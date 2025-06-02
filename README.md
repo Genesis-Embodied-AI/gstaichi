@@ -62,7 +62,7 @@ The language has broad applications spanning real-time physical simulation, nume
   - Apple Metal
   - WebAssembly (experiemental)
 - Other packages:
-  - cmake >= 3.17.1
+  - cmake >= 3.11.0
  </details>
 
 Use Python's package installer **pip** to install Taichi Lang:
