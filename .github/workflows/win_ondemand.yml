@@ -1,0 +1,25 @@
+name: Windows 2025 on-demand
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: windows-2025
+    steps:
+      - name: Python check
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: explore env
+        run: |
+          systeminfo
+          Get-Location
+          Get-ChildItem
+          python -V
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Windows 2025 Build
+        run: |
+          pwd
+          & .\.github\workflows\scripts_new\win.ps1
