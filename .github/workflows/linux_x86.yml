@@ -1,8 +1,5 @@
 name: Linux x86 on-demand
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
