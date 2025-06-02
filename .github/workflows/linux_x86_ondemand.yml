@@ -1,0 +1,11 @@
+name: Linux x86 on-demand
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Linux x86 Build
+        run: |
+          bash .github/workflows/scripts_new/linux_x86.sh
