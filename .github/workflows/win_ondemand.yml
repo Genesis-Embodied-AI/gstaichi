@@ -1,5 +1,8 @@
 name: Windows 2025 on-demand
 on:
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 jobs:
   build:
