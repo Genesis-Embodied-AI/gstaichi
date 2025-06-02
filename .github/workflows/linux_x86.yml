@@ -1,5 +1,13 @@
 name: Linux x86 on-demand
 on:
+  push:
+    branches:
+      - main
+    branches-ignore:
+      - '**'
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 jobs:
   build:
