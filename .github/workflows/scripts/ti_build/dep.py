@@ -150,7 +150,7 @@ def download_dep(url, outdir, *, strip=0, force=False, args=None, plain=False, e
     if name.endswith(".zip"):
         outdir.mkdir(parents=True, exist_ok=True)
         unzip(local_cached, outdir, strip=strip)
-    elif name.endswith(".tar.gz") or name.endswith(".tgz") or name.endswith(".xz") or name.endswith(".tar.bz2"):
+    elif any(name.endswith(ext) for ext in [".tar.gz", ".tgz", ".xz", ".tar.bz2"]):
         outdir.mkdir(parents=True, exist_ok=True)
         tar("-xf", local_cached, "-C", outdir, f"--strip-components={strip}")
     elif name.endswith(".sh"):
