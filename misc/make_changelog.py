@@ -45,6 +45,7 @@ def main(ver: str | None = None, repo_dir: str = ".") -> str | None:
         print("latest_release is", latest_release)
         print("head is", head)
         print("repo_dir is", repo_dir)
+        return None
     assert len(mb) == 1
     mb = mb[0]
     commits_in_base_tag = list(g.iter_commits(latest_release, max_count=500))
