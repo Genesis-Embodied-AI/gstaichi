@@ -72,8 +72,15 @@ def check_anchor(md_file_path, anchor):
         with open(md_file_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
-        # Check for GitHub-style anchors (spaces become dashes, lowercase, remove ` and .)
-        normalized_anchor = anchor.lower().replace(' ', '-').replace('`', '').replace('.', '')
+        # Improved anchor cleaning: remove non-alphanum except hyphens, collapse multiple hyphens, strip hyphens
+        def clean_anchor(s):
+            s = s.lower().replace(' ', '-')
+            s = re.sub(r'[^a-z0-9\-]', '', s)
+            s = re.sub(r'-+', '-', s)
+            s = s.strip('-')
+            return s
+
+        normalized_anchor = clean_anchor(anchor)
         
         # Pattern for Markdown headers
         header_pattern = r'^#+\s+(.*)$'
@@ -84,11 +91,6 @@ def check_anchor(md_file_path, anchor):
             match = re.match(header_pattern, line)
             if match:
                 header_text = match.group(1)
-                # Generate possible anchor formats (remove all except letters, numbers, hyphens)
-                def clean_anchor(s):
-                    s = s.lower().replace(' ', '-')
-                    s = re.sub(r'[^a-z0-9\-]', '', s)
-                    return s
                 anchor_dash = clean_anchor(header_text)
                 anchor_underscore = re.sub(r'[^a-z0-9\-]', '', header_text.lower().replace(' ', '_'))
                 anchor_nospace = re.sub(r'[^a-z0-9\-]', '', header_text.replace(' ', ''))
@@ -100,8 +102,6 @@ def check_anchor(md_file_path, anchor):
                     anchor_raw
                 ]
                 available_anchors.append(anchor_dash)
-                # Clean the input anchor the same way
-                normalized_anchor = re.sub(r'[^a-z0-9\-]', '', anchor.lower().replace(' ', '-'))
                 if normalized_anchor in possible_anchors:
                     found = True
                     break

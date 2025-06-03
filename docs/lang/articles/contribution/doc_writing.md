@@ -62,7 +62,7 @@ def paint(t: float):
 
 ## Cross-references
 
-To link to another section within the same article, you would use `[Return to ## 1. Code blocks](#1-code-blocks)`: [Return to ## 1. Code blocks](#1-code-blocks).
+To link to another section within the same article, you would use `[Return to ## 1. Code blocks](#code-blocks)`: [Return to ## 1. Code blocks](#code-blocks).
 
 We follow the best practices suggested by [Docusaurus](https://docusaurus.io/docs/markdown-features/links) to cross-reference other documents, so to link to sections in other articles, please use the following relative-path based syntax, which
 is docs-versioning and IDE/GitHub friendly:
