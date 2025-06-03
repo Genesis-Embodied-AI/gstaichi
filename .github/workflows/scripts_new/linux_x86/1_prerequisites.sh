@@ -2,16 +2,16 @@
 
 set -ex
 
-echo hello from linux_x86.sh
 pwd
 uname -a
 git status
-git submodule
-git submodule update --init --recursive
 free -m
 cat /etc/lsb-release
 ls -la
 python -V
+
+git submodule
+git submodule update --init --recursive
 sudo apt update
 sudo apt install -y \
     freeglut3-dev \
@@ -41,11 +41,3 @@ sudo apt install -y \
     python3-pip
 
 pip3 install scikit-build
-
-./build.py wheel
-
-pip3 install dist/*.whl
-python -c "import taichi as ti; ti.init(arch=ti.cpu)"
-
-pip3 install -r requirements_test.txt
-python3.10 tests/run_tests.py -v
