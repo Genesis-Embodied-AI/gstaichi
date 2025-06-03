@@ -1,7 +1,7 @@
 import tempfile
 import os
 import pytest
-from markdown_link_check import check_markdown_links, check_anchor, find_markdown_files
+from tools.markdown_link_check import check_markdown_links, check_anchor, find_markdown_files
 
 @pytest.fixture
 def temp_dir():
