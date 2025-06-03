@@ -4,6 +4,8 @@ import pathlib
 from urllib.parse import urlparse
 import argparse
 
+error_found = False  # Track if any errors are found
+
 def check_markdown_links(file_path, base_dir=None):
     """
     Check all links in a Markdown file, including anchor references.
@@ -12,6 +14,7 @@ def check_markdown_links(file_path, base_dir=None):
         file_path: Path to the Markdown file
         base_dir: Base directory for relative links (defaults to file's directory)
     """
+    global error_found
     if base_dir is None:
         base_dir = os.path.dirname(os.path.abspath(file_path))
     
@@ -45,6 +48,7 @@ def check_markdown_links(file_path, base_dir=None):
             # Check if file exists
             if not os.path.exists(full_path):
                 print(f"❌ Broken link: {link} (File not found: {full_path})")
+                error_found = True
                 continue
             
             # Check anchor in local file
@@ -63,6 +67,7 @@ def check_anchor(md_file_path, anchor):
         md_file_path: Path to the Markdown file
         anchor: Anchor to check (without #)
     """
+    global error_found
     try:
         with open(md_file_path, 'r', encoding='utf-8') as f:
             content = f.read()
@@ -91,6 +96,7 @@ def check_anchor(md_file_path, anchor):
         
         if not found:
             print(f"❌ Broken anchor: #{anchor} in {md_file_path}")
+            error_found = True
     except Exception as e:
         print(f"⚠️ Error checking anchor #{anchor} in {md_file_path}: {str(e)}")
 
@@ -123,3 +129,5 @@ if __name__ == '__main__':
     for md_file in md_files:
         print(f"\nChecking: {md_file}")
         check_markdown_links(md_file, base_dir=os.path.dirname(md_file))
+    if error_found:
+        exit(2)

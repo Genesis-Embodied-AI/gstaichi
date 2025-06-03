@@ -9,11 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: tcort/github-action-markdown-link-check@v1
+    - uses: actions/setup-python@v4
       with:
-        folder-path: 'docs'
-        file-path: README.md
-        check-modified-files-only: yes
-        base-branch: main
-        use-quiet-mode: yes
-        use-verbose-mode: yes
+        python-version: 3.10
+    - name: Check Markup Links
+      run: |
+        python python/tools/markdown_link_check.py docs
