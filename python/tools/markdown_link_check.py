@@ -112,19 +112,23 @@ def find_markdown_files(root_dir):
     return md_files
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Check Markdown links in a directory recursively.")
-    parser.add_argument("directory", help="Path to the root directory containing Markdown files")
+    parser = argparse.ArgumentParser(description="Check Markdown links in a directory or a single Markdown file.")
+    parser.add_argument("path", help="Path to the root directory or a Markdown file")
     args = parser.parse_args()
 
-    root_dir = os.path.abspath(args.directory)
-    if not os.path.isdir(root_dir):
-        print(f"Error: {root_dir} is not a directory.")
-        exit(1)
+    input_path = os.path.abspath(args.path)
+    md_files = []
 
-    md_files = find_markdown_files(root_dir)
-    if not md_files:
-        print(f"No Markdown files found in {root_dir}")
-        exit(0)
+    if os.path.isdir(input_path):
+        md_files = find_markdown_files(input_path)
+        if not md_files:
+            print(f"No Markdown files found in {input_path}")
+            exit(0)
+    elif os.path.isfile(input_path) and input_path.lower().endswith('.md'):
+        md_files = [input_path]
+    else:
+        print(f"Error: {input_path} is not a directory or a Markdown (.md) file.")
+        exit(1)
 
     for md_file in md_files:
         print(f"\nChecking: {md_file}")
