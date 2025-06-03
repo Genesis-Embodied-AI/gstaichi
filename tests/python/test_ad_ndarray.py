@@ -1160,7 +1160,7 @@ def test_ad_if_parallel_complex():
     assert x.grad[1] == -0.25
 
 
-@pytest.mark.skipif(platform.system() == "Windows", reason="ad_ndarray failing sporadically on Windows")
+@pytest.mark.flaky(retries=5, only_on=(ValueError, IndexError))
 @test_utils.test(arch=archs_support_ndarray_ad)
 def test_ad_ndarray_i32():
     with pytest.raises(TaichiRuntimeError, match=r"i32 is not supported for ndarray"):

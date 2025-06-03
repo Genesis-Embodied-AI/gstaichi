@@ -6,7 +6,7 @@ import taichi as ti
 from tests import test_utils
 
 
-@pytest.mark.xfail(platform.system() == "Windows", reason="Fails on windows currently")
+@pytest.mark.flaky(retries=5)
 # (issue filed to fix this at https://linear.app/genesis-ai-company/issue/CMP-21/fix-failing-test-cg-test-in-windows)
 @pytest.mark.parametrize("ti_dtype", [ti.f32, ti.f64])
 @test_utils.test(arch=[ti.cpu])
