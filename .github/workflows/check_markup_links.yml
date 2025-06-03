@@ -14,3 +14,4 @@ jobs:
         folder-path: 'docs'
         file-path: README.md
         check-modified-files-only: yes
+        base-branch: main
