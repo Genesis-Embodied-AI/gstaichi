@@ -17,11 +17,8 @@ pre-commit run -a --show-diff
 # ======
 
 pip install pyright
-# since runnign pyright on everything is chaos right now,
-# we only run it on modified files
-# we factorize this to a separate script, so people can run it
-# directly if they wish
-bash .github/workflows/scripts_new/run_pyright_changed_files.sh
+# Need to deal with C++ linkage issues first (and possibly
+# some other things), before we can turn on pyright
 
 pip install isort
 # TODO: run isort on all python files, and commit those, then
