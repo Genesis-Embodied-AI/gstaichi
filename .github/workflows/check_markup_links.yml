@@ -9,11 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: tcort/github-action-markdown-link-check@v1
-      with:
-        folder-path: 'docs'
-        file-path: README.md
-        check-modified-files-only: yes
-        base-branch: main
-        use-quiet-mode: yes
-        use-verbose-mode: yes
+    - name: Install lychee
+      run: |
+        bash .github/workflows/scripts_new/check_markup_links_1_install.sh
+    - name: Run lychee
+      run: |
+        bash .github/workflows/scripts_new/check_markup_links_2_run.sh
