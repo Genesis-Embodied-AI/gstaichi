@@ -426,14 +426,14 @@ The `develop` command serves the developers' needs better because edits to the P
 
 These can serve as a reference if you get stuck. Whilst the CI configuration won't match perfectly the configuration of your own machine, these scripts can serve as a reference for what does run correctly on our CI servers.
 
-- [Github runner configuration](.github/workflows/linux_x86.yml)
+- [Github runner configuration](../../../../.github/workflows/linux_x86.yml)
 
 ### Linux Ubuntu 22.04 x86
 
-- [1_prerequisites.sh](.github/workflows/scripts_new/linux_x86/1_prerequisites.sh)
-- [2_build.sh](.github/workflows/scripts_new/linux_x86/2_build.sh)
-- [3_install.sh](.github/workflows/scripts_new/linux_x86/3_install.sh)
-- [4_test.sh](.github/workflows/scripts_new/linux_x86/4_test.sh)
+- [1_prerequisites.sh](../../../../.github/workflows/scripts_new/linux_x86/1_prerequisites.sh)
+- [2_build.sh](../../../../.github/workflows/scripts_new/linux_x86/2_build.sh)
+- [3_install.sh](../../../../.github/workflows/scripts_new/linux_x86/3_install.sh)
+- [4_test.sh](../../../../.github/workflows/scripts_new/linux_x86/4_test.sh)
 
 ## Design goals, behaviors and usage of `build.py`
 
