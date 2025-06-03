@@ -2,6 +2,7 @@ import re
 import os
 import pathlib
 from urllib.parse import urlparse
+import argparse
 
 def check_markdown_links(file_path, base_dir=None):
     """
@@ -29,7 +30,7 @@ def check_markdown_links(file_path, base_dir=None):
         
         # Skip mailto and external links
         if parsed.scheme in ('http', 'https', 'mailto'):
-            print(f"⚠️ External link (not checked): {link}")
+            print(f"[-] External link (not checked): {link}")
             continue
         
         # Handle anchor-only links
@@ -93,13 +94,32 @@ def check_anchor(md_file_path, anchor):
     except Exception as e:
         print(f"⚠️ Error checking anchor #{anchor} in {md_file_path}: {str(e)}")
 
+def find_markdown_files(root_dir):
+    """
+    Recursively find all .md files under root_dir.
+    """
+    md_files = []
+    for dirpath, _, filenames in os.walk(root_dir):
+        for filename in filenames:
+            if filename.lower().endswith('.md'):
+                md_files.append(os.path.join(dirpath, filename))
+    return md_files
+
 if __name__ == '__main__':
-    import sys
-    if len(sys.argv) < 2:
-        print("Usage: python markdown_link_checker.py <markdown_file> [base_dir]")
-        sys.exit(1)
-    
-    file_path = sys.argv[1]
-    base_dir = sys.argv[2] if len(sys.argv) > 2 else None
-    check_markdown_links(file_path, base_dir)
-    
+    parser = argparse.ArgumentParser(description="Check Markdown links in a directory recursively.")
+    parser.add_argument("directory", help="Path to the root directory containing Markdown files")
+    args = parser.parse_args()
+
+    root_dir = os.path.abspath(args.directory)
+    if not os.path.isdir(root_dir):
+        print(f"Error: {root_dir} is not a directory.")
+        exit(1)
+
+    md_files = find_markdown_files(root_dir)
+    if not md_files:
+        print(f"No Markdown files found in {root_dir}")
+        exit(0)
+
+    for md_file in md_files:
+        print(f"\nChecking: {md_file}")
+        check_markdown_links(md_file, base_dir=os.path.dirname(md_file))
