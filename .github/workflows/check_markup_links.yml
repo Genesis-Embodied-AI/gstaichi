@@ -1,5 +1,8 @@
 name: Check markup links
 on:
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 jobs:
   markdown-link-check:
