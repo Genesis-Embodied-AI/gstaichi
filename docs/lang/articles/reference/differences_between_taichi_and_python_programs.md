@@ -6,7 +6,7 @@ sidebar_position: 5
 
 Although Taichi uses Python as the frontend, it follows a different set of rules in many aspects, including:
 
-1. [Taichi only supports return statement outside non-static `if`/`for`/`while` scope in the program](#return-statement)
+1. [Taichi only supports return statement outside non-static `if`/`for`/`while` scope in the program](#return-statement-and-return-type-annotation)
 2. [Variables defined inside an `if`/`for`/`while` block cannot be accessed outside the block.](#variable-scoping)
 3. [Taichi does not fully support some language features of Python.](#unsupportedpartially-supported-python-language-features)
 
