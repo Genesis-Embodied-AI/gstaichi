@@ -79,6 +79,7 @@ def check_anchor(md_file_path, anchor):
         header_pattern = r'^#+\s+(.*)$'
         
         found = False
+        available_anchors = []
         for line in content.split('\n'):
             match = re.match(header_pattern, line)
             if match:
@@ -90,12 +91,16 @@ def check_anchor(md_file_path, anchor):
                     header_text.replace(' ', ''),
                     header_text
                 ]
+                available_anchors.append(header_text.lower().replace(' ', '-'))
                 if normalized_anchor in possible_anchors:
                     found = True
                     break
         
         if not found:
             print(f"❌ Broken anchor: #{anchor} in {md_file_path}")
+            print(f"   Available anchors in this file:")
+            for a in available_anchors:
+                print(f"     - {a}")
             error_found = True
     except Exception as e:
         print(f"⚠️ Error checking anchor #{anchor} in {md_file_path}: {str(e)}")
