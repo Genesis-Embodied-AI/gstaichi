@@ -1,19 +1,16 @@
-name: Mac OS 15 on-demand
+name: Mac OS on-demand
 on:
   pull_request:
     branches:
       - main
   workflow_dispatch:
 jobs:
-  build-15:
-    runs-on: macos-15
-    steps:
-      - uses: actions/checkout@v4
-      - name: Mac Build
-        run: |
-          bash .github/workflows/scripts_new/macos_15.sh
-  build-14:
-    runs-on: macos-14
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, macos-15]
+    runs-on: ${{ matrix.os}}
     steps:
       - uses: actions/checkout@v4
       - name: Mac Build
