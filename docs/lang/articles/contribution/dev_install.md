@@ -22,10 +22,10 @@ See the [Get Started](https://docs.taichi-lang.org/) for more information on qui
   This installation guide covers the following:
 
   - [Prerequisites for building Taichi from source](#prerequisites)
-  - [Installing optional dependencies](#Install-optional-dependencies)
-  - [Building Taichi from source](#Build-Taichi-from-source)
+  - [Installing optional dependencies](#install-optional-dependencies)
+  - [Building Taichi from source](#build-taichi-from-source)
   - [List of TAICHI_CMAKE_ARGS](#list-of-taichi_cmake_args)
-  - [Usage and behavior of `build.py`](#Design-goals-behaviors-and-usage-of-buildpy)
+  - [Usage and behavior of `build.py`](#usage-and-behavior-of-buildpy)
   - [Troubleshooting and debugging](#troubleshooting-and-debugging)
   - [Frequently asked questions](#frequently-asked-questions)
 
