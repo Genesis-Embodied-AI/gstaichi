@@ -7,6 +7,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: tcort/github-action-markdown-link-check@v1
+      with:
+        folder-path: 'docs'
+        file-path: README.md
 
 # name: Check markup links
 # on:

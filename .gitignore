@@ -81,7 +81,6 @@ _build
 !.github/**/*.yml
 *.dot
 *.json
-!.github/workflows/scripts_new/*.json
 !tests/**/*.json
 !docs/**/*.json
 imgui.ini
