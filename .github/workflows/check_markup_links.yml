@@ -1,0 +1,14 @@
+name: Check markup links
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '14'
+      - name: Run markup check
+        run: |
+          bash .github/workflows/scripts_new/run_markup_check.sh
