@@ -24,7 +24,7 @@ sidebar_position: 5
 
 <https://en.wikipedia.org/wiki/AoS_and_SoA>
 
-See also [structure of arrays](#structure-of-arrays-soa).
+See also [structure of arrays](./glossary.md/#structure-of-arrays-soa).
 
 ## Assert statement
 
@@ -50,7 +50,7 @@ See also [structure of arrays](#structure-of-arrays-soa).
 
 <https://en.wikipedia.org/wiki/Row-_and_column-major_order>
 
-See also [row-major order](#row-major-order).
+See also [row-major order](./glossary.md/#row-major-order).
 
 ## Compound type
 
@@ -176,7 +176,7 @@ The Python scope corresponds to the host side in CUDA.
 
 <https://en.wikipedia.org/wiki/Row-_and_column-major_order>
 
-See also [coloum-major order](#column-major-order).
+See also [coloum-major order](./glossary.md/#column-major-order).
 
 ## Shader storage buffer object (SSBO)
 
@@ -200,7 +200,7 @@ A static scope is a scope of the argument of `ti.static`, which is a hint for th
 
 <https://en.wikipedia.org/wiki/AoS_and_SoA>
 
-See also [array of structures](#array-of-structures-aos).
+See also [array of structures](./glossary.md/#array-of-structures-aos).
 
 ## Taichi function
 
