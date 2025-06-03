@@ -15,3 +15,5 @@ jobs:
         file-path: README.md
         check-modified-files-only: yes
         base-branch: main
+        use-quiet-mode: yes
+        use-verbose-mode: yes
