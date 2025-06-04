@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <variant>
+#include <filesystem>
 
 #include "taichi/codegen/codegen_utils.h"
 #include "taichi/program/program.h"

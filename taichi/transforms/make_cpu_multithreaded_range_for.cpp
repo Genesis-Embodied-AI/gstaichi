@@ -142,18 +142,18 @@ class MakeCPUMultithreadedRangeFor : public BasicStmtVisitor {
     offloaded->body = std::move(offloaded_body);
     offloaded->body->set_parent_stmt(offloaded);
     offloaded->block_dim = 1;
-    modified = true;
+    modified_ = true;
   }
 
   static bool run(IRNode *root, const CompileConfig &config) {
     MakeCPUMultithreadedRangeFor pass(config);
     root->accept(&pass);
-    return pass.modified;
+    return pass.modified_;
   }
 
  private:
   const CompileConfig &config_;
-  bool modified{false};
+  bool modified_{false};
 };
 }  // namespace
 
