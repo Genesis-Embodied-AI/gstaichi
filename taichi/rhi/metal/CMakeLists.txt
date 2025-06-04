@@ -8,6 +8,11 @@ target_sources(${METAL_RHI}
     metal_device.mm
   )
 
+if (APPLE)
+  set(CLANG_OSX_FLAGS -DTARGET_OS_OSX)
+  target_compile_options(${METAL_RHI} PRIVATE ${CLANG_OSX_FLAGS})
+endif()
+
 # TODO(#4832) some dependencies here should not be required as they
 # are build requirements of other targets.
 target_include_directories(${METAL_RHI}
