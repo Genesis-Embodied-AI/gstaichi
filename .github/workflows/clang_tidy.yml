@@ -1,0 +1,15 @@
+name: clang-tidy (static analysis)
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Python check
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - uses: actions/checkout@v4
+      - name: Run linters
+        run: |
+          bash .github/workflows/scripts_new/clang_tidy.sh
