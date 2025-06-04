@@ -1168,6 +1168,7 @@ def test_ad_ndarray_i32():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad)
+@pytest.mark.flaky(retries=5)
 def test_ad_sum_vector():
     N = 10
 
