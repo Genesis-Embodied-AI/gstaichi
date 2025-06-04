@@ -1,0 +1,19 @@
+name: Check markup links
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  markdown-link-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: tcort/github-action-markdown-link-check@v1
+      with:
+        folder-path: 'docs'
+        file-path: README.md
+        check-modified-files-only: yes
+        base-branch: main
+        use-quiet-mode: yes
+        use-verbose-mode: yes

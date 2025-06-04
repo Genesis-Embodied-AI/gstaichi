@@ -27,7 +27,7 @@ def find_latest_tag_commit(tags):
             return tag.commit
 
 
-def main(ver=None, repo_dir="."):
+def main(ver: str | None = None, repo_dir: str = ".") -> str | None:
     g = Repo(repo_dir)
     g.tags.sort(key=lambda x: x.commit.committed_date, reverse=True)
 
@@ -35,8 +35,17 @@ def main(ver=None, repo_dir="."):
     # everything after this commit should be listed in the changelog.
 
     latest_release = find_latest_tag_commit(g.tags)
+    if not latest_release:
+        print("No release tag found => not creating release notes")
+        return None
     head = g.head.commit
     mb = g.merge_base(latest_release, head)
+    if len(mb) != 1:
+        print("error: expected length of mb to be 1. mb is:", mb, "ver is", ver)
+        print("latest_release is", latest_release)
+        print("head is", head)
+        print("repo_dir is", repo_dir)
+        return None
     assert len(mb) == 1
     mb = mb[0]
     commits_in_base_tag = list(g.iter_commits(latest_release, max_count=500))
@@ -109,8 +118,9 @@ if __name__ == "__main__":
     parser.add_argument("--save", action="store_true", default=False)
     args = parser.parse_args()
     res = main(args.ver, args.repo_dir)
-    if args.save:
-        with open("./python/taichi/CHANGELOG.md", "w", encoding="utf-8") as f:
-            f.write(res)
-    else:
-        print(res)
+    if res:
+        if args.save:
+            with open("./python/taichi/CHANGELOG.md", "w", encoding="utf-8") as f:
+                f.write(res)
+        else:
+            print(res)
