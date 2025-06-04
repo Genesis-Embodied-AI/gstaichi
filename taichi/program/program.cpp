@@ -382,7 +382,7 @@ Ndarray *Program::create_ndarray(const DataType type,
   if (zero_fill) {
     Arch arch = compile_config().arch;
     if (arch_is_cpu(arch) || arch == Arch::cuda || arch == Arch::amdgpu) {
-      fill_ndarray_fast_u32(arr.get(), /*data=*/0);
+      fill_ndarray_fast_u32(arr.get(), /*data=*/0);  // NOLINT
     } else if (arch != Arch::dx12) {
       // Device api support for dx12 backend are not complete yet
       Stream *stream =
