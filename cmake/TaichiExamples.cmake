@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.11)
 
 function(add_taichi_example NAME)
 set(TARGET_NAME "cpp_examples_${NAME}")
