@@ -2,17 +2,12 @@
 
 set -ex
 
-pwd
-uname -a
-git status
-free -m
-cat /etc/lsb-release
-ls -la
-python -V
+set -ex
 
-git submodule
+sudo apt-get update
+sudo apt-get install -y clang-tidy-14
 git submodule update --init --recursive
-sudo apt update
+
 sudo apt install -y \
     freeglut3-dev \
     libglfw3-dev \
@@ -40,4 +35,4 @@ sudo apt install -y \
     python3-dev \
     python3-pip
 
-pip3 install scikit-build
+pip install scikit-build

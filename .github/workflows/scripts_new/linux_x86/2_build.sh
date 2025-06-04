@@ -2,5 +2,4 @@
 
 set -ex
 
-export TAICHI_CMAKE_ARGS="-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
 ./build.py wheel
