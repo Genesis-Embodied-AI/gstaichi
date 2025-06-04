@@ -1,5 +1,8 @@
 name: clang-tidy (static analysis)
 on:
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 jobs:
   build:
