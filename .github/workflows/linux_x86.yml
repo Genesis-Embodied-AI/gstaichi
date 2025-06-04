@@ -1,0 +1,23 @@
+name: Linux x86 on-demand
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Linux x86 prerequisites
+        run: |
+          bash .github/workflows/scripts_new/linux_x86/1_prerequisites.sh
+      - name: Linux x86 build
+        run: |
+          bash .github/workflows/scripts_new/linux_x86/2_build.sh
+      - name: Linux x86 install
+        run: |
+          bash .github/workflows/scripts_new/linux_x86/3_install.sh
+      - name: Linux x86 test
+        run: |
+          bash .github/workflows/scripts_new/linux_x86/4_test.sh

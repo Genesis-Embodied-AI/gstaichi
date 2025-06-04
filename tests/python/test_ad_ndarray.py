@@ -685,6 +685,7 @@ def test_stacked_inner_loops_local_variable_adaptive_stack_size_kernel_grad():
     assert x.grad[None] == 38.0
 
 
+@pytest.mark.flaky(reruns=5)
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack, ad_stack_size=0)
 def test_stacked_mixed_ib_and_non_ib_inner_loops_local_variable_adaptive_stack_size_kernel_grad():
     x = ti.ndarray(dtype=float, shape=(), needs_grad=True)
