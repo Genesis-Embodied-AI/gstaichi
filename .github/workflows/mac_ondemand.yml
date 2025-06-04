@@ -13,6 +13,15 @@ jobs:
     runs-on: ${{ matrix.os}}
     steps:
       - uses: actions/checkout@v4
-      - name: Mac Build
+      - name: Mac OS X prerequisites
         run: |
-          bash .github/workflows/scripts_new/macos_15.sh
+          bash .github/workflows/scripts_new/macosx/1_prerequisites.sh
+      - name: Mac OS X build
+        run: |
+          bash .github/workflows/scripts_new/macosx/2_build.sh
+      - name: Mac OS X install
+        run: |
+          bash .github/workflows/scripts_new/macosx/3_install.sh
+      - name: Mac OS X test
+        run: |
+          bash .github/workflows/scripts_new/macosx/4_test.sh

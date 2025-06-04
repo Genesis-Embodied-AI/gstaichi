@@ -2,7 +2,6 @@
 
 set -ex
 
-echo hello from macos_15.sh
 pwd
 git submodule
 git submodule update --init --recursive
@@ -26,12 +25,3 @@ python -V
 pip3.10 install scikit-build
 pip3.10 install numpy
 brew install llvm@15
-export TAICHI_CMAKE_ARGS="-DTI_WITH_VULKAN:BOOL=OFF -DTI_WITH_METAL:BOOL=ON"
-./build.py wheel
-
-pip3.10 install dist/*.whl
-python -c "import taichi as ti; ti.init(arch=ti.cpu)"
-python -c "import taichi as ti; ti.init(arch=ti.metal)"
-
-pip3.10 install -r requirements_test.txt
-python3.10 tests/run_tests.py -v
