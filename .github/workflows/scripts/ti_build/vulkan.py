@@ -11,13 +11,17 @@ from .misc import banner, get_cache_home, path_prepend
 from .python import path_prepend
 
 
+VULKAN_VERSION = "1.4.304.1"
+
+
 # -- code --
-@banner("Setup Vulkan 1.3.236.0")
+@banner(f"Setup Vulkan {VULKAN_VERSION}")
 def setup_vulkan():
     u = platform.uname()
     if u.system == "Linux":
-        url = "https://sdk.lunarg.com/sdk/download/1.3.236.0/linux/vulkansdk-linux-x86_64-1.3.236.0.tar.gz"
-        prefix = get_cache_home() / "vulkan-1.3.236.0"
+        url = f"https://sdk.lunarg.com/sdk/download/{VULKAN_VERSION}/linux/vulkansdk-linux-x86_64-{VULKAN_VERSION}.tar.xz"
+        prefix = get_cache_home() / f"vulkan-{VULKAN_VERSION}"
+
         download_dep(url, prefix, strip=1)
         sdk = prefix / "x86_64"
         os.environ["VULKAN_SDK"] = str(sdk)
