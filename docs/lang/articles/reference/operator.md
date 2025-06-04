@@ -57,7 +57,7 @@ Python3 distinguishes `/` (true division) and `//` (floor division), e.g., `1.0 
 
 To avoid such implicit casting, you can manually cast your operands to
 desired types, using `ti.cast`. Please see
-[Default precisions](../type_system/type.md#primitive-types) for more details on
+[Default precisions](global_settings.md#going-high-precision) for more details on
 default numerical types.
 
 Taichi also provides `ti.raw_div` function which performs true division if one of the operands is floating point type
