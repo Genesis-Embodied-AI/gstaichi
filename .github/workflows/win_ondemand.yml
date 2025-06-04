@@ -15,8 +15,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          submodules: true
           fetch-depth: 0
-      - name: Windows 2025 Build
+      - name: Windows 2025 build
         run: |
-          pwd
-          & .\.github\workflows\scripts_new\win.ps1
+          & .\.github\workflows\scripts_new\win\2_build.ps1
+      - name: Windows 2025 install
+        run: |
+          & .\.github\workflows\scripts_new\win\3_install.ps1
+      - name: Windows 2025 test
+        run: |
+          & .\.github\workflows\scripts_new\win\4_test.ps1
