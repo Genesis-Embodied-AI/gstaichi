@@ -25,9 +25,8 @@
 #include <objc/objc.h>
 #include <objc/runtime.h>
 
-typedef const struct __CFAttributedString *CFAttributedStringRef;
+#include <CoreFoundation/CFAttributedString.h>
 #include <ApplicationServices/ApplicationServices.h>
-
 #include <CoreGraphics/CGBase.h>
 #include <CoreGraphics/CGGeometry.h>
 #include <AppKit/AppKit.h>
