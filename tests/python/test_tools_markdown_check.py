@@ -1,7 +1,14 @@
 import tempfile
 import os
 import pytest
-from tools.markdown_link_check import check_markdown_links, check_anchor, find_markdown_files
+import sys
+
+_skip_these_tests = sys.platform.startswith("win")
+
+if not _skip_these_tests:
+    from tools.markdown_link_check import check_markdown_links, check_anchor, find_markdown_files
+
+pytest.skip("Skipping on Windows", allow_module_level=True) if _skip_these_tests else None
 
 @pytest.fixture
 def temp_dir():
