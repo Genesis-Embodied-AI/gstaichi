@@ -93,7 +93,7 @@ You **HAVE TO** insert blank lines to make them work:
 ```md
 <center>
 
-![](./some_pic.png)
+Dummy text
 
 </center>
 ```
