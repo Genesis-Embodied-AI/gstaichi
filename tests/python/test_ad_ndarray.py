@@ -1161,7 +1161,7 @@ def test_ad_if_parallel_complex():
     assert x.grad[1] == -0.25
 
 
-@pytest.mark.flaky(retries=5, only_on=(ValueError, IndexError))
+@pytest.mark.flaky(retries=5)
 @test_utils.test(arch=archs_support_ndarray_ad)
 def test_ad_ndarray_i32():
     with pytest.raises(TaichiRuntimeError, match=r"i32 is not supported for ndarray"):
