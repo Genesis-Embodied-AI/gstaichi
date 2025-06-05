@@ -25,7 +25,7 @@ See the [Get Started](https://docs.taichi-lang.org/) for more information on qui
   - [Installing optional dependencies](#install-optional-dependencies)
   - [Building Taichi from source](#build-taichi-from-source)
   - [List of TAICHI_CMAKE_ARGS](#list-of-taichi_cmake_args)
-  - [Usage and behavior of `build.py`](#usage-and-behavior-of-buildpy)
+  - [Usage and behavior of `build.py`](#design-goals-behaviors-and-usage-of-buildpy)
   - [Troubleshooting and debugging](#troubleshooting-and-debugging)
   - [Frequently asked questions](#frequently-asked-questions)
 
