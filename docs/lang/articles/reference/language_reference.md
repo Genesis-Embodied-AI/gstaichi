@@ -113,7 +113,7 @@ Following the [Values and types](#values-and-types) section, if both operands
 of a binary operation are Python values, compile-time evaluation is triggered
 and a result Python value is produced. If only one operand is a Python value,
 it is first turned into a Taichi value with
-[default type](../type_system/type.md#default-primitive-types-for-integers-and-floating-point-numbers).
+[default type](../type_system/type.md#primitive-types).
 Now the only remaining case is that both operands are Taichi values.
 
 Binary operations can happen between Taichi values of either primitive type or
@@ -277,7 +277,7 @@ positional_item      ::= assignment_expression | "*" expression
 ```
 
 The `primary` must be evaluated to one of:
-- A [Taichi function](../kernels/kernel_function.md#taichi-function).
+- A [Taichi function](../kernels/kernel_function.md#kernels-and-functions).
 - A [Taichi builtin function](./operator.md#other-arithmetic-functions).
 - A Taichi primitive type. In this case, the `positional_arguments` must only
   contain one item. If the item is evaluated to a Python value, then the
@@ -499,7 +499,7 @@ with the following points to notice:
 target is an identifier appearing for the first time, a variable is defined
 with that name and inferred type from the corresponding right-hand side
 expression. If the expression is evaluated to a Python value, it will be turned
-into a Taichi value with [default type](../type_system/type.md#default-primitive-types-for-integers-and-floating-point-numbers).
+into a Taichi value with [default type](../type_system/type.md#primitive-types).
 - If a target is an existing identifier, the corresponding right-hand side
 expression must be evaluated to a Taichi value with the type of the
 corresponding variable of that identifier. Otherwise, an implicit cast will
