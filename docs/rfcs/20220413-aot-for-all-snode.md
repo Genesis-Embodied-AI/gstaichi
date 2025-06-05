@@ -6,7 +6,7 @@
 ---
 
 - [RFC: AOT for All SNodes](#rfc-aot-for-all-snodes)
-  - [* Relevant Issue: https://github.com/taichi-dev/taichi/issues/4777](#-relevant-issue-httpsgithubcomtaichi-devtaichiissues4777)
+  - [* Relevant Issue: https://github.com/taichi-dev/taichi/issues/4777](https://github.com/taichi-dev/taichi/issues/4777)
 - [TL;DR](#tldr)
 - [Background](#background)
 - [Goals](#goals)
