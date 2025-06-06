@@ -32,5 +32,3 @@ sudo apt install -y \
     python3-pip
 
 pip3 install scikit-build
-
-pip install pyright pybind11-stubgen
