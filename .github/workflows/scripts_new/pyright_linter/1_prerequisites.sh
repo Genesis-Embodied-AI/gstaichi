@@ -32,3 +32,6 @@ sudo apt install -y \
     python3-pip
 
 pip3 install scikit-build
+
+pip3 install -r requirements_dev.txt
+python3 -c 'import pybind11_stubgen'
