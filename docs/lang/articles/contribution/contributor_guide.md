@@ -146,7 +146,7 @@ No problem, the CI bot will run the code checkers and format your codes automati
 
 <!-- Todo: Make this a reusable fragment. -->
 
-> For more style information for your C++ code, see [our C++ style](#c-style).
+> For more style information for your C++ code, see [our C++ style](#c-style-guide).
 
 ### C++ style guide
 
@@ -210,7 +210,7 @@ Now you get to the point where you need to get your hands dirty with your PRs. T
 - **When implementing a complex feature:**
 
   - Consider breaking it down to multiple separate, self-contained PRs to provide the community with a clearer context and keep a more traceable development history.
-  - If you're already a collaborator or maintainer with write access to the Taichi repository, please consider adopting [the ghstack workflow](#ghstack-workflow).
+  - If you're already a collaborator or maintainer with write access to the Taichi repository, please consider adopting [the ghstack workflow](#implementing-the-ghstack-workflow-for-complex-changesets).
 
 - **When creating a PR:**
 
@@ -317,8 +317,6 @@ Here, we do not want to repeat some best practices summarized in the following G
   - [Code Health: Respectful Reviews == Useful Reviews](https://testing.googleblog.com/2019/11/code-health-respectful-reviews-useful.html)
   - [How to have your PR merged quickly](https://testing.googleblog.com/2017/06/code-health-too-many-comments-on-your.html)
 
-
-<a name="ghstack-workflow"></a>
 
 ### Implementing the ghstack workflow for complex changesets
 
