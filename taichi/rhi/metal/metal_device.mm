@@ -1,5 +1,3 @@
-#include <math.h>
-
 #include "spirv_msl.hpp"
 #include "taichi/rhi/device.h"
 #include "taichi/rhi/device_capability.h"
