@@ -61,7 +61,7 @@ class CG {
   }
 
  private:
-  SparseMatrix &A_;
+  SparseMatrix &A_;  // NOLINT
   EigenT x_;
   EigenT b_;
   int max_iters_{0};
@@ -90,7 +90,7 @@ class CUCG {
  private:
   void init_solver();
   cublasHandle_t handle_;
-  SparseMatrix &A_;
+  SparseMatrix &A_;  // NOLINT
   int max_iters_{0};
   float tol_{0.0f};
   bool verbose_{false};

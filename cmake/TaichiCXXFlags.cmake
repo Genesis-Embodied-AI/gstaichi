@@ -101,11 +101,6 @@ else()
 
     # FIXME: Check why Android don't support check_cxx_compiler_flag
     if (NOT ANDROID)
-        check_cxx_compiler_flag("-Wno-unqualified-std-cast-call" CXX_HAS_Wno_unqualified_std_cast_call)
-        if (${CXX_HAS_Wno_unqualified_std_cast_call})
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unqualified-std-cast-call ")
-        endif()
-
         check_cxx_compiler_flag("-Wno-unused-but-set-variable" CXX_HAS_Wno_unused_but_set_variable)
         if (${CXX_HAS_Wno_unused_but_set_variable})
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-but-set-variable ")
