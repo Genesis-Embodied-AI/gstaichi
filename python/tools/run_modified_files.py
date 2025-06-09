@@ -11,7 +11,7 @@ from pathlib import Path
 import fnmatch
 
 
-def get_changed_files(include_pattern: str) -> List[str]:
+def get_changed_files(include_pattern: str, cwd: str = '.') -> List[str]:
     """Get all changed files matching glob pattern"""
     include_pattern = include_pattern
     
@@ -24,11 +24,10 @@ def get_changed_files(include_pattern: str) -> List[str]:
     
     files = set()
     for cmd in commands:
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd)
         files.update(result.stdout.splitlines())
-    
     return [f for f in files 
-            if fnmatch.fnmatch(f, include_pattern) and Path(f).is_file()]
+            if fnmatch.fnmatch(f, include_pattern) and (Path(cwd) / f).is_file()]
 
 def main():
     parser = argparse.ArgumentParser(
