@@ -4,10 +4,11 @@ from collections.abc import Iterable
 from itertools import product
 
 import numpy as np
+
 from taichi._lib import core as ti_python_core
-from taichi.lang import expr, impl
+from taichi._lib.utils import ti_python_core as _ti_python_core
+from taichi.lang import expr, impl, runtime_ops
 from taichi.lang import ops as ops_mod
-from taichi.lang import runtime_ops
 from taichi.lang._ndarray import Ndarray, NdarrayHostAccess
 from taichi.lang.common_ops import TaichiOperations
 from taichi.lang.enums import Layout
@@ -32,7 +33,6 @@ from taichi.lang.util import (
 from taichi.types import primitive_types
 from taichi.types.compound_types import CompoundType
 from taichi.types.utils import is_signed
-from taichi._lib.utils import ti_python_core as _ti_python_core
 
 _type_factory = _ti_python_core.get_type_factory_instance()
 

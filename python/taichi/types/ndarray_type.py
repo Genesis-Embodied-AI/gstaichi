@@ -1,6 +1,6 @@
+from taichi.lang import util
 from taichi.lang.enums import Layout, to_boundary_enum
 from taichi.types.compound_types import CompoundType, matrix, vector
-from taichi.lang import util
 
 
 class NdarrayTypeMetadata:

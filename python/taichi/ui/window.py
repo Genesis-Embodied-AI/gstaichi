@@ -1,6 +1,8 @@
 import pathlib
 
 import numpy
+
+from taichi import f32
 from taichi._kernels import (
     arr_vulkan_layout_to_arr_normal_layout,
     arr_vulkan_layout_to_field_normal_layout,
@@ -10,12 +12,10 @@ from taichi.lang._ndarray import Ndarray
 from taichi.lang.impl import Field, default_cfg, get_runtime
 from taichi.ui.staging_buffer import get_depth_ndarray
 
-from taichi import f32
-
 from .canvas import Canvas
-from .scene import SceneV2
 from .constants import PRESS, RELEASE
 from .imgui import Gui
+from .scene import SceneV2
 from .utils import check_ggui_availability
 
 

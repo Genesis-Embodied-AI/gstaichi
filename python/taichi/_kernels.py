@@ -10,11 +10,10 @@ from taichi.lang.kernel_impl import func, kernel
 from taichi.lang.misc import loop_config
 from taichi.lang.simt import block, warp
 from taichi.lang.snode import deactivate
+from taichi.math import vec3
 from taichi.types import ndarray_type, texture_type, vector
 from taichi.types.annotations import template
 from taichi.types.primitive_types import f16, f32, f64, i32, u8
-
-from taichi.math import vec3
 
 
 # A set of helper (meta)functions

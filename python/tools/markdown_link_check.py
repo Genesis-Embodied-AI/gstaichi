@@ -1,8 +1,8 @@
-import re
+import argparse
 import os
 import pathlib
+import re
 from urllib.parse import urlparse
-import argparse
 
 error_found = False  # Track if any errors are found
 

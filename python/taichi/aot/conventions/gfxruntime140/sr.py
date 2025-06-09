@@ -7,9 +7,8 @@ from abc import ABC
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from taichi.aot.conventions.gfxruntime140 import dr
-
 import taichi as ti
+from taichi.aot.conventions.gfxruntime140 import dr
 
 
 class DataType(Enum):

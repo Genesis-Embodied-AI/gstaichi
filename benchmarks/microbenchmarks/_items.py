@@ -1,6 +1,5 @@
-from microbenchmarks._utils import size2tag
-
 import taichi as ti
+from microbenchmarks._utils import size2tag
 
 
 class BenchmarkItem:

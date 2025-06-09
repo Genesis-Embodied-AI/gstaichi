@@ -1,13 +1,13 @@
 import numpy as np
-from taichi.types import ndarray as ndarray_type
+
+import taichi as ti
 from taichi.lang import ops
 from taichi.lang._texture import Texture
 from taichi.lang.impl import ndarray
 from taichi.lang.kernel_impl import kernel
+from taichi.types import ndarray as ndarray_type
 from taichi.types.annotations import template
 from taichi.types.primitive_types import f32, u8, u32
-
-import taichi as ti
 
 vbo_field_cache = {}
 depth_ndarray_cache = {}

@@ -1,21 +1,23 @@
 # -*- coding: utf-8 -*-
 
 # -- stdlib --
-from dataclasses import dataclass
-from functools import wraps
-from itertools import count
-from re import M
-from typing import List, Optional, Dict
 import linecache
 import sys
 import uuid
 import warnings
+from dataclasses import dataclass
+from functools import wraps
+from itertools import count
+from re import M
+from typing import Dict, List, Optional
 
-# -- third party --
-from pytest import ExceptionInfo
 import marko
 import matplotlib.pyplot as plt
 import pytest
+
+# -- third party --
+from pytest import ExceptionInfo
+
 import taichi as ti
 
 # -- own --

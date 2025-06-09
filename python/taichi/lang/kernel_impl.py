@@ -5,18 +5,20 @@ import operator
 import re
 import sys
 import textwrap
-import typing
 import types
+import typing
 import warnings
 import weakref
 
 import numpy as np
+
 import taichi.lang
+from taichi import _logging
 from taichi._lib import core as _ti_core
 from taichi.lang import impl, ops, runtime_ops
-from taichi.lang.any_array import AnyArray
 from taichi.lang._wrap_inspect import getsourcefile, getsourcelines
-from taichi.lang.argpack import ArgPackType, ArgPack
+from taichi.lang.any_array import AnyArray
+from taichi.lang.argpack import ArgPack, ArgPackType
 from taichi.lang.ast import (
     ASTTransformerContext,
     KernelSimplicityASTChecker,
@@ -47,8 +49,6 @@ from taichi.types import (
 )
 from taichi.types.compound_types import CompoundType
 from taichi.types.utils import is_signed
-
-from taichi import _logging
 
 
 def func(fn, is_real_function=False):

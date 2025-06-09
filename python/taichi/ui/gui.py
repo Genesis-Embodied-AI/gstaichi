@@ -3,12 +3,12 @@ import numbers
 import os
 
 import numpy as np
+
+import taichi as ti
 import taichi.lang
 from taichi._kernels import tensor_to_image, vector_to_fast_image, vector_to_image
 from taichi._lib import core as _ti_core
 from taichi.lang.field import Field, ScalarField
-
-import taichi as ti
 
 
 # For window creation and drawing in the original ti.GUI system.

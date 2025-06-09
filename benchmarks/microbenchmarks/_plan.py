@@ -1,10 +1,9 @@
 import itertools
 
+import taichi as ti
 from microbenchmarks._items import AtomicOps, DataType
 from microbenchmarks._metric import MetricType
 from microbenchmarks._utils import get_ti_arch, tags2name
-
-import taichi as ti
 
 
 class Funcs:

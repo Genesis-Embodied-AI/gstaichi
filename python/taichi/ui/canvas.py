@@ -1,8 +1,8 @@
 from taichi._lib import core as _ti_core
 from taichi.lang import impl
 from taichi.lang._texture import Texture
-from .scene import SceneV2
 
+from .scene import SceneV2
 from .staging_buffer import (
     copy_all_to_vbo,
     copy_all_to_vbo_particle,

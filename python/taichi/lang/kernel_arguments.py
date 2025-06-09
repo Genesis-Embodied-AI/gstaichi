@@ -9,8 +9,8 @@ from taichi.lang.expr import Expr
 from taichi.lang.matrix import MatrixType
 from taichi.lang.struct import StructType
 from taichi.lang.util import cook_dtype
-from taichi.types.primitive_types import RefType, u64
 from taichi.types.compound_types import CompoundType
+from taichi.types.primitive_types import RefType, u64
 
 
 class KernelArgument:

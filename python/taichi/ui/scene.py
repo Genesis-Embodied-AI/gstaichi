@@ -1,4 +1,5 @@
 import warnings
+
 import taichi
 from taichi._lib import core as _ti_core
 from taichi.lang.impl import field
@@ -9,10 +10,10 @@ from taichi.types.annotations import template
 from taichi.types.primitive_types import f32
 
 from .staging_buffer import (
-    copy_to_vbo_scalar,
-    copy_to_vbo_vector,
     copy_all_to_vbo,
     copy_all_to_vbo_particle,
+    copy_to_vbo_scalar,
+    copy_to_vbo_vector,
     get_indices_field,
     get_indices_field_v2,
     get_transforms_field,
