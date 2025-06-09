@@ -2,8 +2,9 @@ import os
 
 import numpy as np
 
-import taichi as ti
 from tests import test_utils
+
+import taichi as ti
 
 this_dir = os.path.dirname(os.path.abspath(__file__))
 model_file_path = os.path.join(this_dir, "ell.json")

@@ -10,9 +10,10 @@ from unittest.mock import patch
 
 import pytest
 
+from tests import test_utils
+
 import taichi as ti
 from taichi._main import TaichiMain
-from tests import test_utils
 
 
 @contextmanager

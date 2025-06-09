@@ -1,8 +1,9 @@
 import pytest
 
+from tests import test_utils
+
 import taichi as ti
 from taichi.lang import impl
-from tests import test_utils
 
 _TI_TYPES = [ti.i8, ti.i16, ti.i32, ti.u8, ti.u16, ti.u32, ti.f32]
 _TI_64_TYPES = [ti.i64, ti.u64, ti.f64]

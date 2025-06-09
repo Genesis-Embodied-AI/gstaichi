@@ -1,8 +1,9 @@
 import time
 
+from tests import test_utils
+
 import taichi as ti
 from taichi.lang import impl
-from tests import test_utils
 
 
 @test_utils.test(exclude=[ti.metal, ti.opengl, ti.gles, ti.cuda, ti.vulkan, ti.amdgpu])

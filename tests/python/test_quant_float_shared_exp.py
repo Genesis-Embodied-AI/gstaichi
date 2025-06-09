@@ -1,8 +1,9 @@
 import pytest
 from pytest import approx
 
-import taichi as ti
 from tests import test_utils
+
+import taichi as ti
 
 
 @pytest.mark.parametrize("exponent_bits", [5, 6, 7, 8])

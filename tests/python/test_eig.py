@@ -1,8 +1,9 @@
 import numpy as np
 import pytest
 
-import taichi as ti
 from tests import test_utils
+
+import taichi as ti
 
 
 def _eigen_vector_equal(v1, v2, tol):

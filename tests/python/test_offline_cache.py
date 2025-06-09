@@ -9,8 +9,9 @@ from tempfile import mkdtemp
 
 import pytest
 
-import taichi as ti
 from tests import test_utils
+
+import taichi as ti
 
 OFFLINE_CACHE_TEMP_DIR = mkdtemp()
 atexit.register(lambda: rmdir(OFFLINE_CACHE_TEMP_DIR))

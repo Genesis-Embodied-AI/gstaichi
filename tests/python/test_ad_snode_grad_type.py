@@ -1,6 +1,7 @@
+from tests import test_utils
+
 import taichi as ti
 from taichi.lang.enums import SNodeGradType
-from tests import test_utils
 
 
 @test_utils.test()

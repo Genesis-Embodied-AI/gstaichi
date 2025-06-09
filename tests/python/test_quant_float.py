@@ -2,8 +2,9 @@ import numpy as np
 import pytest
 from pytest import approx
 
-import taichi as ti
 from tests import test_utils
+
+import taichi as ti
 
 
 @pytest.mark.parametrize("max_num_bits", [32, 64])

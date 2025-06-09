@@ -3,8 +3,9 @@ from sys import version_info
 
 import pytest
 
-import taichi as ti
 from tests import test_utils
+
+import taichi as ti
 
 
 @test_utils.test()

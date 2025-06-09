@@ -1,5 +1,6 @@
-import taichi as ti
 from tests import test_utils
+
+import taichi as ti
 
 n = 1000
 

@@ -3,10 +3,11 @@ import os
 import numpy as np
 import pytest
 
+from tests import test_utils
+
 import taichi as ti
 from taichi.lang.misc import get_host_arch_list
 from taichi.lang.util import to_numpy_type
-from tests import test_utils
 
 
 # jpg is also supported but hard to test here since it's lossy:

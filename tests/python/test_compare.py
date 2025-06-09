@@ -1,8 +1,9 @@
 import pytest
 
+from tests import test_utils
+
 import taichi as ti
 from taichi.lang import impl
-from tests import test_utils
 
 
 @test_utils.test(require=ti.extension.sparse, exclude=ti.metal)

@@ -1,5 +1,6 @@
-import taichi as ti
 from tests import test_utils
+
+import taichi as ti
 
 
 def _test_dynamic_append_length(dt):

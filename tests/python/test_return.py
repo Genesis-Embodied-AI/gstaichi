@@ -4,8 +4,9 @@ from typing import Tuple
 import pytest
 from pytest import approx
 
-import taichi as ti
 from tests import test_utils
+
+import taichi as ti
 
 
 @test_utils.test()

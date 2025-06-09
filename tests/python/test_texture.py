@@ -5,9 +5,10 @@ import pytest
 import requests
 from PIL import Image
 
+from tests import test_utils
+
 import taichi as ti
 from taichi.lang import impl
-from tests import test_utils
 
 supported_archs_texture = [ti.vulkan]
 supported_archs_texture_excluding_load_store = [ti.vulkan, ti.opengl]

@@ -2,6 +2,11 @@ import pathlib
 
 import numpy
 
+from .canvas import Canvas
+from .constants import PRESS, RELEASE
+from .imgui import Gui
+from .scene import SceneV2
+from .utils import check_ggui_availability
 from taichi import f32
 from taichi._kernels import (
     arr_vulkan_layout_to_arr_normal_layout,
@@ -11,12 +16,6 @@ from taichi._lib import core as _ti_core
 from taichi.lang._ndarray import Ndarray
 from taichi.lang.impl import Field, default_cfg, get_runtime
 from taichi.ui.staging_buffer import get_depth_ndarray
-
-from .canvas import Canvas
-from .constants import PRESS, RELEASE
-from .imgui import Gui
-from .scene import SceneV2
-from .utils import check_ggui_availability
 
 
 class Window:

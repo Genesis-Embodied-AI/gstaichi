@@ -1,7 +1,6 @@
+from .mathimpl import dot, vec2
 from taichi.lang import ops
 from taichi.lang.kernel_impl import func
-
-from .mathimpl import dot, vec2
 
 
 @func

@@ -1,5 +1,6 @@
-import taichi as ti
 from tests import test_utils
+
+import taichi as ti
 
 
 # such small block_dim will cause grid_dim too large for OpenGL...

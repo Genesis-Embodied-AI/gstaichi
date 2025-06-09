@@ -1,9 +1,10 @@
 import numpy as np
 import pytest
 
+from tests import test_utils
+
 import taichi as ti
 from taichi.lang.exception import TaichiTypeError
-from tests import test_utils
 
 
 def _test_op(dt, taichi_op, np_op):

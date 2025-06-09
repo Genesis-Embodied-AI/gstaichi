@@ -3,10 +3,11 @@ import platform
 import numpy as np
 import pytest
 
-import taichi as ti
-from taichi._lib import core as _ti_core
 from tests import test_utils
 from tests.test_utils import verify_image
+
+import taichi as ti
+from taichi._lib import core as _ti_core
 
 # FIXME: render(); get_image_buffer_as_numpy() loop does not actually redraw
 RENDER_REPEAT = 5

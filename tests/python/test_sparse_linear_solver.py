@@ -1,8 +1,9 @@
 import numpy as np
 import pytest
 
-import taichi as ti
 from tests import test_utils
+
+import taichi as ti
 
 """
 A_psd used in the tests is a random positive definite matrix with a given number of rows and columns:

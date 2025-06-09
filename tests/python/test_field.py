@@ -5,10 +5,11 @@ To test our new `ti.field` API is functional (#1500)
 import numpy as np
 import pytest
 
+from tests import test_utils
+
 import taichi as ti
 from taichi.lang import impl
 from taichi.lang.misc import get_host_arch_list
-from tests import test_utils
 
 data_types = [ti.i32, ti.f32, ti.i64, ti.f64]
 field_shapes = [(), 8, (6, 12)]

@@ -1,7 +1,8 @@
 from pytest import approx
 
-import taichi as ti
 from tests import test_utils
+
+import taichi as ti
 
 
 # TODO: remove excluding of ti.metal.
