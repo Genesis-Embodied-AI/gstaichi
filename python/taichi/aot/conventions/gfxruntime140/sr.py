@@ -7,7 +7,7 @@ from abc import ABC
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-import taichi as ti
+from taichi.lang.enums import Format, DeviceCapability
 from taichi.aot.conventions.gfxruntime140 import dr
 
 
@@ -85,9 +85,9 @@ class ArgumentTexture(Argument):
 
 
 class ArgumentRwTexture(Argument):
-    def __init__(self, name: Optional[str], fmt: ti.Format, ndim: int):
+    def __init__(self, name: Optional[str], fmt: Format, ndim: int):
         super().__init__(name)
-        self.fmt: ti.Format = fmt
+        self.fmt: Format = fmt
         self.ndim: int = ndim
 
 
@@ -190,12 +190,12 @@ class Metadata:
         self,
         fields: List[Field],
         kernels: List[Kernel],
-        required_caps: List[ti.DeviceCapability],
+        required_caps: List[DeviceCapability],
         root_buffer_size: int,
     ):
         self.fields: Dict[str, Field] = {x.name: x for x in fields}
         self.kernels: Dict[str, Kernel] = {x.name: x for x in kernels}
-        self.required_caps: List[ti.DeviceCapability] = required_caps
+        self.required_caps: List[DeviceCapability] = required_caps
         self.root_buffer_size: int = root_buffer_size
 
 
@@ -288,7 +288,7 @@ def from_dr_kernel(d: dr.KernelAttributes) -> Kernel:
             elif ptype == ParameterType.Texture:
                 args += [ArgumentTexture(arg.name, arg.field_dim)]
             elif ptype == ParameterType.RwTexture:
-                args += [ArgumentRwTexture(arg.name, ti.Format(arg.format), arg.field_dim)]
+                args += [ArgumentRwTexture(arg.name, Format(arg.format), arg.field_dim)]
             else:
                 assert False
         else:
@@ -309,7 +309,7 @@ def from_dr_kernel(d: dr.KernelAttributes) -> Kernel:
                 elif binding_ty == OpaqueArgumentType.Texture:
                     args += [ArgumentTexture(arg.name, arg.field_dim)]
                 elif binding_ty == OpaqueArgumentType.RwTexture:
-                    args += [ArgumentRwTexture(arg.name, ti.Format(arg.format), arg.field_dim)]
+                    args += [ArgumentRwTexture(arg.name, Format(arg.format), arg.field_dim)]
                 else:
                     assert False
             else:
@@ -399,7 +399,7 @@ def to_dr_kernel(s: Kernel) -> Dict[str, Any]:
                 "dtype": arg.dtype.value,
                 "element_shape": arg.element_shape,
                 "field_dim": arg.ndim,
-                "format": ti.Format.unknown,
+                "format": Format.unknown,
                 "index": i,
                 "is_array": True,
                 "offset_in_mem": arg_offset,
@@ -412,7 +412,7 @@ def to_dr_kernel(s: Kernel) -> Dict[str, Any]:
                 "dtype": 1,
                 "element_shape": [],
                 "field_dim": arg.ndim,
-                "format": ti.Format.unknown,
+                "format": Format.unknown,
                 "index": i,
                 "is_array": True,
                 "offset_in_mem": arg_offset,
@@ -438,7 +438,7 @@ def to_dr_kernel(s: Kernel) -> Dict[str, Any]:
                 "dtype": arg.dtype.value,
                 "element_shape": [],
                 "field_dim": 0,
-                "format": ti.Format.unknown,
+                "format": Format.unknown,
                 "index": i,
                 "is_array": False,
                 "offset_in_mem": arg_offset,
@@ -459,7 +459,7 @@ def to_dr_kernel(s: Kernel) -> Dict[str, Any]:
                 "dtype": ret.dtype.value,
                 "element_shape": [],
                 "field_dim": 0,
-                "format": ti.Format.unknown,
+                "format": Format.unknown,
                 "index": i,
                 "is_array": False,
                 "offset_in_mem": 0,

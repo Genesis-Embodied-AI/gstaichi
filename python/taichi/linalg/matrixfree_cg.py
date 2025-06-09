@@ -1,10 +1,11 @@
 from math import sqrt
 
-import taichi as ti
+from taichi.types import primitive_types
+from taichi.lang.kernel_impl import data_oriented
 from taichi.lang.exception import TaichiRuntimeError, TaichiTypeError
 
 
-@ti.data_oriented
+@data_oriented
 class LinearOperator:
     def __init__(self, matvec_kernel):
         self._matvec = matvec_kernel
@@ -33,9 +34,9 @@ def MatrixFreeCG(A, b, x, tol=1e-6, maxiter=5000, quiet=True):
     if b.dtype != x.dtype:
         raise TaichiTypeError(f"Dtype mismatch b.dtype({b.dtype}) != x.dtype({x.dtype}).")
     if str(b.dtype) == "f32":
-        solver_dtype = ti.f32
+        solver_dtype = primitive_types.f32
     elif str(b.dtype) == "f64":
-        solver_dtype = ti.f64
+        solver_dtype = primitive_types.f64
     else:
         raise TaichiTypeError(f"Not supported dtype: {b.dtype}")
     if b.shape != x.shape:
