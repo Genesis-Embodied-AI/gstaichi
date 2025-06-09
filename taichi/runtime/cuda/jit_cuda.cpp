@@ -16,13 +16,12 @@ bool module_has_runtime_initialize(
 }
 
 std::string moduleToDumpName(llvm::Module *M) {
-  std::string dumpName(M->getName().begin(), M->getName().end());
-  std::cout << "module get function list len:" << M->getFunctionList().size()
-            << std::endl;
+  std::string dumpName(M->getName().str());
   auto func0 = M->getFunctionList().begin();
-  std::cout << "function 0 name: " << func0->getName().str() << std::endl;
-  if (!module_has_runtime_initialize(M->getFunctionList())) {
-    dumpName = std::string(func0->getName().begin(), func0->getName().end());
+  if(func0 != M->getFunctionList().end()) {
+    if (!module_has_runtime_initialize(M->getFunctionList())) {
+      dumpName = func0->getName().str();
+    }
   }
   return dumpName;
 }
@@ -31,10 +30,10 @@ JITModule *JITSessionCUDA ::add_module(std::unique_ptr<llvm::Module> M,
                                        int max_reg) {
   const char *dump_ir_env = std::getenv("TAICHI_DUMP_IR");
   if (dump_ir_env != nullptr) {
-    const std::string dumpOutDir = "/tmp/ir/";
+    const auto dumpOutDir = std::filesystem::path("/tmp/ir/");
     std::filesystem::create_directories(dumpOutDir);
     std::string dumpName = moduleToDumpName(M.get());
-    std::string filename = dumpOutDir + "/" + dumpName + "_before_ptx.ll";
+    std::string filename = dumpOutDir / (dumpName + "_before_ptx.ll");
     std::error_code EC;
     llvm::raw_fd_ostream dest_file(filename, EC);
     if (!EC) {

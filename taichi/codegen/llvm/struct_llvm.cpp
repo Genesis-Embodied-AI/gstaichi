@@ -264,12 +264,12 @@ void StructCompilerLLVM::run(SNode &root) {
   }
 
   const char *dump_ir_env = std::getenv("TAICHI_DUMP_IR");
-  const std::string dumpOutDir = "/tmp/ir/";
+  const auto dumpOutDir = std::filesystem::path("/tmp/ir/");
   if (dump_ir_env != nullptr) {
     std::filesystem::create_directories(dumpOutDir);
 
     std::string filename =
-        dumpOutDir + "/" + std::string(module->getName()) + "_llvm.ll";
+        dumpOutDir / (std::string(module->getName()) + "_llvm.ll");
     std::error_code EC;
     llvm::raw_fd_ostream dest_file(filename, EC);
     if (!EC) {

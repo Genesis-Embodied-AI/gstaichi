@@ -2749,11 +2749,11 @@ LLVMCompiledTask TaskCodeGenLLVM::run_compilation() {
     }
   }
   const char *dump_ir_env = std::getenv("TAICHI_DUMP_IR");
-  const std::string dumpOutDir = "/tmp/ir/";
+  const auto dumpOutDir = std::filesystem::path("/tmp/ir/");
   if (dump_ir_env != nullptr) {
     std::filesystem::create_directories(dumpOutDir);
 
-    std::string filename = dumpOutDir + "/" + kernel->name + "_llvm.ll";
+    std::string filename = dumpOutDir / (kernel->name + "_llvm.ll");
     std::error_code EC;
     llvm::raw_fd_ostream dest_file(filename, EC);
     if (!EC) {
@@ -2763,7 +2763,7 @@ LLVMCompiledTask TaskCodeGenLLVM::run_compilation() {
 
   const char *load_ir_env = std::getenv("TAICHI_LOAD_IR");
   if (load_ir_env != nullptr) {
-    std::string filename = dumpOutDir + "/" + kernel->name + "_llvm.ll";
+    std::string filename = dumpOutDir / (kernel->name + "_llvm.ll");
     llvm::SMDiagnostic err;
     auto loaded_module = llvm::parseAssemblyFile(filename, err, *llvm_context);
     if (!loaded_module) {
