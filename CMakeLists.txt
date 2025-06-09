@@ -78,8 +78,8 @@ if(LINUX OR APPLE)
         # comes from; probably a XCode preset?
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffunction-sections -fdata-sections")
     endif()
-    add_definitions(-D__MAC_OS_X_VERSION_MIN_REQUIRED=140000)
-    add_definitions(-DTARGET_OS_OSX)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "14.0")
+    set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
 endif()
 
 if (USE_LLD)
