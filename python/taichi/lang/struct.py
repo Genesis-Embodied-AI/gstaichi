@@ -5,7 +5,7 @@ import numpy as np
 
 from taichi._lib import core as _ti_core
 from taichi.lang import expr, impl, ops
-from taichi.lang.enums import Layout
+from taichi.types.enums import Layout
 from taichi.lang.exception import (
     TaichiRuntimeTypeError,
     TaichiSyntaxError,

@@ -25,7 +25,7 @@ from taichi.lang.ast import (
     transform_tree,
 )
 from taichi.lang.ast.ast_transformer_utils import ReturnStatus
-from taichi.lang.enums import AutodiffMode, Layout
+from taichi.types.enums import AutodiffMode, Layout
 from taichi.lang.exception import (
     TaichiCompilationError,
     TaichiRuntimeError,

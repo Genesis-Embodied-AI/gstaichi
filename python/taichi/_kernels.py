@@ -2,7 +2,7 @@ from taichi._funcs import field_fill_taichi_scope
 from taichi._lib.utils import get_os_name
 from taichi.lang import ops
 from taichi.lang._ndrange import ndrange
-from taichi.lang.enums import Format
+from taichi.types.enums import Format
 from taichi.lang.expr import Expr
 from taichi.lang.field import ScalarField
 from taichi.lang.impl import grouped, static, static_assert

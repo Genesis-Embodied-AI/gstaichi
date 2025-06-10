@@ -2,7 +2,7 @@ from typing import Any
 
 from taichi.lang._ndarray import ScalarNdarray
 from taichi.lang._texture import Texture
-from taichi.lang.enums import Format
+from taichi.types.enums import Format
 from taichi.lang.exception import TaichiCompilationError
 from taichi.lang.matrix import (
     Matrix,

@@ -1,7 +1,7 @@
 from tests import test_utils
 
 import taichi as ti
-from taichi.lang.enums import SNodeGradType
+from taichi.types.enums import SNodeGradType
 
 
 @test_utils.test()

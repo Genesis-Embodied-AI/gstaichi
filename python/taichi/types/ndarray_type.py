@@ -1,10 +1,9 @@
 from taichi.types.compound_types import CompoundType, matrix, vector
+from taichi.types.enums import Layout, to_boundary_enum
 
 
 class NdarrayTypeMetadata:
     def __init__(self, element_type, shape=None, needs_grad=False):
-        from taichi.lang.enums import Layout  # pylint: disable=C0415
-
         self.element_type = element_type
         self.shape = shape
         self.layout = Layout.AOS
@@ -75,8 +74,6 @@ class NdarrayType:
             self.dtype = _make_matrix_dtype_from_element_shape(element_dim, element_shape, dtype)
         else:
             self.dtype = dtype
-
-        from taichi.lang.enums import Layout, to_boundary_enum  # pylint: disable=C0415
 
         self.ndim = ndim
         self.layout = Layout.AOS

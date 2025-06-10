@@ -3,7 +3,7 @@ from taichi.lang._ndarray import *
 from taichi.lang._ndrange import ndrange
 from taichi.lang._texture import Texture
 from taichi.lang.argpack import *
-from taichi.lang.enums import DeviceCapability, Format, Layout
+from taichi.types.enums import DeviceCapability, Format, Layout
 from taichi.lang.exception import *
 from taichi.lang.field import *
 from taichi.lang.impl import *

@@ -5,7 +5,7 @@ import numpy as np
 from taichi import lang
 from taichi._lib import core as _ti_core
 from taichi.lang import impl
-from taichi.lang.enums import Layout
+from taichi.types.enums import Layout
 from taichi.lang.exception import TaichiSyntaxError
 from taichi.lang.field import Field, ScalarField
 from taichi.lang.matrix import Matrix, MatrixField

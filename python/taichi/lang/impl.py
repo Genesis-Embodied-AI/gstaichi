@@ -10,7 +10,7 @@ from taichi.lang._ndarray import ScalarNdarray
 from taichi.lang._ndrange import GroupedNDRange, _Ndrange
 from taichi.lang._texture import RWTextureAccessor
 from taichi.lang.any_array import AnyArray
-from taichi.lang.enums import SNodeGradType
+from taichi.types.enums import SNodeGradType
 from taichi.lang.exception import (
     TaichiCompilationError,
     TaichiRuntimeError,

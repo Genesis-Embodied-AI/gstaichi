@@ -11,7 +11,7 @@ from taichi.lang import expr, impl, runtime_ops
 from taichi.lang import ops as ops_mod
 from taichi.lang._ndarray import Ndarray, NdarrayHostAccess
 from taichi.lang.common_ops import TaichiOperations
-from taichi.lang.enums import Layout
+from taichi.types.enums import Layout
 from taichi.lang.exception import (
     TaichiRuntimeError,
     TaichiRuntimeTypeError,
