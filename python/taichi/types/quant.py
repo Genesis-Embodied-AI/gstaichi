@@ -21,7 +21,7 @@ def int(bits, signed=True, compute=None):  # pylint: disable=W0622
         DataType: The specified type.
     """
     if compute is None:
-        from taichi.lang import impl
+        from taichi.lang import impl  # pylint: disable=C0415
 
         compute = impl.get_runtime().default_ip if signed else impl.get_runtime().default_up
     if isinstance(compute, _ti_python_core.DataType):
@@ -43,7 +43,7 @@ def fixed(bits, signed=True, max_value=1.0, compute=None, scale=None):
         DataType: The specified type.
     """
     if compute is None:
-        from taichi.lang import impl
+        from taichi.lang import impl  # pylint: disable=C0415
 
         compute = impl.get_runtime().default_fp
     if isinstance(compute, _ti_python_core.DataType):
@@ -71,7 +71,7 @@ def float(exp, frac, signed=True, compute=None):  # pylint: disable=W0622
         DataType: The specified type.
     """
     if compute is None:
-        from taichi.lang import impl
+        from taichi.lang import impl  # pylint: disable=C0415
 
         compute = impl.get_runtime().default_fp
     if isinstance(compute, _ti_python_core.DataType):

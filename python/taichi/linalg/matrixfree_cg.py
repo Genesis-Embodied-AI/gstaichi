@@ -3,7 +3,7 @@ from math import sqrt
 from taichi.lang.exception import TaichiRuntimeError, TaichiTypeError
 from taichi.lang.impl import FieldsBuilder, field, grouped
 from taichi.lang.kernel_impl import data_oriented, kernel
-from taichi.lang.misc import ij
+from taichi.lang.misc import ij as _ij, i as _i, ijk as _ijk
 from taichi.types import primitive_types, template
 from taichi.types.primitive_types import f32, f64
 
@@ -13,7 +13,9 @@ class ti:
     FieldsBuilder = FieldsBuilder
     f64 = f64
     f32 = f32
-    ij = ij
+    i = _i
+    ij = _ij
+    ijk = _ijk
     kernel = kernel
     template = template
     grouped = grouped
