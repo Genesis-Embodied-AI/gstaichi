@@ -21,11 +21,16 @@
 // Obj-c runtime doc:
 // https://developer.apple.com/documentation/objectivec/objective-c_runtime?language=objc
 
+#include <objc/NSObjCRuntime.h>
+#include <objc/objc.h>
+#include <objc/runtime.h>
+
+#include <CoreFoundation/CFAttributedString.h>
 #include <ApplicationServices/ApplicationServices.h>
-#include <Carbon/Carbon.h>
 #include <CoreGraphics/CGBase.h>
 #include <CoreGraphics/CGGeometry.h>
-#include <objc/NSObjCRuntime.h>
+#include <AppKit/AppKit.h>
+#include "taichi/ui/gui/cocoa_keycodes.h"
 
 namespace {
 using taichi::mac::call;
@@ -113,13 +118,6 @@ std::string lookup_keysym(ushort keycode) {
   return "Vk" + std::to_string((int)keycode);
 }
 
-// TODO(k-ye): Define all the magic numbers for Obj-C enums here
-constexpr int NSApplicationActivationPolicyRegular = 0;
-constexpr int NSEventTypeKeyDown = 10;
-constexpr int NSEventTypeKeyUp = 11;
-constexpr int NSEventTypeFlagsChanged = 12;
-constexpr int NSEventTypeScrollWheel = 22;
-
 struct ModifierFlagsHandler {
   struct Result {
     std::vector<std::string> released;
@@ -163,9 +161,6 @@ constexpr char kTaichiViewClassName[] = "TaichiGuiView";
 
 }  // namespace
 
-extern id NSApp;
-extern id const NSDefaultRunLoopMode;
-
 typedef struct AppDel {
   Class isa;
   id window;
@@ -181,14 +176,6 @@ class IdComparator {
 };
 
 std::map<id, taichi::GUI *, IdComparator> gui_from_id;
-
-enum {
-  NSBorderlessWindowMask = 0,
-  NSTitledWindowMask = 1 << 0,
-  NSClosableWindowMask = 1 << 1,
-  NSMiniaturizableWindowMask = 1 << 2,
-  NSResizableWindowMask = 1 << 3,
-};
 
 void updateLayer(id self, SEL _) {
   using namespace taichi;
@@ -293,7 +280,7 @@ void GUI::create_window() {
   // call(NSApp, "activateIgnoringOtherApps:", YES);
   img_data_length = width * height * 4;
   img_data.resize(img_data_length);
-  auto appDelObj = clscall("AppDelegate", "alloc");
+  id appDelObj = clscall("AppDelegate", "alloc");
   appDelObj = call(appDelObj, "init");
   call(NSApp, "setDelegate:", appDelObj);
   window = clscall("NSWindow", "alloc");
@@ -324,7 +311,7 @@ void GUI::process_event() {
        "runMode:beforeDate:", NSDefaultRunLoopMode,
        clscall("NSDate", "distantPast"));
   while (1) {
-    auto event = call(
+    id event = call(
         NSApp, "nextEventMatchingMask:untilDate:inMode:dequeue:", NSUIntegerMax,
         clscall("NSDate", "distantPast"), NSDefaultRunLoopMode, YES);
     if (event != nullptr) {
@@ -412,7 +399,7 @@ void GUI::process_event() {
 }
 
 void GUI::set_title(std::string title) {
-  auto str = clscall("NSString", "stringWithUTF8String:", title.c_str());
+  id str = clscall("NSString", "stringWithUTF8String:", title.c_str());
   call(window, "setTitle:", str);
   call(str, "release");
 }

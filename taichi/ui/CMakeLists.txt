@@ -8,6 +8,12 @@ add_library(taichi_ui
     gui/x11.cpp
   )
 
+if (APPLE)
+  set(CLANG_OSX_FLAGS -DTARGET_OS_OSX -x objective-c++)
+  target_compile_options(taichi_ui PRIVATE ${CLANG_OSX_FLAGS})
+endif()
+
+
 if(TI_WITH_GGUI AND NOT ANDROID)
   target_sources(taichi_ui PRIVATE common/window_base.cpp)
 endif()
