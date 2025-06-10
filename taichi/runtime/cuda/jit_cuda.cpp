@@ -1,12 +1,13 @@
 #include "taichi/runtime/cuda/jit_cuda.h"
 #include "taichi/runtime/llvm/llvm_context.h"
+#include "taichi/codegen/ir_dump.h"
 
 namespace taichi::lang {
 
 #if defined(TI_WITH_CUDA)
 
 bool module_has_runtime_initialize(
-    llvm::Module::FunctionListType &function_list) {
+    const llvm::Module::FunctionListType &function_list) {
   for (auto &func : function_list) {
     if (func.getName() == "runtime_initialize") {
       return true;
@@ -16,24 +17,20 @@ bool module_has_runtime_initialize(
 }
 
 std::string moduleToDumpName(llvm::Module *M) {
-  std::string dumpName(M->getName().str());
-  auto func0 = M->getFunctionList().begin();
-  if(func0 != M->getFunctionList().end()) {
-    if (!module_has_runtime_initialize(M->getFunctionList())) {
-      dumpName = func0->getName().str();
-    }
+  const auto& function_list = M->getFunctionList();
+  if(!function_list.empty() && !module_has_runtime_initialize(function_list)) {
+    return function_list.front().getName().str();
   }
-  return dumpName;
+  return M->getName().str();
 }
 
 JITModule *JITSessionCUDA ::add_module(std::unique_ptr<llvm::Module> M,
                                        int max_reg) {
-  const char *dump_ir_env = std::getenv("TAICHI_DUMP_IR");
+  const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
   if (dump_ir_env != nullptr) {
-    const auto dumpOutDir = std::filesystem::path("/tmp/ir/");
-    std::filesystem::create_directories(dumpOutDir);
+    std::filesystem::create_directories(IR_DUMP_DIR);
     std::string dumpName = moduleToDumpName(M.get());
-    std::string filename = dumpOutDir / (dumpName + "_before_ptx.ll");
+    std::string filename = IR_DUMP_DIR / (dumpName + "_before_ptx.ll");
     std::error_code EC;
     llvm::raw_fd_ostream dest_file(filename, EC);
     if (!EC) {

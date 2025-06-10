@@ -15,8 +15,9 @@
 #include "taichi/codegen/llvm/struct_llvm.h"
 #include "taichi/util/file_sequence_writer.h"
 #include "taichi/codegen/codegen_utils.h"
-#include "llvm/Support/SourceMgr.h"  // Add this line for SMDiagnostic
-#include "llvm/AsmParser/Parser.h"   // Add this line for parseIRFile
+#include "llvm/Support/SourceMgr.h"
+#include "llvm/AsmParser/Parser.h"
+#include "taichi/codegen/ir_dump.h"
 
 namespace taichi::lang {
 
@@ -2748,12 +2749,11 @@ LLVMCompiledTask TaskCodeGenLLVM::run_compilation() {
       tlctx->mark_function_as_amdgpu_kernel(func);
     }
   }
-  const char *dump_ir_env = std::getenv("TAICHI_DUMP_IR");
-  const auto dumpOutDir = std::filesystem::path("/tmp/ir/");
+  const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
   if (dump_ir_env != nullptr) {
-    std::filesystem::create_directories(dumpOutDir);
+    std::filesystem::create_directories(IR_DUMP_DIR);
 
-    std::string filename = dumpOutDir / (kernel->name + "_llvm.ll");
+    std::string filename = IR_DUMP_DIR / (kernel->name + "_llvm.ll");
     std::error_code EC;
     llvm::raw_fd_ostream dest_file(filename, EC);
     if (!EC) {
@@ -2761,9 +2761,9 @@ LLVMCompiledTask TaskCodeGenLLVM::run_compilation() {
     }
   }
 
-  const char *load_ir_env = std::getenv("TAICHI_LOAD_IR");
+  const char *load_ir_env = std::getenv(LOAD_IR_ENV.data());
   if (load_ir_env != nullptr) {
-    std::string filename = dumpOutDir / (kernel->name + "_llvm.ll");
+    std::string filename = IR_DUMP_DIR / (kernel->name + "_llvm.ll");
     llvm::SMDiagnostic err;
     auto loaded_module = llvm::parseAssemblyFile(filename, err, *llvm_context);
     if (!loaded_module) {

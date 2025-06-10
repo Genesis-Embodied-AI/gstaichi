@@ -15,6 +15,7 @@
 #include "taichi/codegen/spirv/spirv_ir_builder.h"
 #include "taichi/ir/transforms.h"
 #include "taichi/math/arithmetic.h"
+#include "taichi/codegen/ir_dump.h"
 
 #include <spirv-tools/libspirv.hpp>
 #include <spirv-tools/optimizer.hpp>
@@ -2717,19 +2718,16 @@ void KernelCodegen::run(TaichiKernelAttributes &kernel_attribs,
   auto *root = params_.ir_root->as<Block>();
 
   {
-    const char *dump_ir_env = std::getenv("TAICHI_DUMP_IR");
-    const auto dumpOutDir = std::filesystem::path("/tmp/ir/");
+    const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
     if (dump_ir_env != nullptr) {
-      std::filesystem::create_directories(dumpOutDir);
+      std::filesystem::create_directories(IR_DUMP_DIR);
 
       std::string filename =
-          dumpOutDir / (params_.ti_kernel_name + "_before_final_spirv.ll");
-      std::ofstream out_file(filename);
-      if (out_file.is_open()) {
+          IR_DUMP_DIR / (params_.ti_kernel_name + "_before_final_spirv.ll");
+      if(std::ofstream out_file(filename); out_file) {
         std::string outString;
-        irpass::print((IRNode *)(params_.ir_root), &outString);
+        irpass::print(const_cast<IRNode *>(params_.ir_root), &outString);
         out_file << outString;
-        out_file.close();
       }
     }
   }
@@ -2774,18 +2772,15 @@ void KernelCodegen::run(TaichiKernelAttributes &kernel_attribs,
              task_res.spirv_code.size(), optimized_spv.size());
 
     {
-      const char *dump_ir_env = std::getenv("TAICHI_DUMP_IR");
-      const auto dumpOutDir = std::filesystem::path("/tmp/ir/");
+      const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
       if (dump_ir_env != nullptr) {
-        std::filesystem::create_directories(dumpOutDir);
+        std::filesystem::create_directories(IR_DUMP_DIR);
         std::string spirv_asm;
         spirv_tools_->Disassemble(optimized_spv, &spirv_asm);
         auto kernel_name = tp.ti_kernel_name;
-        std::string filename = dumpOutDir / (kernel_name + ".spirv");
-        std::ofstream out_file(filename);
-        if (out_file.is_open()) {
+        std::string filename = IR_DUMP_DIR / (kernel_name + ".spirv");
+        if(std::ofstream out_file(filename); out_file) {
           out_file.write(spirv_asm.c_str(), spirv_asm.size());
-          out_file.close();
         }
       }
     }
