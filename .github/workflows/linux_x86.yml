@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 jobs:
   build:
+    name: Linux x86 Build
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
