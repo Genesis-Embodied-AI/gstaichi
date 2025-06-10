@@ -9,12 +9,14 @@ from taichi.lang.util import has_pytorch
 if has_pytorch():
     import torch
 
+
+pytestmark = pytest.mark.flaky(retries=5)
+
 archs_support_ndarray_ad = [ti.cpu, ti.cuda]
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
 @test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64)
-@pytest.mark.flaky(reruns=5)
 def test_simple_demo():
     @test_utils.torch_op(output_shapes=[(1,)])
     @ti.kernel
@@ -32,7 +34,6 @@ def test_simple_demo():
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
 @test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64)
-@pytest.mark.flaky(reruns=5)
 def test_ad_reduce():
     @test_utils.torch_op(output_shapes=[(1,)])
     @ti.kernel
@@ -87,7 +88,6 @@ def test_ad_reduce():
 )
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
 @test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64)
-@pytest.mark.flaky(reruns=5)
 def test_poly(tifunc):
     s = (4,)
 
@@ -104,7 +104,6 @@ def test_poly(tifunc):
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
 @test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64)
-@pytest.mark.flaky(reruns=5)
 def test_ad_select():
     s = (4,)
 
@@ -121,7 +120,6 @@ def test_ad_select():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64)
-@pytest.mark.flaky(reruns=5)
 def test_ad_sum():
     N = 10
 
@@ -153,7 +151,6 @@ def test_ad_sum():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64)
-@pytest.mark.flaky(reruns=5)
 def test_ad_sum_local_atomic():
     N = 10
     a = ti.ndarray(ti.f32, shape=N, needs_grad=True)
@@ -185,7 +182,6 @@ def test_ad_sum_local_atomic():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_ad_power():
     N = 10
     a = ti.ndarray(ti.f32, shape=N, needs_grad=True)
@@ -217,7 +213,6 @@ def test_ad_power():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_ad_fibonacci():
     N = 15
     a = ti.ndarray(ti.f32, shape=N, needs_grad=True)
@@ -256,7 +251,6 @@ def test_ad_fibonacci():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f32, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_ad_fibonacci_index():
     N = 5
     M = 10
@@ -289,7 +283,6 @@ def test_ad_fibonacci_index():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_integer_stack():
     N = 5
     a = ti.ndarray(ti.f32, shape=N, needs_grad=True)
@@ -329,7 +322,6 @@ def test_integer_stack():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_double_for_loops():
     N = 5
     a = ti.ndarray(ti.f32, shape=N, needs_grad=True)
@@ -368,7 +360,6 @@ def test_double_for_loops():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_double_for_loops_more_nests():
     N = 6
     a = ti.ndarray(ti.f32, shape=N, needs_grad=True)
@@ -415,7 +406,6 @@ def test_double_for_loops_more_nests():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_complex_body():
     N = 5
     a = ti.ndarray(ti.f32, shape=N, needs_grad=True)
@@ -455,7 +445,6 @@ def test_complex_body():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_mixed_inner_loops():
     x = ti.ndarray(dtype=ti.f32, shape=(1,), needs_grad=True)
     arr = ti.ndarray(dtype=ti.f32, shape=(5))
@@ -478,7 +467,6 @@ def test_mixed_inner_loops():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_mixed_inner_loops_tape():
     x = ti.ndarray(dtype=ti.f32, shape=(1,), needs_grad=True)
     arr = ti.ndarray(dtype=ti.f32, shape=(5))
@@ -499,7 +487,6 @@ def test_mixed_inner_loops_tape():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack, ad_stack_size=32)
-@pytest.mark.flaky(reruns=5)
 def test_inner_loops_local_variable_fixed_stack_size_kernel_grad():
     x = ti.ndarray(dtype=float, shape=(1), needs_grad=True)
     arr = ti.ndarray(dtype=float, shape=(2), needs_grad=True)
@@ -526,7 +513,6 @@ def test_inner_loops_local_variable_fixed_stack_size_kernel_grad():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack, ad_stack_size=0)
-@pytest.mark.flaky(reruns=5)
 def test_inner_loops_local_variable_adaptive_stack_size_tape():
     x = ti.ndarray(dtype=float, shape=(1), needs_grad=True)
     arr = ti.ndarray(dtype=float, shape=(2), needs_grad=True)
@@ -552,7 +538,6 @@ def test_inner_loops_local_variable_adaptive_stack_size_tape():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack, ad_stack_size=0)
-@pytest.mark.flaky(reruns=5)
 def test_more_inner_loops_local_variable_adaptive_stack_size_tape():
     x = ti.ndarray(dtype=float, shape=(1), needs_grad=True)
     arr = ti.ndarray(dtype=float, shape=(2), needs_grad=True)
@@ -580,7 +565,6 @@ def test_more_inner_loops_local_variable_adaptive_stack_size_tape():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack, ad_stack_size=32)
-@pytest.mark.flaky(reruns=5)
 def test_more_inner_loops_local_variable_fixed_stack_size_tape():
     x = ti.ndarray(dtype=float, shape=(1), needs_grad=True)
     arr = ti.ndarray(dtype=float, shape=(2), needs_grad=True)
@@ -608,7 +592,6 @@ def test_more_inner_loops_local_variable_fixed_stack_size_tape():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack, ad_stack_size=32)
-@pytest.mark.flaky(reruns=5)
 def test_stacked_inner_loops_local_variable_fixed_stack_size_kernel_grad():
     x = ti.ndarray(dtype=float, shape=(), needs_grad=True)
     arr = ti.ndarray(dtype=float, shape=(2), needs_grad=True)
@@ -641,7 +624,6 @@ def test_stacked_inner_loops_local_variable_fixed_stack_size_kernel_grad():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack, ad_stack_size=32)
-@pytest.mark.flaky(reruns=5)
 def test_stacked_mixed_ib_and_non_ib_inner_loops_local_variable_fixed_stack_size_kernel_grad():
     x = ti.ndarray(dtype=float, shape=(), needs_grad=True)
     arr = ti.ndarray(dtype=float, shape=(2), needs_grad=True)
@@ -675,7 +657,6 @@ def test_stacked_mixed_ib_and_non_ib_inner_loops_local_variable_fixed_stack_size
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack, ad_stack_size=0)
-@pytest.mark.flaky(reruns=5)
 def test_stacked_inner_loops_local_variable_adaptive_stack_size_kernel_grad():
     x = ti.ndarray(dtype=float, shape=(), needs_grad=True)
     arr = ti.ndarray(dtype=float, shape=(2), needs_grad=True)
@@ -742,7 +723,6 @@ def test_stacked_mixed_ib_and_non_ib_inner_loops_local_variable_adaptive_stack_s
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack, ad_stack_size=0)
-@pytest.mark.flaky(reruns=5)
 def test_large_for_loops_adaptive_stack_size():
     x = ti.ndarray(dtype=float, shape=(), needs_grad=True)
     arr = ti.ndarray(dtype=float, shape=(2), needs_grad=True)
@@ -763,7 +743,6 @@ def test_large_for_loops_adaptive_stack_size():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack, ad_stack_size=1)
-@pytest.mark.flaky(reruns=5)
 def test_large_for_loops_fixed_stack_size():
     x = ti.ndarray(dtype=float, shape=(), needs_grad=True)
     arr = ti.ndarray(dtype=float, shape=(2), needs_grad=True)
@@ -784,7 +763,6 @@ def test_large_for_loops_fixed_stack_size():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_multiple_ib():
     x = ti.ndarray(float, (), needs_grad=True)
     y = ti.ndarray(float, (), needs_grad=True)
@@ -806,7 +784,6 @@ def test_multiple_ib():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_multiple_ib_multiple_outermost():
     x = ti.ndarray(float, (), needs_grad=True)
     y = ti.ndarray(float, (), needs_grad=True)
@@ -833,7 +810,6 @@ def test_multiple_ib_multiple_outermost():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_multiple_ib_multiple_outermost_mixed():
     x = ti.ndarray(float, (), needs_grad=True)
     y = ti.ndarray(float, (), needs_grad=True)
@@ -862,7 +838,6 @@ def test_multiple_ib_multiple_outermost_mixed():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_multiple_ib_mixed():
     x = ti.ndarray(float, (), needs_grad=True)
     y = ti.ndarray(float, (), needs_grad=True)
@@ -888,7 +863,6 @@ def test_multiple_ib_mixed():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_multiple_ib_deeper():
     x = ti.ndarray(float, (), needs_grad=True)
     y = ti.ndarray(float, (), needs_grad=True)
@@ -915,7 +889,6 @@ def test_multiple_ib_deeper():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_multiple_ib_deeper_non_scalar():
     N = 10
     x = ti.ndarray(float, shape=N, needs_grad=True)
@@ -945,7 +918,6 @@ def test_multiple_ib_deeper_non_scalar():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_multiple_ib_inner_mixed():
     x = ti.ndarray(float, (), needs_grad=True)
     y = ti.ndarray(float, (), needs_grad=True)
@@ -976,7 +948,6 @@ def test_multiple_ib_inner_mixed():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_ib_global_load():
     N = 10
     a = ti.ndarray(ti.f32, shape=N, needs_grad=True)
@@ -1007,7 +978,6 @@ def test_ib_global_load():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_ad_if_simple():
     x = ti.ndarray(ti.f32, shape=(), needs_grad=True)
     y = ti.ndarray(ti.f32, shape=(), needs_grad=True)
@@ -1027,7 +997,6 @@ def test_ad_if_simple():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_ad_if():
     x = ti.ndarray(ti.f32, shape=2, needs_grad=True)
     y = ti.ndarray(ti.f32, shape=2, needs_grad=True)
@@ -1054,7 +1023,6 @@ def test_ad_if():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_ad_if_nested():
     n = 20
     x = ti.ndarray(ti.f32, shape=n, needs_grad=True)
@@ -1091,7 +1059,6 @@ def test_ad_if_nested():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_ad_if_mutable():
     x = ti.ndarray(ti.f32, shape=2, needs_grad=True)
     y = ti.ndarray(ti.f32, shape=2, needs_grad=True)
@@ -1119,7 +1086,6 @@ def test_ad_if_mutable():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_ad_if_parallel():
     x = ti.ndarray(ti.f32, shape=2, needs_grad=True)
     y = ti.ndarray(ti.f32, shape=2, needs_grad=True)
@@ -1146,7 +1112,6 @@ def test_ad_if_parallel():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_ad_if_parallel_f64():
     x = ti.ndarray(ti.f64, shape=2, needs_grad=True)
     y = ti.ndarray(ti.f64, shape=2, needs_grad=True)
@@ -1173,7 +1138,6 @@ def test_ad_if_parallel_f64():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
-@pytest.mark.flaky(reruns=5)
 def test_ad_if_parallel_complex():
     x = ti.ndarray(ti.f32, shape=2, needs_grad=True)
     y = ti.ndarray(ti.f32, shape=2, needs_grad=True)
@@ -1199,15 +1163,15 @@ def test_ad_if_parallel_complex():
     assert x.grad[1] == -0.25
 
 
+@pytest.mark.flaky(retries=5)
 @test_utils.test(arch=archs_support_ndarray_ad)
-@pytest.mark.flaky(reruns=5)
 def test_ad_ndarray_i32():
     with pytest.raises(TaichiRuntimeError, match=r"i32 is not supported for ndarray"):
         ti.ndarray(ti.i32, shape=3, needs_grad=True)
 
 
 @test_utils.test(arch=archs_support_ndarray_ad)
-@pytest.mark.flaky(reruns=5)
+@pytest.mark.flaky(retries=5)
 def test_ad_sum_vector():
     N = 10
 
@@ -1235,7 +1199,6 @@ def test_ad_sum_vector():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad)
-@pytest.mark.flaky(reruns=5)
 def test_ad_multiple_tapes():
     N = 10
 
@@ -1273,7 +1236,6 @@ def test_ad_multiple_tapes():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad)
-@pytest.mark.flaky(reruns=5)
 def test_ad_set_loss_grad():
     x = ti.ndarray(dtype=ti.f32, shape=(), needs_grad=True)
     loss = ti.ndarray(dtype=ti.f32, shape=(), needs_grad=True)
@@ -1306,7 +1268,6 @@ def test_ad_set_loss_grad():
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
 @test_utils.test(arch=archs_support_ndarray_ad)
-@pytest.mark.flaky(reruns=5)
 def test_ad_mixed_with_torch():
     @test_utils.torch_op(output_shapes=[(1,)])
     @ti.kernel
@@ -1326,7 +1287,6 @@ def test_ad_mixed_with_torch():
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
 @test_utils.test(arch=archs_support_ndarray_ad)
-@pytest.mark.flaky(reruns=5)
 def test_ad_tape_throw():
     N = 4
 
@@ -1368,7 +1328,6 @@ def test_ad_tape_throw():
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
 @test_utils.test(arch=archs_support_ndarray_ad)
-@pytest.mark.flaky(reruns=5)
 def test_tape_torch_tensor_grad_none():
     N = 3
 
@@ -1393,7 +1352,6 @@ def test_tape_torch_tensor_grad_none():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad)
-@pytest.mark.flaky(reruns=5)
 def test_grad_tensor_in_kernel():
     N = 10
 
@@ -1415,7 +1373,6 @@ def test_grad_tensor_in_kernel():
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
 @test_utils.test(arch=archs_support_ndarray_ad)
-@pytest.mark.flaky(reruns=5)
 def test_tensor_shape():
     N = 3
 
@@ -1440,7 +1397,6 @@ def test_tensor_shape():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad)
-@pytest.mark.flaky(reruns=5)
 def test_ndarray_needs_grad_false():
     N = 3
 
@@ -1465,7 +1421,6 @@ def test_ndarray_needs_grad_false():
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
 @test_utils.test(arch=archs_support_ndarray_ad)
-@pytest.mark.flaky(reruns=5)
 def test_torch_needs_grad_false():
     N = 3
 
@@ -1489,7 +1444,6 @@ def test_torch_needs_grad_false():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad)
-@pytest.mark.flaky(reruns=5)
 def test_ad_vector_arg():
     N = 10
 
@@ -1518,7 +1472,6 @@ def test_ad_vector_arg():
 
 
 @test_utils.test(arch=archs_support_ndarray_ad)
-@pytest.mark.flaky(reruns=5)
 def test_hash_encoder_simple():
     @ti.kernel
     def hash_encoder_kernel(
