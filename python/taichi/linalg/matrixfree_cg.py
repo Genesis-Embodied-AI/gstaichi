@@ -3,22 +3,8 @@ from math import sqrt
 from taichi.lang.exception import TaichiRuntimeError, TaichiTypeError
 from taichi.lang.impl import FieldsBuilder, field, grouped
 from taichi.lang.kernel_impl import data_oriented, kernel
-from taichi.lang.misc import ij as _ij, i as _i, ijk as _ijk
+from taichi.lang import misc
 from taichi.types import primitive_types, template
-from taichi.types.primitive_types import f32, f64
-
-
-class ti:
-    field = field
-    FieldsBuilder = FieldsBuilder
-    f64 = f64
-    f32 = f32
-    i = _i
-    ij = _ij
-    ijk = _ijk
-    kernel = kernel
-    template = template
-    grouped = grouped
 
 
 @data_oriented
@@ -59,55 +45,55 @@ def MatrixFreeCG(A, b, x, tol=1e-6, maxiter=5000, quiet=True):
         raise TaichiRuntimeError(f"Dimension mismatch b.shape{b.shape} != x.shape{x.shape}.")
 
     size = b.shape
-    vector_fields_builder = ti.FieldsBuilder()
-    p = ti.field(dtype=solver_dtype)
-    r = ti.field(dtype=solver_dtype)
-    Ap = ti.field(dtype=solver_dtype)
-    Ax = ti.field(dtype=solver_dtype)
+    vector_fields_builder = FieldsBuilder()
+    p = field(dtype=solver_dtype)
+    r = field(dtype=solver_dtype)
+    Ap = field(dtype=solver_dtype)
+    Ax = field(dtype=solver_dtype)
     if len(size) == 1:
-        axes = ti.i
+        axes = misc.i
     elif len(size) == 2:
-        axes = ti.ij
+        axes = misc.ij
     elif len(size) == 3:
-        axes = ti.ijk
+        axes = misc.ijk
     else:
         raise TaichiRuntimeError(f"MatrixFreeCG only support 1D, 2D, 3D inputs; your inputs is {len(size)}-D.")
     vector_fields_builder.dense(axes, size).place(p, r, Ap, Ax)
     vector_fields_snode_tree = vector_fields_builder.finalize()
 
-    scalar_builder = ti.FieldsBuilder()
-    alpha = ti.field(dtype=solver_dtype)
-    beta = ti.field(dtype=solver_dtype)
+    scalar_builder = FieldsBuilder()
+    alpha = field(dtype=solver_dtype)
+    beta = field(dtype=solver_dtype)
     scalar_builder.place(alpha, beta)
     scalar_snode_tree = scalar_builder.finalize()
 
-    @ti.kernel
+    @kernel
     def init():
-        for I in ti.grouped(x):
+        for I in grouped(x):
             r[I] = b[I] - Ax[I]
             p[I] = 0.0
             Ap[I] = 0.0
 
-    @ti.kernel
-    def reduce(p: ti.template(), q: ti.template()) -> solver_dtype:
+    @kernel
+    def reduce(p: template(), q: template()) -> solver_dtype:
         result = solver_dtype(0.0)
-        for I in ti.grouped(p):
+        for I in grouped(p):
             result += p[I] * q[I]
         return result
 
-    @ti.kernel
+    @kernel
     def update_x():
-        for I in ti.grouped(x):
+        for I in grouped(x):
             x[I] += alpha[None] * p[I]
 
-    @ti.kernel
+    @kernel
     def update_r():
-        for I in ti.grouped(r):
+        for I in grouped(r):
             r[I] -= alpha[None] * Ap[I]
 
-    @ti.kernel
+    @kernel
     def update_p():
-        for I in ti.grouped(p):
+        for I in grouped(p):
             p[I] = r[I] + beta[None] * p[I]
 
     def solve():
@@ -171,50 +157,50 @@ def MatrixFreeBICGSTAB(A, b, x, tol=1e-6, maxiter=5000, quiet=True):
     if b.dtype != x.dtype:
         raise TaichiTypeError(f"Dtype mismatch b.dtype({b.dtype}) != x.dtype({x.dtype}).")
     if str(b.dtype) == "f32":
-        solver_dtype = ti.f32
+        solver_dtype = primitive_types.f32
     elif str(b.dtype) == "f64":
-        solver_dtype = ti.f64
+        solver_dtype = primitive_types.f64
     else:
         raise TaichiTypeError(f"Not supported dtype: {b.dtype}")
     if b.shape != x.shape:
         raise TaichiRuntimeError(f"Dimension mismatch b.shape{b.shape} != x.shape{x.shape}.")
 
     size = b.shape
-    vector_fields_builder = ti.FieldsBuilder()
-    p = ti.field(dtype=solver_dtype)
-    p_hat = ti.field(dtype=solver_dtype)
-    r = ti.field(dtype=solver_dtype)
-    r_tld = ti.field(dtype=solver_dtype)
-    s = ti.field(dtype=solver_dtype)
-    s_hat = ti.field(dtype=solver_dtype)
-    t = ti.field(dtype=solver_dtype)
-    Ap = ti.field(dtype=solver_dtype)
-    Ax = ti.field(dtype=solver_dtype)
-    Ashat = ti.field(dtype=solver_dtype)
+    vector_fields_builder = FieldsBuilder()
+    p = field(dtype=solver_dtype)
+    p_hat = field(dtype=solver_dtype)
+    r = field(dtype=solver_dtype)
+    r_tld = field(dtype=solver_dtype)
+    s = field(dtype=solver_dtype)
+    s_hat = field(dtype=solver_dtype)
+    t = field(dtype=solver_dtype)
+    Ap = field(dtype=solver_dtype)
+    Ax = field(dtype=solver_dtype)
+    Ashat = field(dtype=solver_dtype)
     if len(size) == 1:
-        axes = ti.i
+        axes = misc.i
     elif len(size) == 2:
-        axes = ti.ij
+        axes = misc.ij
     elif len(size) == 3:
-        axes = ti.ijk
+        axes = misc.ijk
     else:
         raise TaichiRuntimeError(f"MatrixFreeBICGSTAB only support 1D, 2D, 3D inputs; your inputs is {len(size)}-D.")
     vector_fields_builder.dense(axes, size).place(p, p_hat, r, r_tld, s, s_hat, t, Ap, Ax, Ashat)
     vector_fields_snode_tree = vector_fields_builder.finalize()
 
-    scalar_builder = ti.FieldsBuilder()
-    alpha = ti.field(dtype=solver_dtype)
-    beta = ti.field(dtype=solver_dtype)
-    omega = ti.field(dtype=solver_dtype)
-    rho = ti.field(dtype=solver_dtype)
-    rho_1 = ti.field(dtype=solver_dtype)
+    scalar_builder = FieldsBuilder()
+    alpha = field(dtype=solver_dtype)
+    beta = field(dtype=solver_dtype)
+    omega = field(dtype=solver_dtype)
+    rho = field(dtype=solver_dtype)
+    rho_1 = field(dtype=solver_dtype)
     scalar_builder.place(alpha, beta, omega, rho, rho_1)
     scalar_snode_tree = scalar_builder.finalize()
     succeeded = True
 
-    @ti.kernel
+    @kernel
     def init():
-        for I in ti.grouped(x):
+        for I in grouped(x):
             r[I] = b[I] - Ax[I]
             r_tld[I] = b[I]
             p[I] = 0.0
@@ -226,46 +212,46 @@ def MatrixFreeBICGSTAB(A, b, x, tol=1e-6, maxiter=5000, quiet=True):
         beta[None] = 1.0
         omega[None] = 1.0
 
-    @ti.kernel
-    def reduce(p: ti.template(), q: ti.template()) -> solver_dtype:
+    @kernel
+    def reduce(p: template(), q: template()) -> solver_dtype:
         result = solver_dtype(0.0)
-        for I in ti.grouped(p):
+        for I in grouped(p):
             result += p[I] * q[I]
         return result
 
-    @ti.kernel
-    def copy(orig: ti.template(), dest: ti.template()):
-        for I in ti.grouped(orig):
+    @kernel
+    def copy(orig: template(), dest: template()):
+        for I in grouped(orig):
             dest[I] = orig[I]
 
-    @ti.kernel
+    @kernel
     def update_p():
-        for I in ti.grouped(p):
+        for I in grouped(p):
             p[I] = r[I] + beta[None] * (p[I] - omega[None] * Ap[I])
 
-    @ti.kernel
+    @kernel
     def update_phat():
-        for I in ti.grouped(p_hat):
+        for I in grouped(p_hat):
             p_hat[I] = p[I]
 
-    @ti.kernel
+    @kernel
     def update_s():
-        for I in ti.grouped(s):
+        for I in grouped(s):
             s[I] = r[I] - alpha[None] * Ap[I]
 
-    @ti.kernel
+    @kernel
     def update_shat():
-        for I in ti.grouped(s_hat):
+        for I in grouped(s_hat):
             s_hat[I] = s[I]
 
-    @ti.kernel
+    @kernel
     def update_x():
-        for I in ti.grouped(x):
+        for I in grouped(x):
             x[I] += alpha[None] * p_hat[I] + omega[None] * s_hat[I]
 
-    @ti.kernel
+    @kernel
     def update_r():
-        for I in ti.grouped(r):
+        for I in grouped(r):
             r[I] = s[I] - omega[None] * t[I]
 
     def solve():
