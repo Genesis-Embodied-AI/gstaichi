@@ -53,7 +53,7 @@ JITSessionCUDA::JITSessionCUDA(TaichiLLVMContext *tlctx,
     : JITSession(tlctx, config), data_layout(data_layout) {
 }
 
-JITModule *JITSessionCUDA ::add_module(std::unique_ptr<llvm::Module> M,
+JITModule *JITSessionCUDA::add_module(std::unique_ptr<llvm::Module> M,
                                        int max_reg) {
   auto ptx = compile_module_to_ptx(M);
   if (this->config_.print_kernel_asm) {
