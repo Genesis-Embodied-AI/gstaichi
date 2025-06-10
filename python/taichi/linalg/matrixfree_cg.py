@@ -1,8 +1,23 @@
 from math import sqrt
 
-from taichi.types import primitive_types
+from taichi.types import primitive_types, template
 from taichi.lang.kernel_impl import data_oriented
 from taichi.lang.exception import TaichiRuntimeError, TaichiTypeError
+
+from taichi.lang.impl import field, FieldsBuilder, grouped
+from taichi.types.primitive_types import f64, f32
+from taichi.lang.misc import ij
+from taichi.lang.kernel_impl import kernel
+
+class ti:
+    field = field
+    FieldsBuilder = FieldsBuilder
+    f64 = f64
+    f32 = f32
+    ij = ij
+    kernel = kernel
+    template = template
+    grouped = grouped
 
 
 @data_oriented
