@@ -3,9 +3,8 @@ import math
 import pytest
 from pytest import approx
 
-from tests import test_utils
-
 import taichi as ti
+from tests import test_utils
 
 
 @pytest.mark.parametrize(

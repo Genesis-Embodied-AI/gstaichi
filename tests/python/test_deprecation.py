@@ -3,10 +3,9 @@ import tempfile
 
 import pytest
 
-from tests import test_utils
-
 import taichi as ti
 from taichi._lib import core as _ti_core
+from tests import test_utils
 
 
 @test_utils.test()

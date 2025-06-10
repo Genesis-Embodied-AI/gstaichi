@@ -5,7 +5,6 @@ import numpy as np
 
 from taichi._lib import core as _ti_core
 from taichi.lang import expr, impl, ops
-from taichi.types.enums import Layout
 from taichi.lang.exception import (
     TaichiRuntimeTypeError,
     TaichiSyntaxError,
@@ -17,6 +16,7 @@ from taichi.lang.matrix import Matrix, MatrixType
 from taichi.lang.util import cook_dtype, in_python_scope, python_scope, taichi_scope
 from taichi.types import primitive_types
 from taichi.types.compound_types import CompoundType
+from taichi.types.enums import Layout
 from taichi.types.utils import is_signed
 
 

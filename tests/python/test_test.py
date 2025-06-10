@@ -8,9 +8,8 @@ import os
 
 import pytest
 
-from tests import test_utils
-
 import taichi as ti
+from tests import test_utils
 
 ### `ti.test`
 

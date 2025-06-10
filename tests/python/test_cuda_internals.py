@@ -1,7 +1,6 @@
-from tests import test_utils
-
 import taichi as ti
 from taichi.lang import impl
+from tests import test_utils
 
 # TODO: these are not really tests...
 

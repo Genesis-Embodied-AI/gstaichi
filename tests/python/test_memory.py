@@ -4,10 +4,9 @@ import os
 import psutil
 import pytest
 
-from tests import test_utils
-
 import taichi as ti
 from taichi.lang.misc import get_host_arch_list
+from tests import test_utils
 
 
 @pytest.mark.run_in_serial

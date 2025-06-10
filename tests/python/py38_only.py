@@ -1,6 +1,5 @@
-from tests import test_utils
-
 import taichi as ti
+from tests import test_utils
 
 # The walrus operator is not supported until python 3.8,
 # and pytest cannot handle files containing walrus operators when python version is below 3.8.

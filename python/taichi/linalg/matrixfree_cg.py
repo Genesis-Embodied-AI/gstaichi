@@ -1,9 +1,9 @@
 from math import sqrt
 
+from taichi.lang import misc
 from taichi.lang.exception import TaichiRuntimeError, TaichiTypeError
 from taichi.lang.impl import FieldsBuilder, field, grouped
 from taichi.lang.kernel_impl import data_oriented, kernel
-from taichi.lang import misc
 from taichi.types import primitive_types, template
 
 

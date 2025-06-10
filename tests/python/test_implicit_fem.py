@@ -1,9 +1,8 @@
 import numpy as np
 import pytest
 
-from tests import test_utils
-
 import taichi as ti
+from tests import test_utils
 
 
 @test_utils.test(arch=[ti.cpu, ti.cuda])

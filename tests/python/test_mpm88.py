@@ -2,9 +2,8 @@ import os
 
 import pytest
 
-from tests import test_utils
-
 import taichi as ti
+from tests import test_utils
 
 
 @pytest.mark.skipif(os.environ.get("TI_LITE_TEST") or "0", reason="Lite test")

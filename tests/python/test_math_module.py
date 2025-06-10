@@ -2,10 +2,9 @@ import errno
 
 import pytest
 
-from tests import test_utils
-
 import taichi as ti
 from taichi.math import inf, isinf, isnan, nan, pi, vdir
+from tests import test_utils
 
 
 def _test_inf_nan(dt):

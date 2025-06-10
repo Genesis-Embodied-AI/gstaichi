@@ -1,9 +1,8 @@
 import pytest
 
-from tests import test_utils
-
 import taichi as ti
 from taichi.lang import impl
+from tests import test_utils
 
 
 @test_utils.test(arch=[ti.cuda, ti.cpu])

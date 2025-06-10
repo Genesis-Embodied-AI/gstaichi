@@ -2,9 +2,8 @@ import random
 
 import pytest
 
-from tests import test_utils
-
 import taichi as ti
+from tests import test_utils
 
 
 @ti.data_oriented

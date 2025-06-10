@@ -2,10 +2,9 @@ import numpy as np
 import pytest
 from pytest import approx
 
-from tests import test_utils
-
 import taichi as ti
 from taichi.lang.simt import subgroup
+from tests import test_utils
 
 
 @test_utils.test(arch=ti.cuda)

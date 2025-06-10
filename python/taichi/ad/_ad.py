@@ -13,12 +13,12 @@ import taichi.types.primitive_types as types
 from taichi import _snode
 from taichi.lang import impl
 from taichi.lang._ndarray import Ndarray
-from taichi.types.enums import AutodiffMode, SNodeGradType
 from taichi.lang.expr import Expr
 from taichi.lang.field import Field, ScalarField
 from taichi.lang.kernel_impl import kernel
 from taichi.lang.snode import SNode
 from taichi.types import ndarray, template
+from taichi.types.enums import AutodiffMode, SNodeGradType
 
 
 class GradChecker:

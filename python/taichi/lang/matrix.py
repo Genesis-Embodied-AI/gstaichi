@@ -11,7 +11,6 @@ from taichi.lang import expr, impl, runtime_ops
 from taichi.lang import ops as ops_mod
 from taichi.lang._ndarray import Ndarray, NdarrayHostAccess
 from taichi.lang.common_ops import TaichiOperations
-from taichi.types.enums import Layout
 from taichi.lang.exception import (
     TaichiRuntimeError,
     TaichiRuntimeTypeError,
@@ -32,6 +31,7 @@ from taichi.lang.util import (
 )
 from taichi.types import primitive_types
 from taichi.types.compound_types import CompoundType
+from taichi.types.enums import Layout
 from taichi.types.utils import is_signed
 
 _type_factory = _ti_python_core.get_type_factory_instance()

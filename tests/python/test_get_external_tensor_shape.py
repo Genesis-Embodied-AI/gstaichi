@@ -1,10 +1,9 @@
 import numpy as np
 import pytest
 
-from tests import test_utils
-
 import taichi as ti
 from taichi.lang.util import has_paddle, has_pytorch
+from tests import test_utils
 
 if has_pytorch():
     import torch

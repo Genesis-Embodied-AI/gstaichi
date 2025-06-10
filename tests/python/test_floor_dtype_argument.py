@@ -1,6 +1,5 @@
-from tests import test_utils
-
 import taichi as ti
+from tests import test_utils
 
 
 def _test_floor_ceil_round(dt):

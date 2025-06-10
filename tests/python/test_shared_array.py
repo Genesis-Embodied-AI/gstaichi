@@ -1,10 +1,9 @@
 import numpy as np
 import pytest
 
-from tests import test_utils
-
 import taichi as ti
 from taichi.math import vec4
+from tests import test_utils
 
 
 @test_utils.test(arch=[ti.cuda])

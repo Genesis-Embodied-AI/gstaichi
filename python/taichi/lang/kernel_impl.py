@@ -25,7 +25,6 @@ from taichi.lang.ast import (
     transform_tree,
 )
 from taichi.lang.ast.ast_transformer_utils import ReturnStatus
-from taichi.types.enums import AutodiffMode, Layout
 from taichi.lang.exception import (
     TaichiCompilationError,
     TaichiRuntimeError,
@@ -48,6 +47,7 @@ from taichi.types import (
     texture_type,
 )
 from taichi.types.compound_types import CompoundType
+from taichi.types.enums import AutodiffMode, Layout
 from taichi.types.utils import is_signed
 
 

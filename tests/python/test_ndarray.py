@@ -3,14 +3,13 @@ import copy
 import numpy as np
 import pytest
 
-from tests import test_utils
-
 import taichi as ti
 from taichi.lang import impl
 from taichi.lang.exception import TaichiIndexError, TaichiRuntimeError, TaichiTypeError
 from taichi.lang.misc import get_host_arch_list
 from taichi.lang.util import has_pytorch
 from taichi.math import ivec3, vec3
+from tests import test_utils
 
 if has_pytorch():
     import torch

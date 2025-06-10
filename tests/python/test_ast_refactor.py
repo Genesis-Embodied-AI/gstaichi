@@ -3,11 +3,10 @@ import sys
 import numpy as np
 import pytest
 
-from tests import test_utils
-
 import taichi as ti
 from taichi.lang import impl
 from taichi.lang.util import has_pytorch
+from tests import test_utils
 
 if sys.version_info >= (3, 8):
     # Import the test case only if the Python version is >= 3.8

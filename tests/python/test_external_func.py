@@ -5,10 +5,9 @@ import tempfile
 
 import pytest
 
-from tests import test_utils
-
 import taichi as ti
 from taichi.lang.util import has_clangpp
+from tests import test_utils
 
 
 @pytest.mark.skipif(not has_clangpp(), reason="Clang not installed.")

@@ -2,9 +2,8 @@ import sys
 
 import pytest
 
-from tests import test_utils
-
 import taichi as ti
+from tests import test_utils
 
 # TODO: validation layer support on macos vulkan backend is not working.
 vk_on_mac = (ti.vulkan, "Darwin")

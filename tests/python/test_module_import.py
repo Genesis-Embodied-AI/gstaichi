@@ -1,6 +1,5 @@
-from tests import test_utils
-
 import taichi as myowntaichi
+from tests import test_utils
 
 
 @test_utils.test()

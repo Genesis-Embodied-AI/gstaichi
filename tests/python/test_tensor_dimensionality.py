@@ -1,8 +1,7 @@
 import pytest
 
-from tests import test_utils
-
 import taichi as ti
+from tests import test_utils
 
 
 @pytest.mark.parametrize("d", range(2, ti._lib.core.get_max_num_indices() + 1))

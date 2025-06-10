@@ -2,9 +2,8 @@ import sys
 
 import pytest
 
-from tests import test_utils
-
 import taichi as ti
+from tests import test_utils
 
 
 def _get_matrix_swizzle_apis():

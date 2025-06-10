@@ -1,8 +1,7 @@
-from tests import test_utils
-
 import taichi as ti
 from taichi.lang.kernel_arguments import KernelArgument
 from taichi.lang.kernel_impl import TaichiCallableTemplateMapper
+from tests import test_utils
 
 
 @test_utils.test()

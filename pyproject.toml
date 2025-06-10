@@ -27,4 +27,5 @@ exclude = [
 select = ["I"]  # Enable import ordering checks
 
 [tool.ruff.lint.isort]
-known-local-folder = ["taichi"]
+known-local-folder = ["taichi", "tests"]
+known-third-party = ["pytest"]

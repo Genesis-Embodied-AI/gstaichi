@@ -3,9 +3,8 @@ import platform
 
 import pytest
 
-from tests import test_utils
-
 import taichi as ti
+from tests import test_utils
 
 if os.name == "nt":
     pytest.skip(

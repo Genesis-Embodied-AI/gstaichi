@@ -1,9 +1,8 @@
 import pytest
 
-from tests import test_utils
-
 import taichi as ti
 from taichi.types.enums import AutodiffMode
+from tests import test_utils
 
 
 @test_utils.test(debug=True)

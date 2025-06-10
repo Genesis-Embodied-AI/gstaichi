@@ -1,8 +1,7 @@
 import pytest
 
-from tests import test_utils
-
 import taichi as ti
+from tests import test_utils
 
 
 @pytest.mark.parametrize("dtype", [ti.u8, ti.u16, ti.u32])

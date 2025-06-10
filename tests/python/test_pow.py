@@ -1,9 +1,8 @@
 import pytest
 
-from tests import test_utils
-
 import taichi as ti
 from taichi.lang.exception import TaichiRuntimeError
+from tests import test_utils
 
 
 def _test_pow_f(dt):
