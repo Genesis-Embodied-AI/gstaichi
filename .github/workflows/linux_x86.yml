@@ -1,4 +1,4 @@
-name: Linux x86 on-demand
+name: Linux x86
 on:
   pull_request:
     branches:

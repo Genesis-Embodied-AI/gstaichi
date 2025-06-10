@@ -1,0 +1,38 @@
+name: Pyright linter
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  build:
+    name: Pyright Linter
+    runs-on: ubuntu-22.04
+    steps:
+      # looks like we need to first build the dll...
+      # easiest way to do that is to build the wheel
+      # at some point, we should probably have a separate wheel building thing
+      # that will upload to somewhere
+      # and other runners can use that pre-built wheel?
+      - name: Python check
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: 1_prerequisites
+        run: |
+            bash .github/workflows/scripts_new/pyright_linter/1_prerequisites.sh
+      - name: 2_build
+        run: |
+            bash .github/workflows/scripts_new/pyright_linter/2_build.sh
+      - name: 3_install
+        run: |
+            bash .github/workflows/scripts_new/pyright_linter/3_install.sh
+      - name: 4_build_stubs
+        run: |
+            bash .github/workflows/scripts_new/pyright_linter/4_build_stubs.sh
+      - name: 5_pyright
+        run: |
+            bash .github/workflows/scripts_new/pyright_linter/5_pyright.sh
