@@ -22,6 +22,8 @@ def write_vtk(scalar_field, filename):
         zcoords = np.array([0, 1])
     elif dimensions == 3:
         zcoords = np.arange(0, field_shape[2])
+    else:
+        raise ValueError("dimensions should be 2 or 3")
     gridToVTK(
         filename,
         x=np.arange(0, field_shape[0]),
