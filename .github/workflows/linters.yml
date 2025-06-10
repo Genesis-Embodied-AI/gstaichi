@@ -6,6 +6,7 @@ on:
       - main
 jobs:
   build:
+    name: Linters
     runs-on: ubuntu-22.04
     steps:
       - name: Python check
