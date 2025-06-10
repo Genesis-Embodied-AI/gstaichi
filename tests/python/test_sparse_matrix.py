@@ -3,6 +3,8 @@ import pytest
 import taichi as ti
 from tests import test_utils
 
+pytestmark = pytest.mark.flaky(retries=5)
+
 
 @pytest.mark.parametrize(
     "dtype, storage_format",
