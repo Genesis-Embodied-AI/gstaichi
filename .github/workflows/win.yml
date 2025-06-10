@@ -1,0 +1,31 @@
+name: Windows 2025 on-demand
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: windows-2025
+    steps:
+      - name: Python check
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+      - name: Windows 2025 pre-requisites
+        run: |
+          & .\.github\workflows\scripts_new\win\1_prerequisites.ps1
+      - name: Windows 2025 build
+        run: |
+          & .\.github\workflows\scripts_new\win\2_build.ps1
+      - name: Windows 2025 install
+        run: |
+          & .\.github\workflows\scripts_new\win\3_install.ps1
+      - name: Windows 2025 test
+        run: |
+          & .\.github\workflows\scripts_new\win\4_test.ps1
