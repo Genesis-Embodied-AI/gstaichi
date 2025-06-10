@@ -13,7 +13,6 @@ markdown_link_check = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(markdown_link_check)
 
 
-
 @pytest.fixture
 def temp_dir():
     with tempfile.TemporaryDirectory() as d:
