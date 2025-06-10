@@ -26,21 +26,21 @@ void *JITModuleCUDA::lookup_function(const std::string &name) {
 }
 
 void JITModuleCUDA::call(const std::string &name,
-          const std::vector<void *> &arg_pointers,
-          const std::vector<int> &arg_sizes) {
+                         const std::vector<void *> &arg_pointers,
+                         const std::vector<int> &arg_sizes) {
   launch(name, 1, 1, 0, arg_pointers, arg_sizes);
 }
 
 void JITModuleCUDA::launch(const std::string &name,
-            std::size_t grid_dim,
-            std::size_t block_dim,
-            std::size_t dynamic_shared_mem_bytes,
-            const std::vector<void *> &arg_pointers,
-            const std::vector<int> &arg_sizes) {
+                           std::size_t grid_dim,
+                           std::size_t block_dim,
+                           std::size_t dynamic_shared_mem_bytes,
+                           const std::vector<void *> &arg_pointers,
+                           const std::vector<int> &arg_sizes) {
   auto func = lookup_function(name);
   CUDAContext::get_instance().launch(func, name, arg_pointers, arg_sizes,
-                                      grid_dim, block_dim,
-                                      dynamic_shared_mem_bytes);
+                                     grid_dim, block_dim,
+                                     dynamic_shared_mem_bytes);
 }
 
 bool JITModuleCUDA::direct_dispatch() const {
@@ -48,13 +48,13 @@ bool JITModuleCUDA::direct_dispatch() const {
 }
 
 JITSessionCUDA::JITSessionCUDA(TaichiLLVMContext *tlctx,
-                const CompileConfig &config,
-                llvm::DataLayout data_layout)
+                               const CompileConfig &config,
+                               llvm::DataLayout data_layout)
     : JITSession(tlctx, config), data_layout(data_layout) {
 }
 
 JITModule *JITSessionCUDA::add_module(std::unique_ptr<llvm::Module> M,
-                                       int max_reg) {
+                                      int max_reg) {
   auto ptx = compile_module_to_ptx(M);
   if (this->config_.print_kernel_asm) {
     static FileSequenceWriter writer("taichi_kernel_nvptx_{:04d}.ptx",
