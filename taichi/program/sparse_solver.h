@@ -97,12 +97,12 @@ class CuSparseSolver : public SparseSolver {
   int *d_Q_{nullptr};
   int *h_csr_row_ptr_B_{nullptr}; /* <int> n+1 */
   int *h_csr_col_ind_B_{nullptr}; /* <int> nnzA */
-  float *h_csr_val_B_{nullptr};  /* <float> nnzA */
+  float *h_csr_val_B_{nullptr};   /* <float> nnzA */
   int *h_map_B_from_A_{nullptr};  /* <int> nnzA */
   int *d_csr_row_ptr_B_{nullptr}; /* <int> n+1 */
   int *d_csr_col_ind_B_{nullptr}; /* <int> nnzA */
-  float *d_csr_val_B_{nullptr};  /* <float> nnzA */
-  // NOLINTEND
+  float *d_csr_val_B_{nullptr};   /* <float> nnzA */
+                                  // NOLINTEND
  public:
   CuSparseSolver();
   explicit CuSparseSolver(SolverType solver_type) : solver_type_(solver_type) {
