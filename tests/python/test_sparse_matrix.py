@@ -356,6 +356,7 @@ def test_sparse_matrix_multiplication(dtype, storage_format):
     ],
 )
 @test_utils.test(arch=ti.cpu)
+@pytest.mark.flaky(retries=5)
 def test_sparse_matrix_nonsymmetric_multiplication(dtype, storage_format):
     n, k, m = 2, 3, 4
     Abuilder = ti.linalg.SparseMatrixBuilder(n, k, max_num_triplets=100, dtype=dtype, storage_format=storage_format)

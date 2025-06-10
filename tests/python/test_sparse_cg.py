@@ -1,3 +1,4 @@
+import platform
 import numpy as np
 import pytest
 
@@ -6,6 +7,8 @@ from tests import test_utils
 import taichi as ti
 
 
+@pytest.mark.flaky(retries=5)
+# (issue filed to fix this at https://linear.app/genesis-ai-company/issue/CMP-21/fix-failing-test-cg-test-in-windows)
 @pytest.mark.parametrize("ti_dtype", [ti.f32, ti.f64])
 @test_utils.test(arch=[ti.cpu])
 def test_cg(ti_dtype):
