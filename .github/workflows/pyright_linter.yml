@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 jobs:
   build:
+    name: Pyright Linter
     runs-on: ubuntu-22.04
     steps:
       # looks like we need to first build the dll...
