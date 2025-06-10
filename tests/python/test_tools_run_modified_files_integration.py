@@ -22,13 +22,15 @@ class Runner:
         return subprocess.check_output(cwd=self.cwd, args=args).decode('utf-8')
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def git_repo(tmp_path) -> Generator[str, None, None]:
     parent_repo = tmp_path / "parent"
     os.makedirs(parent_repo)
     child_repo = tmp_path / "child"
     origin_runner = Runner(cwd=parent_repo)
     origin_runner(["git", "init", "-b", "main"])
+    origin_runner(["git", "config", "user.email", "test@example.com"])
+    origin_runner(["git", "config", "user.name", "Test User"])
     origin_runner(["touch", "foo"])
     origin_runner(["git", "add", "foo"])
     origin_runner(["git", "commit", "-m", "foo"])
@@ -43,7 +45,7 @@ def git_repo(tmp_path) -> Generator[str, None, None]:
     yield child_repo
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def runner(git_repo) -> Runner:
     return Runner(cwd=git_repo)
 
