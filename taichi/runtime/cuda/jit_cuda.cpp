@@ -5,28 +5,6 @@ namespace taichi::lang {
 
 #if defined(TI_WITH_CUDA)
 
-bool module_has_runtime_initialize(
-    llvm::Module::FunctionListType &function_list) {
-  for (auto &func : function_list) {
-    if (func.getName() == "runtime_initialize") {
-      return true;
-    }
-  }
-  return false;
-}
-
-std::string moduleToDumpName(llvm::Module *M) {
-  std::string dumpName(M->getName().begin(), M->getName().end());
-  std::cout << "module get function list len:" << M->getFunctionList().size()
-            << std::endl;
-  auto func0 = M->getFunctionList().begin();
-  std::cout << "function 0 name: " << func0->getName().str() << std::endl;
-  if (!module_has_runtime_initialize(M->getFunctionList())) {
-    dumpName = std::string(func0->getName().begin(), func0->getName().end());
-  }
-  return dumpName;
-}
-
 JITModuleCUDA::JITModuleCUDA(void *module) : module_(module) {
 }
 
