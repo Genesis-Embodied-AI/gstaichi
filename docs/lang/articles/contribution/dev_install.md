@@ -442,6 +442,14 @@ These can serve as a reference if you get stuck. Whilst the CI configuration won
 - [3_install.sh](../../../../.github/workflows/scripts_new/macosx/3_install.sh)
 - [4_test.sh](../../../../.github/workflows/scripts_new/macosx/4_test.sh)
 
+### Windows 2025 Server Core
+
+- [Github runner configuration](../../../../.github/workflows/win.yml)
+- [1_prerequisites.sh](../../../../.github/workflows/scripts_new/win/1_prerequisites.ps1)
+- [2_build.sh](../../../../.github/workflows/scripts_new/win/2_build.ps1)
+- [3_install.sh](../../../../.github/workflows/scripts_new/win/3_install.ps1)
+- [4_test.sh](../../../../.github/workflows/scripts_new/win/4_test.ps1)
+
 ## Design goals, behaviors and usage of `build.py`
 
 ### Created to be dead simple
