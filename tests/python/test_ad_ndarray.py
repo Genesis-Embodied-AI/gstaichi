@@ -1,3 +1,4 @@
+import platform
 import taichi as ti
 
 import pytest
