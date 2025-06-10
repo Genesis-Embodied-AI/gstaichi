@@ -19,7 +19,7 @@ class Runner:
         self.cwd = cwd
 
     def __call__(self, args: Iterable[str]) -> str:
-        return subprocess.check_output(cwd=self.cwd, args=args).decode('utf-8')
+        return subprocess.check_output(cwd=self.cwd, args=args).decode("utf-8")
 
 
 @pytest.fixture(scope="function")
@@ -35,7 +35,7 @@ def git_repo(tmp_path) -> Generator[str, None, None]:
     origin_runner(["git", "add", "foo"])
     origin_runner(["git", "commit", "-m", "foo"])
 
-    subprocess.check_output(["git", "clone", parent_repo, "child"], cwd=tmp_path).decode('utf-8')
+    subprocess.check_output(["git", "clone", parent_repo, "child"], cwd=tmp_path).decode("utf-8")
 
     child_runner = Runner(cwd=child_repo)
     child_runner(["git", "config", "user.email", "test@example.com"])
@@ -52,8 +52,8 @@ def runner(git_repo) -> Runner:
 
 def test_get_changed_files_added_file(git_repo, runner):
     # Create a file and add it
-    runner(['ls', '-lh'])
-    runner(['pwd'])
+    runner(["ls", "-lh"])
+    runner(["pwd"])
     f = git_repo / "foo.py"
     f.write_text("print('hi')")
     runner(["git", "add", "foo.py"])
@@ -101,7 +101,7 @@ def test_get_changed_files_none(git_repo, runner):
         (["foo.py", "foo.pyc"], "foo.*", ["foo.py", "foo.pyc"]),
         (["foo.md"], "*.md", ["foo.md"]),
         ([], "*.py", []),
-    ]
+    ],
 )
 def test_get_changed_files_parametrize(git_repo, filenames, pattern, expected, runner):
     # Create files and add/commit them
@@ -127,7 +127,7 @@ def test_get_changed_files_parametrize(git_repo, filenames, pattern, expected, r
         (["baz.py"], "*.py", ["baz.py"]),
         (["baz.txt"], "*.py", []),
         (["baz.py", "baz.txt"], "*.txt", ["baz.txt"]),
-    ]
+    ],
 )
 def test_get_changed_files_untracked_parametrize(git_repo, untracked, pattern, expected, runner):
     # Create and do not add to git
