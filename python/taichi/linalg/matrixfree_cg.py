@@ -1,13 +1,12 @@
 from math import sqrt
 
-from taichi.types import primitive_types, template
-from taichi.lang.kernel_impl import data_oriented
 from taichi.lang.exception import TaichiRuntimeError, TaichiTypeError
-
-from taichi.lang.impl import field, FieldsBuilder, grouped
-from taichi.types.primitive_types import f64, f32
+from taichi.lang.impl import FieldsBuilder, field, grouped
+from taichi.lang.kernel_impl import data_oriented, kernel
 from taichi.lang.misc import ij
-from taichi.lang.kernel_impl import kernel
+from taichi.types import primitive_types, template
+from taichi.types.primitive_types import f32, f64
+
 
 class ti:
     field = field

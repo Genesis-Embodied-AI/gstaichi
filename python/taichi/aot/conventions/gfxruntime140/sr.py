@@ -7,8 +7,8 @@ from abc import ABC
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from taichi.lang.enums import Format, DeviceCapability
 from taichi.aot.conventions.gfxruntime140 import dr
+from taichi.lang.enums import DeviceCapability, Format
 
 
 class DataType(Enum):
