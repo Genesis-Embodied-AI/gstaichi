@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-# -- stdlib --
 import linecache
 import sys
 import uuid
@@ -14,15 +11,10 @@ from typing import Dict, List, Optional
 import marko
 import matplotlib.pyplot as plt
 import pytest
-
-# -- third party --
 from pytest import ExceptionInfo
 
 import taichi as ti
 
-# -- own --
-
-# -- code --
 warnings.filterwarnings("error", category=DeprecationWarning)
 
 SANE_LANGUAGE_TAGS = {
