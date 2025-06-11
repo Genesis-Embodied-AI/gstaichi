@@ -17,8 +17,8 @@ bool module_has_runtime_initialize(
 }
 
 std::string moduleToDumpName(llvm::Module *M) {
-  const auto& function_list = M->getFunctionList();
-  if(!function_list.empty() && !module_has_runtime_initialize(function_list)) {
+  const auto &function_list = M->getFunctionList();
+  if (!function_list.empty() && !module_has_runtime_initialize(function_list)) {
     return function_list.front().getName().str();
   }
   return M->getName().str();
@@ -59,8 +59,7 @@ JITModule *JITSessionCUDA ::add_module(std::unique_ptr<llvm::Module> M,
       out_file << ptx << std::endl;
       out_file.close();
     }
-    std::cout << "PTX dumped to: " << filename
-              << std::endl;
+    std::cout << "PTX dumped to: " << filename << std::endl;
   }
 
   const char *load_ptx_env = std::getenv("TAICHI_LOAD_PTX");

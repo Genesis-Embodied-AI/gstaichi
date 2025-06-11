@@ -2724,7 +2724,7 @@ void KernelCodegen::run(TaichiKernelAttributes &kernel_attribs,
 
       std::string filename =
           IR_DUMP_DIR / (params_.ti_kernel_name + "_before_final_spirv.ll");
-      if(std::ofstream out_file(filename); out_file) {
+      if (std::ofstream out_file(filename); out_file) {
         std::string outString;
         irpass::print(const_cast<IRNode *>(params_.ir_root), &outString);
         out_file << outString;
@@ -2779,7 +2779,7 @@ void KernelCodegen::run(TaichiKernelAttributes &kernel_attribs,
         spirv_tools_->Disassemble(optimized_spv, &spirv_asm);
         auto kernel_name = tp.ti_kernel_name;
         std::string filename = IR_DUMP_DIR / (kernel_name + ".spirv");
-        if(std::ofstream out_file(filename); out_file) {
+        if (std::ofstream out_file(filename); out_file) {
           out_file.write(spirv_asm.c_str(), spirv_asm.size());
         }
       }

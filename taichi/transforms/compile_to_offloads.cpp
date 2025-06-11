@@ -45,7 +45,7 @@ void compile_to_offloads(IRNode *ir,
     std::filesystem::create_directories(IR_DUMP_DIR);
 
     std::string filename = IR_DUMP_DIR / (kernel->name + "_from_ast.ll");
-    if(std::ofstream out_file(filename); out_file) {
+    if (std::ofstream out_file(filename); out_file) {
       std::string outString;
       irpass::print(ir, &outString);
       out_file << outString;
@@ -60,7 +60,7 @@ void compile_to_offloads(IRNode *ir,
 
   if (dump_ir_env != nullptr) {
     std::string filename = IR_DUMP_DIR / (kernel->name + "_taichi1.ll");
-    if(std::ofstream out_file(filename); out_file) {
+    if (std::ofstream out_file(filename); out_file) {
       std::string outString;
       irpass::print(ir, &outString);
       out_file << outString;
