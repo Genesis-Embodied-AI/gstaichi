@@ -39,47 +39,18 @@ class JITModuleCUDA : public JITModule {
   void *module_;
 
  public:
-  explicit JITModuleCUDA(void *module) : module_(module) {
-  }
-
-  void *lookup_function(const std::string &name) override {
-    // TODO: figure out why using the guard leads to wrong tests results
-    // auto context_guard = CUDAContext::get_instance().get_guard();
-    CUDAContext::get_instance().make_current();
-    void *func = nullptr;
-    auto t = Time::get_time();
-    auto err = CUDADriver::get_instance().module_get_function.call_with_warning(
-        &func, module_, name.c_str());
-    if (err) {
-      TI_ERROR("Cannot look up function {}", name);
-    }
-    t = Time::get_time() - t;
-    TI_TRACE("CUDA module_get_function {} costs {} ms", name, t * 1000);
-    TI_ASSERT(func != nullptr);
-    return func;
-  }
-
+  explicit JITModuleCUDA(void *module);
+  void *lookup_function(const std::string &name) override;
   void call(const std::string &name,
             const std::vector<void *> &arg_pointers,
-            const std::vector<int> &arg_sizes) override {
-    launch(name, 1, 1, 0, arg_pointers, arg_sizes);
-  }
-
+            const std::vector<int> &arg_sizes) override;
   void launch(const std::string &name,
               std::size_t grid_dim,
               std::size_t block_dim,
               std::size_t dynamic_shared_mem_bytes,
               const std::vector<void *> &arg_pointers,
-              const std::vector<int> &arg_sizes) override {
-    auto func = lookup_function(name);
-    CUDAContext::get_instance().launch(func, name, arg_pointers, arg_sizes,
-                                       grid_dim, block_dim,
-                                       dynamic_shared_mem_bytes);
-  }
-
-  bool direct_dispatch() const override {
-    return false;
-  }
+              const std::vector<int> &arg_sizes) override;
+  bool direct_dispatch() const override;
 };
 
 class JITSessionCUDA : public JITSession {
@@ -88,15 +59,9 @@ class JITSessionCUDA : public JITSession {
 
   JITSessionCUDA(TaichiLLVMContext *tlctx,
                  const CompileConfig &config,
-                 llvm::DataLayout data_layout)
-      : JITSession(tlctx, config), data_layout(data_layout) {
-  }
-
+                 llvm::DataLayout data_layout);
   JITModule *add_module(std::unique_ptr<llvm::Module> M, int max_reg) override;
-
-  llvm::DataLayout get_data_layout() override {
-    return data_layout;
-  }
+  llvm::DataLayout get_data_layout() override;
 
  private:
   std::string compile_module_to_ptx(std::unique_ptr<llvm::Module> &module);
