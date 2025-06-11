@@ -2,13 +2,13 @@
 
 # compares with origin/main, so make sure you have origin/main available
 
-import subprocess
-import re
-import sys
 import argparse
-from typing import List
-from pathlib import Path
 import fnmatch
+import re
+import subprocess
+import sys
+from pathlib import Path
+from typing import List
 
 
 def get_changed_files(include_pattern: str, cwd: str = ".") -> List[str]:
