@@ -16,7 +16,7 @@ bool module_has_runtime_initialize(
   return false;
 }
 
-std::string moduleToDumpName(llvm::Module * const M) {
+std::string moduleToDumpName(llvm::Module *const M) {
   const auto &function_list = M->getFunctionList();
   if (!function_list.empty() && !module_has_runtime_initialize(function_list)) {
     return function_list.front().getName().str();
