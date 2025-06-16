@@ -11,7 +11,6 @@ from taichi.types.primitive_types import *
 
 
 from taichi import ad, algorithms, experimental, graph, linalg, math, sparse, tools, types
-from taichi.ui import GUI, hex_to_rgb, rgb_to_hex, ui
 
 # Issue#2223: Do not reorder, or we're busted with partially initialized module
 from taichi import aot  # isort:skip
