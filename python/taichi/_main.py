@@ -1,5 +1,4 @@
 import argparse
-import glob
 import math
 import os
 import runpy
@@ -11,17 +10,13 @@ from collections import defaultdict
 from functools import wraps
 from pathlib import Path
 
-import numpy as np
 import rich
 from colorama import Fore
 from rich.console import Console
-from rich.syntax import Syntax
 from taichi._lib import core as _ti_core
 from taichi._lib import utils
 from taichi.lang import impl
-from taichi.tools import diagnose, video
-
-import taichi as ti
+from taichi.tools import diagnose
 
 
 def timer(func):
