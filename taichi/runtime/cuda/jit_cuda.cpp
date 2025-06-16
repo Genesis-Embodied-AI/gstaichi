@@ -85,8 +85,8 @@ JITModule *JITSessionCUDA::add_module(std::unique_ptr<llvm::Module> M,
     if (!EC) {
       M->print(dest_file, nullptr);
     } else {
-      std::cout << "problem dumping file " << filename.string() << ": " << EC.message()
-                << std::endl;
+      std::cout << "problem dumping file " << filename.string() << ": "
+                << EC.message() << std::endl;
       TI_ERROR("Failed to dump LLVM IR to file: {}", filename.c_str());
     }
   }
