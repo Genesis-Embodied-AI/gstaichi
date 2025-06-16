@@ -2765,7 +2765,8 @@ LLVMCompiledTask TaskCodeGenLLVM::run_compilation() {
   if (load_ir_env != nullptr) {
     std::filesystem::path filename = IR_DUMP_DIR / (kernel->name + "_llvm.ll");
     llvm::SMDiagnostic err;
-    auto loaded_module = llvm::parseAssemblyFile(filename.string(), err, *llvm_context);
+    auto loaded_module =
+        llvm::parseAssemblyFile(filename.string(), err, *llvm_context);
     if (!loaded_module) {
       err.print("TAICHI_LOAD_IR_FILE error", llvm::errs());
       TI_ERROR("Failed to load LLVM IR from {}", filename.string());
