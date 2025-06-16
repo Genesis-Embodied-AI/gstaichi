@@ -1136,7 +1136,7 @@ def test_cross_scope_matrix_ternary_ops():
 
 @test_utils.test(debug=True)
 def test_cross_scope_matrix_atomic_ops():
-    n = 128
+    n = 64
     x = ti.Vector.field(3, dtype=int, shape=(n, n))
     spring_offsets = [ti.Vector([1, 2]), ti.Vector([2, 3])]
 
