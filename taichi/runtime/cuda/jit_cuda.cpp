@@ -78,9 +78,9 @@ JITModule *JITSessionCUDA::add_module(std::unique_ptr<llvm::Module> M,
   if (dump_ir_env != nullptr) {
     std::filesystem::create_directories(IR_DUMP_DIR);
     std::string dumpName = moduleToDumpName(M.get());
-    std::string filename = IR_DUMP_DIR / (dumpName + "_before_ptx.ll");
+    std::filesystem::path filename = IR_DUMP_DIR / (dumpName + "_before_ptx.ll");
     std::error_code EC;
-    llvm::raw_fd_ostream dest_file(filename, EC);
+    llvm::raw_fd_ostream dest_file(filename.string(), EC);
     if (!EC) {
       M->print(dest_file, nullptr);
     } else {
