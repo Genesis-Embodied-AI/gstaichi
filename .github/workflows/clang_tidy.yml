@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 jobs:
   build:
+    name: clang-tidy
     runs-on: ubuntu-22.04
     steps:
       - name: Python check
