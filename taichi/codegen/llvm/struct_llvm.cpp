@@ -268,10 +268,10 @@ void StructCompilerLLVM::run(SNode &root) {
   if (dump_ir_env != nullptr) {
     std::filesystem::create_directories(IR_DUMP_DIR);
 
-    std::string filename =
+    std::filesystem::path filename =
         IR_DUMP_DIR / (std::string(module->getName()) + "_llvm.ll");
     std::error_code EC;
-    llvm::raw_fd_ostream dest_file(filename, EC);
+    llvm::raw_fd_ostream dest_file(filename.c_str(), EC);
     if (!EC) {
       module->print(dest_file, nullptr);
     }
