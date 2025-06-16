@@ -271,7 +271,7 @@ void StructCompilerLLVM::run(SNode &root) {
     std::filesystem::path filename =
         IR_DUMP_DIR / (std::string(module->getName()) + "_llvm.ll");
     std::error_code EC;
-    llvm::raw_fd_ostream dest_file(filename.c_str(), EC);
+    llvm::raw_fd_ostream dest_file(filename.string(), EC);
     if (!EC) {
       module->print(dest_file, nullptr);
     }
