@@ -687,10 +687,10 @@ class ASTTransformer(Builder):
             return True, kernel_arguments.decl_scalar_arg(annotation, name, arg_depth)
 
         def transform_as_kernel():
-            # Treat return type
             if node.returns is not None:
-                for return_type in ctx.func.return_type:
-                    kernel_arguments.decl_ret(return_type)
+                if not isinstance(node.returns, ast.Constant):
+                    for return_type in ctx.func.return_type:
+                        kernel_arguments.decl_ret(return_type)
             impl.get_runtime().compiling_callable.finalize_rets()
 
             invoke_later_dict = dict()

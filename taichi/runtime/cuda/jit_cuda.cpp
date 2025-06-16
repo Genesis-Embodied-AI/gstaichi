@@ -5,8 +5,56 @@ namespace taichi::lang {
 
 #if defined(TI_WITH_CUDA)
 
-JITModule *JITSessionCUDA ::add_module(std::unique_ptr<llvm::Module> M,
-                                       int max_reg) {
+JITModuleCUDA::JITModuleCUDA(void *module) : module_(module) {
+}
+
+void *JITModuleCUDA::lookup_function(const std::string &name) {
+  // TODO: figure out why using the guard leads to wrong tests results
+  // auto context_guard = CUDAContext::get_instance().get_guard();
+  CUDAContext::get_instance().make_current();
+  void *func = nullptr;
+  auto t = Time::get_time();
+  auto err = CUDADriver::get_instance().module_get_function.call_with_warning(
+      &func, module_, name.c_str());
+  if (err) {
+    TI_ERROR("Cannot look up function {}", name);
+  }
+  t = Time::get_time() - t;
+  TI_TRACE("CUDA module_get_function {} costs {} ms", name, t * 1000);
+  TI_ASSERT(func != nullptr);
+  return func;
+}
+
+void JITModuleCUDA::call(const std::string &name,
+                         const std::vector<void *> &arg_pointers,
+                         const std::vector<int> &arg_sizes) {
+  launch(name, 1, 1, 0, arg_pointers, arg_sizes);
+}
+
+void JITModuleCUDA::launch(const std::string &name,
+                           std::size_t grid_dim,
+                           std::size_t block_dim,
+                           std::size_t dynamic_shared_mem_bytes,
+                           const std::vector<void *> &arg_pointers,
+                           const std::vector<int> &arg_sizes) {
+  auto func = lookup_function(name);
+  CUDAContext::get_instance().launch(func, name, arg_pointers, arg_sizes,
+                                     grid_dim, block_dim,
+                                     dynamic_shared_mem_bytes);
+}
+
+bool JITModuleCUDA::direct_dispatch() const {
+  return false;
+}
+
+JITSessionCUDA::JITSessionCUDA(TaichiLLVMContext *tlctx,
+                               const CompileConfig &config,
+                               llvm::DataLayout data_layout)
+    : JITSession(tlctx, config), data_layout(data_layout) {
+}
+
+JITModule *JITSessionCUDA::add_module(std::unique_ptr<llvm::Module> M,
+                                      int max_reg) {
   auto ptx = compile_module_to_ptx(M);
   if (this->config_.print_kernel_asm) {
     static FileSequenceWriter writer("taichi_kernel_nvptx_{:04d}.ptx",
@@ -43,6 +91,10 @@ JITModule *JITSessionCUDA ::add_module(std::unique_ptr<llvm::Module> M,
   // cudaModules.push_back(cudaModule);
   modules.push_back(std::make_unique<JITModuleCUDA>(cuda_module));
   return modules.back().get();
+}
+
+llvm::DataLayout JITSessionCUDA::get_data_layout() {
+  return data_layout;
 }
 
 std::string cuda_mattrs() {
