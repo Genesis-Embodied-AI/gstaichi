@@ -6,6 +6,7 @@
 #include "taichi/ir/ir.h"
 #include "taichi/struct/struct.h"
 #include "taichi/util/file_sequence_writer.h"
+#include "taichi/codegen/ir_dump.h"
 
 namespace taichi::lang {
 
@@ -261,6 +262,19 @@ void StructCompilerLLVM::run(SNode &root) {
     static FileSequenceWriter writer("taichi_struct_llvm_ir_{:04d}.ll",
                                      "struct LLVM IR");
     writer.write(module.get());
+  }
+
+  const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
+  if (dump_ir_env != nullptr) {
+    std::filesystem::create_directories(IR_DUMP_DIR);
+
+    std::filesystem::path filename =
+        IR_DUMP_DIR / (std::string(module->getName()) + "_llvm.ll");
+    std::error_code EC;
+    llvm::raw_fd_ostream dest_file(filename.string(), EC);
+    if (!EC) {
+      module->print(dest_file, nullptr);
+    }
   }
 
   TI_ASSERT((int)snodes.size() <= taichi_max_num_snodes);

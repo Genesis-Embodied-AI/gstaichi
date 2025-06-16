@@ -15,6 +15,9 @@
 #include "taichi/codegen/llvm/struct_llvm.h"
 #include "taichi/util/file_sequence_writer.h"
 #include "taichi/codegen/codegen_utils.h"
+#include "llvm/Support/SourceMgr.h"
+#include "llvm/AsmParser/Parser.h"
+#include "taichi/codegen/ir_dump.h"
 
 namespace taichi::lang {
 
@@ -2744,6 +2747,31 @@ LLVMCompiledTask TaskCodeGenLLVM::run_compilation() {
       llvm::Function *func = module->getFunction(task.name);
       TI_ASSERT(func);
       tlctx->mark_function_as_amdgpu_kernel(func);
+    }
+  }
+  const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
+  if (dump_ir_env != nullptr) {
+    std::filesystem::create_directories(IR_DUMP_DIR);
+
+    std::filesystem::path filename = IR_DUMP_DIR / (kernel->name + "_llvm.ll");
+    std::error_code EC;
+    llvm::raw_fd_ostream dest_file(filename.string(), EC);
+    if (!EC) {
+      module->print(dest_file, nullptr);
+    }
+  }
+
+  const char *load_ir_env = std::getenv(LOAD_IR_ENV.data());
+  if (load_ir_env != nullptr) {
+    std::filesystem::path filename = IR_DUMP_DIR / (kernel->name + "_llvm.ll");
+    llvm::SMDiagnostic err;
+    auto loaded_module =
+        llvm::parseAssemblyFile(filename.string(), err, *llvm_context);
+    if (!loaded_module) {
+      err.print("TAICHI_LOAD_IR_FILE error", llvm::errs());
+      TI_ERROR("Failed to load LLVM IR from {}", filename.string());
+    } else {
+      module = std::move(loaded_module);
     }
   }
 
