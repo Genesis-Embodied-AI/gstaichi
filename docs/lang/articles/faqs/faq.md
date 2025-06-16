@@ -155,15 +155,6 @@ render_pixels()
 arr = pixels.to_numpy()  # store taichi data into numpy arrays
 plt.imshow(arr)
 plt.show()
-import matplotlib.cm as cm
-cmap = cm.get_cmap('magma')
-gui = ti.GUI('Color map', (512, 512))
-
-while gui.running:
-    render_pixels()
-    arr = pixels.to_numpy()
-    gui.set_image(cmap(arr))
-    gui.show()
 ```
 
 Besides, you can also pass numpy arrays or torch tensors into a Taichi kernel as arguments. See [Interacting with external arrays](../basic/external.md) for more details.
@@ -242,26 +233,6 @@ def test(arr: ti.types.ndarray()):
     for i in range(3):
         x[i] = arr[i]
 test(array)
-```
-
-## Visualization
-
-### Does the Taichi's GUI system support color mapping when rendering simulation results?
-
-Taichi's GUI system can display colors when the field it accepts is a 3D vector field where each vector represents the RGB values of a pixel.
-
-To enable color mapping, convert `ti.field` into a NumPy array and call Matplotlib's colormap (`cm`), as shown in the following example:
-
-```python skip-ci:Trivial
-pixels = ti.Vector.field(3, shape=(w, h))
-gui = ti.GUI(f'Window title', (w, h))
-step = 0
-while gui.running: # Main loop
-    simulate_one_substep(pixels)
-    img = pixels.to_numpy()
-    img = cm.jet(img)
-    gui.set_image(img)
-    gui.show()
 ```
 
 ## Objective-oriented programming

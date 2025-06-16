@@ -188,11 +188,6 @@ def fill_image():
         gray_scale_image[i,j] = ti.random()
 
 fill_image()
-# Creates a GUI of the size of the gray-scale image
-gui = ti.GUI('gray-scale image of random values', (width, height))
-while gui.running:
-    gui.set_image(gray_scale_image)
-    gui.show()
 ```
 
 :::caution WARNING

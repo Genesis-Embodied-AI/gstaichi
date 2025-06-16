@@ -134,12 +134,6 @@ def init():
 
 
 init()
-gui = ti.GUI('Autodiff gravity')
-while gui.running:
-    for i in range(50):
-        substep()
-    gui.circles(x.to_numpy(), radius=3)
-    gui.show()
 ```
 
 :::note
