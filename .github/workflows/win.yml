@@ -20,8 +20,6 @@ jobs:
       - name: Windows 2025 pre-requisites
         run: |
           & .\.github\workflows\scripts_new\win\1_prerequisites.ps1
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
       - name: Windows 2025 build
         run: |
           & .\.github\workflows\scripts_new\win\2_build.ps1
