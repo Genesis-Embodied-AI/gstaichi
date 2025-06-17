@@ -1144,7 +1144,8 @@ def test_cross_scope_matrix_ternary_ops():
         "https://linear.app/genesis-ai-company/issue/CMP-31/"
         "fix-failing-test-cross-scope-matrix-atomic-ops-on-mac-in-multiprocess"
         " to track"
-    ))
+    ),
+)
 def test_cross_scope_matrix_atomic_ops():
     n = 64
     x = ti.Vector.field(3, dtype=int, shape=(n, n))
