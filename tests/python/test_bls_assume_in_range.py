@@ -1,7 +1,6 @@
 import taichi as ti
-from tests import test_utils
-
 from .bls_test_template import bls_particle_grid
+from tests import test_utils
 
 
 @test_utils.test(require=ti.extension.bls)

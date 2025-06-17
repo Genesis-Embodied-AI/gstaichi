@@ -3,11 +3,12 @@ from typing import Any, Dict, List
 
 from taichi._lib import core as _ti_core
 from taichi.aot.utils import produce_injected_args
-from taichi.lang import enums, impl, kernel_impl
+from taichi.lang import impl, kernel_impl
 from taichi.lang._ndarray import Ndarray
 from taichi.lang._texture import Texture
 from taichi.lang.exception import TaichiRuntimeError
 from taichi.lang.matrix import Matrix, MatrixType
+from taichi.types import enums
 from taichi.types.texture_type import FORMAT2TY_CH, TY_CH2FORMAT
 
 ArgKind = _ti_core.ArgKind

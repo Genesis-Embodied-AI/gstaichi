@@ -4,9 +4,9 @@ import numpy as np
 import pytest
 import requests
 from PIL import Image
-from taichi.lang import impl
 
 import taichi as ti
+from taichi.lang import impl
 from tests import test_utils
 
 supported_archs_texture = [ti.vulkan]

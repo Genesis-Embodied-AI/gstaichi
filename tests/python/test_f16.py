@@ -2,9 +2,9 @@ import math
 
 import numpy as np
 import pytest
-from taichi.lang.util import has_paddle, has_pytorch
 
 import taichi as ti
+from taichi.lang.util import has_paddle, has_pytorch
 from tests import test_utils
 
 archs_support_f16 = [ti.cpu, ti.cuda, ti.vulkan]

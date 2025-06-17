@@ -1,10 +1,9 @@
 import time
 from math import pi
 
+from .utils import check_ggui_availability, euler_to_vec, vec_to_euler
 from taichi._lib import core as _ti_core
 from taichi.lang.matrix import Vector
-
-from .utils import check_ggui_availability, euler_to_vec, vec_to_euler
 
 
 class Camera:

@@ -1,8 +1,7 @@
 # 2D Euler Fluid Simulation using Taichi, originally created by @Lee-abcde
-from taichi.examples.patterns import taichi_logo
-
 import taichi as ti
 import taichi.math as tm
+from taichi.examples.patterns import taichi_logo
 
 ti.init(arch=ti.gpu)
 

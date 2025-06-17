@@ -1,7 +1,7 @@
 import sys
+from typing import Tuple
 
 import pytest
-from typing import Tuple
 from pytest import approx
 
 import taichi as ti

@@ -2,9 +2,9 @@ import platform
 
 import numpy as np
 import pytest
-from taichi._lib import core as _ti_core
 
 import taichi as ti
+from taichi._lib import core as _ti_core
 from tests import test_utils
 from tests.test_utils import verify_image
 

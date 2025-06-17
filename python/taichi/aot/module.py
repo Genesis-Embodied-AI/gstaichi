@@ -8,13 +8,12 @@ from shutil import rmtree
 from tempfile import mkdtemp
 from zipfile import ZipFile
 
+import taichi
 from taichi.aot.utils import produce_injected_args, produce_injected_args_from_template
 from taichi.lang import impl, kernel_impl
 from taichi.lang.field import ScalarField
 from taichi.lang.matrix import MatrixField
 from taichi.types.annotations import template
-
-import taichi
 
 
 class KernelTemplate:
