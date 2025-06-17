@@ -59,6 +59,8 @@ def setup_sccache() -> Command:
     cache.mkdir(parents=True, exist_ok=True)
     os.environ["SCCACHE_DIR"] = str(cache)
     os.environ["SCCACHE_CACHE_SIZE"] = "40G"
+    os.environ["SCCACHE_STARTUP_TIMEOUT"] = "30"
+    os.environ["SCCACHE_IDLE_TIMEOUT"] = "0"
     # </LocalCache>
 
     return sh.bake(str(exe))
