@@ -184,5 +184,4 @@ The table below provides an overview of the operating systems supported by Taich
 You are now prepared to begin writing your own Taichi programs. The following documents provide more information about how to utilize Taichi in some of its typical application scenarios:
 
 - [Accelerate Python with Taichi](./accelerate_python.md)
-- [Conduct Physical Simulation](./cloth_simulation.md)
 - [Accelerate PyTorch with Taichi](./accelerate_pytorch.md).
