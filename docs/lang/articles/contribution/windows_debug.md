@@ -10,7 +10,7 @@ You should be able to build Taichi from source and already have LLVM and related
 
 :::note
 
-Familiarize yourself with the [Developer Installation Guide](https://docs.taichi-lang.org/docs/dev_install).
+Familiarize yourself with the [Developer Installation Guide](docs/lang/articles/contribution/dev_install.md).
 
 :::
 
