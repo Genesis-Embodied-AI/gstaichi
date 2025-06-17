@@ -2,9 +2,9 @@ from inspect import currentframe, getframeinfo
 from sys import version_info
 
 import pytest
-from tests import test_utils
 
 import taichi as ti
+from tests import test_utils
 
 
 @test_utils.test()

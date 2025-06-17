@@ -2,6 +2,7 @@ import platform
 from math import asin, cos, sin
 
 import numpy as np
+
 from taichi._lib import core as _ti_core
 from taichi._lib.utils import try_get_wheel_tag
 from taichi.lang._ndarray import Ndarray

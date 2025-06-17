@@ -1,6 +1,7 @@
 from functools import reduce
 
 import numpy as np
+
 from taichi._lib import core as _ti_core
 from taichi.lang._ndarray import Ndarray, ScalarNdarray
 from taichi.lang.exception import TaichiRuntimeError

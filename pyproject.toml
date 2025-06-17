@@ -17,3 +17,15 @@ filterwarnings = [
 [tool.yapf]
 based_on_style = "pep8"
 blank_line_before_nested_class_or_def = false
+
+[tool.ruff]
+exclude = [
+    "external/**/*",
+]
+
+[tool.ruff.lint]
+select = ["I"]  # Enable import ordering checks
+
+[tool.ruff.lint.isort]
+known-local-folder = ["taichi", "tests"]
+known-third-party = ["pytest"]

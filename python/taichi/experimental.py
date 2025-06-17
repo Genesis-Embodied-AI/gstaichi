@@ -1,5 +1,6 @@
-from taichi.lang.kernel_impl import real_func as _real_func
 import warnings
+
+from taichi.lang.kernel_impl import real_func as _real_func
 
 
 def real_func(func):

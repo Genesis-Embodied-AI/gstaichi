@@ -8,9 +8,10 @@ User interface:
 2. Press `p` to save screenshot.
 """
 
+import typing
+
 import taichi as ti
 import taichi.math as tm
-import typing
 
 ti.init(arch=ti.cuda)
 
