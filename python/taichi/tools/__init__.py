@@ -6,7 +6,5 @@
 """
 
 from taichi.tools.diagnose import *
-from taichi.tools.image import *
 from taichi.tools.np2ply import *
-from taichi.tools.video import *
 from taichi.tools.vtk import *
