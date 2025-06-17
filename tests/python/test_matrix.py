@@ -1136,10 +1136,10 @@ def test_cross_scope_matrix_ternary_ops():
 
 
 @test_utils.test(debug=True)
-@pytest.mark.xfail(
+@pytest.mark.skipif(
     sys.platform == "darwin",
     reason=(
-        "Passes on mac with -t 1; fails with multiprocess. "
+        "segfaults on Mac with multiprocess. Runs ok with -t 1 "
         "SHOULD PASS. Created "
         "https://linear.app/genesis-ai-company/issue/CMP-31/"
         "fix-failing-test-cross-scope-matrix-atomic-ops-on-mac-in-multiprocess"
