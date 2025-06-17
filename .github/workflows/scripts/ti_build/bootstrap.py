@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
 # -- stdlib --
-from pathlib import Path
-from types import ModuleType
-from typing import Optional
 import importlib
 import os
 import platform
@@ -11,6 +8,9 @@ import re
 import subprocess
 import sys
 import sysconfig
+from pathlib import Path
+from types import ModuleType
+from typing import Optional
 
 # -- third party --
 # -- own --

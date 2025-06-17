@@ -2,7 +2,6 @@ from typing import Any
 
 from taichi.lang._ndarray import ScalarNdarray
 from taichi.lang._texture import Texture
-from taichi.lang.enums import Format
 from taichi.lang.exception import TaichiCompilationError
 from taichi.lang.matrix import (
     Matrix,
@@ -13,6 +12,7 @@ from taichi.lang.matrix import (
 )
 from taichi.lang.util import cook_dtype
 from taichi.types.annotations import template
+from taichi.types.enums import Format
 from taichi.types.ndarray_type import NdarrayType
 from taichi.types.texture_type import RWTextureType, TextureType
 

@@ -2,7 +2,7 @@ from taichi.lang import impl, simt
 from taichi.lang._ndarray import *
 from taichi.lang._ndrange import ndrange
 from taichi.lang._texture import Texture
-from taichi.lang.enums import DeviceCapability, Format, Layout
+from taichi.lang.argpack import *
 from taichi.lang.exception import *
 from taichi.lang.field import *
 from taichi.lang.impl import *
@@ -15,7 +15,7 @@ from taichi.lang.runtime_ops import *
 from taichi.lang.snode import *
 from taichi.lang.source_builder import *
 from taichi.lang.struct import *
-from taichi.lang.argpack import *
+from taichi.types.enums import DeviceCapability, Format, Layout
 
 __all__ = [
     s

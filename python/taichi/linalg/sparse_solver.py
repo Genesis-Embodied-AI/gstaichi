@@ -1,4 +1,5 @@
 import numpy as np
+
 import taichi.lang
 from taichi._lib import core as _ti_core
 from taichi.lang._ndarray import Ndarray, ScalarNdarray

@@ -1,10 +1,11 @@
 import numpy as np
+
 from taichi._lib import core as _ti_core
 from taichi.lang import impl
-from taichi.lang.enums import Layout
 from taichi.lang.exception import TaichiIndexError
 from taichi.lang.util import cook_dtype, get_traceback, python_scope, to_numpy_type
 from taichi.types import primitive_types
+from taichi.types.enums import Layout
 from taichi.types.ndarray_type import NdarrayTypeMetadata
 from taichi.types.utils import is_real, is_signed
 

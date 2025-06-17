@@ -1,9 +1,9 @@
-import tempfile
+import importlib
 import os
-import pytest
-
+import tempfile
 from pathlib import Path
-import importlib.util
+
+import pytest
 
 # I don't want to make python/tools a module, and I don't want to move this tool
 # into `taichi` namespace, so that leaves temporarily importing it somehow

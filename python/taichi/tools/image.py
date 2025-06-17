@@ -1,9 +1,9 @@
+import ctypes
+
 import numpy as np
-from taichi._lib import core as _ti_core
 
 import taichi as ti
-
-import ctypes
+from taichi._lib import core as _ti_core
 
 
 def cook_image_to_bytes(img):

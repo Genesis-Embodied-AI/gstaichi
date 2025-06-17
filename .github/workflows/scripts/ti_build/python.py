@@ -12,7 +12,7 @@ from typing import Tuple
 # -- own --
 from . import misc
 from .dep import download_dep
-from .misc import banner, get_cache_home, path_prepend, info
+from .misc import banner, get_cache_home, info, path_prepend
 from .tinysh import Command, sh
 
 
