@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
 
 # -- stdlib --
-from pathlib import Path
 import os
 import platform
 import re
 import sys
+from pathlib import Path
 
 # -- third party --
 # -- own --
 from .misc import banner, error, info
 from .tinysh import apt
-
 
 # -- code --
 UBUNTU_PACKAGES = {

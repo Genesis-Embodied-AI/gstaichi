@@ -8,11 +8,11 @@ from tempfile import NamedTemporaryFile, mkstemp
 
 import numpy as np
 import pytest
+
+import taichi as ti
 from taichi._lib import core as _ti_core
 from taichi.lang import cpu, cuda, dx11, gles, gpu, metal, opengl, vulkan
 from taichi.lang.misc import is_arch_supported
-
-import taichi as ti
 
 
 # Helper functions

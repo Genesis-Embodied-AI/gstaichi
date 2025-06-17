@@ -1,7 +1,8 @@
+from typing import TYPE_CHECKING
+
 from taichi.lang import ops
 from taichi.lang.util import in_python_scope
 from taichi.types import primitive_types
-from typing import TYPE_CHECKING
 
 
 class TaichiOperations:

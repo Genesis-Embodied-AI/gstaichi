@@ -1,6 +1,6 @@
-import subprocess
-import os
 import importlib
+import os
+import subprocess
 from pathlib import Path
 from typing import Generator, Iterable
 

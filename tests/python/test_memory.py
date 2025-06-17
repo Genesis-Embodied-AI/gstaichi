@@ -3,9 +3,9 @@ import os
 
 import psutil
 import pytest
-from taichi.lang.misc import get_host_arch_list
 
 import taichi as ti
+from taichi.lang.misc import get_host_arch_list
 from tests import test_utils
 
 

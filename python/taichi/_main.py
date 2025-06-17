@@ -13,6 +13,8 @@ from pathlib import Path
 import rich
 from colorama import Fore
 from rich.console import Console
+from rich.syntax import Syntax
+
 from taichi._lib import core as _ti_core
 from taichi._lib import utils
 from taichi.lang import impl

@@ -1,7 +1,7 @@
 import pytest
-from taichi.lang.exception import TaichiRuntimeError
 
 import taichi as ti
+from taichi.lang.exception import TaichiRuntimeError
 from tests import test_utils
 
 

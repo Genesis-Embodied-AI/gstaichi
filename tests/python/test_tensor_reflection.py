@@ -1,7 +1,7 @@
 import pytest
-from taichi.lang import impl
 
 import taichi as ti
+from taichi.lang import impl
 from tests import test_utils
 
 

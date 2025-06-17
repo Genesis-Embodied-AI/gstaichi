@@ -3,13 +3,13 @@ from types import FunctionType, MethodType
 from typing import Any, Iterable, Sequence
 
 import numpy as np
+
 from taichi._lib import core as _ti_core
 from taichi._snode.fields_builder import FieldsBuilder
 from taichi.lang._ndarray import ScalarNdarray
 from taichi.lang._ndrange import GroupedNDRange, _Ndrange
 from taichi.lang._texture import RWTextureAccessor
 from taichi.lang.any_array import AnyArray
-from taichi.lang.enums import SNodeGradType
 from taichi.lang.exception import (
     TaichiCompilationError,
     TaichiRuntimeError,
@@ -48,6 +48,7 @@ from taichi.lang.util import (
     taichi_scope,
     warning,
 )
+from taichi.types.enums import SNodeGradType
 from taichi.types.primitive_types import (
     all_types,
     f16,

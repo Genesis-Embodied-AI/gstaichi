@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
 # -- stdlib --
-from pathlib import Path
-import os
-from os.path import join
 import json
+import os
 import platform
 import shutil
-import tempfile
-import sys
 import subprocess
+import sys
+import tempfile
+from os.path import join
+from pathlib import Path
 
 # -- third party --
 # -- own --

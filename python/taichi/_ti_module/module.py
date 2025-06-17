@@ -3,6 +3,7 @@ import runpy
 from pathlib import Path
 from typing import List
 
+import taichi
 from taichi._ti_module.cppgen import generate_header
 from taichi.aot._export import _aot_kernels
 from taichi.aot.conventions.gfxruntime140 import GfxRuntime140
@@ -10,8 +11,6 @@ from taichi.aot.module import Module
 from taichi.types.ndarray_type import NdarrayType
 from taichi.types.primitive_types import integer_type_ids, real_type_ids
 from taichi.types.texture_type import RWTextureType, TextureType
-
-import taichi
 
 
 def module_cppgen(parser: argparse.ArgumentParser):

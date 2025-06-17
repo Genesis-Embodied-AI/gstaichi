@@ -1,8 +1,7 @@
 from time import perf_counter
 
-from taichi._lib import core as ti_python_core
-
 import taichi as ti
+from taichi._lib import core as ti_python_core
 
 
 class End2EndTimer:
