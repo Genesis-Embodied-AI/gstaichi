@@ -1,3 +1,5 @@
+# type: ignore
+
 # Authored by Tiantian Liu, Taichi Graphics.
 import math
 

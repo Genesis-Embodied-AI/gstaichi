@@ -1,3 +1,5 @@
+# type: ignore
+
 """Taichi math module.
 
 The math module supports glsl-style vectors, matrices and functions.

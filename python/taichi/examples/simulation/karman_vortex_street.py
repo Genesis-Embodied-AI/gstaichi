@@ -1,3 +1,5 @@
+# type: ignore
+
 # Fluid solver based on lattice boltzmann method using taichi language
 # Author : Wang (hietwll@gmail.com)
 # Original code at https://github.com/hietwll/LBM_Taichi

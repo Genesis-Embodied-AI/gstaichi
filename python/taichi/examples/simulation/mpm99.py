@@ -1,3 +1,5 @@
+# type: ignore
+
 import taichi as ti
 
 ti.init(arch=ti.gpu)  # Try to run on GPU

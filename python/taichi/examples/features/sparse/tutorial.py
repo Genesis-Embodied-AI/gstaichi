@@ -1,3 +1,5 @@
+# type: ignore
+
 import taichi as ti
 
 use_bitmask = False

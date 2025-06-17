@@ -1,3 +1,5 @@
+# type: ignore
+
 from functools import reduce
 
 import numpy as np

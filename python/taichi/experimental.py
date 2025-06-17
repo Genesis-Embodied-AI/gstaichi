@@ -1,3 +1,5 @@
+# type: ignore
+
 import warnings
 
 from taichi.lang.kernel_impl import real_func as _real_func

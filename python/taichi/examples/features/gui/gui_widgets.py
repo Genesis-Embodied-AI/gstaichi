@@ -1,3 +1,5 @@
+# type: ignore
+
 import taichi as ti
 
 gui = ti.GUI("GUI widgets")

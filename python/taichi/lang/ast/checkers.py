@@ -1,3 +1,5 @@
+# type: ignore
+
 import ast
 
 from taichi.lang._wrap_inspect import getsourcefile, getsourcelines

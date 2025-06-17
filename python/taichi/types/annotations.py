@@ -1,3 +1,5 @@
+# type: ignore
+
 class Template:
     """Type annotation for template kernel parameter.
     Useful for passing parameters to kernels by reference.
