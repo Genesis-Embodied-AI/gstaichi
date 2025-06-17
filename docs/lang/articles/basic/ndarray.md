@@ -107,7 +107,7 @@ rgb = ti.ndarray(dtype=ti.types.vector(3, ti.f32), shape=(8,8))
 proc(rgb)
 ```
 
-It does not matter whether you use the [range-for](docs/lang/articles/reference/language_reference.md#the-range-for-statement) or [struct-for](docs/lang/articles/reference/language_reference.md#the-struct-for-statement) to iterate over the ndarrays.
+It does not matter whether you use the [range-for](../reference/language_reference.md#the-range-for-statement) or [struct-for](../reference/language_reference.md#the-struct-for-statement) to iterate over the ndarrays.
 
 :::tip
 
