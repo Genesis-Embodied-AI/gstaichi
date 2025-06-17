@@ -1,0 +1,40 @@
+name: Manylinux wheel build
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  build_wheel:
+    name: Manylinux wheel Build
+    runs-on: ubuntu-22.04
+    container: quay.io/pypa/manylinux_2_28_x86_64:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: manylinux wheel prerequisites
+        run: |
+          bash .github/workflows/scripts_new/manylinux_wheel/1_prerequisites.sh
+      - name: manylinux wheel build
+        run: |
+          bash .github/workflows/scripts_new/manylinux_wheel/2_build.sh
+      - name: manylinux wheel check
+        run: |
+          bash .github/workflows/scripts_new/manylinux_wheel/3_check.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: manylinux_wheel
+          path: dist/*.whl
+  test_wheel:
+    name: Manylinux wheel Test
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: manylinux_wheel
+      - name: manylinux install wheel
+        run: |
+          bash .github/workflows/scripts_new/manylinux_wheel/4_install_wheel.sh
+      - name: manylinux test
+        run: |
+          bash .github/workflows/scripts_new/manylinux_wheel/5_test.sh
