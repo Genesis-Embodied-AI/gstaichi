@@ -1,4 +1,4 @@
-name: Mac OS on-demand
+name: Mac OS
 on:
   pull_request:
     branches:
@@ -10,6 +10,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-14, macos-15]
+    name: Mac OS Build
     runs-on: ${{ matrix.os}}
     steps:
       - uses: actions/checkout@v4
