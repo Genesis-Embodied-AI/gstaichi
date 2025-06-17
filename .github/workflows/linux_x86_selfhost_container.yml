@@ -1,0 +1,35 @@
+name: Linux x86 self-host container on-demand
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: rtx5090
+    container:
+      image: nvcr.io/nvidia/cuda:12.3.2-runtime-ubuntu22.04
+      options: --cpus 12 --gpus all
+    steps:
+      - name: check resources
+        run: |
+          nvidia-smi
+          echo "CPU cores: $(nproc)"
+      - name: Install Git
+        run: |
+          apt-get update
+          apt-get install -y git
+          git config --global --add safe.directory /__w/taichi/taichi
+      - uses: actions/checkout@v4
+      - name: Linux x86 container prerequisites
+        run: |
+          bash .github/workflows/scripts_new/linux_x86_container/1_prerequisites.sh
+      - name: Linux x86 container build
+        run: |
+          bash .github/workflows/scripts_new/linux_x86_container/2_build.sh
+      - name: Linux x86 container install
+        run: |
+          bash .github/workflows/scripts_new/linux_x86_container/3_install.sh
+      - name: Linux x86 container test
+        run: |
+          bash .github/workflows/scripts_new/linux_x86_container/4_test.sh

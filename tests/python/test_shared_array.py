@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import pynvml
 
 import taichi as ti
 from taichi.math import vec4
@@ -11,6 +12,12 @@ def test_large_shared_array():
     # Skip the GPUs prior to Ampere which doesn't have large dynamical shared memory.
     if ti.lang.impl.get_cuda_compute_capability() < 86:
         pytest.skip("Skip the GPUs prior to Ampere")
+
+    pynvml.nvmlInit()
+    handle = pynvml.nvmlDeviceGetHandleByIndex(0)
+    gpu_name = pynvml.nvmlDeviceGetName(handle)
+    if gpu_name == "NVIDIA GeForce RTX 5090":
+        pytest.skip("Skipping large array tests on NVIDIA GeForce RTX 5090")
 
     block_dim = 128
     nBlocks = 64

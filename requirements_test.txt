@@ -17,3 +17,7 @@ marko
 PyYAML
 pyevtk
 wget
+# temporarily, until the 5090 bug is fixed
+# lets us detect if we are running on 5090
+# and skip tests on large memory
+pynvml
