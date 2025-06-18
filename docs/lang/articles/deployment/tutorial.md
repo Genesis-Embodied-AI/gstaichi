@@ -310,6 +310,6 @@ Please note that due to the nature of Ndarray handling in Taichi, the generated 
 
 ### How can I set values for ndarrays in C++?
 
-In the C++ wrapper we provide these convenient read/write() methods on NdArray class. <c_api/include/taichi/cpp/taichi.hpp#L192-L215>
+In the C++ wrapper we provide these convenient read/write() methods on NdArray class, see declaration inside [taichi.hpp](c_api/include/taichi/cpp/taichi.hpp)
 
-In C API you can allocate your memory as host accessible and then use map/unmap. <docs/lang/articles/c-api/taichi_vulkan.md>
+In C API you can allocate your memory as host accessible and then use map/unmap. [taichi_vulkan.md](docs/lang/articles/c-api/taichi_vulkan.md)
