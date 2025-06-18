@@ -1,3 +1,5 @@
+# type: ignore
+
 import taichi as ti
 from taichi.math import cmul, dot, log2, vec2, vec3
 

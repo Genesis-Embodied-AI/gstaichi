@@ -1,3 +1,5 @@
+# type: ignore
+
 """Taichi's AOT (ahead of time) module.
 
 Users can use Taichi as a GPU compute shader/kernel compiler by compiling their

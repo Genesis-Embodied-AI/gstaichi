@@ -1,3 +1,5 @@
+# type: ignore
+
 """
 Data representation of all JSON data structures following the GfxRuntime140
 convention.

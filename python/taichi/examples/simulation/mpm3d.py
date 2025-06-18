@@ -1,3 +1,5 @@
+# type: ignore
+
 export_file = ""  # use '/tmp/mpm3d.ply' for exporting result to disk
 
 import numpy as np

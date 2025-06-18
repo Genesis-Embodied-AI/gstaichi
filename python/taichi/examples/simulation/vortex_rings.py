@@ -1,3 +1,5 @@
+# type: ignore
+
 # C++ reference and tutorial (Chinese): https://zhuanlan.zhihu.com/p/26882619
 import math
 

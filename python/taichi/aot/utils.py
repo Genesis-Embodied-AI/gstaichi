@@ -1,3 +1,5 @@
+# type: ignore
+
 from typing import Any
 
 from taichi.lang._ndarray import ScalarNdarray

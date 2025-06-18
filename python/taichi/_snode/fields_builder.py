@@ -1,3 +1,5 @@
+# type: ignore
+
 from typing import Any, Optional, Sequence, Union
 
 from taichi._lib import core as _ti_core

@@ -1,3 +1,5 @@
+# type: ignore
+
 # Smoothed-particle hydrodynamics (SPH) is a computational method used for simulating the mechanics of continuum media, such as solid mechanics and fluid flows.
 # Here we utilize SPH to simulate a fountain, who tries to hit a target given by the user.
 # The SPH simulator here implemented using Taichi is differentiable.

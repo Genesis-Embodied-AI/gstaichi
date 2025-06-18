@@ -1,3 +1,5 @@
+# type: ignore
+
 """Taichi support module for sparse matrix operations."""
 
 from taichi.linalg.matrixfree_cg import *

@@ -1,3 +1,5 @@
+# type: ignore
+
 # pylint: disable=W0622,W0621,W0401
 import taichi as ti
 from taichi.math import *

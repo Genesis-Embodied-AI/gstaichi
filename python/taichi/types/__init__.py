@@ -1,3 +1,5 @@
+# type: ignore
+
 """
 This module defines data types in Taichi:
 
