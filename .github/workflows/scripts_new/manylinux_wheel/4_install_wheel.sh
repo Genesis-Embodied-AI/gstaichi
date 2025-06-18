@@ -2,7 +2,10 @@
 
 set -ex
 
-ls -lR manylinux_wheel
+ls -l
+find . -cmin -1
+find . -cmin -1 -name '*.whl
+find . -name '*.whl
 
 python -V
 pip -V
