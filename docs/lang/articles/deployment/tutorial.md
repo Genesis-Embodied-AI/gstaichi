@@ -268,7 +268,7 @@ There is no official versioning yet (pre-release). For now, use Taichi and C++ r
 
 ### Can I hook Taichi into a render pipeline?
 
-Yes! If you already have a rendering pipeline, you can interop with Taichi via <docs/lang/articles/c-api/taichi_vulkan.md>.
+Yes! If you already have a rendering pipeline, you can interop with Taichi via [taichi_vulkan.md](docs/lang/articles/c-api/taichi_vulkan.md).
 
 If you don't have one already, please check out our demos at <https://github.com/taichi-dev/taichi-aot-demo>
 
