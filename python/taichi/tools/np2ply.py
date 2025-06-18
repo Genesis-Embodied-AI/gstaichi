@@ -1,3 +1,5 @@
+# type: ignore
+
 # convert numpy array to ply files
 import sys
 

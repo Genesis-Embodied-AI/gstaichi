@@ -1,3 +1,5 @@
+# type: ignore
+
 # Taichi's custom inspect module.
 # This module is used by Taichi's ast transformer to parse the source code.
 # Currently this module is aimed for working in the following modes:

@@ -1,3 +1,5 @@
+# type: ignore
+
 """
 Taichi gui module for visualization.
 

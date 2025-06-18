@@ -1,3 +1,5 @@
+# type: ignore
+
 """
 Poisson disk sampling in Taichi, a fancy version.
 Based on Yuanming Hu's code: https://github.com/taichi-dev/poisson_disk_sampling

@@ -1,3 +1,5 @@
+# type: ignore
+
 from taichi._kernels import (
     blit_from_field_to_field,
     scan_add_inclusive,

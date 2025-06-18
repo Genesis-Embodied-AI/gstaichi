@@ -1,3 +1,5 @@
+# type: ignore
+
 import taichi as ti
 
 x, y = 0.5, 0.5
