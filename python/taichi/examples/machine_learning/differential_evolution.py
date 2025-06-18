@@ -1,3 +1,5 @@
+# type: ignore
+
 # Authored by Erqi Chen.
 # This script shows the optimization process of differential evolution.
 # The black points are the search agents, and they finally find the minimum solution.

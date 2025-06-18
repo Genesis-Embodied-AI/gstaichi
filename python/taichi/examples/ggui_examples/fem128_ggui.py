@@ -1,3 +1,5 @@
+# type: ignore
+
 import taichi as ti
 
 arch = ti.vulkan if ti._lib.core.with_vulkan() else ti.cuda

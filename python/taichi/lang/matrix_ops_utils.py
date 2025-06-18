@@ -1,3 +1,5 @@
+# type: ignore
+
 import functools
 
 from taichi.lang.exception import TaichiCompilationError

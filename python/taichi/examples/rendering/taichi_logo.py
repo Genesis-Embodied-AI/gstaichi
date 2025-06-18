@@ -1,3 +1,5 @@
+# type: ignore
+
 import taichi as ti
 from taichi.examples.patterns import taichi_logo
 

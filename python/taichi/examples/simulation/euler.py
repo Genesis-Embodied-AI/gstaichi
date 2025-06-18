@@ -1,3 +1,5 @@
+# type: ignore
+
 from matplotlib import cm
 
 import taichi as ti

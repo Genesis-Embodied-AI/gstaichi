@@ -1,3 +1,5 @@
+# type: ignore
+
 from taichi.types.compound_types import CompoundType, matrix, vector
 from taichi.types.enums import Layout, to_boundary_enum
 

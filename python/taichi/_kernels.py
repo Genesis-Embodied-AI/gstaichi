@@ -1,3 +1,5 @@
+# type: ignore
+
 from taichi._funcs import field_fill_taichi_scope
 from taichi._lib.utils import get_os_name
 from taichi.lang import ops

@@ -1,3 +1,5 @@
+# type: ignore
+
 import atexit
 import ctypes
 import os

@@ -1,3 +1,5 @@
+# type: ignore
+
 # 2D Euler Fluid Simulation using Taichi, originally created by @Lee-abcde
 import taichi as ti
 import taichi.math as tm

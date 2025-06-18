@@ -1,3 +1,5 @@
+# type: ignore
+
 from .scene import SceneV2
 from .staging_buffer import (
     copy_all_to_vbo,

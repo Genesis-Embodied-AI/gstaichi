@@ -1,3 +1,5 @@
+# type: ignore
+
 import taichi.lang
 from taichi._lib import core as _ti_core
 from taichi._logging import warn
