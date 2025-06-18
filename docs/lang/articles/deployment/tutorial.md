@@ -268,7 +268,7 @@ There is no official versioning yet (pre-release). For now, use Taichi and C++ r
 
 ### Can I hook Taichi into a render pipeline?
 
-Yes! If you already have a rendering pipeline, you can interop with Taichi via [taichi_vulkan.md](docs/lang/articles/c-api/taichi_vulkan.md).
+Yes! If you already have a rendering pipeline, you can interop with Taichi via [taichi_vulkan.md](../c-api/taichi_vulkan.md).
 
 If you don't have one already, please check out our demos at <https://github.com/taichi-dev/taichi-aot-demo>
 
@@ -310,6 +310,6 @@ Please note that due to the nature of Ndarray handling in Taichi, the generated 
 
 ### How can I set values for ndarrays in C++?
 
-In the C++ wrapper we provide these convenient read/write() methods on NdArray class, see declaration inside [taichi.hpp](c_api/include/taichi/cpp/taichi.hpp)
+In the C++ wrapper we provide these convenient read/write() methods on NdArray class, see declaration inside [taichi.hpp](../../../../c_api/include/taichi/cpp/taichi.hpp)
 
-In C API you can allocate your memory as host accessible and then use map/unmap. [taichi_vulkan.md](docs/lang/articles/c-api/taichi_vulkan.md)
+In C API you can allocate your memory as host accessible and then use map/unmap. [taichi_vulkan.md](../c-api/taichi_vulkan.md)
