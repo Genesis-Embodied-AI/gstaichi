@@ -269,12 +269,9 @@ void StructCompilerLLVM::run(SNode &root) {
     std::filesystem::create_directories(IR_DUMP_DIR);
 
     std::filesystem::path filename =
-        IR_DUMP_DIR / (std::string(module->getName()) + "_llvm.ll");
-    std::error_code EC;
-    llvm::raw_fd_ostream dest_file(filename.string(), EC);
-    if (!EC) {
-      module->print(dest_file, nullptr);
-    }
+        IR_DUMP_DIR / (std::string(module->getName()) + "_{:04d}_llvm.ll");
+    static FileSequenceWriter writer(filename, "struct LLVM IR");
+    writer.write(module.get());
   }
 
   TI_ASSERT((int)snodes.size() <= taichi_max_num_snodes);
