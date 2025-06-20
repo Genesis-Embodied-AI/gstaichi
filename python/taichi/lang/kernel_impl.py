@@ -215,7 +215,7 @@ class Func:
         self.extract_arguments()
         self.template_slot_locations = []
         for i, arg in enumerate(self.arguments):
-            if isinstance(arg.annotation, template):
+            if isinstance(arg.annotation, template) or arg.annotation == template:
                 self.template_slot_locations.append(i)
         self.mapper = TaichiCallableTemplateMapper(self.arguments, self.template_slot_locations)
         self.taichi_functions = {}  # The |Function| class in C++
@@ -368,6 +368,8 @@ class Func:
                     pass
                 elif isinstance(annotation, template):
                     pass
+                elif type(annotation) == taichi.types.annotations.Template:
+                    pass
                 elif isinstance(annotation, primitive_types.RefType):
                     pass
                 else:
@@ -384,7 +386,7 @@ class TaichiCallableTemplateMapper:
 
     @staticmethod
     def extract_arg(arg, anno, arg_name):
-        if isinstance(anno, template):
+        if isinstance(anno, template) or anno == template:
             if isinstance(arg, taichi.lang.snode.SNode):
                 return arg.ptr
             if isinstance(arg, taichi.lang.expr.Expr):
@@ -553,7 +555,7 @@ class Kernel:
         self.extract_arguments()
         self.template_slot_locations = []
         for i, arg in enumerate(self.arguments):
-            if isinstance(arg.annotation, template):
+            if isinstance(arg.annotation, template) or arg.annotation == template::
                 self.template_slot_locations.append(i)
         self.mapper = TaichiCallableTemplateMapper(self.arguments, self.template_slot_locations)
         impl.get_runtime().kernels.append(self)
@@ -628,6 +630,8 @@ class Kernel:
                 elif isinstance(annotation, StructType):
                     pass
                 elif isinstance(annotation, ArgPackType):
+                    pass
+                elif annotation == template:
                     pass
                 else:
                     raise TaichiSyntaxError(f"Invalid type annotation (argument {i}) of Taichi kernel: {annotation}")
@@ -951,7 +955,7 @@ class Kernel:
 
         template_num = 0
         for i, val in enumerate(args):
-            needed_ = self.arguments[i].annotation
+            needed_ = self.arguments[i].annotation or needed_ == template
             if isinstance(needed_, template):
                 template_num += 1
                 continue
