@@ -270,7 +270,7 @@ void StructCompilerLLVM::run(SNode &root) {
 
     std::filesystem::path filename =
         IR_DUMP_DIR / (std::string(module->getName()) + "_{:04d}_llvm.ll");
-    static FileSequenceWriter writer(filename, "struct LLVM IR");
+    static FileSequenceWriter writer(filename.string(), "struct LLVM IR");
     writer.write(module.get());
   }
 
