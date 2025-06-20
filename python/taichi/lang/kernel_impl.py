@@ -555,7 +555,7 @@ class Kernel:
         self.extract_arguments()
         self.template_slot_locations = []
         for i, arg in enumerate(self.arguments):
-            if isinstance(arg.annotation, template) or arg.annotation == template::
+            if isinstance(arg.annotation, template) or arg.annotation == template:
                 self.template_slot_locations.append(i)
         self.mapper = TaichiCallableTemplateMapper(self.arguments, self.template_slot_locations)
         impl.get_runtime().kernels.append(self)
@@ -955,8 +955,8 @@ class Kernel:
 
         template_num = 0
         for i, val in enumerate(args):
-            needed_ = self.arguments[i].annotation or needed_ == template
-            if isinstance(needed_, template):
+            needed_ = self.arguments[i].annotation
+            if isinstance(needed_, template) or needed_ == template:
                 template_num += 1
                 continue
             recursive_set_args(needed_, type(val), val, (i - template_num,))
