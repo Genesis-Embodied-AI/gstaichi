@@ -1,3 +1,5 @@
+# type: ignore
+
 import json
 import zipfile
 from pathlib import Path

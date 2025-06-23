@@ -1,3 +1,5 @@
+# type: ignore
+
 from .camera import Camera  # pylint: disable=unused-import
 from .canvas import Canvas  # pylint: disable=unused-import
 from .constants import *  # pylint: disable=unused-import,wildcard-import

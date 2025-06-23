@@ -1,3 +1,5 @@
+# type: ignore
+
 import numbers
 from types import FunctionType, MethodType
 from typing import Any, Iterable, Sequence

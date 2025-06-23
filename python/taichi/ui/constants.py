@@ -1,3 +1,5 @@
+# type: ignore
+
 """Key constants for :mod:`~taichi.ui`"""
 
 SHIFT = "Shift"

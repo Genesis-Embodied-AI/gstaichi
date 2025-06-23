@@ -1,3 +1,5 @@
+# type: ignore
+
 from taichi._lib import core as _ti_core
 from taichi.lang import impl
 from taichi.lang.expr import Expr, make_expr_group

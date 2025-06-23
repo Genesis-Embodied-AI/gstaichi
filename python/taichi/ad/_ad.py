@@ -1,3 +1,5 @@
+# type: ignore
+
 """Taichi automatic differentiation module.
 
 This module supplies two decorators for users to customize their

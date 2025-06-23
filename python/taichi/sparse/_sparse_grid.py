@@ -1,3 +1,5 @@
+# type: ignore
+
 from taichi.lang.impl import grouped, root, static
 from taichi.lang.kernel_impl import kernel
 from taichi.lang.misc import ij, ijk

@@ -1,3 +1,5 @@
+# type: ignore
+
 import argparse
 
 import taichi as ti
