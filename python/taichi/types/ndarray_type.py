@@ -82,6 +82,10 @@ class NdarrayType:
         self.needs_grad = needs_grad
         self.boundary = to_boundary_enum(boundary)
 
+    @classmethod
+    def __class_getitem__(cls, args, **kwargs):
+        return cls(*args, **kwargs)
+
     def check_matched(self, ndarray_type: NdarrayTypeMetadata, arg_name: str):
         # FIXME(Haidong) Cannot use Vector/MatrixType due to circular import
         # Use the CompuoundType instead to determine the specific typs.
@@ -124,6 +128,7 @@ class NdarrayType:
 
 
 ndarray = NdarrayType
+NDArray = NdarrayType
 """Alias for :class:`~taichi.types.ndarray_type.NdarrayType`.
 
 Example::
@@ -139,4 +144,4 @@ Example::
     >>> to_numpy(x, y)  # `x` will be filled with `y`'s data.
 """
 
-__all__ = ["ndarray"]
+__all__ = ["ndarray", "NDArray"]

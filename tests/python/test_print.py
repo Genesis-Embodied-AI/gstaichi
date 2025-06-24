@@ -1,5 +1,3 @@
-import sys
-
 import pytest
 
 import taichi as ti
@@ -11,12 +9,43 @@ vk_on_mac = (ti.vulkan, "Darwin")
 # TODO: capfd doesn't function well on CUDA backend on Windows
 cuda_on_windows = (ti.cuda, "Windows")
 
-if sys.version_info >= (3, 8):
-    # Import the test case only if the Python version is >= 3.8
-    from .py38_only import (
-        test_print_docs_matrix_self_documenting_exp,
-        test_print_docs_scalar_self_documenting_exp,
-    )
+
+@test_utils.test(arch=[ti.cpu, ti.cuda, ti.vulkan], exclude=[vk_on_mac, cuda_on_windows], debug=True)
+def test_print_docs_scalar_self_documenting_exp(capfd):
+    a = ti.field(ti.f32, 4)
+
+    @ti.kernel
+    def func():
+        a[0] = 1.0
+
+        # with self-documenting expressions
+        print(f"{a[0] = :.1f}")
+
+    func()
+    ti.sync()
+
+    out, err = capfd.readouterr()
+    expected_out = """a[0] = 1.0
+"""
+    assert out == expected_out and err == ""
+
+
+@test_utils.test(arch=[ti.cpu, ti.cuda, ti.vulkan], exclude=[vk_on_mac, cuda_on_windows], debug=True)
+def test_print_docs_matrix_self_documenting_exp(capfd):
+    @ti.kernel
+    def func():
+        m = ti.Matrix([[2e1, 3e2, 4e3], [5e4, 6e5, 7e6]], ti.f32)
+
+        # with self-documenting expressions
+        print(f"{m = :g}")
+
+    func()
+    ti.sync()
+
+    out, err = capfd.readouterr()
+    expected_out = """m = [[20, 300, 4000], [50000, 600000, 7e+06]]
+"""
+    assert out == expected_out and err == ""
 
 
 # Not really testable..
