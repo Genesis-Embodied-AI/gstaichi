@@ -655,7 +655,7 @@ class ASTTransformer(Builder):
                 for item in items_to_put_in_dict:
                     invoke_later_dict[item[0]] = argpack, item[1], *item[2]
                 return True, argpack
-            if isinstance(annotation, annotations.template):
+            if annotation == annotations.template or isinstance(annotation, annotations.template):
                 return True, ctx.global_vars[name]
             if isinstance(annotation, annotations.sparse_matrix_builder):
                 return False, (
