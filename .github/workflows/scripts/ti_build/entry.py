@@ -101,6 +101,14 @@ def setup_basic_build_env():
 def action_wheel():
     setup_os_pkgs()
     sccache, python, pip = setup_basic_build_env()
+
+    # Explicitly start sccache server before the build
+    try:
+        sccache("--start-server")
+    except CommandFailed:
+        # If server is already running, this will fail, which is fine
+        pass
+
     install_build_wheel_deps(python, pip)
     handle_alternate_actions()
     build_wheel(python, pip)
