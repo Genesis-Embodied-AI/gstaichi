@@ -1,5 +1,3 @@
-import sys
-
 import numpy as np
 import pytest
 
@@ -8,9 +6,16 @@ from taichi.lang import impl
 from taichi.lang.util import has_pytorch
 from tests import test_utils
 
-if sys.version_info >= (3, 8):
-    # Import the test case only if the Python version is >= 3.8
-    from .py38_only import test_namedexpr  # noqa
+
+@test_utils.test()
+def test_namedexpr():
+    @ti.kernel
+    def foo() -> ti.i32:
+        b = 2 + (a := 5)
+        b += a
+        return b
+
+    assert foo() == 12
 
 
 @test_utils.test()
