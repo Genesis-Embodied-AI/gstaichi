@@ -11,8 +11,8 @@ jobs:
     container: quay.io/pypa/manylinux_2_28_x86_64:latest
     strategy:
       matrix:
-        PYTHON_VERSION: ['cp310']
-        # PYTHON_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
+        PYTHON_CP_VERSION: ['cp310']
+        # PYTHON_CP_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
     steps:
       - uses: actions/checkout@v4
       - name: manylinux wheel prerequisites
@@ -20,17 +20,17 @@ jobs:
           bash .github/workflows/scripts_new/manylinux_wheel/1_prerequisites.sh
       - name: manylinux wheel build
         run: |
-          export PATH=/opt/python/${PYTHON_VERSION}/bin:$PATH
+          export PATH=/opt/python/${{ matrix.PYTHON_CP_VERSION }}/bin:$PATH
           python -V
           bash .github/workflows/scripts_new/manylinux_wheel/2_build.sh
       - name: manylinux wheel check
         run: |
-          export PATH=/opt/python/${PYTHON_VERSION}/bin:$PATH
+          export PATH=/opt/python/${{ matrix.PYTHON_CP_VERSION }}/bin:$PATH
           python -V
           bash .github/workflows/scripts_new/manylinux_wheel/3_check.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: manylinux_wheel_${{ matrix.PYTHON_VERSION }}
+          name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}
           path: dist/*.whl
   test_wheel:
     name: Manylinux wheel Test
