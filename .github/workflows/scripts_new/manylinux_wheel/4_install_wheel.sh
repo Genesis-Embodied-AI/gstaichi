@@ -2,8 +2,6 @@
 
 set -ex
 
-ls -l
-find . -cmin -1
 find . -cmin -1 -name '*.whl
 find . -name '*.whl
 ls -lh *.whl
