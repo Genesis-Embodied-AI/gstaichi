@@ -20,12 +20,12 @@ jobs:
           bash .github/workflows/scripts_new/manylinux_wheel/1_prerequisites.sh
       - name: manylinux wheel build
         run: |
-          export PATH=/opt/python/${{ matrix.PYTHON_CP_VERSION }}/bin:$PATH
+          export PATH=/opt/python/${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION }}/bin:$PATH
           python -V
           bash .github/workflows/scripts_new/manylinux_wheel/2_build.sh
       - name: manylinux wheel check
         run: |
-          export PATH=/opt/python/${{ matrix.PYTHON_CP_VERSION }}/bin:$PATH
+          export PATH=/opt/python/${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION }}/bin:$PATH
           python -V
           bash .github/workflows/scripts_new/manylinux_wheel/3_check.sh
       - uses: actions/upload-artifact@v4
