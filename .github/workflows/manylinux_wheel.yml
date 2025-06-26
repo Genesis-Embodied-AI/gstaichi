@@ -32,10 +32,40 @@ jobs:
         with:
           name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}
           path: dist/*.whl
+
+  upload_to_storaage:
+    name: Manylinux wheel upload
+    runs-on: ubuntu-22.04
+    needs: build_wheel
+    environment: aws_storage
+    strategy:
+      matrix:
+        PYTHON_CP_VERSION: ['cp310']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - uses: actions/download-artifact@v4
+        with:
+          name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}
+      - name: 'Upload wheel to aws s3 storage'
+        run: |
+          set -x
+          ls -l *.whl
+          mkdir -p dist
+          mv *.whl dist/
+          aws s3 ls
+          aws s3 ls s3://genesis-ai-compiler/
+          aws s3 sync dist/ s3://genesis-ai-compiler/ci/taichi/${GITHUB_SHA:0:7}/${{ matrix.PYTHON_CP_VERSION }}/
   test_wheel:
     name: Manylinux wheel Test
     runs-on: ubuntu-22.04
-    needs: build_wheel
+    needs: upload_to_storaage
+    environment: aws_storage
     strategy:
       matrix:
         include:
@@ -44,15 +74,30 @@ jobs:
         # PYTHON_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      # - uses: actions/download-artifact@v4
+      #   with:
+      #     name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Download artifact
+        run: |
+          set -x
+          aws s3 ls s3://genesis-ai-compiler/ci/taichi/${GITHUB_SHA:0:7}/
+          aws s3 ls s3://genesis-ai-compiler/ci/taichi/${GITHUB_SHA:0:7}/${{ matrix.PYTHON_CP_VERSION }}/
+          aws s3 sync s3://genesis-ai-compiler/ci/taichi/${GITHUB_SHA:0:7}/${{ matrix.PYTHON_VERSION }}/ dist/
       - name: Python check
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.PYTHON_VERSION }}
       - name: manylinux install wheel
         run: |
+          set -x
+          ls -l
+          ls -l dist/
           bash .github/workflows/scripts_new/manylinux_wheel/4_install_wheel.sh
       - name: manylinux test
         run: |
