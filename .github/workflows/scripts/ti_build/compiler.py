@@ -58,6 +58,7 @@ def setup_clang(as_compiler=True) -> None:
         raise RuntimeError(f"Unsupported platform: {u.system} {u.machine}")
 
     cmake_args["CLANG_EXECUTABLE"] = clang
+    cmake_args["CMAKE_CXX_COMPILER_WORKS"] = "1"
 
     if as_compiler:
         cc = os.environ.get("CC")
