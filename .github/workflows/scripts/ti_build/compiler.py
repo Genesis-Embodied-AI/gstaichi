@@ -35,9 +35,8 @@ def setup_clang(as_compiler=True) -> None:
     if u.system == "Linux":
         for v in ("-15", "-14", "-13", "-12", "-11", "-10", ""):
             clang = shutil.which(f"clang{v}")
-            if clang is not None:
-                clangpp = shutil.which(f"clang++{v}")
-                assert clangpp
+            clangpp = shutil.which(f"clang++{v}")
+            if clang is not None and clangpp is not None:
                 break
         else:
             error("Could not find clang of any version")
