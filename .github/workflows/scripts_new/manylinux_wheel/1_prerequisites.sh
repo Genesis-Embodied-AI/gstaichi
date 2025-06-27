@@ -3,7 +3,7 @@
 set -ex
 
 # yum update
-yum install -y git libXrandr-devel libXinerama-devel libXcursor-devel libXi-devel
+yum install -y git wget libXrandr-devel libXinerama-devel libXcursor-devel libXi-devel
 git config --global --add safe.directory /__w/taichi/taichi
 git submodule update --init --jobs 2
 
