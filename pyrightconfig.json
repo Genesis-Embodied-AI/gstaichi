@@ -1,0 +1,6 @@
+{
+    "reportInvalidTypeForm": "warning",
+    "include": ["python"],
+    "stubPath": "./stubs",
+    "extraPaths": ["./stubs"]
+}

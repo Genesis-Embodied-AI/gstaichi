@@ -1,3 +1,5 @@
+# type: ignore
+
 # Instant-NGP renderer implemented using Taichi
 # Author : Linyou (linyoutian.loyot@gmail.com)
 # Original code at https://github.com/Linyou/taichi-ngp-renderer

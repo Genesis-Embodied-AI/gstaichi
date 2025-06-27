@@ -1,3 +1,5 @@
+# type: ignore
+
 import math
 import numbers
 import os

@@ -1,3 +1,5 @@
+# type: ignore
+
 # Solve Poisson's equation on an NxN grid using MGPCG
 import numpy as np
 

@@ -1,3 +1,5 @@
+# type: ignore
+
 # MPM-MLS in 88 lines of Taichi code, originally created by @yuanming-hu
 import taichi as ti
 

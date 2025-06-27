@@ -1,3 +1,5 @@
+# type: ignore
+
 import math
 
 from taichi.lang import impl, ops

@@ -1,3 +1,5 @@
+# type: ignore
+
 from taichi.lang import impl
 
 

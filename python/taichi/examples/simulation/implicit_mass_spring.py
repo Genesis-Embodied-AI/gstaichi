@@ -1,3 +1,5 @@
+# type: ignore
+
 # https://www.cs.cmu.edu/~baraff/papers/sig98.pdf
 import argparse
 
