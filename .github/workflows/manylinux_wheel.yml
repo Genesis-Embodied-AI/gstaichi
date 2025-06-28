@@ -88,7 +88,7 @@ jobs:
           set -x
           aws s3 ls s3://genesis-ai-compiler/ci/taichi/${GITHUB_SHA:0:7}/
           aws s3 ls s3://genesis-ai-compiler/ci/taichi/${GITHUB_SHA:0:7}/${{ matrix.PYTHON_CP_VERSION }}/
-          aws s3 sync s3://genesis-ai-compiler/ci/taichi/${GITHUB_SHA:0:7}/${{ matrix.PYTHON_VERSION }}/ dist/
+          aws s3 sync s3://genesis-ai-compiler/ci/taichi/${GITHUB_SHA:0:7}/${{ matrix.PYTHON_CP_VERSION }}/ dist/
       - name: Python check
         uses: actions/setup-python@v4
         with:
