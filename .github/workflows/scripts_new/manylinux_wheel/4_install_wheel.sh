@@ -4,7 +4,7 @@ set -ex
 
 find . -cmin -1 -name '*.whl
 find . -name '*.whl
-ls -lh *.whl
+ls -lh dist/*.whl
 
 python -V
 pip -V
