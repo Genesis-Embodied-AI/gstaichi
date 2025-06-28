@@ -31,7 +31,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}
-          path: dist/*.whl
+          path: /wheelhouse/*.whl
 
   upload_to_storaage:
     name: Manylinux wheel upload
