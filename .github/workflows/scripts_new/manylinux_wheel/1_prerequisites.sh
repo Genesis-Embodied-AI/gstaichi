@@ -20,4 +20,4 @@ ln -s /usr/lib64/libstdc++.so.6 /usr/lib64/libstdc++.so
 
 # since we are linking statically
 # and looks like this installs the same version of libstdc++-static as libstdc++
-yum install libstdc++-static
+yum install -y libstdc++-static
