@@ -58,8 +58,6 @@ jobs:
           ls -l *.whl
           mkdir -p dist
           mv *.whl dist/
-          aws s3 ls
-          aws s3 ls s3://genesis-ai-compiler/
           aws s3 sync dist/ s3://genesis-ai-compiler/ci/taichi/${GITHUB_SHA:0:7}/${{ matrix.PYTHON_CP_VERSION }}/
   test_wheel:
     name: Manylinux wheel Test
@@ -83,8 +81,6 @@ jobs:
       - name: Download artifact
         run: |
           set -x
-          aws s3 ls s3://genesis-ai-compiler/ci/taichi/${GITHUB_SHA:0:7}/
-          aws s3 ls s3://genesis-ai-compiler/ci/taichi/${GITHUB_SHA:0:7}/${{ matrix.PYTHON_CP_VERSION }}/
           aws s3 sync s3://genesis-ai-compiler/ci/taichi/${GITHUB_SHA:0:7}/${{ matrix.PYTHON_CP_VERSION }}/ dist/
       - name: Python check
         uses: actions/setup-python@v4
@@ -93,7 +89,6 @@ jobs:
       - name: manylinux install wheel
         run: |
           set -x
-          ls -l
           ls -l dist/
           bash .github/workflows/scripts_new/manylinux_wheel/4_install_wheel.sh
       - name: manylinux test
