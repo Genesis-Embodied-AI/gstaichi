@@ -74,9 +74,6 @@ jobs:
         # PYTHON_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
     steps:
       - uses: actions/checkout@v4
-      # - uses: actions/download-artifact@v4
-      #   with:
-      #     name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
