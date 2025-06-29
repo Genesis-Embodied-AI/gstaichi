@@ -17,8 +17,11 @@ reveal_type(taichi._lib.core.taichi_python)
             f.write(test_code)
 
         # if no types, this will fail
-        subprocess.check_output([
-            sys.executable,
-            "-m", "mypy",
-            test_file,
-        ])
+        subprocess.check_output(
+            [
+                sys.executable,
+                "-m",
+                "mypy",
+                test_file,
+            ]
+        )

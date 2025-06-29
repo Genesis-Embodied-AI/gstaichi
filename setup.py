@@ -113,19 +113,15 @@ class Clean(clean):
 
 class BDistWheelWithStubs(_bdist_wheel):
     def run(self):
-        build_lib = self.get_finalized_command('build_py').build_lib
+        build_lib = self.get_finalized_command("build_py").build_lib
         taichi_path = path.join(path.dirname(path.dirname(build_lib)), "cmake-install/python")
         env = os.environ.copy()
-        env['PYTHONPATH'] = taichi_path + os.pathsep + env.get('PYTHONPATH', '')
+        env["PYTHONPATH"] = taichi_path + os.pathsep + env.get("PYTHONPATH", "")
 
         # command that works:
         # PYTHONPATH=_skbuild/linux-x86_64-3.10/cmake-install/python pybind11-stubgen \
         #     taichi._lib.core.taichi_python --ignore-all-errors
-        cmd_line = [
-            "pybind11-stubgen",
-            "taichi._lib.core.taichi_python",
-            "--ignore-all-errors"
-        ]
+        cmd_line = ["pybind11-stubgen", "taichi._lib.core.taichi_python", "--ignore-all-errors"]
         print(" ".join(cmd_line))
         subprocess.check_call(cmd_line, env=env)
         stub_filepath = "stubs/taichi/_lib/core/taichi_python.pyi"
