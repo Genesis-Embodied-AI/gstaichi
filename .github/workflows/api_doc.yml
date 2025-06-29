@@ -1,17 +1,14 @@
 name: api docs build
 
 on:
-  # pull_request:
-  #   branches:
-  #     - main
   workflow_run:
     workflows: ["Manylinux wheel build"]
     types:
-      - completed  
+      - completed
   workflow_dispatch:
 
 concurrency:
-  group: gh-pages-deploy-${{ github.ref }}
+  group: gh-pages-deploy-${{ github.head_ref }}
   cancel-in-progress: true
 permissions:
   contents: write
