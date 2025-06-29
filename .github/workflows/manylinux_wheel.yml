@@ -1,0 +1,103 @@
+name: Manylinux wheel build
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  build_wheel:
+    name: Manylinux wheel Build
+    runs-on: ubuntu-22.04
+    container: quay.io/pypa/manylinux_2_28_x86_64:latest
+    strategy:
+      matrix:
+        PYTHON_CP_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: manylinux wheel prerequisites
+        run: |
+          bash .github/workflows/scripts_new/manylinux_wheel/1_prerequisites.sh
+      - name: manylinux wheel build
+        run: |
+          export PATH=/opt/python/${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION }}/bin:$PATH
+          python -V
+          bash .github/workflows/scripts_new/manylinux_wheel/2_build.sh
+      - name: manylinux wheel check
+        run: |
+          export PATH=/opt/python/${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION }}/bin:$PATH
+          python -V
+          bash .github/workflows/scripts_new/manylinux_wheel/3_check.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}
+          path: wheelhouse/*.whl
+
+  upload_to_storaage:
+    name: Manylinux wheel upload
+    runs-on: ubuntu-22.04
+    needs: build_wheel
+    environment: aws_storage
+    strategy:
+      matrix:
+        PYTHON_CP_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - uses: actions/download-artifact@v4
+        with:
+          name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}
+      - name: 'Upload wheel to aws s3 storage'
+        run: |
+          set -x
+          ls -l *.whl
+          mkdir -p dist
+          mv *.whl dist/
+          aws s3 sync dist/ s3://genesis-ai-compiler/ci/taichi/${GITHUB_SHA:0:7}/${{ matrix.PYTHON_CP_VERSION }}/
+  test_wheel:
+    name: Manylinux wheel Test
+    runs-on: ubuntu-22.04
+    needs: upload_to_storaage
+    environment: aws_storage
+    strategy:
+      matrix:
+        include:
+          - PYTHON_CP_VERSION: 'cp310'
+            PYTHON_VERSION: '3.10'
+          - PYTHON_CP_VERSION: 'cp311'
+            PYTHON_VERSION: '3.11'
+          - PYTHON_CP_VERSION: 'cp312'
+            PYTHON_VERSION: '3.12'
+          - PYTHON_CP_VERSION: 'cp313'
+            PYTHON_VERSION: '3.13'
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Download artifact
+        run: |
+          set -x
+          aws s3 sync s3://genesis-ai-compiler/ci/taichi/${GITHUB_SHA:0:7}/${{ matrix.PYTHON_CP_VERSION }}/ dist/
+      - name: Python check
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.PYTHON_VERSION }}
+      - name: manylinux install wheel
+        run: |
+          set -x
+          ls -l dist/
+          bash .github/workflows/scripts_new/manylinux_wheel/4_install_wheel.sh
+      - name: manylinux test
+        run: |
+          bash .github/workflows/scripts_new/manylinux_wheel/5_test.sh
