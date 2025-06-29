@@ -8,18 +8,18 @@
 import glob
 import multiprocessing
 import os
-from os import path
 import platform
 import shutil
 import subprocess
 import sys
 from distutils.command.clean import clean
 from distutils.dir_util import remove_tree
-from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
+from os import path
 
 from setuptools import find_packages
 from skbuild import setup
 from skbuild.command.egg_info import egg_info
+from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
 
 root_dir = os.path.dirname(os.path.abspath(__file__))
 

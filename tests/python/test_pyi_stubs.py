@@ -1,8 +1,9 @@
-from tests import test_utils
-import tempfile
-import sys
 import os
 import subprocess
+import sys
+import tempfile
+
+from tests import test_utils
 
 
 @test_utils.test()
