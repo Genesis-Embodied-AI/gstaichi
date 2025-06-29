@@ -12,6 +12,7 @@ jobs:
     strategy:
       matrix:
         PYTHON_CP_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
+      fail-fast: false
     steps:
       - uses: actions/checkout@v4
       - name: manylinux wheel prerequisites
@@ -40,6 +41,7 @@ jobs:
     strategy:
       matrix:
         PYTHON_CP_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
+      fail-fast: false
     steps:
       - uses: actions/checkout@v4
       - name: Configure AWS credentials
@@ -74,6 +76,7 @@ jobs:
             PYTHON_VERSION: '3.12'
           - PYTHON_CP_VERSION: 'cp313'
             PYTHON_VERSION: '3.13'
+      fail-fast: false
     steps:
       - uses: actions/checkout@v4
       - name: Configure AWS credentials
