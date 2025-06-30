@@ -1,12 +1,13 @@
 name: api docs build
 
 on:
-  workflow_run:
-    workflows: ["Manylinux wheel build"]
-    types:
-      - completed
+  workflow_call:
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
   workflow_dispatch:
-
 concurrency:
   group: gh-pages-deploy-${{ github.head_ref }}
   cancel-in-progress: true
