@@ -2,6 +2,11 @@ name: api docs build
 
 on:
   workflow_call:
+    inputs:
+      head_ref:
+        description: 'The head ref (branch name or PR ref)'
+        required: true
+        type: string
     secrets:
       AWS_ACCESS_KEY_ID:
         required: true
@@ -9,7 +14,7 @@ on:
         required: true
   workflow_dispatch:
 concurrency:
-  group: gh-pages-deploy-${{ github.head_ref }}
+  group: gh-pages-deploy-${{ github.event.inputs.head_ref || github.head_ref }}
   cancel-in-progress: true
 permissions:
   contents: write
@@ -48,6 +53,6 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
-          destination_dir: ${{ github.head_ref }}
+          destination_dir: ${{ github.event.inpus.head_ref || github.head_ref }}
           keep_files: true
           publish_branch: gh-pages
