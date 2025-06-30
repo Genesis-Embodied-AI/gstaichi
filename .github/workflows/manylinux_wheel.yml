@@ -102,9 +102,9 @@ jobs:
         run: |
           bash .github/workflows/scripts_new/manylinux_wheel/5_test.sh
 
-  api_docs:
-    uses: ./.github/workflows/api_doc.yml
-    needs: upload_to_storage
-    secrets:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  # api_docs:
+  #   uses: ./.github/workflows/api_doc.yml
+  #   needs: upload_to_storage
+  #   secrets:
+  #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
