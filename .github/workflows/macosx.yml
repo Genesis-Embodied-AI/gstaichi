@@ -5,13 +5,23 @@ on:
       - main
   workflow_dispatch:
 jobs:
-  build:
+  build_mac_14_15:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14, macos-15]
+        include:
+          - MAC_OS_VERSION: 14
+            PYTHON_CP_VERSION: cp310
+          - MAC_OS_VERSION: 14
+            PYTHON_CP_VERSION: cp311
+          - MAC_OS_VERSION: 14
+            PYTHON_CP_VERSION: cp312
+          - MAC_OS_VERSION: 14
+            PYTHON_CP_VERSION: cp313
+          - MAC_OS_VERSION: 15
+            PYTHON_CP_VERSION: cp310
     name: Mac OS Build
-    runs-on: ${{ matrix.os}}
+    runs-on: macos-${{ matrix.MAC_OS_VERSION }}
     steps:
       - uses: actions/checkout@v4
       - name: Mac OS X prerequisites
@@ -26,3 +36,44 @@ jobs:
       - name: Mac OS X test
         run: |
           bash .github/workflows/scripts_new/macosx/4_test.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac_wheel_${{ matrix.MAC_OS_VERSION }}_${{ matrix.PYTHON_CP_VERSION }}
+          path: dist/*.whl
+  upload_to_storage:
+    name: Mac wheel upload
+    runs-on: ubuntu-22.04
+    needs: build_mac_14_15
+    environment: aws_storage
+    strategy:
+      matrix:
+        include:
+          - MAC_OS_VERSION: 14
+            PYTHON_CP_VERSION: cp310
+          - MAC_OS_VERSION: 14
+            PYTHON_CP_VERSION: cp311
+          - MAC_OS_VERSION: 14
+            PYTHON_CP_VERSION: cp312
+          - MAC_OS_VERSION: 14
+            PYTHON_CP_VERSION: cp313
+          - MAC_OS_VERSION: 15
+            PYTHON_CP_VERSION: cp310
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - uses: actions/download-artifact@v4
+        with:
+          name: manylinux_wheel_${{ matrix.MAC_OS_VERSION }}_${{ matrix.PYTHON_CP_VERSION }}
+      - name: 'Upload wheel to aws s3 storage'
+        run: |
+          set -x
+          ls -l *.whl
+          mkdir -p dist
+          mv *.whl dist/
+          aws s3 sync dist/ s3://genesis-ai-compiler/ci/taichi/${GITHUB_SHA:0:7}/mac-${{ matrix.MAC_OS_VERSION }}-${{ matrix.PYTHON_CP_VERSION }}/
