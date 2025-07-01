@@ -17,12 +17,12 @@ reveal_type(taichi._lib.core.taichi_python)
         with open(test_file, "w") as f:
             f.write(test_code)
 
-        # if no types, this will fail
-        subprocess.check_output(
+        res = subprocess.check_output(
             [
                 sys.executable,
                 "-m",
-                "mypy",
+                "pyright",
                 test_file,
             ]
-        )
+        ).decode("utf-8")
+        assert "unknown" not in res.lower()
