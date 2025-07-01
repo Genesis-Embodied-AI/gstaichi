@@ -47,7 +47,7 @@ jobs:
           name: win_wheel_${{ matrix.PYTHON_CP_VERSION }}
           path: dist/*.whl
   upload_to_storage:
-    name: Mac wheel upload
+    name: Windows wheel upload
     runs-on: ubuntu-22.04
     needs: win_build
     environment: aws_storage
