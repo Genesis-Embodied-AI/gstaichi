@@ -6,7 +6,6 @@ requires = [
     "pybind11",
     "pybind11-stubgen",
     "cmake>=3.11",
-    "scikit-build",
     "ninja; platform_system != 'Windows'",
     "cffi>=1.16.0",
 ]
