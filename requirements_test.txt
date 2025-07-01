@@ -16,4 +16,3 @@ nbmake
 marko
 PyYAML
 pyevtk
-wget
