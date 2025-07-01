@@ -99,13 +99,10 @@ else()
     # However, some of these "constexpr" are debug flags and will be manually enabled upon debugging.
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unneeded-internal-declaration ")
 
-    # FIXME: Check why Android don't support check_cxx_compiler_flag
-    if (NOT ANDROID)
-        check_cxx_compiler_flag("-Wno-unused-but-set-variable" CXX_HAS_Wno_unused_but_set_variable)
-        if (${CXX_HAS_Wno_unused_but_set_variable})
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-but-set-variable ")
-        endif()
-    endif()
+    # if we don't set -Wno-unused-but-set-variable, then Eigen build will fail anyway,
+    # in a way that is not obvious why, without very close inspection.
+    # So we will simply set it
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-but-set-variable ")
 endif ()
 
 # (penguinliong) When building for iOS with Xcode `CMAKE_SYSTEM_PROCESSOR`
