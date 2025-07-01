@@ -69,7 +69,7 @@ jobs:
           aws-region: us-east-1
       - uses: actions/download-artifact@v4
         with:
-          name: manylinux_wheel_${{ matrix.MAC_OS_VERSION }}_${{ matrix.PYTHON_CP_VERSION }}
+          name: mac_wheel_${{ matrix.MAC_OS_VERSION }}_${{ matrix.PYTHON_CP_VERSION }}
       - name: 'Upload wheel to aws s3 storage'
         run: |
           set -x
