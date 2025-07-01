@@ -23,10 +23,6 @@ def setup_llvm() -> None:
         if cmake_args.get_effective("TI_WITH_AMDGPU"):
             out = get_cache_home() / "llvm15-amdgpu-005"
             url = "https://github.com/GaleSeLee/assets/releases/download/v0.0.5/taichi-llvm-15.0.0-linux.zip"
-        elif is_manylinux2014():
-            # FIXME: prebuilt llvm15 on ubuntu didn't work on manylinux2014 image of centos. Once that's fixed, remove this hack.
-            out = get_cache_home() / "llvm15-manylinux2014"
-            url = "https://github.com/ailzhang/torchhub_example/releases/download/0.3/taichi-llvm-15-linux.zip"
         else:
             out = get_cache_home() / "llvm15"
             url = "https://github.com/taichi-dev/taichi_assets/releases/download/llvm15/taichi-llvm-15-linux.zip"
