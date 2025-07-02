@@ -18,6 +18,7 @@ from distutils.dir_util import remove_tree
 from setuptools import find_packages
 from skbuild import setup
 from skbuild.command.egg_info import egg_info
+from wheel.bdist_wheel import bdist_wheel
 
 root_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -107,6 +108,30 @@ class Clean(clean):
                 print(f"removing generated file {f}")
                 if not self.dry_run:
                     os.remove(f)
+
+
+class BDistWheelWithStubs(bdist_wheel):
+    def run(self):
+        build_lib = self.get_finalized_command("build_py").build_lib
+        taichi_path = os.path.join(os.path.dirname(os.path.dirname(build_lib)), "cmake-install/python")
+        env = os.environ.copy()
+        env["PYTHONPATH"] = taichi_path + os.pathsep + env.get("PYTHONPATH", "")
+
+        # command that works:
+        # PYTHONPATH=_skbuild/linux-x86_64-3.10/cmake-install/python pybind11-stubgen \
+        #     taichi._lib.core.taichi_python --ignore-all-errors
+        cmd_line = ["pybind11-stubgen", "taichi._lib.core.taichi_python", "--ignore-all-errors"]
+        print(" ".join(cmd_line))
+        subprocess.check_call(cmd_line, env=env)
+        stub_filepath = "stubs/taichi/_lib/core/taichi_python.pyi"
+        target_filepath = os.path.join(build_lib, "taichi/_lib/core/taichi_python.pyi")
+        py_typed_dst = os.path.join(build_lib, "taichi/_lib/core/py.typed")
+        os.makedirs(os.path.dirname(target_filepath), exist_ok=True)
+        print("copying ", stub_filepath, "to", target_filepath)
+        shutil.copy(stub_filepath, target_filepath)
+        with open(py_typed_dst, "w"):
+            pass  # creates an empty file
+        super().run()
 
 
 def get_cmake_args():
@@ -228,10 +253,15 @@ setup(
         "colorama",
         "dill",
         "rich",
+        "setuptools>=68.0.0",  # Required for Python 3.12+ compatibility
+        "cffi>=1.16.0",
     ],
     data_files=[
         (os.path.join("_lib", "runtime"), data_files),
     ],
+    package_data={
+        "taichi._lib.core": ["taichi_python.pyi", "py.typed"],
+    },
     keywords=["graphics", "simulation"],
     license="Apache Software License (http://www.apache.org/licenses/LICENSE-2.0)",
     include_package_data=True,
@@ -243,7 +273,11 @@ setup(
     classifiers=classifiers,
     cmake_args=get_cmake_args(),
     cmake_process_manifest_hook=cmake_install_manifest_filter,
-    cmdclass={"egg_info": EggInfo, "clean": Clean},
+    cmdclass={
+        "egg_info": EggInfo,
+        "clean": Clean,
+        "bdist_wheel": BDistWheelWithStubs,
+    },
     has_ext_modules=lambda: True,
 )
 

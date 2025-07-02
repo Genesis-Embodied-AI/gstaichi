@@ -1,3 +1,5 @@
+# type: ignore
+
 import taichi.lang.ops as ops_mod
 from taichi.lang.impl import static
 from taichi.lang.kernel_impl import func, pyfunc

@@ -1,3 +1,5 @@
+# type: ignore
+
 from contextlib import contextmanager
 
 from taichi._lib import core as _ti_core

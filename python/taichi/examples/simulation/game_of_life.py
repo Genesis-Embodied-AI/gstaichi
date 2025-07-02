@@ -1,3 +1,5 @@
+# type: ignore
+
 # Game of Life written in 100 lines of Taichi
 # In memory of John Horton Conway (1937 - 2020)
 

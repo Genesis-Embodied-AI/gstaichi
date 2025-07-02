@@ -1,3 +1,5 @@
+# type: ignore
+
 import functools
 import os
 import sys

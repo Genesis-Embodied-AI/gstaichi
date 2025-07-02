@@ -1,3 +1,5 @@
+# type: ignore
+
 import functools
 import numbers
 from collections.abc import Iterable

@@ -1,3 +1,5 @@
+# type: ignore
+
 import time
 from math import pi
 

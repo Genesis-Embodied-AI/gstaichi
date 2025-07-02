@@ -1,3 +1,5 @@
+# type: ignore
+
 import numbers
 
 from taichi._lib import core as _ti_core
