@@ -2750,7 +2750,7 @@ LLVMCompiledTask TaskCodeGenLLVM::run_compilation() {
     }
   }
   const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
-  if (dump_ir_env != nullptr) {
+  if (dump_ir_env != nullptr && std::string(dump_ir_env) == "1") {
     std::filesystem::create_directories(IR_DUMP_DIR);
 
     std::filesystem::path filename = IR_DUMP_DIR / (kernel->name + "_llvm.ll");
@@ -2762,7 +2762,7 @@ LLVMCompiledTask TaskCodeGenLLVM::run_compilation() {
   }
 
   const char *load_ir_env = std::getenv(LOAD_IR_ENV.data());
-  if (load_ir_env != nullptr) {
+  if (load_ir_env != nullptr && std::string(load_ir_env) == "1") {
     std::filesystem::path filename = IR_DUMP_DIR / (kernel->name + "_llvm.ll");
     llvm::SMDiagnostic err;
     auto loaded_module =

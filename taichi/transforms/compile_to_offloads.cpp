@@ -41,7 +41,7 @@ void compile_to_offloads(IRNode *ir,
   }
 
   const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
-  if (dump_ir_env != nullptr) {
+  if (dump_ir_env != nullptr && std::string(dump_ir_env) == "1") {
     std::filesystem::create_directories(IR_DUMP_DIR);
 
     std::filesystem::path filename =

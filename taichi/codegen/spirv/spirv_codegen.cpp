@@ -2719,7 +2719,7 @@ void KernelCodegen::run(TaichiKernelAttributes &kernel_attribs,
 
   {
     const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
-    if (dump_ir_env != nullptr) {
+    if (dump_ir_env != nullptr && std::string(dump_ir_env) == "1") {
       std::filesystem::create_directories(IR_DUMP_DIR);
 
       std::filesystem::path filename =
@@ -2773,7 +2773,7 @@ void KernelCodegen::run(TaichiKernelAttributes &kernel_attribs,
 
     {
       const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
-      if (dump_ir_env != nullptr) {
+      if (dump_ir_env != nullptr && std::string(dump_ir_env) == "1") {
         std::filesystem::create_directories(IR_DUMP_DIR);
         std::string spirv_asm;
         spirv_tools_->Disassemble(optimized_spv, &spirv_asm);
