@@ -14,12 +14,11 @@ import subprocess
 import sys
 from distutils.command.clean import clean
 from distutils.dir_util import remove_tree
-from os import path
 
 from setuptools import find_packages
 from skbuild import setup
 from skbuild.command.egg_info import egg_info
-from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
+from wheel.bdist_wheel import bdist_wheel
 
 root_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -111,10 +110,10 @@ class Clean(clean):
                     os.remove(f)
 
 
-class BDistWheelWithStubs(_bdist_wheel):
+class BDistWheelWithStubs(bdist_wheel):
     def run(self):
         build_lib = self.get_finalized_command("build_py").build_lib
-        taichi_path = path.join(path.dirname(path.dirname(build_lib)), "cmake-install/python")
+        taichi_path = os.path.join(os.path.dirname(os.path.dirname(build_lib)), "cmake-install/python")
         env = os.environ.copy()
         env["PYTHONPATH"] = taichi_path + os.pathsep + env.get("PYTHONPATH", "")
 
@@ -125,7 +124,7 @@ class BDistWheelWithStubs(_bdist_wheel):
         print(" ".join(cmd_line))
         subprocess.check_call(cmd_line, env=env)
         stub_filepath = "stubs/taichi/_lib/core/taichi_python.pyi"
-        target_filepath = path.join(build_lib, "taichi/_lib/core/taichi_python.pyi")
+        target_filepath = os.path.join(build_lib, "taichi/_lib/core/taichi_python.pyi")
         py_typed_dst = os.path.join(build_lib, "taichi/_lib/core/py.typed")
         os.makedirs(os.path.dirname(target_filepath), exist_ok=True)
         print("copying ", stub_filepath, "to", target_filepath)
