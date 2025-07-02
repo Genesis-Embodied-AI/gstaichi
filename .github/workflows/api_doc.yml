@@ -16,8 +16,8 @@ on:
 concurrency:
   group: gh-pages-deploy-${{ github.event.inputs.head_ref || github.head_ref }}
   cancel-in-progress: true
-permissions:
-  contents: write
+# permissions:
+#   contents: write
 jobs:
   deploy:
     runs-on: ubuntu-latest
