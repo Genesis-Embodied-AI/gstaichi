@@ -10,7 +10,7 @@ def test_pyi_stubs(tmpdir):
 import taichi._lib.core.taichi_python
 reveal_type(taichi._lib.core.taichi_python)
 """
-    test_file = tmpdir.join("tmp_mypy_test.py")
+    test_file = tmpdir / "tmp_mypy_test.py"
     test_file.write(test_code)
 
     res = subprocess.check_output([sys.executable, "-m", "pyright", test_file]).decode("utf-8")
