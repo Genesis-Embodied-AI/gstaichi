@@ -16,3 +16,4 @@ nbmake
 marko
 PyYAML
 pyevtk
+pyright
