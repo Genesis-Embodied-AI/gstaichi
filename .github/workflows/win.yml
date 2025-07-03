@@ -11,20 +11,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - PYTHON_CP_VERSION: 'cp310'
-            PYTHON_VERSION: '3.10'
-          - PYTHON_CP_VERSION: 'cp311'
-            PYTHON_VERSION: '3.11'
-          - PYTHON_CP_VERSION: 'cp312'
-            PYTHON_VERSION: '3.12'
-          - PYTHON_CP_VERSION: 'cp313'
-            PYTHON_VERSION: '3.13'
+        PYTHON_CP_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
     steps:
       - name: Python check
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ MATRIX.PYTHON_VERSION}}
+          python-version: ${{ MATRIX.PYTHON_CP_VERSION}}
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -53,11 +45,7 @@ jobs:
     environment: aws_storage
     strategy:
       matrix:
-        include:
-          - PYTHON_CP_VERSION: cp310
-          - PYTHON_CP_VERSION: cp311
-          - PYTHON_CP_VERSION: cp312
-          - PYTHON_CP_VERSION: cp313
+        PYTHON_CP_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
