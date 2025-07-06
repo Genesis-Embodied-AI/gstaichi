@@ -34,7 +34,6 @@ def test_print_docs_scalar_self_documenting_exp(capfd):
 
     import os
 
-    os.system("cat /tmp/foo.txt")
     out, err = capfd.readouterr()
     out = grep(out, "TEST_PRINT:")
     expected_out = """TEST_PRINT: a[0] = 1.0"""
