@@ -4,6 +4,8 @@ on:
     branches:
       - main
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   build_wheel:
     name: Manylinux wheel Build
@@ -33,7 +35,7 @@ jobs:
           name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}
           path: wheelhouse/*.whl
 
-  upload_to_storaage:
+  upload_to_storage:
     name: Manylinux wheel upload
     runs-on: ubuntu-22.04
     needs: build_wheel
@@ -63,7 +65,7 @@ jobs:
   test_wheel:
     name: Manylinux wheel Test
     runs-on: ubuntu-22.04
-    needs: upload_to_storaage
+    needs: upload_to_storage
     environment: aws_storage
     strategy:
       matrix:
@@ -101,3 +103,11 @@ jobs:
       - name: manylinux test
         run: |
           bash .github/workflows/scripts_new/manylinux_wheel/5_test.sh
+  api_docs:
+    uses: ./.github/workflows/api_doc.yml
+    needs: upload_to_storage
+    with:
+      head_ref: ${{ github.head_ref }}
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
