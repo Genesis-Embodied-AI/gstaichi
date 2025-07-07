@@ -1,3 +1,5 @@
+# type: ignore
+
 from math import sqrt
 
 from taichi.lang import misc

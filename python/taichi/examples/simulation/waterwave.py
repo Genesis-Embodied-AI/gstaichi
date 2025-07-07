@@ -1,3 +1,5 @@
+# type: ignore
+
 # Water wave effect partially based on shallow water equations
 # https://en.wikipedia.org/wiki/Shallow_water_equations#Non-conservative_form
 

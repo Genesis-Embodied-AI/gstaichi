@@ -72,12 +72,13 @@ option(TI_WITH_BACKTRACE "Use backward-cpp to print out C++ stack trace upon fai
 option(TI_GENERATE_PDB "Generate Program Database (PDB) files (will make compilation uncacheable)" OFF)
 option(TI_WITH_LTO "Enable Link Time Optimization (LTO) (affects Windows + MSVC for now)" OFF)  # wheel-tag: lto
 
-if(LINUX OR APPLE)
-    if (NOT IOS)
-        # (penguinliong) Not compatible with -fembed-bitcode. Not sure where it
-        # comes from; probably a XCode preset?
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffunction-sections -fdata-sections")
-    endif()
+if((LINUX OR APPLE) AND NOT IOS)
+      # (penguinliong) Not compatible with -fembed-bitcode. Not sure where it
+      # comes from; probably a XCode preset?
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffunction-sections -fdata-sections")
+endif()
+
+if(APPLE)
     add_definitions(-D__MAC_OS_X_VERSION_MIN_REQUIRED=140000)
     add_definitions(-DTARGET_OS_OSX)
 endif()

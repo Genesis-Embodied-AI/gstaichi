@@ -1,3 +1,5 @@
+# type: ignore
+
 from taichi.lang.ast.ast_transformer import ASTTransformer
 from taichi.lang.ast.ast_transformer_utils import ASTTransformerContext
 

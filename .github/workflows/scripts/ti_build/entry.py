@@ -8,6 +8,8 @@ import platform
 import subprocess
 import sys
 
+import psutil
+
 # -- third party --
 # -- own --
 from . import misc
@@ -98,9 +100,26 @@ def setup_basic_build_env():
     return sccache, python, pip
 
 
+def _is_sccache_running():
+    for proc in psutil.process_iter(attrs=["name", "cmdline"]):
+        try:
+            if proc.info["cmdline"] and "sccache" in proc.info["cmdline"][0]:
+                return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    return False
+
+
 def action_wheel():
     setup_os_pkgs()
     sccache, python, pip = setup_basic_build_env()
+
+    # Explicitly start sccache server before the build
+    if _is_sccache_running():
+        print("sccache already appears to be running")
+    else:
+        sccache("--start-server")
+
     install_build_wheel_deps(python, pip)
     handle_alternate_actions()
     build_wheel(python, pip)

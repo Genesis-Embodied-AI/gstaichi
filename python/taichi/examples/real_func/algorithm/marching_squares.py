@@ -1,3 +1,5 @@
+# type: ignore
+
 """
 Marching squares algorithm in Taichi.
 See "https://en.wikipedia.org/wiki/Marching_squares"

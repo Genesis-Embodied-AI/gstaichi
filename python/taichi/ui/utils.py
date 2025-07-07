@@ -1,3 +1,5 @@
+# type: ignore
+
 import platform
 from math import asin, cos, sin
 

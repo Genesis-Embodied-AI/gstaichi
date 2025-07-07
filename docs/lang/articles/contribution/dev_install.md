@@ -434,6 +434,14 @@ These can serve as a reference if you get stuck. Whilst the CI configuration won
 - [3_install.sh](../../../../.github/workflows/scripts_new/linux_x86/3_install.sh)
 - [4_test.sh](../../../../.github/workflows/scripts_new/linux_x86/4_test.sh)
 
+### Mac OS X 14 and 15
+
+- [Github runner configuration](../../../../.github/workflows/macosx.yml)
+- [1_prerequisites.sh](../../../../.github/workflows/scripts_new/macosx/1_prerequisites.sh)
+- [2_build.sh](../../../../.github/workflows/scripts_new/macosx/2_build.sh)
+- [3_install.sh](../../../../.github/workflows/scripts_new/macosx/3_install.sh)
+- [4_test.sh](../../../../.github/workflows/scripts_new/macosx/4_test.sh)
+
 ### Windows 2025 Server Core
 
 - [Github runner configuration](../../../../.github/workflows/win.yml)
