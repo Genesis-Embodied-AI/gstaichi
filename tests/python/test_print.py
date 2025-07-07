@@ -10,10 +10,13 @@ vk_on_mac = (ti.vulkan, "Darwin")
 cuda_on_windows = (ti.cuda, "Windows")
 
 
-def grep(target: str, pattern: str) -> str:
+def filter_lines(target: str, match: str) -> str:
+    """
+    Returns target string, with only lines included that contains `match` string
+    """
     lines = []
     for line in target.split("\n"):
-        if pattern in line:
+        if match in line:
             lines.append(line)
     return "\n".join(lines)
 
@@ -35,7 +38,7 @@ def test_print_docs_scalar_self_documenting_exp(capfd):
     import os
 
     out, err = capfd.readouterr()
-    out = grep(out, "TEST_PRINT:")
+    out = filter_lines(out, "TEST_PRINT:")
     expected_out = """TEST_PRINT: a[0] = 1.0"""
     assert out == expected_out and err == ""
 
@@ -53,7 +56,7 @@ def test_print_docs_matrix_self_documenting_exp(capfd):
     ti.sync()
 
     out, err = capfd.readouterr()
-    out = grep(out, "TEST_PRINT:")
+    out = filter_lines(out, "TEST_PRINT:")
     expected_out = """TEST_PRINT: m = [[20, 300, 4000], [50000, 600000, 7e+06]]"""
     assert out == expected_out and err == ""
 
@@ -149,7 +152,7 @@ def test_print_matrix_string_format_with_spec(capfd):
     ti.sync()
 
     out, err = capfd.readouterr()
-    out = grep(out, "TEST_PRINT: ")
+    out = filter_lines(out, "TEST_PRINT: ")
     expected_out = """TEST_PRINT: hello [[-1.00, 0.00, 0.00], [0.00, 0.00, 0.00]] world!
 TEST_PRINT: [233.300, 233.300, 233.300] [[-4.286326e-03, 0.000000e+00, 0.000000e+00], [0.000000e+00, 0.000000e+00, 0.000000e+00]] [1.00, 1.00, 1.00]
 TEST_PRINT: hello [[0000000000, 0000000000, 0000000000], [0000000000, 0000000000, 0000000000]] world!"""
@@ -219,7 +222,7 @@ def test_print_matrix_fstring_with_spec(capfd):
     ti.sync()
 
     out, err = capfd.readouterr()
-    out = grep(out, "TEST_PRINT: ")
+    out = filter_lines(out, "TEST_PRINT: ")
     expected_out = """TEST_PRINT: hello [[-1.00, 0.00, 0.00], [0.00, 0.00, 0.00]] world!
 TEST_PRINT: [233.300, 233.300, 233.300] [[-4.286326e-03, 0.000000e+00, 0.000000e+00], [0.000000e+00, 0.000000e+00, 0.000000e+00]] [1.00, 1.00, 1.00]
 TEST_PRINT: hello [[00, 00, 00], [00, 00, 00]] world!"""
@@ -288,7 +291,7 @@ def test_print_docs_scalar(capfd):
     ti.sync()
 
     out, err = capfd.readouterr()
-    out = grep(out, "TEST_PRINT: ")
+    out = filter_lines(out, "TEST_PRINT: ")
     expected_out = """TEST_PRINT: a[0] = 1.000000
 TEST_PRINT: a[0] = 1.000000
 TEST_PRINT: a[0] = 1.0
@@ -329,7 +332,7 @@ def test_print_docs_matrix(capfd):
     ti.sync()
 
     out, err = capfd.readouterr()
-    out = grep(out, "TEST_PRINT: ")
+    out = filter_lines(out, "TEST_PRINT: ")
     expected_out = """TEST_PRINT: m = [[20.000000, 300.000000, 4000.000000], [50000.000000, 600000.000000, 7000000.000000]]
 TEST_PRINT: m = [[20.000000, 300.000000, 4000.000000], [50000.000000, 600000.000000, 7000000.000000]]
 TEST_PRINT: m = [[20.0, 300.0, 4000.0], [50000.0, 600000.0, 7000000.0]]
@@ -439,7 +442,7 @@ def test_print_string_format_with_spec(capfd):
     func(233.3)
     ti.sync()
     out, err = capfd.readouterr()
-    out = grep(out, "TEST_PRINT: ")
+    out = filter_lines(out, "TEST_PRINT: ")
     expected_out = """TEST_PRINT:  123
 TEST_PRINT: 123 abc
 TEST_PRINT: 1 2 0000000003
@@ -486,7 +489,7 @@ def test_print_string_format_with_positional_arg(capfd):
     func(233.3)
     ti.sync()
     out, err = capfd.readouterr()
-    out = grep(out, "TEST_PRINT: ")
+    out = filter_lines(out, "TEST_PRINT: ")
     expected_out = """TEST_PRINT: 1 2 3
 TEST_PRINT: 1 2 3
 TEST_PRINT: 1 3 2 233.300003 3 233.300003 3 233.300003"""
@@ -504,7 +507,7 @@ def test_print_string_format_with_positional_arg_with_spec(capfd):
     func(233.3)
     ti.sync()
     out, err = capfd.readouterr()
-    out = grep(out, "TEST_PRINT: ")
+    out = filter_lines(out, "TEST_PRINT: ")
     expected_out = """TEST_PRINT: 1 2 3
 TEST_PRINT: 1 02 0000000003
 TEST_PRINT: 1.0 3.00 2.000 2.3330e+02 3.00000 233.30000 3.00000 233.3"""
@@ -579,7 +582,7 @@ def test_print_fstring_with_spec(capfd):
     func(123, 4.56)
     ti.sync()
     out, err = capfd.readouterr()
-    out = grep(out, "TEST_PRINT: ")
+    out = filter_lines(out, "TEST_PRINT: ")
     expected_out = """TEST_PRINT: qwe 2 0000000005 123 4.6 4 True 1.23"""
     assert out == expected_out and err == ""
 
