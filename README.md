@@ -130,6 +130,7 @@ If you wish to try our experimental features or build Taichi Lang for your own e
 ## Documentation
 
 - [Technical documents](docs/lang/articles)
+- [API Reference](https://ideal-adventure-2n6lpyw.pages.github.io/main)
 
 ## Community activity [![Time period](https://images.repography.com/32602247/taichi-dev/taichi/recent-activity/RlhQybvihwEjfE7ngXyQR9tudBDYAvl27v-NVNMxUrg_badge.svg)](https://repography.com)
 [![Timeline graph](https://images.repography.com/32602247/taichi-dev/taichi/recent-activity/RlhQybvihwEjfE7ngXyQR9tudBDYAvl27v-NVNMxUrg_timeline.svg)](https://github.com/taichi-dev/taichi/commits)
