@@ -1,3 +1,4 @@
+import gc
 import sys
 
 import pytest
@@ -10,6 +11,13 @@ import pytest_rerunfailures
 import taichi as ti
 
 pytest_rerunfailures.works_with_current_xdist = lambda: True
+
+
+@pytest.fixture(autouse=True)
+def run_gc_before_test():
+    print("running gc")
+    gc.collect()
+    gc.collect()
 
 
 @pytest.fixture(autouse=True)
