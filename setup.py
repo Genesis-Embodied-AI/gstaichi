@@ -8,6 +8,7 @@
 import glob
 import multiprocessing
 import os
+import pathlib
 import platform
 import shutil
 import subprocess
@@ -16,6 +17,7 @@ from distutils.command.clean import clean
 from distutils.dir_util import remove_tree
 
 from setuptools import find_packages
+from setuptools.command.develop import develop
 from skbuild import setup
 from skbuild.command.egg_info import egg_info
 from wheel.bdist_wheel import bdist_wheel
@@ -110,27 +112,60 @@ class Clean(clean):
                     os.remove(f)
 
 
+def postprocess_stubs(stub_path: str) -> None:
+    from ruamel.yaml import YAML
+
+    stub_lines = stub_path.read_text().split("\n")
+    yaml = YAML()
+    with open("stub_replacements.yaml") as f:
+        replacements = yaml.load(f)
+    new_stub_lines = []
+    for line in stub_lines:
+        func_name = line.lstrip().partition("(")[0]
+        if func_name in replacements:
+            print("func_name", func_name)
+            print("found func_name replacing with ", replacements[func_name])
+            line = replacements[func_name]
+        new_stub_lines.append(line)
+    stub_path.write_text("\n".join(new_stub_lines))
+    print("stub_path", stub_path)
+
+
+def generate_pybind11_stubs(build_lib: str):
+    build_lib_path = pathlib.Path(build_lib).resolve()
+    taichi_path = build_lib_path.parent.parent / "cmake-install" / "python"
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(taichi_path) + os.pathsep + env.get("PYTHONPATH", "")
+
+    # command that works:
+    # PYTHONPATH=_skbuild/linux-x86_64-3.10/cmake-install/python pybind11-stubgen \
+    #     taichi._lib.core.taichi_python --ignore-all-errors
+    cmd_line = ["pybind11-stubgen", "taichi._lib.core.taichi_python", "--ignore-all-errors"]
+    print(" ".join(cmd_line))
+    subprocess.check_call(cmd_line, env=env)
+    stub_filepath = pathlib.Path("stubs/taichi/_lib/core/taichi_python.pyi")
+    postprocess_stubs(stub_filepath)
+
+    target_filepath = build_lib_path / "taichi" / "_lib" / "core" / "taichi_python.pyi"
+    py_typed_dst = build_lib_path / "taichi" / "_lib" / "core" / "py.typed"
+    os.makedirs(os.path.dirname(target_filepath), exist_ok=True)
+    print("copying ", stub_filepath, "to", target_filepath)
+    shutil.copy(stub_filepath, target_filepath)
+    with open(py_typed_dst, "w"):
+        pass  # creates an empty file
+
+
+class DevelopWithStubs(develop):
+    def run(self):
+        super().run()
+        build_lib = self.get_finalized_command("build_py").build_lib
+        generate_pybind11_stubs(build_lib)
+
+
 class BDistWheelWithStubs(bdist_wheel):
     def run(self):
         build_lib = self.get_finalized_command("build_py").build_lib
-        taichi_path = os.path.join(os.path.dirname(os.path.dirname(build_lib)), "cmake-install/python")
-        env = os.environ.copy()
-        env["PYTHONPATH"] = taichi_path + os.pathsep + env.get("PYTHONPATH", "")
-
-        # command that works:
-        # PYTHONPATH=_skbuild/linux-x86_64-3.10/cmake-install/python pybind11-stubgen \
-        #     taichi._lib.core.taichi_python --ignore-all-errors
-        cmd_line = ["pybind11-stubgen", "taichi._lib.core.taichi_python", "--ignore-all-errors"]
-        print(" ".join(cmd_line))
-        subprocess.check_call(cmd_line, env=env)
-        stub_filepath = "stubs/taichi/_lib/core/taichi_python.pyi"
-        target_filepath = os.path.join(build_lib, "taichi/_lib/core/taichi_python.pyi")
-        py_typed_dst = os.path.join(build_lib, "taichi/_lib/core/py.typed")
-        os.makedirs(os.path.dirname(target_filepath), exist_ok=True)
-        print("copying ", stub_filepath, "to", target_filepath)
-        shutil.copy(stub_filepath, target_filepath)
-        with open(py_typed_dst, "w"):
-            pass  # creates an empty file
+        generate_pybind11_stubs(build_lib)
         super().run()
 
 
@@ -247,7 +282,7 @@ setup(
     author="Taichi developers",
     author_email="yuanmhu@gmail.com",
     url="https://github.com/taichi-dev/taichi",
-    python_requires=">=3.9,<4.0",
+    python_requires=">=3.10,<4.0",
     install_requires=[
         "numpy",
         "colorama",
@@ -277,6 +312,7 @@ setup(
         "egg_info": EggInfo,
         "clean": Clean,
         "bdist_wheel": BDistWheelWithStubs,
+        "develop": DevelopWithStubs,
     },
     has_ext_modules=lambda: True,
 )
