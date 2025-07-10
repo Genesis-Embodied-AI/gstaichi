@@ -18,6 +18,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/AsmParser/Parser.h"
 #include "taichi/codegen/ir_dump.h"
+#include "taichi/util/environ_config.h"
 
 namespace taichi::lang {
 
@@ -2749,8 +2750,7 @@ LLVMCompiledTask TaskCodeGenLLVM::run_compilation() {
       tlctx->mark_function_as_amdgpu_kernel(func);
     }
   }
-  const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
-  if (dump_ir_env != nullptr) {
+  if (get_environ_config(DUMP_IR_ENV.data())) {
     std::filesystem::create_directories(IR_DUMP_DIR);
 
     std::filesystem::path filename = IR_DUMP_DIR / (kernel->name + "_llvm.ll");
@@ -2761,8 +2761,7 @@ LLVMCompiledTask TaskCodeGenLLVM::run_compilation() {
     }
   }
 
-  const char *load_ir_env = std::getenv(LOAD_IR_ENV.data());
-  if (load_ir_env != nullptr) {
+  if (get_environ_config(LOAD_IR_ENV.data())) {
     std::filesystem::path filename = IR_DUMP_DIR / (kernel->name + "_llvm.ll");
     llvm::SMDiagnostic err;
     auto loaded_module =
