@@ -9,7 +9,7 @@ jobs:
     name: Windows 2025 Build
     runs-on: windows-2025
     concurrency:
-      group: ${{ github.workflow }}-build-${{ github.ref }}
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.PYTHON_VERSION }}-build
       cancel-in-progress: true
     strategy:
       fail-fast: false
@@ -57,7 +57,7 @@ jobs:
     needs: win_build
     environment: aws_storage
     concurrency:
-      group: ${{ github.workflow }}-upload-${{ github.ref }}
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-upload
       cancel-in-progress: true
     strategy:
       matrix:

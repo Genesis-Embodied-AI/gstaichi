@@ -17,7 +17,7 @@ jobs:
     name: Mac OS Build
     runs-on: macos-${{ matrix.MAC_OS_VERSION }}
     concurrency:
-      group: ${{ github.workflow }}-build-${{ github.ref }}
+      group: ${{ github.workflow }}-${{ github.ref }}-${{matrix.MAC_OS_VERSION}}-${{ matrix.PYTHON_CP_VERSION }}-build
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
@@ -43,7 +43,7 @@ jobs:
     needs: build_mac_14_15
     environment: aws_storage
     concurrency:
-      group: ${{ github.workflow }}-upload-${{ github.ref }}
+      group: ${{ github.workflow }}-${{ github.ref }}-${{matrix.MAC_OS_VERSION}}-${{ matrix.PYTHON_CP_VERSION }}-upload
       cancel-in-progress: true
     strategy:
       matrix:

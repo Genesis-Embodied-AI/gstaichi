@@ -15,8 +15,8 @@ jobs:
     runs-on: ubuntu-22.04
     container: quay.io/pypa/manylinux_2_28_x86_64:latest
     concurrency:
-      group: ${{ github.workflow }}-build-${{ matrix.PYTHON_CP_VERSION != 'cp310' && github.ref || github.run_id }}
-      cancel-in-progress: ${{ matrix.PYTHON_CP_VERSION != 'cp310' }}
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-build
+      cancel-in-progress: true
     strategy:
       matrix:
         PYTHON_CP_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
@@ -47,8 +47,8 @@ jobs:
     needs: build_wheel
     environment: aws_storage
     concurrency:
-      group: ${{ github.workflow }}-upload-${{ matrix.PYTHON_CP_VERSION != 'cp310' && github.ref || github.run_id }}
-      cancel-in-progress: ${{ matrix.PYTHON_CP_VERSION != 'cp310' }}
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-upload
+      cancel-in-progress: true
     strategy:
       matrix:
         PYTHON_CP_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
@@ -77,8 +77,8 @@ jobs:
     needs: upload_to_storage
     environment: aws_storage
     concurrency:
-      group: ${{ github.workflow }}-test-${{ matrix.PYTHON_CP_VERSION != 'cp310' && github.ref || github.run_id }}
-      cancel-in-progress: ${{ matrix.PYTHON_CP_VERSION != 'cp310' }}
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-test
+      cancel-in-progress: true
     strategy:
       matrix:
         include:
@@ -118,9 +118,6 @@ jobs:
   api_docs:
     uses: ./.github/workflows/api_doc.yml
     needs: upload_to_storage
-    concurrency:
-      group: ${{ github.workflow }}-call-apidocs-${{ matrix.PYTHON_CP_VERSION != 'cp310' && github.ref || github.run_id }}
-      cancel-in-progress: ${{ matrix.PYTHON_CP_VERSION != 'cp310' }}
     with:
       head_ref: ${{ github.head_ref || github.ref_name }}
     secrets:
