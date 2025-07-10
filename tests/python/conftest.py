@@ -15,7 +15,37 @@ pytest_rerunfailures.works_with_current_xdist = lambda: True
 
 @pytest.fixture(autouse=True)
 def run_gc_before_test():
-    print("running gc")
+    """
+    This is necessary to prevent random test failures when testing with ndarray.
+
+    ndarray comprises two separate objects:
+    - a c++ side ndarray, which then links the actual data, and contains metadata around
+      the shape, and so on
+      - let's call this 'ndarray-cpp'
+    - a python side ndarray object, that represents the c++ side ndarray, from pybind11
+      - let's call this 'ndarray-pybind'
+    - a python side ndarray object, that is created independently of the pybind11-created
+      python side ndarray object
+      - let's call this 'ndarray-py'
+    
+    pybind11 is configured such that ownership of ndarray-cpp is NOT passed to the python side
+
+    However, pybind-py has a __del__ method on it, which is called when pybind-py is garbage-
+    collected
+    - when pybind-py __del__ is called, it calls a c++ method, via pybind, to delete the 
+      underling ndarray-cpp
+
+    When ti.init() or similar is called, during tests, ndarray-cpp is no longer considered allocated
+    - however ndarray-cp has not yet been garbage collected, still exists, and still has a pointer
+      to where the ndarray-cpp used to be
+    - on mac os x, it regularly happens, as an artifact of how memory management works, that new
+      ndarray-cpps are allocated with the exact same address as the old one
+    - when garbage collection runs, __del__ is called on the old ndarray-py
+        - causing the new ndarray-cpp to be deleted
+        - at this point => crash bug
+    
+    By calling gc.collect before each test, we avoid this issue.
+    """
     gc.collect()
     gc.collect()
 
