@@ -4,4 +4,4 @@ trap { Write-Error $_; exit 1 }
 
 python -c 'import taichi as ti; ti.init();'
 pip install -r requirements_test.txt
-python .\tests\run_tests.py -v
+python .\tests\run_tests.py -v -r 1
