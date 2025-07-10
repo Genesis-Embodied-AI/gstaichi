@@ -1,3 +1,5 @@
+# type: ignore
+
 import argparse
 import math
 import os

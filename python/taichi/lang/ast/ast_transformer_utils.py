@@ -1,3 +1,5 @@
+# type: ignore
+
 import ast
 import builtins
 import traceback
@@ -94,7 +96,7 @@ class LoopScopeAttribute:
     def __init__(self, is_static):
         self.is_static = is_static
         self.status = LoopStatus.Normal
-        self.nearest_non_static_if = None
+        self.nearest_non_static_if: ast.If | None = None
 
 
 class LoopScopeGuard:

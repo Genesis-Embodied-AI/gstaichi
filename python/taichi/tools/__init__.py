@@ -1,3 +1,5 @@
+# type: ignore
+
 """Taichi utility module.
 
 - `image` submodule for image io.

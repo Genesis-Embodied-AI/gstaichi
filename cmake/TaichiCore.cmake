@@ -364,6 +364,7 @@ if(TI_WITH_PYTHON)
             # Excluding Android
             # Android defaults to static linking with libc++, no tinkering needed.
             target_link_options(${CORE_WITH_PYBIND_LIBRARY_NAME} PUBLIC -static-libgcc -static-libstdc++)
+            target_link_libraries(${CORE_WITH_PYBIND_LIBRARY_NAME} PUBLIC stdc++fs)
         endif()
     endif()
 

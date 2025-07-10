@@ -1,3 +1,5 @@
+# type: ignore
+
 #!/usr/bin/env python3
 
 # compares with origin/main, so make sure you have origin/main available

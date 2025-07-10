@@ -78,7 +78,7 @@ if ti.lang.impl.current_cfg().arch != ti.vulkan:
 
 Then, we define our Taichi kernel for computing each pixel in our program. A Taichi kernel describes two aspects of a computer program: the computation itself, and the data it operates on. Because we don't know what kind of data will be fed into the kernel before execution, we have to clearly annotate the argument types for the AOT compiler.
 
-Taichi AOT module supports the following argument types: `ti.i32`, `ti.f32`, `ti.Ndarray`. Despite integers and floating-point numbers, we have a commonly-used data container called [`Ndarray`](https://docs.taichi-lang.org/api/taichi/lang/_ndarray/#taichi.lang._ndarray.Ndarray). It's similar to an [`ndarray`](https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html) in NumPy, or a [`Tensor`](https://pytorch.org/docs/stable/tensors.html) in PyTorch. It can be multidimensional and is laid out continuously in memory. If you have experienced the multidimensional arrays in C++, You can treat it as a nested array type like `float[6][14]`.
+Taichi AOT module supports the following argument types: `ti.i32`, `ti.f32`, `ti.Ndarray`. Despite integers and floating-point numbers, we have a commonly-used data container called [`Ndarray`](../basic/ndarray.md#taichi-ndarray). It's similar to an [`ndarray`](https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html) in NumPy, or a [`Tensor`](https://pytorch.org/docs/stable/tensors.html) in PyTorch. It can be multidimensional and is laid out continuously in memory. If you have experienced the multidimensional arrays in C++, You can treat it as a nested array type like `float[6][14]`.
 
 Our Taichi kernel accepts an integer `n`, a float-pointing number `t` and a 2-dimensional Ndarray `pixels` as arguments. Each element of `pixels` is a floating-point number ranges from 0.0 to 1.0.
 
@@ -268,7 +268,7 @@ There is no official versioning yet (pre-release). For now, use Taichi and C++ r
 
 ### Can I hook Taichi into a render pipeline?
 
-Yes! If you already have a rendering pipeline, you can interop with Taichi via <https://docs.taichi-lang.org/docs/taichi_vulkan>.
+Yes! If you already have a rendering pipeline, you can interop with Taichi via [taichi_vulkan.md](../c-api/taichi_vulkan.md).
 
 If you don't have one already, please check out our demos at <https://github.com/taichi-dev/taichi-aot-demo>
 
@@ -294,7 +294,7 @@ You can find the built `libtaichi_c_api.so` and its headers in the `_skbuild/` f
 
 ### Taichi/C API Reference Manual
 
-<https://docs.taichi-lang.org/docs/taichi_core#api-reference>
+<docs/lang/articles/c-api/taichi_core.md#api-reference>
 
 
 ### When do I need to recompile my artifacts?
@@ -310,6 +310,6 @@ Please note that due to the nature of Ndarray handling in Taichi, the generated 
 
 ### How can I set values for ndarrays in C++?
 
-In the C++ wrapper we provide these convenient read/write() methods on NdArray class. <https://github.com/taichi-dev/taichi/blob/master/c_api/include/taichi/cpp/taichi.hpp#L192-L215>
+In the C++ wrapper we provide these convenient read/write() methods on NdArray class, see declaration inside [taichi.hpp](../../../../c_api/include/taichi/cpp/taichi.hpp)
 
-In C API you can allocate your memory as host accessible and then use map/unmap. <https://docs.taichi-lang.org/docs/taichi_core>
+In C API you can allocate your memory as host accessible and then use map/unmap. [taichi_vulkan.md](../c-api/taichi_vulkan.md)

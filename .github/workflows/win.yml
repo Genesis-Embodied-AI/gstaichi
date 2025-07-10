@@ -1,17 +1,32 @@
-name: Windows 2025 on-demand
+name: Windows 2025
 on:
   pull_request:
     branches:
       - main
   workflow_dispatch:
 jobs:
-  build:
+  win_build:
+    name: Windows 2025 Build
     runs-on: windows-2025
+    strategy:
+      fail-fast: false
+      matrix:
+        PYTHON_VERSION: ['3.10', '3.11', '3.12', '3.13']
     steps:
       - name: Python check
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: ${{ MATRIX.PYTHON_VERSION}}
+      - name: Set Python CP version
+        id: set_cp_version
+        run: |
+          pip install packaging
+          $cp = python -c "from packaging import tags; print(next(tags.sys_tags()).interpreter)"
+          echo "PYTHON_CP_VERSION=$cp"
+          echo "PYTHON_CP_VERSION=$cp" >> $env:GITHUB_OUTPUT
+      - name: Check Python CP version
+        run: |
+          echo "PYTHON_CP_VERSION=${{ steps.set_cp_version.outputs.PYTHON_CP_VERSION }}"
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -29,3 +44,34 @@ jobs:
       - name: Windows 2025 test
         run: |
           & .\.github\workflows\scripts_new\win\4_test.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: win_wheel_${{ steps.set_cp_version.outputs.python_CP_VERSION }}
+          path: dist/*.whl
+  upload_to_storage:
+    name: Windows wheel upload
+    runs-on: ubuntu-22.04
+    needs: win_build
+    environment: aws_storage
+    strategy:
+      matrix:
+        PYTHON_CP_VERSION: ["cp310", "cp311", "cp312", "cp313"]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - uses: actions/download-artifact@v4
+        with:
+          name: win_wheel_${{ matrix.PYTHON_CP_VERSION }}
+      - name: 'Upload wheel to aws s3 storage'
+        run: |
+          set -x
+          ls -l *.whl
+          mkdir -p dist
+          mv *.whl dist/
+          aws s3 sync dist/ s3://genesis-ai-compiler/ci/taichi/${GITHUB_SHA:0:7}/win-${{ matrix.PYTHON_CP_VERSION }}/

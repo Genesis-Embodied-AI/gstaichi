@@ -1,3 +1,5 @@
+# type: ignore
+
 import numpy as np
 
 from taichi._lib import core as _ti_core

@@ -4,7 +4,7 @@ git+https://github.com/taichi-dev/pytest-xdist@a3b5ad3038#egg=pytest-xdist
 pytest-rerunfailures
 pytest-cov
 pytest-retry
-numpy
+numpy>=2.0.0  # otherwise, on windows, tries to install 1.26.4, which has no wheel for python 3.13
 psutil
 autograd
 requests
@@ -16,4 +16,4 @@ nbmake
 marko
 PyYAML
 pyevtk
-wget
+pyright

@@ -85,6 +85,7 @@ user_api[ti] = [
     "TaichiRuntimeTypeError",
     "TaichiSyntaxError",
     "TaichiTypeError",
+    "Template",
     "Texture",
     "Vector",
     "VectorNdarray",

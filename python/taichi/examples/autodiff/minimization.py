@@ -1,3 +1,5 @@
+# type: ignore
+
 import random
 
 import taichi as ti

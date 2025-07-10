@@ -1,10 +1,16 @@
+# type: ignore
+
 import ast
 import functools
 import inspect
+import json
 import operator
+import os
+import pathlib
 import re
 import sys
 import textwrap
+import time
 import types
 import typing
 import warnings
@@ -213,7 +219,7 @@ class Func:
         self.extract_arguments()
         self.template_slot_locations = []
         for i, arg in enumerate(self.arguments):
-            if isinstance(arg.annotation, template):
+            if arg.annotation == template or isinstance(arg.annotation, template):
                 self.template_slot_locations.append(i)
         self.mapper = TaichiCallableTemplateMapper(self.arguments, self.template_slot_locations)
         self.taichi_functions = {}  # The |Function| class in C++
@@ -364,6 +370,8 @@ class Func:
                     pass
                 elif id(annotation) in primitive_types.type_ids:
                     pass
+                elif type(annotation) == taichi.types.annotations.Template:
+                    pass
                 elif isinstance(annotation, template):
                     pass
                 elif isinstance(annotation, primitive_types.RefType):
@@ -382,7 +390,7 @@ class TaichiCallableTemplateMapper:
 
     @staticmethod
     def extract_arg(arg, anno, arg_name):
-        if isinstance(anno, template):
+        if anno == template or isinstance(anno, template):
             if isinstance(arg, taichi.lang.snode.SNode):
                 return arg.ptr
             if isinstance(arg, taichi.lang.expr.Expr):
@@ -551,7 +559,7 @@ class Kernel:
         self.extract_arguments()
         self.template_slot_locations = []
         for i, arg in enumerate(self.arguments):
-            if isinstance(arg.annotation, template):
+            if arg.annotation == template or isinstance(arg.annotation, template):
                 self.template_slot_locations.append(i)
         self.mapper = TaichiCallableTemplateMapper(self.arguments, self.template_slot_locations)
         impl.get_runtime().kernels.append(self)
@@ -627,6 +635,8 @@ class Kernel:
                     pass
                 elif isinstance(annotation, ArgPackType):
                     pass
+                elif annotation == template:
+                    pass
                 else:
                     raise TaichiSyntaxError(f"Invalid type annotation (argument {i}) of Taichi kernel: {annotation}")
             self.arguments.append(KernelArgument(annotation, param.name, param.default))
@@ -669,6 +679,40 @@ class Kernel:
             self.runtime.compiling_callable = kernel_cxx
             try:
                 ctx.ast_builder = kernel_cxx.ast_builder()
+
+                def ast_to_dict(node):
+                    if isinstance(node, ast.AST):
+                        fields = {k: ast_to_dict(v) for k, v in ast.iter_fields(node)}
+                        return {
+                            "type": node.__class__.__name__,
+                            "fields": fields,
+                            "lineno": getattr(node, "lineno", None),
+                            "col_offset": getattr(node, "col_offset", None),
+                        }
+                    if isinstance(node, list):
+                        return [ast_to_dict(x) for x in node]
+                    return node  # Basic types (str, int, None, etc.)
+
+                if os.environ.get("TI_DUMP_AST", "") == "1":
+                    target_dir = pathlib.Path("/tmp/ast")
+                    target_dir.mkdir(parents=True, exist_ok=True)
+
+                    start = time.time()
+                    ast_str = ast.dump(tree, indent=2)
+                    output_file = target_dir / f"{kernel_name}_ast.txt"
+                    output_file.write_text(ast_str)
+                    elapsed_txt = time.time() - start
+
+                    start = time.time()
+                    json_str = json.dumps(ast_to_dict(tree), indent=2)
+                    output_file = target_dir / f"{kernel_name}_ast.json"
+                    output_file.write_text(json_str)
+                    elapsed_json = time.time() - start
+
+                    output_file = target_dir / f"{kernel_name}_gen_time.json"
+                    output_file.write_text(
+                        json.dumps({"elapsed_txt": elapsed_txt, "elapsed_json": elapsed_json}, indent=2)
+                    )
                 transform_tree(tree, ctx)
                 if not ctx.is_real_function:
                     if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
@@ -950,7 +994,7 @@ class Kernel:
         template_num = 0
         for i, val in enumerate(args):
             needed_ = self.arguments[i].annotation
-            if isinstance(needed_, template):
+            if needed_ == template or isinstance(needed_, template):
                 template_num += 1
                 continue
             recursive_set_args(needed_, type(val), val, (i - template_num,))

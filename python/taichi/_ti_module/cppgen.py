@@ -1,3 +1,5 @@
+# type: ignore
+
 from typing import Any, List, Optional, Set
 
 from taichi.aot.conventions.gfxruntime140 import GfxRuntime140, sr

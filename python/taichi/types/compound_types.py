@@ -1,3 +1,5 @@
+# type: ignore
+
 import taichi
 from taichi._lib.utils import ti_python_core as _ti_python_core
 
