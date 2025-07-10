@@ -27,12 +27,12 @@ def run_gc_before_test():
     - a python side ndarray object, that is created independently of the pybind11-created
       python side ndarray object
       - let's call this 'ndarray-py'
-    
+
     pybind11 is configured such that ownership of ndarray-cpp is NOT passed to the python side
 
     However, pybind-py has a __del__ method on it, which is called when pybind-py is garbage-
     collected
-    - when pybind-py __del__ is called, it calls a c++ method, via pybind, to delete the 
+    - when pybind-py __del__ is called, it calls a c++ method, via pybind, to delete the
       underling ndarray-cpp
 
     When ti.init() or similar is called, during tests, ndarray-cpp is no longer considered allocated
@@ -43,7 +43,7 @@ def run_gc_before_test():
     - when garbage collection runs, __del__ is called on the old ndarray-py
         - causing the new ndarray-cpp to be deleted
         - at this point => crash bug
-    
+
     By calling gc.collect before each test, we avoid this issue.
     """
     gc.collect()
