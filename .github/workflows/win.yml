@@ -8,6 +8,9 @@ jobs:
   win_build:
     name: Windows 2025 Build
     runs-on: windows-2025
+    concurrency:
+      group: ${{ github.workflow }}-build-${{ github.ref }}
+      cancel-in-progress: true
     strategy:
       fail-fast: false
       matrix:
@@ -53,6 +56,9 @@ jobs:
     runs-on: ubuntu-22.04
     needs: win_build
     environment: aws_storage
+    concurrency:
+      group: ${{ github.workflow }}-upload-${{ github.ref }}
+      cancel-in-progress: true
     strategy:
       matrix:
         PYTHON_CP_VERSION: ["cp310", "cp311", "cp312", "cp313"]
