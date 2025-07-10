@@ -106,7 +106,7 @@ class Texture:
     """
 
     def __init__(self, fmt, arr_shape):
-        self.tex = impl.get_runtime().prog.create_texture(fmt, arr_shape)
+        self.tex = impl.get_runtime()._prog.create_texture(fmt, arr_shape)
         self.fmt = fmt
         self.num_dims = len(arr_shape)
         self.shape = arr_shape

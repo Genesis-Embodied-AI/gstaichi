@@ -76,7 +76,7 @@ class KernelProfiler:
     def set_toolkit(self, toolkit_name="default"):
         if self._check_not_turned_on_with_warning_message():
             return False
-        status = impl.get_runtime().prog.set_kernel_profiler_toolkit(toolkit_name)
+        status = impl.get_runtime()._prog.set_kernel_profiler_toolkit(toolkit_name)
         if status is True:
             self._profiling_toolkit = toolkit_name
         else:
@@ -106,9 +106,9 @@ class KernelProfiler:
         if self._check_not_turned_on_with_warning_message():
             return None
         # sync first
-        impl.get_runtime().prog.sync_kernel_profiler()
+        impl.get_runtime()._prog.sync_kernel_profiler()
         # then clear backend & frontend info
-        impl.get_runtime().prog.clear_kernel_profiler()
+        impl.get_runtime()._prog.clear_kernel_profiler()
         self._clear_frontend()
 
         return None
@@ -120,7 +120,7 @@ class KernelProfiler:
         self._update_records()  # kernel records
         self._count_statistics()  # statistics results
         # TODO : query self.StatisticalResult in python scope
-        return impl.get_runtime().prog.query_kernel_profile_info(name)
+        return impl.get_runtime()._prog.query_kernel_profile_info(name)
 
     def set_metrics(self, metric_list=default_cupti_metrics):
         """For docstring of this function, see :func:`~taichi.profiler.set_kernel_profiler_metrics`."""
@@ -129,7 +129,7 @@ class KernelProfiler:
         self._metric_list = metric_list
         metric_name_list = [metric.name for metric in metric_list]
         self.clear_info()
-        impl.get_runtime().prog.reinit_kernel_profiler_with_metrics(metric_name_list)
+        impl.get_runtime()._prog.reinit_kernel_profiler_with_metrics(metric_name_list)
 
         return None
 
@@ -194,10 +194,10 @@ class KernelProfiler:
 
     def _update_records(self):
         """Acquires kernel records from a backend."""
-        impl.get_runtime().prog.sync_kernel_profiler()
-        impl.get_runtime().prog.update_kernel_profiler()
+        impl.get_runtime()._prog.sync_kernel_profiler()
+        impl.get_runtime()._prog.update_kernel_profiler()
         self._clear_frontend()
-        self._traced_records = impl.get_runtime().prog.get_kernel_profiler_records()
+        self._traced_records = impl.get_runtime()._prog.get_kernel_profiler_records()
 
     def _count_statistics(self):
         """Counts the statistics of launched kernels during the profiling period.
@@ -221,7 +221,7 @@ class KernelProfiler:
     def _make_table_header(self, mode):
         header_str = f"Kernel Profiler({mode}, {self._profiling_toolkit})"
         arch_name = f" @ {_ti_core.arch_name(impl.current_cfg().arch).upper()}"
-        device_name = impl.get_runtime().prog.get_kernel_profiler_device_name()
+        device_name = impl.get_runtime()._prog.get_kernel_profiler_device_name()
         if len(device_name) > 1:  # default device_name = ' '
             device_name = " on " + device_name
         return header_str + arch_name + device_name

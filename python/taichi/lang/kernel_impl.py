@@ -240,9 +240,9 @@ class Func:
                 raise TaichiSyntaxError("Taichi functions cannot be called from Python-scope.")
             return self.func(*args)
 
+        current_kernel = impl.get_runtime().current_kernel
+        assert current_kernel is not None
         if self.is_real_function:
-            current_kernel = impl.get_runtime().current_kernel
-            assert current_kernel is not None
             if current_kernel.autodiff_mode != AutodiffMode.NONE:
                 raise TaichiSyntaxError("Real function in gradient kernels unsupported.")
             instance_id, arg_features = self.mapper.lookup(args)
@@ -250,8 +250,6 @@ class Func:
             if key.instance_id not in self.compiled:
                 self.do_compile(key=key, args=args, arg_features=arg_features)
             return self.func_call_rvalue(key=key, args=args)
-        current_kernel = impl.get_runtime().current_kernel
-        assert current_kernel is not None
         tree, ctx = _get_tree_and_ctx(
             self,
             is_kernel=False,
@@ -318,7 +316,6 @@ class Func:
             self, is_kernel=False, args=args, arg_features=arg_features, is_real_function=self.is_real_function
         )
         prog = impl.get_runtime().prog
-        assert prog is not None
         fn = prog.create_function(key)
 
         def func_body():
@@ -731,7 +728,6 @@ class Kernel:
                 self.runtime.compiling_callable = None
 
         prog = impl.get_runtime().prog
-        assert prog is not None
         taichi_kernel = prog.create_kernel(taichi_ast_generator, kernel_name, self.autodiff_mode)
         assert key not in self.compiled_kernels
         self.compiled_kernels[key] = taichi_kernel
@@ -806,7 +802,6 @@ class Kernel:
                             "passing it into taichi kernel."
                         )
                     prog = self.runtime.prog
-                    assert prog is not None
                     taichi_arch = prog.config().arch
 
                     def get_call_back(u, v):
@@ -864,7 +859,6 @@ class Kernel:
 
                     tmp = v.value().get_tensor()
                     prog = self.runtime.prog
-                    assert prog is not None
                     taichi_arch = prog.config().arch
                     if v.place.is_gpu_place():
                         if taichi_arch != _ti_core.Arch.cuda:
@@ -1024,7 +1018,6 @@ class Kernel:
 
         try:
             prog = impl.get_runtime().prog
-            assert prog is not None
             # Compile kernel (& Online Cache & Offline Cache)
             compiled_kernel_data = prog.compile_kernel(prog.config(), prog.get_device_caps(), t_kernel)
             # Launch kernel

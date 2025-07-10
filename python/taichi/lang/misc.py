@@ -173,11 +173,11 @@ When this is used, Taichi automatically picks the matching CPU backend.
 
 
 def timeline_clear():
-    return impl.get_runtime().prog.timeline_clear()
+    return impl.get_runtime()._prog.timeline_clear()
 
 
 def timeline_save(fn):
-    return impl.get_runtime().prog.timeline_save(fn)
+    return impl.get_runtime()._prog.timeline_save(fn)
 
 
 extension = _ti_core.Extension
@@ -459,7 +459,7 @@ def init(
     impl.get_runtime().create_program()
 
     _logging.trace("Materializing runtime...")
-    impl.get_runtime().prog.materialize_runtime()
+    impl.get_runtime()._prog.materialize_runtime()
 
     impl._root_fb = _snode.FieldsBuilder()
 
@@ -599,10 +599,10 @@ def _block_dim(dim):
 
 def _block_dim_adaptive(block_dim_adaptive):
     """Enable/Disable backends set block_dim adaptively."""
-    if get_runtime().prog.config().arch != cpu:
+    if get_runtime()._prog.config().arch != cpu:
         _logging.warn("Adaptive block_dim is supported on CPU backend only")
     else:
-        get_runtime().prog.config().cpu_block_dim_adaptive = block_dim_adaptive
+        get_runtime()._prog.config().cpu_block_dim_adaptive = block_dim_adaptive
 
 
 def _bit_vectorize():
