@@ -314,7 +314,7 @@ class TriangleRasterizer:
 
 ### How can I write data in Taichi fields to files? `write()` does not work.
 
-You cannot save data in Taichi fields directly, but there is a workaround. Taichi allows interaction with external arrays. Use `to_numpy` to convert a Taichi field to a NumPy array, as explained in [this section](https://docs.taichi-lang.org/docs/master/external). Then write the Numpy array to files via `numpy.savetxt`.
+You cannot save data in Taichi fields directly, but there is a workaround. Taichi allows interaction with external arrays. Use `to_numpy` to convert a Taichi field to a NumPy array, as explained in [this section](../basic/external.md). Then write the Numpy array to files via `numpy.savetxt`.
 
 A simple example:
 
