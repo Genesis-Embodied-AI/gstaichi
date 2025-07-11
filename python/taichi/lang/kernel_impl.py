@@ -315,8 +315,7 @@ class Func:
         tree, ctx = _get_tree_and_ctx(
             self, is_kernel=False, args=args, arg_features=arg_features, is_real_function=self.is_real_function
         )
-        prog = impl.get_runtime().prog
-        fn = prog.create_function(key)
+        fn = impl.get_runtime().prog.create_function(key)
 
         def func_body():
             old_callable = impl.get_runtime().compiling_callable
@@ -727,8 +726,7 @@ class Kernel:
                 self.runtime.current_kernel = None
                 self.runtime.compiling_callable = None
 
-        prog = impl.get_runtime().prog
-        taichi_kernel = prog.create_kernel(taichi_ast_generator, kernel_name, self.autodiff_mode)
+        taichi_kernel = impl.get_runtime().prog.create_kernel(taichi_ast_generator, kernel_name, self.autodiff_mode)
         assert key not in self.compiled_kernels
         self.compiled_kernels[key] = taichi_kernel
 
@@ -801,8 +799,7 @@ class Kernel:
                             "Non contiguous tensors are not supported, please call tensor.contiguous() before "
                             "passing it into taichi kernel."
                         )
-                    prog = self.runtime.prog
-                    taichi_arch = prog.config().arch
+                    taichi_arch = self.runtime.prog.config().arch
 
                     def get_call_back(u, v):
                         def call_back():
@@ -858,8 +855,7 @@ class Kernel:
                         return call_back
 
                     tmp = v.value().get_tensor()
-                    prog = self.runtime.prog
-                    taichi_arch = prog.config().arch
+                    taichi_arch = self.runtime.prog.config().arch
                     if v.place.is_gpu_place():
                         if taichi_arch != _ti_core.Arch.cuda:
                             # Paddle cuda tensor on Taichi non-cuda arch
