@@ -405,8 +405,8 @@ class PyTaichi:
         default_cfg().default_up = self.default_up
 
     def create_program(self):
-        if self._prog is None:
-            self._prog = _ti_core.Program()
+        if self.prog is None:
+            self.prog = _ti_core.Program()
 
     @staticmethod
     def materialize_root_fb(is_first_call):
@@ -510,16 +510,16 @@ class PyTaichi:
             self._signal_handler_registry = _ti_core.HackedSignalRegister()
 
     def clear(self):
-        if self._prog:
-            self._prog.finalize()
-            self._prog = None
+        if self.prog:
+            self.prog.finalize()
+            self.prog = None
         self._signal_handler_registry = None
         self.materialized = False
 
     def sync(self):
         self.materialize()
-        assert self._prog is not None
-        self._prog.synchronize()
+        assert self.prog is not None
+        self.prog.synchronize()
 
 
 pytaichi = PyTaichi()
@@ -686,7 +686,7 @@ def create_field_member(dtype, name, needs_grad, needs_dual):
     dtype = cook_dtype(dtype)
 
     # primal
-    prog = get_runtime()._prog
+    prog = get_runtime().prog
     if prog is None:
         raise TaichiRuntimeError("Cannont create field, maybe you forgot to call `ti.init()` first?")
 
@@ -860,7 +860,7 @@ def ndarray(dtype, shape, needs_grad=False):
             >>> z = ti.ndarray(matrix_ty, shape=(4, 5))  # ndarray of shape (4, 5), each element is a matrix of (3, 4) ti.float scalars.
     """
     # primal
-    prog = get_runtime()._prog
+    prog = get_runtime().prog
     if prog is None:
         raise TaichiRuntimeError("Cannont create ndarray, maybe you forgot to call `ti.init()` first?")
 

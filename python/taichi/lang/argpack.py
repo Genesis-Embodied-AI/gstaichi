@@ -70,13 +70,13 @@ class ArgPack:
             self.__entries[k] = v if in_python_scope() else impl.expr_init(v)
         self._register_members()
         self.__dtype = dtype
-        self.__argpack = impl.get_runtime()._prog.create_argpack(self.__dtype)
+        self.__argpack = impl.get_runtime().prog.create_argpack(self.__dtype)
         for i, (k, v) in enumerate(self.__entries.items()):
             self._write_to_device(self.__annotations[k], type(v), v, self._calc_element_true_index(i))
 
     def __del__(self):
-        if impl is not None and impl.get_runtime() is not None and impl.get_runtime()._prog is not None:
-            impl.get_runtime()._prog.delete_argpack(self.__argpack)
+        if impl is not None and impl.get_runtime() is not None and impl.get_runtime().prog is not None:
+            impl.get_runtime().prog.delete_argpack(self.__argpack)
 
     @property
     def keys(self):
@@ -278,7 +278,7 @@ class _IntermediateArgPack(ArgPack):
         self._ArgPack__annotations = annotations
         self._register_members()
         self._ArgPack__dtype = dtype
-        self._ArgPack__argpack = impl.get_runtime()._prog.create_argpack(dtype)
+        self._ArgPack__argpack = impl.get_runtime().prog.create_argpack(dtype)
 
     def __del__(self):
         pass

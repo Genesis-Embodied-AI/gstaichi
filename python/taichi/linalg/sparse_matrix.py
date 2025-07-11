@@ -28,7 +28,7 @@ class SparseMatrix:
         if sm is None:
             self.n = n
             self.m = m if m else n
-            self.matrix = get_runtime()._prog.create_sparse_matrix(n, m, dtype, storage_format)
+            self.matrix = get_runtime().prog.create_sparse_matrix(n, m, dtype, storage_format)
         else:
             self.n = sm.num_rows()
             self.m = sm.num_cols()
@@ -155,7 +155,7 @@ class SparseMatrix:
                     f"Dimension mismatch between sparse matrix ({self.n}, {self.m}) and vector ({other.shape})"
                 )
             res = ScalarNdarray(dtype=other.dtype, arr_shape=(self.n,))
-            self.matrix.spmv(get_runtime()._prog, other.arr, res.arr)
+            self.matrix.spmv(get_runtime().prog, other.arr, res.arr)
             return res
         raise TaichiRuntimeError(
             f"Sparse matrix-matrix/vector multiplication does not support {type(other)} for now. Supported types are SparseMatrix, ti.field, and numpy ndarray."
@@ -209,7 +209,7 @@ class SparseMatrix:
             num_scalars = reduce(lambda x, y: x * y, ndarray.shape + ndarray.element_shape)
             if num_scalars % 3 != 0:
                 raise TaichiRuntimeError("The number of ndarray elements must have a length that is divisible by 3.")
-            get_runtime()._prog.make_sparse_matrix_from_ndarray(self.matrix, ndarray.arr)
+            get_runtime().prog.make_sparse_matrix_from_ndarray(self.matrix, ndarray.arr)
         else:
             raise TaichiRuntimeError(
                 "Sparse matrix only supports building from [ti.ndarray, ti.Vector.ndarray, ti.Matrix.ndarray]"
@@ -249,7 +249,7 @@ class SparseMatrixBuilder:
         self.num_cols = num_cols if num_cols else num_rows
         self.dtype = dtype
         if num_rows is not None:
-            taichi_arch = get_runtime()._prog.config().arch
+            taichi_arch = get_runtime().prog.config().arch
             if taichi_arch in [
                 _ti_core.Arch.x64,
                 _ti_core.Arch.arm64,
@@ -262,7 +262,7 @@ class SparseMatrixBuilder:
                     dtype,
                     storage_format,
                 )
-                self.ptr.create_ndarray(get_runtime()._prog)
+                self.ptr.create_ndarray(get_runtime().prog)
             else:
                 raise TaichiRuntimeError("SparseMatrix only supports CPU and CUDA for now.")
 
@@ -276,7 +276,7 @@ class SparseMatrixBuilder:
 
     def print_triplets(self):
         """Print the triplets stored in the builder"""
-        taichi_arch = get_runtime()._prog.config().arch
+        taichi_arch = get_runtime().prog.config().arch
         if taichi_arch in [_ti_core.Arch.x64, _ti_core.Arch.arm64]:
             self.ptr.print_triplets_eigen()
         elif taichi_arch == _ti_core.Arch.cuda:
@@ -284,7 +284,7 @@ class SparseMatrixBuilder:
 
     def build(self, dtype=f32, _format="CSR"):
         """Create a sparse matrix using the triplets"""
-        taichi_arch = get_runtime()._prog.config().arch
+        taichi_arch = get_runtime().prog.config().arch
         if taichi_arch in [_ti_core.Arch.x64, _ti_core.Arch.arm64]:
             sm = self.ptr.build()
             return SparseMatrix(sm=sm, dtype=self.dtype)
@@ -296,8 +296,8 @@ class SparseMatrixBuilder:
         raise TaichiRuntimeError("Sparse matrix only supports CPU and CUDA backends.")
 
     def __del__(self):
-        if get_runtime() is not None and get_runtime()._prog is not None:
-            self.ptr.delete_ndarray(get_runtime()._prog)
+        if get_runtime() is not None and get_runtime().prog is not None:
+            self.ptr.delete_ndarray(get_runtime().prog)
 
 
 __all__ = ["SparseMatrix", "SparseMatrixBuilder"]

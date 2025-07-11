@@ -9,7 +9,7 @@ def print_memory_profiler_info():
     This profiler is automatically on.
     """
     get_runtime().materialize()
-    get_runtime()._prog.print_memory_profiler_info()
+    get_runtime().prog.print_memory_profiler_info()
 
 
 __all__ = ["print_memory_profiler_info"]

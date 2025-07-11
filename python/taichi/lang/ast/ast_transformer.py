@@ -1473,7 +1473,7 @@ class ASTTransformer(Builder):
                 node.iter.ptr.to_element_type,
                 loop_var.ptr,
             )
-            entry_expr.type_check(impl.get_runtime()._prog.config())
+            entry_expr.type_check(impl.get_runtime().prog.config())
             mesh_idx = mesh.MeshElementFieldProxy(ctx.mesh, node.iter.ptr.to_element_type, entry_expr)
             ctx.create_variable(target, mesh_idx)
             build_stmts(ctx, node.body)

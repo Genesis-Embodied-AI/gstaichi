@@ -52,9 +52,9 @@ class FieldsBuilder:
             A list of the roots of the finalized SNodeTree.
         """
         roots_ptr = []
-        size = impl.get_runtime()._prog.get_snode_tree_size()
+        size = impl.get_runtime().prog.get_snode_tree_size()
         for i in range(size):
-            res = impl.get_runtime()._prog.get_snode_root(i)
+            res = impl.get_runtime().prog.get_snode_root(i)
             roots_ptr.append(snode.SNode(res))
         return roots_ptr
 
@@ -182,7 +182,7 @@ class FieldsBuilder:
         self.finalized = True
         impl.get_runtime().finalize_fields_builder(self)
         return SNodeTree(
-            _ti_core.finalize_snode_tree(_snode_registry, self.ptr, impl.get_runtime()._prog, compile_only)
+            _ti_core.finalize_snode_tree(_snode_registry, self.ptr, impl.get_runtime().prog, compile_only)
         )
 
     def _check_not_finalized(self):
