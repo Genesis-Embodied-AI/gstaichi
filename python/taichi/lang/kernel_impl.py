@@ -222,7 +222,7 @@ class Func:
         self.pyfunc = _pyfunc
         self.is_real_function = is_real_function
         self.arguments: list[KernelArgument] = []
-        self.return_type: tuple[Type] or None = None
+        self.return_type: tuple[Type, ...] | None = None
         self.extract_arguments()
         self.template_slot_locations = []
         for i, arg in enumerate(self.arguments):
