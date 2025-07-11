@@ -79,8 +79,30 @@ pip install -i https://pypi.taichi.graphics/simple/ taichi-nightly
 
 Here is how you can calculate prime numbers:
 ```py
-# 
+# from docs/lang/articles/get-started/accelerate-python.md
+import taichi as ti
 
+ti.init(arch=ti.gpu)
+
+@ti.func
+def is_prime(n: int):
+    result = True
+    for k in range(2, int(n ** 0.5) + 1):
+        if n % k == 0:
+            result = False
+            break
+    return result
+
+@ti.kernel
+def count_primes(n: int) -> int:
+    count = 0
+    for k in range(2, n):
+        if is_prime(k):
+            count += 1
+
+    return count
+
+print(count_primes(1000000))
 ```
 
 See [Get started](docs/lang/articles/get-started/hello_world.md) for more information.
