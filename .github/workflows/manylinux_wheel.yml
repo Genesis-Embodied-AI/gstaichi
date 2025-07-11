@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-22.04
     container: quay.io/pypa/manylinux_2_28_x86_64:latest
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-build
+      group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-build
       cancel-in-progress: true
     strategy:
       matrix:
@@ -47,7 +47,7 @@ jobs:
     needs: build_wheel
     environment: aws_storage
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-upload
+      group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-upload
       cancel-in-progress: true
     strategy:
       matrix:
@@ -77,7 +77,7 @@ jobs:
     needs: upload_to_storage
     environment: aws_storage
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-test
+      group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-test
       cancel-in-progress: true
     strategy:
       matrix:

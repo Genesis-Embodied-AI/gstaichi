@@ -4,13 +4,13 @@ on:
     branches:
       - main
   workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
     name: Linux x86 Build
     runs-on: ubuntu-22.04
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-build
-      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
       - name: Linux x86 prerequisites

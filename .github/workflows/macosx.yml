@@ -4,6 +4,9 @@ on:
     branches:
       - main
   workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 jobs:
   build_mac_14_15:
     strategy:
@@ -16,9 +19,6 @@ jobs:
             PYTHON_CP_VERSION: cp310
     name: Mac OS Build
     runs-on: macos-${{ matrix.MAC_OS_VERSION }}
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-${{matrix.MAC_OS_VERSION}}-${{ matrix.PYTHON_CP_VERSION }}-build
-      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
       - name: Mac OS X prerequisites
@@ -42,9 +42,6 @@ jobs:
     runs-on: ubuntu-22.04
     needs: build_mac_14_15
     environment: aws_storage
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-${{matrix.MAC_OS_VERSION}}-${{ matrix.PYTHON_CP_VERSION }}-upload
-      cancel-in-progress: true
     strategy:
       matrix:
         MAC_OS_VERSION: [15]
