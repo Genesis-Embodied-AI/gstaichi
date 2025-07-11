@@ -16,6 +16,10 @@ FetchContent_Declare(
   pybind11
   GIT_REPOSITORY https://github.com/pybind/pybind11.git
   GIT_TAG v2.13.6  # Should be less than 3.0.0 for now
-)
+     # pybind11 3.0.0 caused builds to start failing. This PR downgrades pybind11 to latest <3.0.0 release,
+     # which fixes the issue
+     # whilst we could probably get 3.0.0 working too, I feel that x.0.0 releases, in opensource (and closed source
+     # too often) might not always be very stable, so we might want to wait 3-6 months before trying it?)
+  )
 
 FetchContent_MakeAvailable(pybind11)
