@@ -77,6 +77,12 @@ pip install --upgrade taichi
 pip install -i https://pypi.taichi.graphics/simple/ taichi-nightly
 ```
 
+Here is how you can calculate prime numbers:
+```py
+# 
+
+```
+
 See [Get started](docs/lang/articles/get-started/hello_world.md) for more information.
 
 ### Build from source
