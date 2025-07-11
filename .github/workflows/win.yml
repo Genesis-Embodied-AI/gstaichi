@@ -4,6 +4,9 @@ on:
     branches:
       - main
   workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 jobs:
   win_build:
     name: Windows 2025 Build
