@@ -148,16 +148,16 @@ class ASTTransformerContext:
     def __init__(
         self,
         excluded_parameters=(),
-        is_kernel=True,
+        is_kernel: bool = True,
         func=None,
         arg_features=None,
         global_vars=None,
         argument_data=None,
         file=None,
         src=None,
-        start_lineno=None,
+        start_lineno: int | None = None,
         ast_builder=None,
-        is_real_function=False,
+        is_real_function: bool = False,
     ):
         self.func = func
         self.local_scopes = []
