@@ -3,6 +3,9 @@ on:
   pull_request:
     branches:
       - main
+  push:
+    branches:
+      - main
   workflow_dispatch:
 permissions:
   contents: write
@@ -107,7 +110,7 @@ jobs:
     uses: ./.github/workflows/api_doc.yml
     needs: upload_to_storage
     with:
-      head_ref: ${{ github.head_ref }}
+      head_ref: ${{ github.head_ref || github.ref_name }}
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
