@@ -20,6 +20,6 @@ FetchContent_Declare(
      # which fixes the issue
      # whilst we could probably get 3.0.0 working too, I feel that x.0.0 releases, in opensource (and closed source
      # too often) might not always be very stable, so we might want to wait 3-6 months before trying it?)
-  )
+)
 
 FetchContent_MakeAvailable(pybind11)
