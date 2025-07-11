@@ -358,7 +358,8 @@ class PyTaichi:
 
     @property
     def prog(self) -> Program:
-        assert self._prog is not None
+        if self._prog is None:
+            raise TaichiRuntimeError("_prog attribute not initialized. Maybe you forgot to call `ti.init()` first?")
         return self._prog
 
     def initialize_fields_builder(self, builder):
@@ -687,8 +688,6 @@ def create_field_member(dtype, name, needs_grad, needs_dual):
 
     # primal
     prog = get_runtime().prog
-    if prog is None:
-        raise TaichiRuntimeError("Cannont create field, maybe you forgot to call `ti.init()` first?")
 
     x = Expr(prog.make_id_expr(""))
     x.declaration_tb = get_traceback(stacklevel=4)
@@ -861,8 +860,6 @@ def ndarray(dtype, shape, needs_grad=False):
     """
     # primal
     prog = get_runtime().prog
-    if prog is None:
-        raise TaichiRuntimeError("Cannont create ndarray, maybe you forgot to call `ti.init()` first?")
 
     if isinstance(shape, numbers.Number):
         shape = (shape,)
