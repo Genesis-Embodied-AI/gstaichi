@@ -405,8 +405,8 @@ class PyTaichi:
         default_cfg().default_up = self.default_up
 
     def create_program(self):
-        if self.prog is None:
-            self.prog = _ti_core.Program()
+        if self._prog is None:
+            self._prog = _ti_core.Program()
 
     @staticmethod
     def materialize_root_fb(is_first_call):
@@ -510,16 +510,16 @@ class PyTaichi:
             self._signal_handler_registry = _ti_core.HackedSignalRegister()
 
     def clear(self):
-        if self.prog:
-            self.prog.finalize()
-            self.prog = None
+        if self._prog:
+            self._prog.finalize()
+            self._prog = None
         self._signal_handler_registry = None
         self.materialized = False
 
     def sync(self):
         self.materialize()
-        assert self.prog is not None
-        self.prog.synchronize()
+        assert self._prog is not None
+        self._prog.synchronize()
 
 
 pytaichi = PyTaichi()
