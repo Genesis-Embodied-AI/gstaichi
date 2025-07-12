@@ -12,6 +12,17 @@ With Taichi, physical simulation programs can be much more readable and intuitiv
 
 In this document, we will walk you through the process of writing a Python program simulating and rendering a piece of cloth falling onto a sphere. Before you proceed, please take a guess of how many lines of code this program consists of.
 
+## Pre-requisites
+
+You'll need to install gs-taichi:
+```
+pip install gs-taichi
+```
+And in addition, we'll use PyOpenGL for 3D rendering:
+```
+pip install PyOpenGL
+```
+
 ## Get started
 
 Before using Taichi in your Python program, you need to import Taichi to your namespace and initialize Taichi:
@@ -31,14 +42,12 @@ import taichi as ti
 # - ti.cuda
 # - ti.vulkan
 # - ti.metal
-# - ti.opengl
-ti.init(arch=ti.cpu)
+ti.init(arch=ti.gpu)
 ```
 
-We choose `ti.cpu` here despite the fact that running Taichi on a GPU backend can be much faster. This is mainly because we need to make sure that you can run our source code without any editing or additional configurations to your platform. Please note:
-
-- If you choose a GPU backend, for example `ti.cuda`, ensure that you have installed it on your system; otherwise, Taichi will raise an error.
-- The [GGUI](../visualization/ggui.md) we use for 3D rendering only supports CUDA and Vulkan, and x86 for now. If you choose a different backend, consider switching the GGUI system we provide in the source code.
+We choose gpu here because:
+- it's faster
+- you will need an OpenGL gpu in order to use the PyOpenGL rendering framework we are using.
 
 ## Modelling
 
@@ -356,7 +365,7 @@ import glfw
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-ti.init(arch=ti.cpu)  # Use CPU for compatibility
+ti.init(arch=ti.gpu)
 
 n = 128
 quad_size = 1.0 / n
@@ -524,6 +533,6 @@ if __name__ == "__main__":
     main()
 ```
 
-(You can also find this at [../../../python/taichi/examples/simulation/cloth_simulation.py](../../../python/taichi/examples/simulation/cloth_simulation.py) ) 
+(You can also find this at [python/taichi/examples/simulation/cloth_simulation.py](../../../../python/taichi/examples/simulation/cloth_simulation.py) ) 
 
 Total number of lines: ~180 (including OpenGL setup).
