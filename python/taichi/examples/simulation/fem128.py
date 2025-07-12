@@ -97,6 +97,10 @@ def init_mesh():
         f2v[k + 1] = [c, d, a]
 
 
+def clip(v: int, min_v: int, max_v: int) -> int:
+    return min(max_v, max(v, min_v))
+
+
 def paint_phi(screen, width, height):
     pos_ = pos.to_numpy()
     phi_ = phi.to_numpy()
@@ -108,11 +112,15 @@ def paint_phi(screen, width, height):
     # Draw triangles
     for i in range(len(a)):
         points = [
-            (int(a[i][0] * width), int(a[i][1] * height)),
-            (int(b[i][0] * width), int(b[i][1] * height)),
-            (int(c[i][0] * width), int(c[i][1] * height))
+            (int(a[i][0] * width), height - int(a[i][1] * height)),
+            (int(b[i][0] * width), height - int(b[i][1] * height)),
+            (int(c[i][0] * width), height - int(c[i][1] * height))
         ]
-        color = (int((k[i] + gb[i]) * 255), int(gb[i] * 255), int(gb[i] * 255))
+        color = (
+            clip(int((k[i] + gb[i]) * 255), 0, 255),
+            clip(int(gb[i] * 255), 0, 255),
+            clip(int(gb[i] * 255), 0, 255)
+        )
         pygame.draw.polygon(screen, color, points)
 
 
@@ -169,14 +177,14 @@ def main():
         pygame.draw.circle(screen, (51, 102, 153), mouse_pos, 15)  # 0x336699
         
         # Draw ball
-        ball_screen_pos = (int(ball_pos[0] * width), int(ball_pos[1] * height))
+        ball_screen_pos = (int(ball_pos[0] * width), int(height - ball_pos[1] * height))
         pygame.draw.circle(screen, (102, 102, 102), ball_screen_pos, int(ball_radius * width))  # 0x666666
         
         # Draw vertices
         positions = pos.to_numpy()
         for pos_vertex in positions:
             screen_x = int(pos_vertex[0] * width)
-            screen_y = int(pos_vertex[1] * height)
+            screen_y = int(height - pos_vertex[1] * height)
             if 0 <= screen_x < width and 0 <= screen_y < height:
                 pygame.draw.circle(screen, (255, 170, 51), (screen_x, screen_y), 2)  # 0xFFAA33
         

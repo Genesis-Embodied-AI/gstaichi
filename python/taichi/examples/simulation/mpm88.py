@@ -115,7 +115,7 @@ def main():
         for pos in positions:
             # Scale positions to screen coordinates
             screen_x = int(pos[0] * width)
-            screen_y = int(pos[1] * height)
+            screen_y = int(height - pos[1] * height)  # Flip y-axis
             if 0 <= screen_x < width and 0 <= screen_y < height:
                 pygame.draw.circle(screen, (6, 133, 135), (screen_x, screen_y), 1)  # 0x068587
         

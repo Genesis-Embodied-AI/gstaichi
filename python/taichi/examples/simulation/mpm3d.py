@@ -140,7 +140,7 @@ def main():
         transformed_pos = T(pos)
         for pos_particle in transformed_pos:
             screen_x = int(pos_particle[0] * width)
-            screen_y = int(pos_particle[1] * height)
+            screen_y = int(height - pos_particle[1] * height)
             if 0 <= screen_x < width and 0 <= screen_y < height:
                 pygame.draw.circle(screen, (102, 204, 255), (screen_x, screen_y), 1)  # 0x66CCFF
         

@@ -187,7 +187,7 @@ def main():
         materials = material.to_numpy()
         for i, pos in enumerate(positions):
             screen_x = int(pos[0] * width)
-            screen_y = int(pos[1] * height)
+            screen_y = int(height - pos[1] * height)
             if 0 <= screen_x < width and 0 <= screen_y < height:
                 color = colors[materials[i]]
                 pygame.draw.circle(screen, color, (screen_x, screen_y), 1)

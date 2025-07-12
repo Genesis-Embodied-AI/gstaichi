@@ -126,12 +126,12 @@ def main():
         positions = pos.to_numpy()
         for pos_vertex in positions:
             screen_x = int(pos_vertex[0] * width)
-            screen_y = int(pos_vertex[1] * height)
+            screen_y = int(height - pos_vertex[1] * height)
             if 0 <= screen_x < width and 0 <= screen_y < height:
                 pygame.draw.circle(screen, (255, 170, 51), (screen_x, screen_y), 2)  # 0xFFAA33
         
         # Draw ball
-        ball_screen_pos = (int(ball_pos[0] * width), int(ball_pos[1] * height))
+        ball_screen_pos = (int(ball_pos[0] * width), int(height - ball_pos[1] * height))
         pygame.draw.circle(screen, (102, 102, 102), ball_screen_pos, int(ball_radius * width))  # 0x666666
         
         pygame.display.flip()

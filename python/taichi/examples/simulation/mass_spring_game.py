@@ -148,14 +148,14 @@ def main():
                         dashpot_damping[None] *= 1.1
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:  # LMB
-                    pos_x, pos_y = event.pos[0] / width, event.pos[1] / height
+                    pos_x, pos_y = event.pos[0] / width, 1 - event.pos[1] / height
                     shift_pressed = pygame.key.get_pressed()[pygame.K_LSHIFT] or pygame.key.get_pressed()[pygame.K_RSHIFT]
                     new_particle(pos_x, pos_y, int(shift_pressed))
 
         # Handle right mouse button for attraction
         if pygame.mouse.get_pressed()[2]:  # RMB
             cursor_pos = pygame.mouse.get_pos()
-            attract(cursor_pos[0] / width, cursor_pos[1] / height)
+            attract(cursor_pos[0] / width, 1 - cursor_pos[1] / height)
 
         if not paused[None]:
             for step in range(substeps):
@@ -171,13 +171,13 @@ def main():
         for i in range(n):
             for j in range(i + 1, n):
                 if rest_length[i, j] != 0:
-                    start_pos = (int(X[i][0] * width), int(X[i][1] * height))
-                    end_pos = (int(X[j][0] * width), int(X[j][1] * height))
+                    start_pos = (int(X[i][0] * width), height - int(X[i][1] * height))
+                    end_pos = (int(X[j][0] * width), height - int(X[j][1] * height))
                     pygame.draw.line(screen, (68, 68, 68), start_pos, end_pos, 2)  # 0x444444
 
         # Draw the particles
         for i in range(n):
-            pos = (int(X[i][0] * width), int(X[i][1] * height))
+            pos = (int(X[i][0] * width), height - int(X[i][1] * height))
             color = (255, 0, 0) if fixed[i] else (17, 17, 17)  # 0xFF0000 or 0x111111
             pygame.draw.circle(screen, color, pos, 5)
 
