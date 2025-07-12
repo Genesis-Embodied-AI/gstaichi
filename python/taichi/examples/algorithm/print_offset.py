@@ -1,6 +1,5 @@
 # type: ignore
 
-import numpy as np
 import pygame
 
 import taichi as ti
