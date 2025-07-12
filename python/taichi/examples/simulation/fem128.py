@@ -110,7 +110,7 @@ def paint_phi(screen, width, height):
     gb = (1 - k) * 0.5
 
     # Draw triangles
-    for i in range(len(a)):
+    for i, _ in enumerate(a):
         points = [
             (int(a[i][0] * width), height - int(a[i][1] * height)),
             (int(b[i][0] * width), height - int(b[i][1] * height)),
