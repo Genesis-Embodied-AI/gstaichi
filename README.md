@@ -12,6 +12,8 @@
     - older versions of Mac OS X (< 14)
     - older versions of Python (< 3.10)
     - older versions of NVidia GPUs (< sm_60, i.e. < Pascal)
+    - OpenGL (please use Vulkan)
+    - Mobile devices (Android etc)
 
 We will aggressively prune code that is not used by [Genesis project](https://github.com/Genesis-Embodied-AI/Genesis) in order to stay focused on our mission to [build generalist robots to unlock unlimited physical labor, so humans can focus on creativity, curiosity, and what we love](https://genesis-ai.company/)
 
