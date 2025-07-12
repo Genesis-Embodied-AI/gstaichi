@@ -111,7 +111,8 @@ def main():
 
         # Convert to pygame surface
         img = alive.to_numpy()
-        img = ti.tools.imresize(img, img_size).astype(np.uint8) * 255
+        # Resize using numpy kron for visualization
+        img = np.kron(img, np.ones((cell_size, cell_size), dtype=np.uint8)) * 255
         img_rgb = np.stack([img] * 3, axis=-1)
         surf = pygame.surfarray.make_surface(img_rgb)
         screen.blit(surf, (0, 0))
