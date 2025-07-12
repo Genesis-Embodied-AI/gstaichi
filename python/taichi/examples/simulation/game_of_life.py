@@ -4,7 +4,7 @@
 # In memory of John Horton Conway (1937 - 2020)
 
 import numpy as np
-
+import pygame
 import taichi as ti
 
 ti.init()
@@ -73,34 +73,52 @@ def init():
 
 
 def main():
-    gui = ti.GUI("Game of Life", (img_size, img_size))
-    gui.fps_limit = 15
-
+    pygame.init()
+    screen = pygame.display.set_mode((img_size, img_size))
+    pygame.display.set_caption("Game of Life")
+    clock = pygame.time.Clock()
+    
     print("[Hint] Press `r` to reset")
     print("[Hint] Press SPACE to pause")
     print("[Hint] Click LMB, RMB and drag to add alive / dead cells")
 
     init()
     paused = False
-    while gui.running:
-        for e in gui.get_events(gui.PRESS, gui.MOTION):
-            if e.key == gui.ESCAPE:
-                gui.running = False
-            elif e.key == gui.SPACE:
-                paused = not paused
-            elif e.key == "r":
-                alive.fill(0)
+    running = True
+    
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                elif event.key == pygame.K_SPACE:
+                    paused = not paused
+                elif event.key == pygame.K_r:
+                    alive.fill(0)
 
-        if gui.is_pressed(gui.LMB, gui.RMB):
-            mx, my = gui.get_cursor_pos()
-            alive[int(mx * n), int(my * n)] = gui.is_pressed(gui.LMB)
-            paused = True
+        # Handle mouse input
+        if pygame.mouse.get_pressed()[0] or pygame.mouse.get_pressed()[2]:  # LMB or RMB
+            mx, my = pygame.mouse.get_pos()
+            grid_x, grid_y = int(mx * n / img_size), int(my * n / img_size)
+            if 0 <= grid_x < n and 0 <= grid_y < n:
+                alive[grid_x, grid_y] = pygame.mouse.get_pressed()[0]  # LMB = alive, RMB = dead
+                paused = True
 
         if not paused:
             run()
 
-        gui.set_image(ti.tools.imresize(alive, img_size).astype(np.uint8) * 255)
-        gui.show()
+        # Convert to pygame surface
+        img = alive.to_numpy()
+        img = ti.tools.imresize(img, img_size).astype(np.uint8) * 255
+        img_rgb = np.stack([img] * 3, axis=-1)
+        surf = pygame.surfarray.make_surface(img_rgb)
+        screen.blit(surf, (0, 0))
+        pygame.display.flip()
+        clock.tick(15)
+    
+    pygame.quit()
 
 
 if __name__ == "__main__":

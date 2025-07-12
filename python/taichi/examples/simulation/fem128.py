@@ -1,6 +1,8 @@
 # type: ignore
 
 import taichi as ti
+import pygame
+import numpy as np
 
 ti.init(arch=ti.gpu)
 
@@ -95,14 +97,23 @@ def init_mesh():
         f2v[k + 1] = [c, d, a]
 
 
-def paint_phi(gui):
+def paint_phi(screen, width, height):
     pos_ = pos.to_numpy()
     phi_ = phi.to_numpy()
     f2v_ = f2v.to_numpy()
     a, b, c = pos_[f2v_[:, 0]], pos_[f2v_[:, 1]], pos_[f2v_[:, 2]]
     k = phi_ * (10 / E)
     gb = (1 - k) * 0.5
-    gui.triangles(a, b, c, color=ti.rgb_to_hex([k + gb, gb, gb]))
+    
+    # Draw triangles
+    for i in range(len(a)):
+        points = [
+            (int(a[i][0] * width), int(a[i][1] * height)),
+            (int(b[i][0] * width), int(b[i][1] * height)),
+            (int(c[i][0] * width), int(c[i][1] * height))
+        ]
+        color = (int((k[i] + gb[i]) * 255), int(gb[i] * 255), int(gb[i] * 255))
+        pygame.draw.polygon(screen, color, points)
 
 
 def main():
@@ -110,36 +121,69 @@ def main():
     init_pos()
     gravity[None] = [0, -1]
 
-    gui = ti.GUI("FEM128")
+    width, height = 512, 512
+    pygame.init()
+    screen = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("FEM128")
+    clock = pygame.time.Clock()
+    
     print(
         "[Hint] Use WSAD/arrow keys to control gravity. Use left/right mouse buttons to attract/repel. Press R to reset."
     )
-    while gui.running:
-        for e in gui.get_events(gui.PRESS):
-            if e.key == gui.ESCAPE:
-                gui.running = False
-            elif e.key == "r":
-                init_pos()
-            elif e.key in ("a", gui.LEFT):
-                gravity[None] = [-1, 0]
-            elif e.key in ("d", gui.RIGHT):
-                gravity[None] = [+1, 0]
-            elif e.key in ("s", gui.DOWN):
-                gravity[None] = [0, -1]
-            elif e.key in ("w", gui.UP):
-                gravity[None] = [0, +1]
-        mouse_pos = gui.get_cursor_pos()
-        attractor_pos[None] = mouse_pos
-        attractor_strength[None] = gui.is_pressed(gui.LMB) - gui.is_pressed(gui.RMB)
+    
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                elif event.key == pygame.K_r:
+                    init_pos()
+                elif event.key in (pygame.K_a, pygame.K_LEFT):
+                    gravity[None] = [-1, 0]
+                elif event.key in (pygame.K_d, pygame.K_RIGHT):
+                    gravity[None] = [+1, 0]
+                elif event.key in (pygame.K_s, pygame.K_DOWN):
+                    gravity[None] = [0, -1]
+                elif event.key in (pygame.K_w, pygame.K_UP):
+                    gravity[None] = [0, +1]
+        
+        mouse_pos = pygame.mouse.get_pos()
+        attractor_pos[None] = [mouse_pos[0] / width, mouse_pos[1] / height]
+        attractor_strength[None] = pygame.mouse.get_pressed()[0] - pygame.mouse.get_pressed()[2]  # LMB - RMB
+        
         for i in range(50):
             with ti.ad.Tape(loss=U):
                 update_U()
             advance()
-        paint_phi(gui)
-        gui.circle(mouse_pos, radius=15, color=0x336699)
-        gui.circle(ball_pos, radius=ball_radius * 512, color=0x666666)
-        gui.circles(pos.to_numpy(), radius=2, color=0xFFAA33)
-        gui.show()
+        
+        # Clear screen
+        screen.fill((0, 0, 0))
+        
+        # Draw triangles
+        paint_phi(screen, width, height)
+        
+        # Draw mouse cursor
+        pygame.draw.circle(screen, (51, 102, 153), mouse_pos, 15)  # 0x336699
+        
+        # Draw ball
+        ball_screen_pos = (int(ball_pos[0] * width), int(ball_pos[1] * height))
+        pygame.draw.circle(screen, (102, 102, 102), ball_screen_pos, int(ball_radius * width))  # 0x666666
+        
+        # Draw vertices
+        positions = pos.to_numpy()
+        for pos_vertex in positions:
+            screen_x = int(pos_vertex[0] * width)
+            screen_y = int(pos_vertex[1] * height)
+            if 0 <= screen_x < width and 0 <= screen_y < height:
+                pygame.draw.circle(screen, (255, 170, 51), (screen_x, screen_y), 2)  # 0xFFAA33
+        
+        pygame.display.flip()
+        clock.tick(60)
+    
+    pygame.quit()
 
 
 if __name__ == "__main__":

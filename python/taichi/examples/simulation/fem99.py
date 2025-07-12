@@ -1,6 +1,8 @@
 # type: ignore
 
 import taichi as ti
+import pygame
+import numpy as np
 
 ti.init(arch=ti.gpu)
 
@@ -94,20 +96,48 @@ def init_mesh():
 def main():
     init_mesh()
     init_pos()
-    gui = ti.GUI("FEM99")
-    while gui.running:
-        for e in gui.get_events():
-            if e.key == gui.ESCAPE:
-                gui.running = False
-            elif e.key == "r":
-                init_pos()
+    
+    width, height = 512, 512
+    pygame.init()
+    screen = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("FEM99")
+    clock = pygame.time.Clock()
+    
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                elif event.key == pygame.K_r:
+                    init_pos()
+        
         for i in range(30):
             with ti.ad.Tape(loss=U):
                 update_U()
             advance()
-        gui.circles(pos.to_numpy(), radius=2, color=0xFFAA33)
-        gui.circle(ball_pos, radius=ball_radius * 512, color=0x666666)
-        gui.show()
+        
+        # Clear screen
+        screen.fill((0, 0, 0))
+        
+        # Draw vertices
+        positions = pos.to_numpy()
+        for pos_vertex in positions:
+            screen_x = int(pos_vertex[0] * width)
+            screen_y = int(pos_vertex[1] * height)
+            if 0 <= screen_x < width and 0 <= screen_y < height:
+                pygame.draw.circle(screen, (255, 170, 51), (screen_x, screen_y), 2)  # 0xFFAA33
+        
+        # Draw ball
+        ball_screen_pos = (int(ball_pos[0] * width), int(ball_pos[1] * height))
+        pygame.draw.circle(screen, (102, 102, 102), ball_screen_pos, int(ball_radius * width))  # 0x666666
+        
+        pygame.display.flip()
+        clock.tick(60)
+    
+    pygame.quit()
 
 
 if __name__ == "__main__":

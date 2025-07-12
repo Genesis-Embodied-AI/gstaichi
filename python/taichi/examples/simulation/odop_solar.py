@@ -1,7 +1,8 @@
 # type: ignore
 
 import math
-
+import pygame
+import numpy as np
 import taichi as ti
 
 ti.init()
@@ -44,10 +45,19 @@ class SolarSystem:
             self.v[i] += self.dt * self.gravity(self.x[i])
             self.x[i] += self.dt * self.v[i]
 
-    @staticmethod
-    def render(gui):  # Render the scene on GUI
-        gui.circle([0.5, 0.5], radius=10, color=0xFFAA88)
-        gui.circles(solar.x.to_numpy(), radius=3, color=0xFFFFFF)
+    def render(self, screen, width, height):  # Render the scene on pygame screen
+        # Draw sun
+        sun_x = int(0.5 * width)
+        sun_y = int(0.5 * height)
+        pygame.draw.circle(screen, (255, 170, 136), (sun_x, sun_y), 10)  # 0xFFAA88
+        
+        # Draw planets
+        positions = self.x.to_numpy()
+        for pos in positions:
+            screen_x = int(pos[0] * width)
+            screen_y = int(pos[1] * height)
+            if 0 <= screen_x < width and 0 <= screen_y < height:
+                pygame.draw.circle(screen, (255, 255, 255), (screen_x, screen_y), 3)
 
 
 def main():
@@ -57,16 +67,32 @@ def main():
     solar.center[None] = [0.5, 0.5]
     solar.initialize_particles()
 
-    gui = ti.GUI("Solar System", background_color=0x0071A)
-    while gui.running:
-        if gui.get_event() and gui.is_pressed(gui.SPACE):
-            solar.initialize_particles()  # reinitialize when space bar pressed.
+    width, height = 800, 600
+    pygame.init()
+    screen = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("Solar System")
+    clock = pygame.time.Clock()
+    
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    solar.initialize_particles()  # reinitialize when space bar pressed.
 
         for _ in range(10):  # Time integration
             solar.integrate()
 
-        solar.render(gui)
-        gui.show()
+        # Clear screen with background color
+        screen.fill((0, 113, 26))  # 0x0071A
+        
+        solar.render(screen, width, height)
+        pygame.display.flip()
+        clock.tick(60)
+    
+    pygame.quit()
 
 
 if __name__ == "__main__":

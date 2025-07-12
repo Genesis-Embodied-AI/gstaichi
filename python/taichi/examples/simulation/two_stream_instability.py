@@ -5,6 +5,8 @@
 # Some settings of the grids and particles are taken from "Introduction to Computational Plasma Physics"(ISBN: 9787030563675)
 
 import taichi as ti
+import pygame
+import numpy as np
 
 ti.init(arch=ti.gpu)  # Try to run on GPU
 PI = 3.141592653589793
@@ -86,14 +88,49 @@ def vx_pos():  # to show x-vx on the screen
 
 def main():
     initialize()
-    gui = ti.GUI("Shortest PIC", (800, 800))
-    while not gui.get_event(ti.GUI.ESCAPE, ti.GUI.EXIT):
+    
+    width, height = 800, 800
+    pygame.init()
+    screen = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("Shortest PIC")
+    clock = pygame.time.Clock()
+    
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+        
         for s in range(substepping):
             substep()
         vx_pos()
-        gui.circles(v_x_pos1.to_numpy(), color=0x0000FF, radius=2)
-        gui.circles(v_x_pos2.to_numpy(), color=0xFF0000, radius=2)
-        gui.show()
+        
+        # Clear screen
+        screen.fill((0, 0, 0))
+        
+        # Draw particles
+        positions1 = v_x_pos1.to_numpy()
+        positions2 = v_x_pos2.to_numpy()
+        
+        for pos in positions1:
+            screen_x = int(pos[0] * width)
+            screen_y = int(pos[1] * height)
+            if 0 <= screen_x < width and 0 <= screen_y < height:
+                pygame.draw.circle(screen, (0, 0, 255), (screen_x, screen_y), 2)  # Blue
+        
+        for pos in positions2:
+            screen_x = int(pos[0] * width)
+            screen_y = int(pos[1] * height)
+            if 0 <= screen_x < width and 0 <= screen_y < height:
+                pygame.draw.circle(screen, (255, 0, 0), (screen_x, screen_y), 2)  # Red
+        
+        pygame.display.flip()
+        clock.tick(60)
+    
+    pygame.quit()
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@
 See https://sagejenson.com/physarum for the details."""
 
 import numpy as np
-
+import pygame
 import taichi as ti
 
 ti.init(arch=ti.gpu)
@@ -71,17 +71,44 @@ def step(phase: ti.i32):
 
 
 def main():
-    print("[Hint] Use slider to change simulation speed.")
-    gui = ti.GUI("Physarum")
+    print("[Hint] Use UP/DOWN arrows to change simulation speed.")
+    
+    pygame.init()
+    screen = pygame.display.set_mode((GRID_SIZE, GRID_SIZE))
+    pygame.display.set_caption("Physarum")
+    clock = pygame.time.Clock()
+    
     init()
     i = 0
-    step_per_frame = gui.slider("step_per_frame", 1, 100, 1)
-    while gui.running and not gui.get_event(gui.ESCAPE):
-        for _ in range(int(step_per_frame.value)):
+    step_per_frame = 1
+    running = True
+    
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                elif event.key == pygame.K_UP:
+                    step_per_frame = min(100, step_per_frame + 1)
+                elif event.key == pygame.K_DOWN:
+                    step_per_frame = max(1, step_per_frame - 1)
+        
+        for _ in range(step_per_frame):
             step(i % 2)
             i += 1
-        gui.set_image(grid.to_numpy()[0])
-        gui.show()
+        
+        # Convert to pygame surface
+        img = grid.to_numpy()[0]
+        img = np.clip(img * 255, 0, 255).astype(np.uint8)
+        img_rgb = np.stack([img] * 3, axis=-1)
+        surf = pygame.surfarray.make_surface(img_rgb)
+        screen.blit(surf, (0, 0))
+        pygame.display.flip()
+        clock.tick(60)
+    
+    pygame.quit()
 
 
 if __name__ == "__main__":

@@ -5,6 +5,8 @@
 # - https://www.bilibili.com/video/BV1DK411A771
 
 import taichi as ti
+import pygame
+import numpy as np
 
 ti.init(arch=ti.cpu)
 
@@ -99,7 +101,14 @@ def attract(pos_x: ti.f32, pos_y: ti.f32):
 
 
 def main():
-    gui = ti.GUI("Explicit Mass Spring System", res=(512, 512), background_color=0xDDDDDD)
+    width, height = 512, 512
+    pygame.init()
+    screen = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("Explicit Mass Spring System")
+    clock = pygame.time.Clock()
+    
+    # Initialize font for text rendering
+    font = pygame.font.Font(None, 24)
 
     spring_Y[None] = 1000
     drag_damping[None] = 1
@@ -109,36 +118,44 @@ def main():
     new_particle(0.3, 0.4, False)
     new_particle(0.4, 0.4, False)
 
-    while True:
-        for e in gui.get_events(ti.GUI.PRESS):
-            if e.key in [ti.GUI.ESCAPE, ti.GUI.EXIT]:
-                exit()
-            elif e.key == gui.SPACE:
-                paused[None] = not paused[None]
-            elif e.key == ti.GUI.LMB:
-                new_particle(e.pos[0], e.pos[1], int(gui.is_pressed(ti.GUI.SHIFT)))
-            elif e.key == "c":
-                num_particles[None] = 0
-                rest_length.fill(0)
-            elif e.key == "y":
-                if gui.is_pressed("Shift"):
-                    spring_Y[None] /= 1.1
-                else:
-                    spring_Y[None] *= 1.1
-            elif e.key == "d":
-                if gui.is_pressed("Shift"):
-                    drag_damping[None] /= 1.1
-                else:
-                    drag_damping[None] *= 1.1
-            elif e.key == "x":
-                if gui.is_pressed("Shift"):
-                    dashpot_damping[None] /= 1.1
-                else:
-                    dashpot_damping[None] *= 1.1
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                elif event.key == pygame.K_SPACE:
+                    paused[None] = not paused[None]
+                elif event.key == pygame.K_c:
+                    num_particles[None] = 0
+                    rest_length.fill(0)
+                elif event.key == pygame.K_y:
+                    if pygame.key.get_pressed()[pygame.K_LSHIFT] or pygame.key.get_pressed()[pygame.K_RSHIFT]:
+                        spring_Y[None] /= 1.1
+                    else:
+                        spring_Y[None] *= 1.1
+                elif event.key == pygame.K_d:
+                    if pygame.key.get_pressed()[pygame.K_LSHIFT] or pygame.key.get_pressed()[pygame.K_RSHIFT]:
+                        drag_damping[None] /= 1.1
+                    else:
+                        drag_damping[None] *= 1.1
+                elif event.key == pygame.K_x:
+                    if pygame.key.get_pressed()[pygame.K_LSHIFT] or pygame.key.get_pressed()[pygame.K_RSHIFT]:
+                        dashpot_damping[None] /= 1.1
+                    else:
+                        dashpot_damping[None] *= 1.1
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # LMB
+                    pos_x, pos_y = event.pos[0] / width, event.pos[1] / height
+                    shift_pressed = pygame.key.get_pressed()[pygame.K_LSHIFT] or pygame.key.get_pressed()[pygame.K_RSHIFT]
+                    new_particle(pos_x, pos_y, int(shift_pressed))
 
-        if gui.is_pressed(ti.GUI.RMB):
-            cursor_pos = gui.get_cursor_pos()
-            attract(cursor_pos[0], cursor_pos[1])
+        # Handle right mouse button for attraction
+        if pygame.mouse.get_pressed()[2]:  # RMB
+            cursor_pos = pygame.mouse.get_pos()
+            attract(cursor_pos[0] / width, cursor_pos[1] / height)
 
         if not paused[None]:
             for step in range(substeps):
@@ -147,39 +164,40 @@ def main():
         X = x.to_numpy()
         n = num_particles[None]
 
+        # Clear screen with background color
+        screen.fill((221, 221, 221))  # 0xDDDDDD
+
         # Draw the springs
         for i in range(n):
             for j in range(i + 1, n):
                 if rest_length[i, j] != 0:
-                    gui.line(begin=X[i], end=X[j], radius=2, color=0x444444)
+                    start_pos = (int(X[i][0] * width), int(X[i][1] * height))
+                    end_pos = (int(X[j][0] * width), int(X[j][1] * height))
+                    pygame.draw.line(screen, (68, 68, 68), start_pos, end_pos, 2)  # 0x444444
 
         # Draw the particles
         for i in range(n):
-            c = 0xFF0000 if fixed[i] else 0x111111
-            gui.circle(pos=X[i], color=c, radius=5)
+            pos = (int(X[i][0] * width), int(X[i][1] * height))
+            color = (255, 0, 0) if fixed[i] else (17, 17, 17)  # 0xFF0000 or 0x111111
+            pygame.draw.circle(screen, color, pos, 5)
 
-        gui.text(
-            content="Left click: add mass point (with shift to fix); Right click: attract",
-            pos=(0, 0.99),
-            color=0x0,
-        )
-        gui.text(content="C: clear all; Space: pause", pos=(0, 0.95), color=0x0)
-        gui.text(
-            content=f"Y: Spring Young's modulus {spring_Y[None]:.1f}",
-            pos=(0, 0.9),
-            color=0x0,
-        )
-        gui.text(
-            content=f"D: Drag damping {drag_damping[None]:.2f}",
-            pos=(0, 0.85),
-            color=0x0,
-        )
-        gui.text(
-            content=f"X: Dashpot damping {dashpot_damping[None]:.2f}",
-            pos=(0, 0.8),
-            color=0x0,
-        )
-        gui.show()
+        # Draw text
+        texts = [
+            "Left click: add mass point (with shift to fix); Right click: attract",
+            "C: clear all; Space: pause",
+            f"Y: Spring Young's modulus {spring_Y[None]:.1f}",
+            f"D: Drag damping {drag_damping[None]:.2f}",
+            f"X: Dashpot damping {dashpot_damping[None]:.2f}"
+        ]
+        
+        for i, text in enumerate(texts):
+            text_surface = font.render(text, True, (0, 0, 0))
+            screen.blit(text_surface, (10, 10 + i * 25))
+
+        pygame.display.flip()
+        clock.tick(60)
+    
+    pygame.quit()
 
 
 if __name__ == "__main__":

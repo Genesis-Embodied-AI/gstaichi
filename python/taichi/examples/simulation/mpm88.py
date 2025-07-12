@@ -2,6 +2,8 @@
 
 # MPM-MLS in 88 lines of Taichi code, originally created by @yuanming-hu
 import taichi as ti
+import pygame
+import numpy as np
 
 ti.init(arch=ti.gpu)
 
@@ -84,11 +86,44 @@ def init():
         J[i] = 1
 
 
-init()
-gui = ti.GUI("MPM88")
-while gui.running and not gui.get_event(gui.ESCAPE):
-    for s in range(50):
-        substep()
-    gui.clear(0x112F41)
-    gui.circles(x.to_numpy(), radius=1.5, color=0x068587)
-    gui.show()
+def main():
+    init()
+    
+    width, height = 800, 600
+    pygame.init()
+    screen = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("MPM88")
+    clock = pygame.time.Clock()
+    
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+        
+        for s in range(50):
+            substep()
+        
+        # Clear screen with background color
+        screen.fill((17, 47, 65))  # 0x112F41
+        
+        # Draw particles
+        positions = x.to_numpy()
+        for pos in positions:
+            # Scale positions to screen coordinates
+            screen_x = int(pos[0] * width)
+            screen_y = int(pos[1] * height)
+            if 0 <= screen_x < width and 0 <= screen_y < height:
+                pygame.draw.circle(screen, (6, 133, 135), (screen_x, screen_y), 1)  # 0x068587
+        
+        pygame.display.flip()
+        clock.tick(60)
+    
+    pygame.quit()
+
+
+if __name__ == "__main__":
+    main()

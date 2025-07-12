@@ -4,6 +4,8 @@
 # https://en.wikipedia.org/wiki/Shallow_water_equations#Non-conservative_form
 
 import taichi as ti
+import pygame
+import numpy as np
 
 ti.init(arch=ti.gpu)
 
@@ -80,20 +82,40 @@ def main():
     print("[Hint] click on the window to create waves")
 
     reset()
-    gui = ti.GUI("Water Wave", shape)
-    while gui.running:
-        for e in gui.get_events(ti.GUI.PRESS):
-            if e.key in [ti.GUI.ESCAPE, ti.GUI.EXIT]:
-                gui.running = False
-            elif e.key == "r":
-                reset()
-            elif e.key == ti.GUI.LMB:
-                x, y = e.pos
-                create_wave(3, x * shape[0], y * shape[1])
+    
+    pygame.init()
+    screen = pygame.display.set_mode(shape)
+    pygame.display.set_caption("Water Wave")
+    clock = pygame.time.Clock()
+    
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                elif event.key == pygame.K_r:
+                    reset()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # LMB
+                    x, y = event.pos
+                    create_wave(3, x, y)
+        
         update()
         visualize_wave()
-        gui.set_image(pixels)
-        gui.show()
+        
+        # Convert to pygame surface
+        img = pixels.to_numpy()
+        img = np.clip(img * 255, 0, 255).astype(np.uint8)
+        img_rgb = np.stack([img] * 3, axis=-1)
+        surf = pygame.surfarray.make_surface(img_rgb)
+        screen.blit(surf, (0, 0))
+        pygame.display.flip()
+        clock.tick(60)
+    
+    pygame.quit()
 
 
 if __name__ == "__main__":

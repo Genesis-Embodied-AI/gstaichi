@@ -2,7 +2,8 @@
 
 # Authored by Tiantian Liu, Taichi Graphics.
 import math
-
+import pygame
+import numpy as np
 import taichi as ti
 
 ti.init(arch=ti.cpu)
@@ -82,25 +83,47 @@ def update():
 
 
 def main():
-    gui = ti.GUI("N-body problem", (800, 800))
+    width, height = 800, 800
+    pygame.init()
+    screen = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("N-body problem")
+    clock = pygame.time.Clock()
 
     initialize()
-    while gui.running:
-        for e in gui.get_events(ti.GUI.PRESS):
-            if e.key in [ti.GUI.ESCAPE, ti.GUI.EXIT]:
-                exit()
-            elif e.key == "r":
-                initialize()
-            elif e.key == ti.GUI.SPACE:
-                paused[None] = not paused[None]
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                elif event.key == pygame.K_r:
+                    initialize()
+                elif event.key == pygame.K_SPACE:
+                    paused[None] = not paused[None]
 
         if not paused[None]:
             for i in range(substepping):
                 compute_force()
                 update()
 
-        gui.circles(pos.to_numpy(), color=0xFFFFFF, radius=planet_radius)
-        gui.show()
+        # Clear screen
+        screen.fill((0, 0, 0))
+        
+        # Draw particles
+        positions = pos.to_numpy()
+        for pos_particle in positions:
+            # Scale positions to screen coordinates
+            screen_x = int(pos_particle[0] * width)
+            screen_y = int(pos_particle[1] * height)
+            if 0 <= screen_x < width and 0 <= screen_y < height:
+                pygame.draw.circle(screen, (255, 255, 255), (screen_x, screen_y), planet_radius)
+        
+        pygame.display.flip()
+        clock.tick(60)
+    
+    pygame.quit()
 
 
 if __name__ == "__main__":

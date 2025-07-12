@@ -3,7 +3,7 @@
 export_file = ""  # use '/tmp/mpm3d.ply' for exporting result to disk
 
 import numpy as np
-
+import pygame
 import taichi as ti
 
 ti.init(arch=ti.gpu)
@@ -107,17 +107,48 @@ def T(a):
 
 def main():
     init()
-    gui = ti.GUI("MPM3D", background_color=0x112F41)
-    while gui.running and not gui.get_event(gui.ESCAPE):
+    
+    width, height = 512, 512
+    pygame.init()
+    screen = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("MPM3D")
+    clock = pygame.time.Clock()
+    
+    running = True
+    frame = 0
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+        
         for s in range(steps):
             substep()
+        
         pos = F_x.to_numpy()
         if export_file:
             writer = ti.tools.PLYWriter(num_vertices=n_particles)
             writer.add_vertex_pos(pos[:, 0], pos[:, 1], pos[:, 2])
-            writer.export_frame(gui.frame, export_file)
-        gui.circles(T(pos), radius=1.5, color=0x66CCFF)
-        gui.show()
+            writer.export_frame(frame, export_file)
+        
+        # Clear screen with background color
+        screen.fill((17, 47, 65))  # 0x112F41
+        
+        # Draw particles
+        transformed_pos = T(pos)
+        for pos_particle in transformed_pos:
+            screen_x = int(pos_particle[0] * width)
+            screen_y = int(pos_particle[1] * height)
+            if 0 <= screen_x < width and 0 <= screen_y < height:
+                pygame.draw.circle(screen, (102, 204, 255), (screen_x, screen_y), 1)  # 0x66CCFF
+        
+        pygame.display.flip()
+        clock.tick(60)
+        frame += 1
+    
+    pygame.quit()
 
 
 if __name__ == "__main__":

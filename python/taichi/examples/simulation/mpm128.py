@@ -1,6 +1,8 @@
 # type: ignore
 
 import taichi as ti
+import pygame
+import numpy as np
 
 ti.init(arch=ti.gpu)  # Try to run on GPU
 
@@ -119,43 +121,83 @@ def reset():
         C[i] = ti.Matrix.zero(float, 2, 2)
 
 
-print("[Hint] Use WSAD/arrow keys to control gravity. Use left/right mouse buttons to attract/repel. Press R to reset.")
-gui = ti.GUI("Taichi MLS-MPM-128", res=512, background_color=0x112F41)
-reset()
-gravity[None] = [0, -1]
+def main():
+    print("[Hint] Use WSAD/arrow keys to control gravity. Use left/right mouse buttons to attract/repel. Press R to reset.")
+    
+    width, height = 512, 512
+    pygame.init()
+    screen = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("Taichi MLS-MPM-128")
+    clock = pygame.time.Clock()
+    
+    reset()
+    gravity[None] = [0, -1]
+    
+    # Color palette: [0x068587, 0xED553B, 0xEEEEF0]
+    colors = [(6, 133, 135), (237, 85, 59), (238, 238, 240)]
+    
+    running = True
+    frame = 0
+    while running and frame < 20000:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                elif event.key == pygame.K_r:
+                    reset()
+        
+        # Handle continuous key presses
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+            gravity[None][0] = -1
+        elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+            gravity[None][0] = 1
+        else:
+            gravity[None][0] = 0
+            
+        if keys[pygame.K_UP] or keys[pygame.K_w]:
+            gravity[None][1] = 1
+        elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
+            gravity[None][1] = -1
+        else:
+            gravity[None][1] = 0
+        
+        mouse = pygame.mouse.get_pos()
+        attractor_pos[None] = [mouse[0] / width, mouse[1] / height]
+        attractor_strength[None] = 0
+        
+        if pygame.mouse.get_pressed()[0]:  # LMB
+            attractor_strength[None] = 1
+        if pygame.mouse.get_pressed()[2]:  # RMB
+            attractor_strength[None] = -1
+        
+        for s in range(int(2e-3 // dt)):
+            substep()
+        
+        # Clear screen with background color
+        screen.fill((17, 47, 65))  # 0x112F41
+        
+        # Draw mouse cursor
+        pygame.draw.circle(screen, (51, 102, 153), mouse, 15)  # 0x336699
+        
+        # Draw particles
+        positions = x.to_numpy()
+        materials = material.to_numpy()
+        for i, pos in enumerate(positions):
+            screen_x = int(pos[0] * width)
+            screen_y = int(pos[1] * height)
+            if 0 <= screen_x < width and 0 <= screen_y < height:
+                color = colors[materials[i]]
+                pygame.draw.circle(screen, color, (screen_x, screen_y), 1)
+        
+        pygame.display.flip()
+        clock.tick(60)
+        frame += 1
+    
+    pygame.quit()
 
-for frame in range(20000):
-    if gui.get_event(ti.GUI.PRESS):
-        if gui.event.key == "r":
-            reset()
-        elif gui.event.key in [ti.GUI.ESCAPE, ti.GUI.EXIT]:
-            break
-    if gui.event is not None:
-        gravity[None] = [0, 0]  # if had any event
-    if gui.is_pressed(ti.GUI.LEFT, "a"):
-        gravity[None][0] = -1
-    if gui.is_pressed(ti.GUI.RIGHT, "d"):
-        gravity[None][0] = 1
-    if gui.is_pressed(ti.GUI.UP, "w"):
-        gravity[None][1] = 1
-    if gui.is_pressed(ti.GUI.DOWN, "s"):
-        gravity[None][1] = -1
-    mouse = gui.get_cursor_pos()
-    gui.circle((mouse[0], mouse[1]), color=0x336699, radius=15)
-    attractor_pos[None] = [mouse[0], mouse[1]]
-    attractor_strength[None] = 0
-    if gui.is_pressed(ti.GUI.LMB):
-        attractor_strength[None] = 1
-    if gui.is_pressed(ti.GUI.RMB):
-        attractor_strength[None] = -1
-    for s in range(int(2e-3 // dt)):
-        substep()
-    gui.circles(
-        x.to_numpy(),
-        radius=1.5,
-        palette=[0x068587, 0xED553B, 0xEEEEF0],
-        palette_indices=material,
-    )
 
-    # Change to gui.show(f'{frame:06d}.png') to write images to disk
-    gui.show()
+if __name__ == "__main__":
+    main()

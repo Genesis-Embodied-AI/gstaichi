@@ -1,9 +1,8 @@
 # type: ignore
 
 import time
-
+import pygame
 import numpy as np
-
 import taichi as ti
 
 
@@ -38,14 +37,45 @@ def paint(t: float):
 
 
 def main():
-    gui = ti.GUI("Vector Field", res=(500, 500))
+    width, height = 500, 500
+    pygame.init()
+    screen = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("Vector Field")
+    clock = pygame.time.Clock()
 
     beginning = time.time_ns()
-    for k in range(1000000):
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+        
         paint((time.time_ns() - beginning) * 0.00000001)
         dirs_np = dirs.to_numpy()
-        gui.arrows(locations_np, dirs_np, radius=1)
-        gui.show()
+        
+        # Clear screen
+        screen.fill((0, 0, 0))
+        
+        # Draw arrows
+        for i in range(len(locations_np)):
+            start_x = int(locations_np[i, 0] * width)
+            start_y = int(locations_np[i, 1] * height)
+            end_x = int((locations_np[i, 0] + dirs_np[i, 0]) * width)
+            end_y = int((locations_np[i, 1] + dirs_np[i, 1]) * height)
+            
+            if 0 <= start_x < width and 0 <= start_y < height:
+                pygame.draw.line(screen, (255, 255, 255), (start_x, start_y), (end_x, end_y), 1)
+                # Draw arrowhead
+                if abs(end_x - start_x) > 1 or abs(end_y - start_y) > 1:
+                    pygame.draw.circle(screen, (255, 255, 255), (end_x, end_y), 1)
+        
+        pygame.display.flip()
+        clock.tick(60)
+    
+    pygame.quit()
 
 
 if __name__ == "__main__":

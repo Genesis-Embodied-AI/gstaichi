@@ -1,7 +1,8 @@
 # type: ignore
 
 import math
-
+import pygame
+import numpy as np
 import taichi as ti
 
 ti.init(arch=ti.cuda)
@@ -92,15 +93,35 @@ def main():
     v[0].y = +0.4
     color[0] = 1
 
-    gui = ti.GUI("Comet", res)
-    while gui.running:
-        gui.running = not gui.get_event(gui.ESCAPE)
+    pygame.init()
+    screen = pygame.display.set_mode((res, res))
+    pygame.display.set_caption("Comet")
+    clock = pygame.time.Clock()
+    
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+        
         generate()
         for s in range(steps):
             substep()
         render()
-        gui.set_image(img)
-        gui.show()
+        
+        # Convert to pygame surface
+        img_np = img.to_numpy()
+        img_np = np.clip(img_np * 255, 0, 255).astype(np.uint8)
+        img_rgb = np.stack([img_np] * 3, axis=-1)
+        surf = pygame.surfarray.make_surface(img_rgb)
+        screen.blit(surf, (0, 0))
+        pygame.display.flip()
+        clock.tick(60)
+    
+    pygame.quit()
 
 
 if __name__ == "__main__":

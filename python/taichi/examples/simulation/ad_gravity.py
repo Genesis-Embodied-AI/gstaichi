@@ -1,6 +1,8 @@
 # type: ignore
 
 import taichi as ti
+import pygame
+import numpy as np
 
 ti.init()
 
@@ -45,12 +47,38 @@ def init():
 
 def main():
     init()
-    gui = ti.GUI("Autodiff gravity")
-    while gui.running:
+    
+    width, height = 800, 600
+    pygame.init()
+    screen = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("Autodiff gravity")
+    clock = pygame.time.Clock()
+    
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        
         for i in range(50):
             substep()
-        gui.circles(x.to_numpy(), radius=3)
-        gui.show()
+        
+        # Clear screen
+        screen.fill((0, 0, 0))
+        
+        # Draw particles
+        positions = x.to_numpy()
+        for pos in positions:
+            # Scale positions to screen coordinates
+            screen_x = int(pos[0] * width)
+            screen_y = int(pos[1] * height)
+            if 0 <= screen_x < width and 0 <= screen_y < height:
+                pygame.draw.circle(screen, (255, 255, 255), (screen_x, screen_y), 3)
+        
+        pygame.display.flip()
+        clock.tick(60)
+    
+    pygame.quit()
 
 
 if __name__ == "__main__":

@@ -1,6 +1,8 @@
 # type: ignore
 
 import taichi as ti
+import pygame
+import numpy as np
 from taichi.math import cmul, dot, log2, vec2, vec3
 
 ti.init(arch=ti.gpu)
@@ -46,11 +48,30 @@ def render(time: ti.f32):
 
 
 def main():
-    gui = ti.GUI("Mandelbrot set zoom", res=(width, height))
-    for i in range(100000):
+    pygame.init()
+    screen = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("Mandelbrot set zoom")
+    clock = pygame.time.Clock()
+    
+    running = True
+    i = 0
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        
         render(i * 0.03)
-        gui.set_image(pixels)
-        gui.show()
+        i += 1
+        
+        # Convert to pygame surface
+        img = pixels.to_numpy()
+        img = np.clip(img * 255, 0, 255).astype(np.uint8)
+        surf = pygame.surfarray.make_surface(img)
+        screen.blit(surf, (0, 0))
+        pygame.display.flip()
+        clock.tick(60)
+    
+    pygame.quit()
 
 
 if __name__ == "__main__":
