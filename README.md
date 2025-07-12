@@ -29,6 +29,11 @@ For the time being, the documentation is in flux. Please feel free to raise an i
 
 - See [hello_world.md](docs/lang/articles/get-started/hello_world.md)
 
+# Documentation
+
+- [docs](docs/lang/articles)
+- [API reference](https://ideal-adventure-2n6lpyw.pages.github.io/taichi.html)
+
 # Something is broken!
 
 - [Create an issue](https://github.com/Genesis-Embodied-AI/taichi/issues/new/choose)
