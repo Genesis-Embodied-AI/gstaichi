@@ -1,14 +1,39 @@
-# type: ignore
+# type: ignorex
 
 # from https://github.com/taichi-dev/taichi/blob/master/docs/lang/articles/get-started/cloth_simulation.md
 # migrated to pygame to work without ti.GUI (which we removed from gs-taichi)
-import taichi as ti
-import numpy as np
 import glfw
-from OpenGL.GL import *
-from OpenGL.GLU import *
+from OpenGL.GL import (
+    GL_COLOR_BUFFER_BIT,
+    GL_DEPTH_BUFFER_BIT,
+    GL_DEPTH_TEST,
+    GL_MODELVIEW,
+    GL_PROJECTION,
+    GL_TRIANGLES,
+    glBegin,
+    glClear,
+    glClearColor,
+    glColor3f,
+    glEnable,
+    glEnd,
+    glLoadIdentity,
+    glMatrixMode,
+    glPopMatrix,
+    glPushMatrix,
+    glTranslatef,
+    glVertex3f,
+)
+from OpenGL.GLU import (
+    gluDeleteQuadric,
+    gluLookAt,
+    gluNewQuadric,
+    gluPerspective,
+    gluSphere,
+)
 
-ti.init(arch=ti.cpu)  # Use CPU for compatibility
+import taichi as ti
+
+ti.init(arch=ti.gpu)
 
 n = 128
 quad_size = 1.0 / n
@@ -21,7 +46,7 @@ dashpot_damping = 1e4
 drag_damping = 1
 
 ball_radius = 0.3
-ball_center = ti.Vector.field(3, dtype=float, shape=(1, ))
+ball_center = ti.Vector.field(3, dtype=float, shape=(1,))
 ball_center[0] = [0, 0, 0]
 
 x = ti.Vector.field(3, dtype=float, shape=(n, n))
@@ -34,15 +59,14 @@ colors = ti.Vector.field(3, dtype=float, shape=n * n)
 
 bending_springs = False
 
+
 @ti.kernel
 def initialize_mass_points():
     random_offset = ti.Vector([ti.random() - 0.5, ti.random() - 0.5]) * 0.1
     for i, j in x:
-        x[i, j] = [
-            i * quad_size - 0.5 + random_offset[0], 0.6,
-            j * quad_size - 0.5 + random_offset[1]
-        ]
+        x[i, j] = [i * quad_size - 0.5 + random_offset[0], 0.6, j * quad_size - 0.5 + random_offset[1]]
         v[i, j] = [0, 0, 0]
+
 
 @ti.kernel
 def initialize_mesh_indices():
@@ -62,6 +86,7 @@ def initialize_mesh_indices():
         else:
             colors[i * n + j] = (1, 0.334, 0.52)
 
+
 initialize_mesh_indices()
 
 spring_offsets = []
@@ -75,6 +100,7 @@ else:
         for j in range(-2, 3):
             if (i, j) != (0, 0) and abs(i) + abs(j) <= 2:
                 spring_offsets.append(ti.Vector([i, j]))
+
 
 @ti.kernel
 def substep():
@@ -101,10 +127,12 @@ def substep():
             v[i] -= min(v[i].dot(normal), 0) * normal
         x[i] += dt * v[i]
 
+
 @ti.kernel
 def update_vertices():
     for i, j in ti.ndrange(n, n):
         vertices[i * n + j] = x[i, j]
+
 
 # --- PyOpenGL/GLFW rendering setup ---
 def draw_cloth(vertices_np, indices_np, colors_np):
@@ -117,6 +145,7 @@ def draw_cloth(vertices_np, indices_np, colors_np):
         glVertex3f(vtx[0], vtx[1], vtx[2])
     glEnd()
 
+
 def draw_ball(center, radius):
     glPushMatrix()
     glTranslatef(center[0], center[1], center[2])
@@ -125,6 +154,7 @@ def draw_ball(center, radius):
     gluSphere(quadric, radius, 32, 32)
     gluDeleteQuadric(quadric)
     glPopMatrix()
+
 
 def main():
     if not glfw.init():
@@ -171,6 +201,7 @@ def main():
         glfw.poll_events()
 
     glfw.terminate()
+
 
 if __name__ == "__main__":
     main()

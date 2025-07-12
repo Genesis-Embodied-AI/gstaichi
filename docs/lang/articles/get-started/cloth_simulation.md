@@ -533,6 +533,6 @@ if __name__ == "__main__":
     main()
 ```
 
-(You can also find this at [python/taichi/examples/simulation/cloth_simulation.py](../../../../python/taichi/examples/simulation/cloth_simulation.py) ) 
+(You can also find this at [python/taichi/examples/simulation/cloth_simulation.py](../../../../python/taichi/examples/simulation/cloth_simulation.py) )
 
 Total number of lines: ~180 (including OpenGL setup).
