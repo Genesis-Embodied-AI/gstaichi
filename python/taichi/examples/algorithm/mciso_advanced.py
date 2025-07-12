@@ -1,5 +1,6 @@
 # type: ignore
 
+import cv2  # Add this import
 import numpy as np
 import pygame
 
@@ -498,7 +499,16 @@ class MCISO_Example(MCISO):
             if self.dim == 2:
                 self.compute_grad()
                 # Convert gradient field to image
-                img = ti.tools.imresize(self.g, (width, height)) * 0.5 + 0.5
+                g_np = self.g.to_numpy()
+                # Resize each channel separately and stack
+                img = np.stack(
+                    [
+                        cv2.resize(g_np[..., c], (width, height), interpolation=cv2.INTER_LINEAR)
+                        for c in range(g_np.shape[-1])
+                    ],
+                    axis=-1,
+                )
+                img = img * 0.5 + 0.5
                 img = np.clip(img * 255, 0, 255).astype(np.uint8)
                 img_rgb = np.stack([img] * 3, axis=-1)
                 surf = pygame.surfarray.make_surface(img_rgb)
