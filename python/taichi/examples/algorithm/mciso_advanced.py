@@ -1,7 +1,7 @@
 # type: ignore
 
 import numpy as np
-
+import pygame
 import taichi as ti
 
 
@@ -451,35 +451,96 @@ class MCISO_Example(MCISO):
             self.m[o] = r * 3
 
     def main(self):
-        gui = ti.GUI("Marching cube")
-        while gui.running and not gui.get_event(gui.ESCAPE):
+        width, height = 512, 512
+        pygame.init()
+        screen = pygame.display.set_mode((width, height))
+        pygame.display.set_caption("Marching cube")
+        clock = pygame.time.Clock()
+        
+        # Initialize font for text rendering
+        font = pygame.font.Font(None, 24)
+        
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        running = False
+                    elif event.key == pygame.K_SPACE:
+                        # Save mesh to PLY
+                        ret_len = self.march()
+                        ret = self.r.to_numpy()[:ret_len] / self.N
+                        num = ret.shape[0]
+                        writer = ti.tools.PLYWriter(num_vertices=num * 3, num_faces=num)
+                        vertices = ret.reshape(num * 3, 3) * 2 - 1
+                        writer.add_vertex_pos(vertices[:, 0], vertices[:, 1], vertices[:, 2])
+                        indices = np.arange(0, num * 3)
+                        writer.add_faces(indices)
+                        writer.export("mciso_output.ply")
+                        print("Mesh saved to mciso_output.ply")
+            
             if self.use_sparse:
                 ti.deactivate_all_snodes()
             else:
                 self.m.fill(0)
-            self.touch(*gui.get_cursor_pos())
+            
+            mouse_pos = pygame.mouse.get_pos()
+            self.touch(mouse_pos[0] / width, mouse_pos[1] / height)
             ret_len = self.march()
             ret = self.r.to_numpy()[:ret_len] / self.N
+            
+            # Clear screen
+            screen.fill((0, 0, 0))
+            
             if self.dim == 2:
                 self.compute_grad()
-                gui.set_image(ti.tools.imresize(self.g, *gui.res) * 0.5 + 0.5)
-                gui.lines(ret[:, 0], ret[:, 1], color=0xFF66CC, radius=1.5)
+                # Convert gradient field to image
+                img = ti.tools.imresize(self.g, (width, height)) * 0.5 + 0.5
+                img = np.clip(img * 255, 0, 255).astype(np.uint8)
+                img_rgb = np.stack([img] * 3, axis=-1)
+                surf = pygame.surfarray.make_surface(img_rgb)
+                screen.blit(surf, (0, 0))
+                
+                # Draw lines
+                for i in range(len(ret)):
+                    start_pos = (int(ret[i, 0][0] * width), int(ret[i, 0][1] * height))
+                    end_pos = (int(ret[i, 1][0] * width), int(ret[i, 1][1] * height))
+                    pygame.draw.line(screen, (255, 102, 204), start_pos, end_pos, 2)  # 0xFF66CC
             else:
-                gui.triangles(ret[:, 0, 0:2], ret[:, 1, 0:2], ret[:, 2, 0:2], color=0xFFCC66)
-                gui.lines(ret[:, 0, 0:2], ret[:, 1, 0:2], color=0xFF66CC, radius=0.5)
-                gui.lines(ret[:, 1, 0:2], ret[:, 2, 0:2], color=0xFF66CC, radius=0.5)
-                gui.lines(ret[:, 2, 0:2], ret[:, 0, 0:2], color=0xFF66CC, radius=0.5)
-                gui.text(f"Press space to save mesh to PLY ({len(ret)} faces)", (0, 1))
-                if gui.is_pressed(gui.SPACE):
-                    num = ret.shape[0]
-                    writer = ti.tools.PLYWriter(num_vertices=num * 3, num_faces=num)
-                    vertices = ret.reshape(num * 3, 3) * 2 - 1
-                    writer.add_vertex_pos(vertices[:, 0], vertices[:, 1], vertices[:, 2])
-                    indices = np.arange(0, num * 3)
-                    writer.add_faces(indices)
-                    writer.export("mciso_output.ply")
-                    print("Mesh saved to mciso_output.ply")
-            gui.show()
+                # Draw triangles
+                for i in range(len(ret)):
+                    points = [
+                        (int(ret[i, 0, 0] * width), int(ret[i, 0, 1] * height)),
+                        (int(ret[i, 1, 0] * width), int(ret[i, 1, 1] * height)),
+                        (int(ret[i, 2, 0] * width), int(ret[i, 2, 1] * height))
+                    ]
+                    pygame.draw.polygon(screen, (255, 204, 102), points)  # 0xFFCC66
+                
+                # Draw triangle edges
+                for i in range(len(ret)):
+                    start_pos = (int(ret[i, 0, 0] * width), int(ret[i, 0, 1] * height))
+                    end_pos = (int(ret[i, 1, 0] * width), int(ret[i, 1, 1] * height))
+                    pygame.draw.line(screen, (255, 102, 204), start_pos, end_pos, 1)  # 0xFF66CC
+                    
+                    start_pos = (int(ret[i, 1, 0] * width), int(ret[i, 1, 1] * height))
+                    end_pos = (int(ret[i, 2, 0] * width), int(ret[i, 2, 1] * height))
+                    pygame.draw.line(screen, (255, 102, 204), start_pos, end_pos, 1)  # 0xFF66CC
+                    
+                    start_pos = (int(ret[i, 2, 0] * width), int(ret[i, 2, 1] * height))
+                    end_pos = (int(ret[i, 0, 0] * width), int(ret[i, 0, 1] * height))
+                    pygame.draw.line(screen, (255, 102, 204), start_pos, end_pos, 1)  # 0xFF66CC
+                
+                # Draw text
+                text = f"Press space to save mesh to PLY ({len(ret)} faces)"
+                text_surface = font.render(text, True, (255, 255, 255))
+                screen.blit(text_surface, (10, 10))
+            
+            pygame.display.flip()
+            clock.tick(60)
+        
+        pygame.quit()
 
 
 if __name__ == "__main__":

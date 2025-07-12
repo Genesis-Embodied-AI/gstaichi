@@ -1,8 +1,10 @@
 # type: ignore
 
 import taichi as ti
+import pygame
+import numpy as np
 
-ti.init(arch=ti.cpu, print_ir=True)
+ti.init(arch=ti.cpu, print_ir=False)
 
 n = 4
 m = 8
@@ -22,22 +24,50 @@ def main():
     fill()
     print(a.to_numpy())
 
-    gui = ti.GUI("layout", res=(256, 512), background_color=0xFFFFFF)
+    width, height = 256, 512
+    pygame.init()
+    screen = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("layout")
+    clock = pygame.time.Clock()
+    
+    # Initialize font for text rendering
+    font = pygame.font.Font(None, 30)
 
-    while True:
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+        
+        # Clear screen with white background
+        screen.fill((255, 255, 255))  # 0xFFFFFF
+        
+        # Draw horizontal lines
         for i in range(1, m):
-            gui.line(begin=(0, i / m), end=(1, i / m), radius=2, color=0x000000)
+            y_pos = int(i * height / m)
+            pygame.draw.line(screen, (0, 0, 0), (0, y_pos), (width, y_pos), 2)  # 0x000000
+        
+        # Draw vertical lines
         for i in range(1, n):
-            gui.line(begin=(i / n, 0), end=(i / n, 1), radius=2, color=0x000000)
+            x_pos = int(i * width / n)
+            pygame.draw.line(screen, (0, 0, 0), (x_pos, 0), (x_pos, height), 2)  # 0x000000
+        
+        # Draw text
         for i in range(n):
             for j in range(m):
-                gui.text(
-                    f"{a[i, j]}",
-                    ((i + 0.3) / n, (j + 0.75) / m),
-                    font_size=30,
-                    color=0x0,
-                )
-        gui.show()
+                text = str(a[i, j])
+                text_surface = font.render(text, True, (0, 0, 0))  # 0x0
+                x_pos = int((i + 0.3) * width / n)
+                y_pos = int((j + 0.75) * height / m)
+                screen.blit(text_surface, (x_pos, y_pos))
+        
+        pygame.display.flip()
+        clock.tick(60)
+    
+    pygame.quit()
 
 
 if __name__ == "__main__":

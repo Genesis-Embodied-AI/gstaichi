@@ -6,13 +6,12 @@ See "https://en.wikipedia.org/wiki/Marching_squares"
 """
 
 import time
-
+import pygame
 import numpy as np
-
 import taichi as ti
 import taichi.math as tm
 
-ti.init(arch=ti.cpu)
+ti.init(arch=ti.cpu, cfg_optimization=False)
 
 W, H = 800, 600
 resolution = (W, H)
@@ -175,11 +174,37 @@ def render():
         pixels[i, j] = tm.sqrt(tm.clamp(col, 0, 1))
 
 
-t0 = time.perf_counter()
-gui = ti.GUI("2D Marching Squares", res=resolution, fast_gui=True)
-while gui.running and not gui.get_event(gui.ESCAPE):
-    iTime[None] = time.perf_counter() - t0
-    march_squares()
-    render()
-    gui.set_image(pixels)
-    gui.show()
+def main():
+    t0 = time.perf_counter()
+    
+    pygame.init()
+    screen = pygame.display.set_mode(resolution)
+    pygame.display.set_caption("2D Marching Squares")
+    clock = pygame.time.Clock()
+    
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+        
+        iTime[None] = time.perf_counter() - t0
+        march_squares()
+        render()
+        
+        # Convert to pygame surface
+        img = pixels.to_numpy()
+        img = np.clip(img * 255, 0, 255).astype(np.uint8)
+        surf = pygame.surfarray.make_surface(img)
+        screen.blit(surf, (0, 0))
+        pygame.display.flip()
+        clock.tick(60)
+    
+    pygame.quit()
+
+
+if __name__ == "__main__":
+    main()

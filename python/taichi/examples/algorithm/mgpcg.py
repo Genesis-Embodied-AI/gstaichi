@@ -2,7 +2,7 @@
 
 # Solve Poisson's equation on an NxN grid using MGPCG
 import numpy as np
-
+import pygame
 import taichi as ti
 
 real = ti.f32
@@ -161,7 +161,10 @@ def paint():
 
 
 def main():
-    gui = ti.GUI("mgpcg", res=(N_gui, N_gui))
+    pygame.init()
+    screen = pygame.display.set_mode((N_gui, N_gui))
+    pygame.display.set_caption("mgpcg")
+    clock = pygame.time.Clock()
 
     init()
 
@@ -223,10 +226,28 @@ def main():
         print(" ")
         print(f"Iter = {i:4}, Residual = {rTr:e}")
         paint()
-        gui.set_image(pixels)
-        gui.show()
+        
+        # Handle pygame events
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    return
+        
+        # Convert to pygame surface
+        img = pixels.to_numpy()
+        img = np.clip(img * 255, 0, 255).astype(np.uint8)
+        img_rgb = np.stack([img] * 3, axis=-1)
+        surf = pygame.surfarray.make_surface(img_rgb)
+        screen.blit(surf, (0, 0))
+        pygame.display.flip()
+        clock.tick(60)
 
     ti.profiler.print_kernel_profiler_info()
+    pygame.quit()
 
 
 if __name__ == "__main__":

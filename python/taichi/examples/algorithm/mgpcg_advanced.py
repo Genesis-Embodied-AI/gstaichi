@@ -2,7 +2,8 @@
 
 import math
 import time
-
+import pygame
+import numpy as np
 import taichi as ti
 
 
@@ -262,7 +263,32 @@ class MGPCG_Example(MGPCG):
         self.init()
         self.solve(max_iters=400, verbose=verbose)
         self.paint()
-        ti.tools.imshow(self.pixels)
+        
+        # Initialize pygame for visualization
+        pygame.init()
+        screen = pygame.display.set_mode((self.N_gui, self.N_gui))
+        pygame.display.set_caption("MGPCG Advanced")
+        clock = pygame.time.Clock()
+        
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        running = False
+            
+            # Convert to pygame surface
+            img = self.pixels.to_numpy()
+            img = np.clip(img * 255, 0, 255).astype(np.uint8)
+            img_rgb = np.stack([img] * 3, axis=-1)
+            surf = pygame.surfarray.make_surface(img_rgb)
+            screen.blit(surf, (0, 0))
+            pygame.display.flip()
+            clock.tick(60)
+        
+        pygame.quit()
         ti.profiler.print_kernel_profiler_info()
 
 
