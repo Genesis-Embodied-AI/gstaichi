@@ -21,6 +21,53 @@ GS-Taichi is available as a PyPI package:
 ```bash
 pip install gs-taichi
 ```
+
+## Hello, world!
+
+A basic fractal example, the [Julia fractal](https://en.wikipedia.org/wiki/Julia_set), can be a good starting point for you to understand the fundamentals of the Taichi programming language.
+
+```python title=fractal.py
+import taichi as ti
+import taichi.math as tm
+
+ti.init(arch=ti.gpu)
+
+n = 320
+pixels = ti.field(dtype=float, shape=(n * 2, n))
+
+@ti.func
+def complex_sqr(z):  # complex square of a 2D vector
+    return tm.vec2(z[0] * z[0] - z[1] * z[1], 2 * z[0] * z[1])
+
+@ti.kernel
+def paint(t: float):
+    for i, j in pixels:  # Parallelized over all pixels
+        c = tm.vec2(-0.8, tm.cos(t) * 0.2)
+        z = tm.vec2(i / n - 1, j / n - 0.5) * 2
+        iterations = 0
+        while z.norm() < 20 and iterations < 50:
+            z = complex_sqr(z) + c
+            iterations += 1
+        pixels[i, j] = 1 - iterations * 0.02
+
+gui = ti.GUI("Julia Set", res=(n * 2, n))
+
+i = 0
+while gui.running:
+    paint(i * 0.03)
+    gui.set_image(pixels)
+    gui.show()
+    i += 1
+```
+
+Save the code above to your local machine and run this program, you get the following animation:
+
+<center>
+
+![image](https://raw.githubusercontent.com/taichi-dev/public_files/master/taichi/fractal.gif)
+
+</center>
+
 :::note
 
 If you are *not* using an IDE for running code, you can simply run the code from your terminal by:
@@ -71,11 +118,11 @@ Field is a fundamental and frequently utilized data structure in Taichi. It can 
 
 ```python skip-ci:Trivial
 @ti.func
-def complex_sqr(z: ti.template()): -> None  # complex square of a 2D vector
+def complex_sqr(z):  # complex square of a 2D vector
     return tm.vec2(z[0] * z[0] - z[1] * z[1], 2 * z[0] * z[1])
 
 @ti.kernel
-def paint(t: float, pixels: ti.template()) -> None:
+def paint(t: float):
     for i, j in pixels:  # Parallelized over all pixels
         c = tm.vec2(-0.8, tm.cos(t) * 0.2)
         z = tm.vec2(i / n - 1, j / n - 0.5) * 2
@@ -108,7 +155,7 @@ For those familiar with the world of OpenGL, `ti.func` can be compared to a typi
 
 ```python skip-ci:Trivial
 @ti.kernel
-def paint(t: float, pixels: ti.template()) -> None:
+def paint(t: float):
     for i, j in pixels:  # Parallelized over all pixels
 ```
 
@@ -163,6 +210,31 @@ def foo():
 
 :::
 
+### Display the result
+
+To render the result on screen, Taichi provides a built-in [GUI System](../visualization/gui_system.md). Use the `gui.set_image()` method to set the content of the window and `gui.show()` method to show the updated image.
+
+```python skip-ci:Trivial
+gui = ti.GUI("Julia Set", res=(n * 2, n))
+# Sets the window title and the resolution
+
+i = 0
+while gui.running:
+    paint(i * 0.03)
+    gui.set_image(pixels)
+    gui.show()
+    i += 1
+```
+
+Taichi's GUI system uses the standard Cartesian coordinate system to define pixel coordinates. The origin of the coordinate system is located at the lower left corner of the screen. The `(0, 0)` element in `pixels` will be mapped to the lower left corner of the window, and the `(639, 319)` element will be mapped to the upper right corner of the window, as shown in the following image:
+
+<center>
+
+![](https://raw.githubusercontent.com/taichi-dev/public_files/master/taichi/doc/pixels.png)
+
+</center>
+
+
 ### Key takeaways
 
 Congratulations! By following the brief example above, you have learned the most important features of Taichi:
@@ -170,6 +242,27 @@ Congratulations! By following the brief example above, you have learned the most
 - Taichi compiles and executes Taichi functions and kernels on the designated backend.
 - For loops located at the outermost scope in a Taichi kernel are automatically parallelized.
 - Taichi offers a flexible data container, known as *field*, and you can utilize indices to iterate over a field.
+
+## Taichi examples
+
+The Julia fractal is one of the featured demos included in Taichi. To view additional selected demos available in the Taichi Gallery:
+
+```bash
+ti gallery
+```
+
+A new window will open and appear on the screen:
+
+<center>
+
+![image](https://raw.githubusercontent.com/taichi-dev/public_files/master/taichi/taichi-gallery.png)
+
+</center>
+
+To access the complete list of Taichi examples, run `ti example`. Here are some additional useful command lines:
+
+- `ti example -p fractal` or `ti example -P fractal` prints the source code of the fractal example.
+- `ti example -s fractal` saves the example to your current working directory.
 
 ## Supported systems and backends
 
@@ -187,4 +280,5 @@ The table below provides an overview of the operating systems supported by Taich
 You are now prepared to begin writing your own Taichi programs. The following documents provide more information about how to utilize Taichi in some of its typical application scenarios:
 
 - [Accelerate Python with Taichi](./accelerate_python.md)
+- [Conduct Physical Simulation](./cloth_simulation.md)
 - [Accelerate PyTorch with Taichi](./accelerate_pytorch.md).
