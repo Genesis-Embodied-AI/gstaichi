@@ -1,4 +1,4 @@
-# type: ignorex
+# type: ignore
 
 # from https://github.com/taichi-dev/taichi/blob/master/docs/lang/articles/get-started/cloth_simulation.md
 # migrated to pygame to work without ti.GUI (which we removed from gs-taichi)
@@ -59,6 +59,8 @@ colors = ti.Vector.field(3, dtype=float, shape=n * n)
 
 bending_springs = False
 
+spring_offsets = []
+
 
 @ti.kernel
 def initialize_mass_points():
@@ -85,21 +87,6 @@ def initialize_mesh_indices():
             colors[i * n + j] = (0.22, 0.72, 0.52)
         else:
             colors[i * n + j] = (1, 0.334, 0.52)
-
-
-initialize_mesh_indices()
-
-spring_offsets = []
-if bending_springs:
-    for i in range(-1, 2):
-        for j in range(-1, 2):
-            if (i, j) != (0, 0):
-                spring_offsets.append(ti.Vector([i, j]))
-else:
-    for i in range(-2, 3):
-        for j in range(-2, 3):
-            if (i, j) != (0, 0) and abs(i) + abs(j) <= 2:
-                spring_offsets.append(ti.Vector([i, j]))
 
 
 @ti.kernel
@@ -157,6 +144,19 @@ def draw_ball(center, radius):
 
 
 def main():
+    initialize_mesh_indices()
+
+    if bending_springs:
+        for i in range(-1, 2):
+            for j in range(-1, 2):
+                if (i, j) != (0, 0):
+                    spring_offsets.append(ti.Vector([i, j]))
+    else:
+        for i in range(-2, 3):
+            for j in range(-2, 3):
+                if (i, j) != (0, 0) and abs(i) + abs(j) <= 2:
+                    spring_offsets.append(ti.Vector([i, j]))
+
     if not glfw.init():
         raise Exception("GLFW can't be initialized")
     window = glfw.create_window(1024, 1024, "Taichi Cloth Simulation (PyOpenGL)", None, None)
