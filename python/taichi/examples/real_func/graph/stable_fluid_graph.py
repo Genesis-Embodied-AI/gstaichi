@@ -7,9 +7,8 @@
 # https://github.com/ShaneFX/GAMES201/tree/master/HW01
 
 import argparse
-
+import pygame
 import numpy as np
-
 import taichi as ti
 from taichi.math import vec2, vec3
 
@@ -135,7 +134,8 @@ def apply_impulse(
     dyef: ti.types.ndarray(ndim=2),
     imp_data: ti.types.ndarray(ndim=1),
 ):
-    g_dir = -ti.Vector([0, 9.8]) * 300
+    # Flip gravity direction to match vertical flip
+    g_dir = ti.Vector([0, 9.8]) * 300
     for i, j in vf:
         omx, omy = imp_data[2], imp_data[3]
         mdir = ti.Vector([imp_data[0], imp_data[1]])
@@ -231,13 +231,13 @@ class MouseDataGen:
         self.prev_mouse = None
         self.prev_color = None
 
-    def __call__(self, gui):
+    def __call__(self, mouse_pos, mouse_pressed):
         # [0:2]: normalized delta direction
         # [2:4]: current mouse xy
         # [4:7]: color
         mouse_data = np.zeros(8, dtype=np.float32)
-        if gui.is_pressed(ti.GUI.LMB):
-            mxy = np.array(gui.get_cursor_pos(), dtype=np.float32) * res
+        if mouse_pressed:
+            mxy = np.array(mouse_pos, dtype=np.float32) * res
             if self.prev_mouse is None:
                 self.prev_mouse = mxy
                 # Set lower bound to 0.3 to prevent too dark colors
@@ -271,7 +271,11 @@ def main():
     parser.add_argument("--baseline", action="store_true")
     args, _ = parser.parse_known_args()
 
-    gui = ti.GUI("Stable Fluid", (res, res))
+    pygame.init()
+    screen = pygame.display.set_mode((res, res))
+    pygame.display.set_caption("Stable Fluid")
+    clock = pygame.time.Clock()
+    
     md_gen = MouseDataGen()
 
     _velocities = ti.Vector.ndarray(2, float, shape=(res, res))
@@ -321,28 +325,44 @@ def main():
         g2 = g2_builder.compile()
 
     swap = True
+    mouse_pressed = False
 
-    while gui.running:
-        if gui.get_event(ti.GUI.PRESS):
-            e = gui.event
-            if e.key == ti.GUI.ESCAPE:
-                break
-            elif e.key == "r":
-                paused = False
-                reset()
-            elif e.key == "s":
-                if curl_strength:
-                    curl_strength = 0
-                else:
-                    curl_strength = 7
-            elif e.key == "p":
-                paused = not paused
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                elif event.key == pygame.K_r:
+                    paused = False
+                    reset()
+                elif event.key == pygame.K_s:
+                    if curl_strength:
+                        curl_strength = 0
+                    else:
+                        curl_strength = 7
+                elif event.key == pygame.K_p:
+                    paused = not paused
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # LMB
+                    mouse_pressed = True
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1:  # LMB
+                    mouse_pressed = False
 
         if not paused:
-            _mouse_data = md_gen(gui)
+            mouse_pos = pygame.mouse.get_pos()
+            mouse_pos = ((mouse_pos[0]) / res, mouse_pos[1] / res)
+            _mouse_data = md_gen(mouse_pos, mouse_pressed)
             if args.baseline:
                 step_orig(_mouse_data)
-                gui.set_image(dyes_pair.cur.to_numpy())
+                # Convert to pygame surface
+                img = dyes_pair.cur.to_numpy()
+                img = np.clip(img * 255, 0, 255).astype(np.uint8)
+                surf = pygame.surfarray.make_surface(img)
+                screen.blit(surf, (0, 0))
             else:
                 invoke_args = {
                     "mouse_data": _mouse_data,
@@ -356,13 +376,25 @@ def main():
                 }
                 if swap:
                     g1.run(invoke_args)
-                    gui.set_image(_dye_buffer.to_numpy())  # false+, pylint: disable=no-member
+                    # Convert to pygame surface
+                    img = _dye_buffer.to_numpy()  # false+, pylint: disable=no-member
+                    img = np.clip(img * 255, 0, 255).astype(np.uint8)
+                    surf = pygame.surfarray.make_surface(img)
+                    screen.blit(surf, (0, 0))
                     swap = False
                 else:
                     g2.run(invoke_args)
-                    gui.set_image(_new_dye_buffer.to_numpy())  # false+, pylint: disable=no-member
+                    # Convert to pygame surface
+                    img = _new_dye_buffer.to_numpy()  # false+, pylint: disable=no-member
+                    img = np.clip(img * 255, 0, 255).astype(np.uint8)
+                    surf = pygame.surfarray.make_surface(img)
+                    screen.blit(surf, (0, 0))
                     swap = True
-        gui.show()
+        
+        pygame.display.flip()
+        clock.tick(maxfps)
+    
+    pygame.quit()
 
 
 if __name__ == "__main__":

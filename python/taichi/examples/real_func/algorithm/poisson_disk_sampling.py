@@ -11,7 +11,8 @@ User interface:
 """
 
 import typing
-
+import pygame
+import numpy as np
 import taichi as ti
 import taichi.math as tm
 
@@ -143,28 +144,46 @@ def render():
 
 def main():
     refresh_scene()
-    gui = ti.ui.Window("Poisson Disk Sampling", res=(window_size, window_size))
-    canvas = gui.get_canvas()
-    gui.fps_limit = 10
-    while gui.running:
-        gui.get_event(ti.ui.PRESS)
-        if gui.is_pressed(ti.ui.ESCAPE):
-            gui.running = False
-
-        if gui.is_pressed(ti.ui.LMB):
-            iMouse[None] = gui.get_cursor_pos()
-            refresh_scene()
-
-        if gui.is_pressed("p"):
-            canvas.set_image(img)
-            gui.save_image("screenshot.png")
+    
+    pygame.init()
+    screen = pygame.display.set_mode((window_size, window_size))
+    pygame.display.set_caption("Poisson Disk Sampling")
+    clock = pygame.time.Clock()
+    
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                elif event.key == pygame.K_p:
+                    # Save screenshot
+                    img_np = img.to_numpy()
+                    img_np = np.clip(img_np * 255, 0, 255).astype(np.uint8)
+                    surf = pygame.surfarray.make_surface(img_np)
+                    pygame.image.save(surf, "screenshot.png")
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # LMB
+                    mouse_pos = pygame.mouse.get_pos()
+                    iMouse[None] = [mouse_pos[0] / window_size, mouse_pos[1] / window_size]
+                    refresh_scene()
 
         poisson_disk_sample(sample_count[None])
         sample_count[None] += 1
         compute_distance_field()
         render()
-        canvas.set_image(img)
-        gui.show()
+        
+        # Convert to pygame surface
+        img_np = img.to_numpy()
+        img_np = np.clip(img_np * 255, 0, 255).astype(np.uint8)
+        surf = pygame.surfarray.make_surface(img_np)
+        screen.blit(surf, (0, 0))
+        pygame.display.flip()
+        clock.tick(10)  # 10 FPS as in original
+    
+    pygame.quit()
 
 
 if __name__ == "__main__":
