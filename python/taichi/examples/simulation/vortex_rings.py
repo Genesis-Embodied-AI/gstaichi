@@ -3,7 +3,6 @@
 # C++ reference and tutorial (Chinese): https://zhuanlan.zhihu.com/p/26882619
 import math
 
-import numpy as np
 import pygame
 
 import taichi as ti

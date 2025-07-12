@@ -1,7 +1,6 @@
 # type: ignore
 
 # MPM-MLS in 88 lines of Taichi code, originally created by @yuanming-hu
-import numpy as np
 import pygame
 
 import taichi as ti

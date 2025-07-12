@@ -3,7 +3,6 @@
 # Authored by Tiantian Liu, Taichi Graphics.
 import math
 
-import numpy as np
 import pygame
 
 import taichi as ti

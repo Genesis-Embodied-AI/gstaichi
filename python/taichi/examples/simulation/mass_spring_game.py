@@ -4,7 +4,6 @@
 # - https://www.bilibili.com/video/BV1UK4y177iH
 # - https://www.bilibili.com/video/BV1DK411A771
 
-import numpy as np
 import pygame
 
 import taichi as ti
