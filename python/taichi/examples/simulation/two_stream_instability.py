@@ -8,7 +8,7 @@ import taichi as ti
 import pygame
 import numpy as np
 
-ti.init(arch=ti.gpu)  # Try to run on GPU
+ti.init(arch=ti.gpu, cfg_optimization=False)  # Try to run on GPU
 PI = 3.141592653589793
 L = 8 * PI  # simulation domain size
 dt = 0.1  # time step
