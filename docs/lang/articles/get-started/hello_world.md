@@ -22,6 +22,11 @@ GS-Taichi is available as a PyPI package:
 pip install gs-taichi
 ```
 
+For this demo, you will also need pygame, for 2D rendering:
+```
+pip install pygame
+```
+
 ## Hello, world!
 
 A basic fractal example, the [Julia fractal](https://en.wikipedia.org/wiki/Julia_set), can be a good starting point for you to understand the fundamentals of the Taichi programming language.
@@ -212,28 +217,35 @@ def foo():
 
 ### Display the result
 
-To render the result on screen, Taichi provides a built-in [GUI System](../visualization/gui_system.md). Use the `gui.set_image()` method to set the content of the window and `gui.show()` method to show the updated image.
+To render the result on screen, we will use pygame.
 
 ```python skip-ci:Trivial
-gui = ti.GUI("Julia Set", res=(n * 2, n))
-# Sets the window title and the resolution
-
-i = 0
-while gui.running:
-    paint(i * 0.03)
-    gui.set_image(pixels)
-    gui.show()
-    i += 1
+def main():
+    n = 320
+    pixels = ti.field(dtype=float, shape=(n * 2, n))
+    pygame.init()
+    screen = pygame.display.set_mode((n * 2, n))
+    pygame.display.set_caption("Julia Set")
+    clock = pygame.time.Clock()
+    t = 0.0
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        paint(n, t, pixels)
+        t += 0.03
+        img = pixels.to_numpy()
+        img = np.clip(img * 255, 0, 255).astype(np.uint8)
+        img_rgb = np.stack([img] * 3, axis=-1)
+        surf = pygame.surfarray.make_surface(img_rgb)
+        screen.blit(surf, (0, 0))
+        pygame.display.flip()
+        clock.tick(60)
+    pygame.quit()
 ```
 
-Taichi's GUI system uses the standard Cartesian coordinate system to define pixel coordinates. The origin of the coordinate system is located at the lower left corner of the screen. The `(0, 0)` element in `pixels` will be mapped to the lower left corner of the window, and the `(639, 319)` element will be mapped to the upper right corner of the window, as shown in the following image:
-
-<center>
-
-![](https://raw.githubusercontent.com/taichi-dev/public_files/master/taichi/doc/pixels.png)
-
-</center>
-
+pygame uses the standard Cartesian coordinate system to define pixel coordinates. The origin of the coordinate system is located at the top left corner of the screen. (Different than upstream taichi ti.GUI, which has the origin at the bottom left) The `(0, 0)` element in `pixels` will be mapped to the top left corner of the window, and the `(639, 319)` element will be mapped to the lower right corner of the window.
 
 ### Key takeaways
 
@@ -245,24 +257,15 @@ Congratulations! By following the brief example above, you have learned the most
 
 ## Taichi examples
 
-The Julia fractal is one of the featured demos included in Taichi. To view additional selected demos available in the Taichi Gallery:
+The Julia fractal is one of many examples included in Taichi. You can find additional examples at:
 
-```bash
-ti gallery
+- [python/taichi/examples](../../../../python/taichi/examples)
+
+Note that many of these examples will also need pygame too, for 2D rendering. Some will need also PyOpenGL, for 3D rendering:
+
 ```
-
-A new window will open and appear on the screen:
-
-<center>
-
-![image](https://raw.githubusercontent.com/taichi-dev/public_files/master/taichi/taichi-gallery.png)
-
-</center>
-
-To access the complete list of Taichi examples, run `ti example`. Here are some additional useful command lines:
-
-- `ti example -p fractal` or `ti example -P fractal` prints the source code of the fractal example.
-- `ti example -s fractal` saves the example to your current working directory.
+pip install PyOpenGL
+```
 
 ## Supported systems and backends
 
