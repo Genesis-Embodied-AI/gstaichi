@@ -9,19 +9,17 @@ Taichi is a domain-specific language designed for high-performance, parallel com
 
 When writing compute-intensive tasks, users can leverage Taichi's high performance computation by following a set of extra rules, and making use of the two decorators `@ti.func` and `@ti.kernel`. These decorators instruct Taichi to take over the computation tasks and compile the decorated functions to machine code using its just-in-time (JIT) compiler. As a result, calls to these functions are executed on multi-core CPUs or GPUs and can achieve acceleration by 50x~100x compared to native Python code.
 
-Additionally, Taichi also has an ahead-of-time (AOT) system for exporting code to binary/shader files that can be run without the Python environment. See [Tutorial: Run Taichi programs in C++ application](../deployment/tutorial.md) for more information.
-
 ## Prerequisites
 
-- Python: 3.7/3.8/3.9/3.10 (64-bit)
-- OS: Windows, OS X, and Linux (64-bit)
+- Python: 3.10/3.11/3.12/3.13 (64-bit)
+- OS: Windows, OS X 14+, and Linux (64-bit)
 
 ## Installation
 
-Taichi is available as a PyPI package:
+GS-Taichi is available as a PyPI package:
 
 ```bash
-pip install taichi
+pip install gs-taichi
 ```
 :::note
 
@@ -50,7 +48,7 @@ The first two lines import Taichi and its `math` module. The `math` module conta
 ti.init(arch=ti.gpu)
 ```
 
-The argument `arch` in `ti.init()` specifies the backend that will execute the compiled code. This backend can be either `ti.cpu` or `ti.gpu`. If the `ti.gpu` option is specified, Taichi will attempt to use the GPU backends in the following order: `ti.cuda`, `ti.vulkan`, and `ti.opengl/ti.Metal`. If no GPU architecture is available, the CPU will be used as the backend.
+The argument `arch` in `ti.init()` specifies the backend that will execute the compiled code. This backend can be either `ti.cpu` or `ti.gpu`. If the `ti.gpu` option is specified, Taichi will attempt to use the GPU backends in the following order: `ti.cuda`, `ti.vulkan`, and `ti.metal`. If no GPU architecture is available, the CPU will be used as the backend.
 
 Additionally, you can specify the desired GPU backend directly by setting `arch=ti.cuda`, for example. Taichi will raise an error if the specified architecture is not available. For further information, refer to the [Global Settings](../reference/global_settings.md) section in the Taichi documentation.
 
@@ -69,16 +67,15 @@ The function `ti.field(dtype, shape)` defines a Taichi field whose shape is of `
 
 Field is a fundamental and frequently utilized data structure in Taichi. It can be considered equivalent to NumPy's `ndarray` or PyTorch's `tensor`, but with added flexibility. For instance, a Taichi field can be [spatially sparse](../basic/sparse.md) and can be easily [changed between different data layouts](../basic/layout.md). Further advanced features of fields will be covered in other scenario-based tutorials. For now, it is sufficient to understand that the field `pixels` is a dense two-dimensional array.
 
-
 ### Kernels and functions
 
 ```python skip-ci:Trivial
 @ti.func
-def complex_sqr(z):  # complex square of a 2D vector
+def complex_sqr(z: ti.template()): -> None  # complex square of a 2D vector
     return tm.vec2(z[0] * z[0] - z[1] * z[1], 2 * z[0] * z[1])
 
 @ti.kernel
-def paint(t: float):
+def paint(t: float, pixels: ti.template()) -> None:
     for i, j in pixels:  # Parallelized over all pixels
         c = tm.vec2(-0.8, tm.cos(t) * 0.2)
         z = tm.vec2(i / n - 1, j / n - 0.5) * 2
@@ -111,7 +108,7 @@ For those familiar with the world of OpenGL, `ti.func` can be compared to a typi
 
 ```python skip-ci:Trivial
 @ti.kernel
-def paint(t: float):
+def paint(t: float, pixels: ti.template()) -> None:
     for i, j in pixels:  # Parallelized over all pixels
 ```
 
@@ -135,7 +132,13 @@ def fill():
 
     if total > 10:
         for k in range(5):  # Not parallelized because it is not at the outermost scope
+
+    for i in range(10): # Is parallelized, since is at outermost scope
+        for j in range(5): # Serialized in each parallel thread
+            total += i * j
 ```
+
+Note that, when run on a GPU, each outermost scope statement will run in a separate GPU kernel, incurring launch overhead. For maximum speed, try to fuse your code into a single parallel for, if possible.
 
 You may also serialize a for loop at the outermost scope using `ti.loop_config(serialize=True)`. Please refer to [Serialize a specified parallel for loop](../debug/debugging.md#serialize-a-specified-parallel-for-loop) for additional information.
 
@@ -172,11 +175,11 @@ Congratulations! By following the brief example above, you have learned the most
 
 The table below provides an overview of the operating systems supported by Taichi and the corresponding backends that are compatible with these platforms:
 
-| **platform** |      **CPU**       |      **CUDA**      |     **OpenGL**     |     **Metal**      |    **Vulkan**    |
-| :----------: | :----------------: | :----------------: | :----------------: | :----------------: | :----------------: |
-|   Windows    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |        N/A         | :heavy_check_mark: |
-|    Linux     | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |        N/A         | :heavy_check_mark: |
-|    macOS     | :heavy_check_mark: |        N/A         |        N/A         | :heavy_check_mark: | :heavy_check_mark: |
+| **platform** |      **CPU**       |      **CUDA**      |      **Metal**      |    **Vulkan**    |
+| :----------: | :----------------: | :----------------: |  :----------------: | :----------------: |
+|   Windows    | :heavy_check_mark: | :heavy_check_mark: |        N/A         | :heavy_check_mark: |
+|    Linux     | :heavy_check_mark: | :heavy_check_mark: |         N/A         | :heavy_check_mark: |
+|    macOS     | :heavy_check_mark: |        N/A         |  :heavy_check_mark: | :heavy_check_mark: |
 
 - :heavy_check_mark:: supported;
 - N/A: not available
