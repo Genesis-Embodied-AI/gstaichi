@@ -1,7 +1,7 @@
 # GS-Taichi
 
 [Taichi](https://github.com/taichi-dev/taichi) was forked in June 2025. It is being developed to target the [Genesis physics simulator](https://github.com/Genesis-Embodied-AI/Genesis). Whilst the repo largely resembles upstream for now, we have made the following changes:
-- revamped continuous integration, to run using recent python versions (up to 3.13), recent mac os x versions (up to 15), and to run reliably (at least 95% of runs with correct code pass all tests)
+- revamped continuous integration, to run using recent python versions (up to 3.13), recent mac os x versions (up to 15), and to run reliably (at least 95% of runs with correct code succeed)
 - added dataclasses.dataclass structs:
     - work with both ndarrays and fields (cf ti.struct (field only), ti.dataclass (field only), ti.data_oriented (field only), argpack (ndarray only))
     - can be passed into child `ti.func`tions (cf argpack)
