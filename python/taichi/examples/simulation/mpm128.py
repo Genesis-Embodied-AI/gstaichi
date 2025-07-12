@@ -1,8 +1,9 @@
 # type: ignore
 
-import taichi as ti
-import pygame
 import numpy as np
+import pygame
+
+import taichi as ti
 
 ti.init(arch=ti.gpu)  # Try to run on GPU
 
@@ -122,20 +123,22 @@ def reset():
 
 
 def main():
-    print("[Hint] Use WSAD/arrow keys to control gravity. Use left/right mouse buttons to attract/repel. Press R to reset.")
-    
+    print(
+        "[Hint] Use WSAD/arrow keys to control gravity. Use left/right mouse buttons to attract/repel. Press R to reset."
+    )
+
     width, height = 512, 512
     pygame.init()
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption("Taichi MLS-MPM-128")
     clock = pygame.time.Clock()
-    
+
     reset()
     gravity[None] = [0, -1]
-    
+
     # Color palette: [0x068587, 0xED553B, 0xEEEEF0]
     colors = [(6, 133, 135), (237, 85, 59), (238, 238, 240)]
-    
+
     running = True
     frame = 0
     while running and frame < 20000:
@@ -147,7 +150,7 @@ def main():
                     running = False
                 elif event.key == pygame.K_r:
                     reset()
-        
+
         # Handle continuous key presses
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
@@ -156,32 +159,32 @@ def main():
             gravity[None][0] = 1
         else:
             gravity[None][0] = 0
-            
+
         if keys[pygame.K_UP] or keys[pygame.K_w]:
             gravity[None][1] = 1
         elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
             gravity[None][1] = -1
         else:
             gravity[None][1] = 0
-        
+
         mouse = pygame.mouse.get_pos()
         attractor_pos[None] = [mouse[0] / width, mouse[1] / height]
         attractor_strength[None] = 0
-        
+
         if pygame.mouse.get_pressed()[0]:  # LMB
             attractor_strength[None] = 1
         if pygame.mouse.get_pressed()[2]:  # RMB
             attractor_strength[None] = -1
-        
+
         for s in range(int(2e-3 // dt)):
             substep()
-        
+
         # Clear screen with background color
         screen.fill((17, 47, 65))  # 0x112F41
-        
+
         # Draw mouse cursor
         pygame.draw.circle(screen, (51, 102, 153), mouse, 15)  # 0x336699
-        
+
         # Draw particles
         positions = x.to_numpy()
         materials = material.to_numpy()
@@ -191,11 +194,11 @@ def main():
             if 0 <= screen_x < width and 0 <= screen_y < height:
                 color = colors[materials[i]]
                 pygame.draw.circle(screen, color, (screen_x, screen_y), 1)
-        
+
         pygame.display.flip()
         clock.tick(60)
         frame += 1
-    
+
     pygame.quit()
 
 

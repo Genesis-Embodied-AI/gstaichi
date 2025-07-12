@@ -1,8 +1,10 @@
 # type: ignore
 
 import math
-import pygame
+
 import numpy as np
+import pygame
+
 import taichi as ti
 
 ti.init(arch=ti.cuda)
@@ -97,7 +99,7 @@ def main():
     screen = pygame.display.set_mode((res, res))
     pygame.display.set_caption("Comet")
     clock = pygame.time.Clock()
-    
+
     running = True
     while running:
         for event in pygame.event.get():
@@ -106,12 +108,12 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
-        
+
         generate()
         for s in range(steps):
             substep()
         render()
-        
+
         # Convert to pygame surface
         img_np = img.to_numpy()
         img_np = np.clip(img_np * 255, 0, 255).astype(np.uint8)
@@ -120,7 +122,7 @@ def main():
         screen.blit(surf, (0, 0))
         pygame.display.flip()
         clock.tick(60)
-    
+
     pygame.quit()
 
 

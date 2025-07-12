@@ -2,8 +2,10 @@
 
 # C++ reference and tutorial (Chinese): https://zhuanlan.zhihu.com/p/26882619
 import math
-import pygame
+
 import numpy as np
+import pygame
+
 import taichi as ti
 
 ti.init(arch=ti.gpu)
@@ -78,13 +80,13 @@ def init_tracers():
 
 def main():
     init_tracers()
-    
+
     width, height = 1024, 512
     pygame.init()
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption("Vortex Rings")
     clock = pygame.time.Clock()
-    
+
     running = True
     while running:
         for event in pygame.event.get():
@@ -93,14 +95,14 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
-        
+
         for i in range(4):  # substeps
             advect()
             integrate_vortex()
 
         # Clear screen with white background
         screen.fill((255, 255, 255))
-        
+
         # Draw tracers
         positions = tracer.to_numpy()
         for pos_tracer in positions:
@@ -109,10 +111,10 @@ def main():
             screen_y = int((pos_tracer[1] * 0.1 + 0.5) * height)
             if 0 <= screen_x < width and 0 <= screen_y < height:
                 pygame.draw.circle(screen, (0, 0, 0), (screen_x, screen_y), 1)
-        
+
         pygame.display.flip()
         clock.tick(60)
-    
+
     pygame.quit()
 
 

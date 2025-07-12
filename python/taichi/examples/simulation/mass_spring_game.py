@@ -4,9 +4,10 @@
 # - https://www.bilibili.com/video/BV1UK4y177iH
 # - https://www.bilibili.com/video/BV1DK411A771
 
-import taichi as ti
-import pygame
 import numpy as np
+import pygame
+
+import taichi as ti
 
 ti.init(arch=ti.cpu)
 
@@ -106,7 +107,7 @@ def main():
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption("Explicit Mass Spring System")
     clock = pygame.time.Clock()
-    
+
     # Initialize font for text rendering
     font = pygame.font.Font(None, 24)
 
@@ -149,7 +150,9 @@ def main():
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:  # LMB
                     pos_x, pos_y = event.pos[0] / width, 1 - event.pos[1] / height
-                    shift_pressed = pygame.key.get_pressed()[pygame.K_LSHIFT] or pygame.key.get_pressed()[pygame.K_RSHIFT]
+                    shift_pressed = (
+                        pygame.key.get_pressed()[pygame.K_LSHIFT] or pygame.key.get_pressed()[pygame.K_RSHIFT]
+                    )
                     new_particle(pos_x, pos_y, int(shift_pressed))
 
         # Handle right mouse button for attraction
@@ -187,16 +190,16 @@ def main():
             "C: clear all; Space: pause",
             f"Y: Spring Young's modulus {spring_Y[None]:.1f}",
             f"D: Drag damping {drag_damping[None]:.2f}",
-            f"X: Dashpot damping {dashpot_damping[None]:.2f}"
+            f"X: Dashpot damping {dashpot_damping[None]:.2f}",
         ]
-        
+
         for i, text in enumerate(texts):
             text_surface = font.render(text, True, (0, 0, 0))
             screen.blit(text_surface, (10, 10 + i * 25))
 
         pygame.display.flip()
         clock.tick(60)
-    
+
     pygame.quit()
 
 

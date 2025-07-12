@@ -1,8 +1,9 @@
 # type: ignore
 
-import taichi as ti
-import pygame
 import numpy as np
+import pygame
+
+import taichi as ti
 
 ti.init(arch=ti.gpu)  # Try to run on GPU
 quality = 1  # Use a larger value for higher-res simulations
@@ -119,16 +120,16 @@ def initialize():
 
 def main():
     initialize()
-    
+
     width, height = 512, 512
     pygame.init()
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption("Taichi MLS-MPM-99")
     clock = pygame.time.Clock()
-    
+
     # Color palette: [0x068587, 0xED553B, 0xEEEEF0]
     colors = [(6, 133, 135), (237, 85, 59), (238, 238, 240)]
-    
+
     running = True
     while running:
         for event in pygame.event.get():
@@ -137,13 +138,13 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
-        
+
         for s in range(int(2e-3 // dt)):
             substep()
-        
+
         # Clear screen with background color
         screen.fill((17, 47, 65))  # 0x112F41
-        
+
         # Draw particles
         positions = x.to_numpy()
         materials = material.to_numpy()
@@ -153,10 +154,10 @@ def main():
             if 0 <= screen_x < width and 0 <= screen_y < height:
                 color = colors[materials[i]]
                 pygame.draw.circle(screen, color, (screen_x, screen_y), 1)
-        
+
         pygame.display.flip()
         clock.tick(60)
-    
+
     pygame.quit()
 
 

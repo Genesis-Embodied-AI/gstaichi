@@ -5,6 +5,7 @@
 
 import numpy as np
 import pygame
+
 import taichi as ti
 
 ti.init()
@@ -77,7 +78,7 @@ def main():
     screen = pygame.display.set_mode((img_size, img_size))
     pygame.display.set_caption("Game of Life")
     clock = pygame.time.Clock()
-    
+
     print("[Hint] Press `r` to reset")
     print("[Hint] Press SPACE to pause")
     print("[Hint] Click LMB, RMB and drag to add alive / dead cells")
@@ -85,7 +86,7 @@ def main():
     init()
     paused = False
     running = True
-    
+
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -118,7 +119,7 @@ def main():
         screen.blit(surf, (0, 0))
         pygame.display.flip()
         clock.tick(15)
-    
+
     pygame.quit()
 
 

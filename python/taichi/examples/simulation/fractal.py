@@ -1,8 +1,9 @@
 # type: ignore
 
-import taichi as ti
-import pygame
 import numpy as np
+import pygame
+
+import taichi as ti
 
 ti.init(arch=ti.gpu)
 

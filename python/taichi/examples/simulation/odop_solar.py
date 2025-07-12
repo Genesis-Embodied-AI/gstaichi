@@ -1,8 +1,10 @@
 # type: ignore
 
 import math
-import pygame
+
 import numpy as np
+import pygame
+
 import taichi as ti
 
 ti.init()
@@ -50,7 +52,7 @@ class SolarSystem:
         sun_x = int(0.5 * width)
         sun_y = int(0.5 * height)
         pygame.draw.circle(screen, (255, 170, 136), (sun_x, sun_y), 10)  # 0xFFAA88
-        
+
         # Draw planets
         positions = self.x.to_numpy()
         for pos in positions:
@@ -72,7 +74,7 @@ def main():
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption("Solar System")
     clock = pygame.time.Clock()
-    
+
     running = True
     while running:
         for event in pygame.event.get():
@@ -87,11 +89,11 @@ def main():
 
         # Clear screen with background color
         screen.fill((0, 113, 26))  # 0x0071A
-        
+
         solar.render(screen, width, height)
         pygame.display.flip()
         clock.tick(60)
-    
+
     pygame.quit()
 
 

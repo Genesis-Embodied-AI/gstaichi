@@ -1,8 +1,9 @@
 # type: ignore
 
-import taichi as ti
-import pygame
 import numpy as np
+import pygame
+
+import taichi as ti
 
 ti.init(arch=ti.gpu)
 
@@ -108,18 +109,18 @@ def paint_phi(screen, width, height):
     a, b, c = pos_[f2v_[:, 0]], pos_[f2v_[:, 1]], pos_[f2v_[:, 2]]
     k = phi_ * (10 / E)
     gb = (1 - k) * 0.5
-    
+
     # Draw triangles
     for i in range(len(a)):
         points = [
             (int(a[i][0] * width), height - int(a[i][1] * height)),
             (int(b[i][0] * width), height - int(b[i][1] * height)),
-            (int(c[i][0] * width), height - int(c[i][1] * height))
+            (int(c[i][0] * width), height - int(c[i][1] * height)),
         ]
         color = (
             clip(int((k[i] + gb[i]) * 255), 0, 255),
             clip(int(gb[i] * 255), 0, 255),
-            clip(int(gb[i] * 255), 0, 255)
+            clip(int(gb[i] * 255), 0, 255),
         )
         pygame.draw.polygon(screen, color, points)
 
@@ -134,11 +135,11 @@ def main():
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption("FEM128")
     clock = pygame.time.Clock()
-    
+
     print(
         "[Hint] Use WSAD/arrow keys to control gravity. Use left/right mouse buttons to attract/repel. Press R to reset."
     )
-    
+
     running = True
     while running:
         for event in pygame.event.get():
@@ -157,29 +158,29 @@ def main():
                     gravity[None] = [0, -1]
                 elif event.key in (pygame.K_w, pygame.K_UP):
                     gravity[None] = [0, +1]
-        
+
         mouse_pos = pygame.mouse.get_pos()
         attractor_pos[None] = [mouse_pos[0] / width, mouse_pos[1] / height]
         attractor_strength[None] = pygame.mouse.get_pressed()[0] - pygame.mouse.get_pressed()[2]  # LMB - RMB
-        
+
         for i in range(50):
             with ti.ad.Tape(loss=U):
                 update_U()
             advance()
-        
+
         # Clear screen
         screen.fill((0, 0, 0))
-        
+
         # Draw triangles
         paint_phi(screen, width, height)
-        
+
         # Draw mouse cursor
         pygame.draw.circle(screen, (51, 102, 153), mouse_pos, 15)  # 0x336699
-        
+
         # Draw ball
         ball_screen_pos = (int(ball_pos[0] * width), int(height - ball_pos[1] * height))
         pygame.draw.circle(screen, (102, 102, 102), ball_screen_pos, int(ball_radius * width))  # 0x666666
-        
+
         # Draw vertices
         positions = pos.to_numpy()
         for pos_vertex in positions:
@@ -187,10 +188,10 @@ def main():
             screen_y = int(height - pos_vertex[1] * height)
             if 0 <= screen_x < width and 0 <= screen_y < height:
                 pygame.draw.circle(screen, (255, 170, 51), (screen_x, screen_y), 2)  # 0xFFAA33
-        
+
         pygame.display.flip()
         clock.tick(60)
-    
+
     pygame.quit()
 
 

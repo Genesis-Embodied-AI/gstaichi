@@ -2,8 +2,10 @@
 
 # Authored by Tiantian Liu, Taichi Graphics.
 import math
-import pygame
+
 import numpy as np
+import pygame
+
 import taichi as ti
 
 ti.init(arch=ti.cpu)
@@ -110,7 +112,7 @@ def main():
 
         # Clear screen
         screen.fill((0, 0, 0))
-        
+
         # Draw particles
         positions = pos.to_numpy()
         for pos_particle in positions:
@@ -119,10 +121,10 @@ def main():
             screen_y = int(pos_particle[1] * height)
             if 0 <= screen_x < width and 0 <= screen_y < height:
                 pygame.draw.circle(screen, (255, 255, 255), (screen_x, screen_y), planet_radius)
-        
+
         pygame.display.flip()
         clock.tick(60)
-    
+
     pygame.quit()
 
 

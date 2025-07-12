@@ -1,8 +1,9 @@
 # type: ignore
 
-import taichi as ti
-import pygame
 import numpy as np
+import pygame
+
+import taichi as ti
 
 ti.init()
 
@@ -47,25 +48,25 @@ def init():
 
 def main():
     init()
-    
+
     width, height = 800, 600
     pygame.init()
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption("Autodiff gravity")
     clock = pygame.time.Clock()
-    
+
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-        
+
         for i in range(50):
             substep()
-        
+
         # Clear screen
         screen.fill((0, 0, 0))
-        
+
         # Draw particles
         positions = x.to_numpy()
         for pos in positions:
@@ -74,10 +75,10 @@ def main():
             screen_y = int(pos[1] * height)
             if 0 <= screen_x < width and 0 <= screen_y < height:
                 pygame.draw.circle(screen, (255, 255, 255), (screen_x, screen_y), 3)
-        
+
         pygame.display.flip()
         clock.tick(60)
-    
+
     pygame.quit()
 
 

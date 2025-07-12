@@ -6,6 +6,7 @@ See https://sagejenson.com/physarum for the details."""
 
 import numpy as np
 import pygame
+
 import taichi as ti
 
 ti.init(arch=ti.gpu)
@@ -72,17 +73,17 @@ def step(phase: ti.i32):
 
 def main():
     print("[Hint] Use UP/DOWN arrows to change simulation speed.")
-    
+
     pygame.init()
     screen = pygame.display.set_mode((GRID_SIZE, GRID_SIZE))
     pygame.display.set_caption("Physarum")
     clock = pygame.time.Clock()
-    
+
     init()
     i = 0
     step_per_frame = 1
     running = True
-    
+
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -94,11 +95,11 @@ def main():
                     step_per_frame = min(100, step_per_frame + 1)
                 elif event.key == pygame.K_DOWN:
                     step_per_frame = max(1, step_per_frame - 1)
-        
+
         for _ in range(step_per_frame):
             step(i % 2)
             i += 1
-        
+
         # Convert to pygame surface
         img = grid.to_numpy()[0]
         img = np.clip(img * 255, 0, 255).astype(np.uint8)
@@ -107,7 +108,7 @@ def main():
         screen.blit(surf, (0, 0))
         pygame.display.flip()
         clock.tick(60)
-    
+
     pygame.quit()
 
 

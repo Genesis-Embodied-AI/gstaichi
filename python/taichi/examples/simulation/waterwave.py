@@ -3,9 +3,10 @@
 # Water wave effect partially based on shallow water equations
 # https://en.wikipedia.org/wiki/Shallow_water_equations#Non-conservative_form
 
-import taichi as ti
-import pygame
 import numpy as np
+import pygame
+
+import taichi as ti
 
 ti.init(arch=ti.gpu)
 
@@ -82,12 +83,12 @@ def main():
     print("[Hint] click on the window to create waves")
 
     reset()
-    
+
     pygame.init()
     screen = pygame.display.set_mode(shape)
     pygame.display.set_caption("Water Wave")
     clock = pygame.time.Clock()
-    
+
     running = True
     while running:
         for event in pygame.event.get():
@@ -102,10 +103,10 @@ def main():
                 if event.button == 1:  # LMB
                     x, y = event.pos
                     create_wave(3, x, y)
-        
+
         update()
         visualize_wave()
-        
+
         # Convert to pygame surface
         img = pixels.to_numpy()
         img = np.clip(img * 255, 0, 255).astype(np.uint8)
@@ -114,7 +115,7 @@ def main():
         screen.blit(surf, (0, 0))
         pygame.display.flip()
         clock.tick(60)
-    
+
     pygame.quit()
 
 

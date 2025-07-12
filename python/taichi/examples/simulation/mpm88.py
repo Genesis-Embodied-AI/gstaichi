@@ -1,9 +1,10 @@
 # type: ignore
 
 # MPM-MLS in 88 lines of Taichi code, originally created by @yuanming-hu
-import taichi as ti
-import pygame
 import numpy as np
+import pygame
+
+import taichi as ti
 
 ti.init(arch=ti.gpu)
 
@@ -88,13 +89,13 @@ def init():
 
 def main():
     init()
-    
+
     width, height = 800, 600
     pygame.init()
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption("MPM88")
     clock = pygame.time.Clock()
-    
+
     running = True
     while running:
         for event in pygame.event.get():
@@ -103,13 +104,13 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
-        
+
         for s in range(50):
             substep()
-        
+
         # Clear screen with background color
         screen.fill((17, 47, 65))  # 0x112F41
-        
+
         # Draw particles
         positions = x.to_numpy()
         for pos in positions:
@@ -118,10 +119,10 @@ def main():
             screen_y = int(height - pos[1] * height)  # Flip y-axis
             if 0 <= screen_x < width and 0 <= screen_y < height:
                 pygame.draw.circle(screen, (6, 133, 135), (screen_x, screen_y), 1)  # 0x068587
-        
+
         pygame.display.flip()
         clock.tick(60)
-    
+
     pygame.quit()
 
 
