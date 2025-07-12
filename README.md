@@ -25,6 +25,36 @@ Other changes to gs-taichi are planned:
 
 For the time being, the documentation is in flux. Please feel free to raise an issue with any inconsistencies or issues you find.
 
+# What is gs-taichi?
+
+GS-Taichi is a high performance multi-platform compiler, targeted at physics simulations. It compiles Python code into parallelizable kernels that can run on:
+- NVidia GPUs, using CUDA
+- Vulkan-compatible GPUs, using SPIR-V
+- Mac Metal GPUs
+- x86 and arm64 CPUs
+
+GS-Taichi supports automatic differentiation. GS-Taichi lets you build fully fused GPU kernels, using Python.
+
+## Why not use WARP?
+
+- Warp is CUDA-only. gs-taichi runs on non-nvidia GPUs
+
+## Why not use upstream Taichi?
+
+- upstream Taichi repo appears empirically to be not currently being actively developed, nor accepting [new features](https://github.com/taichi-dev/taichi/pulls); and we want to move fast, now :)
+
+## Why not use Torch?
+
+- Torch uses pre-built kernels, e.g. for per-element addition, which are combined together, in Python space
+     - for machine learning workloads, this will run at full speed
+     - for many physics simulation workloads, the kernel launch overhead can easily dominate the kernel runtime, leaving performance on the table
+- gs-taichi by contrast lets you easily build fully-fused custom kernels, which allows launch latency to be fully hidden by the kernel runtime
+
+## Why not use numba?
+
+- no support for automatic differentiation
+- no support for Metal or Vulkan
+
 # Getting started
 
 - See [hello_world.md](docs/lang/articles/get-started/hello_world.md)
