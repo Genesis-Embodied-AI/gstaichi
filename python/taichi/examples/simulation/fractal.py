@@ -1,20 +1,19 @@
 # type: ignore
 
 import taichi as ti
+import pygame
+import numpy as np
 
 ti.init(arch=ti.gpu)
 
-n = 320
-pixels = ti.field(dtype=float, shape=(n * 2, n))
-
 
 @ti.func
-def complex_sqr(z):
+def complex_sqr(z: ti.template()) -> None:
     return ti.Vector([z[0] ** 2 - z[1] ** 2, z[1] * z[0] * 2])
 
 
 @ti.kernel
-def paint(t: float):
+def paint(n: int, t: float, pixels: ti.Template) -> None:
     for i, j in pixels:  # Parallelized over all pixels
         c = ti.Vector([-0.8, ti.cos(t) * 0.2])
         z = ti.Vector([i / n - 1, j / n - 0.5]) * 2
@@ -26,13 +25,28 @@ def paint(t: float):
 
 
 def main():
-    gui = ti.GUI("Julia Set", res=(n * 2, n))
+    n = 320
+    pixels = ti.field(dtype=float, shape=(n * 2, n))
+    pygame.init()
+    screen = pygame.display.set_mode((n * 2, n))
+    pygame.display.set_caption("Julia Set")
+    clock = pygame.time.Clock()
     t = 0.0
-    while not gui.get_event(ti.GUI.ESCAPE, ti.GUI.EXIT):
-        paint(t)
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        paint(n, t, pixels)
         t += 0.03
-        gui.set_image(pixels)
-        gui.show()
+        img = pixels.to_numpy()
+        img = np.clip(img * 255, 0, 255).astype(np.uint8)
+        img_rgb = np.stack([img] * 3, axis=-1)
+        surf = pygame.surfarray.make_surface(img_rgb)
+        screen.blit(surf, (0, 0))
+        pygame.display.flip()
+        clock.tick(60)
+    pygame.quit()
 
 
 if __name__ == "__main__":
