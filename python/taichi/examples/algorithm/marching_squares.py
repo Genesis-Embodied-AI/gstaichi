@@ -6,8 +6,10 @@ See "https://en.wikipedia.org/wiki/Marching_squares"
 """
 
 import time
-import pygame
+
 import numpy as np
+import pygame
+
 import taichi as ti
 import taichi.math as tm
 
@@ -176,12 +178,12 @@ def render():
 
 def main():
     t0 = time.perf_counter()
-    
+
     pygame.init()
     screen = pygame.display.set_mode(resolution)
     pygame.display.set_caption("2D Marching Squares")
     clock = pygame.time.Clock()
-    
+
     running = True
     while running:
         for event in pygame.event.get():
@@ -190,11 +192,11 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
-        
+
         iTime[None] = time.perf_counter() - t0
         march_squares()
         render()
-        
+
         # Convert to pygame surface
         img = pixels.to_numpy()
         img = np.clip(img * 255, 0, 255).astype(np.uint8)
@@ -202,7 +204,7 @@ def main():
         screen.blit(surf, (0, 0))
         pygame.display.flip()
         clock.tick(60)
-    
+
     pygame.quit()
 
 

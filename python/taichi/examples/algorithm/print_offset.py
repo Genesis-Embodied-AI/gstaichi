@@ -1,8 +1,9 @@
 # type: ignore
 
-import taichi as ti
-import pygame
 import numpy as np
+import pygame
+
+import taichi as ti
 
 ti.init(arch=ti.cpu, print_ir=False)
 
@@ -29,7 +30,7 @@ def main():
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption("layout")
     clock = pygame.time.Clock()
-    
+
     # Initialize font for text rendering
     font = pygame.font.Font(None, 30)
 
@@ -41,20 +42,20 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
-        
+
         # Clear screen with white background
         screen.fill((255, 255, 255))  # 0xFFFFFF
-        
+
         # Draw horizontal lines
         for i in range(1, m):
             y_pos = int(i * height / m)
             pygame.draw.line(screen, (0, 0, 0), (0, y_pos), (width, y_pos), 2)  # 0x000000
-        
+
         # Draw vertical lines
         for i in range(1, n):
             x_pos = int(i * width / n)
             pygame.draw.line(screen, (0, 0, 0), (x_pos, 0), (x_pos, height), 2)  # 0x000000
-        
+
         # Draw text
         for i in range(n):
             for j in range(m):
@@ -63,10 +64,10 @@ def main():
                 x_pos = int((i + 0.3) * width / n)
                 y_pos = int((j + 0.75) * height / m)
                 screen.blit(text_surface, (x_pos, y_pos))
-        
+
         pygame.display.flip()
         clock.tick(60)
-    
+
     pygame.quit()
 
 

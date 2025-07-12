@@ -2,6 +2,7 @@
 
 import numpy as np
 import pygame
+
 import taichi as ti
 
 
@@ -456,10 +457,10 @@ class MCISO_Example(MCISO):
         screen = pygame.display.set_mode((width, height))
         pygame.display.set_caption("Marching cube")
         clock = pygame.time.Clock()
-        
+
         # Initialize font for text rendering
         font = pygame.font.Font(None, 24)
-        
+
         running = True
         while running:
             for event in pygame.event.get():
@@ -480,20 +481,20 @@ class MCISO_Example(MCISO):
                         writer.add_faces(indices)
                         writer.export("mciso_output.ply")
                         print("Mesh saved to mciso_output.ply")
-            
+
             if self.use_sparse:
                 ti.deactivate_all_snodes()
             else:
                 self.m.fill(0)
-            
+
             mouse_pos = pygame.mouse.get_pos()
             self.touch(mouse_pos[0] / width, mouse_pos[1] / height)
             ret_len = self.march()
             ret = self.r.to_numpy()[:ret_len] / self.N
-            
+
             # Clear screen
             screen.fill((0, 0, 0))
-            
+
             if self.dim == 2:
                 self.compute_grad()
                 # Convert gradient field to image
@@ -502,7 +503,7 @@ class MCISO_Example(MCISO):
                 img_rgb = np.stack([img] * 3, axis=-1)
                 surf = pygame.surfarray.make_surface(img_rgb)
                 screen.blit(surf, (0, 0))
-                
+
                 # Draw lines
                 for i in range(len(ret)):
                     start_pos = (int(ret[i, 0][0] * width), int(ret[i, 0][1] * height))
@@ -514,32 +515,32 @@ class MCISO_Example(MCISO):
                     points = [
                         (int(ret[i, 0, 0] * width), int(ret[i, 0, 1] * height)),
                         (int(ret[i, 1, 0] * width), int(ret[i, 1, 1] * height)),
-                        (int(ret[i, 2, 0] * width), int(ret[i, 2, 1] * height))
+                        (int(ret[i, 2, 0] * width), int(ret[i, 2, 1] * height)),
                     ]
                     pygame.draw.polygon(screen, (255, 204, 102), points)  # 0xFFCC66
-                
+
                 # Draw triangle edges
                 for i in range(len(ret)):
                     start_pos = (int(ret[i, 0, 0] * width), int(ret[i, 0, 1] * height))
                     end_pos = (int(ret[i, 1, 0] * width), int(ret[i, 1, 1] * height))
                     pygame.draw.line(screen, (255, 102, 204), start_pos, end_pos, 1)  # 0xFF66CC
-                    
+
                     start_pos = (int(ret[i, 1, 0] * width), int(ret[i, 1, 1] * height))
                     end_pos = (int(ret[i, 2, 0] * width), int(ret[i, 2, 1] * height))
                     pygame.draw.line(screen, (255, 102, 204), start_pos, end_pos, 1)  # 0xFF66CC
-                    
+
                     start_pos = (int(ret[i, 2, 0] * width), int(ret[i, 2, 1] * height))
                     end_pos = (int(ret[i, 0, 0] * width), int(ret[i, 0, 1] * height))
                     pygame.draw.line(screen, (255, 102, 204), start_pos, end_pos, 1)  # 0xFF66CC
-                
+
                 # Draw text
                 text = f"Press space to save mesh to PLY ({len(ret)} faces)"
                 text_surface = font.render(text, True, (255, 255, 255))
                 screen.blit(text_surface, (10, 10))
-            
+
             pygame.display.flip()
             clock.tick(60)
-        
+
         pygame.quit()
 
 

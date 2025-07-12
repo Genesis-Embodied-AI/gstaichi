@@ -7,8 +7,10 @@
 # https://github.com/ShaneFX/GAMES201/tree/master/HW01
 
 import argparse
-import pygame
+
 import numpy as np
+import pygame
+
 import taichi as ti
 from taichi.math import vec2, vec3
 
@@ -275,7 +277,7 @@ def main():
     screen = pygame.display.set_mode((res, res))
     pygame.display.set_caption("Stable Fluid")
     clock = pygame.time.Clock()
-    
+
     md_gen = MouseDataGen()
 
     _velocities = ti.Vector.ndarray(2, float, shape=(res, res))
@@ -390,10 +392,10 @@ def main():
                     surf = pygame.surfarray.make_surface(img)
                     screen.blit(surf, (0, 0))
                     swap = True
-        
+
         pygame.display.flip()
         clock.tick(maxfps)
-    
+
     pygame.quit()
 
 

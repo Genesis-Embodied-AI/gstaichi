@@ -11,8 +11,10 @@ User interface:
 """
 
 import typing
-import pygame
+
 import numpy as np
+import pygame
+
 import taichi as ti
 import taichi.math as tm
 
@@ -144,12 +146,12 @@ def render():
 
 def main():
     refresh_scene()
-    
+
     pygame.init()
     screen = pygame.display.set_mode((window_size, window_size))
     pygame.display.set_caption("Poisson Disk Sampling")
     clock = pygame.time.Clock()
-    
+
     running = True
     while running:
         for event in pygame.event.get():
@@ -174,7 +176,7 @@ def main():
         sample_count[None] += 1
         compute_distance_field()
         render()
-        
+
         # Convert to pygame surface
         img_np = img.to_numpy()
         img_np = np.clip(img_np * 255, 0, 255).astype(np.uint8)
@@ -182,7 +184,7 @@ def main():
         screen.blit(surf, (0, 0))
         pygame.display.flip()
         clock.tick(10)  # 10 FPS as in original
-    
+
     pygame.quit()
 
 
