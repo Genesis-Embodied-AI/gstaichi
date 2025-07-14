@@ -14,7 +14,7 @@ pytest_rerunfailures.works_with_current_xdist = lambda: True
 
 
 @pytest.fixture(autouse=True)
-def run_gc_before_test():
+def run_gc_after_test():
     """
     This is necessary to prevent random test failures when testing with ndarray.
 
@@ -44,8 +44,9 @@ def run_gc_before_test():
         - causing the new ndarray-cpp to be deleted
         - at this point => crash bug
 
-    By calling gc.collect before each test, we avoid this issue.
+    By calling gc.collect after each test, we avoid this issue.
     """
+    yield
     gc.collect()
     gc.collect()
 
