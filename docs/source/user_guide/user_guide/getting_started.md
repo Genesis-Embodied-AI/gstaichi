@@ -1,3 +1,5 @@
+# Getting started
+
 # Installation
 
 ## Pre-requisites

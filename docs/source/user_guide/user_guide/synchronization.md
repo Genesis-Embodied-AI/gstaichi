@@ -76,4 +76,3 @@ ti.simt.block.SharedArray(data_type, shape)
 ti.simt.block.sync()
 ```
 See [../../..](tests/python/test_shared_array.py) for examples.
-
