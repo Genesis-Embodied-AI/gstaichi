@@ -55,7 +55,7 @@ end = time.time()
 print("elapsed", end - start)
 ```
 
-You can find the full code also at [lcg_python.py](../../../python/taichi/examples/lcg_python.py)
+You can find the full code also at [lcg_python.py](../../../../python/taichi/examples/lcg_python.py)
 
 On a Macbook Air M4, this gives the following output:
 ```

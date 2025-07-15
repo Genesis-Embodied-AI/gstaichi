@@ -75,4 +75,4 @@ Barriers and fences only work well for shared memory. Using shared memory is an 
 ti.simt.block.SharedArray(data_type, shape)
 ti.simt.block.sync()
 ```
-See [../../..](tests/python/test_shared_array.py) for examples.
+See [tests/python/test_shared_array.py](../../../../tests/python/test_shared_array.py) for examples.
