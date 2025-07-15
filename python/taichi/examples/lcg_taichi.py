@@ -1,5 +1,6 @@
-import taichi as ti
 import time
+
+import taichi as ti
 
 
 @ti.kernel
@@ -10,19 +11,24 @@ def lcg_ti(B: int, lcg_its: int, a: ti.types.NDArray[ti.i32, 1]) -> None:
             x = (1664525 * x + 1013904223) % 2147483647
         a[i] = x
 
-ti.init(arch=ti.gpu)
 
-B = 16000
-a = ti.ndarray(ti.int32, (B,))
+def main() -> None:
+    ti.init(arch=ti.gpu)
 
-ti.sync()
-start = time.time()
-lcg_ti(B, 1000, a)
-ti.sync()
-end = time.time()
-print("elapsed", end - start)
+    B = 16000
+    a = ti.ndarray(ti.int32, (B,))
 
-# [Taichi] version 1.8.0, llvm 15.0.7, commit 5afed1c9, osx, python 3.10.16
-# [Taichi] Starting on arch=metal
-# elapsed 0.04660296440124512
-# (on mac air m4)
+    ti.sync()
+    start = time.time()
+    lcg_ti(B, 1000, a)
+    ti.sync()
+    end = time.time()
+    print("elapsed", end - start)
+
+    # [Taichi] version 1.8.0, llvm 15.0.7, commit 5afed1c9, osx, python 3.10.16
+    # [Taichi] Starting on arch=metal
+    # elapsed 0.04660296440124512
+    # (on mac air m4)
+
+
+main()

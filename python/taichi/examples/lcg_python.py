@@ -1,6 +1,7 @@
+import time
+
 import numpy as np
 import numpy.typing as npt
-import time
 
 
 def lcg_np(B: int, lcg_its: int, a: npt.NDArray) -> None:
@@ -10,11 +11,16 @@ def lcg_np(B: int, lcg_its: int, a: npt.NDArray) -> None:
             x = (1664525 * x + 1013904223) % 2147483647
         a[i] = x
 
-B = 16000
-a = np.ndarray((B,), np.int32)
 
-start = time.time()
-lcg_np(B, 1000, a)
-end = time.time()
-print("elapsed", end - start)
-# elapsed 5.552601099014282 on macbook air m4
+def main() -> None:
+    B = 16000
+    a = np.ndarray((B,), np.int32)
+
+    start = time.time()
+    lcg_np(B, 1000, a)
+    end = time.time()
+    print("elapsed", end - start)
+    # elapsed 5.552601099014282 on macbook air m4
+
+
+main()
