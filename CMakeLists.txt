@@ -140,8 +140,6 @@ if (TI_BUILD_TESTS)
   include(cmake/TaichiTests.cmake)
 endif()
 
-option(TI_BUILD_RHI_EXAMPLES "Build the Unified Device API examples" OFF)
-
 message("C++ Flags: ${CMAKE_CXX_FLAGS}")
 message("Build type: ${CMAKE_BUILD_TYPE}")
 
@@ -218,11 +216,6 @@ if (TI_WITH_C_API)
     include(cmake/TaichiCAPITests.cmake)
   endif()
 endif()
-
-if (TI_BUILD_RHI_EXAMPLES)
-  add_subdirectory(cpp_examples/rhi_examples)
-endif()
-
 
 option(TI_WITH_GRAPHVIZ "generate dependency graphs between targets" OFF)  # wheel-tag: viz
 if (TI_WITH_GRAPHVIZ)
