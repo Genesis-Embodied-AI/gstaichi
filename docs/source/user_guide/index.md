@@ -1,7 +1,8 @@
 # User guide
 
 ```{toctree}
-:caption: Getting started
+:caption: User Guide
 :maxdepth: 1
 
 ```
+[Under construction]
