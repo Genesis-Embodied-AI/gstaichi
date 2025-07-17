@@ -251,11 +251,11 @@ def unpack_ndarray_struct(tree: ast.Module, struct_locals: set[str]) -> ast.Modu
 
 def extract_struct_locals_from_context(ctx: ASTTransformerContext):
     """
-    Uses ctx.func.func to get the function signature
-    Searches this for any dataclasses
-    - if it finds any dataclasses, then converts them into expanded names
-    - e.g. my_struct: MyStruct, and MyStruct contains a, b, c would become:
-        {"__ti_my_struct_a", "__ti_my_struct_b, "__ti_my_struct_c"}
+    - Uses ctx.func.func to get the function signature.
+    - Searches this for any dataclasses:
+      - If it finds any dataclasses, then converts them into expanded names.
+      - E.g. my_struct: MyStruct, and MyStruct contains a, b, c would become:
+          {"__ti_my_struct_a", "__ti_my_struct_b, "__ti_my_struct_c"}
     """
     assert ctx.func is not None
     sig = inspect.signature(ctx.func.func)
