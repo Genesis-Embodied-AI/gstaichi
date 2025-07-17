@@ -1092,13 +1092,14 @@ class Kernel:
             raise ValueError(f"Argument type mismatch. Expecting {needed_arg_type}, got {type(v)}.")
 
         template_num = 0
-        skip_offset = 0
-        for i, val in enumerate(args):
-            needed_ = self.arguments[i].annotation
+        i_out = 0
+        for i_in, val in enumerate(args):
+            needed_ = self.arguments[i_in].annotation
             if needed_ == template or isinstance(needed_, template):
                 template_num += 1
+                i_out += 1
                 continue
-            skip_offset += recursive_set_args(needed_, type(val), val, (skip_offset + i - template_num,)) - 1
+            i_out += recursive_set_args(needed_, type(val), val, (i_out - template_num,))
 
         for i, (set_arg_func, params) in enumerate(set_later_list):
             set_arg_func((len(args) - template_num + i,), *params)
