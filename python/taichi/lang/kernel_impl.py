@@ -478,7 +478,7 @@ class TaichiCallableTemplateMapper:
         self.mapping = {}
 
     @staticmethod
-    def extract_arg(arg, anno: AnnotationType, arg_name: str):
+    def extract_arg(arg, annotation: AnnotationType, arg_name: str):
         if annotation == template or isinstance(annotation, template):
             if isinstance(arg, taichi.lang.snode.SNode):
                 return arg.ptr
