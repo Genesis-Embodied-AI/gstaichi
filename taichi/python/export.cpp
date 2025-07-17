@@ -19,8 +19,6 @@ PYBIND11_MODULE(taichi_python, m) {
   export_lang(m);
   export_math(m);
   export_misc(m);
-  export_visual(m);
-  export_ggui(m);
 }
 
 }  // namespace taichi

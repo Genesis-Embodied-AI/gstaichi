@@ -8,12 +8,11 @@ option(TI_WITH_OPENGL "Build with the OpenGL backend" ON)       # wheel-tag: gl
 option(TI_WITH_VULKAN "Build with the Vulkan backend" OFF)      # wheel-tag: vk
 option(TI_WITH_DX11 "Build with the DX11 backend" OFF)          # wheel-tag: dx11
 option(TI_WITH_DX12 "Build with the DX12 backend" OFF)          # wheel-tag: dx12
-option(TI_WITH_GGUI "Build with GGUI" OFF)                      # wheel-tag: ggui
 
 # Force symbols to be 'hidden' by default so nothing is exported from the Taichi
 # library including the third-party dependencies.
 # As Taichi can be used by external projects, some of the internal dependencies
-# such as Vulkan, ImGui, etc. could be in conflict with the dependencies of those
+# such as Vulkan, etc. could be in conflict with the dependencies of those
 # projects.
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
@@ -345,11 +344,6 @@ foreach (source IN LISTS TAICHI_CORE_SOURCE)
 endforeach ()
 
 if(TI_WITH_PYTHON)
-    # TODO Use TI_WITH_UI to guard the compilation of this target.
-    # This requires refactoring on the python/export_*.cpp as well as better
-    # error message on the Python side.
-    add_subdirectory(taichi/ui)
-
     message("PYTHON_LIBRARIES: " ${PYTHON_LIBRARIES})
     set(CORE_WITH_PYBIND_LIBRARY_NAME taichi_python)
     if (NOT ANDROID)
@@ -381,11 +375,6 @@ if(TI_WITH_PYTHON)
         target_link_libraries(${CORE_WITH_PYBIND_LIBRARY_NAME} PRIVATE ${BACKWARD_ENABLE})
     endif()
 
-    if(TI_WITH_GGUI)
-        target_compile_definitions(${CORE_WITH_PYBIND_LIBRARY_NAME} PRIVATE -DTI_WITH_GGUI)
-    endif()
-
-    target_link_libraries(${CORE_WITH_PYBIND_LIBRARY_NAME} PRIVATE taichi_ui)
     target_link_libraries(${CORE_WITH_PYBIND_LIBRARY_NAME} PRIVATE ${CORE_LIBRARY_NAME})
 
     target_include_directories(${CORE_WITH_PYBIND_LIBRARY_NAME}
@@ -396,8 +385,6 @@ if(TI_WITH_PYTHON)
         ${PROJECT_SOURCE_DIR}/external/volk
         ${PROJECT_SOURCE_DIR}/external/SPIRV-Tools/include
         ${PROJECT_SOURCE_DIR}/external/Vulkan-Headers/include
-        ${PROJECT_SOURCE_DIR}/external/imgui
-        ${PROJECT_SOURCE_DIR}/external/imgui/backends
         ${PROJECT_SOURCE_DIR}/external/FP16/include
       )
     target_include_directories(${CORE_WITH_PYBIND_LIBRARY_NAME} SYSTEM

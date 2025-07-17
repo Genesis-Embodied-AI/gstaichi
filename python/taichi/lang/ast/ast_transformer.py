@@ -9,8 +9,8 @@ import math
 import operator
 import re
 import warnings
+from ast import unparse
 from collections import ChainMap
-from sys import version_info
 from typing import Any, Iterable, Type
 
 import numpy as np
@@ -42,11 +42,6 @@ from taichi.lang.struct import Struct, StructType
 from taichi.lang.util import is_taichi_class, to_taichi_type
 from taichi.types import annotations, ndarray_type, primitive_types, texture_type
 from taichi.types.utils import is_integral
-
-if version_info < (3, 9):
-    from astunparse import unparse
-else:
-    from ast import unparse
 
 
 def reshape_list(flat_list: list[Any], target_shape: Iterable[int]) -> list[Any]:
@@ -733,14 +728,14 @@ class ASTTransformer(Builder):
                         kernel_arguments.decl_ret(return_type)
             impl.get_runtime().compiling_callable.finalize_rets()
 
-            invoke_later_dict: dict[str, tuple[any, str, any]] = dict()
+            invoke_later_dict: dict[str, tuple[Any, str, Any]] = dict()
             create_variable_later = dict()
             for i, arg in enumerate(args.args):
                 argument = ctx.func.arguments[i]
                 if isinstance(argument.annotation, ArgPackType):
                     kernel_arguments.push_argpack_arg(argument.name)
                     d = {}
-                    items_to_put_in_dict: list[tuple[str, str, any]] = []
+                    items_to_put_in_dict: list[tuple[str, str, Any]] = []
                     for j, (name, anno) in enumerate(argument.annotation.members.items()):
                         result, obj = decl_and_create_variable(
                             anno, name, ctx.arg_features[i][j], invoke_later_dict, "__argpack_" + name, 1

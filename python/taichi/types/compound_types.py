@@ -7,7 +7,8 @@ _type_factory = _ti_python_core.get_type_factory_instance()
 
 
 class CompoundType:
-    pass
+    def from_kernel_struct_ret(self, launch_ctx, index: tuple):
+        raise NotImplementedError()
 
 
 # TODO: maybe move MatrixType, StructType here to avoid the circular import?

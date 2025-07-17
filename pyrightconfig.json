@@ -2,5 +2,7 @@
     "reportInvalidTypeForm": "warning",
     "include": ["python"],
     "stubPath": "./stubs",
-    "extraPaths": ["./stubs"]
+    "extraPaths": ["./stubs"],
+    "reportMissingImports": true,
+    "reportMissingModuleSource": false
 }

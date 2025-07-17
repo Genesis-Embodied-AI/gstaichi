@@ -1,7 +1,6 @@
 # type: ignore
 
 import argparse
-import glob
 import math
 import os
 import runpy
@@ -13,17 +12,14 @@ from collections import defaultdict
 from functools import wraps
 from pathlib import Path
 
-import numpy as np
 import rich
 from colorama import Fore
 from rich.console import Console
-from rich.syntax import Syntax
 
-import taichi as ti
 from taichi._lib import core as _ti_core
 from taichi._lib import utils
 from taichi.lang import impl
-from taichi.tools import diagnose, video
+from taichi.tools import diagnose
 
 
 def timer(func):
@@ -142,100 +138,6 @@ class TaichiMain:
             return choice
 
         return support_choice_with_dot_py
-
-    @register
-    def gallery(self, arguments: list = sys.argv[2:]):
-        """Use mouse to select and run taichi examples in an interactive gui."""
-        # set the spacing parameters in the gallery image
-        slide_bar = 14
-        top_margin = 6
-        left_margin = 7
-        bottom_margin = 32
-        row_spacing = 32
-        col_spacing = 11
-        tile_size = 128
-
-        # load the gallery image
-        image_source = utils.package_root + "/assets/**/ti_gallery.png"
-        gallery_image_path = glob.glob(image_source, recursive=True)[0]
-        gallery_image = ti.tools.imread(gallery_image_path)
-        gallery_image = gallery_image[:, :-slide_bar]
-        width, height = gallery_image.shape[:2]
-
-        # create the gui, 2x4 tiles
-        gui = ti.GUI("Taichi Gallery", res=(width, height))
-        ncols = 4
-
-        # side length of a tile
-        dx = tile_size / width
-        dy = tile_size / height
-
-        examples = [
-            "poisson_disk_sampling",
-            "mass_spring_3d_ggui",
-            "circle_packing_image",
-            "snow_phaseField",
-            "sdf_renderer",
-            "cornell_box",
-            "karman_vortex_street",
-            "euler",
-            "fractal",
-            "mpm128",
-            "pbf2d",
-            "mass_spring_game",
-        ]
-
-        def valid_mouse_position(mou_x, mou_y):
-            xmin = left_margin / width
-            xmax = 1 - xmin
-            ymin = 0
-            ymax = 1 - top_margin / height
-            return (xmin <= mou_x <= xmax) and (ymin <= mou_y <= ymax)
-
-        def get_tile_from_mouse(mou_x, mou_y):
-            """Find the image tile that the mouse is hovering over."""
-            x = int(mou_x * width)
-            y = int(mou_y * height)
-            rind = y // (row_spacing + tile_size)
-            cind = (x - left_margin) // (col_spacing + tile_size)
-            return rind, cind
-
-        def draw_bounding_box(rind, cind):
-            x0 = cind * (col_spacing + tile_size) + left_margin
-            y0 = rind * (row_spacing + tile_size) + bottom_margin
-            x0 /= width
-            y0 /= height
-            pts = [(x0, y0), (x0 + dx, y0), (x0 + dx, y0 + dy), (x0, y0 + dy), (x0, y0)]
-            for i in range(4):
-                gui.line(pts[i], pts[i + 1], radius=2, color=0x0000FF)
-
-        def on_mouse_click_callback(example_name):
-            examples_dir = TaichiMain._get_examples_dir()
-            script = list(examples_dir.rglob(f"{example_name}.py"))[0]
-            print("Demo source code:")
-            print()
-            content = Syntax.from_path(script, line_numbers=True)
-            console = rich.console.Console()
-            console.print(content)
-            self._exec_python_file(str(script))
-
-        index = None
-        while not gui.get_event(ti.GUI.ESCAPE, ti.GUI.EXIT):
-            gui.set_image(gallery_image)
-            mou_x, mou_y = gui.get_cursor_pos()
-            gui.get_event(ti.GUI.PRESS)
-            if valid_mouse_position(mou_x, mou_y):
-                rind, cind = get_tile_from_mouse(mou_x, mou_y)
-                draw_bounding_box(rind, cind)
-                if gui.is_pressed(ti.GUI.LMB):
-                    gui.close()
-                    index = cind + rind * ncols
-                    break
-
-            gui.show()
-
-        if index is not None:
-            on_mouse_click_callback(examples[index])
 
     @register
     def example(self, arguments: list = sys.argv[2:]):
@@ -361,238 +263,6 @@ class TaichiMain:
         raise RuntimeError("TBD")
 
     @staticmethod
-    def _mp4_file(name: str) -> str:
-        if not name.endswith(".mp4"):
-            raise argparse.ArgumentTypeError("filename must be of type .mp4")
-        return name
-
-    @register
-    def gif(self, arguments: list = sys.argv[2:]):
-        """Convert mp4 file to gif in the same directory"""
-        parser = argparse.ArgumentParser(prog="ti gif", description=f"{self.gif.__doc__}")
-        parser.add_argument(
-            "-i",
-            "--input",
-            required=True,
-            dest="input_file",
-            type=TaichiMain._mp4_file,
-            help="Path to input MP4 video file",
-        )
-        parser.add_argument(
-            "-f",
-            "--framerate",
-            required=False,
-            default=24,
-            dest="framerate",
-            type=int,
-            help="Frame rate of the output GIF",
-        )
-        args = parser.parse_args(arguments)
-
-        args.output_file = str(Path(args.input_file).with_suffix(".gif"))
-        ti._logging.info(f"Converting {args.input_file} to {args.output_file}")
-
-        # Short circuit for testing
-        if self.test_mode:
-            return args
-        video.mp4_to_gif(args.input_file, args.output_file, args.framerate)
-
-        return None
-
-    @register
-    def video_speed(self, arguments: list = sys.argv[2:]):
-        """Speed up video in the same directory"""
-        parser = argparse.ArgumentParser(prog="ti video_speed", description=f"{self.video_speed.__doc__}")
-        parser.add_argument(
-            "-i",
-            "--input",
-            required=True,
-            dest="input_file",
-            type=TaichiMain._mp4_file,
-            help="Path to input MP4 video file",
-        )
-        parser.add_argument(
-            "-s",
-            "--speed",
-            required=True,
-            dest="speed",
-            type=float,
-            help="Speedup factor for the output MP4 based on input. (e.g. 2.0)",
-        )
-        args = parser.parse_args(arguments)
-
-        args.output_file = str(
-            Path(args.input_file).with_name(f"{Path(args.input_file).stem}-sped{Path(args.input_file).suffix}")
-        )
-
-        # Short circuit for testing
-        if self.test_mode:
-            return args
-        video.accelerate_video(args.input_file, args.output_file, args.speed)
-
-        return None
-
-    @register
-    def video_crop(self, arguments: list = sys.argv[2:]):
-        """Crop video in the same directory"""
-        parser = argparse.ArgumentParser(prog="ti video_crop", description=f"{self.video_crop.__doc__}")
-        parser.add_argument(
-            "-i",
-            "--input",
-            required=True,
-            dest="input_file",
-            type=TaichiMain._mp4_file,
-            help="Path to input MP4 video file",
-        )
-        parser.add_argument(
-            "--x1",
-            required=True,
-            dest="x_begin",
-            type=float,
-            help="X coordinate of the beginning crop point",
-        )
-        parser.add_argument(
-            "--x2",
-            required=True,
-            dest="x_end",
-            type=float,
-            help="X coordinate of the ending crop point",
-        )
-        parser.add_argument(
-            "--y1",
-            required=True,
-            dest="y_begin",
-            type=float,
-            help="Y coordinate of the beginning crop point",
-        )
-        parser.add_argument(
-            "--y2",
-            required=True,
-            dest="y_end",
-            type=float,
-            help="Y coordinate of the ending crop point",
-        )
-        args = parser.parse_args(arguments)
-
-        args.output_file = str(
-            Path(args.input_file).with_name(f"{Path(args.input_file).stem}-cropped{Path(args.input_file).suffix}")
-        )
-
-        # Short circuit for testing
-        if self.test_mode:
-            return args
-        video.crop_video(
-            args.input_file,
-            args.output_file,
-            args.x_begin,
-            args.x_end,
-            args.y_begin,
-            args.y_end,
-        )
-
-        return None
-
-    @register
-    def video_scale(self, arguments: list = sys.argv[2:]):
-        """Scale video resolution in the same directory"""
-        parser = argparse.ArgumentParser(prog="ti video_scale", description=f"{self.video_scale.__doc__}")
-        parser.add_argument(
-            "-i",
-            "--input",
-            required=True,
-            dest="input_file",
-            type=TaichiMain._mp4_file,
-            help="Path to input MP4 video file",
-        )
-        parser.add_argument(
-            "-w",
-            "--ratio-width",
-            required=True,
-            dest="ratio_width",
-            type=float,
-            help="The scaling ratio of the resolution on width",
-        )
-        parser.add_argument(
-            "--ratio-height",
-            required=False,
-            default=None,
-            dest="ratio_height",
-            type=float,
-            help="The scaling ratio of the resolution on height [default: equal to ratio-width]",
-        )
-        args = parser.parse_args(arguments)
-
-        if not args.ratio_height:
-            args.ratio_height = args.ratio_width
-        args.output_file = str(
-            Path(args.input_file).with_name(f"{Path(args.input_file).stem}-scaled{Path(args.input_file).suffix}")
-        )
-
-        # Short circuit for testing
-        if self.test_mode:
-            return args
-        video.scale_video(args.input_file, args.output_file, args.ratio_width, args.ratio_height)
-
-        return None
-
-    @register
-    def video(self, arguments: list = sys.argv[2:]):
-        """Make a video using *.png files in the current directory"""
-        parser = argparse.ArgumentParser(prog="ti video", description=f"{self.video.__doc__}")
-        parser.add_argument("inputs", nargs="*", help="PNG file(s) as inputs")
-        parser.add_argument(
-            "-o",
-            "--output",
-            required=False,
-            default=Path("./video.mp4").resolve(),
-            dest="output_file",
-            type=lambda x: Path(x).resolve(),
-            help="Path to output MP4 video file",
-        )
-        parser.add_argument(
-            "-f",
-            "--framerate",
-            required=False,
-            default=24,
-            dest="framerate",
-            type=int,
-            help="Frame rate of the output MP4 video",
-        )
-        parser.add_argument(
-            "-c",
-            "--crf",
-            required=False,
-            default=20,
-            dest="crf",
-            type=int,
-            help="Constant rate factor (0-51, lower is higher quality)",
-        )
-        args = parser.parse_args(arguments)
-
-        if not args.inputs:
-            args.inputs = sorted(str(p.resolve()) for p in Path(".").glob("*.png"))
-
-        assert (
-            1 <= args.crf <= 51
-        ), "The range of the CRF scale is 1-51, where 1 is almost lossless, 20 is the default, and 51 is worst quality possible."
-
-        ti._logging.info(f"Making video using {len(args.inputs)} png files...")
-        ti._logging.info(f"frame_rate = {args.framerate}")
-
-        # Short circuit for testing
-        if self.test_mode:
-            return args
-        video.make_video(
-            args.inputs,
-            output_path=str(args.output_file),
-            crf=args.crf,
-            frame_rate=args.framerate,
-        )
-        ti._logging.info(f"Done! Output video file = {args.output_file}")
-
-        return None
-
-    @staticmethod
     @register
     def doc(arguments: list = sys.argv[2:]):
         """Build documentation"""
@@ -645,17 +315,6 @@ class TaichiMain:
                 _dict[name] = parse_dat(path)
             return _dict
 
-        def plot_in_gui(scatter):
-            gui = ti.GUI("Regression Test", (640, 480), 0x001122)
-            print("[Hint] press SPACE to go for next display")
-            for key, data in scatter.items():
-                data = np.array([((i + 0.5) / len(data), x / 2) for i, x in enumerate(data)])
-                while not gui.get_event((ti.GUI.PRESS, ti.GUI.SPACE)):
-                    gui.core.title = key
-                    gui.line((0, 0.5), (1, 0.5), 1.8, 0x66CCFF)
-                    gui.circles(data, 0xFFCC66, 1.5)
-                    gui.show()
-
         spec = args.files
         single_line = spec and len(spec) == 1
         xs, ys = get_dats(xd), get_dats(yd)
@@ -704,9 +363,6 @@ class TaichiMain:
                 if not single_line:
                     print("")
 
-        if args.gui:
-            plot_in_gui(scatter)
-
     @staticmethod
     def _get_benchmark_baseline_dir():
         return os.path.join(_ti_core.get_repo_dir(), "benchmarks", "baseline")
@@ -720,13 +376,6 @@ class TaichiMain:
         """Display benchmark regression test result"""
         parser = argparse.ArgumentParser(prog="ti regression", description=f"{self.regression.__doc__}")
         parser.add_argument("files", nargs="*", help="Test file(s) to be run for benchmarking")
-        parser.add_argument(
-            "-g",
-            "--gui",
-            dest="gui",
-            action="store_true",
-            help="Display benchmark regression result in GUI",
-        )
         args = parser.parse_args(arguments)
 
         # Short circuit for testing
