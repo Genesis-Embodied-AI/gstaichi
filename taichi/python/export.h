@@ -33,8 +33,4 @@ void export_math(py::module &m);
 
 void export_misc(py::module &m);
 
-void export_visual(py::module &m);
-
-void export_ggui(py::module &m);
-
 }  // namespace taichi

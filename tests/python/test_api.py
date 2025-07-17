@@ -64,7 +64,6 @@ user_api[ti] = [
     "Field",
     "FieldsBuilder",
     "Format",
-    "GUI",
     "INFO",
     "Layout",
     "Matrix",
@@ -148,7 +147,6 @@ user_api[ti] = [
     "gpu",
     "graph",
     "grouped",
-    "hex_to_rgb",
     "i",
     "i16",
     "i32",
@@ -204,7 +202,6 @@ user_api[ti] = [
     "ref",
     "rescale_index",
     "reset",
-    "rgb_to_hex",
     "root",
     "round",
     "rsqrt",
@@ -233,7 +230,6 @@ user_api[ti] = [
     "u32",
     "u64",
     "u8",
-    "ui",
     "uint1",
     "uint16",
     "uint32",
@@ -445,8 +441,6 @@ user_api[ti.sparse] = ["grid", "usage"]
 @pytest.mark.parametrize("src", user_api.keys())
 @test_utils.test(arch=ti.cpu)
 def test_api(src):
-    # When Python version is below 3.7, deprecated names are
-    # handled as normal names, which will fail this test.
     expected = user_api[src]
     actual = [s for s in dir(src) if not s.startswith("_")]
     assert (

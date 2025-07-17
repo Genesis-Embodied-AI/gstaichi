@@ -1,0 +1,3 @@
+"def get_tensor_type": "    def get_tensor_type(self, shape: tuple[int, ...], element_type: DataType) -> DataType:"
+"def make_get_element_expr": "def make_get_element_expr(arg0: Expr, arg1: tuple[int, ...], arg2: DebugInfo) -> Expr:"
+"def create_function": "    def create_function(self, arg0: ...) -> Function:"

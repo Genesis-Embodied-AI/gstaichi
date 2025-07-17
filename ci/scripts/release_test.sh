@@ -85,32 +85,6 @@ function taichi::utils::pkill {
     pkill -f "$1"
 }
 
-function taichi::test::ggui {
-    local WORKDIR=${1}
-    local PATTERN="*_ggui.py"
-    local ORG="taichi-dev"
-    local REPO="taichi"
-
-    # divider
-    taichi::utils::line
-    taichi::utils::logger::info "Running GGUI examples"
-
-    # clone the repo
-    taichi::utils::git_clone "${ORG}" "${REPO}"
-    cd "${REPO}/python/taichi/examples/ggui_examples"
-
-    # run tests
-    for match in $(find ./ -name "${PATTERN}"); do
-        python "${match}" &
-        taichi::utils::pkill "${match}"
-        taichi::utils::line
-        # taichi::utils::pause
-    done
-
-    # go back to workdir
-    cd "${WORKDIR}"
-}
-
 function taichi::test::difftaichi {
     local WORKDIR=${1}
     local PATTERN="*.py"
@@ -293,9 +267,6 @@ function taichi::test::main {
     # walk into the working dir
     cd "${WORKDIR}"
 
-    # ggui examples
-    taichi::test::ggui "${WORKDIR}"
-
     # difftaichi examples
     taichi::test::difftaichi "${WORKDIR}"
 
@@ -310,9 +281,6 @@ function taichi::test::main {
 
     # voxel editor tests
     taichi::test::voxel_editor "${WORKDIR}"
-
-    # generating example videos
-    taichi::test::generate_videos "${WORKDIR}"
 }
 
 taichi::test::main

@@ -25,7 +25,6 @@
   "pypi"            : "PyPI package",
   "autodiff"        : "Automatic differentiation",
   "sparse"          : "Sparse computation",
-  "gui"             : "GUI",
   "llvm"            : "LLVM backend (CPU and CUDA)",
   "refactor"        : "Refactor",
   "bug"             : "Bug fixes",

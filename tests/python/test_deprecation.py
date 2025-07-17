@@ -29,52 +29,6 @@ def test_remove_element_shape_ndarray_arg():
 
 
 @test_utils.test()
-def test_remove_texture_channel_format_num_channels():
-    with pytest.raises(
-        ti.TaichiRuntimeError,
-        match="The channel_format and num_channels arguments are no longer required for non-RW textures "
-        "since v1.6.0, and they are removed in v1.7.0. Please remove them.",
-    ):
-        ti.graph.Arg(ti.graph.ArgKind.TEXTURE, "x", ndim=2, channel_format=ti.f32, num_channels=1)
-
-
-@test_utils.test()
-def test_remove_rwtexture_channel_format_num_channels():
-    with pytest.raises(
-        ti.TaichiRuntimeError,
-        match="The channel_format and num_channels arguments for texture are deprecated in v1.6.0, "
-        "and they are removed in v1.7.0. Please use fmt instead.",
-    ):
-        ti.graph.Arg(
-            ti.graph.ArgKind.RWTEXTURE,
-            "x",
-            ndim=2,
-            channel_format=ti.f32,
-            num_channels=1,
-        )
-
-
-@test_utils.test()
-def test_remove_texture_ndim():
-    with pytest.raises(
-        ti.TaichiRuntimeError,
-        match=r"The shape argument for texture is deprecated in v1.6.0, and it is removed in v1.7.0. "
-        r"Please use ndim instead. \(Note that you no longer need the exact texture size.\)",
-    ):
-        ti.graph.Arg(ti.graph.ArgKind.TEXTURE, "x", shape=(128, 128), channel_format=ti.f32)
-
-
-@test_utils.test()
-def test_remove_rwtexture_ndim():
-    with pytest.raises(
-        ti.TaichiRuntimeError,
-        match=r"The shape argument for texture is deprecated in v1.6.0, and it is removed in v1.7.0. "
-        r"Please use ndim instead. \(Note that you no longer need the exact texture size.\)",
-    ):
-        ti.graph.Arg(ti.graph.ArgKind.RWTEXTURE, "x", shape=(128, 128), fmt=ti.Format.r32f)
-
-
-@test_utils.test()
 def test_remove_is_is_not():
     with pytest.raises(ti.TaichiSyntaxError, match='Operator "is" in Taichi scope is not supported'):
 
@@ -83,16 +37,6 @@ def test_remove_is_is_not():
             ti.static(1 is 2)
 
         func()
-
-
-@pytest.mark.skipif(not _ti_core.GGUI_AVAILABLE, reason="GGUI Not Available")
-@test_utils.test()
-def test_deprecate_initialization_of_scene():
-    with pytest.warns(
-        DeprecationWarning,
-        match=r"Instantiating ti.ui.Scene directly is deprecated, use the get_scene\(\) function from a taichi.ui.Window object instead.",
-    ):
-        ti.ui.Scene()
 
 
 @test_utils.test(arch=[ti.cpu, ti.cuda])

@@ -35,10 +35,10 @@ The language has broad applications spanning real-time physical simulation, nume
 ## Why Taichi Lang?
 
 - Built around Python: Taichi Lang shares almost the same syntax with Python, allowing you to write algorithms with minimal language barrier. It is also well integrated into the Python ecosystem, including NumPy and PyTorch.
-- Flexibility: Taichi Lang provides a set of generic data containers known as *SNode* (/ˈsnoʊd/), an effective mechanism for composing hierarchical, multi-dimensional fields. This can cover many use patterns in numerical simulation (e.g. [spatially sparse computing](https://docs.taichi-lang.org/docs/sparse)).
+- Flexibility: Taichi Lang provides a set of generic data containers known as *SNode* (/ˈsnoʊd/), an effective mechanism for composing hierarchical, multi-dimensional fields. This can cover many use patterns in numerical simulation (e.g. [spatially sparse computing](docs/lang/articles/basic/sparse.md)).
 - Performance: With the `@ti.kernel` decorator, Taichi Lang's JIT compiler automatically compiles your Python functions into efficient GPU or CPU machine code for parallel execution.
 - Portability: Write your code once and run it everywhere. Currently, Taichi Lang supports most mainstream GPU APIs, such as CUDA and Vulkan.
-- ... and many more features! A cross-platform, Vulkan-based 3D visualizer, [differentiable programming](https://docs.taichi-lang.org/docs/differentiable_programming),  [quantized computation](https://github.com/taichi-dev/quantaichi) (experimental), etc.
+- ... and many more features! A cross-platform, Vulkan-based 3D visualizer, [differentiable programming](docs/lang/articles/differentiable/differentiable_programming.md),  [quantized computation](docs/lang/articles/advanced/quant.md) (experimental), etc.
 
 ## Getting Started
 
@@ -77,61 +77,44 @@ pip install --upgrade taichi
 pip install -i https://pypi.taichi.graphics/simple/ taichi-nightly
 ```
 
-### Run your "Hello, world!"
-
-Here is how you can program a 2D fractal in Taichi:
-
+Here is how you can calculate prime numbers:
 ```py
-# python/taichi/examples/simulation/fractal.py
-
+# from docs/lang/articles/get-started/accelerate-python.md
 import taichi as ti
 
 ti.init(arch=ti.gpu)
 
-n = 320
-pixels = ti.field(dtype=float, shape=(n * 2, n))
-
-
 @ti.func
-def complex_sqr(z):
-    return ti.Vector([z[0]**2 - z[1]**2, z[1] * z[0] * 2])
-
+def is_prime(n: int):
+    result = True
+    for k in range(2, int(n ** 0.5) + 1):
+        if n % k == 0:
+            result = False
+            break
+    return result
 
 @ti.kernel
-def paint(t: float):
-    for i, j in pixels:  # Parallelized over all pixels
-        c = ti.Vector([-0.8, ti.cos(t) * 0.2])
-        z = ti.Vector([i / n - 1, j / n - 0.5]) * 2
-        iterations = 0
-        while z.norm() < 20 and iterations < 50:
-            z = complex_sqr(z) + c
-            iterations += 1
-        pixels[i, j] = 1 - iterations * 0.02
+def count_primes(n: int) -> int:
+    count = 0
+    for k in range(2, n):
+        if is_prime(k):
+            count += 1
 
+    return count
 
-gui = ti.GUI("Julia Set", res=(n * 2, n))
-
-for i in range(1000000):
-    paint(i * 0.03)
-    gui.set_image(pixels)
-    gui.show()
+print(count_primes(1000000))
 ```
 
-*If Taichi Lang is properly installed, you should get the animation below 🎉:*
-
-<a href="https://github.com/taichi-dev/taichi/blob/master/python/taichi/examples/simulation/fractal.py#L1-L31"> </a><img src="https://raw.githubusercontent.com/taichi-dev/public_files/master/taichi/fractal_small.gif" height="270px">
-
-See [Get started](https://docs.taichi-lang.org) for more information.
+See [Get started](docs/lang/articles/get-started/hello_world.md) for more information.
 
 ### Build from source
 
-If you wish to try our experimental features or build Taichi Lang for your own environments, see [Developer installation](https://docs.taichi-lang.org/docs/dev_install).
+If you wish to try our experimental features or build Taichi Lang for your own environments, see [Developer installation](docs/lang/articles/contribution/dev_install.md).
 
 ## Documentation
 
-- [Technical documents](https://docs.taichi-lang.org/)
-- [API Reference](https://docs.taichi-lang.org/api/)
-- [Blog](https://docs.taichi-lang.org/blog)
+- [Technical documents](docs/lang/articles)
+- [API Reference](https://ideal-adventure-2n6lpyw.pages.github.io/)
 
 ## Community activity [![Time period](https://images.repography.com/32602247/taichi-dev/taichi/recent-activity/RlhQybvihwEjfE7ngXyQR9tudBDYAvl27v-NVNMxUrg_badge.svg)](https://repography.com)
 [![Timeline graph](https://images.repography.com/32602247/taichi-dev/taichi/recent-activity/RlhQybvihwEjfE7ngXyQR9tudBDYAvl27v-NVNMxUrg_timeline.svg)](https://github.com/taichi-dev/taichi/commits)
@@ -153,27 +136,6 @@ Taichi Lang is distributed under the terms of Apache License (Version 2.0).
 
 See [Apache License](https://github.com/taichi-dev/taichi/blob/master/LICENSE) for details.
 
-## Community
-
-For more information about the events or community, please refer to [this page](https://github.com/taichi-dev/community)
-
-
-### Join our discussions
-
-- [Discord](https://discord.gg/f25GRdXRfg)
-- [GitHub Discussions](https://github.com/taichi-dev/taichi/discussions)
-- [太极编程语言中文论坛](https://forum.taichi.graphics/)
-
-### Report an issue
-
-- If you spot an technical or documentation issue, file an issue at [GitHub Issues](https://github.com/taichi-dev/taichi/issues)
-- If you spot any security issue, mail directly to <a href = "mailto:security@taichi.graphics?subject = Taichi Security Problem">security@taichi.graphics</a>.
-
-### Contact us
-
-- [Discord](https://discord.gg/f25GRdXRfg)
-- [WeChat](https://forum.taichi-lang.cn/t/topic/2884)
-
 ## Reference
 
 ### Demos
@@ -186,7 +148,6 @@ For more information about the events or community, please refer to [this page](
 - [Taichi elements](https://github.com/taichi-dev/taichi_elements)
 - [Taichi Houdini](https://github.com/taichi-dev/taichi_houdini)
 - [More...](misc/links.md)
-
 
 ### AOT deployment
 

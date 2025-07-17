@@ -116,6 +116,7 @@ endif()
 
 # No support of Python for Android build; or in any case taichi is integrated
 # in another project as submodule.
+set(PYBIND11_VERSION "2.13.6" CACHE STRING "Pybind11 version to use")
 option(TI_WITH_PYTHON "Build with Python language binding" ON)
 if (TI_WITH_PYTHON AND NOT ANDROID)
     include(cmake/PythonNumpyPybind11.cmake)
@@ -138,9 +139,6 @@ if (TI_BUILD_TESTS)
   add_subdirectory(external/googletest EXCLUDE_FROM_ALL)
   include(cmake/TaichiTests.cmake)
 endif()
-
-option(TI_BUILD_EXAMPLES "Build the CPP examples" ON)
-option(TI_BUILD_RHI_EXAMPLES "Build the Unified Device API examples" OFF)
 
 if(NOT TI_WITH_LLVM OR NOT TI_WITH_METAL)
     set(TI_BUILD_EXAMPLES OFF)
@@ -222,15 +220,6 @@ if (TI_WITH_C_API)
     include(cmake/TaichiCAPITests.cmake)
   endif()
 endif()
-
-if (TI_BUILD_EXAMPLES)
-  include(cmake/TaichiExamples.cmake)
-endif()
-
-if (TI_BUILD_RHI_EXAMPLES)
-  add_subdirectory(cpp_examples/rhi_examples)
-endif()
-
 
 option(TI_WITH_GRAPHVIZ "generate dependency graphs between targets" OFF)  # wheel-tag: viz
 if (TI_WITH_GRAPHVIZ)
