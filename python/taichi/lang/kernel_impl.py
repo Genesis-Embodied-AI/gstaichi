@@ -1,6 +1,7 @@
 # type: ignore
 
 import ast
+import dataclasses
 import functools
 import inspect
 import json
@@ -173,18 +174,35 @@ def _get_tree_and_ctx(
     )
 
 
-def _process_args(self: "Func | Kernel", args, kwargs):
-    ret = [argument.default for argument in self.arguments]
+def expand_func_arguments(arguments: list[KernelArgument]) -> list[KernelArgument]:
+    new_arguments = []
+    for argument in arguments:
+        if dataclasses.is_dataclass(argument.annotation):
+            for field in dataclasses.fields(argument.annotation):
+                new_argument = KernelArgument(
+                    _annotation=field.type,
+                    _name=f"__ti_{argument.name}_{field.name}",
+                )
+                new_arguments.append(new_argument)
+        else:
+            new_arguments.append(argument)
+    return new_arguments
+
+
+def _process_args(self: "Func | Kernel", is_func: bool, args, kwargs):
+    if is_func:
+        self.arguments = expand_func_arguments(self.arguments)
+    fused_args = [argument.default for argument in self.arguments]
     len_args = len(args)
 
-    if len_args > len(ret):
+    if len_args > len(fused_args):
         arg_str = ", ".join([str(arg) for arg in args])
         expected_str = ", ".join([f"{arg.name} : {arg.annotation}" for arg in self.arguments])
         msg = f"Too many arguments. Expected ({expected_str}), got ({arg_str})."
         raise TaichiSyntaxError(msg)
 
     for i, arg in enumerate(args):
-        ret[i] = arg
+        fused_args[i] = arg
 
     for key, value in kwargs.items():
         found = False
@@ -192,13 +210,13 @@ def _process_args(self: "Func | Kernel", args, kwargs):
             if key == arg.name:
                 if i < len_args:
                     raise TaichiSyntaxError(f"Multiple values for argument '{key}'.")
-                ret[i] = value
+                fused_args[i] = value
                 found = True
                 break
         if not found:
             raise TaichiSyntaxError(f"Unexpected argument '{key}'.")
 
-    for i, arg in enumerate(ret):
+    for i, arg in enumerate(fused_args):
         if arg is inspect.Parameter.empty:
             if self.arguments[i].annotation is inspect._empty:
                 raise TaichiSyntaxError(f"Parameter `{self.arguments[i].name}` missing.")
@@ -207,7 +225,47 @@ def _process_args(self: "Func | Kernel", args, kwargs):
                     f"Parameter `{self.arguments[i].name} : {self.arguments[i].annotation}` missing."
                 )
 
-    return ret
+    return tuple(fused_args)
+
+
+def unpack_ndarray_struct(tree: ast.Module, struct_locals: set[str]) -> ast.Module:
+    class AttributeToNameTransformer(ast.NodeTransformer):
+        def visit_Attribute(self, node: ast.AST):
+            if isinstance(node.value, ast.Attribute):
+                return node
+            if not isinstance(node.value, ast.Name):
+                return node
+            base_id = node.value.id
+            attr_name = node.attr
+            new_id = f"__ti_{base_id}_{attr_name}"
+            if new_id not in struct_locals:
+                return node
+            return ast.copy_location(ast.Name(id=new_id, ctx=node.ctx), node)
+
+    transformer = AttributeToNameTransformer()
+    new_tree = transformer.visit(tree)
+    ast.fix_missing_locations(new_tree)
+    return new_tree
+
+
+def extract_struct_locals_from_context(ctx: ASTTransformerContext):
+    """
+    Uses ctx.func.func to get the function signature
+    Searches this for any dataclasses
+    - if it finds any dataclasses, then converts them into expanded names
+    - e.g. my_struct: MyStruct, and MyStruct contains a, b, c would become:
+        {"__ti_my_struct_a", "__ti_my_struct_b, "__ti_my_struct_c"}
+    """
+    assert ctx.func is not None
+    sig = inspect.signature(ctx.func.func)
+    parameters = sig.parameters
+    struct_locals = set()
+    for param_name, parameter in parameters.items():
+        if dataclasses.is_dataclass(parameter.annotation):
+            for field in dataclasses.fields(parameter.annotation):
+                child_name = f"__ti_{param_name}_{field.name}"
+                struct_locals.add(child_name)
+    return struct_locals
 
 
 class Func:
@@ -222,6 +280,7 @@ class Func:
         self.pyfunc = _pyfunc
         self.is_real_function = is_real_function
         self.arguments: list[KernelArgument] = []
+        self.orig_arguments: list[KernelArgument] = []
         self.return_type: tuple[Type, ...] | None = None
         self.extract_arguments()
         self.template_slot_locations: list[int] = []
@@ -233,7 +292,7 @@ class Func:
         self.has_print = False
 
     def __call__(self, *args, **kwargs):
-        args = _process_args(self, args, kwargs)
+        args = _process_args(self, is_func=True, args=args, kwargs=kwargs)
 
         if not impl.inside_kernel():
             if not self.pyfunc:
@@ -256,6 +315,9 @@ class Func:
             ast_builder=current_kernel.ast_builder(),
             is_real_function=self.is_real_function,
         )
+
+        struct_locals = extract_struct_locals_from_context(ctx)
+        tree = unpack_ndarray_struct(tree, struct_locals=struct_locals)
         ret = transform_tree(tree, ctx)
         if not self.is_real_function:
             if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
@@ -378,9 +440,12 @@ class Func:
                     pass
                 elif isinstance(annotation, primitive_types.RefType):
                     pass
+                elif isinstance(annotation, type) and dataclasses.is_dataclass(annotation):
+                    pass
                 else:
                     raise TaichiSyntaxError(f"Invalid type annotation (argument {i}) of Taichi function: {annotation}")
             self.arguments.append(KernelArgument(annotation, param.name, param.default))
+            self.orig_arguments.append(KernelArgument(annotation, param.name, param.default))
 
 
 AnnotationType = Union[
@@ -395,6 +460,17 @@ AnnotationType = Union[
 
 
 class TaichiCallableTemplateMapper:
+    """
+    This should probably be renamed to sometihng like FeatureMapper, or
+    FeatureExtractor, since:
+    - it's not specific to templates
+    - it extracts what are later called 'features', for example for ndarray this includes:
+        - element type
+        - number dimensions
+        - needs grad (or not)
+    - these are returned as a heterogeneous tuple, whose contents depends on the type
+    """
+
     def __init__(self, arguments: list[KernelArgument], template_slot_locations: list[int]) -> None:
         self.arguments = arguments
         self.num_args = len(arguments)
@@ -403,7 +479,7 @@ class TaichiCallableTemplateMapper:
 
     @staticmethod
     def extract_arg(arg, anno: AnnotationType, arg_name: str):
-        if anno == template or isinstance(anno, template):
+        if annotation == template or isinstance(annotation, template):
             if isinstance(arg, taichi.lang.snode.SNode):
                 return arg.ptr
             if isinstance(arg, taichi.lang.expr.Expr):
@@ -411,7 +487,7 @@ class TaichiCallableTemplateMapper:
             if isinstance(arg, _ti_core.Expr):
                 return arg.get_underlying_ptr_address()
             if isinstance(arg, tuple):
-                return tuple(TaichiCallableTemplateMapper.extract_arg(item, anno, arg_name) for item in arg)
+                return tuple(TaichiCallableTemplateMapper.extract_arg(item, annotation, arg_name) for item in arg)
             if isinstance(arg, taichi.lang._ndarray.Ndarray):
                 raise TaichiRuntimeTypeError(
                     "Ndarray shouldn't be passed in via `ti.template()`, please annotate your kernel using `ti.types.ndarray(...)` instead"
@@ -430,45 +506,53 @@ class TaichiCallableTemplateMapper:
 
             # [Primitive arguments] Return the value
             return arg
-        if isinstance(anno, ArgPackType):
+        if isinstance(annotation, ArgPackType):
             if not isinstance(arg, ArgPack):
                 raise TaichiRuntimeTypeError(f"Argument {arg_name} must be a argument pack, got {type(arg)}")
             return tuple(
                 TaichiCallableTemplateMapper.extract_arg(arg[name], dtype, arg_name)
-                for index, (name, dtype) in enumerate(anno.members.items())
+                for index, (name, dtype) in enumerate(annotation.members.items())
             )
-        if isinstance(anno, texture_type.TextureType):
+        if dataclasses.is_dataclass(annotation):
+            _res_l = []
+            for field in dataclasses.fields(annotation):
+                field_value = getattr(arg, field.name)
+                arg_name = f"__ti_{arg_name}_{field.name}"
+                field_extracted = TaichiCallableTemplateMapper.extract_arg(field_value, field.type, arg_name)
+                _res_l.append(field_extracted)
+            return tuple(_res_l)
+        if isinstance(annotation, texture_type.TextureType):
             if not isinstance(arg, taichi.lang._texture.Texture):
                 raise TaichiRuntimeTypeError(f"Argument {arg_name} must be a texture, got {type(arg)}")
-            if arg.num_dims != anno.num_dimensions:
+            if arg.num_dims != annotation.num_dimensions:
                 raise TaichiRuntimeTypeError(
-                    f"TextureType dimension mismatch for argument {arg_name}: expected {anno.num_dimensions}, got {arg.num_dims}"
+                    f"TextureType dimension mismatch for argument {arg_name}: expected {annotation.num_dimensions}, got {arg.num_dims}"
                 )
             return (arg.num_dims,)
-        if isinstance(anno, texture_type.RWTextureType):
+        if isinstance(annotation, texture_type.RWTextureType):
             if not isinstance(arg, taichi.lang._texture.Texture):
                 raise TaichiRuntimeTypeError(f"Argument {arg_name} must be a texture, got {type(arg)}")
-            if arg.num_dims != anno.num_dimensions:
+            if arg.num_dims != annotation.num_dimensions:
                 raise TaichiRuntimeTypeError(
-                    f"RWTextureType dimension mismatch for argument {arg_name}: expected {anno.num_dimensions}, got {arg.num_dims}"
+                    f"RWTextureType dimension mismatch for argument {arg_name}: expected {annotation.num_dimensions}, got {arg.num_dims}"
                 )
-            if arg.fmt != anno.fmt:
+            if arg.fmt != annotation.fmt:
                 raise TaichiRuntimeTypeError(
-                    f"RWTextureType format mismatch for argument {arg_name}: expected {anno.fmt}, got {arg.fmt}"
+                    f"RWTextureType format mismatch for argument {arg_name}: expected {annotation.fmt}, got {arg.fmt}"
                 )
             # (penguinliong) '0' is the assumed LOD level. We currently don't
             # support mip-mapping.
             return arg.num_dims, arg.fmt, 0
-        if isinstance(anno, ndarray_type.NdarrayType):
+        if isinstance(annotation, ndarray_type.NdarrayType):
             if isinstance(arg, taichi.lang._ndarray.Ndarray):
-                anno.check_matched(arg.get_type(), arg_name)
-                needs_grad = (arg.grad is not None) if anno.needs_grad is None else anno.needs_grad
+                annotation.check_matched(arg.get_type(), arg_name)
+                needs_grad = (arg.grad is not None) if annotation.needs_grad is None else annotation.needs_grad
                 assert arg.shape is not None
-                return arg.element_type, len(arg.shape), needs_grad, anno.boundary
+                return arg.element_type, len(arg.shape), needs_grad, annotation.boundary
             if isinstance(arg, AnyArray):
                 ty = arg.get_type()
-                anno.check_matched(arg.get_type(), arg_name)
-                return ty.element_type, len(arg.shape), ty.needs_grad, anno.boundary
+                annotation.check_matched(arg.get_type(), arg_name)
+                return ty.element_type, len(arg.shape), ty.needs_grad, annotation.boundary
             # external arrays
             shape = getattr(arg, "shape", None)
             if shape is None:
@@ -476,47 +560,49 @@ class TaichiCallableTemplateMapper:
             shape = tuple(shape)
             element_shape: tuple[int, ...] = ()
             dtype = to_taichi_type(arg.dtype)
-            if isinstance(anno.dtype, MatrixType):
-                if anno.ndim is not None:
-                    if len(shape) != anno.dtype.ndim + anno.ndim:
+            if isinstance(annotation.dtype, MatrixType):
+                if annotation.ndim is not None:
+                    if len(shape) != annotation.dtype.ndim + annotation.ndim:
                         raise ValueError(
-                            f"Invalid value for argument {arg_name} - required array has ndim={anno.ndim} element_dim={anno.dtype.ndim}, "
+                            f"Invalid value for argument {arg_name} - required array has ndim={annotation.ndim} element_dim={annotation.dtype.ndim}, "
                             f"array with {len(shape)} dimensions is provided"
                         )
                 else:
-                    if len(shape) < anno.dtype.ndim:
+                    if len(shape) < annotation.dtype.ndim:
                         raise ValueError(
-                            f"Invalid value for argument {arg_name} - required element_dim={anno.dtype.ndim}, "
+                            f"Invalid value for argument {arg_name} - required element_dim={annotation.dtype.ndim}, "
                             f"array with {len(shape)} dimensions is provided"
                         )
-                element_shape = shape[-anno.dtype.ndim :]
-                anno_element_shape = anno.dtype.get_shape()
+                element_shape = shape[-annotation.dtype.ndim :]
+                anno_element_shape = annotation.dtype.get_shape()
                 if None not in anno_element_shape and element_shape != anno_element_shape:
                     raise ValueError(
                         f"Invalid value for argument {arg_name} - required element_shape={anno_element_shape}, "
                         f"array with element shape of {element_shape} is provided"
                     )
-            elif anno.dtype is not None:
+            elif annotation.dtype is not None:
                 # User specified scalar dtype
-                if anno.dtype != dtype:
+                if annotation.dtype != dtype:
                     raise ValueError(
-                        f"Invalid value for argument {arg_name} - required array has dtype={anno.dtype.to_string()}, "
+                        f"Invalid value for argument {arg_name} - required array has dtype={annotation.dtype.to_string()}, "
                         f"array with dtype={dtype.to_string()} is provided"
                     )
 
-                if anno.ndim is not None and len(shape) != anno.ndim:
+                if annotation.ndim is not None and len(shape) != annotation.ndim:
                     raise ValueError(
-                        f"Invalid value for argument {arg_name} - required array has ndim={anno.ndim}, "
+                        f"Invalid value for argument {arg_name} - required array has ndim={annotation.ndim}, "
                         f"array with {len(shape)} dimensions is provided"
                     )
-            needs_grad = getattr(arg, "requires_grad", False) if anno.needs_grad is None else anno.needs_grad
+            needs_grad = (
+                getattr(arg, "requires_grad", False) if annotation.needs_grad is None else annotation.needs_grad
+            )
             element_type = (
                 _ti_core.get_type_factory_instance().get_tensor_type(element_shape, dtype)
                 if len(element_shape) != 0
                 else arg.dtype
             )
-            return element_type, len(shape) - len(element_shape), needs_grad, anno.boundary
-        if isinstance(anno, sparse_matrix_builder):
+            return element_type, len(shape) - len(element_shape), needs_grad, annotation.boundary
+        if isinstance(annotation, sparse_matrix_builder):
             return arg.dtype
         # Use '#' as a placeholder because other kinds of arguments are not involved in template instantiation
         return "#"
@@ -647,6 +733,8 @@ class Kernel:
                     pass
                 elif annotation == template:
                     pass
+                elif isinstance(annotation, type) and dataclasses.is_dataclass(annotation):
+                    pass
                 else:
                     raise TaichiSyntaxError(f"Invalid type annotation (argument {i}) of Taichi kernel: {annotation}")
             self.arguments.append(KernelArgument(annotation, param.name, param.default))
@@ -675,6 +763,7 @@ class Kernel:
         # Do not change the name of 'taichi_ast_generator'
         # The warning system needs this identifier to remove unnecessary messages
         def taichi_ast_generator(kernel_cxx: Kernel):  # not sure if this type is correct, seems doubtful
+            nonlocal tree
             if self.runtime.inside_kernel:
                 raise TaichiSyntaxError(
                     "Kernels cannot call other kernels. I.e., nested kernels are not allowed. "
@@ -723,6 +812,8 @@ class Kernel:
                     output_file.write_text(
                         json.dumps({"elapsed_txt": elapsed_txt, "elapsed_json": elapsed_json}, indent=2)
                     )
+                struct_locals = extract_struct_locals_from_context(ctx)
+                tree = unpack_ndarray_struct(tree, struct_locals=struct_locals)
                 transform_tree(tree, ctx)
                 if not ctx.is_real_function:
                     if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
@@ -925,90 +1016,101 @@ class Kernel:
 
         set_later_list = []
 
-        def recursive_set_args(needed, provided, v, indices):
+        def recursive_set_args(needed_arg_type, provided_arg_type, v, indices):
             in_argpack = len(indices) > 1
             nonlocal actual_argument_slot, exceed_max_arg_num, set_later_list
             if actual_argument_slot >= max_arg_num:
                 exceed_max_arg_num = True
                 return 0
             actual_argument_slot += 1
-            if isinstance(needed, ArgPackType):
+            if isinstance(needed_arg_type, ArgPackType):
                 if not isinstance(v, ArgPack):
-                    raise TaichiRuntimeTypeError.get(indices, str(needed), str(provided))
+                    raise TaichiRuntimeTypeError.get(indices, str(needed_arg_type), str(provided_arg_type))
                 idx_new = 0
-                for j, (name, anno) in enumerate(needed.members.items()):
+                for j, (name, anno) in enumerate(needed_arg_type.members.items()):
                     idx_new += recursive_set_args(anno, type(v[name]), v[name], indices + (idx_new,))
                 launch_ctx.set_arg_argpack(indices, v._ArgPack__argpack)  # type: ignore
                 return 1
             # Note: do not use sth like "needed == f32". That would be slow.
-            if id(needed) in primitive_types.real_type_ids:
+            if id(needed_arg_type) in primitive_types.real_type_ids:
                 if not isinstance(v, (float, int, np.floating, np.integer)):
-                    raise TaichiRuntimeTypeError.get(indices, needed.to_string(), provided)
+                    raise TaichiRuntimeTypeError.get(indices, needed_arg_type.to_string(), provided_arg_type)
                 if in_argpack:
                     return 1
                 launch_ctx.set_arg_float(indices, float(v))
                 return 1
-            if id(needed) in primitive_types.integer_type_ids:
+            if id(needed_arg_type) in primitive_types.integer_type_ids:
                 if not isinstance(v, (int, np.integer)):
-                    raise TaichiRuntimeTypeError.get(indices, needed.to_string(), provided)
+                    raise TaichiRuntimeTypeError.get(indices, needed_arg_type.to_string(), provided_arg_type)
                 if in_argpack:
                     return 1
-                if is_signed(cook_dtype(needed)):
+                if is_signed(cook_dtype(needed_arg_type)):
                     launch_ctx.set_arg_int(indices, int(v))
                 else:
                     launch_ctx.set_arg_uint(indices, int(v))
                 return 1
-            if isinstance(needed, sparse_matrix_builder):
+            if isinstance(needed_arg_type, sparse_matrix_builder):
                 if in_argpack:
                     set_later_list.append((set_arg_sparse_matrix_builder, (v,)))
                     return 0
                 set_arg_sparse_matrix_builder(indices, v)
                 return 1
-            if isinstance(needed, ndarray_type.NdarrayType) and isinstance(v, taichi.lang._ndarray.Ndarray):
+            if dataclasses.is_dataclass(needed_arg_type):
+                assert provided_arg_type == needed_arg_type
+                for j, field in enumerate(dataclasses.fields(needed_arg_type)):
+                    assert not isinstance(field.type, str)
+                    field_value = getattr(v, field.name)
+                    recursive_set_args(field.type, field.type, field_value, (indices[0] + j,))
+                return len(dataclasses.fields(needed_arg_type))
+            if isinstance(needed_arg_type, ndarray_type.NdarrayType) and isinstance(v, taichi.lang._ndarray.Ndarray):
                 if in_argpack:
                     set_later_list.append((set_arg_ndarray, (v,)))
                     return 0
                 set_arg_ndarray(indices, v)
                 return 1
-            if isinstance(needed, texture_type.TextureType) and isinstance(v, taichi.lang._texture.Texture):
+            if isinstance(needed_arg_type, texture_type.TextureType) and isinstance(v, taichi.lang._texture.Texture):
                 if in_argpack:
                     set_later_list.append((set_arg_texture, (v,)))
                     return 0
                 set_arg_texture(indices, v)
                 return 1
-            if isinstance(needed, texture_type.RWTextureType) and isinstance(v, taichi.lang._texture.Texture):
+            if isinstance(needed_arg_type, texture_type.RWTextureType) and isinstance(v, taichi.lang._texture.Texture):
                 if in_argpack:
                     set_later_list.append((set_arg_rw_texture, (v,)))
                     return 0
                 set_arg_rw_texture(indices, v)
                 return 1
-            if isinstance(needed, ndarray_type.NdarrayType):
+            if isinstance(needed_arg_type, ndarray_type.NdarrayType):
                 if in_argpack:
-                    set_later_list.append((set_arg_ext_array, (v, needed)))
+                    set_later_list.append((set_arg_ext_array, (v, needed_arg_type)))
                     return 0
-                set_arg_ext_array(indices, v, needed)
+                set_arg_ext_array(indices, v, needed_arg_type)
                 return 1
-            if isinstance(needed, MatrixType):
+            if isinstance(needed_arg_type, MatrixType):
                 if in_argpack:
                     return 1
-                set_arg_matrix(indices, v, needed)
+                set_arg_matrix(indices, v, needed_arg_type)
                 return 1
-            if isinstance(needed, StructType):
+            if isinstance(needed_arg_type, StructType):
                 if in_argpack:
                     return 1
-                if not isinstance(v, needed):
-                    raise TaichiRuntimeTypeError(f"Argument {provided} cannot be converted into required type {needed}")
-                needed.set_kernel_struct_args(v, launch_ctx, indices)
+                if not isinstance(v, needed_arg_type):
+                    raise TaichiRuntimeTypeError(
+                        f"Argument {provided_arg_type} cannot be converted into required type {needed_arg_type}"
+                    )
+                needed_arg_type.set_kernel_struct_args(v, launch_ctx, indices)
                 return 1
-            raise ValueError(f"Argument type mismatch. Expecting {needed}, got {type(v)}.")
+            raise ValueError(f"Argument type mismatch. Expecting {needed_arg_type}, got {type(v)}.")
 
         template_num = 0
-        for i, val in enumerate(args):
-            needed_ = self.arguments[i].annotation
+        i_out = 0
+        for i_in, val in enumerate(args):
+            needed_ = self.arguments[i_in].annotation
             if needed_ == template or isinstance(needed_, template):
                 template_num += 1
+                i_out += 1
                 continue
-            recursive_set_args(needed_, type(val), val, (i - template_num,))
+            i_out += recursive_set_args(needed_, type(val), val, (i_out - template_num,))
 
         for i, (set_arg_func, params) in enumerate(set_later_list):
             set_arg_func((len(args) - template_num + i,), *params)
@@ -1070,7 +1172,7 @@ class Kernel:
     # Thus this part needs to be fast. (i.e. < 3us on a 4 GHz x64 CPU)
     @_shell_pop_print
     def __call__(self, *args, **kwargs):
-        args = _process_args(self, args, kwargs)
+        args = _process_args(self, is_func=False, args=args, kwargs=kwargs)
 
         # Transform the primal kernel to forward mode grad kernel
         # then recover to primal when exiting the forward mode manager
