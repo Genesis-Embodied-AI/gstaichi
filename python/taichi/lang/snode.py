@@ -3,6 +3,8 @@
 import numbers
 
 from taichi._lib import core as _ti_core
+from taichi._lib.core.taichi_python import Axis
+from taichi._lib.core.taichi_python import SNode as SNodeCxx
 from taichi.lang import expr, impl, matrix
 from taichi.lang.exception import TaichiRuntimeError
 from taichi.lang.field import BitpackedFields, Field
@@ -22,10 +24,10 @@ class SNode:
         ptr (pointer): The C++ side SNode pointer.
     """
 
-    def __init__(self, ptr):
+    def __init__(self, ptr: SNodeCxx) -> None:
         self.ptr = ptr
 
-    def dense(self, axes, dimensions):
+    def dense(self, axes: list[Axis], dimensions: list[int] | int) -> "SNode":
         """Adds a dense SNode as a child component of `self`.
 
         Args:
@@ -39,7 +41,7 @@ class SNode:
             dimensions = [dimensions] * len(axes)
         return SNode(self.ptr.dense(axes, dimensions, _ti_core.DebugInfo(get_traceback())))
 
-    def pointer(self, axes, dimensions):
+    def pointer(self, axes: list[Axis], dimensions: list[int] | int) -> "SNode":
         """Adds a pointer SNode as a child component of `self`.
 
         Args:
@@ -64,7 +66,7 @@ class SNode:
         #     dimensions = [dimensions] * len(axes)
         # return SNode(self.ptr.hash(axes, dimensions))
 
-    def dynamic(self, axis, dimension, chunk_size=None):
+    def dynamic(self, axis: list[Axis], dimension: int, chunk_size: int | None = None) -> "SNode":
         """Adds a dynamic SNode as a child component of `self`.
 
         Args:
@@ -82,7 +84,7 @@ class SNode:
             chunk_size = dimension
         return SNode(self.ptr.dynamic(axis[0], dimension, chunk_size, _ti_core.DebugInfo(get_traceback())))
 
-    def bitmasked(self, axes, dimensions):
+    def bitmasked(self, axes: list[Axis], dimensions: list[int] | int) -> "SNode":
         """Adds a bitmasked SNode as a child component of `self`.
 
         Args:
@@ -98,7 +100,7 @@ class SNode:
             dimensions = [dimensions] * len(axes)
         return SNode(self.ptr.bitmasked(axes, dimensions, _ti_core.DebugInfo(get_traceback())))
 
-    def quant_array(self, axes, dimensions, max_num_bits):
+    def quant_array(self, axes: list[Axis], dimensions: list[int] | int, max_num_bits: int) -> "SNode":
         """Adds a quant_array SNode as a child component of `self`.
 
         Args:
@@ -113,7 +115,7 @@ class SNode:
             dimensions = [dimensions] * len(axes)
         return SNode(self.ptr.quant_array(axes, dimensions, max_num_bits, _ti_core.DebugInfo(get_traceback())))
 
-    def place(self, *args, offset=None):
+    def place(self, *args, offset: numbers.Number | tuple[numbers.Number] | None = None) -> "SNode":
         """Places a list of Taichi fields under the `self` container.
 
         Args:

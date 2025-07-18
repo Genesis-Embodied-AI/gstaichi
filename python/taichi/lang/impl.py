@@ -338,9 +338,9 @@ class PyTaichi:
         self.materialized = False
         self._prog: Program | None = None
         self.src_info_stack = []
-        self.inside_kernel = False
-        self.compiling_callable: Function | None = None  # pointer to instance of lang::Kernel/Function
-        self.current_kernel: Kernel | None = None
+        self.inside_kernel: bool = False
+        self.compiling_callable: Kernel | Function | None = None  # pointer to instance of lang::Kernel/Function
+        self._current_kernel: Kernel | None = None
         self.global_vars = []
         self.grad_vars = []
         self.dual_vars = []
@@ -361,6 +361,14 @@ class PyTaichi:
         if self._prog is None:
             raise TaichiRuntimeError("_prog attribute not initialized. Maybe you forgot to call `ti.init()` first?")
         return self._prog
+
+    @property
+    def current_kernel(self) -> Kernel:
+        if self._current_kernel is None:
+            raise TaichiRuntimeError(
+                "_pr_current_kernelog attribute not initialized. Maybe you forgot to call `ti.init()` first?"
+            )
+        return self._current_kernel
 
     def initialize_fields_builder(self, builder):
         self.unfinalized_fields_builder[builder] = get_traceback(2)

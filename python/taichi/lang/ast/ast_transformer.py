@@ -141,7 +141,7 @@ class ASTTransformer(Builder):
         return None
 
     @staticmethod
-    def build_assign_unpack(ctx: ASTTransformerContext, node_target: ast.Tuple, values, is_static_assign: bool):
+    def build_assign_unpack(ctx: ASTTransformerContext, node_target: list | ast.Tuple, values, is_static_assign: bool):
         """Build the unpack assignments like this: (target1, target2) = (value1, value2).
         The function should be called only if the node target is a tuple.
 
@@ -666,7 +666,9 @@ class ASTTransformer(Builder):
         assert args.kw_defaults == []
         assert args.kwarg is None
 
-        def decl_and_create_variable(annotation, name, arg_features, invoke_later_dict, prefix_name, arg_depth):
+        def decl_and_create_variable(
+            annotation, name, arg_features, invoke_later_dict, prefix_name, arg_depth
+        ) -> tuple[bool, Any]:
             full_name = prefix_name + "_" + name
             if not isinstance(annotation, primitive_types.RefType):
                 ctx.kernel_args.append(name)
@@ -721,7 +723,7 @@ class ASTTransformer(Builder):
                 return True, kernel_arguments.decl_struct_arg(annotation, name, arg_depth)
             return True, kernel_arguments.decl_scalar_arg(annotation, name, arg_depth)
 
-        def transform_as_kernel():
+        def transform_as_kernel() -> None:
             if node.returns is not None:
                 if not isinstance(node.returns, ast.Constant):
                     for return_type in ctx.func.return_type:
