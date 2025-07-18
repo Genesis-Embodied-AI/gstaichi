@@ -4,9 +4,15 @@ import taichi as ti
 from tests import test_utils
 
 
+@ti.func
+def some_sub_func(a: ti.template, b: ti.Template) -> None:
+    a[None] = b[None] + 2
+
+
 @ti.kernel
 def some_kernel(a: ti.template, b: ti.Template) -> None:
     a[None] = b[None] + 2
+    some_sub_func(a, b)
 
 
 @test_utils.test()
