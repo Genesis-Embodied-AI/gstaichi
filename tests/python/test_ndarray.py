@@ -1161,3 +1161,16 @@ def test_real_func_write_ndarray_cfg():
     a = ti.Vector.ndarray(3, float, shape=(2,))
     foo(a)
     assert (a[0] == vec3(3)).all()
+
+
+@test_utils.test()
+def test_ndarray_max_num_args() -> None:
+    num_args = 32
+    kernel_templ = """
+import taichi as ti
+
+ti.init()
+
+@ti.kernel
+def my_kernel
+"""
