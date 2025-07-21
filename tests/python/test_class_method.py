@@ -1,11 +1,18 @@
+import pytest
+
 import taichi as ti
 from tests import test_utils
 
 
+@pytest.mark.parametrize(
+    "use_ndarray",
+    [
+        False,
+        True,
+    ],
+)
 @test_utils.test()
-def test_class_method():
-    use_ndarray = False
-
+def test_class_method(use_ndarray: bool) -> None:
     if not use_ndarray:
         V = ti.field
         V_ANNOTATION = ti.template()
