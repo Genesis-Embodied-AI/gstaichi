@@ -6,8 +6,9 @@ import traceback
 from enum import Enum
 from sys import version_info
 from textwrap import TextWrapper
-from typing import List
+from typing import TYPE_CHECKING, Any, List
 
+from taichi._lib.core.taichi_python import ASTBuilder
 from taichi.lang import impl
 from taichi.lang.exception import (
     TaichiCompilationError,
@@ -15,6 +16,12 @@ from taichi.lang.exception import (
     TaichiSyntaxError,
     handle_exception_from_cpp,
 )
+
+if TYPE_CHECKING:
+    from taichi.lang.kernel_impl import (
+        Func,
+        Kernel,
+    )
 
 
 class Builder:
@@ -93,9 +100,9 @@ class LoopStatus(Enum):
 
 
 class LoopScopeAttribute:
-    def __init__(self, is_static):
+    def __init__(self, is_static: bool):
         self.is_static = is_static
-        self.status = LoopStatus.Normal
+        self.status: LoopStatus = LoopStatus.Normal
         self.nearest_non_static_if: ast.If | None = None
 
 
@@ -149,14 +156,14 @@ class ASTTransformerContext:
         self,
         excluded_parameters=(),
         is_kernel: bool = True,
-        func=None,
+        func: "Func | Kernel | None" = None,
         arg_features=None,
-        global_vars=None,
+        global_vars: dict[str, Any] | None = None,
         argument_data=None,
-        file=None,
-        src=None,
+        file: str | None = None,
+        src: list[str] | None = None,
         start_lineno: int | None = None,
-        ast_builder=None,
+        ast_builder: ASTBuilder | None = None,
         is_real_function: bool = False,
     ):
         self.func = func
@@ -252,7 +259,7 @@ class ASTTransformerContext:
                 f"Variable '{loop_var}' is already declared in the outer scope and cannot be used as loop variable"
             )
 
-    def get_var_by_name(self, name):
+    def get_var_by_name(self, name: str):
         for s in reversed(self.local_scopes):
             if name in s:
                 return s[name]
@@ -271,7 +278,7 @@ class ASTTransformerContext:
         except AttributeError:
             raise TaichiNameError(f'Name "{name}" is not defined')
 
-    def get_pos_info(self, node):
+    def get_pos_info(self, node) -> str:
         msg = f'File "{self.file}", line {node.lineno + self.lineno_offset}, in {self.func.func.__name__}:\n'
         if version_info < (3, 8):
             msg += self.src[node.lineno - 1] + "\n"

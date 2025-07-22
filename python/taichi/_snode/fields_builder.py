@@ -3,6 +3,7 @@
 from typing import Any, Optional, Sequence, Union
 
 from taichi._lib import core as _ti_core
+from taichi._lib.core.taichi_python import SNode as SNodeCxx
 from taichi._snode.snode_tree import SNodeTree
 from taichi.lang import impl, snode
 from taichi.lang.exception import TaichiRuntimeError
@@ -37,7 +38,7 @@ class FieldsBuilder:
     """
 
     def __init__(self):
-        self.ptr = _snode_registry.create_root(impl.get_runtime().prog)
+        self.ptr: SNodeCxx = _snode_registry.create_root(impl.get_runtime().prog)
         self.root = snode.SNode(self.ptr)
         self.finalized = False
         self.empty = True
