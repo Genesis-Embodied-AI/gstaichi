@@ -140,9 +140,6 @@ if (TI_BUILD_TESTS)
   include(cmake/TaichiTests.cmake)
 endif()
 
-option(TI_BUILD_EXAMPLES "Build the CPP examples" ON)
-option(TI_BUILD_RHI_EXAMPLES "Build the Unified Device API examples" OFF)
-
 if(NOT TI_WITH_LLVM OR NOT TI_WITH_METAL)
     set(TI_BUILD_EXAMPLES OFF)
 endif()
@@ -223,15 +220,6 @@ if (TI_WITH_C_API)
     include(cmake/TaichiCAPITests.cmake)
   endif()
 endif()
-
-if (TI_BUILD_EXAMPLES)
-  include(cmake/TaichiExamples.cmake)
-endif()
-
-if (TI_BUILD_RHI_EXAMPLES)
-  add_subdirectory(cpp_examples/rhi_examples)
-endif()
-
 
 option(TI_WITH_GRAPHVIZ "generate dependency graphs between targets" OFF)  # wheel-tag: viz
 if (TI_WITH_GRAPHVIZ)
