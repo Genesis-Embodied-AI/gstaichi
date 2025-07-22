@@ -1,5 +1,3 @@
-import pytest
-
 import taichi as ti
 from tests import test_utils
 
@@ -17,6 +15,9 @@ def some_kernel(a: ti.template, b: ti.Template) -> None:
 
 @test_utils.test()
 def test_template_no_braces():
+    """
+    Check that we can use ti.Template as an annotation for kernels and funcs.
+    """
     a = ti.field(int, shape=())
     b = ti.field(int, shape=())
     b[None] = 5
