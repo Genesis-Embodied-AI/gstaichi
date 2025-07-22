@@ -34,7 +34,7 @@ File "{frameinfo.filename}", line {frameinfo.lineno + 5}, in foo:
     assert e.value.args[0][:len(msg)] == msg
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_exception_from_func():
     frameinfo = getframeinfo(currentframe())
     with pytest.raises(ti.TaichiNameError) as e:
@@ -77,7 +77,7 @@ File "{file}", line {lineno + 5}, in baz:
     assert e.value.args[0][:len(msg)] == msg
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_tab():
     frameinfo = getframeinfo(currentframe())
     with pytest.raises(ti.TaichiNameError) as e:
@@ -102,7 +102,7 @@ File "{file}", line {lineno + 5}, in foo:
     assert e.value.args[0][:len(msg)] == msg
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_super_long_line():
     frameinfo = getframeinfo(currentframe())
     with pytest.raises(ti.TaichiNameError) as e:
@@ -132,8 +132,7 @@ bbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(111)
     assert e.value.args[0][:len(msg)] == msg
 
 
-@pytest.mark.skipif(version_info < (3, 8), reason="This is a feature for python>=3.8")
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_exception_in_node_with_body():
     frameinfo = getframeinfo(currentframe())
     @ti.kernel

@@ -5,7 +5,7 @@ from taichi.lang.misc import get_host_arch_list
 from tests import test_utils
 
 
-@test_utils.test(arch=get_host_arch_list())
+@test_utils.test(arch=get_host_arch_list(), print_full_traceback=False)
 def test_struct_for_mismatch():
     x = ti.field(ti.f32, (3, 4))
 
