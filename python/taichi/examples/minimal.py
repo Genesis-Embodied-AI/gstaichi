@@ -1,5 +1,3 @@
-# type: ignore
-
 import taichi as ti
 
 
@@ -24,7 +22,7 @@ def main() -> None:
     a = ti.ndarray(ti.int32, (B,))
 
     lcg_ti(B, lcg_its, a)
-    print(f"LCG for B={B}, lcg_its={lcg_its}: ", a.to_numpy())
+    print(f"LCG for B={B}, lcg_its={lcg_its}: ", a.to_numpy())  # pylint: disable=no-member
 
 
 main()
