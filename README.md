@@ -1,29 +1,25 @@
 # GS-Taichi
 
-[Taichi](https://github.com/taichi-dev/taichi) was forked in June 2025. It is being developed to target the [Genesis physics simulator](https://github.com/Genesis-Embodied-AI/Genesis). Whilst the repo largely resembles upstream for now, we have made the following changes:
+[Taichi](https://github.com/taichi-dev/taichi) was forked in June 2025. This repository (or gs-taichi) is now a fully independent project with no intention of maintaining backward compatibility with the original taichi. Whilst the repo largely resembles upstream for now, we have made the following changes:
 - revamped continuous integration, to run using recent python versions (up to 3.13), recent mac os x versions (up to 15), and to run reliably (at least 95% of runs with correct code succeed)
 - added dataclasses.dataclass structs:
     - work with both ndarrays and fields (cf ti.struct (field only), ti.dataclass (field only), ti.data_oriented (field only), argpack (ndarray only))
     - can be passed into child `ti.func`tions (cf argpack)
     - does not affect kernel runtime speed (kernels see only the underlying arrays, no indirection is added within the kernel layer)
 - removed GUI/GGUI
-    - not used by Genesis (we are using other, dedicated, rendering engines, see [Genesis physics simulator](https://github.com/Genesis-Embodied-AI/Genesis) for more details)
-- removed support for:
-    - older versions of Mac OS X (< 14)
-    - older versions of Python (< 3.10)
-    - older versions of NVidia GPUs (< sm_60, i.e. < Pascal)
-    - OpenGL (please use Vulkan)
-    - Mobile devices (Android etc)
+- upgraded supported OS and Python versions (eg added support for Python 3.13)
 
-We will aggressively prune code that is not used by [Genesis project](https://github.com/Genesis-Embodied-AI/Genesis) in order to stay focused on our mission to [build generalist robots to unlock unlimited physical labor, so humans can focus on creativity, curiosity, and what we love](https://genesis-ai.company/)
-
-Other changes to gs-taichi are planned:
+Planned features:
 - reduce warm cache launch latency
-- add launch arguments caching, to reduce kernel launch latency (only if we find Genesis needs this)
+- (maybe) add launch args caching, to reduce launch latency
 - make dataclasses.dataclass nestable
-- remove argpack (Genesis doesn't use argpack, argpack functionality is a subset of dataclasses.dataclass and caching)
 
-For the time being, the documentation is in flux. Please feel free to raise an issue with any inconsistencies or issues you find.
+Planned pruning:
+- remove argpack
+- remove ti CLI
+- remove OpenGL (please use Vulkan)
+- remove mobile device support (Android etc)
+- remove support for NVidia GPUs earlier than sm_60/Pascal
 
 # What is gs-taichi?
 
@@ -35,7 +31,7 @@ GS-Taichi is a high performance multi-platform compiler, targeted at physics sim
 
 GS-Taichi supports automatic differentiation. GS-Taichi lets you build fully fused GPU kernels, using Python.
 
-We have considered other compute backends, but found that a dedicated gs-taichi is the best solution for us. This is because we want to support users across different platforms (while Warp focuses on NVIDIA GPUs), and we also aim to actively develop new simulation features (where upstream Taichi has been slower in development and accepting new features).
+Genesis simulator's best-in-class performance can be largely attributed to Taichi, its underlying GPU acceleration framework for Python. Given how critical is this component, we decided to fork Taichi and build our own very framework from there, so that from now on, we are free to drive its development in the direction that best supports the continuous improvement of Genesis simulator.
 
 # Getting started
 
