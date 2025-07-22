@@ -1111,7 +1111,7 @@ class Kernel:
                     )
                 needed_arg_type.set_kernel_struct_args(v, launch_ctx, indices)
                 return 1
-            if isinstance(needed_arg_type, template):
+            if needed_arg_type == template or isinstance(needed_arg_type, template):
                 return 0
             raise ValueError(f"Argument type mismatch. Expecting {needed_arg_type}, got {type(v)}.")
 
