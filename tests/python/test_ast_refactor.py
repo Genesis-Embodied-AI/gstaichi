@@ -829,7 +829,7 @@ def test_assert_message_formatted():
     assert_formatted()
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_dict():
     @ti.kernel
     def foo(x: ti.template()) -> ti.i32:
@@ -894,7 +894,7 @@ def test_dictcomp():
     assert foo(10) == 1 * 1 + 5 * 5 + 7 * 7
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_dictcomp_fail():
     @ti.kernel
     def foo(n: ti.template(), m: ti.template()) -> ti.i32:
@@ -976,7 +976,7 @@ def test_func_default_value_fail():
         foo()
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_raise():
     dim = 1
     m = ti.Matrix.field(dim, dim, ti.f32)

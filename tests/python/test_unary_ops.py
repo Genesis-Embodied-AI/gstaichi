@@ -57,7 +57,7 @@ def test_trig_f64(taichi_op, np_op):
     _test_op(ti.f64, taichi_op, np_op)
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_bit_not_invalid():
     @ti.kernel
     def test(x: ti.f32) -> ti.i32:
@@ -67,7 +67,7 @@ def test_bit_not_invalid():
         test(1.0)
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_logic_not_invalid():
     @ti.kernel
     def test(x: ti.f32) -> ti.i32:

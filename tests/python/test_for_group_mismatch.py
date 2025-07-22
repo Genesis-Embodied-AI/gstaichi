@@ -18,7 +18,7 @@ def test_struct_for_mismatch():
         func()
 
 
-@test_utils.test(arch=get_host_arch_list())
+@test_utils.test(arch=get_host_arch_list(), print_full_traceback=False)
 def test_struct_for_mismatch2():
     x = ti.field(ti.f32, (3, 4))
 

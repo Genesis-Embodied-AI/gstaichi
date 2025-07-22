@@ -7,7 +7,7 @@ import taichi as ti
 from tests import test_utils
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_exception_multiline():
     frameinfo = getframeinfo(currentframe())
     with pytest.raises(ti.TaichiNameError) as e:
