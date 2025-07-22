@@ -163,7 +163,6 @@ def _get_tree_and_ctx(
         for arg_i, (name, param) in enumerate(parameters.items()):
             if dataclasses.is_dataclass(param.annotation):
                 for field in dataclasses.fields(param.annotation):
-                    field_name = field.name
                     child_value = getattr(args[arg_i], field.name)
                     flat_name = f"__ti_{name}_{field.name}"
                     global_vars[flat_name] = child_value
@@ -1027,6 +1026,12 @@ class Kernel:
         set_later_list = []
 
         def recursive_set_args(needed_arg_type, provided_arg_type, v, indices):
+            """
+            Returns the number of kernel args set
+            e.g. templates don't set kernel args, so returns 0
+            a single ndarray is 1 kernel arg, so returns 1
+            a struct of 3 ndarrays would set 3 kernel args, so return 3
+            """
             in_argpack = len(indices) > 1
             nonlocal actual_argument_slot, exceed_max_arg_num, set_later_list
             if actual_argument_slot >= max_arg_num:
