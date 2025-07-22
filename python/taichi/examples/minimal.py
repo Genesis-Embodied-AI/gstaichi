@@ -1,4 +1,4 @@
-import time
+# type: ignore
 
 import taichi as ti
 
@@ -19,13 +19,12 @@ def main() -> None:
     ti.init(arch=ti.cpu)
 
     B = 10
+    lcg_its = 10
+
     a = ti.ndarray(ti.int32, (B,))
 
-    ti.sync()
-    start = time.time()
-    lcg_ti(B, 10, a)
-    ti.sync()
-    end = time.time()
+    lcg_ti(B, lcg_its, a)
+    print(f"LCG for B={B}, lcg_its={lcg_its}: ", a.to_numpy())
 
 
 main()
