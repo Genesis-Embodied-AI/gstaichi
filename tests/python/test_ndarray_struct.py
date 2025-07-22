@@ -272,32 +272,33 @@ def test_ndarray_struct_diverse_params():
 
 
 @test_utils.test()
-def test_ndarray_struct_prim1():
+@pytest.mark.parametrize("use_ndarray", [False, True])
+def test_ndarray_struct_prim1(ti_type: Any, ti_annotation: Any) -> None:
     gc.collect()
     gc.collect()
 
-    a = ti.ndarray(ti.i32, shape=(55,))
-    b = ti.ndarray(ti.i32, shape=(57,))
-    c = ti.ndarray(ti.i32, shape=(211,))
-    z_param = ti.ndarray(ti.i32, shape=(223,))
-    bar_param = ti.ndarray(ti.i32, shape=(227,))
+    a = ti_type(ti.i32, shape=(55,))
+    b = ti_type(ti.i32, shape=(57,))
+    c = ti_type(ti.i32, shape=(211,))
+    z_param = ti_type(ti.i32, shape=(223,))
+    bar_param = ti_type(ti.i32, shape=(227,))
 
     @dataclass
     class MyStructAB:
         p3: ti.i32
-        a: ti.types.NDArray[ti.i32, 1]
+        a: ti_annotation[ti.i32, 1]
         p1: ti.i32
         p2: ti.i32
 
     @dataclass
     class MyStructC:
-        c: ti.types.NDArray[ti.i32, 1]
+        c: ti_annotation[ti.i32, 1]
 
     @ti.kernel
     def k1(
-        z: ti.types.NDArray[ti.i32, 1],
+        z: ti_annotation[ti.i32, 1],
         my_struct_ab: MyStructAB,
-        bar: ti.types.NDArray[ti.i32, 1],
+        bar: ti_annotation[ti.i32, 1],
         my_struct_c: MyStructC,
     ) -> None:
         my_struct_ab.a[36] += my_struct_ab.p1
