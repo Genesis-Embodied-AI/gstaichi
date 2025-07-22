@@ -41,7 +41,7 @@ extensions = [
 ]
 
 # https://myst-parser.readthedocs.io/en/latest/syntax/optional.html
-myst_enable_extensions = ["colon_fence", "dollarmath"]
+myst_enable_extensions = ["colon_fence", "dollarmath", "amsmath"]
 # https://github.com/executablebooks/MyST-Parser/issues/519#issuecomment-1037239655
 myst_heading_anchors = 4
 
