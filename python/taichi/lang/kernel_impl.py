@@ -16,6 +16,7 @@ import types
 import typing
 import warnings
 import weakref
+import traceback
 from typing import Any, Callable, Type, Union
 
 import numpy as np
@@ -875,6 +876,7 @@ class Kernel:
                 element_dim = needed.dtype.ndim
                 array_shape = v.shape[element_dim:] if is_soa else v.shape[:-element_dim]
             if isinstance(v, np.ndarray):
+                # numpy
                 if v.flags.c_contiguous:
                     launch_ctx.set_arg_external_array_with_shape(indices, int(v.ctypes.data), v.nbytes, array_shape, 0)
                 elif v.flags.f_contiguous:
@@ -946,7 +948,7 @@ class Kernel:
                     )
                 else:
                     raise TaichiRuntimeTypeError(
-                        f"Argument {needed.to_string()} cannot be converted into required type {v}"
+                        f"Argument {needed} cannot be converted into required type {type(v)}"
                     )
             elif has_paddle():
                 import paddle  # pylint: disable=C0415  # type: ignore
@@ -981,25 +983,25 @@ class Kernel:
                     )
                 else:
                     raise TaichiRuntimeTypeError(
-                        f"Argument {needed.to_string()} cannot be converted into required type {v}"
+                        f"Argument {needed} cannot be converted into required type {v}"
                     )
             else:
                 raise TaichiRuntimeTypeError(
-                    f"Argument {needed.to_string()} cannot be converted into required type {v}"
+                    f"Argument {needed} cannot be converted into required type {v}"
                 )
 
         def set_arg_matrix(indices, v, needed):
             def cast_float(x):
                 if not isinstance(x, (int, float, np.integer, np.floating)):
                     raise TaichiRuntimeTypeError(
-                        f"Argument {needed.dtype.to_string()} cannot be converted into required type {type(x)}"
+                        f"Argument {needed.dtype} cannot be converted into required type {type(x)}"
                     )
                 return float(x)
 
             def cast_int(x):
                 if not isinstance(x, (int, np.integer)):
                     raise TaichiRuntimeTypeError(
-                        f"Argument {needed.dtype.to_string()} cannot be converted into required type {type(x)}"
+                        f"Argument {needed.dtype} cannot be converted into required type {type(x)}"
                     )
                 return int(x)
 
