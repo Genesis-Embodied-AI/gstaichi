@@ -445,7 +445,7 @@ class Func:
                     pass
                 elif type(annotation) == taichi.types.annotations.Template:
                     pass
-                elif isinstance(annotation, template):
+                elif isinstance(annotation, template) or annotation == taichi.types.annotations.Template:
                     pass
                 elif isinstance(annotation, primitive_types.RefType):
                     pass
