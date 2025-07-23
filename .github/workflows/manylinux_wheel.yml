@@ -45,7 +45,9 @@ jobs:
     name: Manylinux wheel upload
     runs-on: ubuntu-22.04
     needs: build_wheel
-    environment: aws_storage
+    environment:
+      name: aws_storage
+      url:
     concurrency:
       group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-upload
       cancel-in-progress: true
@@ -75,7 +77,9 @@ jobs:
     name: Manylinux wheel Test
     runs-on: ubuntu-22.04
     needs: upload_to_storage
-    environment: aws_storage
+    environment:
+      name: aws_storage
+      url:
     concurrency:
       group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-test
       cancel-in-progress: true

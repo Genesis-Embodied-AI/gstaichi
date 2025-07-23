@@ -21,7 +21,9 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: aws_storage
+    environment:
+      name: aws_storage
+      url:
     steps:
       - uses: actions/checkout@v4
       - name: Configure AWS credentials
