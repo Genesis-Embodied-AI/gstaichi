@@ -198,11 +198,11 @@ if (TI_WITH_LLVM)
 
     check_clang_version()
 
-    add_subdirectory(taichi/runtime/llvm/runtime_module)
+    add_subdirectory(gs_taichi/runtime/llvm/runtime_module)
 endif()
 
-configure_file(taichi/common/version.h.in ${CMAKE_SOURCE_DIR}/taichi/common/version.h)
-configure_file(taichi/common/commit_hash.h.in ${CMAKE_SOURCE_DIR}/taichi/common/commit_hash.h)
+configure_file(gs_taichi/common/version.h.in ${CMAKE_SOURCE_DIR}/gs_taichi/common/version.h)
+configure_file(gs_taichi/common/commit_hash.h.in ${CMAKE_SOURCE_DIR}/gs_taichi/common/commit_hash.h)
 
 option(TI_WITH_C_API "build taichi runtime c-api library" ON)  # wheel-tag: aot
 option(TI_WITH_STATIC_C_API "build static taichi runtime c-api library" OFF)  # wheel-tag: static_aot

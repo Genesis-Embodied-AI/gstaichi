@@ -1,11 +1,11 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/statements.h"
-#include "taichi/ir/ir_builder.h"
-#include "taichi/ir/transforms.h"
+#include "gs_taichi/ir/statements.h"
+#include "gs_taichi/ir/ir_builder.h"
+#include "gs_taichi/ir/transforms.h"
 #include "tests/cpp/program/test_program.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 
 TEST(IRTypePromotionTest, ShiftOp) {
   IRBuilder builder;

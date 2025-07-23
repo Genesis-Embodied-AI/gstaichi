@@ -3,7 +3,7 @@ import copy
 import numpy as np
 import pytest
 
-import taichi as ti
+import gs_taichi as ti
 from taichi.lang import impl
 from taichi.lang.exception import TaichiIndexError, TaichiRuntimeError, TaichiTypeError
 from taichi.lang.misc import get_host_arch_list

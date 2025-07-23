@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 
-#include "taichi/common/platform_macros.h"
-#include "taichi/common/cleanup.h"
-#include "taichi/common/filesystem.hpp"
+#include "gs_taichi/common/platform_macros.h"
+#include "gs_taichi/common/cleanup.h"
+#include "gs_taichi/common/filesystem.hpp"
 
 #ifdef TI_WITH_LLVM
 #if defined(TI_PLATFORM_LINUX) || defined(TI_PLATFORM_WINDOWS)
@@ -18,12 +18,12 @@ namespace fs = std::filesystem;
 #include "llvm/Support/Host.h"
 #include "llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h"
 
-#include "taichi/rhi/arch.h"
-#include "taichi/runtime/llvm/llvm_context.h"
-#include "taichi/runtime/llvm/llvm_offline_cache.h"
-#include "taichi/runtime/program_impls/llvm/llvm_program.h"
-#include "taichi/program/compile_config.h"
-#include "taichi/program/program.h"
+#include "gs_taichi/rhi/arch.h"
+#include "gs_taichi/runtime/llvm/llvm_context.h"
+#include "gs_taichi/runtime/llvm/llvm_offline_cache.h"
+#include "gs_taichi/runtime/program_impls/llvm/llvm_program.h"
+#include "gs_taichi/program/compile_config.h"
+#include "gs_taichi/program/program.h"
 
 namespace taichi::lang {
 namespace {

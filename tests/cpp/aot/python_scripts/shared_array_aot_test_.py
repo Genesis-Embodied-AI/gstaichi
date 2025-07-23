@@ -3,7 +3,7 @@ import os
 
 import numpy as np
 
-import taichi as ti
+import gs_taichi as ti
 
 
 def shared_array_aot_test(arch):

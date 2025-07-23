@@ -1,17 +1,17 @@
 #include "gtest/gtest.h"
-#include "taichi/ir/ir_builder.h"
-#include "taichi/ir/statements.h"
-#include "taichi/inc/constants.h"
-#include "taichi/program/program.h"
+#include "gs_taichi/ir/ir_builder.h"
+#include "gs_taichi/ir/statements.h"
+#include "gs_taichi/inc/constants.h"
+#include "gs_taichi/program/program.h"
 #include "tests/cpp/ir/ndarray_kernel.h"
 #include "tests/cpp/program/test_program.h"
-#include "taichi/aot/graph_data.h"
-#include "taichi/program/graph_builder.h"
-#include "taichi/runtime/dx12/aot_module_loader_impl.h"
-#include "taichi/rhi/dx12/dx12_api.h"
-#include "taichi/common/filesystem.hpp"
+#include "gs_taichi/aot/graph_data.h"
+#include "gs_taichi/program/graph_builder.h"
+#include "gs_taichi/runtime/dx12/aot_module_loader_impl.h"
+#include "gs_taichi/rhi/dx12/dx12_api.h"
+#include "gs_taichi/common/filesystem.hpp"
 
-using namespace taichi;
+using namespace gs_taichi;
 using namespace lang;
 namespace fs = std::filesystem;
 

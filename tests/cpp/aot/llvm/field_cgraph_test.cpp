@@ -1,23 +1,23 @@
 #include "gtest/gtest.h"
 
-#include "taichi/program/kernel_profiler.h"
-#include "taichi/runtime/llvm/llvm_runtime_executor.h"
-#include "taichi/runtime/llvm/llvm_aot_module_loader.h"
-#include "taichi/runtime/cpu/kernel_launcher.h"
+#include "gs_taichi/program/kernel_profiler.h"
+#include "gs_taichi/runtime/llvm/llvm_runtime_executor.h"
+#include "gs_taichi/runtime/llvm/llvm_aot_module_loader.h"
+#include "gs_taichi/runtime/cpu/kernel_launcher.h"
 
 #ifdef TI_WITH_CUDA
 
-#include "taichi/rhi/cuda/cuda_driver.h"
-#include "taichi/platform/cuda/detect_cuda.h"
-#include "taichi/runtime/cuda/kernel_launcher.h"
+#include "gs_taichi/rhi/cuda/cuda_driver.h"
+#include "gs_taichi/platform/cuda/detect_cuda.h"
+#include "gs_taichi/runtime/cuda/kernel_launcher.h"
 
 #endif
 
 #define TI_RUNTIME_HOST
-#include "taichi/program/context.h"
+#include "gs_taichi/program/context.h"
 #undef TI_RUNTIME_HOST
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 
 void run_graph_tests(aot::Module *mod,
                      LlvmRuntimeExecutor *exec,
@@ -32,9 +32,9 @@ void run_graph_tests(aot::Module *mod,
 
   int base0 = 10;
   int base1 = 10;
-  std::unordered_map<std::string, taichi::lang::aot::IValue> args;
-  args.insert({"base0", taichi::lang::aot::IValue::create(base0)});
-  args.insert({"base1", taichi::lang::aot::IValue::create(base1)});
+  std::unordered_map<std::string, gs_taichi::lang::aot::IValue> args;
+  args.insert({"base0", gs_taichi::lang::aot::IValue::create(base0)});
+  args.insert({"base1", gs_taichi::lang::aot::IValue::create(base1)});
 
   run_graph->run(args);
 

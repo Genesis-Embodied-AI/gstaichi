@@ -3,7 +3,7 @@ import tempfile
 
 import pytest
 
-import taichi as ti
+import gs_taichi as ti
 from taichi._lib import core as _ti_core
 from tests import test_utils
 

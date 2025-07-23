@@ -1,12 +1,12 @@
 #include "gtest/gtest.h"
-#include "taichi/common/version.h"
-#include "taichi/util/offline_cache.h"
+#include "gs_taichi/common/version.h"
+#include "gs_taichi/util/offline_cache.h"
 
 #ifdef TI_WITH_LLVM
-#include "taichi/runtime/llvm/llvm_offline_cache.h"
+#include "gs_taichi/runtime/llvm/llvm_offline_cache.h"
 #endif  // TI_WITH_LLVM
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 
 namespace {
 
@@ -93,9 +93,9 @@ void load_metadata_test() {
     EXPECT_TRUE(data.kernels.count("2"));
   }
 
-  taichi::remove(old_file);
-  taichi::remove(corrupted_file);
-  taichi::remove(true_file);
+  gs_taichi::remove(old_file);
+  gs_taichi::remove(corrupted_file);
+  gs_taichi::remove(true_file);
 }
 
 }  // namespace

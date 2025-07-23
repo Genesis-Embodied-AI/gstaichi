@@ -1,6 +1,6 @@
-#include "taichi/struct/struct.h"
+#include "gs_taichi/struct/struct.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 
 class FakeStructCompiler : public StructCompiler {
  public:

@@ -3,7 +3,7 @@ import platform
 import numpy as np
 import pytest
 
-import taichi as ti
+import gs_taichi as ti
 from taichi.lang.exception import TaichiCompilationError
 from tests import test_utils
 

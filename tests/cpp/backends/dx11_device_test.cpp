@@ -2,10 +2,10 @@
 
 #ifdef TI_WITH_DX11
 
-#include "taichi/ir/ir_builder.h"
-#include "taichi/rhi/dx/dx_device.h"
-#include "taichi/rhi/dx/dx_info_queue.h"
-#include "taichi/runtime/program_impls/dx/dx_program.h"
+#include "gs_taichi/ir/ir_builder.h"
+#include "gs_taichi/rhi/dx/dx_device.h"
+#include "gs_taichi/rhi/dx/dx_info_queue.h"
+#include "gs_taichi/runtime/program_impls/dx/dx_program.h"
 #include "tests/cpp/program/test_program.h"
 
 namespace taichi::lang {

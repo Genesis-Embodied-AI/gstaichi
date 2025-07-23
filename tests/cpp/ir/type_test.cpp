@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/type_factory.h"
+#include "gs_taichi/ir/type_factory.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 
 TEST(Type, TypeToString) {
   auto f16 = TypeFactory::get_instance().get_primitive_real_type(16);

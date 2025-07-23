@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "c_api_test_utils.h"
-#include "taichi/cpp/taichi.hpp"
+#include "gs_taichi/cpp/taichi.hpp"
 #include "c_api/tests/gtest_fixture.h"
 
 static void taichi_sparse_test(TiArch arch) {

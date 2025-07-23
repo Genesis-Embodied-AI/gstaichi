@@ -1,7 +1,7 @@
 import argparse
 import os
 
-import taichi as ti
+import gs_taichi as ti
 
 
 def compile_field_aot(arch, compile_for_cgraph=False):

@@ -1,8 +1,8 @@
 import argparse
 import os
 
-import taichi as ti
-from taichi.examples.patterns import taichi_logo
+import gs_taichi as ti
+from taichi.examples.patterns import gs_taichi_logo
 
 ti.init(arch=ti.cuda, debug=True)
 

@@ -5,7 +5,7 @@ import pytest
 import requests
 from PIL import Image
 
-import taichi as ti
+import gs_taichi as ti
 from taichi.lang import impl
 from tests import test_utils
 

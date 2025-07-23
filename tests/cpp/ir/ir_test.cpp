@@ -1,9 +1,9 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/ir.h"
-#include "taichi/ir/statements.h"
+#include "gs_taichi/ir/ir.h"
+#include "gs_taichi/ir/statements.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 namespace {
 
 std::unique_ptr<ConstStmt> make_const_i32(int32_t value) {

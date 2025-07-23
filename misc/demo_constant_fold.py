@@ -1,5 +1,5 @@
 # https://github.com/taichi-dev/taichi/pull/839#issuecomment-626217806
-import taichi as ti
+import gs_taichi as ti
 
 ti.init(print_ir=True)
 # ti.core.toggle_advanced_optimization(False)

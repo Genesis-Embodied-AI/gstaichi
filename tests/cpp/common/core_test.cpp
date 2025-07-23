@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 
-#include "taichi/common/core.h"
+#include "gs_taichi/common/core.h"
 
-namespace taichi {
+namespace gs_taichi {
 
 TEST(CoreTest, Basic) {
   EXPECT_EQ(trim_string("hello taichi  "), "hello taichi");

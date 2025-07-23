@@ -1,4 +1,4 @@
-import taichi as ti
+import gs_taichi as ti
 from taichi.lang.kernel_arguments import KernelArgument
 from taichi.lang.kernel_impl import TaichiCallableTemplateMapper
 from tests import test_utils

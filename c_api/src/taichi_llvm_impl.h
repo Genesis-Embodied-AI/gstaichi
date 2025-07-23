@@ -4,10 +4,10 @@
 #include "taichi_core_impl.h"
 
 #ifdef TI_WITH_CUDA
-#include "taichi/platform/cuda/detect_cuda.h"
+#include "gs_taichi/platform/cuda/detect_cuda.h"
 #endif
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 class LlvmRuntimeExecutor;
 struct CompileConfig;
 }  // namespace taichi::lang
@@ -16,21 +16,21 @@ namespace capi {
 
 class LlvmRuntime : public Runtime {
  public:
-  LlvmRuntime(taichi::Arch arch);
+  LlvmRuntime(gs_taichi::Arch arch);
   virtual ~LlvmRuntime();
 
   void check_runtime_error();
-  taichi::lang::Device &get() override;
+  gs_taichi::lang::Device &get() override;
 
  private:
   /* Internally used interfaces */
   TiAotModule load_aot_module(const char *module_path) override;
   TiMemory allocate_memory(
-      const taichi::lang::Device::AllocParams &params) override;
+      const gs_taichi::lang::Device::AllocParams &params) override;
   void free_memory(TiMemory devmem) override;
 
-  void buffer_copy(const taichi::lang::DevicePtr &dst,
-                   const taichi::lang::DevicePtr &src,
+  void buffer_copy(const gs_taichi::lang::DevicePtr &dst,
+                   const gs_taichi::lang::DevicePtr &src,
                    size_t size) override;
 
   void flush() override;
@@ -38,9 +38,9 @@ class LlvmRuntime : public Runtime {
   void wait() override;
 
  private:
-  std::unique_ptr<taichi::lang::CompileConfig> cfg_{nullptr};
-  std::unique_ptr<taichi::lang::LlvmRuntimeExecutor> executor_{nullptr};
-  taichi::uint64 *result_buffer{nullptr};
+  std::unique_ptr<gs_taichi::lang::CompileConfig> cfg_{nullptr};
+  std::unique_ptr<gs_taichi::lang::LlvmRuntimeExecutor> executor_{nullptr};
+  gs_taichi::uint64 *result_buffer{nullptr};
 };
 
 }  // namespace capi

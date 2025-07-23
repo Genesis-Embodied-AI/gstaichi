@@ -74,19 +74,19 @@ if(NOT TI_WITH_LLVM)
 endif()
 
 file(GLOB TAICHI_CORE_SOURCE
-    "taichi/analysis/*.cpp" "taichi/analysis/*.h"
-    "taichi/ir/*"
-    "taichi/jit/*"
-    "taichi/math/*"
-    "taichi/program/*"
-    "taichi/struct/*"
-    "taichi/system/*"
-    "taichi/transforms/*"
-    "taichi/aot/*.cpp" "taichi/aot/*.h"
-    "taichi/platform/cuda/*" "taichi/platform/amdgpu/*"
-    "taichi/platform/mac/*" "taichi/platform/windows/*"
-    "taichi/codegen/*.cpp" "taichi/codegen/*.h"
-    "taichi/runtime/*.h" "taichi/runtime/*.cpp"
+    "gs_taichi/analysis/*.cpp" "gs_taichi/analysis/*.h"
+    "gs_taichi/ir/*"
+    "gs_taichi/jit/*"
+    "gs_taichi/math/*"
+    "gs_taichi/program/*"
+    "gs_taichi/struct/*"
+    "gs_taichi/system/*"
+    "gs_taichi/transforms/*"
+    "gs_taichi/aot/*.cpp" "gs_taichi/aot/*.h"
+    "gs_taichi/platform/cuda/*" "gs_taichi/platform/amdgpu/*"
+    "gs_taichi/platform/mac/*" "gs_taichi/platform/windows/*"
+    "gs_taichi/codegen/*.cpp" "gs_taichi/codegen/*.h"
+    "gs_taichi/runtime/*.h" "gs_taichi/runtime/*.cpp"
 )
 
 if(TI_WITH_LLVM)
@@ -130,7 +130,7 @@ if (TI_WITH_VULKAN)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTI_WITH_VULKAN")
 endif ()
 
-add_subdirectory(taichi/rhi)
+add_subdirectory(gs_taichi/rhi)
 
 set(CORE_LIBRARY_NAME taichi_core)
 add_library(${CORE_LIBRARY_NAME} OBJECT ${TAICHI_CORE_SOURCE})
@@ -188,16 +188,16 @@ if(TI_WITH_LLVM)
         llvm_map_components_to_libnames(llvm_aarch64_libs AArch64)
     endif()
 
-    add_subdirectory(taichi/codegen/cpu)
-    add_subdirectory(taichi/runtime/cpu)
+    add_subdirectory(gs_taichi/codegen/cpu)
+    add_subdirectory(gs_taichi/runtime/cpu)
 
     target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE cpu_codegen)
     target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE cpu_runtime)
 
     if (TI_WITH_CUDA)
         llvm_map_components_to_libnames(llvm_ptx_libs NVPTX)
-        add_subdirectory(taichi/codegen/cuda)
-        add_subdirectory(taichi/runtime/cuda)
+        add_subdirectory(gs_taichi/codegen/cuda)
+        add_subdirectory(gs_taichi/runtime/cuda)
 
         target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE cuda_codegen)
         target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE cuda_runtime)
@@ -205,8 +205,8 @@ if(TI_WITH_LLVM)
 
     if (TI_WITH_AMDGPU)
         llvm_map_components_to_libnames(llvm_amdgpu_libs AMDGPU)
-        add_subdirectory(taichi/codegen/amdgpu)
-        add_subdirectory(taichi/runtime/amdgpu)
+        add_subdirectory(gs_taichi/codegen/amdgpu)
+        add_subdirectory(gs_taichi/runtime/amdgpu)
 
         target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE amdgpu_codegen)
         target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE amdgpu_runtime)
@@ -215,9 +215,9 @@ if(TI_WITH_LLVM)
     if (TI_WITH_DX12)
         llvm_map_components_to_libnames(llvm_directx_libs DirectX)
 
-        add_subdirectory(taichi/runtime/dx12)
-        add_subdirectory(taichi/codegen/dx12)
-        add_subdirectory(taichi/runtime/program_impls/dx12)
+        add_subdirectory(gs_taichi/runtime/dx12)
+        add_subdirectory(gs_taichi/codegen/dx12)
+        add_subdirectory(gs_taichi/runtime/program_impls/dx12)
 
         target_include_directories(${CORE_LIBRARY_NAME} PRIVATE external/DirectX-Headers/include)
         target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE dx12_codegen)
@@ -225,9 +225,9 @@ if(TI_WITH_LLVM)
         target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE dx12_program_impl)
     endif()
 
-    add_subdirectory(taichi/codegen/llvm)
-    add_subdirectory(taichi/runtime/llvm)
-    add_subdirectory(taichi/runtime/program_impls/llvm)
+    add_subdirectory(gs_taichi/codegen/llvm)
+    add_subdirectory(gs_taichi/runtime/llvm)
+    add_subdirectory(gs_taichi/runtime/program_impls/llvm)
 
     target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE llvm_program_impl)
     target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE llvm_codegen)
@@ -242,33 +242,33 @@ if(TI_WITH_LLVM)
 endif()
 
 if (TI_WITH_METAL OR TI_WITH_OPENGL OR TI_WITH_DX11 OR TI_WITH_VULKAN)
-    add_subdirectory(taichi/runtime/program_impls/gfx)
+    add_subdirectory(gs_taichi/runtime/program_impls/gfx)
     target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE gfx_program_impl)
 endif()
 
 if (TI_WITH_METAL)
-    add_subdirectory(taichi/runtime/program_impls/metal)
+    add_subdirectory(gs_taichi/runtime/program_impls/metal)
     target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE metal_program_impl)
 endif()
 
 if (TI_WITH_OPENGL)
-    add_subdirectory(taichi/runtime/program_impls/opengl)
+    add_subdirectory(gs_taichi/runtime/program_impls/opengl)
     target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE opengl_program_impl)
 endif()
 
 if (TI_WITH_DX11)
-    add_subdirectory(taichi/runtime/program_impls/dx)
+    add_subdirectory(gs_taichi/runtime/program_impls/dx)
     target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE dx_program_impl)
 endif()
 
 if (TI_WITH_VULKAN)
-    add_subdirectory(taichi/runtime/program_impls/vulkan)
+    add_subdirectory(gs_taichi/runtime/program_impls/vulkan)
     target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE vulkan_program_impl)
 endif ()
 
-add_subdirectory(taichi/util)
-add_subdirectory(taichi/common)
-add_subdirectory(taichi/compilation_manager)
+add_subdirectory(gs_taichi/util)
+add_subdirectory(gs_taichi/common)
+add_subdirectory(gs_taichi/compilation_manager)
 
 target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE taichi_util)
 target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE taichi_common)
@@ -287,8 +287,8 @@ set(SPIRV_SKIP_EXECUTABLES true)
 set(SPIRV-Headers_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/SPIRV-Headers)
 set(ENABLE_SPIRV_TOOLS_INSTALL OFF)
 add_subdirectory(external/SPIRV-Tools)
-add_subdirectory(taichi/codegen/spirv)
-add_subdirectory(taichi/runtime/gfx)
+add_subdirectory(gs_taichi/codegen/spirv)
+add_subdirectory(gs_taichi/runtime/gfx)
 
 if (TI_WITH_OPENGL OR TI_WITH_VULKAN OR TI_WITH_DX11 OR TI_WITH_METAL)
   target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE spirv_codegen)
@@ -349,8 +349,8 @@ if(TI_WITH_PYTHON)
     if (NOT ANDROID)
         # NO_EXTRAS is required here to avoid llvm symbol error during build
         file(GLOB TAICHI_PYBIND_SOURCE
-            "taichi/python/*.cpp"
-            "taichi/python/*.h"
+            "gs_taichi/python/*.cpp"
+            "gs_taichi/python/*.h"
         )
         pybind11_add_module(${CORE_WITH_PYBIND_LIBRARY_NAME} NO_EXTRAS ${TAICHI_PYBIND_SOURCE})
     else()

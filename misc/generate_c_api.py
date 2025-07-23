@@ -289,7 +289,7 @@ def print_module_header(module: Module):
 
     out += [
         "#ifndef TAICHI_H",
-        '#include "taichi.h"',
+        '#include "gs_taichi.h"',
         "#endif // TAICHI_H",
         "",
         "#ifdef __cplusplus",

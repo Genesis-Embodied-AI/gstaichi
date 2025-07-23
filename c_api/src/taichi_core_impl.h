@@ -21,17 +21,17 @@
 #endif  // TI_WITH_OPENGL
 
 // Then Include all C-API symbols.
-#include "taichi/taichi.h"
+#include "gs_taichi/taichi.h"
 
 // Include for the base types.
-#include "taichi/rhi/arch.h"
+#include "gs_taichi/rhi/arch.h"
 #define TI_RUNTIME_HOST 1
-#include "taichi/program/context.h"
+#include "gs_taichi/program/context.h"
 #undef TI_RUNTIME_HOST
-#include "taichi/rhi/device.h"
-#include "taichi/aot/graph_data.h"
-#include "taichi/aot/module_loader.h"
-#include "taichi/common/virtual_dir.h"
+#include "gs_taichi/rhi/device.h"
+#include "gs_taichi/aot/graph_data.h"
+#include "gs_taichi/aot/module_loader.h"
+#include "gs_taichi/common/virtual_dir.h"
 
 #define TI_CAPI_NOT_SUPPORTED(x) ti_set_last_error(TI_ERROR_NOT_SUPPORTED, #x);
 #define TI_CAPI_NOT_SUPPORTED_IF(x)                \
@@ -67,12 +67,12 @@
   }
 
 #define TI_CAPI_INVALID_INTEROP_ARCH(x, arch)                    \
-  if (x != taichi::Arch::arch) {                                 \
+  if (x != gs_taichi::Arch::arch) {                                 \
     ti_set_last_error(TI_ERROR_INVALID_INTEROP, "arch!=" #arch); \
     return;                                                      \
   }
 #define TI_CAPI_INVALID_INTEROP_ARCH_RV(x, arch)                 \
-  if (x != taichi::Arch::arch) {                                 \
+  if (x != gs_taichi::Arch::arch) {                                 \
     ti_set_last_error(TI_ERROR_INVALID_INTEROP, "arch!=" #arch); \
     return TI_NULL_HANDLE;                                       \
   }
@@ -121,56 +121,56 @@ class Runtime {
   // 32 is a magic number in `taichi/inc/constants.h`.
   std::array<uint64_t, 32> host_result_buffer_;
 
-  explicit Runtime(taichi::Arch arch);
+  explicit Runtime(gs_taichi::Arch arch);
 
  public:
-  const taichi::Arch arch;
+  const gs_taichi::Arch arch;
 
   virtual ~Runtime();
 
-  virtual taichi::lang::Device &get() = 0;
+  virtual gs_taichi::lang::Device &get() = 0;
 
   [[deprecated("create_aot_module")]] virtual TiAotModule load_aot_module(
       const char *module_path) {
-    auto dir = taichi::io::VirtualDir::open(module_path);
+    auto dir = gs_taichi::io::VirtualDir::open(module_path);
     TiAotModule aot_module = TI_NULL_HANDLE;
     Error err = create_aot_module(dir.get(), aot_module);
     err.set_last_error();
     return aot_module;
   }
 
-  virtual Error create_aot_module(const taichi::io::VirtualDir *dir,
+  virtual Error create_aot_module(const gs_taichi::io::VirtualDir *dir,
                                   TiAotModule &out) {
     TI_NOT_IMPLEMENTED
   }
   virtual TiMemory allocate_memory(
-      const taichi::lang::Device::AllocParams &params);
+      const gs_taichi::lang::Device::AllocParams &params);
   virtual void free_memory(TiMemory devmem);
 
-  virtual TiImage allocate_image(const taichi::lang::ImageParams &params) {
+  virtual TiImage allocate_image(const gs_taichi::lang::ImageParams &params) {
     TI_NOT_IMPLEMENTED
   }
   virtual void free_image(TiImage image) {
     TI_NOT_IMPLEMENTED
   }
 
-  virtual void buffer_copy(const taichi::lang::DevicePtr &dst,
-                           const taichi::lang::DevicePtr &src,
+  virtual void buffer_copy(const gs_taichi::lang::DevicePtr &dst,
+                           const gs_taichi::lang::DevicePtr &src,
                            size_t size) = 0;
-  virtual void copy_image(const taichi::lang::DeviceAllocation &dst,
-                          const taichi::lang::DeviceAllocation &src,
-                          const taichi::lang::ImageCopyParams &params) {
+  virtual void copy_image(const gs_taichi::lang::DeviceAllocation &dst,
+                          const gs_taichi::lang::DeviceAllocation &src,
+                          const gs_taichi::lang::ImageCopyParams &params) {
     TI_NOT_IMPLEMENTED
   }
-  virtual void track_image(const taichi::lang::DeviceAllocation &image,
-                           taichi::lang::ImageLayout layout) {
+  virtual void track_image(const gs_taichi::lang::DeviceAllocation &image,
+                           gs_taichi::lang::ImageLayout layout) {
     TI_NOT_IMPLEMENTED
   }
-  virtual void untrack_image(const taichi::lang::DeviceAllocation &image) {
+  virtual void untrack_image(const gs_taichi::lang::DeviceAllocation &image) {
     TI_NOT_IMPLEMENTED
   }
-  virtual void transition_image(const taichi::lang::DeviceAllocation &image,
-                                taichi::lang::ImageLayout layout) {
+  virtual void transition_image(const gs_taichi::lang::DeviceAllocation &image,
+                                gs_taichi::lang::ImageLayout layout) {
     TI_NOT_IMPLEMENTED
   }
   virtual void flush() = 0;
@@ -182,18 +182,18 @@ class Runtime {
 
 class AotModule {
   Runtime *runtime_;
-  std::unique_ptr<taichi::lang::aot::Module> aot_module_;
+  std::unique_ptr<gs_taichi::lang::aot::Module> aot_module_;
   std::unordered_map<std::string,
-                     std::unique_ptr<taichi::lang::aot::CompiledGraph>>
+                     std::unique_ptr<gs_taichi::lang::aot::CompiledGraph>>
       loaded_cgraphs_;
 
  public:
   AotModule(Runtime &runtime,
-            std::unique_ptr<taichi::lang::aot::Module> aot_module);
+            std::unique_ptr<gs_taichi::lang::aot::Module> aot_module);
 
-  taichi::lang::aot::Kernel *get_kernel(const std::string &name);
-  taichi::lang::aot::CompiledGraph *get_cgraph(const std::string &name);
-  taichi::lang::aot::Module &get();
+  gs_taichi::lang::aot::Kernel *get_kernel(const std::string &name);
+  gs_taichi::lang::aot::CompiledGraph *get_cgraph(const std::string &name);
+  gs_taichi::lang::aot::Module &get();
   Runtime &runtime();
 };
 
@@ -201,19 +201,19 @@ namespace {
 
 template <typename THandle>
 struct devalloc_cast_t {
-  static inline taichi::lang::DeviceAllocation handle2devalloc(Runtime &runtime,
+  static inline gs_taichi::lang::DeviceAllocation handle2devalloc(Runtime &runtime,
                                                                THandle handle) {
-    return taichi::lang::DeviceAllocation{
-        &runtime.get(), (taichi::lang::DeviceAllocationId)((size_t)handle - 1)};
+    return gs_taichi::lang::DeviceAllocation{
+        &runtime.get(), (gs_taichi::lang::DeviceAllocationId)((size_t)handle - 1)};
   }
   static inline THandle devalloc2handle(
       Runtime &runtime,
-      taichi::lang::DeviceAllocation devalloc) {
+      gs_taichi::lang::DeviceAllocation devalloc) {
     return (THandle)((size_t)devalloc.alloc_id + 1);
   }
 };
 
-[[maybe_unused]] taichi::lang::DeviceAllocation devmem2devalloc(
+[[maybe_unused]] gs_taichi::lang::DeviceAllocation devmem2devalloc(
     Runtime &runtime,
     TiMemory devmem) {
   return devalloc_cast_t<TiMemory>::handle2devalloc(runtime, devmem);
@@ -221,11 +221,11 @@ struct devalloc_cast_t {
 
 [[maybe_unused]] TiMemory devalloc2devmem(
     Runtime &runtime,
-    const taichi::lang::DeviceAllocation &devalloc) {
+    const gs_taichi::lang::DeviceAllocation &devalloc) {
   return devalloc_cast_t<TiMemory>::devalloc2handle(runtime, devalloc);
 }
 
-[[maybe_unused]] taichi::lang::DeviceAllocation devimg2devalloc(
+[[maybe_unused]] gs_taichi::lang::DeviceAllocation devimg2devalloc(
     Runtime &runtime,
     TiImage devimg) {
   return devalloc_cast_t<TiImage>::handle2devalloc(runtime, devimg);
@@ -233,7 +233,7 @@ struct devalloc_cast_t {
 
 [[maybe_unused]] TiImage devalloc2devimg(
     Runtime &runtime,
-    const taichi::lang::DeviceAllocation &devalloc) {
+    const gs_taichi::lang::DeviceAllocation &devalloc) {
   return devalloc_cast_t<TiImage>::devalloc2handle(runtime, devalloc);
 }
 

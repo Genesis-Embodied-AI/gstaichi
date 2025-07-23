@@ -1,11 +1,11 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/frontend_ir.h"
-#include "taichi/program/program.h"
-#include "taichi/ir/expression_ops.h"
-#include "taichi/program/compile_config.h"
+#include "gs_taichi/ir/frontend_ir.h"
+#include "gs_taichi/program/program.h"
+#include "gs_taichi/ir/expression_ops.h"
+#include "gs_taichi/program/compile_config.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 
 TEST(FrontendTypeInference, Const) {
   auto const_i64 = value<int64>(1LL << 63);

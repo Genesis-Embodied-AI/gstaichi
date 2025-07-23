@@ -1,10 +1,10 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/ir.h"
-#include "taichi/ir/statements.h"
-#include "taichi/util/testing.h"
+#include "gs_taichi/ir/ir.h"
+#include "gs_taichi/ir/statements.h"
+#include "gs_taichi/util/testing.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 
 namespace {
 class TestStmt : public Stmt {

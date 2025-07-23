@@ -1,4 +1,4 @@
-import taichi as ti
+import gs_taichi as ti
 
 # TODO: make this a real benchmark and set up regression
 

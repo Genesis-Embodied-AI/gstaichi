@@ -2,9 +2,9 @@
 
 #include <memory>
 
-#include "taichi/program/program.h"
+#include "gs_taichi/program/program.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 
 class TestProgram {
  public:

@@ -6,7 +6,7 @@ from taichi.lang.ast.symbol_resolver import ASTResolver
 
 def test_ast_resolver_basic():
     # import within the function to avoid polluting the global scope
-    import taichi as ti
+    import gs_taichi as ti
 
     ti.init()
     node = ast.parse("ti.kernel", mode="eval").body
@@ -14,7 +14,7 @@ def test_ast_resolver_basic():
 
 
 def test_ast_resolver_direct_import():
-    import taichi as ti
+    import gs_taichi as ti
 
     ti.init()
     from taichi import kernel
@@ -24,20 +24,20 @@ def test_ast_resolver_direct_import():
 
 
 def test_ast_resolver_alias():
-    import taichi
+    import gs_taichi
 
     taichi.init()
     node = ast.parse("taichi.kernel", mode="eval").body
     assert ASTResolver.resolve_to(node, taichi.kernel, locals())
 
-    import taichi as tc
+    import gs_taichi as tc
 
     node = ast.parse("tc.kernel", mode="eval").body
     assert ASTResolver.resolve_to(node, tc.kernel, locals())
 
 
 def test_ast_resolver_chain():
-    import taichi as ti
+    import gs_taichi as ti
 
     ti.init()
     node = ast.parse("ti.lang.ops.atomic_add", mode="eval").body
@@ -45,7 +45,7 @@ def test_ast_resolver_chain():
 
 
 def test_ast_resolver_wrong_ti():
-    import taichi
+    import gs_taichi
 
     taichi.init()
     fake_ti = namedtuple("FakeTi", ["kernel"])

@@ -109,7 +109,7 @@ class CPPTestItem(pytest.Item):
         self.args = args
 
     def runtest(self):
-        import taichi as ti
+        import gs_taichi as ti
 
         ti_lib_dir = Path(ti.__path__[0]) / "_lib" / "runtime"
 

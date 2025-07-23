@@ -1,10 +1,10 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/transforms.h"
-#include "taichi/ir/analysis.h"
-#include "taichi/ir/statements.h"
+#include "gs_taichi/ir/transforms.h"
+#include "gs_taichi/ir/analysis.h"
+#include "gs_taichi/ir/statements.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 
 TEST(SameStatements, TestSameBlock) {
   auto block = std::make_unique<Block>();

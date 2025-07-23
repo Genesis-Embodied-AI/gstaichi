@@ -1,24 +1,24 @@
 #include "gtest/gtest.h"
 
-#include "taichi/program/kernel_profiler.h"
-#include "taichi/runtime/llvm/llvm_runtime_executor.h"
-#include "taichi/runtime/llvm/llvm_aot_module_loader.h"
-#include "taichi/runtime/cpu/kernel_launcher.h"
-#include "taichi/runtime/dx12/aot_module_loader_impl.h"
+#include "gs_taichi/program/kernel_profiler.h"
+#include "gs_taichi/runtime/llvm/llvm_runtime_executor.h"
+#include "gs_taichi/runtime/llvm/llvm_aot_module_loader.h"
+#include "gs_taichi/runtime/cpu/kernel_launcher.h"
+#include "gs_taichi/runtime/dx12/aot_module_loader_impl.h"
 
 #ifdef TI_WITH_CUDA
 
-#include "taichi/rhi/cuda/cuda_driver.h"
-#include "taichi/platform/cuda/detect_cuda.h"
-#include "taichi/runtime/cuda/kernel_launcher.h"
+#include "gs_taichi/rhi/cuda/cuda_driver.h"
+#include "gs_taichi/platform/cuda/detect_cuda.h"
+#include "gs_taichi/runtime/cuda/kernel_launcher.h"
 
 #endif
 
 #define TI_RUNTIME_HOST
-#include "taichi/program/context.h"
+#include "gs_taichi/program/context.h"
 #undef TI_RUNTIME_HOST
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 
 TEST(LlvmAotTest, CpuKernel) {
   CompileConfig cfg;

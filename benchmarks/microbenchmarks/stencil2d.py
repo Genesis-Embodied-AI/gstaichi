@@ -8,7 +8,7 @@ from microbenchmarks._utils import (
     size2tag,
 )
 
-import taichi as ti
+import gs_taichi as ti
 
 stencil_common = [(0, 0), (0, -1), (0, 1), (1, 0)]
 

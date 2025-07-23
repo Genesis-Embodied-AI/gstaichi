@@ -1,6 +1,6 @@
 from autograd import grad
 
-import taichi as ti
+import gs_taichi as ti
 from taichi._testing import approx
 
 

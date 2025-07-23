@@ -8,15 +8,15 @@
 #include "llvm/IR/Type.h"
 #include "llvm/IR/BasicBlock.h"
 
-#include "taichi/rhi/arch.h"
-#include "taichi/ir/snode.h"
-#include "taichi/codegen/llvm/llvm_codegen_utils.h"
-#include "taichi/program/compile_config.h"
-#include "taichi/program/program.h"
-#include "taichi/runtime/program_impls/llvm/llvm_program.h"
-#include "taichi/codegen/llvm/struct_llvm.h"
+#include "gs_taichi/rhi/arch.h"
+#include "gs_taichi/ir/snode.h"
+#include "gs_taichi/codegen/llvm/llvm_codegen_utils.h"
+#include "gs_taichi/program/compile_config.h"
+#include "gs_taichi/program/program.h"
+#include "gs_taichi/runtime/program_impls/llvm/llvm_program.h"
+#include "gs_taichi/codegen/llvm/struct_llvm.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 namespace {
 
 constexpr char kFuncName[] = "run_refine_coords";

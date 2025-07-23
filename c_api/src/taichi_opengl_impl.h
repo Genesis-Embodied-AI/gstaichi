@@ -2,8 +2,8 @@
 #ifdef TI_WITH_OPENGL
 
 #include "taichi_gfx_impl.h"
-#include "taichi/rhi/opengl/opengl_api.h"
-#include "taichi/rhi/opengl/opengl_device.h"
+#include "gs_taichi/rhi/opengl/opengl_api.h"
+#include "gs_taichi/rhi/opengl/opengl_device.h"
 
 class OpenglRuntime : public GfxRuntime {
  private:

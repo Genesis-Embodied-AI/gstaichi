@@ -40,8 +40,8 @@ jobs:
           set -x
           ls -lh dist/
           unzip dist/*.whl -d dist
-          mkdir -p stubs/taichi/_lib/core
-          cp dist/taichi/_lib/core/taichi_python.pyi stubs/taichi/_lib/core/
+          mkdir -p stubs/gs_taichi/_lib/core
+          cp dist/gs_taichi/_lib/core/taichi_python.pyi stubs/gs_taichi/_lib/core/
           touch stubs/taichi/_lib/core/py.typed
           pip install -e .
       - name: install torch and pyright

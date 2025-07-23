@@ -1,4 +1,4 @@
-import taichi as ti
+import gs_taichi as ti
 from taichi.types.enums import SNodeGradType
 from tests import test_utils
 

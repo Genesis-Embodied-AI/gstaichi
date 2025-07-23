@@ -3,9 +3,9 @@
 
 #include "taichi_core_impl.h"
 #include "taichi_gfx_impl.h"
-#include "taichi/rhi/vulkan/vulkan_loader.h"
-#include "taichi/rhi/vulkan/vulkan_device.h"
-#include "taichi/rhi/vulkan/vulkan_device_creator.h"
+#include "gs_taichi/rhi/vulkan/vulkan_loader.h"
+#include "gs_taichi/rhi/vulkan/vulkan_device.h"
+#include "gs_taichi/rhi/vulkan/vulkan_device_creator.h"
 
 class VulkanRuntime;
 class VulkanRuntimeImported;

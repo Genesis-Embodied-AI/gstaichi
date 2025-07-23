@@ -1,7 +1,7 @@
 import gc
 from dataclasses import dataclass
 
-import taichi as ti
+import gs_taichi as ti
 from tests import test_utils
 
 

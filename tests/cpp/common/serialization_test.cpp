@@ -3,10 +3,10 @@
 #include <vector>
 
 #include "gtest/gtest.h"
-#include "taichi/common/core.h"
-#include "taichi/ir/type_factory.h"
+#include "gs_taichi/common/core.h"
+#include "gs_taichi/ir/type_factory.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 namespace {
 
 class BinIoPair {

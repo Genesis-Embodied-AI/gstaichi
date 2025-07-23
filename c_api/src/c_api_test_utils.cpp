@@ -2,15 +2,15 @@
 #include "taichi_llvm_impl.h"
 
 #ifdef TI_WITH_CUDA
-#include "taichi/rhi/cuda/cuda_driver.h"
+#include "gs_taichi/rhi/cuda/cuda_driver.h"
 #endif
 
 #ifdef TI_WITH_VULKAN
-#include "taichi/rhi/vulkan/vulkan_loader.h"
+#include "gs_taichi/rhi/vulkan/vulkan_loader.h"
 #endif
 
 #ifdef TI_WITH_OPENGL
-#include "taichi/rhi/opengl/opengl_api.h"
+#include "gs_taichi/rhi/opengl/opengl_api.h"
 #endif
 
 namespace capi {
@@ -20,7 +20,7 @@ template <typename T>
 bool check_cuda_value_impl(void *ptr, T value) {
 #ifdef TI_WITH_CUDA
   T host_val;
-  taichi::lang::CUDADriver::get_instance().memcpy_device_to_host(&host_val, ptr,
+  gs_taichi::lang::CUDADriver::get_instance().memcpy_device_to_host(&host_val, ptr,
                                                                  sizeof(T));
   if (host_val == value)
     return true;
@@ -30,20 +30,20 @@ bool check_cuda_value_impl(void *ptr, T value) {
 
 void cuda_malloc(void **ptr, size_t size) {
 #ifdef TI_WITH_CUDA
-  taichi::lang::CUDADriver::get_instance().malloc(ptr, size);
+  gs_taichi::lang::CUDADriver::get_instance().malloc(ptr, size);
 #endif
 }
 
 void cuda_memcpy_host_to_device(void *ptr, void *data, size_t size) {
 #ifdef TI_WITH_CUDA
-  taichi::lang::CUDADriver::get_instance().memcpy_host_to_device(ptr, data,
+  gs_taichi::lang::CUDADriver::get_instance().memcpy_host_to_device(ptr, data,
                                                                  size);
 #endif
 }
 
 void cuda_memcpy_device_to_host(void *ptr, void *data, size_t size) {
 #ifdef TI_WITH_CUDA
-  taichi::lang::CUDADriver::get_instance().memcpy_device_to_host(ptr, data,
+  gs_taichi::lang::CUDADriver::get_instance().memcpy_device_to_host(ptr, data,
                                                                  size);
 #endif
 }

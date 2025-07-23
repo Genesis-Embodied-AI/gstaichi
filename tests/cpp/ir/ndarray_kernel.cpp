@@ -1,6 +1,6 @@
 #include "tests/cpp/ir/ndarray_kernel.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 
 std::unique_ptr<Kernel> setup_kernel1(Program *prog) {
   IRBuilder builder1;

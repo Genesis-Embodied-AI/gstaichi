@@ -1,4 +1,4 @@
-import taichi as myowntaichi
+import gs_taichi as myowntaichi
 from tests import test_utils
 
 

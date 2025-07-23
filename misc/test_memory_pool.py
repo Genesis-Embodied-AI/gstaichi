@@ -1,6 +1,6 @@
 # This file is not part of standard tests since it uses too much GPU memory
 
-import taichi as ti
+import gs_taichi as ti
 
 ti.init(arch=ti.cuda, debug=True)
 

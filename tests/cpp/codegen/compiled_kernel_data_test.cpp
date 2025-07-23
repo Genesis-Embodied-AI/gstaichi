@@ -1,9 +1,9 @@
 #include "gtest/gtest.h"
 
-#include "taichi/common/core.h"
-#include "taichi/codegen/compiled_kernel_data.h"
+#include "gs_taichi/common/core.h"
+#include "gs_taichi/codegen/compiled_kernel_data.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 namespace {
 
 static constexpr Arch kFakeArch = (Arch)1024;

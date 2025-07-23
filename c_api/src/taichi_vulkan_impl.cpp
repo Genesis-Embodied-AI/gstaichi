@@ -1,7 +1,7 @@
 #ifdef TI_WITH_VULKAN
 #include "taichi_vulkan_impl.h"
-#include "taichi/rhi/vulkan/vulkan_loader.h"
-#include "taichi/common/utils.h"
+#include "gs_taichi/rhi/vulkan/vulkan_loader.h"
+#include "gs_taichi/common/utils.h"
 
 #ifdef ANDROID
 #define VK_KHR_android_surface 1

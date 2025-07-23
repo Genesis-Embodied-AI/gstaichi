@@ -1,15 +1,15 @@
 #include <memory>
 
 #include "gtest/gtest.h"
-#include "taichi/analysis/arithmetic_interpretor.h"
-#include "taichi/ir/ir_builder.h"
-#include "taichi/ir/snode.h"
-#include "taichi/ir/statements.h"
-#include "taichi/ir/transforms.h"
-#include "taichi/struct/struct.h"
+#include "gs_taichi/analysis/arithmetic_interpretor.h"
+#include "gs_taichi/ir/ir_builder.h"
+#include "gs_taichi/ir/snode.h"
+#include "gs_taichi/ir/statements.h"
+#include "gs_taichi/ir/transforms.h"
+#include "gs_taichi/struct/struct.h"
 #include "tests/cpp/struct/fake_struct_compiler.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 namespace {
 
 class MakeBlockLocalTest : public ::testing::Test {

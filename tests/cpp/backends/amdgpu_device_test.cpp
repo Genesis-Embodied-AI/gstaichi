@@ -1,13 +1,13 @@
 #include "gtest/gtest.h"
 
 #ifdef TI_WITH_AMDGPU
-#include "taichi/ir/ir_builder.h"
-#include "taichi/rhi/amdgpu/amdgpu_driver.h"
-#include "taichi/rhi/amdgpu/amdgpu_context.h"
-#include "taichi/rhi/amdgpu/amdgpu_device.h"
-#include "taichi/runtime/amdgpu/jit_amdgpu.h"
-#include "taichi/runtime/llvm/llvm_context.h"
-#include "taichi/runtime/llvm/llvm_context_pass.h"
+#include "gs_taichi/ir/ir_builder.h"
+#include "gs_taichi/rhi/amdgpu/amdgpu_driver.h"
+#include "gs_taichi/rhi/amdgpu/amdgpu_context.h"
+#include "gs_taichi/rhi/amdgpu/amdgpu_device.h"
+#include "gs_taichi/runtime/amdgpu/jit_amdgpu.h"
+#include "gs_taichi/runtime/llvm/llvm_context.h"
+#include "gs_taichi/runtime/llvm/llvm_context_pass.h"
 
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/IRBuilder.h>

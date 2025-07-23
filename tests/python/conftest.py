@@ -8,7 +8,7 @@ import pytest
 # so we need to override it
 import pytest_rerunfailures
 
-import taichi as ti
+import gs_taichi as ti
 
 pytest_rerunfailures.works_with_current_xdist = lambda: True
 

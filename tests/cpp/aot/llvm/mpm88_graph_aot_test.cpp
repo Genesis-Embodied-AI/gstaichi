@@ -1,23 +1,23 @@
 #include "gtest/gtest.h"
 
-#include "taichi/program/kernel_profiler.h"
-#include "taichi/runtime/llvm/llvm_runtime_executor.h"
-#include "taichi/runtime/llvm/llvm_aot_module_loader.h"
-#include "taichi/runtime/cpu/kernel_launcher.h"
+#include "gs_taichi/program/kernel_profiler.h"
+#include "gs_taichi/runtime/llvm/llvm_runtime_executor.h"
+#include "gs_taichi/runtime/llvm/llvm_aot_module_loader.h"
+#include "gs_taichi/runtime/cpu/kernel_launcher.h"
 
 #ifdef TI_WITH_CUDA
 
-#include "taichi/rhi/cuda/cuda_driver.h"
-#include "taichi/platform/cuda/detect_cuda.h"
-#include "taichi/runtime/cuda/kernel_launcher.h"
+#include "gs_taichi/rhi/cuda/cuda_driver.h"
+#include "gs_taichi/platform/cuda/detect_cuda.h"
+#include "gs_taichi/runtime/cuda/kernel_launcher.h"
 
 #endif
 
 #define TI_RUNTIME_HOST
-#include "taichi/program/context.h"
+#include "gs_taichi/program/context.h"
 #undef TI_RUNTIME_HOST
 
-using namespace taichi;
+using namespace gs_taichi;
 using namespace lang;
 
 constexpr int NR_PARTICLES = 8192 * 5;
@@ -52,23 +52,23 @@ TEST(LlvmCGraph, Mpm88Cpu) {
   /* Prepare arguments */
   constexpr int kArrBytes_x = NR_PARTICLES * 2 * sizeof(float);
   auto devalloc_x = exec.allocate_memory_on_device(kArrBytes_x, result_buffer);
-  auto x = taichi::lang::Ndarray(devalloc_x, taichi::lang::PrimitiveType::f32,
+  auto x = gs_taichi::lang::Ndarray(devalloc_x, gs_taichi::lang::PrimitiveType::f32,
                                  {NR_PARTICLES}, {2});
 
   constexpr int kArrBytes_v = NR_PARTICLES * 2 * sizeof(float);
   auto devalloc_v = exec.allocate_memory_on_device(kArrBytes_v, result_buffer);
-  auto v = taichi::lang::Ndarray(devalloc_v, taichi::lang::PrimitiveType::f32,
+  auto v = gs_taichi::lang::Ndarray(devalloc_v, gs_taichi::lang::PrimitiveType::f32,
                                  {NR_PARTICLES}, {2});
 
   constexpr int kArrBytes_J = NR_PARTICLES * sizeof(float);
   auto devalloc_J = exec.allocate_memory_on_device(kArrBytes_J, result_buffer);
-  auto J = taichi::lang::Ndarray(devalloc_J, taichi::lang::PrimitiveType::f32,
+  auto J = gs_taichi::lang::Ndarray(devalloc_J, gs_taichi::lang::PrimitiveType::f32,
                                  {NR_PARTICLES});
 
-  std::unordered_map<std::string, taichi::lang::aot::IValue> args;
-  args.insert({"x", taichi::lang::aot::IValue::create(x)});
-  args.insert({"v", taichi::lang::aot::IValue::create(v)});
-  args.insert({"J", taichi::lang::aot::IValue::create(J)});
+  std::unordered_map<std::string, gs_taichi::lang::aot::IValue> args;
+  args.insert({"x", gs_taichi::lang::aot::IValue::create(x)});
+  args.insert({"v", gs_taichi::lang::aot::IValue::create(v)});
+  args.insert({"J", gs_taichi::lang::aot::IValue::create(J)});
 
   g_init->run(args);
   exec.synchronize();
@@ -79,30 +79,30 @@ TEST(LlvmCGraph, Mpm88Cpu) {
   constexpr int kArrBytes_grid_v = N_GRID * N_GRID * 2 * sizeof(float);
   auto devalloc_grid_v =
       exec.allocate_memory_on_device(kArrBytes_grid_v, result_buffer);
-  auto grid_v = taichi::lang::Ndarray(
-      devalloc_grid_v, taichi::lang::PrimitiveType::f32, {N_GRID, N_GRID}, {2});
+  auto grid_v = gs_taichi::lang::Ndarray(
+      devalloc_grid_v, gs_taichi::lang::PrimitiveType::f32, {N_GRID, N_GRID}, {2});
 
   constexpr int kArrBytes_grid_m = N_GRID * N_GRID * sizeof(float);
   auto devalloc_grid_m =
       exec.allocate_memory_on_device(kArrBytes_grid_m, result_buffer);
-  auto grid_m = taichi::lang::Ndarray(
-      devalloc_grid_m, taichi::lang::PrimitiveType::f32, {N_GRID, N_GRID});
+  auto grid_m = gs_taichi::lang::Ndarray(
+      devalloc_grid_m, gs_taichi::lang::PrimitiveType::f32, {N_GRID, N_GRID});
 
   constexpr int kArrBytes_pos = NR_PARTICLES * 3 * sizeof(float);
   auto devalloc_pos =
       exec.allocate_memory_on_device(kArrBytes_pos, result_buffer);
-  auto pos = taichi::lang::Ndarray(
-      devalloc_pos, taichi::lang::PrimitiveType::f32, {NR_PARTICLES}, {3});
+  auto pos = gs_taichi::lang::Ndarray(
+      devalloc_pos, gs_taichi::lang::PrimitiveType::f32, {NR_PARTICLES}, {3});
 
   constexpr int kArrBytes_C = NR_PARTICLES * sizeof(float) * 2 * 2;
   auto devalloc_C = exec.allocate_memory_on_device(kArrBytes_C, result_buffer);
-  auto C = taichi::lang::Ndarray(devalloc_C, taichi::lang::PrimitiveType::f32,
+  auto C = gs_taichi::lang::Ndarray(devalloc_C, gs_taichi::lang::PrimitiveType::f32,
                                  {NR_PARTICLES}, {2, 2});
 
-  args.insert({"C", taichi::lang::aot::IValue::create(C)});
-  args.insert({"grid_v", taichi::lang::aot::IValue::create(grid_v)});
-  args.insert({"grid_m", taichi::lang::aot::IValue::create(grid_m)});
-  args.insert({"pos", taichi::lang::aot::IValue::create(pos)});
+  args.insert({"C", gs_taichi::lang::aot::IValue::create(C)});
+  args.insert({"grid_v", gs_taichi::lang::aot::IValue::create(grid_v)});
+  args.insert({"grid_m", gs_taichi::lang::aot::IValue::create(grid_m)});
+  args.insert({"pos", gs_taichi::lang::aot::IValue::create(pos)});
 
   g_update->run(args);
   exec.synchronize();
@@ -138,25 +138,25 @@ TEST(LlvmCGraph, Mpm88Cuda) {
     constexpr int kArrBytes_x = NR_PARTICLES * 2 * sizeof(float);
     auto devalloc_x =
         exec.allocate_memory_on_device(kArrBytes_x, result_buffer);
-    auto x = taichi::lang::Ndarray(devalloc_x, taichi::lang::PrimitiveType::f32,
+    auto x = gs_taichi::lang::Ndarray(devalloc_x, gs_taichi::lang::PrimitiveType::f32,
                                    {NR_PARTICLES}, {2});
 
     constexpr int kArrBytes_v = NR_PARTICLES * 2 * sizeof(float);
     auto devalloc_v =
         exec.allocate_memory_on_device(kArrBytes_v, result_buffer);
-    auto v = taichi::lang::Ndarray(devalloc_v, taichi::lang::PrimitiveType::f32,
+    auto v = gs_taichi::lang::Ndarray(devalloc_v, gs_taichi::lang::PrimitiveType::f32,
                                    {NR_PARTICLES}, {2});
 
     constexpr int kArrBytes_J = NR_PARTICLES * sizeof(float);
     auto devalloc_J =
         exec.allocate_memory_on_device(kArrBytes_J, result_buffer);
-    auto J = taichi::lang::Ndarray(devalloc_J, taichi::lang::PrimitiveType::f32,
+    auto J = gs_taichi::lang::Ndarray(devalloc_J, gs_taichi::lang::PrimitiveType::f32,
                                    {NR_PARTICLES});
 
-    std::unordered_map<std::string, taichi::lang::aot::IValue> args;
-    args.insert({"x", taichi::lang::aot::IValue::create(x)});
-    args.insert({"v", taichi::lang::aot::IValue::create(v)});
-    args.insert({"J", taichi::lang::aot::IValue::create(J)});
+    std::unordered_map<std::string, gs_taichi::lang::aot::IValue> args;
+    args.insert({"x", gs_taichi::lang::aot::IValue::create(x)});
+    args.insert({"v", gs_taichi::lang::aot::IValue::create(v)});
+    args.insert({"J", gs_taichi::lang::aot::IValue::create(J)});
 
     g_init->run(args);
     exec.synchronize();
@@ -168,31 +168,31 @@ TEST(LlvmCGraph, Mpm88Cuda) {
     auto devalloc_grid_v =
         exec.allocate_memory_on_device(kArrBytes_grid_v, result_buffer);
     auto grid_v =
-        taichi::lang::Ndarray(devalloc_grid_v, taichi::lang::PrimitiveType::f32,
+        gs_taichi::lang::Ndarray(devalloc_grid_v, gs_taichi::lang::PrimitiveType::f32,
                               {N_GRID, N_GRID}, {2});
 
     constexpr int kArrBytes_grid_m = N_GRID * N_GRID * sizeof(float);
     auto devalloc_grid_m =
         exec.allocate_memory_on_device(kArrBytes_grid_m, result_buffer);
-    auto grid_m = taichi::lang::Ndarray(
-        devalloc_grid_m, taichi::lang::PrimitiveType::f32, {N_GRID, N_GRID});
+    auto grid_m = gs_taichi::lang::Ndarray(
+        devalloc_grid_m, gs_taichi::lang::PrimitiveType::f32, {N_GRID, N_GRID});
 
     constexpr int kArrBytes_pos = NR_PARTICLES * 3 * sizeof(float);
     auto devalloc_pos =
         exec.allocate_memory_on_device(kArrBytes_pos, result_buffer);
-    auto pos = taichi::lang::Ndarray(
-        devalloc_pos, taichi::lang::PrimitiveType::f32, {NR_PARTICLES}, {3});
+    auto pos = gs_taichi::lang::Ndarray(
+        devalloc_pos, gs_taichi::lang::PrimitiveType::f32, {NR_PARTICLES}, {3});
 
     constexpr int kArrBytes_C = NR_PARTICLES * sizeof(float) * 2 * 2;
     auto devalloc_C =
         exec.allocate_memory_on_device(kArrBytes_C, result_buffer);
-    auto C = taichi::lang::Ndarray(devalloc_C, taichi::lang::PrimitiveType::f32,
+    auto C = gs_taichi::lang::Ndarray(devalloc_C, gs_taichi::lang::PrimitiveType::f32,
                                    {NR_PARTICLES}, {2, 2});
 
-    args.insert({"C", taichi::lang::aot::IValue::create(C)});
-    args.insert({"grid_v", taichi::lang::aot::IValue::create(grid_v)});
-    args.insert({"grid_m", taichi::lang::aot::IValue::create(grid_m)});
-    args.insert({"pos", taichi::lang::aot::IValue::create(pos)});
+    args.insert({"C", gs_taichi::lang::aot::IValue::create(C)});
+    args.insert({"grid_v", gs_taichi::lang::aot::IValue::create(grid_v)});
+    args.insert({"grid_m", gs_taichi::lang::aot::IValue::create(grid_m)});
+    args.insert({"pos", gs_taichi::lang::aot::IValue::create(pos)});
 
     g_update->run(args);
     exec.synchronize();

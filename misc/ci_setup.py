@@ -122,7 +122,7 @@ def get_path_separator():
 
 
 def test_installation():
-    return subprocess.run([get_python_executable(), "-c", "import taichi as tc"]).returncode == 0
+    return subprocess.run([get_python_executable(), "-c", "import gs_taichi as tc"]).returncode == 0
 
 
 # (Stateful) Installer class

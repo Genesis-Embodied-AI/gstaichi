@@ -1,14 +1,14 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/ir_builder.h"
-#include "taichi/ir/statements.h"
+#include "gs_taichi/ir/ir_builder.h"
+#include "gs_taichi/ir/statements.h"
 #include "tests/cpp/program/test_program.h"
 #include "tests/cpp/ir/ndarray_kernel.h"
 #ifdef TI_WITH_VULKAN
-#include "taichi/rhi/vulkan/vulkan_loader.h"
+#include "gs_taichi/rhi/vulkan/vulkan_loader.h"
 #endif
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 
 TEST(IRBuilder, Basic) {
   IRBuilder builder;

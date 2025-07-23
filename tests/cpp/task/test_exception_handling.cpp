@@ -1,8 +1,8 @@
-#include "taichi/common/task.h"
-#include "taichi/ir/ir.h"
-#include "taichi/ir/statements.h"
+#include "gs_taichi/common/task.h"
+#include "gs_taichi/ir/ir.h"
+#include "gs_taichi/ir/statements.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 
 // Simulate the AST transforms on the Google Colab Ubuntu kernels to see why it
 // crashes

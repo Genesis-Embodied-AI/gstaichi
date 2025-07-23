@@ -3,4 +3,4 @@
 set -ex
 
 pip install dist/*.whl
-python -c 'import taichi as ti; ti.init(arch=ti.cpu); print(ti.__version__)'
+python -c 'import gs_taichi as ti; ti.init(arch=ti.cpu); print(ti.__version__)'

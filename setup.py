@@ -76,7 +76,7 @@ class EggInfo(egg_info):
 
 
 def copy_assets():
-    taichi_dir = os.path.join(package_dir, "taichi")
+    taichi_dir = os.path.join(package_dir, "gs_taichi")
     remove_tmp(taichi_dir)
 
     shutil.copytree("external/assets", os.path.join(taichi_dir, "assets"))
@@ -91,20 +91,20 @@ class Clean(clean):
         generated_folders = (
             "bin",
             "dist",
-            "python/taichi/assets",
-            "python/taichi/_lib/runtime",
-            "python/taichi/_lib/c_api",
-            "taichi.egg-info",
-            "python/taichi.egg-info",
+            "python/gs_taichi/assets",
+            "python/gs_taichi/_lib/runtime",
+            "python/gs_taichi/_lib/c_api",
+            "gs_taichi.egg-info",
+            "python/gs_taichi.egg-info",
             "build",
         )
         for d in generated_folders:
             if os.path.exists(d):
                 remove_tree(d, dry_run=self.dry_run)
-        generated_files = ["taichi/common/commit_hash.h", "taichi/common/version.h"]
-        generated_files += glob.glob("taichi/runtime/llvm/runtime_*.bc")
-        generated_files += glob.glob("python/taichi/_lib/core/*.so")
-        generated_files += glob.glob("python/taichi/_lib/core/*.pyd")
+        generated_files = ["gs_taichi/common/commit_hash.h", "taichi/common/version.h"]
+        generated_files += glob.glob("gs_taichi/runtime/llvm/runtime_*.bc")
+        generated_files += glob.glob("python/gs_taichi/_lib/core/*.so")
+        generated_files += glob.glob("python/gs_taichi/_lib/core/*.pyd")
         for f in generated_files:
             if os.path.exists(f):
                 print(f"removing generated file {f}")
@@ -140,14 +140,14 @@ def generate_pybind11_stubs(build_lib: str):
     # command that works:
     # PYTHONPATH=_skbuild/linux-x86_64-3.10/cmake-install/python pybind11-stubgen \
     #     taichi._lib.core.taichi_python --ignore-all-errors
-    cmd_line = ["pybind11-stubgen", "taichi._lib.core.taichi_python", "--ignore-all-errors"]
+    cmd_line = ["pybind11-stubgen", "gs_taichi._lib.core.taichi_python", "--ignore-all-errors"]
     print(" ".join(cmd_line))
     subprocess.check_call(cmd_line, env=env)
-    stub_filepath = pathlib.Path("stubs/taichi/_lib/core/taichi_python.pyi")
+    stub_filepath = pathlib.Path("stubs/gs_taichi/_lib/core/taichi_python.pyi")
     postprocess_stubs(stub_filepath)
 
-    target_filepath = build_lib_path / "taichi" / "_lib" / "core" / "taichi_python.pyi"
-    py_typed_dst = build_lib_path / "taichi" / "_lib" / "core" / "py.typed"
+    target_filepath = build_lib_path / "gs_taichi" / "_lib" / "core" / "taichi_python.pyi"
+    py_typed_dst = build_lib_path / "gs_taichi" / "_lib" / "core" / "py.typed"
     os.makedirs(os.path.dirname(target_filepath), exist_ok=True)
     print("copying ", stub_filepath, "to", target_filepath)
     shutil.copy(stub_filepath, target_filepath)
@@ -255,10 +255,10 @@ def sign_development_for_apple_m1():
     """
     if sys.platform == "darwin" and platform.machine() == "arm64":
         try:
-            for path in glob.glob("python/taichi/_lib/core/*.so"):
+            for path in glob.glob("gs_python/taichi/_lib/core/*.so"):
                 print(f"signing {path}..")
                 subprocess.check_call(["codesign", "--force", "--deep", "--sign", "-", path])
-            for path in glob.glob("python/taichi/_lib/c_api/lib/*.so"):
+            for path in glob.glob("gs_python/taichi/_lib/c_api/lib/*.so"):
                 print(f"signing {path}..")
                 subprocess.check_call(["codesign", "--force", "--deep", "--sign", "-", path])
         except:
@@ -278,10 +278,9 @@ setup(
     packages=packages,
     package_dir={"": package_dir},
     version=version,
-    description="The Taichi Programming Language",
-    author="Taichi developers",
-    author_email="yuanmhu@gmail.com",
-    url="https://github.com/taichi-dev/taichi",
+    description="GS Taichi Programming Language",
+    author="GS Taichi developers",
+    url="https://github.com/genesis-company/taichi",
     python_requires=">=3.10,<4.0",
     install_requires=[
         "numpy",
@@ -295,7 +294,7 @@ setup(
         (os.path.join("_lib", "runtime"), data_files),
     ],
     package_data={
-        "taichi._lib.core": ["taichi_python.pyi", "py.typed"],
+        "gs_taichi._lib.core": ["gs_taichi_python.pyi", "py.typed"],
     },
     keywords=["graphics", "simulation"],
     license="Apache Software License (http://www.apache.org/licenses/LICENSE-2.0)",

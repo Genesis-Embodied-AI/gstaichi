@@ -1,12 +1,12 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/analysis.h"
-#include "taichi/ir/ir_builder.h"
-#include "taichi/ir/statements.h"
-#include "taichi/ir/transforms.h"
-#include "taichi/program/program.h"
+#include "gs_taichi/ir/analysis.h"
+#include "gs_taichi/ir/ir_builder.h"
+#include "gs_taichi/ir/statements.h"
+#include "gs_taichi/ir/transforms.h"
+#include "gs_taichi/program/program.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 
 class ExtractConstantTest : public ::testing::Test {
  protected:

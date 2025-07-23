@@ -1,10 +1,10 @@
 #pragma once
-#include "taichi/ir/ir_builder.h"
-#include "taichi/ir/statements.h"
-#include "taichi/inc/constants.h"
-#include "taichi/program/program.h"
+#include "gs_taichi/ir/ir_builder.h"
+#include "gs_taichi/ir/statements.h"
+#include "gs_taichi/inc/constants.h"
+#include "gs_taichi/program/program.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 
 std::unique_ptr<Kernel> setup_kernel1(Program *prog);
 

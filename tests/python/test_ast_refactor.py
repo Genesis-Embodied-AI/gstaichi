@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-import taichi as ti
+import gs_taichi as ti
 from taichi.lang import impl
 from taichi.lang.util import has_pytorch
 from tests import test_utils
@@ -764,7 +764,7 @@ def test_recreate_variable():
 
 @test_utils.test()
 def test_taichi_other_than_ti():
-    import taichi as tc
+    import gs_taichi as tc
 
     @tc.func
     def bar(x: tc.template()):

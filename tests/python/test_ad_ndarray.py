@@ -1,6 +1,6 @@
 import pytest
 
-import taichi as ti
+import gs_taichi as ti
 from taichi.lang.exception import TaichiRuntimeError
 from taichi.lang.util import has_pytorch
 from tests import test_utils

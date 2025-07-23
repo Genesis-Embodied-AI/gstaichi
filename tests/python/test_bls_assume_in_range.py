@@ -1,4 +1,4 @@
-import taichi as ti
+import gs_taichi as ti
 from .bls_test_template import bls_particle_grid
 from tests import test_utils
 

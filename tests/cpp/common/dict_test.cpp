@@ -4,10 +4,10 @@
 *******************************************************************************/
 #include "gtest/gtest.h"
 
-#include "taichi/common/dict.h"
-#include "taichi/util/testing.h"
+#include "gs_taichi/common/dict.h"
+#include "gs_taichi/util/testing.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 
 TEST(Dict, Config) {
   Dict dict;

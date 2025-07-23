@@ -1,6 +1,6 @@
 import pytest
 
-import taichi as ti
+import gs_taichi as ti
 
 
 @pytest.mark.tryfirst

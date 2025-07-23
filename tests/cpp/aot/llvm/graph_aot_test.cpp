@@ -1,23 +1,23 @@
 #include "gtest/gtest.h"
 
-#include "taichi/program/kernel_profiler.h"
-#include "taichi/runtime/program_impls/llvm/llvm_program.h"
-#include "taichi/runtime/llvm/llvm_aot_module_loader.h"
-#include "taichi/runtime/cpu/kernel_launcher.h"
+#include "gs_taichi/program/kernel_profiler.h"
+#include "gs_taichi/runtime/program_impls/llvm/llvm_program.h"
+#include "gs_taichi/runtime/llvm/llvm_aot_module_loader.h"
+#include "gs_taichi/runtime/cpu/kernel_launcher.h"
 
 #ifdef TI_WITH_CUDA
 
-#include "taichi/rhi/cuda/cuda_driver.h"
-#include "taichi/platform/cuda/detect_cuda.h"
-#include "taichi/runtime/cuda/kernel_launcher.h"
+#include "gs_taichi/rhi/cuda/cuda_driver.h"
+#include "gs_taichi/platform/cuda/detect_cuda.h"
+#include "gs_taichi/runtime/cuda/kernel_launcher.h"
 
 #endif
 
 #define TI_RUNTIME_HOST
-#include "taichi/program/context.h"
+#include "gs_taichi/program/context.h"
 #undef TI_RUNTIME_HOST
 
-using namespace taichi;
+using namespace gs_taichi;
 using namespace lang;
 
 TEST(LlvmCGraph, RunGraphCpu) {
@@ -54,10 +54,10 @@ TEST(LlvmCGraph, RunGraphCpu) {
   // Prepare & Run "init" Graph
   auto run_graph = mod->get_graph("run_graph");
 
-  auto arr0 = taichi::lang::Ndarray(
-      devalloc_arr_0, taichi::lang::PrimitiveType::i32, {ArrLength});
-  auto arr1 = taichi::lang::Ndarray(
-      devalloc_arr_1, taichi::lang::PrimitiveType::i32, {ArrLength},
+  auto arr0 = gs_taichi::lang::Ndarray(
+      devalloc_arr_0, gs_taichi::lang::PrimitiveType::i32, {ArrLength});
+  auto arr1 = gs_taichi::lang::Ndarray(
+      devalloc_arr_1, gs_taichi::lang::PrimitiveType::i32, {ArrLength},
       {
           1,
       });
@@ -65,12 +65,12 @@ TEST(LlvmCGraph, RunGraphCpu) {
   int base0 = 10;
   int base1 = 20;
   int base2 = 30;
-  std::unordered_map<std::string, taichi::lang::aot::IValue> args;
-  args.insert({"arr0", taichi::lang::aot::IValue::create(arr0)});
-  args.insert({"arr1", taichi::lang::aot::IValue::create(arr1)});
-  args.insert({"base0", taichi::lang::aot::IValue::create(base0)});
-  args.insert({"base1", taichi::lang::aot::IValue::create(base1)});
-  args.insert({"base2", taichi::lang::aot::IValue::create(base2)});
+  std::unordered_map<std::string, gs_taichi::lang::aot::IValue> args;
+  args.insert({"arr0", gs_taichi::lang::aot::IValue::create(arr0)});
+  args.insert({"arr1", gs_taichi::lang::aot::IValue::create(arr1)});
+  args.insert({"base0", gs_taichi::lang::aot::IValue::create(base0)});
+  args.insert({"base1", gs_taichi::lang::aot::IValue::create(base1)});
+  args.insert({"base2", gs_taichi::lang::aot::IValue::create(base2)});
 
   run_graph->run(args);
   exec.synchronize();
@@ -124,21 +124,21 @@ TEST(LlvmCGraph, RunGraphCuda) {
     // Prepare & Run "init" Graph
     auto run_graph = mod->get_graph("run_graph");
 
-    auto arr0 = taichi::lang::Ndarray(
-        devalloc_arr_0, taichi::lang::PrimitiveType::i32, {ArrLength});
+    auto arr0 = gs_taichi::lang::Ndarray(
+        devalloc_arr_0, gs_taichi::lang::PrimitiveType::i32, {ArrLength});
 
-    auto arr1 = taichi::lang::Ndarray(
-        devalloc_arr_1, taichi::lang::PrimitiveType::i32, {ArrLength}, {1});
+    auto arr1 = gs_taichi::lang::Ndarray(
+        devalloc_arr_1, gs_taichi::lang::PrimitiveType::i32, {ArrLength}, {1});
 
     int base0 = 10;
     int base1 = 20;
     int base2 = 30;
-    std::unordered_map<std::string, taichi::lang::aot::IValue> args;
-    args.insert({"arr0", taichi::lang::aot::IValue::create(arr0)});
-    args.insert({"arr1", taichi::lang::aot::IValue::create(arr1)});
-    args.insert({"base0", taichi::lang::aot::IValue::create(base0)});
-    args.insert({"base1", taichi::lang::aot::IValue::create(base1)});
-    args.insert({"base2", taichi::lang::aot::IValue::create(base2)});
+    std::unordered_map<std::string, gs_taichi::lang::aot::IValue> args;
+    args.insert({"arr0", gs_taichi::lang::aot::IValue::create(arr0)});
+    args.insert({"arr1", gs_taichi::lang::aot::IValue::create(arr1)});
+    args.insert({"base0", gs_taichi::lang::aot::IValue::create(base0)});
+    args.insert({"base1", gs_taichi::lang::aot::IValue::create(base1)});
+    args.insert({"base2", gs_taichi::lang::aot::IValue::create(base2)});
 
     run_graph->run(args);
     exec.synchronize();

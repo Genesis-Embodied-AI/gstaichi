@@ -1,4 +1,4 @@
-import taichi as ti
+import gs_taichi as ti
 
 ti.init(ti.opengl, saturating_grid_dim=8)
 ti.set_logging_level(ti.DEBUG)

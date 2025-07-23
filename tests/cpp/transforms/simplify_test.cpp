@@ -1,10 +1,10 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/statements.h"
-#include "taichi/ir/transforms.h"
+#include "gs_taichi/ir/statements.h"
+#include "gs_taichi/ir/transforms.h"
 #include "tests/cpp/program/test_program.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 
 // Basic tests within a basic block
 

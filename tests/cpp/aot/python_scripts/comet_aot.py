@@ -2,7 +2,7 @@ import argparse
 import math
 import os
 
-import taichi as ti
+import gs_taichi as ti
 from taichi.lang.impl import grouped
 
 parser = argparse.ArgumentParser()

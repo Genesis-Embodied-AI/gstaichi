@@ -1,6 +1,6 @@
 import pytest
 
-import taichi as ti
+import gs_taichi as ti
 from tests import test_utils
 
 n = 128

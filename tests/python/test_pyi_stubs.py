@@ -7,7 +7,7 @@ from tests import test_utils
 @test_utils.test()
 def test_pyi_stubs(tmpdir):
     test_code = """
-import taichi._lib.core.taichi_python
+import gs_taichi._lib.core.taichi_python
 reveal_type(taichi._lib.core.taichi_python)
 """
     test_file = tmpdir / "tmp_mypy_test.py"

@@ -4,7 +4,7 @@ from microbenchmarks._items import AtomicOps, DataType
 from microbenchmarks._metric import MetricType
 from microbenchmarks._utils import get_ti_arch, tags2name
 
-import taichi as ti
+import gs_taichi as ti
 
 
 class Funcs:

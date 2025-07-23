@@ -1,6 +1,6 @@
 import numpy as np
 
-import taichi as ti
+import gs_taichi as ti
 from tests import test_utils
 
 

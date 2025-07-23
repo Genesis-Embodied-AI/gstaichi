@@ -1,7 +1,7 @@
 import argparse
 import os
 
-import taichi as ti
+import gs_taichi as ti
 
 
 def compile_kernel_return_aot(arch):

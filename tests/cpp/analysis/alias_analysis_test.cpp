@@ -3,12 +3,12 @@
 #include <vector>
 
 #include "gtest/gtest.h"
-#include "taichi/ir/analysis.h"
-#include "taichi/ir/ir_builder.h"
-#include "taichi/ir/snode.h"
-#include "taichi/ir/statements.h"
+#include "gs_taichi/ir/analysis.h"
+#include "gs_taichi/ir/ir_builder.h"
+#include "gs_taichi/ir/snode.h"
+#include "gs_taichi/ir/statements.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 namespace irpass {
 namespace analysis {
 namespace {

@@ -2,7 +2,7 @@ import math
 
 import pytest
 
-import taichi as ti
+import gs_taichi as ti
 from taichi.linalg import LinearOperator, MatrixFreeCG
 from tests import test_utils
 

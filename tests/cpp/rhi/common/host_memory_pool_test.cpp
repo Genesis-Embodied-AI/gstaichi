@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 
-#include "taichi/rhi/common/host_memory_pool.h"
+#include "gs_taichi/rhi/common/host_memory_pool.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 
 class HostMemoryPoolTestHelper {
  public:
