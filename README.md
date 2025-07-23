@@ -33,10 +33,6 @@ GS-Taichi supports automatic differentiation. GS-Taichi lets you build fully fus
 
 Genesis simulator's best-in-class performance can be largely attributed to Taichi, its underlying GPU acceleration framework for Python. Given how critical is this component, we decided to fork Taichi and build our own very framework from there, so that from now on, we are free to drive its development in the direction that best supports the continuous improvement of Genesis simulator.
 
-# Getting started
-
-- See [hello_world.md](docs/lang/articles/get-started/hello_world.md)
-
 # Documentation
 
 - [docs](docs/lang/articles)
