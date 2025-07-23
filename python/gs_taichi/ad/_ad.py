@@ -11,16 +11,16 @@ from functools import reduce
 
 import numpy as np
 
-import taichi.types.primitive_types as types
-from taichi import _snode
-from taichi.lang import impl
-from taichi.lang._ndarray import Ndarray
-from taichi.lang.expr import Expr
-from taichi.lang.field import Field, ScalarField
-from taichi.lang.kernel_impl import kernel
-from taichi.lang.snode import SNode
-from taichi.types import ndarray, template
-from taichi.types.enums import AutodiffMode, SNodeGradType
+import gs_taichi.types.primitive_types as types
+from gs_taichi import _snode
+from gs_taichi.lang import impl
+from gs_taichi.lang._ndarray import Ndarray
+from gs_taichi.lang.expr import Expr
+from gs_taichi.lang.field import Field, ScalarField
+from gs_taichi.lang.kernel_impl import kernel
+from gs_taichi.lang.snode import SNode
+from gs_taichi.types import ndarray, template
+from gs_taichi.types.enums import AutodiffMode, SNodeGradType
 
 
 class GradChecker:
@@ -293,7 +293,7 @@ def clear_all_gradients(gradient_type=SNodeGradType.ADJOINT):
 
         places = tuple(places)
         if places:
-            from taichi._kernels import clear_gradients  # pylint: disable=C0415
+            from gs_taichi._kernels import clear_gradients  # pylint: disable=C0415
 
             clear_gradients(places)
 

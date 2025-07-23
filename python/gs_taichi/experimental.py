@@ -2,7 +2,7 @@
 
 import warnings
 
-from taichi.lang.kernel_impl import real_func as _real_func
+from gs_taichi.lang.kernel_impl import real_func as _real_func
 
 
 def real_func(func):

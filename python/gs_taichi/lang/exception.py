@@ -1,6 +1,6 @@
 # type: ignore
 
-from taichi._lib import core
+from gs_taichi._lib import core
 
 
 class TaichiCompilationError(Exception):

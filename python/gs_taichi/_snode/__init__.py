@@ -1,5 +1,5 @@
 # type: ignore
 
-from taichi._snode.fields_builder import FieldsBuilder
+from gs_taichi._snode.fields_builder import FieldsBuilder
 
 __all__ = ["FieldsBuilder"]

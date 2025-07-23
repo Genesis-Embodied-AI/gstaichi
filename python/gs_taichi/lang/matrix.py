@@ -7,20 +7,20 @@ from itertools import product
 
 import numpy as np
 
-from taichi._lib import core as ti_python_core
-from taichi._lib.utils import ti_python_core as _ti_python_core
-from taichi.lang import expr, impl, runtime_ops
-from taichi.lang import ops as ops_mod
-from taichi.lang._ndarray import Ndarray, NdarrayHostAccess
-from taichi.lang.common_ops import TaichiOperations
-from taichi.lang.exception import (
+from gs_taichi._lib import core as ti_python_core
+from gs_taichi._lib.utils import ti_python_core as _ti_python_core
+from gs_taichi.lang import expr, impl, runtime_ops
+from gs_taichi.lang import ops as ops_mod
+from gs_taichi.lang._ndarray import Ndarray, NdarrayHostAccess
+from gs_taichi.lang.common_ops import TaichiOperations
+from gs_taichi.lang.exception import (
     TaichiRuntimeError,
     TaichiRuntimeTypeError,
     TaichiSyntaxError,
     TaichiTypeError,
 )
-from taichi.lang.field import Field, ScalarField, SNodeHostAccess
-from taichi.lang.util import (
+from gs_taichi.lang.field import Field, ScalarField, SNodeHostAccess
+from gs_taichi.lang.util import (
     cook_dtype,
     get_traceback,
     in_python_scope,
@@ -31,10 +31,10 @@ from taichi.lang.util import (
     to_pytorch_type,
     warning,
 )
-from taichi.types import primitive_types
-from taichi.types.compound_types import CompoundType
-from taichi.types.enums import Layout
-from taichi.types.utils import is_signed
+from gs_taichi.types import primitive_types
+from gs_taichi.types.compound_types import CompoundType
+from gs_taichi.types.enums import Layout
+from gs_taichi.types.utils import is_signed
 
 _type_factory = _ti_python_core.get_type_factory_instance()
 
@@ -308,7 +308,7 @@ class Matrix(TaichiOperations):
             The matrix-matrix product or matrix-vector product.
 
         """
-        from taichi.lang import matrix_ops  # pylint: disable=C0415
+        from gs_taichi.lang import matrix_ops  # pylint: disable=C0415
 
         return matrix_ops.matmul(self, other)
 
@@ -455,7 +455,7 @@ class Matrix(TaichiOperations):
             5
         """
         # pylint: disable-msg=C0415
-        from taichi.lang import matrix_ops
+        from gs_taichi.lang import matrix_ops
 
         return matrix_ops.trace(self)
 
@@ -471,7 +471,7 @@ class Matrix(TaichiOperations):
         Raises:
             Exception: Inversions of matrices with sizes >= 5 are not supported.
         """
-        from taichi.lang import matrix_ops  # pylint: disable=C0415
+        from gs_taichi.lang import matrix_ops  # pylint: disable=C0415
 
         return matrix_ops.inverse(self)
 
@@ -492,7 +492,7 @@ class Matrix(TaichiOperations):
             [0.6, 0.8]
         """
         # pylint: disable-msg=C0415
-        from taichi.lang import matrix_ops
+        from gs_taichi.lang import matrix_ops
 
         return matrix_ops.normalized(self, eps)
 
@@ -509,7 +509,7 @@ class Matrix(TaichiOperations):
             [[0, 2], [1, 3]]
         """
         # pylint: disable=C0415
-        from taichi.lang import matrix_ops
+        from gs_taichi.lang import matrix_ops
 
         return matrix_ops.transpose(self)
 
@@ -527,7 +527,7 @@ class Matrix(TaichiOperations):
             Exception: Determinants of matrices with sizes >= 5 are not supported.
         """
         # pylint: disable=C0415
-        from taichi.lang import matrix_ops
+        from gs_taichi.lang import matrix_ops
 
         return matrix_ops.determinant(a)
 
@@ -551,7 +551,7 @@ class Matrix(TaichiOperations):
              [0, 0, 1]]
         """
         # pylint: disable=C0415
-        from taichi.lang import matrix_ops
+        from gs_taichi.lang import matrix_ops
 
         return matrix_ops.diag(dim, val)
 
@@ -565,7 +565,7 @@ class Matrix(TaichiOperations):
             10
         """
         # pylint: disable=C0415
-        from taichi.lang import matrix_ops
+        from gs_taichi.lang import matrix_ops
 
         return matrix_ops.sum(self)
 
@@ -586,7 +586,7 @@ class Matrix(TaichiOperations):
             The square root of the sum of the absolute squares of its elements.
         """
         # pylint: disable=C0415
-        from taichi.lang import matrix_ops
+        from gs_taichi.lang import matrix_ops
 
         return matrix_ops.norm(self, eps=eps)
 
@@ -600,28 +600,28 @@ class Matrix(TaichiOperations):
             The inverse of the matrix/vector `norm`.
         """
         # pylint: disable=C0415
-        from taichi.lang import matrix_ops
+        from gs_taichi.lang import matrix_ops
 
         return matrix_ops.norm_inv(self, eps=eps)
 
     def norm_sqr(self):
         """Returns the sum of the absolute squares of its elements."""
         # pylint: disable=C0415
-        from taichi.lang import matrix_ops
+        from gs_taichi.lang import matrix_ops
 
         return matrix_ops.norm_sqr(self)
 
     def max(self):
         """Returns the maximum element value."""
         # pylint: disable=C0415
-        from taichi.lang import matrix_ops
+        from gs_taichi.lang import matrix_ops
 
         return matrix_ops.max(self)
 
     def min(self):
         """Returns the minimum element value."""
         # pylint: disable=C0415
-        from taichi.lang import matrix_ops
+        from gs_taichi.lang import matrix_ops
 
         return matrix_ops.min(self)
 
@@ -638,7 +638,7 @@ class Matrix(TaichiOperations):
             True
         """
         # pylint: disable=C0415
-        from taichi.lang import matrix_ops
+        from gs_taichi.lang import matrix_ops
 
         return matrix_ops.any(self)
 
@@ -655,7 +655,7 @@ class Matrix(TaichiOperations):
             False
         """
         # pylint: disable=C0415
-        from taichi.lang import matrix_ops
+        from gs_taichi.lang import matrix_ops
 
         return matrix_ops.all(self)
 
@@ -673,7 +673,7 @@ class Matrix(TaichiOperations):
             [-1, -1, -1, -1]
         """
         # pylint: disable=C0415
-        from taichi.lang import matrix_ops
+        from gs_taichi.lang import matrix_ops
 
         return matrix_ops.fill(self, val)
 
@@ -744,7 +744,7 @@ class Matrix(TaichiOperations):
             :class:`~taichi.lang.matrix.Matrix`: A :class:`~taichi.lang.matrix.Matrix` instance filled with zeros.
 
         """
-        from taichi.lang import matrix_ops  # pylint: disable=C0415
+        from gs_taichi.lang import matrix_ops  # pylint: disable=C0415
 
         if m is None:
             return matrix_ops._filled_vector(n, dt, 0)
@@ -764,7 +764,7 @@ class Matrix(TaichiOperations):
             :class:`~taichi.lang.matrix.Matrix`: A :class:`~taichi.lang.matrix.Matrix` instance filled with ones.
 
         """
-        from taichi.lang import matrix_ops  # pylint: disable=C0415
+        from gs_taichi.lang import matrix_ops  # pylint: disable=C0415
 
         if m is None:
             return matrix_ops._filled_vector(n, dt, 1)
@@ -790,7 +790,7 @@ class Matrix(TaichiOperations):
             >>> A
             [0, 1, 0]
         """
-        from taichi.lang import matrix_ops  # pylint: disable=C0415
+        from gs_taichi.lang import matrix_ops  # pylint: disable=C0415
 
         if dt is None:
             dt = int
@@ -809,7 +809,7 @@ class Matrix(TaichiOperations):
         Returns:
             :class:`~taichi.Matrix`: An `n x n` identity matrix.
         """
-        from taichi.lang import matrix_ops  # pylint: disable=C0415
+        from gs_taichi.lang import matrix_ops  # pylint: disable=C0415
 
         return matrix_ops._identity_matrix(n, dt)
 
@@ -992,7 +992,7 @@ class Matrix(TaichiOperations):
             >>> test()
             [[1, 2, 3], [4, 5, 6]]
         """
-        from taichi.lang import matrix_ops  # pylint: disable=C0415
+        from gs_taichi.lang import matrix_ops  # pylint: disable=C0415
 
         return matrix_ops.rows(rows)
 
@@ -1018,7 +1018,7 @@ class Matrix(TaichiOperations):
             >>> test()
             [[1, 4], [2, 5], [3, 6]]
         """
-        from taichi.lang import matrix_ops  # pylint: disable=C0415
+        from gs_taichi.lang import matrix_ops  # pylint: disable=C0415
 
         return matrix_ops.cols(cols)
 
@@ -1046,7 +1046,7 @@ class Matrix(TaichiOperations):
             >>> v1.dot(v2)
             26
         """
-        from taichi.lang import matrix_ops  # pylint: disable=C0415
+        from gs_taichi.lang import matrix_ops  # pylint: disable=C0415
 
         return matrix_ops.dot(self, other)
 
@@ -1067,7 +1067,7 @@ class Matrix(TaichiOperations):
         Returns:
             :class:`~taichi.Matrix`: The cross product of the two Vectors.
         """
-        from taichi.lang import matrix_ops  # pylint: disable=C0415
+        from gs_taichi.lang import matrix_ops  # pylint: disable=C0415
 
         return matrix_ops.cross(self, other)
 
@@ -1084,7 +1084,7 @@ class Matrix(TaichiOperations):
         Returns:
             :class:`~taichi.Matrix`: The outer product of the two Vectors.
         """
-        from taichi.lang import matrix_ops  # pylint: disable=C0415
+        from gs_taichi.lang import matrix_ops  # pylint: disable=C0415
 
         return matrix_ops.outer_product(self, other)
 
@@ -1241,11 +1241,11 @@ class MatrixField(Field):
             if self.ndim != 1:
                 assert len(val[0]) == self.m
         if in_python_scope():
-            from taichi._kernels import field_fill_python_scope  # pylint: disable=C0415
+            from gs_taichi._kernels import field_fill_python_scope  # pylint: disable=C0415
 
             field_fill_python_scope(self, val)
         else:
-            from taichi._funcs import field_fill_taichi_scope  # pylint: disable=C0415
+            from gs_taichi._funcs import field_fill_taichi_scope  # pylint: disable=C0415
 
             field_fill_taichi_scope(self, val)
 
@@ -1268,7 +1268,7 @@ class MatrixField(Field):
         as_vector = self.m == 1 and not keep_dims
         shape_ext = (self.n,) if as_vector else (self.n, self.m)
         arr = np.zeros(self.shape + shape_ext, dtype=dtype)
-        from taichi._kernels import matrix_to_ext_arr  # pylint: disable=C0415
+        from gs_taichi._kernels import matrix_to_ext_arr  # pylint: disable=C0415
 
         matrix_to_ext_arr(self, arr, as_vector)
         runtime_ops.sync()
@@ -1291,7 +1291,7 @@ class MatrixField(Field):
         shape_ext = (self.n,) if as_vector else (self.n, self.m)
         # pylint: disable=E1101
         arr = torch.empty(self.shape + shape_ext, dtype=to_pytorch_type(self.dtype), device=device)
-        from taichi._kernels import matrix_to_ext_arr  # pylint: disable=C0415
+        from gs_taichi._kernels import matrix_to_ext_arr  # pylint: disable=C0415
 
         matrix_to_ext_arr(self, arr, as_vector)
         runtime_ops.sync()
@@ -1318,7 +1318,7 @@ class MatrixField(Field):
             paddle.empty(self.shape + shape_ext, to_paddle_type(self.dtype)),
             place=place,
         )
-        from taichi._kernels import matrix_to_ext_arr  # pylint: disable=C0415
+        from gs_taichi._kernels import matrix_to_ext_arr  # pylint: disable=C0415
 
         matrix_to_ext_arr(self, arr, as_vector)
         runtime_ops.sync()
@@ -1334,7 +1334,7 @@ class MatrixField(Field):
             assert len(arr.shape) == len(self.shape) + 2
         dim_ext = 1 if as_vector else 2
         assert len(arr.shape) == len(self.shape) + dim_ext
-        from taichi._kernels import ext_arr_to_matrix  # pylint: disable=C0415
+        from gs_taichi._kernels import ext_arr_to_matrix  # pylint: disable=C0415
 
         ext_arr_to_matrix(arr, self, as_vector)
         runtime_ops.sync()
@@ -1744,7 +1744,7 @@ class MatrixNdarray(Ndarray):
 
     @python_scope
     def _fill_by_kernel(self, val):
-        from taichi._kernels import fill_ndarray_matrix  # pylint: disable=C0415
+        from gs_taichi._kernels import fill_ndarray_matrix  # pylint: disable=C0415
 
         shape = self.element_type.shape()
         n = shape[0]
@@ -1858,7 +1858,7 @@ class VectorNdarray(Ndarray):
 
     @python_scope
     def _fill_by_kernel(self, val):
-        from taichi._kernels import fill_ndarray_matrix  # pylint: disable=C0415
+        from gs_taichi._kernels import fill_ndarray_matrix  # pylint: disable=C0415
 
         shape = self.element_type.shape()
         prim_dtype = self.element_type.element_type()

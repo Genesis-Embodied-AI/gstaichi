@@ -9,8 +9,8 @@ from textwrap import TextWrapper
 from typing import TYPE_CHECKING, Any, List
 
 from taichi._lib.core.taichi_python import ASTBuilder
-from taichi.lang import impl
-from taichi.lang.exception import (
+from gs_taichi.lang import impl
+from gs_taichi.lang.exception import (
     TaichiCompilationError,
     TaichiNameError,
     TaichiSyntaxError,
@@ -18,7 +18,7 @@ from taichi.lang.exception import (
 )
 
 if TYPE_CHECKING:
-    from taichi.lang.kernel_impl import (
+    from gs_taichi.lang.kernel_impl import (
         Func,
         Kernel,
     )
@@ -265,7 +265,7 @@ class ASTTransformerContext:
                 return s[name]
         if name in self.global_vars:
             var = self.global_vars[name]
-            from taichi.lang.matrix import (  # pylint: disable-msg=C0415
+            from gs_taichi.lang.matrix import (  # pylint: disable-msg=C0415
                 Matrix,
                 make_matrix,
             )

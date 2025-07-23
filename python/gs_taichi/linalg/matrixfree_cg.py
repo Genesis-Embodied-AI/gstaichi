@@ -2,11 +2,11 @@
 
 from math import sqrt
 
-from taichi.lang import misc
-from taichi.lang.exception import TaichiRuntimeError, TaichiTypeError
-from taichi.lang.impl import FieldsBuilder, field, grouped
-from taichi.lang.kernel_impl import data_oriented, kernel
-from taichi.types import primitive_types, template
+from gs_taichi.lang import misc
+from gs_taichi.lang.exception import TaichiRuntimeError, TaichiTypeError
+from gs_taichi.lang.impl import FieldsBuilder, field, grouped
+from gs_taichi.lang.kernel_impl import data_oriented, kernel
+from gs_taichi.types import primitive_types, template
 
 
 @data_oriented

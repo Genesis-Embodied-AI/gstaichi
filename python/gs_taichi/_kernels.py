@@ -1,21 +1,21 @@
 # type: ignore
 
-from taichi._funcs import field_fill_taichi_scope
-from taichi._lib.utils import get_os_name
-from taichi.lang import ops
-from taichi.lang._ndrange import ndrange
-from taichi.lang.expr import Expr
-from taichi.lang.field import ScalarField
-from taichi.lang.impl import grouped, static, static_assert
-from taichi.lang.kernel_impl import func, kernel
-from taichi.lang.misc import loop_config
-from taichi.lang.simt import block, warp
-from taichi.lang.snode import deactivate
-from taichi.math import vec3
-from taichi.types import ndarray_type, texture_type, vector
-from taichi.types.annotations import template
-from taichi.types.enums import Format
-from taichi.types.primitive_types import f16, f32, f64, i32, u8
+from gs_taichi._funcs import field_fill_taichi_scope
+from gs_taichi._lib.utils import get_os_name
+from gs_taichi.lang import ops
+from gs_taichi.lang._ndrange import ndrange
+from gs_taichi.lang.expr import Expr
+from gs_taichi.lang.field import ScalarField
+from gs_taichi.lang.impl import grouped, static, static_assert
+from gs_taichi.lang.kernel_impl import func, kernel
+from gs_taichi.lang.misc import loop_config
+from gs_taichi.lang.simt import block, warp
+from gs_taichi.lang.snode import deactivate
+from gs_taichi.math import vec3
+from gs_taichi.types import ndarray_type, texture_type, vector
+from gs_taichi.types.annotations import template
+from gs_taichi.types.enums import Format
+from gs_taichi.types.primitive_types import f16, f32, f64, i32, u8
 
 
 # A set of helper (meta)functions

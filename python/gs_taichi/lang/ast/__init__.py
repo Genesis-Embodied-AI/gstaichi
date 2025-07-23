@@ -1,5 +1,5 @@
 # type: ignore
 
-from taichi.lang.ast.ast_transformer_utils import ASTTransformerContext
-from taichi.lang.ast.checkers import KernelSimplicityASTChecker
-from taichi.lang.ast.transform import transform_tree
+from gs_taichi.lang.ast.ast_transformer_utils import ASTTransformerContext
+from gs_taichi.lang.ast.checkers import KernelSimplicityASTChecker
+from gs_taichi.lang.ast.transform import transform_tree

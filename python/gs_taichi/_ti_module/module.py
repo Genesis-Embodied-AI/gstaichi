@@ -5,14 +5,14 @@ import runpy
 from pathlib import Path
 from typing import List
 
-import taichi
-from taichi._ti_module.cppgen import generate_header
-from taichi.aot._export import _aot_kernels
-from taichi.aot.conventions.gfxruntime140 import GfxRuntime140
-from taichi.aot.module import Module
-from taichi.types.ndarray_type import NdarrayType
-from taichi.types.primitive_types import integer_type_ids, real_type_ids
-from taichi.types.texture_type import RWTextureType, TextureType
+import gs_taichi
+from gs_taichi._ti_module.cppgen import generate_header
+from gs_taichi.aot._export import _aot_kernels
+from gs_taichi.aot.conventions.gfxruntime140 import GfxRuntime140
+from gs_taichi.aot.module import Module
+from gs_taichi.types.ndarray_type import NdarrayType
+from gs_taichi.types.primitive_types import integer_type_ids, real_type_ids
+from gs_taichi.types.texture_type import RWTextureType, TextureType
 
 
 def module_cppgen(parser: argparse.ArgumentParser):
@@ -112,11 +112,11 @@ def module_build_impl(a):
                 elif isinstance(v, NdarrayType):
                     if v.ndim is None or v.ndim <= 0:
                         raise ValueError("Ndarray template type must specify a non-zero dimension.")
-                    value = taichi.ndarray(v.dtype, (1,) * v.ndim)
+                    value = gs_taichi.ndarray(v.dtype, (1,) * v.ndim)
                 elif isinstance(v, TextureType):
-                    value = taichi.Texture(taichi.Format.rgba8, (4,) * v.num_dimensions)
+                    value = gs_taichi.Texture(gs_taichi.Format.rgba8, (4,) * v.num_dimensions)
                 elif isinstance(v, RWTextureType):
-                    value = taichi.Texture(v.fmt, (4,) * v.num_dimensions)
+                    value = gs_taichi.Texture(v.fmt, (4,) * v.num_dimensions)
                 else:
                     raise ValueError(f"Unsupported template type: {type(v)}")
                 template_args[k] = value

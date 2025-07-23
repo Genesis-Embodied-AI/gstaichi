@@ -2,24 +2,24 @@
 
 import numpy as np
 
-import taichi.lang
-from taichi._lib import core as _ti_core
-from taichi.lang import impl, ops
-from taichi.lang.exception import (
+import gs_taichi.lang
+from gs_taichi._lib import core as _ti_core
+from gs_taichi.lang import impl, ops
+from gs_taichi.lang.exception import (
     TaichiRuntimeTypeError,
     TaichiSyntaxError,
 )
-from taichi.lang.matrix import Matrix, MatrixType
-from taichi.lang.struct import Struct, StructType
-from taichi.lang.util import cook_dtype, in_python_scope, python_scope
-from taichi.types import (
+from gs_taichi.lang.matrix import Matrix, MatrixType
+from gs_taichi.lang.struct import Struct, StructType
+from gs_taichi.lang.util import cook_dtype, in_python_scope, python_scope
+from gs_taichi.types import (
     ndarray_type,
     primitive_types,
     sparse_matrix_builder,
     texture_type,
 )
-from taichi.types.compound_types import CompoundType
-from taichi.types.utils import is_signed
+from gs_taichi.types.compound_types import CompoundType
+from gs_taichi.types.utils import is_signed
 
 
 class ArgPack:
@@ -215,11 +215,11 @@ class ArgPack:
                     self.__argpack.set_arg_uint((index,), int(v))
             elif isinstance(needed, sparse_matrix_builder):
                 pass
-            elif isinstance(needed, ndarray_type.NdarrayType) and isinstance(v, taichi.lang._ndarray.Ndarray):
+            elif isinstance(needed, ndarray_type.NdarrayType) and isinstance(v, gs_taichi.lang._ndarray.Ndarray):
                 pass
-            elif isinstance(needed, texture_type.TextureType) and isinstance(v, taichi.lang._texture.Texture):
+            elif isinstance(needed, texture_type.TextureType) and isinstance(v, gs_taichi.lang._texture.Texture):
                 pass
-            elif isinstance(needed, texture_type.RWTextureType) and isinstance(v, taichi.lang._texture.Texture):
+            elif isinstance(needed, texture_type.RWTextureType) and isinstance(v, gs_taichi.lang._texture.Texture):
                 pass
             elif isinstance(needed, ndarray_type.NdarrayType):
                 pass

@@ -1,6 +1,6 @@
 # type: ignore
 
-from taichi._lib import core as ti_python_core
+from gs_taichi._lib import core as ti_python_core
 
 # ========================================
 # real types

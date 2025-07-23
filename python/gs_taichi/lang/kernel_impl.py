@@ -20,26 +20,26 @@ from typing import Any, Callable, Type, Union
 
 import numpy as np
 
-import taichi.lang
-import taichi.lang._ndarray
-import taichi.lang._texture
-import taichi.lang.expr
-import taichi.lang.snode
-import taichi.types.annotations
-from taichi import _logging
-from taichi._lib import core as _ti_core
+import gs_taichi.lang
+import gs_taichi.lang._ndarray
+import gs_taichi.lang._texture
+import gs_taichi.lang.expr
+import gs_taichi.lang.snode
+import gs_taichi.types.annotations
+from gs_taichi import _logging
+from gs_taichi._lib import core as _ti_core
 from taichi._lib.core.taichi_python import ASTBuilder
-from taichi.lang import impl, ops, runtime_ops
-from taichi.lang._wrap_inspect import getsourcefile, getsourcelines
-from taichi.lang.any_array import AnyArray
-from taichi.lang.argpack import ArgPack, ArgPackType
-from taichi.lang.ast import (
+from gs_taichi.lang import impl, ops, runtime_ops
+from gs_taichi.lang._wrap_inspect import getsourcefile, getsourcelines
+from gs_taichi.lang.any_array import AnyArray
+from gs_taichi.lang.argpack import ArgPack, ArgPackType
+from gs_taichi.lang.ast import (
     ASTTransformerContext,
     KernelSimplicityASTChecker,
     transform_tree,
 )
-from taichi.lang.ast.ast_transformer_utils import ReturnStatus
-from taichi.lang.exception import (
+from gs_taichi.lang.ast.ast_transformer_utils import ReturnStatus
+from gs_taichi.lang.exception import (
     TaichiCompilationError,
     TaichiRuntimeError,
     TaichiRuntimeTypeError,
@@ -47,22 +47,22 @@ from taichi.lang.exception import (
     TaichiTypeError,
     handle_exception_from_cpp,
 )
-from taichi.lang.expr import Expr
-from taichi.lang.kernel_arguments import KernelArgument
-from taichi.lang.matrix import MatrixType
-from taichi.lang.shell import _shell_pop_print
-from taichi.lang.struct import StructType
-from taichi.lang.util import cook_dtype, has_paddle, has_pytorch, to_taichi_type
-from taichi.types import (
+from gs_taichi.lang.expr import Expr
+from gs_taichi.lang.kernel_arguments import KernelArgument
+from gs_taichi.lang.matrix import MatrixType
+from gs_taichi.lang.shell import _shell_pop_print
+from gs_taichi.lang.struct import StructType
+from gs_taichi.lang.util import cook_dtype, has_paddle, has_pytorch, to_taichi_type
+from gs_taichi.types import (
     ndarray_type,
     primitive_types,
     sparse_matrix_builder,
     template,
     texture_type,
 )
-from taichi.types.compound_types import CompoundType
-from taichi.types.enums import AutodiffMode, Layout
-from taichi.types.utils import is_signed
+from gs_taichi.types.compound_types import CompoundType
+from gs_taichi.types.enums import AutodiffMode, Layout
+from gs_taichi.types.utils import is_signed
 
 
 def func(fn: Callable, is_real_function: bool = False):
@@ -434,9 +434,9 @@ class Func:
                     pass
                 elif id(annotation) in primitive_types.type_ids:
                     pass
-                elif type(annotation) == taichi.types.annotations.Template:
+                elif type(annotation) == gs_taichi.types.annotations.Template:
                     pass
-                elif isinstance(annotation, template) or annotation == taichi.types.annotations.Template:
+                elif isinstance(annotation, template) or annotation == gs_taichi.types.annotations.Template:
                     pass
                 elif isinstance(annotation, primitive_types.RefType):
                     pass
@@ -480,15 +480,15 @@ class TaichiCallableTemplateMapper:
     @staticmethod
     def extract_arg(arg, annotation: AnnotationType, arg_name: str):
         if annotation == template or isinstance(annotation, template):
-            if isinstance(arg, taichi.lang.snode.SNode):
+            if isinstance(arg, gs_taichi.lang.snode.SNode):
                 return arg.ptr
-            if isinstance(arg, taichi.lang.expr.Expr):
+            if isinstance(arg, gs_taichi.lang.expr.Expr):
                 return arg.ptr.get_underlying_ptr_address()
             if isinstance(arg, _ti_core.Expr):
                 return arg.get_underlying_ptr_address()
             if isinstance(arg, tuple):
                 return tuple(TaichiCallableTemplateMapper.extract_arg(item, annotation, arg_name) for item in arg)
-            if isinstance(arg, taichi.lang._ndarray.Ndarray):
+            if isinstance(arg, gs_taichi.lang._ndarray.Ndarray):
                 raise TaichiRuntimeTypeError(
                     "Ndarray shouldn't be passed in via `ti.template()`, please annotate your kernel using `ti.types.ndarray(...)` instead"
                 )
@@ -522,7 +522,7 @@ class TaichiCallableTemplateMapper:
                 _res_l.append(field_extracted)
             return tuple(_res_l)
         if isinstance(annotation, texture_type.TextureType):
-            if not isinstance(arg, taichi.lang._texture.Texture):
+            if not isinstance(arg, gs_taichi.lang._texture.Texture):
                 raise TaichiRuntimeTypeError(f"Argument {arg_name} must be a texture, got {type(arg)}")
             if arg.num_dims != annotation.num_dimensions:
                 raise TaichiRuntimeTypeError(
@@ -530,7 +530,7 @@ class TaichiCallableTemplateMapper:
                 )
             return (arg.num_dims,)
         if isinstance(annotation, texture_type.RWTextureType):
-            if not isinstance(arg, taichi.lang._texture.Texture):
+            if not isinstance(arg, gs_taichi.lang._texture.Texture):
                 raise TaichiRuntimeTypeError(f"Argument {arg_name} must be a texture, got {type(arg)}")
             if arg.num_dims != annotation.num_dimensions:
                 raise TaichiRuntimeTypeError(
@@ -544,7 +544,7 @@ class TaichiCallableTemplateMapper:
             # support mip-mapping.
             return arg.num_dims, arg.fmt, 0
         if isinstance(annotation, ndarray_type.NdarrayType):
-            if isinstance(arg, taichi.lang._ndarray.Ndarray):
+            if isinstance(arg, gs_taichi.lang._ndarray.Ndarray):
                 annotation.check_matched(arg.get_type(), arg_name)
                 needs_grad = (arg.grad is not None) if annotation.needs_grad is None else annotation.needs_grad
                 assert arg.shape is not None
@@ -1062,19 +1062,19 @@ class Kernel:
                     field_value = getattr(v, field.name)
                     recursive_set_args(field.type, field.type, field_value, (indices[0] + j,))
                 return len(dataclasses.fields(needed_arg_type))
-            if isinstance(needed_arg_type, ndarray_type.NdarrayType) and isinstance(v, taichi.lang._ndarray.Ndarray):
+            if isinstance(needed_arg_type, ndarray_type.NdarrayType) and isinstance(v, gs_taichi.lang._ndarray.Ndarray):
                 if in_argpack:
                     set_later_list.append((set_arg_ndarray, (v,)))
                     return 0
                 set_arg_ndarray(indices, v)
                 return 1
-            if isinstance(needed_arg_type, texture_type.TextureType) and isinstance(v, taichi.lang._texture.Texture):
+            if isinstance(needed_arg_type, texture_type.TextureType) and isinstance(v, gs_taichi.lang._texture.Texture):
                 if in_argpack:
                     set_later_list.append((set_arg_texture, (v,)))
                     return 0
                 set_arg_texture(indices, v)
                 return 1
-            if isinstance(needed_arg_type, texture_type.RWTextureType) and isinstance(v, taichi.lang._texture.Texture):
+            if isinstance(needed_arg_type, texture_type.RWTextureType) and isinstance(v, gs_taichi.lang._texture.Texture):
                 if in_argpack:
                     set_later_list.append((set_arg_rw_texture, (v,)))
                     return 0

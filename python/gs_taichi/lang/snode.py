@@ -2,13 +2,13 @@
 
 import numbers
 
-from taichi._lib import core as _ti_core
+from gs_taichi._lib import core as _ti_core
 from taichi._lib.core.taichi_python import Axis
 from taichi._lib.core.taichi_python import SNode as SNodeCxx
-from taichi.lang import expr, impl, matrix
-from taichi.lang.exception import TaichiRuntimeError
-from taichi.lang.field import BitpackedFields, Field
-from taichi.lang.util import get_traceback
+from gs_taichi.lang import expr, impl, matrix
+from gs_taichi.lang.exception import TaichiRuntimeError
+from gs_taichi.lang.field import BitpackedFields, Field
+from gs_taichi.lang.util import get_traceback
 
 
 class SNode:
@@ -294,14 +294,14 @@ class SNode:
             c.deactivate_all()
         SNodeType = _ti_core.SNodeType
         if self.ptr.type == SNodeType.pointer or self.ptr.type == SNodeType.bitmasked:
-            from taichi._kernels import snode_deactivate  # pylint: disable=C0415
+            from gs_taichi._kernels import snode_deactivate  # pylint: disable=C0415
 
             snode_deactivate(self)
         if self.ptr.type == SNodeType.dynamic:
             # Note that dynamic nodes are different from other sparse nodes:
             # instead of deactivating each element, we only need to deactivate
             # its parent, whose linked list of chunks of elements will be deleted.
-            from taichi._kernels import (  # pylint: disable=C0415
+            from gs_taichi._kernels import (  # pylint: disable=C0415
                 snode_deactivate_dynamic,
             )
 
@@ -357,7 +357,7 @@ def rescale_index(a, b, I):
         ), "The third argument must be an index (list, ti.Vector, or Expr with TensorType)"
         n = I.n
 
-    from taichi.lang.kernel_impl import pyfunc  # pylint: disable=C0415
+    from gs_taichi.lang.kernel_impl import pyfunc  # pylint: disable=C0415
 
     @pyfunc
     def _rescale_index():

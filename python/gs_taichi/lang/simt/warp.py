@@ -1,6 +1,6 @@
 # type: ignore
 
-from taichi.lang import impl
+from gs_taichi.lang import impl
 
 
 def all_nonzero(mask, predicate):

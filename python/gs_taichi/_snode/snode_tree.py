@@ -5,8 +5,8 @@
 # loaded during the import procedure, it's probably still good to delay the
 # access to it.
 
-from taichi.lang import impl
-from taichi.lang.exception import TaichiRuntimeError
+from gs_taichi.lang import impl
+from gs_taichi.lang.exception import TaichiRuntimeError
 
 
 class SNodeTree:

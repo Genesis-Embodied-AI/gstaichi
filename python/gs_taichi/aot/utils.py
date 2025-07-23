@@ -2,21 +2,21 @@
 
 from typing import Any
 
-from taichi.lang._ndarray import ScalarNdarray
-from taichi.lang._texture import Texture
-from taichi.lang.exception import TaichiCompilationError
-from taichi.lang.matrix import (
+from gs_taichi.lang._ndarray import ScalarNdarray
+from gs_taichi.lang._texture import Texture
+from gs_taichi.lang.exception import TaichiCompilationError
+from gs_taichi.lang.matrix import (
     Matrix,
     MatrixNdarray,
     MatrixType,
     VectorNdarray,
     VectorType,
 )
-from taichi.lang.util import cook_dtype
-from taichi.types.annotations import template
-from taichi.types.enums import Format
-from taichi.types.ndarray_type import NdarrayType
-from taichi.types.texture_type import RWTextureType, TextureType
+from gs_taichi.lang.util import cook_dtype
+from gs_taichi.types.annotations import template
+from gs_taichi.types.enums import Format
+from gs_taichi.types.ndarray_type import NdarrayType
+from gs_taichi.types.texture_type import RWTextureType, TextureType
 
 template_types = (NdarrayType, TextureType, template)
 

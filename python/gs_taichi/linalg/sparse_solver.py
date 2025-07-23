@@ -2,14 +2,14 @@
 
 import numpy as np
 
-import taichi.lang
-from taichi._lib import core as _ti_core
-from taichi.lang._ndarray import Ndarray, ScalarNdarray
-from taichi.lang.exception import TaichiRuntimeError
-from taichi.lang.field import Field
-from taichi.lang.impl import get_runtime
-from taichi.linalg.sparse_matrix import SparseMatrix
-from taichi.types.primitive_types import f32
+import gs_taichi.lang
+from gs_taichi._lib import core as _ti_core
+from gs_taichi.lang._ndarray import Ndarray, ScalarNdarray
+from gs_taichi.lang.exception import TaichiRuntimeError
+from gs_taichi.lang.field import Field
+from gs_taichi.lang.impl import get_runtime
+from gs_taichi.linalg.sparse_matrix import SparseMatrix
+from gs_taichi.types.primitive_types import f32
 
 
 class SparseSolver:
@@ -28,7 +28,7 @@ class SparseSolver:
         solver_type_list = ["LLT", "LDLT", "LU"]
         solver_ordering = ["AMD", "COLAMD"]
         if solver_type in solver_type_list and ordering in solver_ordering:
-            taichi_arch = taichi.lang.impl.get_runtime().prog.config().arch
+            taichi_arch = gs_taichi.lang.impl.get_runtime().prog.config().arch
             assert (
                 taichi_arch == _ti_core.Arch.x64
                 or taichi_arch == _ti_core.Arch.arm64
@@ -57,7 +57,7 @@ class SparseSolver:
         """
         if isinstance(sparse_matrix, SparseMatrix):
             self.matrix = sparse_matrix
-            taichi_arch = taichi.lang.impl.get_runtime().prog.config().arch
+            taichi_arch = gs_taichi.lang.impl.get_runtime().prog.config().arch
             if taichi_arch == _ti_core.Arch.x64 or taichi_arch == _ti_core.Arch.arm64:
                 self.solver.compute(sparse_matrix.matrix)
             elif taichi_arch == _ti_core.Arch.cuda:

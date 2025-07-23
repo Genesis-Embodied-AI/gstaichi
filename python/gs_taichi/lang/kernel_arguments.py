@@ -2,17 +2,17 @@
 
 import inspect
 
-import taichi.lang
-from taichi._lib import core as _ti_core
-from taichi.lang import impl, ops
-from taichi.lang._texture import RWTextureAccessor, TextureSampler
-from taichi.lang.any_array import AnyArray
-from taichi.lang.expr import Expr
-from taichi.lang.matrix import MatrixType
-from taichi.lang.struct import StructType
-from taichi.lang.util import cook_dtype
-from taichi.types.compound_types import CompoundType
-from taichi.types.primitive_types import RefType, u64
+import gs_taichi.lang
+from gs_taichi._lib import core as _ti_core
+from gs_taichi.lang import impl, ops
+from gs_taichi.lang._texture import RWTextureAccessor, TextureSampler
+from gs_taichi.lang.any_array import AnyArray
+from gs_taichi.lang.expr import Expr
+from gs_taichi.lang.matrix import MatrixType
+from gs_taichi.lang.struct import StructType
+from gs_taichi.lang.util import cook_dtype
+from gs_taichi.types.compound_types import CompoundType
+from gs_taichi.types.primitive_types import RefType, u64
 
 
 class KernelArgument:
@@ -32,9 +32,9 @@ class SparseMatrixEntry:
     def _augassign(self, value, op):
         call_func = f"insert_triplet_{self.dtype}"
         if op == "Add":
-            taichi.lang.impl.call_internal(call_func, self.ptr, self.i, self.j, ops.cast(value, self.dtype))
+            gs_taichi.lang.impl.call_internal(call_func, self.ptr, self.i, self.j, ops.cast(value, self.dtype))
         elif op == "Sub":
-            taichi.lang.impl.call_internal(call_func, self.ptr, self.i, self.j, -ops.cast(value, self.dtype))
+            gs_taichi.lang.impl.call_internal(call_func, self.ptr, self.i, self.j, -ops.cast(value, self.dtype))
         else:
             assert False, "Only operations '+=' and '-=' are supported on sparse matrices."
 

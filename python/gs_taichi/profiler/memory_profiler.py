@@ -1,6 +1,6 @@
 # type: ignore
 
-from taichi.lang.impl import get_runtime
+from gs_taichi.lang.impl import get_runtime
 
 
 def print_memory_profiler_info():

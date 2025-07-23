@@ -5,7 +5,7 @@ import zipfile
 from pathlib import Path
 from typing import Any, List
 
-from taichi.aot.conventions.gfxruntime140 import dr, sr
+from gs_taichi.aot.conventions.gfxruntime140 import dr, sr
 
 
 class GfxRuntime140:

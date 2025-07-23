@@ -1,10 +1,10 @@
 # type: ignore
 
-import taichi.lang.ops as ops_mod
-from taichi.lang.impl import static
-from taichi.lang.kernel_impl import func, pyfunc
-from taichi.lang.matrix import Matrix, Vector
-from taichi.lang.matrix_ops_utils import (
+import gs_taichi.lang.ops as ops_mod
+from gs_taichi.lang.impl import static
+from gs_taichi.lang.kernel_impl import func, pyfunc
+from gs_taichi.lang.matrix import Matrix, Vector
+from gs_taichi.lang.matrix_ops_utils import (
     arg_at,
     arg_foreach_check,
     assert_list,
@@ -18,7 +18,7 @@ from taichi.lang.matrix_ops_utils import (
     same_shapes,
     square_matrix,
 )
-from taichi.types.annotations import template
+from gs_taichi.types.annotations import template
 
 
 @preconditions(arg_at(0, assert_tensor))

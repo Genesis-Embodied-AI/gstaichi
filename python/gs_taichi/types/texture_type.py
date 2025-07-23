@@ -1,8 +1,8 @@
 # type: ignore
 
-from taichi.lang.exception import TaichiCompilationError
-from taichi.types.enums import Format
-from taichi.types.primitive_types import f16, f32, i8, i16, i32, u8, u16, u32
+from gs_taichi.lang.exception import TaichiCompilationError
+from gs_taichi.types.enums import Format
+from gs_taichi.types.primitive_types import f16, f32, i8, i16, i32, u8, u16, u32
 
 FORMAT2TY_CH = {
     Format.r8: (u8, 1),

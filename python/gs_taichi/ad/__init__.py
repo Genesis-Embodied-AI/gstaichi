@@ -1,3 +1,3 @@
 # type: ignore
 
-from taichi.ad._ad import *
+from gs_taichi.ad._ad import *

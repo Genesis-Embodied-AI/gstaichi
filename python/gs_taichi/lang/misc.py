@@ -8,13 +8,13 @@ import tempfile
 import warnings
 from copy import deepcopy as _deepcopy
 
-from taichi import _logging, _snode, _version_check
-from taichi._lib import core as _ti_core
-from taichi.lang import impl
-from taichi.lang.expr import Expr
-from taichi.lang.impl import axes, get_runtime
-from taichi.profiler.kernel_profiler import get_default_kernel_profiler
-from taichi.types.primitive_types import f32, f64, i32, i64
+from gs_taichi import _logging, _snode, _version_check
+from gs_taichi._lib import core as _ti_core
+from gs_taichi.lang import impl
+from gs_taichi.lang.expr import Expr
+from gs_taichi.lang.impl import axes, get_runtime
+from gs_taichi.profiler.kernel_profiler import get_default_kernel_profiler
+from gs_taichi.types.primitive_types import f32, f64, i32, i64
 
 warnings.filterwarnings("once", category=DeprecationWarning, module="taichi")
 

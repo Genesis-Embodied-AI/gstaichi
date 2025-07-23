@@ -7,7 +7,7 @@ convention.
 
 from typing import Any, Dict, List, Optional
 
-from taichi.aot.utils import dump_json_data_model, json_data_model
+from gs_taichi.aot.utils import dump_json_data_model, json_data_model
 
 
 @json_data_model

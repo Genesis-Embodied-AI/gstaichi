@@ -1,7 +1,7 @@
 # type: ignore
 
-import taichi
-from taichi._lib.utils import ti_python_core as _ti_python_core
+import gs_taichi
+from gs_taichi._lib.utils import ti_python_core as _ti_python_core
 
 _type_factory = _ti_python_core.get_type_factory_instance()
 
@@ -28,7 +28,7 @@ def matrix(n=None, m=None, dtype=None):
         >>> mat2x2 = ti.types.matrix(2, 2, ti.f32)  # 2x2 matrix type
         >>> M = mat2x2([[1., 2.], [3., 4.]])  # an instance of this type
     """
-    return taichi.lang.matrix.MatrixType(n, m, 2, dtype)
+    return gs_taichi.lang.matrix.MatrixType(n, m, 2, dtype)
 
 
 def vector(n=None, dtype=None):
@@ -46,7 +46,7 @@ def vector(n=None, dtype=None):
         >>> vec3 = ti.types.vector(3, ti.f32)  # 3d vector type
         >>> v = vec3([1., 2., 3.])  # an instance of this type
     """
-    return taichi.lang.matrix.VectorType(n, dtype)
+    return gs_taichi.lang.matrix.VectorType(n, dtype)
 
 
 def struct(**kwargs):
@@ -65,7 +65,7 @@ def struct(**kwargs):
         >>> sphere = ti.types.struct(center=vec3, radius=float)
         >>> s = sphere(center=vec3([0., 0., 0.]), radius=1.0)
     """
-    return taichi.lang.struct.StructType(**kwargs)
+    return gs_taichi.lang.struct.StructType(**kwargs)
 
 
 def argpack(**kwargs):
@@ -84,7 +84,7 @@ def argpack(**kwargs):
         >>> sphere = ti.types.argpack(center=vec3, radius=float)
         >>> s = sphere(center=vec3([0., 0., 0.]), radius=1.0)
     """
-    return taichi.lang.argpack.ArgPackType(**kwargs)
+    return gs_taichi.lang.argpack.ArgPackType(**kwargs)
 
 
 __all__ = ["matrix", "vector", "struct", "argpack"]

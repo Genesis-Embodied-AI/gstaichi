@@ -8,7 +8,7 @@ import threading
 import uuid
 from urllib import request
 
-from taichi._lib import core as _ti_core
+from gs_taichi._lib import core as _ti_core
 
 
 def check_version(cur_uuid):

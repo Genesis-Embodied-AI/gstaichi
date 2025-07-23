@@ -6,28 +6,28 @@ from typing import Any, Iterable, Sequence
 
 import numpy as np
 
-from taichi._lib import core as _ti_core
+from gs_taichi._lib import core as _ti_core
 from taichi._lib.core.taichi_python import (
     DataType,
     Function,
     Program,
 )
-from taichi._snode.fields_builder import FieldsBuilder
-from taichi.lang._ndarray import ScalarNdarray
-from taichi.lang._ndrange import GroupedNDRange, _Ndrange
-from taichi.lang._texture import RWTextureAccessor
-from taichi.lang.any_array import AnyArray
-from taichi.lang.exception import (
+from gs_taichi._snode.fields_builder import FieldsBuilder
+from gs_taichi.lang._ndarray import ScalarNdarray
+from gs_taichi.lang._ndrange import GroupedNDRange, _Ndrange
+from gs_taichi.lang._texture import RWTextureAccessor
+from gs_taichi.lang.any_array import AnyArray
+from gs_taichi.lang.exception import (
     TaichiCompilationError,
     TaichiRuntimeError,
     TaichiSyntaxError,
     TaichiTypeError,
 )
-from taichi.lang.expr import Expr, make_expr_group
-from taichi.lang.field import Field, ScalarField
-from taichi.lang.kernel_arguments import SparseMatrixProxy
-from taichi.lang.kernel_impl import Kernel
-from taichi.lang.matrix import (
+from gs_taichi.lang.expr import Expr, make_expr_group
+from gs_taichi.lang.field import Field, ScalarField
+from gs_taichi.lang.kernel_arguments import SparseMatrixProxy
+from gs_taichi.lang.kernel_impl import Kernel
+from gs_taichi.lang.matrix import (
     Matrix,
     MatrixField,
     MatrixNdarray,
@@ -36,7 +36,7 @@ from taichi.lang.matrix import (
     VectorNdarray,
     make_matrix,
 )
-from taichi.lang.mesh import (
+from gs_taichi.lang.mesh import (
     ConvType,
     MeshElementFieldProxy,
     MeshInstance,
@@ -45,10 +45,10 @@ from taichi.lang.mesh import (
     MeshReorderedScalarFieldProxy,
     element_type_name,
 )
-from taichi.lang.simt.block import SharedArray
-from taichi.lang.snode import SNode
-from taichi.lang.struct import Struct, StructField, _IntermediateStruct
-from taichi.lang.util import (
+from gs_taichi.lang.simt.block import SharedArray
+from gs_taichi.lang.snode import SNode
+from gs_taichi.lang.struct import Struct, StructField, _IntermediateStruct
+from gs_taichi.lang.util import (
     cook_dtype,
     get_traceback,
     is_taichi_class,
@@ -56,8 +56,8 @@ from taichi.lang.util import (
     taichi_scope,
     warning,
 )
-from taichi.types.enums import SNodeGradType
-from taichi.types.primitive_types import (
+from gs_taichi.types.enums import SNodeGradType
+from gs_taichi.types.primitive_types import (
     all_types,
     f16,
     f32,

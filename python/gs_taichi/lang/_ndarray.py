@@ -2,14 +2,14 @@
 
 import numpy as np
 
-from taichi._lib import core as _ti_core
-from taichi.lang import impl
-from taichi.lang.exception import TaichiIndexError
-from taichi.lang.util import cook_dtype, get_traceback, python_scope, to_numpy_type
-from taichi.types import primitive_types
-from taichi.types.enums import Layout
-from taichi.types.ndarray_type import NdarrayTypeMetadata
-from taichi.types.utils import is_real, is_signed
+from gs_taichi._lib import core as _ti_core
+from gs_taichi.lang import impl
+from gs_taichi.lang.exception import TaichiIndexError
+from gs_taichi.lang.util import cook_dtype, get_traceback, python_scope, to_numpy_type
+from gs_taichi.types import primitive_types
+from gs_taichi.types.enums import Layout
+from gs_taichi.types.ndarray_type import NdarrayTypeMetadata
+from gs_taichi.types.utils import is_real, is_signed
 
 
 class Ndarray:
@@ -91,7 +91,7 @@ class Ndarray:
             numpy.ndarray: The result numpy array.
         """
         arr = np.zeros(shape=self.arr.total_shape(), dtype=to_numpy_type(self.dtype))
-        from taichi._kernels import ndarray_to_ext_arr  # pylint: disable=C0415
+        from gs_taichi._kernels import ndarray_to_ext_arr  # pylint: disable=C0415
 
         ndarray_to_ext_arr(self, arr)
         impl.get_runtime().sync()
@@ -105,7 +105,7 @@ class Ndarray:
             numpy.ndarray: The result numpy array.
         """
         arr = np.zeros(shape=self.arr.total_shape(), dtype=to_numpy_type(self.dtype))
-        from taichi._kernels import ndarray_matrix_to_ext_arr  # pylint: disable=C0415
+        from gs_taichi._kernels import ndarray_matrix_to_ext_arr  # pylint: disable=C0415
 
         layout_is_aos = 1
         ndarray_matrix_to_ext_arr(self, arr, layout_is_aos, as_vector)
@@ -126,7 +126,7 @@ class Ndarray:
         if not arr.flags.c_contiguous:
             arr = np.ascontiguousarray(arr)
 
-        from taichi._kernels import ext_arr_to_ndarray  # pylint: disable=C0415
+        from gs_taichi._kernels import ext_arr_to_ndarray  # pylint: disable=C0415
 
         ext_arr_to_ndarray(arr, self)
         impl.get_runtime().sync()
@@ -147,7 +147,7 @@ class Ndarray:
         if not arr.flags.c_contiguous:
             arr = np.ascontiguousarray(arr)
 
-        from taichi._kernels import ext_arr_to_ndarray_matrix  # pylint: disable=C0415
+        from gs_taichi._kernels import ext_arr_to_ndarray_matrix  # pylint: disable=C0415
 
         layout_is_aos = 1
         ext_arr_to_ndarray_matrix(arr, self, layout_is_aos, as_vector)
@@ -182,7 +182,7 @@ class Ndarray:
         """
         assert isinstance(other, Ndarray)
         assert tuple(self.arr.shape) == tuple(other.arr.shape)
-        from taichi._kernels import ndarray_to_ndarray  # pylint: disable=C0415
+        from gs_taichi._kernels import ndarray_to_ndarray  # pylint: disable=C0415
 
         ndarray_to_ndarray(self, other)
         impl.get_runtime().sync()
@@ -283,7 +283,7 @@ class ScalarNdarray(Ndarray):
         return ret_arr
 
     def _fill_by_kernel(self, val):
-        from taichi._kernels import fill_ndarray  # pylint: disable=C0415
+        from gs_taichi._kernels import fill_ndarray  # pylint: disable=C0415
 
         fill_ndarray(self, val)
 

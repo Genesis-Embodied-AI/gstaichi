@@ -2,9 +2,9 @@
 
 import functools
 
-from taichi.lang.exception import TaichiCompilationError
-from taichi.lang.expr import Expr
-from taichi.lang.matrix import Matrix
+from gs_taichi.lang.exception import TaichiCompilationError
+from gs_taichi.lang.expr import Expr
+from gs_taichi.lang.matrix import Matrix
 
 
 def do_check(checker_fns, *args, **kwargs):

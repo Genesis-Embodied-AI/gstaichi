@@ -2,12 +2,12 @@
 
 import math
 
-from taichi.lang import impl, ops
-from taichi.lang.impl import get_runtime, grouped, static
-from taichi.lang.kernel_impl import func
-from taichi.lang.matrix import Matrix, Vector
-from taichi.types import f32, f64
-from taichi.types.annotations import template
+from gs_taichi.lang import impl, ops
+from gs_taichi.lang.impl import get_runtime, grouped, static
+from gs_taichi.lang.kernel_impl import func
+from gs_taichi.lang.matrix import Matrix, Vector
+from gs_taichi.types import f32, f64
+from gs_taichi.types.annotations import template
 
 
 @func

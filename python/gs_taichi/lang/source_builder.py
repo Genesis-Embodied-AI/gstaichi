@@ -7,11 +7,11 @@ import shutil
 import subprocess
 import tempfile
 
-from taichi._lib import core as _ti_core
-from taichi.lang import impl
-from taichi.lang.exception import TaichiSyntaxError
-from taichi.lang.expr import make_expr_group
-from taichi.lang.util import get_clangpp
+from gs_taichi._lib import core as _ti_core
+from gs_taichi.lang import impl
+from gs_taichi.lang.exception import TaichiSyntaxError
+from gs_taichi.lang.expr import make_expr_group
+from gs_taichi.lang.util import get_clangpp
 
 
 class SourceBuilder:

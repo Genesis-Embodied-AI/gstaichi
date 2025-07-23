@@ -5,11 +5,11 @@ from typing import Iterable
 
 import numpy as np
 
-from taichi.lang import ops
-from taichi.lang.exception import TaichiSyntaxError, TaichiTypeError
-from taichi.lang.expr import Expr
-from taichi.lang.matrix import Matrix
-from taichi.types.utils import is_integral
+from gs_taichi.lang import ops
+from gs_taichi.lang.exception import TaichiSyntaxError, TaichiTypeError
+from gs_taichi.lang.expr import Expr
+from gs_taichi.lang.matrix import Matrix
+from gs_taichi.types.utils import is_integral
 
 
 class _Ndrange:

@@ -2,17 +2,17 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from taichi._lib import core as _ti_core
-from taichi.lang import impl
-from taichi.lang.common_ops import TaichiOperations
-from taichi.lang.exception import TaichiCompilationError, TaichiTypeError
-from taichi.lang.matrix import make_matrix
-from taichi.lang.util import is_matrix_class, is_taichi_class, to_numpy_type
-from taichi.types import primitive_types
-from taichi.types.primitive_types import integer_types, real_types
+from gs_taichi._lib import core as _ti_core
+from gs_taichi.lang import impl
+from gs_taichi.lang.common_ops import TaichiOperations
+from gs_taichi.lang.exception import TaichiCompilationError, TaichiTypeError
+from gs_taichi.lang.matrix import make_matrix
+from gs_taichi.lang.util import is_matrix_class, is_taichi_class, to_numpy_type
+from gs_taichi.types import primitive_types
+from gs_taichi.types.primitive_types import integer_types, real_types
 
 if TYPE_CHECKING:
-    from taichi.lang.ast.ast_transformer_utils import ASTBuilder
+    from gs_taichi.lang.ast.ast_transformer_utils import ASTBuilder
 
 
 # Scalar, basic data type
@@ -151,7 +151,7 @@ def make_var_list(size: int, ast_builder: "ASTBuilder | None" = None):
 
 
 def make_expr_group(*exprs):
-    from taichi.lang.matrix import Matrix  # pylint: disable=C0415
+    from gs_taichi.lang.matrix import Matrix  # pylint: disable=C0415
 
     if len(exprs) == 1:
         if isinstance(exprs[0], (list, tuple)):

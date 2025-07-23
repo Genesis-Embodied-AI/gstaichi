@@ -1,3 +1,3 @@
 # type: ignore
 
-from taichi.aot.conventions import gfxruntime140
+from gs_taichi.aot.conventions import gfxruntime140

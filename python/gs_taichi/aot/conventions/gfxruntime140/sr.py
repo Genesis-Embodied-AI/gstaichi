@@ -9,8 +9,8 @@ from abc import ABC
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from taichi.aot.conventions.gfxruntime140 import dr
-from taichi.types.enums import DeviceCapability, Format
+from gs_taichi.aot.conventions.gfxruntime140 import dr
+from gs_taichi.types.enums import DeviceCapability, Format
 
 
 class DataType(Enum):

@@ -1,11 +1,11 @@
 # type: ignore
 
-import taichi.lang
-from taichi._lib import core as _ti_core
-from taichi._logging import warn
-from taichi.lang import impl
-from taichi.lang.exception import TaichiSyntaxError
-from taichi.lang.util import (
+import gs_taichi.lang
+from gs_taichi._lib import core as _ti_core
+from gs_taichi._logging import warn
+from gs_taichi.lang import impl
+from gs_taichi.lang.exception import TaichiSyntaxError
+from gs_taichi.lang.util import (
     in_python_scope,
     python_scope,
     to_numpy_type,
@@ -48,7 +48,7 @@ class Field:
         Returns:
             SNode: Representative SNode (SNode of first field member).
         """
-        return taichi.lang.snode.SNode(self.vars[0].ptr.snode())
+        return gs_taichi.lang.snode.SNode(self.vars[0].ptr.snode())
 
     @property
     def shape(self):
@@ -214,7 +214,7 @@ class Field:
             raise TypeError("Cannot copy from a non-field object")
         if self.shape != other.shape:
             raise ValueError(f"ti.field shape {self.shape} does not match" f" the source field shape {other.shape}")
-        from taichi._kernels import tensor_to_tensor  # pylint: disable=C0415
+        from gs_taichi._kernels import tensor_to_tensor  # pylint: disable=C0415
 
         tensor_to_tensor(self, other)
 
@@ -241,7 +241,7 @@ class Field:
         raise NotImplementedError()
 
     def __str__(self):
-        if taichi.lang.impl.inside_kernel():
+        if gs_taichi.lang.impl.inside_kernel():
             return self.__repr__()  # make pybind11 happy, see Matrix.__str__
         if self._snode.ptr is None:
             return "<Field: Definition of this field is incomplete>"
@@ -261,7 +261,7 @@ class Field:
     def _initialize_host_accessors(self):
         if self.host_accessors:
             return
-        taichi.lang.impl.get_runtime().materialize()
+        gs_taichi.lang.impl.get_runtime().materialize()
         self.host_accessors = [SNodeHostAccessor(e.ptr.snode()) for e in self.vars]
 
     def _host_access(self, key):
@@ -284,11 +284,11 @@ class ScalarField(Field):
     def fill(self, val):
         """Fills this scalar field with a specified value."""
         if in_python_scope():
-            from taichi._kernels import fill_field  # pylint: disable=C0415
+            from gs_taichi._kernels import fill_field  # pylint: disable=C0415
 
             fill_field(self, val)
         else:
-            from taichi._funcs import field_fill_taichi_scope  # pylint: disable=C0415
+            from gs_taichi._funcs import field_fill_taichi_scope  # pylint: disable=C0415
 
             field_fill_taichi_scope(self, val)
 
@@ -304,10 +304,10 @@ class ScalarField(Field):
         import numpy as np  # pylint: disable=C0415
 
         arr = np.zeros(shape=self.shape, dtype=dtype)
-        from taichi._kernels import tensor_to_ext_arr  # pylint: disable=C0415
+        from gs_taichi._kernels import tensor_to_ext_arr  # pylint: disable=C0415
 
         tensor_to_ext_arr(self, arr)
-        taichi.lang.runtime_ops.sync()
+        gs_taichi.lang.runtime_ops.sync()
         return arr
 
     @python_scope
@@ -317,10 +317,10 @@ class ScalarField(Field):
 
         # pylint: disable=E1101
         arr = torch.zeros(size=self.shape, dtype=to_pytorch_type(self.dtype), device=device)
-        from taichi._kernels import tensor_to_ext_arr  # pylint: disable=C0415
+        from gs_taichi._kernels import tensor_to_ext_arr  # pylint: disable=C0415
 
         tensor_to_ext_arr(self, arr)
-        taichi.lang.runtime_ops.sync()
+        gs_taichi.lang.runtime_ops.sync()
         return arr
 
     @python_scope
@@ -331,10 +331,10 @@ class ScalarField(Field):
         # pylint: disable=E1101
         # paddle.empty() doesn't support argument `place``
         arr = paddle.to_tensor(paddle.zeros(self.shape, to_paddle_type(self.dtype)), place=place)
-        from taichi._kernels import tensor_to_ext_arr  # pylint: disable=C0415
+        from gs_taichi._kernels import tensor_to_ext_arr  # pylint: disable=C0415
 
         tensor_to_ext_arr(self, arr)
-        taichi.lang.runtime_ops.sync()
+        gs_taichi.lang.runtime_ops.sync()
         return arr
 
     @python_scope
@@ -344,10 +344,10 @@ class ScalarField(Field):
         for i, _ in enumerate(self.shape):
             if self.shape[i] != arr.shape[i]:
                 raise ValueError(f"ti.field shape {self.shape} does not match" f" the numpy array shape {arr.shape}")
-        from taichi._kernels import ext_arr_to_tensor  # pylint: disable=C0415
+        from gs_taichi._kernels import ext_arr_to_tensor  # pylint: disable=C0415
 
         ext_arr_to_tensor(arr, self)
-        taichi.lang.runtime_ops.sync()
+        gs_taichi.lang.runtime_ops.sync()
 
     @python_scope
     def from_numpy(self, arr):

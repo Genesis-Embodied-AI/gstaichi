@@ -3,7 +3,7 @@
 import inspect
 import os
 
-from taichi._lib import core as ti_python_core
+from gs_taichi._lib import core as ti_python_core
 
 
 def _get_logging(name):

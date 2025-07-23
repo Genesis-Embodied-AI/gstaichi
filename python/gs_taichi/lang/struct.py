@@ -5,21 +5,21 @@ from types import MethodType
 
 import numpy as np
 
-from taichi._lib import core as _ti_core
-from taichi.lang import expr, impl, ops
-from taichi.lang.exception import (
+from gs_taichi._lib import core as _ti_core
+from gs_taichi.lang import expr, impl, ops
+from gs_taichi.lang.exception import (
     TaichiRuntimeTypeError,
     TaichiSyntaxError,
     TaichiTypeError,
 )
-from taichi.lang.expr import Expr
-from taichi.lang.field import Field, ScalarField, SNodeHostAccess
-from taichi.lang.matrix import Matrix, MatrixType
-from taichi.lang.util import cook_dtype, in_python_scope, python_scope, taichi_scope
-from taichi.types import primitive_types
-from taichi.types.compound_types import CompoundType
-from taichi.types.enums import Layout
-from taichi.types.utils import is_signed
+from gs_taichi.lang.expr import Expr
+from gs_taichi.lang.field import Field, ScalarField, SNodeHostAccess
+from gs_taichi.lang.matrix import Matrix, MatrixType
+from gs_taichi.lang.util import cook_dtype, in_python_scope, python_scope, taichi_scope
+from gs_taichi.types import primitive_types
+from gs_taichi.types.compound_types import CompoundType
+from gs_taichi.types.enums import Layout
+from gs_taichi.types.utils import is_signed
 
 
 class Struct:

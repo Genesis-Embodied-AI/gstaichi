@@ -1,18 +1,18 @@
 # type: ignore
 
-from taichi._kernels import (
+from gs_taichi._kernels import (
     blit_from_field_to_field,
     scan_add_inclusive,
     sort_stage,
     uniform_add,
     warp_shfl_up_i32,
 )
-from taichi.lang.impl import current_cfg, field
-from taichi.lang.kernel_impl import data_oriented
-from taichi.lang.misc import cuda, vulkan
-from taichi.lang.runtime_ops import sync
-from taichi.lang.simt import subgroup
-from taichi.types.primitive_types import i32
+from gs_taichi.lang.impl import current_cfg, field
+from gs_taichi.lang.kernel_impl import data_oriented
+from gs_taichi.lang.misc import cuda, vulkan
+from gs_taichi.lang.runtime_ops import sync
+from gs_taichi.lang.simt import subgroup
+from gs_taichi.types.primitive_types import i32
 
 
 def parallel_sort(keys, values=None):

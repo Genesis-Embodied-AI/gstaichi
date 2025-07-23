@@ -1,7 +1,7 @@
 # type: ignore
 
-from taichi.lang.ast.ast_transformer import ASTTransformer
-from taichi.lang.ast.ast_transformer_utils import ASTTransformerContext
+from gs_taichi.lang.ast.ast_transformer import ASTTransformer
+from gs_taichi.lang.ast.ast_transformer_utils import ASTTransformerContext
 
 
 def transform_tree(tree, ctx: ASTTransformerContext):

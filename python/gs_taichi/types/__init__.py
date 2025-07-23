@@ -10,10 +10,10 @@ This module defines data types in Taichi:
 - quant: for quantized types, see "https://yuanming.taichi.graphics/publication/2021-quantaichi/quantaichi.pdf"
 """
 
-from taichi.types import quant
-from taichi.types.annotations import *
-from taichi.types.compound_types import *
-from taichi.types.ndarray_type import *
-from taichi.types.primitive_types import *
-from taichi.types.texture_type import *
-from taichi.types.utils import *
+from gs_taichi.types import quant
+from gs_taichi.types.annotations import *
+from gs_taichi.types.compound_types import *
+from gs_taichi.types.ndarray_type import *
+from gs_taichi.types.primitive_types import *
+from gs_taichi.types.texture_type import *
+from gs_taichi.types.utils import *

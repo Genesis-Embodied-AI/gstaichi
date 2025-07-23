@@ -1,7 +1,7 @@
 # type: ignore
 
-from taichi.types.compound_types import CompoundType, matrix, vector
-from taichi.types.enums import Layout, to_boundary_enum
+from gs_taichi.types.compound_types import CompoundType, matrix, vector
+from gs_taichi.types.enums import Layout, to_boundary_enum
 
 
 class NdarrayTypeMetadata:
@@ -100,7 +100,7 @@ class NdarrayType:
         else:
             if self.dtype is not None:
                 # Check dtype match for scalar.
-                from taichi.lang import util  # pylint: disable=C0415
+                from gs_taichi.lang import util  # pylint: disable=C0415
 
                 if not util.cook_dtype(self.dtype) == ndarray_type.element_type:
                     raise TypeError(

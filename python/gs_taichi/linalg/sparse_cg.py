@@ -2,11 +2,11 @@
 
 import numpy as np
 
-from taichi._lib import core as _ti_core
-from taichi.lang._ndarray import Ndarray, ScalarNdarray
-from taichi.lang.exception import TaichiRuntimeError
-from taichi.lang.impl import get_runtime
-from taichi.types import f32, f64
+from gs_taichi._lib import core as _ti_core
+from gs_taichi.lang._ndarray import Ndarray, ScalarNdarray
+from gs_taichi.lang.exception import TaichiRuntimeError
+from gs_taichi.lang.impl import get_runtime
+from gs_taichi.types import f32, f64
 
 
 class SparseCG:

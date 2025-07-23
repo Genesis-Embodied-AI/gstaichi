@@ -2,12 +2,12 @@
 
 from typing import Any, Optional, Sequence, Union
 
-from taichi._lib import core as _ti_core
+from gs_taichi._lib import core as _ti_core
 from taichi._lib.core.taichi_python import SNode as SNodeCxx
-from taichi._snode.snode_tree import SNodeTree
-from taichi.lang import impl, snode
-from taichi.lang.exception import TaichiRuntimeError
-from taichi.lang.util import warning
+from gs_taichi._snode.snode_tree import SNodeTree
+from gs_taichi.lang import impl, snode
+from gs_taichi.lang.exception import TaichiRuntimeError
+from gs_taichi.lang.util import warning
 
 _snode_registry = _ti_core.SNodeRegistry()
 

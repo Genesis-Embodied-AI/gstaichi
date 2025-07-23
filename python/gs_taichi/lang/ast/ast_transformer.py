@@ -15,33 +15,33 @@ from typing import Any, Iterable, Type
 
 import numpy as np
 
-from taichi._lib import core as _ti_core
-from taichi.lang import _ndarray, any_array, expr, impl, kernel_arguments, matrix, mesh
-from taichi.lang import ops as ti_ops
-from taichi.lang._ndrange import _Ndrange, ndrange
-from taichi.lang.argpack import ArgPackType
-from taichi.lang.ast.ast_transformer_utils import (
+from gs_taichi._lib import core as _ti_core
+from gs_taichi.lang import _ndarray, any_array, expr, impl, kernel_arguments, matrix, mesh
+from gs_taichi.lang import ops as ti_ops
+from gs_taichi.lang._ndrange import _Ndrange, ndrange
+from gs_taichi.lang.argpack import ArgPackType
+from gs_taichi.lang.ast.ast_transformer_utils import (
     ASTTransformerContext,
     Builder,
     LoopStatus,
     ReturnStatus,
 )
-from taichi.lang.ast.symbol_resolver import ASTResolver
-from taichi.lang.exception import (
+from gs_taichi.lang.ast.symbol_resolver import ASTResolver
+from gs_taichi.lang.exception import (
     TaichiIndexError,
     TaichiRuntimeTypeError,
     TaichiSyntaxError,
     TaichiTypeError,
     handle_exception_from_cpp,
 )
-from taichi.lang.expr import Expr, make_expr_group
-from taichi.lang.field import Field
-from taichi.lang.matrix import Matrix, MatrixType, Vector
-from taichi.lang.snode import append, deactivate, length
-from taichi.lang.struct import Struct, StructType
-from taichi.lang.util import is_taichi_class, to_taichi_type
-from taichi.types import annotations, ndarray_type, primitive_types, texture_type
-from taichi.types.utils import is_integral
+from gs_taichi.lang.expr import Expr, make_expr_group
+from gs_taichi.lang.field import Field
+from gs_taichi.lang.matrix import Matrix, MatrixType, Vector
+from gs_taichi.lang.snode import append, deactivate, length
+from gs_taichi.lang.struct import Struct, StructType
+from gs_taichi.lang.util import is_taichi_class, to_taichi_type
+from gs_taichi.types import annotations, ndarray_type, primitive_types, texture_type
+from gs_taichi.types.utils import is_integral
 
 
 def reshape_list(flat_list: list[Any], target_shape: Iterable[int]) -> list[Any]:
@@ -423,7 +423,7 @@ class ASTTransformer(Builder):
 
     @staticmethod
     def build_call_if_is_builtin(ctx: ASTTransformerContext, node, args, keywords):
-        from taichi.lang import matrix_ops  # pylint: disable=C0415
+        from gs_taichi.lang import matrix_ops  # pylint: disable=C0415
 
         func = node.func.ptr
         replace_func = {
@@ -1113,7 +1113,7 @@ class ASTTransformer(Builder):
                         )
                     )
             else:
-                from taichi.lang import (  # pylint: disable=C0415
+                from gs_taichi.lang import (  # pylint: disable=C0415
                     matrix_ops as tensor_ops,
                 )
 
@@ -1128,7 +1128,7 @@ class ASTTransformer(Builder):
         build_stmt(ctx, node.left)
         build_stmt(ctx, node.right)
         # pylint: disable-msg=C0415
-        from taichi.lang.matrix_ops import matmul
+        from gs_taichi.lang.matrix_ops import matmul
 
         op = {
             ast.Add: lambda l, r: l + r,

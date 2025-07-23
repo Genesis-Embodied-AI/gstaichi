@@ -7,6 +7,6 @@
 - `diagnose` submodule for printing system environment information.
 """
 
-from taichi.tools.diagnose import *
-from taichi.tools.np2ply import *
-from taichi.tools.vtk import *
+from gs_taichi.tools.diagnose import *
+from gs_taichi.tools.np2ply import *
+from gs_taichi.tools.vtk import *

@@ -10,12 +10,12 @@ from shutil import rmtree
 from tempfile import mkdtemp
 from zipfile import ZipFile
 
-import taichi
-from taichi.aot.utils import produce_injected_args, produce_injected_args_from_template
-from taichi.lang import impl, kernel_impl
-from taichi.lang.field import ScalarField
-from taichi.lang.matrix import MatrixField
-from taichi.types.annotations import template
+import gs_taichi
+from gs_taichi.aot.utils import produce_injected_args, produce_injected_args_from_template
+from gs_taichi.lang import impl, kernel_impl
+from gs_taichi.lang.field import ScalarField
+from gs_taichi.lang.matrix import MatrixField
+from gs_taichi.types.annotations import template
 
 
 class KernelTemplate:
@@ -225,7 +225,7 @@ class Module:
         with open(f"{filepath}/__content__", "w") as f:
             f.write("\n".join(self._content))
         with open(f"{filepath}/__version__", "w") as f:
-            f.write(".".join(str(x) for x in taichi.__version__))
+            f.write(".".join(str(x) for x in gs_taichi.__version__))
 
     def archive(self, filepath: str):
         """

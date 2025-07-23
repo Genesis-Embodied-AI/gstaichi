@@ -6,11 +6,11 @@ Math functions for glsl-like functions and other stuff.
 """
 import math
 
-from taichi.lang import impl, ops
-from taichi.lang.impl import static, zero
-from taichi.lang.kernel_impl import func
-from taichi.lang.matrix import Matrix
-from taichi.lang.ops import (
+from gs_taichi.lang import impl, ops
+from gs_taichi.lang.impl import static, zero
+from gs_taichi.lang.kernel_impl import func
+from gs_taichi.lang.matrix import Matrix
+from gs_taichi.lang.ops import (
     acos,
     asin,
     atan2,
@@ -28,8 +28,8 @@ from taichi.lang.ops import (
     tan,
     tanh,
 )
-from taichi.types import matrix, template, vector
-from taichi.types.primitive_types import f64, u32, u64
+from gs_taichi.types import matrix, template, vector
+from gs_taichi.types.primitive_types import f64, u32, u64
 
 cfg = impl.default_cfg
 

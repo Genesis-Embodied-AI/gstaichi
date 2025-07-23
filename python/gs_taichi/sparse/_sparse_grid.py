@@ -1,12 +1,12 @@
 # type: ignore
 
-from taichi.lang.impl import grouped, root, static
-from taichi.lang.kernel_impl import kernel
-from taichi.lang.misc import ij, ijk
-from taichi.lang.snode import is_active
-from taichi.lang.struct import Struct
-from taichi.types.annotations import template
-from taichi.types.primitive_types import f32
+from gs_taichi.lang.impl import grouped, root, static
+from gs_taichi.lang.kernel_impl import kernel
+from gs_taichi.lang.misc import ij, ijk
+from gs_taichi.lang.snode import is_active
+from gs_taichi.lang.struct import Struct
+from gs_taichi.types.annotations import template
+from gs_taichi.types.primitive_types import f32
 
 
 def grid(field_dict, shape):
