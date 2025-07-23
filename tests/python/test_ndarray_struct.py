@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import pytest
+
 import taichi as ti
 from tests import test_utils
 
@@ -20,6 +21,7 @@ def ti_annotation(use_ndarray: bool) -> Any:
         """
         Allows ti_annotation[ti.i32, 2] to be legal
         """
+
         def __getitem__(self, _):
             return ti.Template
 
@@ -34,8 +36,8 @@ def test_ndarray_struct_l4(ti_type: Any, ti_annotation: Any) -> None:
     gc.collect()
     gc.collect()
     a = ti_type(ti.i32, shape=(55,))
-    b = ti_type(ti.i32, shape=(57,23))
-    c = ti_type(ti.i32, shape=(211,34, 25))
+    b = ti_type(ti.i32, shape=(57, 23))
+    c = ti_type(ti.i32, shape=(211, 34, 25))
     d = ti_type(ti.i32, shape=(223,))
     e = ti_type(ti.i32, shape=(227,))
 

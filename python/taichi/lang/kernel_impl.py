@@ -16,7 +16,6 @@ import types
 import typing
 import warnings
 import weakref
-import traceback
 from typing import Any, Callable, Type, Union
 
 import numpy as np
@@ -946,9 +945,7 @@ class Kernel:
                         int(v.grad.data_ptr()) if v.grad is not None else 0,
                     )
                 else:
-                    raise TaichiRuntimeTypeError(
-                        f"Argument {needed} cannot be converted into required type {type(v)}"
-                    )
+                    raise TaichiRuntimeTypeError(f"Argument {needed} cannot be converted into required type {type(v)}")
             elif has_paddle():
                 import paddle  # pylint: disable=C0415  # type: ignore
 
@@ -981,13 +978,9 @@ class Kernel:
                         indices, int(tmp._ptr()), v.element_size() * v.size, array_shape, 0
                     )
                 else:
-                    raise TaichiRuntimeTypeError(
-                        f"Argument {needed} cannot be converted into required type {v}"
-                    )
+                    raise TaichiRuntimeTypeError(f"Argument {needed} cannot be converted into required type {v}")
             else:
-                raise TaichiRuntimeTypeError(
-                    f"Argument {needed} cannot be converted into required type {v}"
-                )
+                raise TaichiRuntimeTypeError(f"Argument {needed} cannot be converted into required type {v}")
 
         def set_arg_matrix(indices, v, needed):
             def cast_float(x):
