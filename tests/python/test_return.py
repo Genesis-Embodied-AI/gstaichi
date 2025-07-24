@@ -272,7 +272,7 @@ def test_real_func_tuple_ret():
     assert ret_b.b == 1
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_return_type_mismatch_1():
     with pytest.raises(ti.TaichiCompilationError):
 
@@ -283,7 +283,7 @@ def test_return_type_mismatch_1():
         foo()
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_return_type_mismatch_2():
     with pytest.raises(ti.TaichiCompilationError):
 
@@ -294,7 +294,7 @@ def test_return_type_mismatch_2():
         foo()
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_return_type_mismatch_3():
     sphere_type = ti.types.struct(center=ti.math.vec3, radius=float)
     circle_type = ti.types.struct(center=ti.math.vec2, radius=float)
