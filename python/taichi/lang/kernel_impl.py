@@ -159,11 +159,11 @@ def _get_tree_and_ctx(
             template_var_name = self.arguments[i].name
             global_vars[template_var_name] = args[i]
         parameters = inspect.signature(self.func).parameters
-        for arg_i, (name, param) in enumerate(parameters.items()):
+        for arg_i, (param_name, param) in enumerate(parameters.items()):
             if dataclasses.is_dataclass(param.annotation):
-                for field in dataclasses.fields(param.annotation):
-                    child_value = getattr(args[arg_i], field.name)
-                    flat_name = f"__ti_{name}_{field.name}"
+                for member_field in dataclasses.fields(param.annotation):
+                    child_value = getattr(args[arg_i], member_field.name)
+                    flat_name = f"__ti_{param_name}_{member_field.name}"
                     global_vars[flat_name] = child_value
 
     return tree, ASTTransformerContext(
