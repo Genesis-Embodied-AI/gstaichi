@@ -577,7 +577,7 @@ def test_python_scope_inplace_operator():
         assert np.allclose(m1.to_numpy(), ops(a, b))
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_indexing():
     @ti.kernel
     def foo():
@@ -596,7 +596,7 @@ def test_indexing():
         bar()
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_indexing_in_fields():
     f = ti.Matrix.field(3, 3, ti.f32, shape=())
 
@@ -619,7 +619,7 @@ def test_indexing_in_fields():
         bar()
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_indexing_in_struct():
     @ti.kernel
     def foo():
@@ -638,7 +638,7 @@ def test_indexing_in_struct():
         bar()
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_indexing_in_struct_field():
     s = ti.Struct.field({"v": ti.types.vector(3, ti.f32), "m": ti.types.matrix(3, 3, ti.f32)}, shape=())
 
@@ -752,7 +752,7 @@ def test_local_matrix_indexing_ops():
             assert f[i, j] == xs[j][i]
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_local_matrix_index_check():
     @ti.kernel
     def foo():
@@ -983,7 +983,7 @@ def test_binary_op_scalarize():
     _test_field_and_ndarray(field, ndarray, func, verify)
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_trace_op():
     @ti.kernel
     def test_fun() -> ti.f32:
@@ -1082,7 +1082,7 @@ def test_atomic_op_scalarize():
     _test_field_and_ndarray(field, ndarray, func, verify)
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_vector_transpose():
     @ti.kernel
     def foo():

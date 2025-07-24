@@ -362,7 +362,7 @@ def test_ref_atomic():
     bar()
 
 
-@test_utils.test(arch=[ti.cpu, ti.cuda], debug=True)
+@test_utils.test(arch=[ti.cpu, ti.cuda], debug=True, print_full_traceback=False)
 def test_func_ndarray_arg():
     vec3 = ti.types.vector(3, ti.f32)
 
