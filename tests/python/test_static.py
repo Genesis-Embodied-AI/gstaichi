@@ -23,7 +23,7 @@ def test_static_if(val):
     assert x[0] == val
 
 
-@test_utils.test(ti.cpu)
+@test_utils.test(ti.cpu, print_full_traceback=False)
 def test_static_if_error():
     x = ti.field(ti.i32)
 

@@ -6,7 +6,7 @@ from taichi.math import vec4
 from tests import test_utils
 
 
-@test_utils.test(arch=[ti.cuda])
+@test_utils.test(arch=[ti.cuda], print_full_traceback=False)
 def test_large_shared_array():
     # Skip the GPUs prior to Ampere which doesn't have large dynamical shared memory.
     if ti.lang.impl.get_cuda_compute_capability() < 86:

@@ -25,7 +25,7 @@ def test_no_grad():
         func()
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_raise_no_gradient():
     y = ti.field(shape=(), name="y", dtype=ti.f32, needs_grad=True)
     x = ti.field(shape=(), name="x", dtype=ti.f32)
