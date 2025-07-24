@@ -36,8 +36,8 @@ runtimes/Release
 runtimes/Debug
 runtimes/RelWithDebInfo
 runtimes/*.png
-runtimes/taichi_python*
-runtimes/libtaichi_python*
+runtimes/gs_taichi_python*
+runtimes/libgs_taichi_python*
 .pypirc
 dist/
 python/MANIFEST

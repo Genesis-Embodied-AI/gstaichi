@@ -3,8 +3,8 @@
 import numbers
 
 from gs_taichi._lib import core as _ti_core
-from taichi._lib.core.taichi_python import Axis
-from taichi._lib.core.taichi_python import SNode as SNodeCxx
+from gs_taichi._lib.core.gs_taichi_python import Axis
+from gs_taichi._lib.core.gs_taichi_python import SNode as SNodeCxx
 from gs_taichi.lang import expr, impl, matrix
 from gs_taichi.lang.exception import TaichiRuntimeError
 from gs_taichi.lang.field import BitpackedFields, Field
@@ -236,10 +236,10 @@ class SNode:
         return ret
 
     def _loop_range(self):
-        """Gets the taichi_python.SNode to serve as loop range.
+        """Gets the gs_taichi_python.SNode to serve as loop range.
 
         Returns:
-            taichi_python.SNode: See above.
+            gs_taichi_python.SNode: See above.
         """
         return self.ptr
 

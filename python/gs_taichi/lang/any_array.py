@@ -12,7 +12,7 @@ class AnyArray:
     """Class for arbitrary arrays in Python AST.
 
     Args:
-        ptr (taichi_python.Expr): A taichi_python.Expr wrapping a taichi_python.ExternalTensorExpression.
+        ptr (gs_taichi_python.Expr): A gs_taichi_python.Expr wrapping a gs_taichi_python.ExternalTensorExpression.
         element_shape (Tuple[Int]): () if scalar elements (default), (n) if vector elements, and (n, m) if matrix elements.
         layout (Layout): Memory layout.
     """
@@ -58,10 +58,10 @@ class AnyArray:
 
     @taichi_scope
     def _loop_range(self):
-        """Gets the corresponding taichi_python.Expr to serve as loop range.
+        """Gets the corresponding gs_taichi_python.Expr to serve as loop range.
 
         Returns:
-            taichi_python.Expr: See above.
+            gs_taichi_python.Expr: See above.
         """
         return self.ptr
 

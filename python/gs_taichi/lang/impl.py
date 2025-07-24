@@ -7,7 +7,7 @@ from typing import Any, Iterable, Sequence
 import numpy as np
 
 from gs_taichi._lib import core as _ti_core
-from taichi._lib.core.taichi_python import (
+from gs_taichi._lib.core.gs_taichi_python import (
     DataType,
     Function,
     Program,

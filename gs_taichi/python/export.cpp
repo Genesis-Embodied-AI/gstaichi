@@ -9,8 +9,8 @@
 
 namespace gs_taichi {
 
-PYBIND11_MODULE(taichi_python, m) {
-  m.doc() = "taichi_python";
+PYBIND11_MODULE(gs_taichi_python, m) {
+  m.doc() = "gs_taichi_python";
 
   for (auto &kv : InterfaceHolder::get_instance()->methods) {
     kv.second(&m);

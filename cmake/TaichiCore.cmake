@@ -345,7 +345,7 @@ endforeach ()
 
 if(TI_WITH_PYTHON)
     message("PYTHON_LIBRARIES: " ${PYTHON_LIBRARIES})
-    set(CORE_WITH_PYBIND_LIBRARY_NAME taichi_python)
+    set(CORE_WITH_PYBIND_LIBRARY_NAME gs_taichi_python)
     if (NOT ANDROID)
         # NO_EXTRAS is required here to avoid llvm symbol error during build
         file(GLOB TAICHI_PYBIND_SOURCE

@@ -20,20 +20,20 @@ endfunction()
 set(TAICHI_C_API_NAME taichi_c_api)
 list(APPEND C_API_SOURCE "c_api/src/taichi_core_impl.cpp")
 list(APPEND C_API_PUBLIC_HEADERS
-  "c_api/include/taichi/taichi_platform.h"
-  "c_api/include/taichi/taichi_core.h"
-  "c_api/include/taichi/taichi.h"
+  "c_api/include/gs_taichi/taichi_platform.h"
+  "c_api/include/gs_taichi/taichi_core.h"
+  "c_api/include/gs_taichi/taichi.h"
   # FIXME: (penguinliong) Remove this in the future when we have a option for
   # Unity3D integration?
-  "c_api/include/taichi/taichi_unity.h"
+  "c_api/include/gs_taichi/taichi_unity.h"
   )
 
 if (TI_WITH_LLVM)
   list(APPEND C_API_SOURCE "c_api/src/taichi_llvm_impl.cpp")
-  list(APPEND C_API_PUBLIC_HEADERS "c_api/include/taichi/taichi_cpu.h")
+  list(APPEND C_API_PUBLIC_HEADERS "c_api/include/gs_taichi/taichi_cpu.h")
 
   if (TI_WITH_CUDA)
-    list(APPEND C_API_PUBLIC_HEADERS "c_api/include/taichi/taichi_cuda.h")
+    list(APPEND C_API_PUBLIC_HEADERS "c_api/include/gs_taichi/taichi_cuda.h")
   endif()
 endif()
 
@@ -43,17 +43,17 @@ endif()
 
 if (TI_WITH_OPENGL)
   list(APPEND C_API_SOURCE "c_api/src/taichi_opengl_impl.cpp")
-  list(APPEND C_API_PUBLIC_HEADERS "c_api/include/taichi/taichi_opengl.h")
+  list(APPEND C_API_PUBLIC_HEADERS "c_api/include/gs_taichi/taichi_opengl.h")
 endif()
 
 if (TI_WITH_METAL)
   list(APPEND C_API_SOURCE "c_api/src/taichi_metal_impl.mm")
-  list(APPEND C_API_PUBLIC_HEADERS "c_api/include/taichi/taichi_metal.h")
+  list(APPEND C_API_PUBLIC_HEADERS "c_api/include/gs_taichi/taichi_metal.h")
 endif()
 
 if (TI_WITH_VULKAN)
   list(APPEND C_API_SOURCE "c_api/src/taichi_vulkan_impl.cpp")
-  list(APPEND C_API_PUBLIC_HEADERS "c_api/include/taichi/taichi_vulkan.h")
+  list(APPEND C_API_PUBLIC_HEADERS "c_api/include/gs_taichi/taichi_vulkan.h")
   if (APPLE)
     install(FILES ${MoltenVK_LIBRARY} DESTINATION c_api/lib)
   endif()
@@ -135,7 +135,7 @@ function(install_taichi_c_api INSTALL_NAME TAICHI_C_API_INSTALL_DIR)
   # The C++ wrapper is saved in a dedicated directory.
   install(
       FILES
-          "c_api/include/taichi/cpp/taichi.hpp"
+          "c_api/include/gs_taichi/cpp/taichi.hpp"
       DESTINATION
           ${TAICHI_C_API_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/taichi/cpp
   )

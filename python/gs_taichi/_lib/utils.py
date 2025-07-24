@@ -45,11 +45,11 @@ def import_ti_python_core():
         pyddir = os.path.dirname(os.path.realpath(__file__))
         os.environ["PATH"] += os.pathsep + pyddir
     try:
-        from taichi._lib.core import gs_taichi_python as core  # pylint: disable=C0415
+        from gs_taichi._lib.core import gs_taichi_python as core  # pylint: disable=C0415
     except Exception as e:
         if isinstance(e, ImportError):
             print(
-                Fore.YELLOW + "Share object taichi_python import failed, "
+                Fore.YELLOW + "Share object gs_taichi_python import failed, "
                 "check this page for possible solutions:\n"
                 "https://docs.taichi-lang.org/docs/install" + Fore.RESET
             )
@@ -89,7 +89,7 @@ package_root = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__f
 
 def get_core_shared_object():
     directory = os.path.join(package_root, "_lib")
-    return os.path.join(directory, "libtaichi_python.so")
+    return os.path.join(directory, "libgs_taichi_python.so")
 
 
 def print_red_bold(*args, **kwargs):

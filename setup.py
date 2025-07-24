@@ -1,9 +1,9 @@
 # Optional environment variables supported by setup.py:
 #   {DEBUG, RELWITHDEBINFO, MINSIZEREL}
-#     build the C++ taichi_python extension with various build types.
+#     build the C++ gs_taichi_python extension with various build types.
 #
 #   TAICHI_CMAKE_ARGS
-#     extra cmake args for C++ taichi_python extension.
+#     extra cmake args for C++ gs_taichi_python extension.
 
 import glob
 import multiprocessing
@@ -139,14 +139,14 @@ def generate_pybind11_stubs(build_lib: str):
 
     # command that works:
     # PYTHONPATH=_skbuild/linux-x86_64-3.10/cmake-install/python pybind11-stubgen \
-    #     taichi._lib.core.taichi_python --ignore-all-errors
-    cmd_line = ["pybind11-stubgen", "gs_taichi._lib.core.taichi_python", "--ignore-all-errors"]
+    #     taichi._lib.core.gs_taichi_python --ignore-all-errors
+    cmd_line = ["pybind11-stubgen", "gs_taichi._lib.core.gs_taichi_python", "--ignore-all-errors"]
     print(" ".join(cmd_line))
     subprocess.check_call(cmd_line, env=env)
-    stub_filepath = pathlib.Path("stubs/gs_taichi/_lib/core/taichi_python.pyi")
+    stub_filepath = pathlib.Path("stubs/gs_taichi/_lib/core/gs_taichi_python.pyi")
     postprocess_stubs(stub_filepath)
 
-    target_filepath = build_lib_path / "gs_taichi" / "_lib" / "core" / "taichi_python.pyi"
+    target_filepath = build_lib_path / "gs_taichi" / "_lib" / "core" / "gs_taichi_python.pyi"
     py_typed_dst = build_lib_path / "gs_taichi" / "_lib" / "core" / "py.typed"
     os.makedirs(os.path.dirname(target_filepath), exist_ok=True)
     print("copying ", stub_filepath, "to", target_filepath)

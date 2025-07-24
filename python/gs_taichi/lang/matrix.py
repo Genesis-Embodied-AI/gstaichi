@@ -718,7 +718,7 @@ class Matrix(TaichiOperations):
             to invoke `repr` to show the object... e.g.:
 
             TypeError: make_const_expr_f32(): incompatible function arguments. The following argument types are supported:
-                1. (arg0: float) -> taichi_python.Expr
+                1. (arg0: float) -> gs_taichi_python.Expr
 
             Invoked with: <Taichi 2x1 Matrix>
 

@@ -3,7 +3,7 @@
 from typing import Any, Optional, Sequence, Union
 
 from gs_taichi._lib import core as _ti_core
-from taichi._lib.core.taichi_python import SNode as SNodeCxx
+from gs_taichi._lib.core.gs_taichi_python import SNode as SNodeCxx
 from gs_taichi._snode.snode_tree import SNodeTree
 from gs_taichi.lang import impl, snode
 from gs_taichi.lang.exception import TaichiRuntimeError

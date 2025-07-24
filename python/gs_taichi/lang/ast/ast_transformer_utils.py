@@ -8,7 +8,7 @@ from sys import version_info
 from textwrap import TextWrapper
 from typing import TYPE_CHECKING, Any, List
 
-from taichi._lib.core.taichi_python import ASTBuilder
+from gs_taichi._lib.core.gs_taichi_python import ASTBuilder
 from gs_taichi.lang import impl
 from gs_taichi.lang.exception import (
     TaichiCompilationError,

@@ -28,7 +28,7 @@ import gs_taichi.lang.snode
 import gs_taichi.types.annotations
 from gs_taichi import _logging
 from gs_taichi._lib import core as _ti_core
-from taichi._lib.core.taichi_python import ASTBuilder
+from gs_taichi._lib.core.gs_taichi_python import ASTBuilder
 from gs_taichi.lang import impl, ops, runtime_ops
 from gs_taichi.lang._wrap_inspect import getsourcefile, getsourcelines
 from gs_taichi.lang.any_array import AnyArray

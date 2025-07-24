@@ -100,7 +100,7 @@ class Field:
         """Gets SNode of representative field member for loop range info.
 
         Returns:
-            taichi_python.SNode: SNode of representative (first) field member.
+            gs_taichi_python.SNode: SNode of representative (first) field member.
         """
         return self.vars[0].ptr.snode()
 

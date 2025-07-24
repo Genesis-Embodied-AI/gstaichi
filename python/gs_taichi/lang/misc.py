@@ -193,8 +193,8 @@ def is_extension_supported(arch, ext):
     """Checks whether an extension is supported on an arch.
 
     Args:
-        arch (taichi_python.Arch): Specified arch.
-        ext (taichi_python.Extension): Specified extension.
+        arch (gs_taichi_python.Arch): Specified arch.
+        ext (gs_taichi_python.Extension): Specified extension.
 
     Returns:
         bool: Whether `ext` is supported on `arch`.
@@ -271,7 +271,7 @@ class _SpecialConfig:
 def prepare_sandbox():
     """
     Returns a temporary directory, which will be automatically deleted on exit.
-    It may contain the taichi_python shared object or some misc. files.
+    It may contain the gs_taichi_python shared object or some misc. files.
     """
     tmp_dir = tempfile.mkdtemp(prefix="taichi-")
     atexit.register(shutil.rmtree, tmp_dir)
@@ -716,7 +716,7 @@ def is_arch_supported(arch):
     """Checks whether an arch is supported on the machine.
 
     Args:
-        arch (taichi_python.Arch): Specified arch.
+        arch (gs_taichi_python.Arch): Specified arch.
 
     Returns:
         bool: Whether `arch` is supported on the machine.
