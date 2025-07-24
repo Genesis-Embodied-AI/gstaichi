@@ -12,7 +12,7 @@
 
 bool is_vulkan_available() {
 #ifdef TI_WITH_VULKAN
-  return taichi::lang::vulkan::is_vulkan_api_available();
+  return gs_taichi::lang::vulkan::is_vulkan_api_available();
 #else
   return false;
 #endif
@@ -20,7 +20,7 @@ bool is_vulkan_available() {
 
 bool is_opengl_available() {
 #ifdef TI_WITH_OPENGL
-  return taichi::lang::opengl::is_opengl_api_available();
+  return gs_taichi::lang::opengl::is_opengl_api_available();
 #else
   return false;
 #endif

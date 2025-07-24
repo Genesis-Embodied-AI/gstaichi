@@ -7,14 +7,14 @@
 
 class OpenglRuntime : public GfxRuntime {
  private:
-  taichi::lang::opengl::GLDevice device_;
-  taichi::lang::gfx::GfxRuntime gfx_runtime_;
+  gs_taichi::lang::opengl::GLDevice device_;
+  gs_taichi::lang::gfx::GfxRuntime gfx_runtime_;
 
  public:
   OpenglRuntime();
-  virtual taichi::lang::Device &get() override final;
-  virtual taichi::lang::gfx::GfxRuntime &get_gfx_runtime() override final;
-  taichi::lang::opengl::GLDevice &get_gl() {
+  virtual gs_taichi::lang::Device &get() override final;
+  virtual gs_taichi::lang::gfx::GfxRuntime &get_gfx_runtime() override final;
+  gs_taichi::lang::opengl::GLDevice &get_gl() {
     return device_;
   }
 };

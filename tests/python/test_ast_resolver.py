@@ -17,7 +17,7 @@ def test_ast_resolver_direct_import():
     import gs_taichi as ti
 
     ti.init()
-    from taichi import kernel
+    from gs_taichi import kernel
 
     node = ast.parse("kernel", mode="eval").body
     assert ASTResolver.resolve_to(node, kernel, locals())
@@ -26,9 +26,9 @@ def test_ast_resolver_direct_import():
 def test_ast_resolver_alias():
     import gs_taichi
 
-    taichi.init()
-    node = ast.parse("taichi.kernel", mode="eval").body
-    assert ASTResolver.resolve_to(node, taichi.kernel, locals())
+    gs_taichi.init()
+    node = ast.parse("gs_taichi.kernel", mode="eval").body
+    assert ASTResolver.resolve_to(node, gs_taichi.kernel, locals())
 
     import gs_taichi as tc
 
@@ -47,8 +47,8 @@ def test_ast_resolver_chain():
 def test_ast_resolver_wrong_ti():
     import gs_taichi
 
-    taichi.init()
+    gs_taichi.init()
     fake_ti = namedtuple("FakeTi", ["kernel"])
     ti = fake_ti(kernel="fake")
     node = ast.parse("ti.kernel", mode="eval").body
-    assert not ASTResolver.resolve_to(node, taichi.kernel, locals())
+    assert not ASTResolver.resolve_to(node, gs_taichi.kernel, locals())

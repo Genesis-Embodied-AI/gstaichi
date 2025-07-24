@@ -8,7 +8,7 @@ from tests import test_utils
 def test_pyi_stubs(tmpdir):
     test_code = """
 import gs_taichi._lib.core.gs_taichi_python
-reveal_type(taichi._lib.core.gs_taichi_python)
+reveal_type(gs_taichi._lib.core.gs_taichi_python)
 """
     test_file = tmpdir / "tmp_mypy_test.py"
     test_file.write(test_code)
