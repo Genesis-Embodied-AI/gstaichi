@@ -29,7 +29,7 @@ def test_binary_op():
         bitwise_float()
 
 
-@test_utils.test(arch=ti.cpu)
+@test_utils.test(arch=ti.cpu, print_full_traceback=False)
 def test_ternary_op():
     @ti.kernel
     def select():

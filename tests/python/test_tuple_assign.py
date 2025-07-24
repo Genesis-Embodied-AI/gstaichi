@@ -196,7 +196,7 @@ def test_unpack_mismatch_type():
         func()
 
 
-@test_utils.test(arch=get_host_arch_list())
+@test_utils.test(arch=get_host_arch_list(), print_full_traceback=False)
 def test_unpack_mismatch_matrix():
     a = ti.field(ti.f32, ())
     b = ti.field(ti.f32, ())
