@@ -42,7 +42,7 @@ jobs:
         run: |
           set -x
           ls -lh dist/
-          pip install "dist/*.whl[docs]"
+          pip install "$(ls dist/*.whl)[docs]"
           python -c 'import taichi as ti; ti.init(arch=ti.cpu); print(ti.__version__)'
           pip freeze | grep sphinx
       - name: Build docs
