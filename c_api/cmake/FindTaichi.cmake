@@ -110,44 +110,44 @@ endif()
 
 if(("Runtime" IN_LIST Taichi_FIND_COMPONENTS) AND (NOT TARGET Taichi::Runtime))
     if(Taichi_FOUND)
-        if(NOT TARGET taichi_c_api)
-            message(FATAL_ERROR "taichi is marked found but target taichi_c_api doesn't exists")
+        if(NOT TARGET gs_taichi_c_api)
+            message(FATAL_ERROR "gs_taichi is marked found but target taichi_c_api doesn't exists")
         endif()
 
         # Already found in config mode.
-        get_target_property(Taichi_Runtime_CONFIG taichi_c_api IMPORTED_CONFIGURATIONS)
+        get_target_property(Taichi_Runtime_CONFIG gs_taichi_c_api IMPORTED_CONFIGURATIONS)
         if(${CMAKE_SYSTEM_NAME} STREQUAL Windows)
-            get_target_property(Taichi_Runtime_LIBRARY taichi_c_api IMPORTED_IMPLIB)
+            get_target_property(Taichi_Runtime_LIBRARY gs_taichi_c_api IMPORTED_IMPLIB)
         else()
-            get_target_property(Taichi_Runtime_LIBRARY taichi_c_api LOCATION)
+            get_target_property(Taichi_Runtime_LIBRARY gs_taichi_c_api LOCATION)
         endif()
-        get_target_property(Taichi_Runtime_REDIST_LIBRARY taichi_c_api LOCATION)
-        get_target_property(Taichi_Runtime_INCLUDE_DIR taichi_c_api INTERFACE_INCLUDE_DIRECTORIES)
+        get_target_property(Taichi_Runtime_REDIST_LIBRARY gs_taichi_c_api LOCATION)
+        get_target_property(Taichi_Runtime_INCLUDE_DIR gs_taichi_c_api INTERFACE_INCLUDE_DIRECTORIES)
     else()
         find_library(Taichi_Runtime_LIBRARY
-            NAMES taichi_runtime taichi_c_api
+            NAMES gs_taichi_runtime gs_taichi_c_api
             HINTS ${TAICHI_C_API_INSTALL_DIR}
             PATH_SUFFIXES lib
             # CMake find root is overriden by Android toolchain.
             NO_CMAKE_FIND_ROOT_PATH)
 
         find_library(Taichi_Runtime_REDIST_LIBRARY
-            NAMES taichi_runtime taichi_c_api
+            NAMES gs_taichi_runtime gs_taichi_c_api
             HINTS ${TAICHI_C_API_INSTALL_DIR}
             PATH_SUFFIXES bin lib
             # CMake find root is overriden by Android toolchain.
             NO_CMAKE_FIND_ROOT_PATH)
 
         find_path(Taichi_Runtime_INCLUDE_DIR
-            NAMES taichi/taichi.h
+            NAMES gs_taichi/taichi.h
             HINTS ${TAICHI_C_API_INSTALL_DIR}
             PATH_SUFFIXES include
             NO_CMAKE_FIND_ROOT_PATH)
     endif()
 
     # Capture Taichi Runtime version from header definition.
-    if(EXISTS "${Taichi_Runtime_INCLUDE_DIR}/taichi/taichi_core.h")
-        file(READ "${Taichi_Runtime_INCLUDE_DIR}/taichi/taichi_core.h" Taichi_Runtime_VERSION_LITERAL)
+    if(EXISTS "${Taichi_Runtime_INCLUDE_DIR}/gs_taichi/taichi_core.h")
+        file(READ "${Taichi_Runtime_INCLUDE_DIR}/gs_taichi/taichi_core.h" Taichi_Runtime_VERSION_LITERAL)
         string(REGEX MATCH "#define TI_C_API_VERSION ([0-9]+)" Taichi_Runtime_VERSION_LITERAL ${Taichi_Runtime_VERSION_LITERAL})
         set(Taichi_Runtime_VERSION_LITERAL ${CMAKE_MATCH_1})
         math(EXPR Taichi_Runtime_VERSION_MAJOR "${Taichi_Runtime_VERSION_LITERAL} / 1000000")

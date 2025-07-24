@@ -50,7 +50,7 @@ def get_version():
     return version.lstrip("v")
 
 
-project_name = os.getenv("PROJECT_NAME", "taichi")
+project_name = os.getenv("PROJECT_NAME", "gs_taichi")
 version = get_version()
 TI_VERSION_MAJOR, TI_VERSION_MINOR, TI_VERSION_PATCH = version.split(".")
 
@@ -101,7 +101,7 @@ class Clean(clean):
         for d in generated_folders:
             if os.path.exists(d):
                 remove_tree(d, dry_run=self.dry_run)
-        generated_files = ["gs_taichi/common/commit_hash.h", "taichi/common/version.h"]
+        generated_files = ["gs_taichi/common/commit_hash.h", "gs_taichi/common/version.h"]
         generated_files += glob.glob("gs_taichi/runtime/llvm/runtime_*.bc")
         generated_files += glob.glob("python/gs_taichi/_lib/core/*.so")
         generated_files += glob.glob("python/gs_taichi/_lib/core/*.pyd")

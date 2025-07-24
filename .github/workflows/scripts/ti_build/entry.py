@@ -48,7 +48,7 @@ def build_wheel(python: Command, pip: Command) -> None:
         wheel_tag = ""
 
     if misc.options.nightly:
-        os.environ["PROJECT_NAME"] = "taichi-nightly"
+        os.environ["PROJECT_NAME"] = "gs_taichi-nightly"
         now = datetime.datetime.now().strftime("%Y%m%d")
         proj_tags.extend(["egg_info", f"--tag-build=.post{now}{wheel_tag}"])
     elif wheel_tag:

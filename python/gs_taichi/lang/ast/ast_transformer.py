@@ -475,7 +475,7 @@ class ASTTransformer(Builder):
             return False
         if hasattr(func, "_is_taichi_function") or hasattr(func, "_is_wrapped_kernel"):  # taichi func/kernel
             return False
-        if hasattr(func, "__module__") and func.__module__ and func.__module__.startswith("taichi."):
+        if hasattr(func, "__module__") and func.__module__ and func.__module__.startswith("gs_taichi."):
             return False
         return True
 
@@ -495,7 +495,7 @@ class ASTTransformer(Builder):
             SyntaxWarning,
             ctx.file,
             node.lineno + ctx.lineno_offset,
-            module="taichi",
+            module="gs_taichi",
         )
 
     @staticmethod

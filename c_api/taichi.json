@@ -1,19 +1,19 @@
 {
     "modules": [
         {
-            "name": "taichi/taichi_platform.h",
+            "name": "gs_taichi/taichi_platform.h",
             "is_built_in": true
         },
         {
-            "name": "taichi/taichi_core.h",
+            "name": "gs_taichi/taichi_core.h",
             "default_definitions": [
                 {
                     "name": "TI_C_API_VERSION"
                 }
             ],
-            "doc": "taichi/taichi_core.h.md",
+            "doc": "gs_taichi/taichi_core.h.md",
             "required_modules": [
-                "taichi/taichi_platform.h"
+                "gs_taichi/taichi_platform.h"
             ],
             "declarations": [
                 {
@@ -1089,9 +1089,9 @@
             ]
         },
         {
-            "name": "taichi/taichi_cpu.h",
+            "name": "gs_taichi/taichi_cpu.h",
             "required_modules": [
-                "taichi/taichi_core.h"
+                "gs_taichi/taichi_core.h"
             ],
             "declarations": [
                 {
@@ -1128,9 +1128,9 @@
             ]
         },
         {
-            "name": "taichi/taichi_cuda.h",
+            "name": "gs_taichi/taichi_cuda.h",
             "required_modules": [
-                "taichi/taichi_core.h"
+                "gs_taichi/taichi_core.h"
             ],
             "declarations": [
                 {
@@ -1167,10 +1167,10 @@
             ]
         },
         {
-            "name": "taichi/taichi_vulkan.h",
-            "doc": "taichi/taichi_vulkan.h.md",
+            "name": "gs_taichi/taichi_vulkan.h",
+            "doc": "gs_taichi/taichi_vulkan.h.md",
             "required_modules": [
-                "taichi/taichi_core.h"
+                "gs_taichi/taichi_core.h"
             ],
             "declarations": [
                 {
@@ -1434,9 +1434,9 @@
             ]
         },
         {
-            "name": "taichi/taichi_opengl.h",
+            "name": "gs_taichi/taichi_opengl.h",
             "required_modules": [
-                "taichi/taichi_core.h"
+                "gs_taichi/taichi_core.h"
             ],
             "declarations": [
                 {
@@ -1599,9 +1599,9 @@
             ]
         },
         {
-            "name": "taichi/taichi_metal.h",
+            "name": "gs_taichi/taichi_metal.h",
             "required_modules": [
-                "taichi/taichi_core.h"
+                "gs_taichi/taichi_core.h"
             ],
             "declarations": [
                 {
@@ -1760,9 +1760,9 @@
             ]
         },
         {
-            "name": "taichi/taichi_unity.h",
+            "name": "gs_taichi/taichi_unity.h",
             "required_modules": [
-                "taichi/taichi_core.h"
+                "gs_taichi/taichi_core.h"
             ],
             "declarations": [
                 {

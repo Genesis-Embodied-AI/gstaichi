@@ -69,7 +69,7 @@ def _ios_compile(build_dir: str) -> None:
     build_path.mkdir(parents=True, exist_ok=True)
 
     cmake("-G", "Xcode", "-B", build_path, *defines, ".")
-    cmake("--build", build_path, "-t", "taichi_c_api")
+    cmake("--build", build_path, "-t", "gs_taichi_c_api")
 
 
 @banner("Prelink Taichi iOS C-API Static Library")
