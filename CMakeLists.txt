@@ -4,7 +4,7 @@
 
 cmake_minimum_required(VERSION 3.17)
 
-project(taichi)
+project(gs_taichi)
 
 include("cmake/utils.cmake")
 
@@ -114,7 +114,7 @@ if (WIN32)
   message("CMAKE_MSVC_RUNTIME_LIBRARY: ${CMAKE_MSVC_RUNTIME_LIBRARY}")
 endif()
 
-# No support of Python for Android build; or in any case taichi is integrated
+# No support of Python for Android build; or in any case gs_taichi is integrated
 # in another project as submodule.
 set(PYBIND11_VERSION "2.13.6" CACHE STRING "Pybind11 version to use")
 option(TI_WITH_PYTHON "Build with Python language binding" ON)
@@ -204,8 +204,8 @@ endif()
 configure_file(gs_taichi/common/version.h.in ${CMAKE_SOURCE_DIR}/gs_taichi/common/version.h)
 configure_file(gs_taichi/common/commit_hash.h.in ${CMAKE_SOURCE_DIR}/gs_taichi/common/commit_hash.h)
 
-option(TI_WITH_C_API "build taichi runtime c-api library" ON)  # wheel-tag: aot
-option(TI_WITH_STATIC_C_API "build static taichi runtime c-api library" OFF)  # wheel-tag: static_aot
+option(TI_WITH_C_API "build gs_taichi runtime c-api library" ON)  # wheel-tag: aot
+option(TI_WITH_STATIC_C_API "build static gs_taichi runtime c-api library" OFF)  # wheel-tag: static_aot
 
 if(TI_WITH_STATIC_C_API)
     set(TI_WITH_C_API ${TI_WITH_STATIC_C_API})

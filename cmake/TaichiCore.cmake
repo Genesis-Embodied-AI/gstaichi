@@ -19,7 +19,7 @@ set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 # Suppress warnings from submodules introduced by the above symbol visibility change
 set(CMAKE_POLICY_DEFAULT_CMP0063 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
-set(INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/python/taichi/_lib)
+set(INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/python/gs_taichi/_lib)
 
 if (TI_WITH_AMDGPU AND TI_WITH_CUDA)
     message(WARNING "Compiling CUDA and AMDGPU backends simultaneously")
@@ -100,13 +100,13 @@ endif()
 
 if (TI_WITH_CUDA)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTI_WITH_CUDA")
-  file(GLOB TAICHI_CUDA_RUNTIME_SOURCE "taichi/runtime/cuda/runtime.cpp")
+  file(GLOB TAICHI_CUDA_RUNTIME_SOURCE "gs_taichi/runtime/cuda/runtime.cpp")
   list(APPEND TAICHI_CORE_SOURCE ${TAICHI_CUDA_RUNTIME_SOURCE})
 endif()
 
 if (TI_WITH_AMDGPU)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTI_WITH_AMDGPU")
-  file(GLOB TAICHI_AMDGPU_RUNTIME_SOURCE "taichi/runtime/amdgpu/runtime.cpp")
+  file(GLOB TAICHI_AMDGPU_RUNTIME_SOURCE "gs_taichi/runtime/amdgpu/runtime.cpp")
   list(APPEND TAIHI_CORE_SOURCE ${TAICHI_AMDGPU_RUNTIME_SOURCE})
 endif()
 
@@ -132,7 +132,7 @@ endif ()
 
 add_subdirectory(gs_taichi/rhi)
 
-set(CORE_LIBRARY_NAME taichi_core)
+set(CORE_LIBRARY_NAME gs_taichi_core)
 add_library(${CORE_LIBRARY_NAME} OBJECT ${TAICHI_CORE_SOURCE})
 
 target_include_directories(${CORE_LIBRARY_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
