@@ -7,9 +7,9 @@ on:
         required: true
         type: string
     secrets:
-      AWS_ACCESS_KEY_ID:
+      AWS_STORAGE_ACCESS_KEY_ID:
         required: true
-      AWS_SECRET_ACCESS_KEY:
+      AWS_STORAGE_SECRET_ACCESS_KEY:
         required: true
   workflow_dispatch:
 jobs:
