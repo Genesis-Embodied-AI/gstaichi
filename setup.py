@@ -255,10 +255,10 @@ def sign_development_for_apple_m1():
     """
     if sys.platform == "darwin" and platform.machine() == "arm64":
         try:
-            for path in glob.glob("gs_python/taichi/_lib/core/*.so"):
+            for path in glob.glob("python/gs_taichi/_lib/core/*.so"):
                 print(f"signing {path}..")
                 subprocess.check_call(["codesign", "--force", "--deep", "--sign", "-", path])
-            for path in glob.glob("gs_python/taichi/_lib/c_api/lib/*.so"):
+            for path in glob.glob("python/gs_taichi/_lib/c_api/lib/*.so"):
                 print(f"signing {path}..")
                 subprocess.check_call(["codesign", "--force", "--deep", "--sign", "-", path])
         except:

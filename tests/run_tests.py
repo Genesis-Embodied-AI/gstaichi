@@ -39,7 +39,7 @@ def _test_python(args, default_dir="python"):
         pytest_args += ["--reruns", args.rerun]
     try:
         if args.coverage:
-            pytest_args += ["--cov-branch", "--cov=python/taichi"]
+            pytest_args += ["--cov-branch", "--cov=python/gs_taichi"]
         if args.cov_append:
             pytest_args += ["--cov-append"]
         if args.keys:

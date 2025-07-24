@@ -189,7 +189,7 @@ function(install_taichi_c_api INSTALL_NAME TAICHI_C_API_INSTALL_DIR)
 endfunction()
 
 if (TI_WITH_PYTHON)
-  install_taichi_c_api(PyTaichi python/taichi/_lib/c_api)
+  install_taichi_c_api(PyTaichi python/gs_taichi/_lib/c_api)
 else()
   install_taichi_c_api(Distribute c_api)
 endif()

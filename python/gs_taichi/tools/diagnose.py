@@ -109,9 +109,9 @@ def main():
         print(f"{ti_cuda_test.decode()}")
 
     try:
-        ti_laplace = subprocess.check_output([executable, "-m", "taichi", "example", "minimal"])
+        ti_laplace = subprocess.check_output([executable, "-m", "gs_taichi", "example", "minimal"])
     except Exception as e:
-        print(f"`python/taichi/examples/algorithm/laplace.py` failed: {e}")
+        print(f"`python/gs_taichi/examples/algorithm/laplace.py` failed: {e}")
     else:
         print(f"{ti_laplace.decode()}")
 

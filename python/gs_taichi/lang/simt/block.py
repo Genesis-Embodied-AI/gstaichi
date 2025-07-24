@@ -3,7 +3,7 @@
 from gs_taichi._lib import core as _ti_core
 from gs_taichi.lang import impl
 from gs_taichi.lang.expr import make_expr_group
-from gs_taichi.lang.util import gs_taichi_scope
+from gs_taichi.lang.util import taichi_scope
 
 
 def arch_uses_spv(arch):
