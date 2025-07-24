@@ -55,7 +55,9 @@ jobs:
     name: Windows wheel upload
     runs-on: ubuntu-22.04
     needs: win_build
-    environment: aws_storage
+    environment:
+      name: aws_storage
+      url:
     strategy:
       matrix:
         PYTHON_CP_VERSION: ["cp310", "cp311", "cp312", "cp313"]

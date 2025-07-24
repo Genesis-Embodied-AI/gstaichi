@@ -41,7 +41,9 @@ jobs:
     name: Mac wheel upload
     runs-on: ubuntu-22.04
     needs: build_mac_14_15
-    environment: aws_storage
+    environment:
+      name: aws_storage
+      url:
     strategy:
       matrix:
         MAC_OS_VERSION: [15]
