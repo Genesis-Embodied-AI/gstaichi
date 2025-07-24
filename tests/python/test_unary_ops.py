@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 import gs_taichi as ti
-from taichi.lang.exception import TaichiTypeError
+from gs_taichi.lang.exception import TaichiTypeError
 from tests import test_utils
 
 

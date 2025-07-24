@@ -2,7 +2,7 @@ import numpy as np
 from pytest import approx
 
 import gs_taichi as ti
-from taichi.lang.misc import get_host_arch_list
+from gs_taichi.lang.misc import get_host_arch_list
 from tests import test_utils
 
 

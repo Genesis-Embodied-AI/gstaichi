@@ -1,7 +1,7 @@
 import pytest
 
 import gs_taichi as ti
-from taichi.types.enums import AutodiffMode
+from gs_taichi.types.enums import AutodiffMode
 from tests import test_utils
 
 

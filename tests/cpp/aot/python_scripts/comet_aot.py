@@ -3,7 +3,7 @@ import math
 import os
 
 import gs_taichi as ti
-from taichi.lang.impl import grouped
+from gs_taichi.lang.impl import grouped
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--arch", type=str)

@@ -6,7 +6,7 @@ import requests
 from PIL import Image
 
 import gs_taichi as ti
-from taichi.lang import impl
+from gs_taichi.lang import impl
 from tests import test_utils
 
 supported_archs_texture = [ti.vulkan]

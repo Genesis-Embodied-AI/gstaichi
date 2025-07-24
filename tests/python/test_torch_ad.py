@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 import gs_taichi as ti
-from taichi.lang.util import has_pytorch
+from gs_taichi.lang.util import has_pytorch
 from tests import test_utils
 
 if has_pytorch():

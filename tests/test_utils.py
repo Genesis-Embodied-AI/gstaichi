@@ -10,9 +10,9 @@ import numpy as np
 import pytest
 
 import gs_taichi as ti
-from taichi._lib import core as _ti_core
-from taichi.lang import cpu, cuda, dx11, gles, gpu, metal, opengl, vulkan
-from taichi.lang.misc import is_arch_supported
+from gs_taichi._lib import core as _ti_core
+from gs_taichi.lang import cpu, cuda, dx11, gles, gpu, metal, opengl, vulkan
+from gs_taichi.lang.misc import is_arch_supported
 
 
 # Helper functions
@@ -285,7 +285,7 @@ def test(arch=None, exclude=None, require=None, **options):
 
 def torch_op(*, output_shapes=[(1,)]):
     def inner(f):
-        from taichi.lang.util import has_pytorch
+        from gs_taichi.lang.util import has_pytorch
 
         if has_pytorch():
             import torch

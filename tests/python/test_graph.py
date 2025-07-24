@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 import gs_taichi as ti
-from taichi.lang.exception import TaichiCompilationError
+from gs_taichi.lang.exception import TaichiCompilationError
 from tests import test_utils
 
 supported_floating_types = [ti.f32] if platform.system() == "Darwin" else [ti.f32, ti.f64]

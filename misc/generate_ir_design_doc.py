@@ -2,7 +2,7 @@ import os
 
 import yaml
 
-from taichi.core import settings
+from gs_taichi.core import settings
 
 
 def extract_doc(doc_filename=None):

@@ -6,8 +6,8 @@ import numpy as np
 import pytest
 
 import gs_taichi as ti
-from taichi.lang import impl
-from taichi.lang.misc import get_host_arch_list
+from gs_taichi.lang import impl
+from gs_taichi.lang.misc import get_host_arch_list
 from tests import test_utils
 
 data_types = [ti.i32, ti.f32, ti.i64, ti.f64]

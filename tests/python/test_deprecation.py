@@ -4,7 +4,7 @@ import tempfile
 import pytest
 
 import gs_taichi as ti
-from taichi._lib import core as _ti_core
+from gs_taichi._lib import core as _ti_core
 from tests import test_utils
 
 

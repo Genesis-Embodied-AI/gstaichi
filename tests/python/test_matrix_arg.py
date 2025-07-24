@@ -41,7 +41,7 @@ def test_vector_arg():
 
 @test_utils.test()
 def test_matrix_fancy_arg():
-    from taichi.math import mat3, vec3
+    from gs_taichi.math import mat3, vec3
 
     mat4x3 = ti.types.matrix(4, 3, float)
     mat2x6 = ti.types.matrix(2, 6, float)

@@ -1,5 +1,5 @@
 import gs_taichi as ti
-from taichi.types.enums import SNodeGradType
+from gs_taichi.types.enums import SNodeGradType
 from tests import test_utils
 
 

@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 import gs_taichi as ti
-from taichi.math import vec4
+from gs_taichi.math import vec4
 from tests import test_utils
 
 

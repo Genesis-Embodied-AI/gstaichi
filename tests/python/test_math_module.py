@@ -3,7 +3,7 @@ import errno
 import pytest
 
 import gs_taichi as ti
-from taichi.math import inf, isinf, isnan, nan, pi, vdir
+from gs_taichi.math import inf, isinf, isnan, nan, pi, vdir
 from tests import test_utils
 
 

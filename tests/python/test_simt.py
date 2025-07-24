@@ -3,7 +3,7 @@ import pytest
 from pytest import approx
 
 import gs_taichi as ti
-from taichi.lang.simt import subgroup
+from gs_taichi.lang.simt import subgroup
 from tests import test_utils
 
 

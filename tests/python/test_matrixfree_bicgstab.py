@@ -3,7 +3,7 @@ import math
 import pytest
 
 import gs_taichi as ti
-from taichi.linalg import LinearOperator, MatrixFreeBICGSTAB
+from gs_taichi.linalg import LinearOperator, MatrixFreeBICGSTAB
 from tests import test_utils
 
 vk_on_mac = (ti.vulkan, "Darwin")

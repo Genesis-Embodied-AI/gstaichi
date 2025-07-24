@@ -7,9 +7,9 @@ import pytest
 from pytest import approx
 
 import gs_taichi as ti
-from taichi.lang import impl
-from taichi.lang.exception import TaichiCompilationError, TaichiTypeError
-from taichi.lang.misc import get_host_arch_list
+from gs_taichi.lang import impl
+from gs_taichi.lang.exception import TaichiCompilationError, TaichiTypeError
+from gs_taichi.lang.misc import get_host_arch_list
 from tests import test_utils
 
 matrix_operation_types = [operator.add, operator.sub, operator.matmul]

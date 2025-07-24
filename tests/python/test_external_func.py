@@ -6,7 +6,7 @@ import tempfile
 import pytest
 
 import gs_taichi as ti
-from taichi.lang.util import has_clangpp
+from gs_taichi.lang.util import has_clangpp
 from tests import test_utils
 
 

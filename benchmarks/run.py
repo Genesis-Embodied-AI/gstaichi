@@ -4,7 +4,7 @@ import warnings
 from suite_microbenchmarks import MicroBenchmark
 from utils import datatime_with_format, dump2json
 
-from taichi._lib import core as ti_python_core
+from gs_taichi._lib import core as ti_python_core
 
 benchmark_suites = [MicroBenchmark]
 

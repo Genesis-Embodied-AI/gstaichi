@@ -11,7 +11,7 @@ from unittest.mock import patch
 import pytest
 
 import gs_taichi as ti
-from taichi._main import TaichiMain
+from gs_taichi._main import TaichiMain
 from tests import test_utils
 
 

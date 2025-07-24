@@ -37,7 +37,7 @@ std::string runtime_lib_dir() {
         !ti_lib_dir,
         "If you are running the taichi_cpp_tests please set $TI_LIB_DIR "
         "to $TAICHI_INSTALL_DIR/_lib/runtime. $TAICHI_INSTALL_DIR can be "
-        "retrieved from taichi.__path__[0] in python. You can also use this "
+        "retrieved from gs_taichi.__path__[0] in python. You can also use this "
         "script to find out $TI_LIB_DIR:\n\n"
         "python -c \"import os; import gs_taichi as ti; p = "
         "os.path.join(ti.__path__[0], '_lib', 'runtime'); print(p)\"");

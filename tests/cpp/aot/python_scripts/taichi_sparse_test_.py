@@ -2,7 +2,7 @@ import argparse
 import os
 
 import gs_taichi as ti
-from taichi.examples.patterns import gs_taichi_logo
+from gs_taichi.examples.patterns import gs_taichi_logo
 
 ti.init(arch=ti.cuda, debug=True)
 

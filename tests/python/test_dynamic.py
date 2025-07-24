@@ -1,7 +1,7 @@
 import pytest
 
 import gs_taichi as ti
-from taichi.lang.exception import TaichiCompilationError
+from gs_taichi.lang.exception import TaichiCompilationError
 from tests import test_utils
 
 
