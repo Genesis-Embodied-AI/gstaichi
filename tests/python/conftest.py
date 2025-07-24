@@ -68,6 +68,8 @@ def wanted_arch(request, req_arch, req_options):
             else:
                 # Serial tests run without aggressive resource optimization
                 req_options = {"device_memory_GB": 1, **req_options}
+        if "print_full_traceback" not in req_options:
+            req_options["print_full_traceback"] = True
         ti.init(arch=req_arch, enable_fallback=False, **req_options)
     yield
     if req_arch is not None:

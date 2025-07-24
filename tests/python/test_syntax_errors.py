@@ -283,7 +283,7 @@ def test_redefining_template_args():
         foo(1)
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_break_in_outermost_for():
     @ti.kernel
     def foo():

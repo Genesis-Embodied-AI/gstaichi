@@ -149,7 +149,7 @@ def test_numpy_3d():
                 assert a[i, j, k] == i * j * (k + 1) + i + j + k * 2
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_numpy_3d_error():
     val = ti.field(ti.i32)
 

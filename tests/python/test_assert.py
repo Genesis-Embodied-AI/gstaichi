@@ -122,7 +122,7 @@ def test_assert_with_check_oob():
     func()
 
 
-@test_utils.test(arch=get_host_arch_list())
+@test_utils.test(arch=get_host_arch_list(), print_full_traceback=False)
 def test_static_assert_message():
     x = 3
 
