@@ -70,7 +70,6 @@ def wanted_arch(request, req_arch, req_options):
                 req_options = {"device_memory_GB": 1, **req_options}
         if "print_full_traceback" not in req_options:
             req_options["print_full_traceback"] = True
-        print("req_options", req_options)
         ti.init(arch=req_arch, enable_fallback=False, **req_options)
     yield
     if req_arch is not None:
