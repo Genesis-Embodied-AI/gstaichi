@@ -57,11 +57,11 @@ __pycache__
 !docs/**/*.jpg
 !docs/**/*.png
 !tests/python/expected/*.png
-!python/taichi/examples/algorithm/circle-packing/*.png
+!python/gs_taichi/examples/algorithm/circle-packing/*.png
 *.egg-info
 .tlang_cache
-/taichi/common/version.h
-/taichi/common/commit_hash.h
+/gs_taichi/common/version.h
+/gs_taichi/common/commit_hash.h
 /python/test_env
 /CHANGELOG.md
 /.coverage
