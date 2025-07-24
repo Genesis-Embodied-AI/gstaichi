@@ -119,13 +119,13 @@ jobs:
     with:
       head_ref: ${{ github.head_ref || github.ref_name }}
     secrets:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_STORAGE_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_STORAGE_SECRET_ACCESS_KEY }}
+      AWS_STORAGE_ACCESS_KEY_ID: ${{ secrets.AWS_STORAGE_ACCESS_KEY_ID }}
+      AWS_STORAGE_SECRET_ACCESS_KEY: ${{ secrets.AWS_STORAGE_SECRET_ACCESS_KEY }}
   pyright_linter:
     uses: ./.github/workflows/pyright_linter.yml
     needs: upload_to_storage
     with:
       head_ref: ${{ github.head_ref  || github.ref_name }}
     secrets:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_STORAGE_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_STORAGE_SECRET_ACCESS_KEY }}
+      AWS_STORAGE_ACCESS_KEY_ID: ${{ secrets.AWS_STORAGE_ACCESS_KEY_ID }}
+      AWS_STORAGE_SECRET_ACCESS_KEY: ${{ secrets.AWS_STORAGE_SECRET_ACCESS_KEY }}
