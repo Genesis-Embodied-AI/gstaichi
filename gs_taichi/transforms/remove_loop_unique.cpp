@@ -38,4 +38,4 @@ bool remove_loop_unique(IRNode *root) {
 
 }  // namespace irpass
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

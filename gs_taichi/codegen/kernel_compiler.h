@@ -26,4 +26,4 @@ class KernelCompiler {
   virtual ~KernelCompiler() = default;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

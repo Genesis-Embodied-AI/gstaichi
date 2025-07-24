@@ -31,4 +31,4 @@ class KernelCodeGenCPU : public KernelCodeGen {
 #endif  // TI_WITH_LLVM
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

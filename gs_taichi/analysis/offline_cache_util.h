@@ -19,4 +19,4 @@ std::string get_hashed_offline_cache_key(const CompileConfig &config,
                                          Kernel *kernel);
 void gen_offline_cache_key(IRNode *ast, std::ostream *os);
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

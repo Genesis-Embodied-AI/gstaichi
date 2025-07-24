@@ -85,4 +85,4 @@ void ScalarPointerLowerer::run() {
   }
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

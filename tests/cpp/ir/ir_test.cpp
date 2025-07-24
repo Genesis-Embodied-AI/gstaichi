@@ -42,4 +42,4 @@ TEST(Block, EraseRange) {
 }
 
 }  // namespace
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

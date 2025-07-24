@@ -143,4 +143,4 @@ TEST_F(BLSAnalyzerTest, Shl) {
 }
 
 }  // namespace
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

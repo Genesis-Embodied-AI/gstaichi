@@ -136,4 +136,4 @@ struct ModuleData {
 };
 
 }  // namespace aot
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

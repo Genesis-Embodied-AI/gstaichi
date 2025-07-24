@@ -18,4 +18,4 @@ class TestProgram {
   std::unique_ptr<Program> prog_{nullptr};
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

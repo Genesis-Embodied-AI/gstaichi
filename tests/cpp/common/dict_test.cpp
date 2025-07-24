@@ -31,4 +31,4 @@ TEST(Dict, Config) {
   EXPECT_EQ(dict.get<std::string>("str"), "Hello");
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

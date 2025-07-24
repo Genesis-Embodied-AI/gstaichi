@@ -264,4 +264,4 @@ bool cache_loop_invariant_global_vars(IRNode *root,
   return CacheLoopInvariantGlobalVars::run(root, config);
 }
 }  // namespace irpass
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

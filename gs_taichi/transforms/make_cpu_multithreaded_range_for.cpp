@@ -166,4 +166,4 @@ void make_cpu_multithreaded_range_for(IRNode *root,
 
 }  // namespace irpass
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

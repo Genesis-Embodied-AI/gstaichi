@@ -28,4 +28,4 @@ void make_lazy_place(SNode *snode,
                      const std::function<void(std::unique_ptr<SNode> &,
                                               std::vector<Expr> &)> &collect);
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

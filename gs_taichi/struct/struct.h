@@ -23,4 +23,4 @@ class StructCompiler {
   virtual void run(SNode &node) = 0;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

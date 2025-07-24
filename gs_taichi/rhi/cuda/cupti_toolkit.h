@@ -43,4 +43,4 @@ class CuptiToolkit {
   CuptiImage cupti_image_;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

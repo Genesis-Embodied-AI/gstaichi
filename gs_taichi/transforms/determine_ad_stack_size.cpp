@@ -28,4 +28,4 @@ bool determine_ad_stack_size(IRNode *root, const CompileConfig &config) {
 
 }  // namespace irpass
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

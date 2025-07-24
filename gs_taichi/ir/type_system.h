@@ -301,4 +301,4 @@ class Operations {
   static void init_internals();
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

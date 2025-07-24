@@ -25,4 +25,4 @@ TEST(SNodeTree, GetSNodeToRootMapping) {
   }
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

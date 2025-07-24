@@ -33,4 +33,4 @@ class KernelCodeGenDX12 : public KernelCodeGen {
 #endif
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

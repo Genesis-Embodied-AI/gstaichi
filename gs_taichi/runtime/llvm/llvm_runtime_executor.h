@@ -164,6 +164,6 @@ class LlvmRuntimeExecutor {
   KernelProfilerBase *profiler_ = nullptr;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 
 #endif  // TI_WITH_LLVM

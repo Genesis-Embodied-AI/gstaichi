@@ -140,4 +140,4 @@ class LaunchContextBuilder {
       argpack_ptrs;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

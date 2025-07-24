@@ -100,4 +100,4 @@ TEST_F(BinaryOpSimplifyTest, ModPOT) {
   EXPECT_EQ(ir_block->statements[3]->as<ReturnStmt>()->values[0], bin_op);
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

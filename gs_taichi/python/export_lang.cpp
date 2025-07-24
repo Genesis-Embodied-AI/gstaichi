@@ -46,7 +46,7 @@ namespace gs_taichi::lang {
 
 std::string libdevice_path();
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 
 namespace gs_taichi {
 void export_lang(py::module &m) {

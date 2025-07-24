@@ -610,4 +610,4 @@ void lower_matrix_ptr(IRNode *root, bool force_scalarize) {
 
 }  // namespace irpass
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

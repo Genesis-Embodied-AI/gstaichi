@@ -17,4 +17,4 @@ std::vector<uint8_t> validate_and_sign(
     std::vector<uint8_t> &input_dxil_container);
 
 }  // namespace directx12
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

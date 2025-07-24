@@ -102,4 +102,4 @@ LLVMCompiledKernel KernelCodeGen::compile_kernel_to_module() {
 }
 
 #endif
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

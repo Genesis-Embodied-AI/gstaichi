@@ -156,4 +156,4 @@ bool unreachable_code_elimination(IRNode *root) {
 }
 }  // namespace irpass
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

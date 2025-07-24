@@ -103,4 +103,4 @@ uint64 SNodeRwAccessorsBank::Accessors::read_uint(const std::vector<int> &I) {
   return launch_ctx.get_struct_ret_uint({0});
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

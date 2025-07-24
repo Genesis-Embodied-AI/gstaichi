@@ -100,4 +100,4 @@ inline WindowsSecurityAttributes::~WindowsSecurityAttributes() {
 #endif  //_WIN64
 
 }  // namespace vulkan
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -17,4 +17,4 @@ void KernelLauncher::launch_kernel(
 }
 
 }  // namespace LLVM
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

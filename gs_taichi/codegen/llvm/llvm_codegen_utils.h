@@ -219,4 +219,4 @@ class RuntimeObject {
   }
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

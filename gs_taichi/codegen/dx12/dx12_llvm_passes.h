@@ -29,7 +29,7 @@ std::vector<uint8_t> global_optimize_module(llvm::Module *module,
 extern const char *NumWorkGroupsCBName;
 
 }  // namespace directx12
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 
 namespace llvm {
 class ModulePass;

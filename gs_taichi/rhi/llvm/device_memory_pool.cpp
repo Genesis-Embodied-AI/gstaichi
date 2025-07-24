@@ -138,4 +138,4 @@ DeviceMemoryPool &DeviceMemoryPool::get_instance(bool merge_upon_release) {
   return *cuda_memory_pool;
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

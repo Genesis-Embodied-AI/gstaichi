@@ -50,4 +50,4 @@ class CompiledKernelData : public lang::CompiledKernelData {
 
 }  // namespace spirv
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

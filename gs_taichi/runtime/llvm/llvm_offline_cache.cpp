@@ -433,4 +433,4 @@ LlvmOfflineCache::KernelCacheData::convert_to_llvm_ckd_data() const {
   return result;
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

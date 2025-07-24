@@ -84,4 +84,4 @@ class KernelCodeGen {
   TaichiLLVMContext &tlctx_;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

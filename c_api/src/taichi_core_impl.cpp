@@ -251,7 +251,7 @@ TiRuntime ti_create_runtime(TiArch arch, uint32_t device_index) {
   switch (arch) {
 #ifdef TI_WITH_VULKAN
     case TI_ARCH_VULKAN: {
-      taichi::lang::vulkan::set_vulkan_visible_device(
+      gs_taichi::lang::vulkan::set_vulkan_visible_device(
           std::to_string(device_index));
       VulkanRuntimeOwned *vulkan_runtime;
       if (is_ci()) {

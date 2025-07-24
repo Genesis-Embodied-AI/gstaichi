@@ -199,4 +199,4 @@ std::string get_hashed_offline_cache_key(const CompileConfig &config,
   return res;
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

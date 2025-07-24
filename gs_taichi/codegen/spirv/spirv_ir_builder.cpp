@@ -1710,4 +1710,4 @@ Value IRBuilder::make_access_chain(const SType &out_type,
 }
 
 }  // namespace spirv
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

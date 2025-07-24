@@ -34,4 +34,4 @@ class Matrix {
   intptr_t data_{};
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

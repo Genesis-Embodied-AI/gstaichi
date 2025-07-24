@@ -44,4 +44,4 @@ std::string Function::get_name() const {
   return func_key.get_full_name();
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

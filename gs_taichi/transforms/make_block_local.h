@@ -14,4 +14,4 @@ class MakeBlockLocalPass : public Pass {
   };
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

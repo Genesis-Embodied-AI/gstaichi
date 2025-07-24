@@ -61,4 +61,4 @@ class SNodeRwAccessorsBank {
   std::unordered_map<const SNode *, RwKernels> snode_to_kernels_;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

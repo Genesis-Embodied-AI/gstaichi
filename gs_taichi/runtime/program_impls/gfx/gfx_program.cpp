@@ -84,4 +84,4 @@ DeviceCapabilityConfig GfxProgramImpl::get_device_caps() {
   return runtime_->get_ti_device()->get_caps();
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

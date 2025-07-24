@@ -144,4 +144,4 @@ TEST(LlvmAotTest, CudaField) {
 #endif
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -116,4 +116,4 @@ TEST(LlvmAotTest, CudaDynamic) {
 #endif
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

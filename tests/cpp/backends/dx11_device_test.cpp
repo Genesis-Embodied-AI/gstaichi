@@ -8,7 +8,7 @@
 #include "gs_taichi/runtime/program_impls/dx/dx_program.h"
 #include "tests/cpp/program/test_program.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 namespace directx11 {
 
 TEST(Dx11DeviceCreationTest, CreateDeviceAndAllocateMemory) {
@@ -157,6 +157,6 @@ TEST(Dx11ProgramTest, MaterializeRuntimeTest) {
 }
 
 }  // namespace directx11
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 
 #endif

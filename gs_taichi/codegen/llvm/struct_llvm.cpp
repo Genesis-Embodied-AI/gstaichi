@@ -323,4 +323,4 @@ llvm::Function *StructCompilerLLVM::create_function(llvm::FunctionType *ft,
                                 *module);
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

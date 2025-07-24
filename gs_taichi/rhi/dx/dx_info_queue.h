@@ -5,7 +5,7 @@
 #include "gs_taichi/rhi/device.h"
 #include <d3d11.h>
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 namespace directx11 {
 
 class Dx11InfoQueue {
@@ -33,6 +33,6 @@ class Dx11InfoQueue {
 };
 
 }  // namespace directx11
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 
 #endif

@@ -42,7 +42,7 @@ The following cache variables may also be set:
 ``Taichi_Runtime_VERSION``
   Taichi runtime library version.
 ``Taichi_Runtime_INCLUDE_DIR``
-  The directory containing ``taichi/taichi.h``.
+  The directory containing ``gs_taichi/taichi.h``.
 ``Taichi_Runtime_LIBRARY``
   Path to linking library of ``Taichi_Runtime``.
 ``Taichi_Runtime_REDIST_LIBRARY``
@@ -69,7 +69,7 @@ endif()
 # New installation location after 2022-03-11.
 if(NOT EXISTS "${TAICHI_C_API_INSTALL_DIR}" AND EXISTS "${Python_EXECUTABLE}")
     message("-- Looking for Taichi libraries via Python package installation (v2)")
-    execute_process(COMMAND ${Python_EXECUTABLE} -c "import sys; import pathlib; print([pathlib.Path(x + '/taichi/_lib/c_api').resolve() for x in sys.path if pathlib.Path(x + '/taichi/_lib/c_api').exists()][0], end='')" OUTPUT_VARIABLE TAICHI_C_API_INSTALL_DIR)
+    execute_process(COMMAND ${Python_EXECUTABLE} -c "import sys; import pathlib; print([pathlib.Path(x + '/gs_taichi/_lib/c_api').resolve() for x in sys.path if pathlib.Path(x + '/gs_taichi/_lib/c_api').exists()][0], end='')" OUTPUT_VARIABLE TAICHI_C_API_INSTALL_DIR)
 endif()
 # If the user didn't specity the environment variable, try find the C-API
 # library in Python wheel.

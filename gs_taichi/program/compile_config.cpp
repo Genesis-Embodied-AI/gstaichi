@@ -75,4 +75,4 @@ void CompileConfig::fit() {
   offline_cache::disable_offline_cache_if_needed(this);
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

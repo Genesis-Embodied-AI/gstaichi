@@ -65,4 +65,4 @@ void AotModuleBuilder::add_graph(const std::string &name,
   }
   graphs_[name] = graph;
 }
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

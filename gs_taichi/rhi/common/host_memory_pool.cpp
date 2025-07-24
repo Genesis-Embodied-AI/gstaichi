@@ -132,4 +132,4 @@ HostMemoryPool &HostMemoryPool::get_instance() {
   return *memory_pool;
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -55,4 +55,4 @@ TEST(IRPromotionTest, TensorType) {
               ret_type->cast<TensorType>()->get_element_type()->is_primitive(
                   PrimitiveTypeID::f32));
 }
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

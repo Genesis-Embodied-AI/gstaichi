@@ -183,4 +183,4 @@ TEST_F(DetermineAdStackSizeTest, EmptyNodes) {
   EXPECT_EQ(stack->max_size, 2);
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

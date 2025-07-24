@@ -906,4 +906,4 @@ sifakis_svd_export(ASTBuilder *ast_builder, const Expr &mat, int num_iters) {
                          Sa11, Sa22, Sa33);
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

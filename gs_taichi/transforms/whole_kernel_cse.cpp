@@ -224,4 +224,4 @@ bool whole_kernel_cse(IRNode *root) {
 }
 }  // namespace irpass
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

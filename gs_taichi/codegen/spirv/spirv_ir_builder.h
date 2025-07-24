@@ -686,4 +686,4 @@ class IRBuilder {
   std::vector<uint32_t> function_;
 };
 }  // namespace spirv
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

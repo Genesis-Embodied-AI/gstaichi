@@ -772,7 +772,7 @@ Type::jsonserde_ptr_io(const T *&ptr,
     }
   }
 }
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 
 namespace gs_taichi::hashing {
 
@@ -787,4 +787,4 @@ struct Hasher<lang::AbstractDictionaryMember> {
   }
 };
 
-}  // namespace taichi::hashing
+}  // namespace gs_taichi::hashing

@@ -143,4 +143,4 @@ void CompiledGraph::init_runtime_context(
 }
 
 }  // namespace aot
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

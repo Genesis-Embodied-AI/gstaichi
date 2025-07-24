@@ -381,4 +381,4 @@ std::unique_ptr<JITSession> create_llvm_jit_session_cuda(
 }
 #endif
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

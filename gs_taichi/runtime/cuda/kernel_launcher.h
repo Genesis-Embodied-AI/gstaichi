@@ -28,4 +28,4 @@ class KernelLauncher : public LLVM::KernelLauncher {
 };
 
 }  // namespace cuda
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

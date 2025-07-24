@@ -201,4 +201,4 @@ DiffPtrResult value_diff_ptr_index(Stmt *val1, Stmt *val2) {
 
 }  // namespace analysis
 }  // namespace irpass
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

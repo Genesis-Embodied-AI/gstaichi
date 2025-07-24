@@ -296,4 +296,4 @@ class ExpressionHumanFriendlyPrinter : public ExpressionPrinter {
   }
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -144,4 +144,4 @@ std::unique_ptr<Stmt> clone(Stmt *root) {
 }
 }  // namespace irpass::analysis
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

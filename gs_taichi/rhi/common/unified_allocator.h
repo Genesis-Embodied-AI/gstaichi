@@ -38,4 +38,4 @@ class UnifiedAllocator {
   friend class HostMemoryPoolTestHelper;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

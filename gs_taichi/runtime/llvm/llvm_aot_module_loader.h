@@ -101,4 +101,4 @@ TI_DLL_EXPORT std::unique_ptr<aot::Module> make_aot_module(
     AotModuleParams mod_params);
 
 }  // namespace LLVM
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

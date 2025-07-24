@@ -359,4 +359,4 @@ class GLSurface : public Surface {
 };
 
 }  // namespace opengl
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

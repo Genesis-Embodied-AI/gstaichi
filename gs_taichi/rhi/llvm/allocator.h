@@ -28,4 +28,4 @@ class CachingAllocator {
   bool merge_upon_release_ = true;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

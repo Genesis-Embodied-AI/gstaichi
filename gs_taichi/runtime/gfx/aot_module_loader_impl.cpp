@@ -198,4 +198,4 @@ std::unique_ptr<aot::Module> make_aot_module(std::any mod_params,
 }
 
 }  // namespace gfx
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

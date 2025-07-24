@@ -1978,4 +1978,4 @@ Stmt *flatten_rvalue(Expr ptr, Expression::FlattenContext *ctx) {
   return ptr_stmt;
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

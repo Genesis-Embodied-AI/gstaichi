@@ -510,4 +510,4 @@ void run_mpm88_graph(Arch arch, gs_taichi::lang::Device *device_) {
   device_->dealloc_memory(devalloc_pos);
 }
 }  // namespace aot_test_utils
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

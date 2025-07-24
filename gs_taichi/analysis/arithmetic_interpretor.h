@@ -95,4 +95,4 @@ class ArithmeticInterpretor {
                                         const EvalContext &init_ctx) const;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -10,61 +10,61 @@
 #include "GLFW/glfw3.h"
 #endif  // ANDROID
 
-VulkanRuntime::VulkanRuntime() : GfxRuntime(taichi::Arch::vulkan) {
+VulkanRuntime::VulkanRuntime() : GfxRuntime(gs_taichi::Arch::vulkan) {
 }
-taichi::lang::vulkan::VulkanDevice &VulkanRuntime::get_vk() {
-  return static_cast<taichi::lang::vulkan::VulkanDevice &>(get());
+gs_taichi::lang::vulkan::VulkanDevice &VulkanRuntime::get_vk() {
+  return static_cast<gs_taichi::lang::vulkan::VulkanDevice &>(get());
 }
 
 VulkanRuntimeImported::Workaround::Workaround(
     uint32_t api_version,
-    const taichi::lang::vulkan::VulkanDevice::Params &params)
+    const gs_taichi::lang::vulkan::VulkanDevice::Params &params)
     : vk_device{} {
   // FIXME: This part is copied from `vulkan_runtime_creator.cpp` which should
   // be refactorized I guess.
-  if (!taichi::lang::vulkan::VulkanLoader::instance().init(
+  if (!gs_taichi::lang::vulkan::VulkanLoader::instance().init(
           params.get_proc_addr)) {
     throw std::runtime_error("Error loading vulkan");
   }
-  taichi::lang::vulkan::VulkanLoader::instance().load_instance(params.instance);
-  taichi::lang::vulkan::VulkanLoader::instance().load_device(params.device);
+  gs_taichi::lang::vulkan::VulkanLoader::instance().load_instance(params.instance);
+  gs_taichi::lang::vulkan::VulkanLoader::instance().load_device(params.device);
   vk_device.vk_caps().vk_api_version = api_version;
   // FIXME: (penguinliong) Workaround missing vulkan caps from import.
   vk_device.vk_caps().external_memory = true;
 
-  taichi::lang::DeviceCapabilityConfig caps{};
+  gs_taichi::lang::DeviceCapabilityConfig caps{};
 
   if (api_version >= VK_API_VERSION_1_2) {
-    caps.set(taichi::lang::DeviceCapability::spirv_version, 0x10500);
+    caps.set(gs_taichi::lang::DeviceCapability::spirv_version, 0x10500);
   } else if (api_version >= VK_API_VERSION_1_1) {
-    caps.set(taichi::lang::DeviceCapability::spirv_version, 0x10300);
+    caps.set(gs_taichi::lang::DeviceCapability::spirv_version, 0x10300);
   } else {
-    caps.set(taichi::lang::DeviceCapability::spirv_version, 0x10000);
+    caps.set(gs_taichi::lang::DeviceCapability::spirv_version, 0x10000);
   }
 
   // (penguinliong) Will bring it back after devcap.
   /*
   if (api_version > VK_API_VERSION_1_0) {
-    caps.set(taichi::lang::DeviceCapability::spirv_has_physical_storage_buffer,
+    caps.set(gs_taichi::lang::DeviceCapability::spirv_has_physical_storage_buffer,
              true);
   }
   */
 
   vk_device.set_caps(std::move(caps));
   vk_device.init_vulkan_structs(
-      const_cast<taichi::lang::vulkan::VulkanDevice::Params &>(params));
+      const_cast<gs_taichi::lang::vulkan::VulkanDevice::Params &>(params));
 }
 VulkanRuntimeImported::VulkanRuntimeImported(
     uint32_t api_version,
-    const taichi::lang::vulkan::VulkanDevice::Params &params)
+    const gs_taichi::lang::vulkan::VulkanDevice::Params &params)
     : inner_(api_version, params),
-      gfx_runtime_(taichi::lang::gfx::GfxRuntime::Params{&inner_.vk_device}) {
+      gfx_runtime_(gs_taichi::lang::gfx::GfxRuntime::Params{&inner_.vk_device}) {
 }
-taichi::lang::Device &VulkanRuntimeImported::get() {
-  return static_cast<taichi::lang::Device &>(inner_.vk_device);
+gs_taichi::lang::Device &VulkanRuntimeImported::get() {
+  return static_cast<gs_taichi::lang::Device &>(inner_.vk_device);
 }
 
-taichi::lang::vulkan::VulkanDeviceCreator::Params
+gs_taichi::lang::vulkan::VulkanDeviceCreator::Params
 make_vulkan_runtime_creator_params() {
 #ifdef ANDROID
   const std::vector<std::string> extensions = {
@@ -88,13 +88,13 @@ make_vulkan_runtime_creator_params() {
 #endif  // ANDROID
 
   // FIXME: (penguinliong) Vulkan runtime should be created outside.
-  taichi::lang::vulkan::VulkanDeviceCreator::Params params{};
+  gs_taichi::lang::vulkan::VulkanDeviceCreator::Params params{};
   params.api_version = std::nullopt;
   params.additional_instance_extensions = extensions;
   params.additional_device_extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
   return params;
 }
-taichi::lang::gfx::GfxRuntime &VulkanRuntimeImported::get_gfx_runtime() {
+gs_taichi::lang::gfx::GfxRuntime &VulkanRuntimeImported::get_gfx_runtime() {
   return gfx_runtime_;
 }
 
@@ -102,25 +102,25 @@ VulkanRuntimeOwned::VulkanRuntimeOwned()
     : VulkanRuntimeOwned(make_vulkan_runtime_creator_params()) {
 }
 VulkanRuntimeOwned::VulkanRuntimeOwned(
-    const taichi::lang::vulkan::VulkanDeviceCreator::Params &params)
+    const gs_taichi::lang::vulkan::VulkanDeviceCreator::Params &params)
     : vk_device_creator_(params),
       gfx_runtime_(
-          taichi::lang::gfx::GfxRuntime::Params{vk_device_creator_.device()}) {
+          gs_taichi::lang::gfx::GfxRuntime::Params{vk_device_creator_.device()}) {
 }
-taichi::lang::Device &VulkanRuntimeOwned::get() {
-  return *static_cast<taichi::lang::Device *>(vk_device_creator_.device());
+gs_taichi::lang::Device &VulkanRuntimeOwned::get() {
+  return *static_cast<gs_taichi::lang::Device *>(vk_device_creator_.device());
 }
-taichi::lang::gfx::GfxRuntime &VulkanRuntimeOwned::get_gfx_runtime() {
+gs_taichi::lang::gfx::GfxRuntime &VulkanRuntimeOwned::get_gfx_runtime() {
   return gfx_runtime_;
 }
 
-TiImage VulkanRuntime::allocate_image(const taichi::lang::ImageParams &params) {
-  taichi::lang::DeviceAllocation devalloc =
+TiImage VulkanRuntime::allocate_image(const gs_taichi::lang::ImageParams &params) {
+  gs_taichi::lang::DeviceAllocation devalloc =
       get_gfx_runtime().create_image(params);
   return devalloc2devimg(*this, devalloc);
 }
 void VulkanRuntime::free_image(TiImage image) {
-  taichi::lang::DeviceAllocation devimg = devimg2devalloc(*this, image);
+  gs_taichi::lang::DeviceAllocation devimg = devimg2devalloc(*this, image);
   get_vk().destroy_image(devimg);
   get_gfx_runtime().untrack_image(devimg);
 }
@@ -145,7 +145,7 @@ TiRuntime ti_create_vulkan_runtime_ext(uint32_t api_version,
     TI_CAPI_ARGUMENT_NULL_RV(device_extensions);
   }
 
-  taichi::lang::vulkan::VulkanDeviceCreator::Params params;
+  gs_taichi::lang::vulkan::VulkanDeviceCreator::Params params;
   params.api_version = api_version;
   params.is_for_ui = false;
   params.additional_instance_extensions.reserve(instance_extension_count);
@@ -175,7 +175,7 @@ TiRuntime ti_import_vulkan_runtime(
   TI_CAPI_ARGUMENT_NULL_RV(interop_info->physical_device);
   TI_CAPI_ARGUMENT_NULL_RV(interop_info->device);
 
-  taichi::lang::vulkan::VulkanDevice::Params params{};
+  gs_taichi::lang::vulkan::VulkanDevice::Params params{};
   params.get_proc_addr = interop_info->get_instance_proc_addr;
   params.instance = interop_info->instance;
   params.physical_device = interop_info->physical_device;
@@ -197,7 +197,7 @@ void ti_export_vulkan_runtime(TiRuntime runtime,
   TI_CAPI_ARGUMENT_NULL(interop_info);
 
   Runtime *runtime2 = (Runtime *)runtime;
-  taichi::lang::vulkan::VulkanDevice &vk_device =
+  gs_taichi::lang::vulkan::VulkanDevice &vk_device =
       static_cast<VulkanRuntime *>(runtime2)->get_vk();
   interop_info->get_instance_proc_addr = vkGetInstanceProcAddr;
   interop_info->api_version = vk_device.vk_caps().vk_api_version;
@@ -224,12 +224,12 @@ TiMemory ti_import_vulkan_memory(
   TI_CAPI_INVALID_INTEROP_ARCH_RV(((Runtime *)runtime)->arch, vulkan);
 
   Runtime *runtime2 = (Runtime *)runtime;
-  taichi::lang::vulkan::VulkanDevice &vk_runtime =
+  gs_taichi::lang::vulkan::VulkanDevice &vk_runtime =
       static_cast<VulkanRuntime *>(runtime2)->get_vk();
 
   vkapi::IVkBuffer buffer = vkapi::create_buffer(
       vk_runtime.vk_device(), interop_info->buffer, interop_info->usage);
-  taichi::lang::DeviceAllocation devalloc = vk_runtime.import_vkbuffer(
+  gs_taichi::lang::DeviceAllocation devalloc = vk_runtime.import_vkbuffer(
       buffer, interop_info->size, interop_info->memory, interop_info->offset);
   out = devalloc2devmem(*runtime2, devalloc);
   TI_CAPI_TRY_CATCH_END();
@@ -244,7 +244,7 @@ void ti_export_vulkan_memory(TiRuntime runtime,
   TI_CAPI_INVALID_INTEROP_ARCH(((Runtime *)runtime)->arch, vulkan);
 
   VulkanRuntime *runtime2 = ((Runtime *)runtime)->as_vk();
-  taichi::lang::DeviceAllocation devalloc = devmem2devalloc(*runtime2, memory);
+  gs_taichi::lang::DeviceAllocation devalloc = devmem2devalloc(*runtime2, memory);
   vkapi::IVkBuffer buffer = runtime2->get_vk().get_vkbuffer(devalloc);
 
   auto [vk_mem, offset, size] =
@@ -268,7 +268,7 @@ TiImage ti_import_vulkan_image(TiRuntime runtime,
   TI_CAPI_INVALID_INTEROP_ARCH_RV(((Runtime *)runtime)->arch, vulkan);
 
   Runtime *runtime2 = ((Runtime *)runtime)->as_vk();
-  taichi::lang::vulkan::VulkanDevice &vk_runtime =
+  gs_taichi::lang::vulkan::VulkanDevice &vk_runtime =
       static_cast<VulkanRuntime *>(runtime2)->get_vk();
 
   bool is_depth = interop_info->format == VK_FORMAT_D16_UNORM ||
@@ -303,10 +303,10 @@ TiImage ti_import_vulkan_image(TiRuntime runtime,
   vkapi::IVkImageView image_view =
       vkapi::create_image_view(vk_runtime.vk_device(), image, &view_info);
 
-  taichi::lang::DeviceAllocation image2 =
+  gs_taichi::lang::DeviceAllocation image2 =
       vk_runtime.import_vk_image(image, image_view, layout);
 
-  taichi::lang::ImageLayout layout2 = (taichi::lang::ImageLayout)layout;
+  gs_taichi::lang::ImageLayout layout2 = (gs_taichi::lang::ImageLayout)layout;
   static_cast<VulkanRuntime *>(runtime2)->track_image(image2, layout2);
 
   out = devalloc2devimg(*runtime2, image2);
@@ -325,7 +325,7 @@ void ti_export_vulkan_image(TiRuntime runtime,
 
   VulkanRuntime *runtime2 = ((Runtime *)runtime)->as_vk();
 
-  taichi::lang::DeviceAllocation devalloc = devimg2devalloc(*runtime2, image);
+  gs_taichi::lang::DeviceAllocation devalloc = devimg2devalloc(*runtime2, image);
   vkapi::IVkImage image2 =
       std::get<0>(runtime2->get_vk().get_vk_image(devalloc));
   interop_info->image = image2->image;

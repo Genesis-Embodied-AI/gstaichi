@@ -76,4 +76,4 @@ class GraphBuilder {
   std::vector<std::unique_ptr<Node>> all_nodes_;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

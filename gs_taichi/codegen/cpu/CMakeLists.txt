@@ -13,5 +13,5 @@ target_include_directories(cpu_codegen
     ${LLVM_INCLUDE_DIRS}
   )
 
-target_link_libraries(cpu_codegen PRIVATE taichi_util)
+target_link_libraries(cpu_codegen PRIVATE gs_taichi_util)
 target_link_libraries(cpu_codegen PRIVATE cpu_runtime)

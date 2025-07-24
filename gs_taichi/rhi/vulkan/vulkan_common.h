@@ -46,4 +46,4 @@ namespace vulkan {
 inline constexpr VkAllocationCallbacks *kNoVkAllocCallbacks = nullptr;
 
 }  // namespace vulkan
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

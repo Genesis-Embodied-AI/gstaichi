@@ -39,4 +39,4 @@ class LlvmAotModuleBuilder : public AotModuleBuilder {
   LlvmProgramImpl *prog_ = nullptr;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

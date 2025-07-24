@@ -11,4 +11,4 @@ void memcpy_cpu_to_vulkan_via_staging(DevicePtr dst,
                                       DevicePtr src,
                                       uint64_t size);
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

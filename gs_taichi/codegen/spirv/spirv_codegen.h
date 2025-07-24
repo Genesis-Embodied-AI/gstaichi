@@ -41,4 +41,4 @@ class KernelCodegen {
 };
 
 }  // namespace spirv
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

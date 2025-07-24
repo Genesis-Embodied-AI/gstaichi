@@ -37,4 +37,4 @@ if(TI_WITH_VULKAN)
       )
 endif()
 
-target_link_libraries(${COMMON_RHI} PRIVATE taichi_util)
+target_link_libraries(${COMMON_RHI} PRIVATE gs_taichi_util)

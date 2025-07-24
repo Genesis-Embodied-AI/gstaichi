@@ -21,4 +21,4 @@ Stmt *generate_div(VecStatement *stmts, Stmt *x, int y) {
   return stmts->push_back<BinaryOpStmt>(BinaryOpType::div, x, const_stmt);
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

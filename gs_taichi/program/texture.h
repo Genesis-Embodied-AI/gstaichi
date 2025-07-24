@@ -69,4 +69,4 @@ class TI_DLL_EXPORT Texture {
   Program *prog_{nullptr};
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

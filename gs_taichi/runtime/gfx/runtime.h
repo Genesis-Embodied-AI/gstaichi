@@ -180,4 +180,4 @@ GfxRuntime::RegisterParams run_codegen(
     const CompileConfig &compile_config);
 
 }  // namespace gfx
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

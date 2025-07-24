@@ -171,4 +171,4 @@ class CudaDevice : public LlvmDevice {
 
 }  // namespace cuda
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

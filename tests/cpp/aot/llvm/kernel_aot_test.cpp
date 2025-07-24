@@ -135,4 +135,4 @@ TEST(LlvmAotTest, DX12Kernel) {
 }
 #endif
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

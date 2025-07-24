@@ -33,4 +33,4 @@ bool cfg_optimization(
 }
 }  // namespace irpass
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

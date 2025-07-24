@@ -12,4 +12,4 @@ void StructCompiler::collect_snodes(SNode &snode) {
   }
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

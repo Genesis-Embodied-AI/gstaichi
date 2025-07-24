@@ -877,4 +877,4 @@ void VulkanDeviceCreator::create_logical_device(bool manual_create) {
 }
 
 }  // namespace vulkan
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

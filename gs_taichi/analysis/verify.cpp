@@ -152,4 +152,4 @@ void verify(IRNode *root) {
 }
 }  // namespace irpass::analysis
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

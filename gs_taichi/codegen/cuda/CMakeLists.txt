@@ -13,5 +13,5 @@ target_include_directories(cuda_codegen
     ${LLVM_INCLUDE_DIRS}
   )
 
-target_link_libraries(cuda_codegen PRIVATE taichi_util)
+target_link_libraries(cuda_codegen PRIVATE gs_taichi_util)
 target_link_libraries(cuda_codegen PRIVATE cuda_runtime)

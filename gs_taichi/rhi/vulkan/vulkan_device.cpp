@@ -2864,4 +2864,4 @@ VulkanStream::~VulkanStream() {
 }
 
 }  // namespace vulkan
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

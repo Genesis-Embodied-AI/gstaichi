@@ -6,7 +6,7 @@
 #include "gs_taichi/runtime/gfx/snode_tree_manager.h"
 #include "gs_taichi/runtime/program_impls/gfx/gfx_program.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 
 class Dx11ProgramImpl : public GfxProgramImpl {
  public:
@@ -16,6 +16,6 @@ class Dx11ProgramImpl : public GfxProgramImpl {
                            uint64 **result_buffer_ptr) override;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 
 #endif

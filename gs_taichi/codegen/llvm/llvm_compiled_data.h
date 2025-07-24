@@ -61,4 +61,4 @@ struct LLVMCompiledKernel {
   TI_IO_DEF(tasks);
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

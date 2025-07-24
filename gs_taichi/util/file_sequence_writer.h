@@ -7,7 +7,7 @@
 
 namespace gs_taichi::lang {
 class IRNode;
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 
 namespace gs_taichi {
 

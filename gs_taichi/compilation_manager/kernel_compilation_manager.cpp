@@ -284,4 +284,4 @@ CacheData::CacheMode KernelCompilationManager::get_cache_mode(
              : CacheData::MemCache;
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

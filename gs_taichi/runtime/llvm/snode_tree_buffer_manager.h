@@ -28,4 +28,4 @@ class SNodeTreeBufferManager {
   std::map<int, DeviceAllocation> snode_tree_id_to_device_alloc_;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

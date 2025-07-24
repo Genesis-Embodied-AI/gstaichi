@@ -2140,4 +2140,4 @@ std::vector<std::unique_ptr<Stmt>> get_const_stmt_with_value(DataType dt,
   }
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

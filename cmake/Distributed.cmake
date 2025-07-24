@@ -18,6 +18,6 @@ add_compile_options(--target=${TRIPLET})
 add_compile_options(-Wno-parentheses-equality)
 
 # False alarm caused by macro expansion
-# taichi/python/export_lang.cpp:1241
+# gs_taichi/python/export_lang.cpp:1241
 # MAKE_SPARSE_MATRIX(32, ColMajor, f)
 add_compile_options(-Wno-self-assign-overloaded)

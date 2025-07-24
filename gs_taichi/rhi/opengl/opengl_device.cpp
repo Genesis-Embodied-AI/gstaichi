@@ -1005,4 +1005,4 @@ void GLCommandList::CmdImageToBuffer::execute() {
 }
 
 }  // namespace opengl
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

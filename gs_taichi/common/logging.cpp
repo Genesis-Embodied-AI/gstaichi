@@ -132,4 +132,4 @@ Logger &Logger::get_instance() {
   return *l;
 }
 
-}  // namespace taichi
+}  // namespace gs_taichi

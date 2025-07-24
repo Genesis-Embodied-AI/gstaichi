@@ -209,4 +209,4 @@ void compile_taichi_functions(IRNode *ir,
                               Function::IRStage target_stage);
 }  // namespace irpass
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

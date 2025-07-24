@@ -248,4 +248,4 @@ RhiResult Device::readback_data(
   return RhiResult::success;
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

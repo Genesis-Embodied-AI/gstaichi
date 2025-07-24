@@ -52,4 +52,4 @@ class StructCompilerLLVM : public StructCompiler, public LLVMModuleBuilder {
   int snode_tree_id_;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

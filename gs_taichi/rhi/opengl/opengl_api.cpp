@@ -272,4 +272,4 @@ std::shared_ptr<Device> make_opengl_device() {
 }
 
 }  // namespace opengl
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

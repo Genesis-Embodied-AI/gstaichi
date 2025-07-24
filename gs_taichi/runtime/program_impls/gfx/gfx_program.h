@@ -95,4 +95,4 @@ class GfxProgramImpl : public ProgramImpl {
   std::vector<spirv::CompiledSNodeStructs> aot_compiled_snode_structs_;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

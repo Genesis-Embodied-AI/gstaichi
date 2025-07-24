@@ -173,4 +173,4 @@ TEST(AliasAnalysis, ExternalPtr_GradDiff) {
 
 }  // namespace analysis
 }  // namespace irpass
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

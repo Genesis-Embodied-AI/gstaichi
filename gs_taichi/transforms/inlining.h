@@ -11,4 +11,4 @@ class InliningPass : public Pass {
   struct Args {};
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -213,4 +213,4 @@ std::unique_ptr<JITSession> create_llvm_jit_session_cpu(
                                          target_info.first, target_info.second);
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

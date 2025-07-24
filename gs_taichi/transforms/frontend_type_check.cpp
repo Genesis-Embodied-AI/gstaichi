@@ -205,4 +205,4 @@ void frontend_type_check(IRNode *root) {
 
 }  // namespace irpass
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -111,4 +111,4 @@ void handle_external_ptr_boundary(IRNode *root, const CompileConfig &config) {
 
 }  // namespace irpass
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

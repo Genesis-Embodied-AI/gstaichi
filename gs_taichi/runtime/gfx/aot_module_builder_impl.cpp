@@ -126,4 +126,4 @@ void AotModuleBuilderImpl::add_per_backend_tmpl(const std::string &identifier,
 }
 
 }  // namespace gfx
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

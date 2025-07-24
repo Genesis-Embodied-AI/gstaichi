@@ -191,4 +191,4 @@ TEST_F(MakeBlockLocalTest, Basic) {
 }
 
 }  // namespace
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

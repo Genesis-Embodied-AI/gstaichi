@@ -55,4 +55,4 @@ class BLSAnalyzer : public BasicStmtVisitor {
   bool analysis_ok_{true};
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

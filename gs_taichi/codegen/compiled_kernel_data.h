@@ -142,4 +142,4 @@ class CompiledKernelData {
   mutable std::optional<KernelLaunchHandle> kernel_launch_handle_;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

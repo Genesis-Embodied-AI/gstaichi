@@ -10,7 +10,7 @@
 namespace gs_taichi::lang {
 class LlvmRuntimeExecutor;
 struct CompileConfig;
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 
 namespace capi {
 

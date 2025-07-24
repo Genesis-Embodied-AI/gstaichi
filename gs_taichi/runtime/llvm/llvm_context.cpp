@@ -1166,4 +1166,4 @@ TaichiLLVMContext::get_struct_type_with_data_layout(const StructType *old_ty,
 
 TI_REGISTER_TASK(make_slim_libdevice);
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

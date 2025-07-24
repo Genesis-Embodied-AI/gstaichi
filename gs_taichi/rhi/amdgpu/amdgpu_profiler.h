@@ -74,4 +74,4 @@ class EventToolkitAMDGPU {
     return base_event_;
   }
 };
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

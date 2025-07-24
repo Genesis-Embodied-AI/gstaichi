@@ -305,4 +305,4 @@ bool try_demangle_name(const std::string &mangled_name,
 std::size_t clean_offline_cache_files(const std::string &path);
 
 }  // namespace offline_cache
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

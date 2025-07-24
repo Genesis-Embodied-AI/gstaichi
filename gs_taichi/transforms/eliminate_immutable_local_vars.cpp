@@ -67,4 +67,4 @@ void eliminate_immutable_local_vars(IRNode *root) {
 
 }  // namespace irpass
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

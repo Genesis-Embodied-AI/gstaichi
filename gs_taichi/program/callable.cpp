@@ -181,4 +181,4 @@ void Callable::finalize_params() {
   std::tie(args_type, args_size) =
       program->get_struct_type_with_data_layout(type, layout);
 }
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

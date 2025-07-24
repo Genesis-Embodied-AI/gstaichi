@@ -23,4 +23,4 @@ std::vector<uint8_t> validate_and_sign(
 }
 
 }  // namespace directx12
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

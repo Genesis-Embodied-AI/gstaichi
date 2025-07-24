@@ -56,4 +56,4 @@ class FieldImpl : public aot::Field {
 };
 
 }  // namespace llvm_aot
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

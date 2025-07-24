@@ -186,4 +186,4 @@ class ControlFlowGraph {
   void determine_ad_stack_size(int default_ad_stack_size);
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

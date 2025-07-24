@@ -264,4 +264,4 @@ TEST(Serialization, JsonSerde) {
 }
 
 }  // namespace
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

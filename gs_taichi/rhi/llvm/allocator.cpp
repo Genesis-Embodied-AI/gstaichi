@@ -67,4 +67,4 @@ void CachingAllocator::release(size_t sz, uint64_t *ptr) {
   }
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

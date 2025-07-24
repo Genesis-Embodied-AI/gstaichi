@@ -13,4 +13,4 @@ namespace gs_taichi::lang::window_system {
 bool glfw_context_acquire();
 void glfw_context_release();
 
-}  // namespace taichi::lang::window_system
+}  // namespace gs_taichi::lang::window_system

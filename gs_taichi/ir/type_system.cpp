@@ -393,4 +393,4 @@ void Operations::init_internals() {
 #undef PLAIN_OP
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

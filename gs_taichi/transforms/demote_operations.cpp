@@ -316,4 +316,4 @@ bool demote_operations(IRNode *root, const CompileConfig &config) {
 
 }  // namespace irpass
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

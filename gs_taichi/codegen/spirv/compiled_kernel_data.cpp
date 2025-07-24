@@ -74,4 +74,4 @@ CompiledKernelData::Err CompiledKernelData::str2src(
 }
 
 }  // namespace spirv
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

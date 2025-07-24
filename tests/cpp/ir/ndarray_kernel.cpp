@@ -47,4 +47,4 @@ std::unique_ptr<Kernel> setup_kernel2(Program *prog) {
   ker2->finalize_rets();
   return ker2;
 }
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

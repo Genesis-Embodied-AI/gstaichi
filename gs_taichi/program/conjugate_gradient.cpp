@@ -91,4 +91,4 @@ std::unique_ptr<CUCG> make_cucg_solver(SparseMatrix &A,
                                        bool verbose) {
   return std::make_unique<CUCG>(A, max_iters, tol, verbose);
 }
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

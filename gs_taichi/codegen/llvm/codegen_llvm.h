@@ -436,6 +436,6 @@ class TaskCodeGenLLVM : public IRVisitor, public LLVMModuleBuilder {
   virtual std::tuple<llvm::Value *, llvm::Value *> get_spmd_info() = 0;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 
 #endif  // #ifdef TI_WITH_LLVM

@@ -33,4 +33,4 @@ class KernelCompiler : public lang::KernelCompiler {
 };
 
 }  // namespace spirv
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -301,4 +301,4 @@ class IRBuilder {
   InsertPoint insert_point_;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

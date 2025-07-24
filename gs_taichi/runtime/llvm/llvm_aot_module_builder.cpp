@@ -76,4 +76,4 @@ LLVMCompiledKernel LlvmAotModuleBuilder::compile_kernel(Kernel *kernel) {
       .compiled_data.clone();
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

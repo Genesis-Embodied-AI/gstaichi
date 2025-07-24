@@ -565,4 +565,4 @@ TEST_F(ConstantFoldTest, BinaryAtan2) {
   EXPECT_EQ(ir->as<Block>()->statements[1]->as<ConstStmt>()->val.val_float(),
             0.);
 }
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

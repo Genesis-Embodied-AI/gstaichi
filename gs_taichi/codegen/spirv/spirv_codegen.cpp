@@ -2810,4 +2810,4 @@ void KernelCodegen::run(TaichiKernelAttributes &kernel_attribs,
 }
 
 }  // namespace spirv
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

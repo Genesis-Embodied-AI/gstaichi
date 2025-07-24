@@ -140,4 +140,4 @@ DataType ArgPack::get_element_dt(const std::vector<int> &i) const {
   return dt;
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

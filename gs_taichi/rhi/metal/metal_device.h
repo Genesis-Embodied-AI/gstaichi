@@ -583,4 +583,4 @@ class MetalDevice final : public GraphicsDevice {
 };
 
 }  // namespace metal
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -165,4 +165,4 @@ std::vector<uint8_t> global_optimize_module(llvm::Module *module,
 }
 
 }  // namespace directx12
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

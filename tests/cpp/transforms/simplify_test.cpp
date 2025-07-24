@@ -51,4 +51,4 @@ TEST(Simplify, SimplifyLinearizedWithTrivialInputs) {
   }
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

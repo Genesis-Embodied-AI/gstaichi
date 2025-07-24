@@ -121,4 +121,4 @@ inline std::string merge_printf_specifier(
   return res;
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

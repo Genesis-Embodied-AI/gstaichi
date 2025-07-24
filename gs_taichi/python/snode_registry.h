@@ -39,4 +39,4 @@ class SNodeRegistry {
   std::vector<std::unique_ptr<SNode>> snodes_;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

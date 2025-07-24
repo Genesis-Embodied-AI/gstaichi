@@ -116,4 +116,4 @@ void gather_meshfor_relation_types(IRNode *node) {
 
 }  // namespace irpass::analysis
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

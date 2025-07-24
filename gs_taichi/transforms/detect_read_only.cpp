@@ -101,4 +101,4 @@ detect_external_ptr_access_in_task(OffloadedStmt *offload) {
 
 }  // namespace irpass
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

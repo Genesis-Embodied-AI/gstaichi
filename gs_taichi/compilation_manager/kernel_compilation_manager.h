@@ -108,4 +108,4 @@ class KernelCompilationManager final {
   std::vector<KernelCacheData *> updated_data_;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

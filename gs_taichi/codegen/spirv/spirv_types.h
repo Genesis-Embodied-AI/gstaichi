@@ -244,4 +244,4 @@ std::unordered_map<const tinyir::Node *, uint32_t> ir_translate_to_spirv(
     IRBuilder *spir_builder);
 
 }  // namespace spirv
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

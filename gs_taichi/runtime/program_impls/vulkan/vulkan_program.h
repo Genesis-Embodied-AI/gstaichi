@@ -57,4 +57,4 @@ class VulkanProgramImpl : public GfxProgramImpl {
  private:
   std::unique_ptr<vulkan::VulkanDeviceCreator> embedded_device_{nullptr};
 };
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -34,4 +34,4 @@ TEST(HostMemoryPool, AllocateMemory) {
   HostMemoryPoolTestHelper::setDefaultAllocatorSize(oldAllocatorSize);
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

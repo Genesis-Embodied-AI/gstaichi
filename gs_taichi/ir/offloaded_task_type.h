@@ -14,4 +14,4 @@ enum class OffloadedTaskType : int {
 
 std::string offloaded_task_type_name(OffloadedTaskType tt);
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

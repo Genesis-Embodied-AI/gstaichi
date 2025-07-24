@@ -100,4 +100,4 @@ void make_lazy_place(SNode *snode,
   }
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

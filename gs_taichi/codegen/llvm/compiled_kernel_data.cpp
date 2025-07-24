@@ -79,4 +79,4 @@ CompiledKernelData::Err CompiledKernelData::dump_impl(
 }
 
 }  // namespace LLVM
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

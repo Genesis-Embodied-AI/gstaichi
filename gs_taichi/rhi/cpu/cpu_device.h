@@ -143,4 +143,4 @@ class CpuDevice : public LlvmDevice {
 
 }  // namespace cpu
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

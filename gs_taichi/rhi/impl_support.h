@@ -191,4 +191,4 @@ class NonAssignable {
 };
 
 }  // namespace rhi_impl
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -103,4 +103,4 @@ enum class TextureOpType : int {
 
 std::string texture_op_type_name(TextureOpType type);
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

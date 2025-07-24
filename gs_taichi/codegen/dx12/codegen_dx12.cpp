@@ -280,4 +280,4 @@ LLVMCompiledTask KernelCodeGenDX12::compile_task(
   return gen.run_compilation();
 }
 #endif  // TI_WITH_LLVM
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -131,4 +131,4 @@ TEST(DiffRangeTest, Shl) {
 
 }  // namespace analysis
 }  // namespace irpass
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -184,4 +184,4 @@ class ExpressionVisitor {
     visitor->visit(this);                            \
   }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

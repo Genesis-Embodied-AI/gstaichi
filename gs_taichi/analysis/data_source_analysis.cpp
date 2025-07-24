@@ -69,4 +69,4 @@ stmt_refs get_store_destination(Stmt *store_stmt, bool get_aliased) noexcept {
 
 }  // namespace irpass::analysis
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

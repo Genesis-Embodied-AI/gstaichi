@@ -21,4 +21,4 @@ std::shared_ptr<Device> create_metal_device() {
 }
 
 }  // namespace metal
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

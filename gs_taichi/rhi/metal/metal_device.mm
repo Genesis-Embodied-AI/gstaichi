@@ -1510,4 +1510,4 @@ void MetalDevice::memcpy_internal(DevicePtr dst, DevicePtr src, uint64_t size) {
 }
 
 } // namespace metal
-} // namespace taichi::lang
+} // namespace gs_taichi::lang

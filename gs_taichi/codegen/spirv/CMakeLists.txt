@@ -23,7 +23,7 @@ target_include_directories(spirv_codegen
     ${LLVM_INCLUDE_DIRS}
   )
 
-target_link_libraries(spirv_codegen PRIVATE taichi_util)
+target_link_libraries(spirv_codegen PRIVATE gs_taichi_util)
 # NOTE: SPIRV-Tools-opt must come before SPIRV-Tools
 # https://github.com/KhronosGroup/SPIRV-Tools/issues/1569#issuecomment-390250792
 target_link_libraries(spirv_codegen PRIVATE SPIRV-Tools-opt ${SPIRV_TOOLS})

@@ -201,4 +201,4 @@ DeviceAllocation CudaDevice::import_memory(void *ptr, size_t size) {
 }
 
 }  // namespace cuda
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

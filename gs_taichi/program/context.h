@@ -27,5 +27,5 @@ struct RuntimeContext {
 };
 
 #if defined(TI_RUNTIME_HOST)
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 #endif

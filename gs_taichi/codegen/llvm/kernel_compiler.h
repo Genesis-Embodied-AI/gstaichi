@@ -28,4 +28,4 @@ class KernelCompiler : public lang::KernelCompiler {
 };
 
 }  // namespace LLVM
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

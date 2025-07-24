@@ -402,4 +402,4 @@ TypedConstant LaunchContextBuilder::fetch_ret_impl(int offset, const Type *dt) {
   }
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

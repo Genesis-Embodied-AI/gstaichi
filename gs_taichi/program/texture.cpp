@@ -277,4 +277,4 @@ Texture::~Texture() {
   }
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

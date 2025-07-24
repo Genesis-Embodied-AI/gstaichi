@@ -17,7 +17,7 @@ else()
 endif()
 endfunction()
 
-set(TAICHI_C_API_NAME taichi_c_api)
+set(TAICHI_C_API_NAME gs_taichi_c_api)
 list(APPEND C_API_SOURCE "c_api/src/taichi_core_impl.cpp")
 list(APPEND C_API_PUBLIC_HEADERS
   "c_api/include/gs_taichi/taichi_platform.h"
@@ -93,8 +93,8 @@ endif()
 target_include_directories(${TAICHI_C_API_NAME}
     PUBLIC
         # Used when building the library:
-        $<BUILD_INTERFACE:${taichi_c_api_BINARY_DIR}/c_api/include>
-        $<BUILD_INTERFACE:${taichi_c_api_SOURCE_DIR}/c_api/include>
+        $<BUILD_INTERFACE:${gs_taichi_c_api_BINARY_DIR}/c_api/include>
+        $<BUILD_INTERFACE:${gs_taichi_c_api_SOURCE_DIR}/c_api/include>
         # Used when installing the library:
         $<INSTALL_INTERFACE:c_api/include>
     PRIVATE
@@ -137,7 +137,7 @@ function(install_taichi_c_api INSTALL_NAME TAICHI_C_API_INSTALL_DIR)
       FILES
           "c_api/include/gs_taichi/cpp/taichi.hpp"
       DESTINATION
-          ${TAICHI_C_API_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/taichi/cpp
+          ${TAICHI_C_API_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/gs_taichi/cpp
   )
 
   # Install the target script.
@@ -148,7 +148,7 @@ function(install_taichi_c_api INSTALL_NAME TAICHI_C_API_INSTALL_DIR)
       FILES
           "cmake/TaichiTargets.cmake"
       DESTINATION
-          ${TAICHI_C_API_INSTALL_DIR}/taichi/${CMAKE_INSTALL_LIBDIR}/cmake/taichi
+          ${TAICHI_C_API_INSTALL_DIR}/gs_taichi/${CMAKE_INSTALL_LIBDIR}/cmake/taichi
   )
 
   # Generate the config file. Put it to the same dir as `TaichiTargets.cmake`.
@@ -156,7 +156,7 @@ function(install_taichi_c_api INSTALL_NAME TAICHI_C_API_INSTALL_DIR)
           "${PROJECT_SOURCE_DIR}/cmake/TaichiConfig.cmake.in"
           "${PROJECT_BINARY_DIR}/TaichiConfig.cmake"
       INSTALL_DESTINATION
-          ${TAICHI_C_API_INSTALL_DIR}/taichi/${CMAKE_INSTALL_LIBDIR}/cmake/taichi
+          ${TAICHI_C_API_INSTALL_DIR}/gs_taichi/${CMAKE_INSTALL_LIBDIR}/cmake/taichi
       )
 
   # Generate the config version file.
@@ -173,7 +173,7 @@ function(install_taichi_c_api INSTALL_NAME TAICHI_C_API_INSTALL_DIR)
           "${CMAKE_CURRENT_BINARY_DIR}/TaichiConfig.cmake"
           "${CMAKE_CURRENT_BINARY_DIR}/TaichiConfigVersion.cmake"
       DESTINATION
-          ${TAICHI_C_API_INSTALL_DIR}/taichi/${CMAKE_INSTALL_LIBDIR}/cmake/taichi
+          ${TAICHI_C_API_INSTALL_DIR}/gs_taichi/${CMAKE_INSTALL_LIBDIR}/cmake/taichi
       )
 
   if(TI_WITH_LLVM)
@@ -206,17 +206,17 @@ if(TI_WITH_STATIC_C_API)
 
     # *** This taichi_static_c_api is NOT an executable ***
     # We faked an executable target because cmake does not have intrinsic support for pre-linked library targets
-    add_executable(taichi_static_c_api ${C_API_SOURCE})
-    set_target_properties(taichi_static_c_api PROPERTIES ENABLE_EXPORTS ON)
+    add_executable(gs_taichi_static_c_api ${C_API_SOURCE})
+    set_target_properties(gs_taichi_static_c_api PROPERTIES ENABLE_EXPORTS ON)
 
     get_target_property(TAICHI_C_API_INCLUDE_DIRS ${TAICHI_C_API_NAME} INCLUDE_DIRECTORIES)
-    target_include_directories(taichi_static_c_api PRIVATE "${TAICHI_C_API_INCLUDE_DIRS}")
+    target_include_directories(gs_taichi_static_c_api PRIVATE "${TAICHI_C_API_INCLUDE_DIRS}")
 
-    target_link_libraries(taichi_static_c_api PRIVATE taichi_core_static)
+    target_link_libraries(gs_taichi_static_c_api PRIVATE gs_taichi_core_static)
 
     set(STATIC_LIB_LINK_OPTIONS "-Wl,-r")
     set(STATIC_LIB_LINK_OPTIONS "${STATIC_LIB_LINK_OPTIONS}" -Wl,-x)
     set(STATIC_LIB_LINK_OPTIONS "${STATIC_LIB_LINK_OPTIONS}" -Wl,-S)
     set(STATIC_LIB_LINK_OPTIONS "${STATIC_LIB_LINK_OPTIONS}" -Wl,-exported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/c_api/version_scripts/export_symbols_mac.lds)
-    target_link_options(taichi_static_c_api PRIVATE "${STATIC_LIB_LINK_OPTIONS}")
+    target_link_options(gs_taichi_static_c_api PRIVATE "${STATIC_LIB_LINK_OPTIONS}")
 endif()

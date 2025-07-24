@@ -93,4 +93,4 @@ std::unordered_set<Stmt *> gather_immutable_local_vars(IRNode *root) {
 
 }  // namespace irpass::analysis
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

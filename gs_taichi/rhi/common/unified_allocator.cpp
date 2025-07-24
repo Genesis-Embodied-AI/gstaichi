@@ -108,4 +108,4 @@ bool UnifiedAllocator::release(size_t sz, void *ptr) {
   return false;
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

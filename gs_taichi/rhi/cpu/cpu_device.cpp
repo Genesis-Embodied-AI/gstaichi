@@ -161,4 +161,4 @@ DeviceAllocation CpuDevice::import_memory(void *ptr, size_t size) {
 }
 
 }  // namespace cpu
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

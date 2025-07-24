@@ -818,4 +818,4 @@ class TI_DLL_EXPORT VulkanDevice : public GraphicsDevice {
 };
 
 }  // namespace vulkan
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

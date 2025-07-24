@@ -94,4 +94,4 @@ class TI_DLL_EXPORT VulkanDeviceCreator {
 };
 
 }  // namespace vulkan
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

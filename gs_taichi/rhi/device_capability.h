@@ -32,4 +32,4 @@ struct DeviceCapabilityConfig {
   // TI_IO_DEF(devcaps);
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -110,4 +110,4 @@ void gather_func_store_dests(IRNode *ir) {
 
 }  // namespace irpass::analysis
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

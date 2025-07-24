@@ -1,4 +1,4 @@
-# ./taichi/runtime/llvm/runtime_module/CMakeLists.txt
+# ./gs_taichi/runtime/llvm/runtime_module/CMakeLists.txt
 
 function(COMPILE_LLVM_RUNTIME rtm_arch)
     message(STATUS "Compiling LLVM byte code file for arch ${rtm_arch}")
@@ -10,7 +10,7 @@ function(COMPILE_LLVM_RUNTIME rtm_arch)
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
     add_dependencies(${CORE_LIBRARY_NAME} "generate_llvm_runtime_${rtm_arch}")
-    install(FILES "${CMAKE_SOURCE_DIR}/taichi/runtime/llvm/runtime_module/runtime_${arch}.bc" DESTINATION ${CMAKE_INSTALL_PREFIX}/python/gs_taichi/_lib/runtime)
+    install(FILES "${CMAKE_SOURCE_DIR}/gs_taichi/runtime/llvm/runtime_module/runtime_${arch}.bc" DESTINATION ${CMAKE_INSTALL_PREFIX}/python/gs_taichi/_lib/runtime)
 
 endfunction()
 
@@ -21,7 +21,7 @@ function(COMPILE_CUSTOM_CUDA_LIBRARY cuda_path)
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
     add_dependencies(${CORE_LIBRARY_NAME} "generate_cuda_library")
-    install(FILES "${CMAKE_SOURCE_DIR}/taichi/runtime/llvm/runtime_module/cuda_runtime-cuda-nvptx64-nvidia-cuda-sm_60.bc" DESTINATION ${CMAKE_INSTALL_PREFIX}/python/gs_taichi/_lib/runtime)
+    install(FILES "${CMAKE_SOURCE_DIR}/gs_taichi/runtime/llvm/runtime_module/cuda_runtime-cuda-nvptx64-nvidia-cuda-sm_60.bc" DESTINATION ${CMAKE_INSTALL_PREFIX}/python/gs_taichi/_lib/runtime)
 
 endfunction()
 

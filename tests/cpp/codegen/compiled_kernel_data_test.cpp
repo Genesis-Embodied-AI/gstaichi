@@ -182,4 +182,4 @@ TEST(CompiledKernelDataTest, Error) {
   }
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

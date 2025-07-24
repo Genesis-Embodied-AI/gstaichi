@@ -52,4 +52,4 @@ gather_statement_usages(IRNode *root) {
 
 }  // namespace irpass::analysis
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

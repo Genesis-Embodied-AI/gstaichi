@@ -25,7 +25,7 @@ namespace fs = std::filesystem;
 #include "gs_taichi/program/compile_config.h"
 #include "gs_taichi/program/program.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 namespace {
 
 static llvm::Triple get_host_target_triple() {
@@ -197,7 +197,7 @@ INSTANTIATE_TEST_SUITE_P(Format,
                          testing::Values(Format::LL, Format::BC));
 
 }  // namespace
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 
 #endif  // #if defined(TI_PLATFORM_LINUX) || defined(TI_PLATFORM_WINDOWS)
 #endif  // #ifdef TI_WITH_LLVM

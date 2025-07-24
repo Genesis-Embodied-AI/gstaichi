@@ -58,4 +58,4 @@ TEST_F(ExtractConstantTest, ExtractConstant) {
   EXPECT_EQ(ir_block->size(), 4);
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -70,4 +70,4 @@ class CompiledKernelData : public lang::CompiledKernelData {
 
 }  // namespace LLVM
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

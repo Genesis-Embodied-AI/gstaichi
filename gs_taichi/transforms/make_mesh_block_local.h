@@ -69,4 +69,4 @@ class MakeMeshBlockLocal : public Pass {
   int mapping_dtype_size_{0};
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

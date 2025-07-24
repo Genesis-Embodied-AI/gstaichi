@@ -181,4 +181,4 @@ class TI_DLL_EXPORT Callable : public CallableBase {
   std::stack<std::string> temp_argpack_name_stack_;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

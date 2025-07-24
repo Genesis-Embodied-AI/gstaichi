@@ -209,4 +209,4 @@ std::unique_ptr<CompiledKernelData> CompiledKernelData::create(Arch arch,
   return nullptr;
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -65,4 +65,4 @@ class TI_DLL_EXPORT Kernel : public Callable {
   mutable std::string kernel_key_;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -585,4 +585,4 @@ void ImmediateIRModifier::replace_usages_with(Stmt *old_stmt, Stmt *new_stmt) {
   }
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

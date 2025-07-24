@@ -11,8 +11,8 @@ namespace gs_taichi::lang {
 
 #if TI_WITH_VULKAN && defined(TI_WITH_LLVM)
 
-using namespace taichi::lang::vulkan;
-using namespace taichi::lang::cpu;
+using namespace gs_taichi::lang::vulkan;
+using namespace gs_taichi::lang::cpu;
 
 void memcpy_cpu_to_vulkan(DevicePtr dst, DevicePtr src, uint64_t size) {
   // Note that `dst` must point to host-visible memory, if `dst` point to
@@ -69,4 +69,4 @@ void memcpy_cpu_to_vulkan_via_staging(DevicePtr dst,
 }
 #endif  // TI_WITH_VULKAN
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

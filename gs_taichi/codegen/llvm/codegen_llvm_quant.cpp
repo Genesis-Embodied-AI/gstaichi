@@ -588,6 +588,6 @@ llvm::Value *TaskCodeGenLLVM::reconstruct_quant_float(
   }
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 
 #endif  // #ifdef TI_WITH_LLVM

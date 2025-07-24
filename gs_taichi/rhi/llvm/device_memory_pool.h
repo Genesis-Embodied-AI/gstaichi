@@ -39,4 +39,4 @@ class TI_DLL_EXPORT DeviceMemoryPool {
   bool merge_upon_release_ = true;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

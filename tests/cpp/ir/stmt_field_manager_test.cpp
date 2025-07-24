@@ -73,4 +73,4 @@ TEST(StmtFieldManager, TestStmtFieldManagerWithVector) {
   EXPECT_EQ(a->field_manager.equal(c->field_manager), false);
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

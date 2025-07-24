@@ -53,4 +53,4 @@ const std::map<DeviceCapability, uint32_t> &DeviceCapabilityConfig::to_inner()
   return devcaps;
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

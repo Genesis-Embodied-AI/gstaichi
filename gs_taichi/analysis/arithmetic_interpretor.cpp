@@ -173,4 +173,4 @@ std::optional<TypedConstant> ArithmeticInterpretor::evaluate(
   return ev.run(region, init_ctx);
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

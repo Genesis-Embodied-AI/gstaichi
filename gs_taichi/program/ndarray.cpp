@@ -237,4 +237,4 @@ void Ndarray::write_float(const std::vector<int> &i, float64 val) {
   write(i, TypedConstant(get_element_data_type(), val));
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

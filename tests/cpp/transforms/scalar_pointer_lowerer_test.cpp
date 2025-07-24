@@ -131,4 +131,4 @@ TEST(ScalarPointerLowerer, EliminateModDiv) {
   }
 }
 }  // namespace
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

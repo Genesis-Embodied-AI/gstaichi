@@ -51,4 +51,4 @@ class Function : public Callable {
   std::optional<std::string> ast_serialization_data_;  // For generating AST-Key
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

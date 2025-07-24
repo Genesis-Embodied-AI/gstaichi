@@ -127,4 +127,4 @@ void Kernel::init(Program &program,
 
   func();
 }
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

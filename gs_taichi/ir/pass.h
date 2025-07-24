@@ -84,4 +84,4 @@ class AnalysisManager {
   std::unordered_map<PassID, std::unique_ptr<AnalysisResultConcept>> result_;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

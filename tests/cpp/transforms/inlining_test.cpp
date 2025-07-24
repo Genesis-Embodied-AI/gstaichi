@@ -59,4 +59,4 @@ TEST_F(InliningTest, ArgLoadOfArgLoad) {
   EXPECT_TRUE(irpass::analysis::same_statements(func_block, kernel_block));
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

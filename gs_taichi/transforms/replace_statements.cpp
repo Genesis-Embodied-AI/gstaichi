@@ -27,4 +27,4 @@ bool replace_statements(IRNode *root,
 
 }  // namespace irpass
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

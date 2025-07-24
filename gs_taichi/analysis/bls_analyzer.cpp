@@ -105,4 +105,4 @@ bool BLSAnalyzer::run() {
   return analysis_ok_;
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

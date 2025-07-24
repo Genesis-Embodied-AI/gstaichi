@@ -18,5 +18,5 @@ target_include_directories(llvm_codegen
     ${LLVM_INCLUDE_DIRS}
   )
 
-target_link_libraries(llvm_codegen PRIVATE taichi_util)
+target_link_libraries(llvm_codegen PRIVATE gs_taichi_util)
 target_link_libraries(llvm_codegen PRIVATE llvm_runtime)

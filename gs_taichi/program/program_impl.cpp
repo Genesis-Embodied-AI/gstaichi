@@ -37,4 +37,4 @@ KernelLauncher &ProgramImpl::get_kernel_launcher() {
   return *(kernel_launcher_ = make_kernel_launcher());
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

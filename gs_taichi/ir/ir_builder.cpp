@@ -515,4 +515,4 @@ ArgLoadStmt *IRBuilder::create_ndarray_arg_load(const std::vector<int> &arg_id,
                                               /*arg_depth=*/arg_depth));
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

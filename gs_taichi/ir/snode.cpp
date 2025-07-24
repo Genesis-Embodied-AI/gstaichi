@@ -358,4 +358,4 @@ const SNode *SNode::get_root() const {
   return parent->get_root();
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

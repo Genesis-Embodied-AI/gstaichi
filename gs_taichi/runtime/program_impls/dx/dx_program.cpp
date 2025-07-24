@@ -11,7 +11,7 @@
 #include "gs_taichi/codegen/spirv/spirv_codegen.h"
 #include "gs_taichi/rhi/common/host_memory_pool.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 
 Dx11ProgramImpl::Dx11ProgramImpl(CompileConfig &config)
     : GfxProgramImpl(config) {
@@ -30,6 +30,6 @@ void Dx11ProgramImpl::materialize_runtime(KernelProfilerBase *profiler,
   snode_tree_mgr_ = std::make_unique<gfx::SNodeTreeManager>(runtime_.get());
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 
 #endif

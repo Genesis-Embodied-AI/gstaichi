@@ -9,4 +9,4 @@ void TestProgram::setup(Arch arch) {
                         /*compile_only=*/false);
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

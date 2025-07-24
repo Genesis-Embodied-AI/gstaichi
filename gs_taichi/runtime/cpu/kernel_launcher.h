@@ -27,4 +27,4 @@ class KernelLauncher : public LLVM::KernelLauncher {
 };
 
 }  // namespace cpu
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

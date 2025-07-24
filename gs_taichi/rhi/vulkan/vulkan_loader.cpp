@@ -146,4 +146,4 @@ void set_vulkan_visible_device(std::string id) {
 }
 
 }  // namespace vulkan
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

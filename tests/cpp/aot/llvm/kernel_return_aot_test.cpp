@@ -91,4 +91,4 @@ TEST(LlvmAotTest, CudaReturn) {
 #endif
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

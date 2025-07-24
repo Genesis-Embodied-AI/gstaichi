@@ -32,4 +32,4 @@ class KernelImpl : public aot::Kernel {
   const GfxRuntime::RegisterParams params_;
 };
 }  // namespace gfx
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

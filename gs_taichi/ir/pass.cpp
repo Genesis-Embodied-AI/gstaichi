@@ -4,4 +4,4 @@ namespace gs_taichi::lang {
 
 const PassID Pass::id = "undefined";
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

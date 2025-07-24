@@ -153,4 +153,4 @@ class MeshBLSAnalyzer : public BasicStmtVisitor {
   CompileConfig config_;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

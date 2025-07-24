@@ -36,4 +36,4 @@ TI_DLL_EXPORT std::unique_ptr<aot::Module> make_aot_module(
     Arch device_api_backend);
 
 }  // namespace gfx
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

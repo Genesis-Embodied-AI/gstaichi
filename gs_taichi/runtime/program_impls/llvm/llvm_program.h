@@ -282,4 +282,4 @@ class LlvmProgramImpl : public ProgramImpl {
 
 LlvmProgramImpl *get_llvm_program(Program *prog);
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

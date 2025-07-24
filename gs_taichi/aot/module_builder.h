@@ -78,4 +78,4 @@ class AotModuleBuilder {
   std::unordered_map<std::string, aot::CompiledGraph> graphs_;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

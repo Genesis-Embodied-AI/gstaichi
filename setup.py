@@ -63,8 +63,8 @@ print(packages)
 package_dir = "python"
 
 
-def remove_tmp(taichi_dir):
-    shutil.rmtree(os.path.join(taichi_dir, "assets"), ignore_errors=True)
+def remove_tmp(gs_taichi_dir):
+    shutil.rmtree(os.path.join(gs_taichi_dir, "assets"), ignore_errors=True)
 
 
 class EggInfo(egg_info):
@@ -76,10 +76,10 @@ class EggInfo(egg_info):
 
 
 def copy_assets():
-    taichi_dir = os.path.join(package_dir, "gs_taichi")
-    remove_tmp(taichi_dir)
+    gs_taichi_dir = os.path.join(package_dir, "gs_taichi")
+    remove_tmp(gs_taichi_dir)
 
-    shutil.copytree("external/assets", os.path.join(taichi_dir, "assets"))
+    shutil.copytree("external/assets", os.path.join(gs_taichi_dir, "assets"))
 
 
 class Clean(clean):
@@ -133,13 +133,13 @@ def postprocess_stubs(stub_path: str) -> None:
 
 def generate_pybind11_stubs(build_lib: str):
     build_lib_path = pathlib.Path(build_lib).resolve()
-    taichi_path = build_lib_path.parent.parent / "cmake-install" / "python"
+    gs_taichi_path = build_lib_path.parent.parent / "cmake-install" / "python"
     env = os.environ.copy()
-    env["PYTHONPATH"] = str(taichi_path) + os.pathsep + env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = str(gs_taichi_path) + os.pathsep + env.get("PYTHONPATH", "")
 
     # command that works:
     # PYTHONPATH=_skbuild/linux-x86_64-3.10/cmake-install/python pybind11-stubgen \
-    #     taichi._lib.core.gs_taichi_python --ignore-all-errors
+    #     gs_taichi._lib.core.gs_taichi_python --ignore-all-errors
     cmd_line = ["pybind11-stubgen", "gs_taichi._lib.core.gs_taichi_python", "--ignore-all-errors"]
     print(" ".join(cmd_line))
     subprocess.check_call(cmd_line, env=env)
@@ -280,7 +280,7 @@ setup(
     version=version,
     description="GS Taichi Programming Language",
     author="GS Taichi developers",
-    url="https://github.com/genesis-company/taichi",
+    url="https://github.com/genesis-company/gs-taichi",
     python_requires=">=3.10,<4.0",
     install_requires=[
         "numpy",
@@ -301,7 +301,7 @@ setup(
     include_package_data=True,
     entry_points={
         "console_scripts": [
-            "ti=taichi._main:main",
+            "ti=gs_taichi._main:main",
         ],
     },
     classifiers=classifiers,

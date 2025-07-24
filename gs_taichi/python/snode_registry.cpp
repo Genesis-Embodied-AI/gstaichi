@@ -27,4 +27,4 @@ std::unique_ptr<SNode> SNodeRegistry::finalize(const SNode *snode) {
   return nullptr;
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

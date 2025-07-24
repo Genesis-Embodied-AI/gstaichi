@@ -183,4 +183,4 @@ class ProgramImpl {
   std::unique_ptr<KernelLauncher> kernel_launcher_;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

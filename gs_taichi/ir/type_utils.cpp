@@ -153,4 +153,4 @@ std::string data_type_format(DataType dt, Arch arch) {
   }
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

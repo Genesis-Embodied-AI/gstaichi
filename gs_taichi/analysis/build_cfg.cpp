@@ -15,7 +15,7 @@ struct CFGFuncKey {
   }
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 
 namespace std {
 template <>
@@ -457,4 +457,4 @@ std::unique_ptr<ControlFlowGraph> build_cfg(IRNode *root) {
 }
 }  // namespace irpass::analysis
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -26,7 +26,7 @@ class FunctionKey {
   [[nodiscard]] std::string get_full_name() const;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 
 namespace std {
 template <>

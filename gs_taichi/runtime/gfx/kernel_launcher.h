@@ -24,4 +24,4 @@ class KernelLauncher : public lang::KernelLauncher {
 };
 
 }  // namespace gfx
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -31,4 +31,4 @@ KernelLauncher::Handle KernelLauncher::register_kernel(
 }
 
 }  // namespace gfx
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

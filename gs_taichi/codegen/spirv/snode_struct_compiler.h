@@ -53,4 +53,4 @@ struct CompiledSNodeStructs {
 CompiledSNodeStructs compile_snode_structs(SNode &root);
 
 }  // namespace spirv
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

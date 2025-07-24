@@ -38,4 +38,4 @@ std::unordered_map<int, int> get_snodes_to_root_id(const SNode &root) {
   return res;
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

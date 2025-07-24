@@ -456,7 +456,7 @@ class TaskCodeGenCUDA : public TaskCodeGenLLVM {
       builder->CreateStore(value1, value_ptr1);
       llvm::Value *value_half2_ptr =
           builder->CreateBitCast(value_ptr, ptr_type);
-      // Defined in taichi/runtime/llvm/runtime_module/cuda_runtime.cu
+      // Defined in gs_taichi/runtime/llvm/runtime_module/cuda_runtime.cu
       call("half2_atomic_add", dest_half2_ptr, old_val_ptr, value_half2_ptr);
 
       llvm_val[atomic_stmt] = builder->CreateLoad(half_type, old_val);
@@ -785,4 +785,4 @@ LLVMCompiledTask KernelCodeGenCUDA::compile_task(
   return gen.run_compilation();
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

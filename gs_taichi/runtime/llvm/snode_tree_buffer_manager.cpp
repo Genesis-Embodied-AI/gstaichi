@@ -23,4 +23,4 @@ void SNodeTreeBufferManager::destroy(SNodeTree *snode_tree) {
   snode_tree_id_to_device_alloc_.erase(snode_tree->id());
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

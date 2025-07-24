@@ -192,4 +192,4 @@ std::unique_ptr<llvm::Module> module_from_bitcode_file(
     const std::string &bitcode_path,
     llvm::LLVMContext *ctx);
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

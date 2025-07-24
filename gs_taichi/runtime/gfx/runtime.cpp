@@ -880,4 +880,4 @@ GfxRuntime::get_struct_type_with_data_layout_impl(
 }
 
 }  // namespace gfx
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

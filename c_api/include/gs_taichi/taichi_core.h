@@ -43,10 +43,7 @@
 // ### Create and destroy a Runtime Instance
 //
 // You *must* create a runtime instance before working with Taichi, and *only*
-// one runtime per thread. Currently, we do not officially claim that multiple
-// runtime instances can coexist in a process, but please feel free to [file an
-// issue with us](https://github.com/taichi-dev/taichi/issues) if you run into
-// any problem with runtime instance coexistence.
+// one runtime per thread.
 //
 // ```cpp
 // // Create a Taichi Runtime on Vulkan device at index 0.

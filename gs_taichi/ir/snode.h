@@ -356,4 +356,4 @@ class SNode {
       nullptr};  // owned by the "Program" class
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

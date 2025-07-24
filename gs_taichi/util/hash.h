@@ -75,4 +75,4 @@ struct Hasher<std::tuple<Ts...>> {
   };
 };
 
-}  // namespace taichi::hashing
+}  // namespace gs_taichi::hashing

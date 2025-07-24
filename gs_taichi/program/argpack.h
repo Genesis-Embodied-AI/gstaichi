@@ -41,4 +41,4 @@ class TI_DLL_EXPORT ArgPack {
 
   DataType get_element_dt(const std::vector<int> &i) const;
 };
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

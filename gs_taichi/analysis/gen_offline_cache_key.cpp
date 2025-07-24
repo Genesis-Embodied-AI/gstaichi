@@ -675,4 +675,4 @@ void gen_offline_cache_key(IRNode *ast, std::ostream *os) {
   ASTSerializer::run(ast, os);
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

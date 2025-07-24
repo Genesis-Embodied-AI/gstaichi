@@ -74,4 +74,4 @@ TEST(TensorType, eliminateImmutableLocalVars) {
   EXPECT_EQ(block->statements[2]->ret_type == DataType(tensor2x2), true);
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

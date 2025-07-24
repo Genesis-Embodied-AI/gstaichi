@@ -21,4 +21,4 @@ std::shared_ptr<Device> make_opengl_device();
 #undef PER_OPENGL_EXTENSION
 
 }  // namespace opengl
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

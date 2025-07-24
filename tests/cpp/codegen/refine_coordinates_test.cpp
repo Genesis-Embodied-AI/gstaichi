@@ -166,5 +166,5 @@ TEST_F(RefineCoordinatesTest, Basic) {
 }
 
 }  // namespace
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 #endif  // #ifdef TI_WITH_LLVM

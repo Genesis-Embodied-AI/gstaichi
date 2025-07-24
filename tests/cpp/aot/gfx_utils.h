@@ -31,4 +31,4 @@ void view_devalloc_as_ndarray(Device *device_);
 
 [[maybe_unused]] void run_mpm88_graph(Arch arch, gs_taichi::lang::Device *device_);
 }  // namespace aot_test_utils
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

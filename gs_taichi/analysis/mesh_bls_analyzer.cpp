@@ -112,4 +112,4 @@ std::unique_ptr<MeshBLSCaches> initialize_mesh_local_attribute(
 }  // namespace analysis
 }  // namespace irpass
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

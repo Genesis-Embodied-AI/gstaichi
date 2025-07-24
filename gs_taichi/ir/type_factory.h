@@ -131,4 +131,4 @@ class TypeFactory {
 
 DataType promoted_type(DataType a, DataType b);
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -104,4 +104,4 @@ KernelLauncher::Handle KernelLauncher::register_llvm_kernel(
 }
 
 }  // namespace cpu
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

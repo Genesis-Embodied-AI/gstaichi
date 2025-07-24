@@ -1130,4 +1130,4 @@ bool CuptiToolkit::update_record(
 }
 #endif
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

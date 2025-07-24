@@ -224,4 +224,4 @@ class CUBLASDriver : protected CUDADriverBase {
   std::mutex lock_;
   bool cublas_loaded_{false};
 };
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -199,5 +199,5 @@ class LlvmOfflineCacheFileWriter {
   bool mangled_{false};
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 #endif  // TI_WITH_LLVM

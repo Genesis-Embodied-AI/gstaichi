@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.11)
 
-set(C_API_TESTS_NAME taichi_c_api_tests)
+set(C_API_TESTS_NAME gs_taichi_c_api_tests)
 if (WIN32)
     # Prevent overriding the parent project's compiler/linker
     # settings on Windows
@@ -29,8 +29,8 @@ if (WIN32)
         target_link_options(${C_API_TESTS_NAME} PRIVATE "$<$<CONFIG:Release>:/OPT:ICF>")
     endif()
 endif()
-target_link_libraries(${C_API_TESTS_NAME} PRIVATE taichi_c_api)
-target_link_libraries(${C_API_TESTS_NAME} PRIVATE taichi_common)
+target_link_libraries(${C_API_TESTS_NAME} PRIVATE gs_taichi_c_api)
+target_link_libraries(${C_API_TESTS_NAME} PRIVATE gs_taichi_common)
 target_link_libraries(${C_API_TESTS_NAME} PRIVATE gtest_main)
 
 if (TI_WITH_BACKTRACE)
@@ -66,7 +66,7 @@ if(TI_WITH_STATIC_C_API)
     add_dependencies(${C_STATIC_API_TESTS_NAME} taichi_static_c_api)
 
     target_link_libraries(${C_STATIC_API_TESTS_NAME} PRIVATE $<TARGET_FILE:taichi_static_c_api>)
-    target_link_libraries(${C_STATIC_API_TESTS_NAME} PRIVATE taichi_common)
+    target_link_libraries(${C_STATIC_API_TESTS_NAME} PRIVATE gs_taichi_common)
     target_link_libraries(${C_STATIC_API_TESTS_NAME} PRIVATE gtest_main)
 
     find_package(ZLIB REQUIRED)

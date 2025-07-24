@@ -1008,7 +1008,7 @@ class RHI_DLL_EXPORT GraphicsDevice : public Device {
                                const BufferImageCopyParams &params);
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 
 template <>
 class fmt::formatter<gs_taichi::lang::RhiResult> {

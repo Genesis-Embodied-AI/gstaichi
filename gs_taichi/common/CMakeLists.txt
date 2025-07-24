@@ -1,7 +1,7 @@
 # ./taichi/common/CMakeLists.txt
 
-add_library(taichi_common)
-target_sources(taichi_common
+add_library(gs_taichi_common)
+target_sources(gs_taichi_common
   PRIVATE
     cleanup.cpp
     core.cpp
@@ -14,7 +14,7 @@ target_sources(taichi_common
     dynamic_loader.cpp
   )
 
-target_include_directories(taichi_common
+target_include_directories(gs_taichi_common
   PUBLIC
     ${PROJECT_SOURCE_DIR}/external/spdlog/include
   PRIVATE

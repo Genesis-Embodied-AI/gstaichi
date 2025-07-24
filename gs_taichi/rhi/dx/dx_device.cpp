@@ -6,7 +6,7 @@
 #include "spirv_hlsl.hpp"
 #include <d3dcompiler.h>
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 namespace directx11 {
 
 using namespace rhi_impl;
@@ -1071,6 +1071,6 @@ Dx11Pipeline::~Dx11Pipeline() {
 }
 
 }  // namespace directx11
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 
 #endif

@@ -39,4 +39,4 @@ class TI_DLL_EXPORT HostMemoryPool {
   friend class UnifiedAllocator;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

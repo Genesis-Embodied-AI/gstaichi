@@ -121,4 +121,4 @@ std::unordered_set<Stmt *> gather_dynamically_indexed_pointers(IRNode *root) {
 }
 
 }  // namespace irpass::analysis
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

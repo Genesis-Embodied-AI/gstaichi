@@ -1000,4 +1000,4 @@ std::function<void(const std::string &)> make_pass_printer(
 
 }  // namespace irpass
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

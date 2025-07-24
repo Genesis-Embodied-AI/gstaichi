@@ -139,4 +139,4 @@ Expr expr_matrix_field(const std::vector<Expr> &fields,
   return Expr::make<MatrixFieldExpression>(fields, element_shape);
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

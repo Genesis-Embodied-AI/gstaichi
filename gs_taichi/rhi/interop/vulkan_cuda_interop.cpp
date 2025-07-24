@@ -13,8 +13,8 @@ namespace gs_taichi::lang {
 
 #if TI_WITH_VULKAN && TI_WITH_CUDA
 
-using namespace taichi::lang::vulkan;
-using namespace taichi::lang::cuda;
+using namespace gs_taichi::lang::vulkan;
+using namespace gs_taichi::lang::cuda;
 
 namespace {
 
@@ -227,4 +227,4 @@ void memcpy_vulkan_to_cuda(DevicePtr dst, DevicePtr src, uint64_t size) {
 }
 #endif  // TI_WITH_VULKAN && TI_WITH_CUDA
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

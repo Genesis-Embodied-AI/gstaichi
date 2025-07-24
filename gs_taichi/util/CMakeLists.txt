@@ -1,7 +1,7 @@
 # ./taichi/util/CMakeLists.txt
 
-add_library(taichi_util)
-target_sources(taichi_util
+add_library(gs_taichi_util)
+target_sources(gs_taichi_util
   PRIVATE
     bit.cpp
     file_sequence_writer.cpp
@@ -15,7 +15,7 @@ target_sources(taichi_util
     zip.cpp
   )
 
-target_include_directories(taichi_util
+target_include_directories(gs_taichi_util
   PRIVATE
     ${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/external/include
@@ -23,4 +23,4 @@ target_include_directories(taichi_util
     ${LLVM_INCLUDE_DIRS}
   )
 
-target_link_libraries(taichi_util PUBLIC taichi_common)
+target_link_libraries(gs_taichi_util PUBLIC gs_taichi_common)

@@ -122,4 +122,4 @@ class TI_DLL_EXPORT Module {
 };
 
 }  // namespace aot
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

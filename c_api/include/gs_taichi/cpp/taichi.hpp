@@ -11,7 +11,7 @@
 #include <map>
 #include <string>
 #include <utility>
-#include <taichi/taichi.h>
+#include <gs_taichi/taichi.h>
 
 namespace ti {
 

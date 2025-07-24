@@ -67,7 +67,7 @@ std::string runtime_lib_dir();
 
 bool command_exist(const std::string &command);
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 
 namespace gs_taichi {
 void initialize_benchmark();

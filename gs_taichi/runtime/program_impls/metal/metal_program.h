@@ -29,4 +29,4 @@ class MetalProgramImpl : public GfxProgramImpl {
       const std::vector<ComputeOpImageRef> &image_refs) override;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

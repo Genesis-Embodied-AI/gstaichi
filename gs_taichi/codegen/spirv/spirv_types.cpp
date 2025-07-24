@@ -514,4 +514,4 @@ const tinyir::Type *translate_ti_type(tinyir::Block &ir_module,
 }
 
 }  // namespace spirv
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

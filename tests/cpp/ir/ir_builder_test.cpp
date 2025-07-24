@@ -128,7 +128,7 @@ TEST(IRBuilder, ExternalPtr) {
 TEST(IRBuilder, Ndarray) {
   TestProgram test_prog;
 #ifdef TI_WITH_VULKAN
-  Arch arch = taichi::lang::vulkan::is_vulkan_api_available() ? Arch::vulkan
+  Arch arch = lang::vulkan::is_vulkan_api_available() ? Arch::vulkan
                                                               : Arch::x64;
 #else
   Arch arch = Arch::x64;
@@ -192,4 +192,4 @@ TEST(IRBuilder, AtomicOp) {
   prog->launch_kernel(compiled_kernel_data, launch_ctx);
   EXPECT_EQ(array[0], 3);
 }
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

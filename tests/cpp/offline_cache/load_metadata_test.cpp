@@ -119,4 +119,4 @@ TEST(OfflineCache, LoadMetadata) {
   load_metadata_test<oc::Metadata<KernelMetadataBase>>();
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

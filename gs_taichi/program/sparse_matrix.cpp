@@ -900,4 +900,4 @@ void CuSparseMatrix::mmwrite(const std::string &filename) {
 #endif
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

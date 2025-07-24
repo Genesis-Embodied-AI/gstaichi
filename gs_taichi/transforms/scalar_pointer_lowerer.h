@@ -72,4 +72,4 @@ class ScalarPointerLowerer {
   int path_length_{0};
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

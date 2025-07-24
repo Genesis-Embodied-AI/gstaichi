@@ -54,4 +54,4 @@ class LlvmDevice : public Device {
   }
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

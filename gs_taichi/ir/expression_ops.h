@@ -128,7 +128,7 @@ DEFINE_EXPRESSION_FUNC_BINARY(bit_shr)
 DEFINE_EXPRESSION_FUNC_TERNARY(select)
 DEFINE_EXPRESSION_FUNC_TERNARY(ifte)
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 
 #undef DEFINE_EXPRESSION_OP_UNARY
 #undef DEFINE_EXPRESSION_OP_BINARY

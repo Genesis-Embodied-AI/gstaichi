@@ -14,4 +14,4 @@ std::string snode_type_name(SNodeType t);
 
 bool is_gc_able(SNodeType t);
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

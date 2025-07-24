@@ -51,4 +51,4 @@ class SNodeTree {
  */
 std::unordered_map<int, int> get_snodes_to_root_id(const SNode &root);
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

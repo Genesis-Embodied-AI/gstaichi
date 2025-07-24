@@ -116,4 +116,4 @@ TEST(LlvmAotTest, CudaBitmasked) {
 #endif
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

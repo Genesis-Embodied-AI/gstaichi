@@ -572,4 +572,4 @@ void Program::enqueue_compute_op_lambda(
   program_impl_->enqueue_compute_op_lambda(op, image_refs);
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

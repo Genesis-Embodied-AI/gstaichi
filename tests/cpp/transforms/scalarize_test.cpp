@@ -234,4 +234,4 @@ TEST(Scalarize, ScalarizeLocalLoad) {
   EXPECT_EQ(block->statements[7]->is<LocalLoadStmt>(), true);
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

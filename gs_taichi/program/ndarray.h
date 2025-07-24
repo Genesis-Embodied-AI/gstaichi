@@ -84,4 +84,4 @@ class TI_DLL_EXPORT Ndarray {
   Program *prog_{nullptr};
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

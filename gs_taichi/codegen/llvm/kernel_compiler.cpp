@@ -48,4 +48,4 @@ KernelCompiler::CKDPtr KernelCompiler::compile(
 }
 
 }  // namespace LLVM
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

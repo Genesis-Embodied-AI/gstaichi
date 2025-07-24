@@ -144,4 +144,4 @@ void check_func_call_signature(llvm::FunctionType *func_type,
   }
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

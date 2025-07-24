@@ -119,4 +119,4 @@ class CUDAContext {
   }
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

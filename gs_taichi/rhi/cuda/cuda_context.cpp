@@ -184,4 +184,4 @@ CUDAContext &CUDAContext::get_instance() {
   return *context;
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

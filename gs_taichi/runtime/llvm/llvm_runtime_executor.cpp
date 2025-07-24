@@ -774,4 +774,4 @@ void LlvmRuntimeExecutor::init_runtime_jit_module(
   runtime_jit_module_ = create_jit_module(std::move(module));
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

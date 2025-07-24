@@ -159,4 +159,4 @@ VulkanProgramImpl::~VulkanProgramImpl() {
   VulkanProgramImpl::finalize();
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

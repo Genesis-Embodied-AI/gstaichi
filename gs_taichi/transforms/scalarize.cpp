@@ -1348,4 +1348,4 @@ bool scalarize(IRNode *root, bool half2_optimization_enabled) {
 
 }  // namespace irpass
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

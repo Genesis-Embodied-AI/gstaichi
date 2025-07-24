@@ -23,4 +23,4 @@ enum class Extension {
 
 bool is_extension_supported(Arch arch, Extension ext);
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

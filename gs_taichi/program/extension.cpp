@@ -32,4 +32,4 @@ bool is_extension_supported(Arch arch, Extension ext) {
   return exts.find(ext) != exts.end();
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -14,4 +14,4 @@ class FakeStructCompiler : public StructCompiler {
   }
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

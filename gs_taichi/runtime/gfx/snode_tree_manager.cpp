@@ -51,4 +51,4 @@ DevicePtr SNodeTreeManager::get_snode_tree_device_ptr(int tree_id) {
 }
 
 }  // namespace gfx
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

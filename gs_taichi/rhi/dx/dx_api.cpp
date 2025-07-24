@@ -17,4 +17,4 @@ std::shared_ptr<Device> make_dx11_device() {
 }
 
 }  // namespace directx11
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

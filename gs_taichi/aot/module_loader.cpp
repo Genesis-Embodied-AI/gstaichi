@@ -91,4 +91,4 @@ Field *Module::get_snode_tree(const std::string &name) {
 }
 
 }  // namespace aot
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

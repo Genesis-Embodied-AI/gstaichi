@@ -666,4 +666,4 @@ inline void StmtFieldManager::operator()(const char *key, T &&value) {
   }
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

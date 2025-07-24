@@ -31,9 +31,9 @@ typedef signed __int64 ssize_t;
 #endif /* _WIN64 */
 #endif /* TI_WITH_LLVM */
 
-namespace taichi::ui {
+namespace gs_taichi::ui {
 
-using namespace taichi::lang;
+using namespace gs_taichi::lang;
 
 glm::vec3 tuple_to_vec3(pybind11::tuple t) {
   return glm::vec3(t[0].cast<float>(), t[1].cast<float>(), t[2].cast<float>());
@@ -774,7 +774,7 @@ void export_ggui(py::module &m) {
       .export_values();
 }
 
-}  // namespace taichi::ui
+}  // namespace gs_taichi::ui
 
 namespace taichi {
 

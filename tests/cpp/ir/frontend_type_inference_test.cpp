@@ -277,4 +277,4 @@ TEST(FrontendTypeInference, TensorTypeUnification) {
               ret_type->cast<TensorType>()->get_shape() == expected_shape);
   EXPECT_TRUE(lhs_type->get_shape() == expected_shape);
 }
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

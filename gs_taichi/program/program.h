@@ -349,4 +349,4 @@ class TI_DLL_EXPORT Program {
   std::vector<std::unique_ptr<Texture>> textures_;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -28,7 +28,7 @@ EIGEN_LLT_SOLVER_INSTANTIATION(float64, LDLT, AMD);
 EIGEN_LLT_SOLVER_INSTANTIATION(float64, LDLT, COLAMD);
 EIGEN_LU_SOLVER_INSTANTIATION(float64, LU, AMD);
 EIGEN_LU_SOLVER_INSTANTIATION(float64, LU, COLAMD);
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 
 // Explicit instantiation of the template class EigenSparseSolver::solve
 #define EIGEN_LLT_SOLVE_INSTANTIATION(dt, type, order, df)               \
@@ -626,4 +626,4 @@ std::unique_ptr<SparseSolver> make_cusparse_solver(
     TI_ERROR("Not supported sparse solver type: {}", solver_type);
   }
 }
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

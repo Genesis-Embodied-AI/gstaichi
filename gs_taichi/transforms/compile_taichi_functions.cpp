@@ -50,4 +50,4 @@ void compile_taichi_functions(IRNode *ir,
 
 }  // namespace irpass
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

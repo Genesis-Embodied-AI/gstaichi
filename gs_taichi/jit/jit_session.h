@@ -42,4 +42,4 @@ class JITSession {
   virtual ~JITSession() = default;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

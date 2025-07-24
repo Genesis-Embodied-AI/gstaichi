@@ -75,4 +75,4 @@ void glfw_context_release() {
 
 #endif  // TI_WITH_GLFW
 
-}  // namespace taichi::lang::window_system
+}  // namespace gs_taichi::lang::window_system

@@ -17,4 +17,4 @@ std::string FunctionKey::get_full_name() const {
          std::to_string(instance_id);
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -15,4 +15,4 @@ class KernelLauncher {
   virtual ~KernelLauncher() = default;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

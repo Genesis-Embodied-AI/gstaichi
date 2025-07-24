@@ -17,4 +17,4 @@ class OpenglProgramImpl : public GfxProgramImpl {
                            uint64 **result_buffer_ptr) override;
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

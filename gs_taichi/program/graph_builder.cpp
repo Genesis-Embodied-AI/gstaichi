@@ -68,4 +68,4 @@ void GraphBuilder::dispatch(Kernel *kernel, const std::vector<aot::Arg> &args) {
   seq()->dispatch(kernel, args);
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

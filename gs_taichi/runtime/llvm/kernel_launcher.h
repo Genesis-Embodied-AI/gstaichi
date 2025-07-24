@@ -39,4 +39,4 @@ class KernelLauncher : public lang::KernelLauncher {
 };
 
 }  // namespace LLVM
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -132,4 +132,4 @@ std::size_t clean_offline_cache_files(const std::string &path) {
   return count;
 }
 
-}  // namespace taichi::lang::offline_cache
+}  // namespace gs_taichi::lang::offline_cache

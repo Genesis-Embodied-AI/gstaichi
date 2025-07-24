@@ -2,7 +2,7 @@
 
 #include "gs_taichi/rhi/dx/dx_info_queue.h"
 
-namespace taichi::lang {
+namespace gs_taichi::lang {
 namespace directx11 {
 
 void check_dx_error(HRESULT hr, const char *msg);
@@ -138,6 +138,6 @@ int Dx11InfoQueue::live_object_count() {
 }
 
 }  // namespace directx11
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 
 #endif

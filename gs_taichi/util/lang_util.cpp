@@ -115,7 +115,7 @@ bool command_exist(const std::string &command) {
 #endif
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
 namespace gs_taichi {
 void initialize_benchmark() {
   // CoreState::set_trigger_gdb_when_crash(true);

@@ -283,4 +283,4 @@ class BitStructTypeBuilder {
   int current_shared_exponent_{-1};
 };
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

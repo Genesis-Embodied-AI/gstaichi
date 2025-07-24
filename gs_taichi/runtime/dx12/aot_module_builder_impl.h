@@ -43,4 +43,4 @@ class AotModuleBuilderImpl : public AotModuleBuilder {
 };
 
 }  // namespace directx12
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

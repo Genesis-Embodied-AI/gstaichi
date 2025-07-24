@@ -167,4 +167,4 @@ TEST(SameStatements, TestSameLoopIndex) {
   EXPECT_TRUE(irpass::analysis::same_value(loop_index_a, loop_index_b));
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

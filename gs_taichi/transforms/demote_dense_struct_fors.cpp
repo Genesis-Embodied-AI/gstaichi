@@ -137,4 +137,4 @@ void demote_dense_struct_fors(IRNode *root) {
 
 }  // namespace irpass
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

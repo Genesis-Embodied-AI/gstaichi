@@ -36,4 +36,4 @@ std::unordered_set<SNode *> gather_deactivations(IRNode *root) {
 }
 }  // namespace irpass::analysis
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

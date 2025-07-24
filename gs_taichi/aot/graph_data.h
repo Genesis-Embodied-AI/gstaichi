@@ -180,4 +180,4 @@ struct TI_DLL_EXPORT CompiledGraph {
 };
 
 }  // namespace aot
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

@@ -268,4 +268,4 @@ bool CUBLASDriver::load_cublas() {
   return cublas_loaded_;
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

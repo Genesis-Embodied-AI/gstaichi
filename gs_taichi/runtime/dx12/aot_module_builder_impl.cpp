@@ -121,4 +121,4 @@ void AotModuleBuilderImpl::dump(const std::string &output_dir,
 }
 
 }  // namespace directx12
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

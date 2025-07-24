@@ -17,5 +17,5 @@ target_include_directories(dx12_codegen
     ${LLVM_INCLUDE_DIRS}
   )
 
-target_link_libraries(dx12_codegen PRIVATE taichi_util)
+target_link_libraries(dx12_codegen PRIVATE gs_taichi_util)
 target_link_libraries(dx12_codegen PRIVATE dx12_runtime)

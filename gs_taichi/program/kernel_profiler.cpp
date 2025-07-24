@@ -157,4 +157,4 @@ std::unique_ptr<KernelProfilerBase> make_profiler(Arch arch, bool enable) {
   }
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang

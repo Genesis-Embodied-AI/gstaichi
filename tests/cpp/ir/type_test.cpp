@@ -44,4 +44,4 @@ TEST(Type, TypeToString) {
   EXPECT_EQ(qa->to_string(), "qa(qi1x32)");
 }
 
-}  // namespace taichi::lang
+}  // namespace gs_taichi::lang
