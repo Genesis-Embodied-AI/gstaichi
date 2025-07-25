@@ -140,10 +140,6 @@ if (TI_BUILD_TESTS)
   include(cmake/TaichiTests.cmake)
 endif()
 
-if(NOT TI_WITH_LLVM OR NOT TI_WITH_METAL)
-    set(TI_BUILD_EXAMPLES OFF)
-endif()
-
 message("C++ Flags: ${CMAKE_CXX_FLAGS}")
 message("Build type: ${CMAKE_BUILD_TYPE}")
 

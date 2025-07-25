@@ -291,6 +291,19 @@ setup(
         "setuptools>=68.0.0",  # Required for Python 3.12+ compatibility
         "cffi>=1.16.0",
     ],
+    extras_require={
+        "docs": [
+            "sphinx",
+            "sphinx-copybutton",
+            "myst_parser",
+            "sphinx-subfigure",
+            "sphinxcontrib-video",
+            "sphinx-togglebutton",
+            "sphinx-design",
+            "pydata-sphinx-theme",
+            "sphinx-autoapi",
+        ],
+    },
     data_files=[
         (os.path.join("_lib", "runtime"), data_files),
     ],

@@ -175,7 +175,7 @@ def test_assignment_in_nested_loops():
     assert x[None] == 1
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_break_in_outermost_for_not_in_outermost_scope():
     @ti.kernel
     def foo() -> ti.i32:
