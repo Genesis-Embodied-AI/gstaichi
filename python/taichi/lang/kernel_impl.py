@@ -158,6 +158,13 @@ def _get_tree_and_ctx(
         for i in self.template_slot_locations:
             template_var_name = self.arguments[i].name
             global_vars[template_var_name] = args[i]
+        parameters = inspect.signature(self.func).parameters
+        for arg_i, (param_name, param) in enumerate(parameters.items()):
+            if dataclasses.is_dataclass(param.annotation):
+                for member_field in dataclasses.fields(param.annotation):
+                    child_value = getattr(args[arg_i], member_field.name)
+                    flat_name = f"__ti_{param_name}_{member_field.name}"
+                    global_vars[flat_name] = child_value
 
     return tree, ASTTransformerContext(
         excluded_parameters=excluded_parameters,
@@ -250,11 +257,11 @@ def unpack_ndarray_struct(tree: ast.Module, struct_locals: set[str]) -> ast.Modu
 
 def extract_struct_locals_from_context(ctx: ASTTransformerContext):
     """
-    Uses ctx.func.func to get the function signature
-    Searches this for any dataclasses
-    - if it finds any dataclasses, then converts them into expanded names
-    - e.g. my_struct: MyStruct, and MyStruct contains a, b, c would become:
-        {"__ti_my_struct_a", "__ti_my_struct_b, "__ti_my_struct_c"}
+    - Uses ctx.func.func to get the function signature.
+    - Searches this for any dataclasses:
+      - If it finds any dataclasses, then converts them into expanded names.
+      - E.g. my_struct: MyStruct, and MyStruct contains a, b, c would become:
+          {"__ti_my_struct_a", "__ti_my_struct_b, "__ti_my_struct_c"}
     """
     assert ctx.func is not None
     sig = inspect.signature(ctx.func.func)
@@ -436,7 +443,7 @@ class Func:
                     pass
                 elif type(annotation) == taichi.types.annotations.Template:
                     pass
-                elif isinstance(annotation, template):
+                elif isinstance(annotation, template) or annotation == taichi.types.annotations.Template:
                     pass
                 elif isinstance(annotation, primitive_types.RefType):
                     pass
@@ -867,6 +874,7 @@ class Kernel:
                 element_dim = needed.dtype.ndim
                 array_shape = v.shape[element_dim:] if is_soa else v.shape[:-element_dim]
             if isinstance(v, np.ndarray):
+                # numpy
                 if v.flags.c_contiguous:
                     launch_ctx.set_arg_external_array_with_shape(indices, int(v.ctypes.data), v.nbytes, array_shape, 0)
                 elif v.flags.f_contiguous:
@@ -937,9 +945,7 @@ class Kernel:
                         int(v.grad.data_ptr()) if v.grad is not None else 0,
                     )
                 else:
-                    raise TaichiRuntimeTypeError(
-                        f"Argument {needed.to_string()} cannot be converted into required type {v}"
-                    )
+                    raise TaichiRuntimeTypeError(f"Argument {needed} cannot be converted into required type {type(v)}")
             elif has_paddle():
                 import paddle  # pylint: disable=C0415  # type: ignore
 
@@ -972,26 +978,22 @@ class Kernel:
                         indices, int(tmp._ptr()), v.element_size() * v.size, array_shape, 0
                     )
                 else:
-                    raise TaichiRuntimeTypeError(
-                        f"Argument {needed.to_string()} cannot be converted into required type {v}"
-                    )
+                    raise TaichiRuntimeTypeError(f"Argument {needed} cannot be converted into required type {v}")
             else:
-                raise TaichiRuntimeTypeError(
-                    f"Argument {needed.to_string()} cannot be converted into required type {v}"
-                )
+                raise TaichiRuntimeTypeError(f"Argument {needed} cannot be converted into required type {v}")
 
         def set_arg_matrix(indices, v, needed):
             def cast_float(x):
                 if not isinstance(x, (int, float, np.integer, np.floating)):
                     raise TaichiRuntimeTypeError(
-                        f"Argument {needed.dtype.to_string()} cannot be converted into required type {type(x)}"
+                        f"Argument {needed.dtype} cannot be converted into required type {type(x)}"
                     )
                 return float(x)
 
             def cast_int(x):
                 if not isinstance(x, (int, np.integer)):
                     raise TaichiRuntimeTypeError(
-                        f"Argument {needed.dtype.to_string()} cannot be converted into required type {type(x)}"
+                        f"Argument {needed.dtype} cannot be converted into required type {type(x)}"
                     )
                 return int(x)
 
@@ -1017,6 +1019,12 @@ class Kernel:
         set_later_list = []
 
         def recursive_set_args(needed_arg_type, provided_arg_type, v, indices):
+            """
+            Returns the number of kernel args set
+            e.g. templates don't set kernel args, so returns 0
+            a single ndarray is 1 kernel arg, so returns 1
+            a struct of 3 ndarrays would set 3 kernel args, so return 3
+            """
             in_argpack = len(indices) > 1
             nonlocal actual_argument_slot, exceed_max_arg_num, set_later_list
             if actual_argument_slot >= max_arg_num:
@@ -1057,11 +1065,12 @@ class Kernel:
                 return 1
             if dataclasses.is_dataclass(needed_arg_type):
                 assert provided_arg_type == needed_arg_type
+                idx = 0
                 for j, field in enumerate(dataclasses.fields(needed_arg_type)):
                     assert not isinstance(field.type, str)
                     field_value = getattr(v, field.name)
-                    recursive_set_args(field.type, field.type, field_value, (indices[0] + j,))
-                return len(dataclasses.fields(needed_arg_type))
+                    idx += recursive_set_args(field.type, field.type, field_value, (indices[0] + idx,))
+                return idx
             if isinstance(needed_arg_type, ndarray_type.NdarrayType) and isinstance(v, taichi.lang._ndarray.Ndarray):
                 if in_argpack:
                     set_later_list.append((set_arg_ndarray, (v,)))
@@ -1100,6 +1109,8 @@ class Kernel:
                     )
                 needed_arg_type.set_kernel_struct_args(v, launch_ctx, indices)
                 return 1
+            if needed_arg_type == template or isinstance(needed_arg_type, template):
+                return 0
             raise ValueError(f"Argument type mismatch. Expecting {needed_arg_type}, got {type(v)}.")
 
         template_num = 0
