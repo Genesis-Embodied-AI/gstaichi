@@ -3,6 +3,7 @@
 #include "taichi/analysis/offline_cache_util.h"
 #include "taichi/codegen/compiled_kernel_data.h"
 #include "taichi/util/offline_cache.h"
+#include "taichi/util/environ_config.h"
 
 namespace taichi::lang {
 
@@ -246,6 +247,10 @@ const CompiledKernelData &KernelCompilationManager::compile_and_cache_kernel(
   KernelCacheData k;
   k.kernel_key = kernel_key;
   k.created_at = k.last_used_at = std::time(nullptr);
+
+  if (get_environ_config("TI_SHOW_COMPILING")) {
+    TI_INFO("Compiling kernel '{}'", kernel_def.get_name());
+  }
   k.compiled_kernel_data = compile_kernel(compile_config, caps, kernel_def);
   k.size = 0;  // Populate `size` within the KernelCompilationManager::dump()
   k.cache_mode = cache_mode;
