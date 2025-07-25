@@ -31,7 +31,19 @@ GS-Taichi is a high performance multi-platform compiler, targeted at physics sim
 
 GS-Taichi supports automatic differentiation. GS-Taichi lets you build fully fused GPU kernels, using Python.
 
-Genesis simulator's best-in-class performance can be largely attributed to Taichi, its underlying GPU acceleration framework for Python. Given how critical is this component, we decided to fork Taichi and build our own very framework from there, so that from now on, we are free to drive its development in the direction that best supports the continuous improvement of Genesis simulator.
+[Genesis simulator](https://genesis-world.readthedocs.io/en/latest/)'s best-in-class performance can be largely attributed to Taichi, its underlying GPU acceleration framework for Python. Given how critical is this component, we decided to fork Taichi and build our own very framework from there, so that from now on, we are free to drive its development in the direction that best supports the continuous improvement of Genesis simulator.
+
+# Installation
+## Prerequisites
+- Python 3.10-3.13
+- Mac OS 14, 15, Windows, or Ubuntu 22.04-24.04 or compatible
+
+## Procedure
+```
+pip install gs-taichi
+```
+
+(For how to build from source, see our CI build scripts, e.g. [linux build scripts](.github/workflows/scripts_new/linux_x86/) )
 
 # Documentation
 
