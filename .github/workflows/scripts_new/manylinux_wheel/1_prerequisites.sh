@@ -4,12 +4,8 @@ set -ex
 
 # yum update
 yum install -y git wget libXrandr-devel libXinerama-devel libXcursor-devel libXi-devel
-git config --global --add safe.directory /__w/taichi/taichi
-# not sure why this is needed, but breaks without this, after I created a branch that
-# renames from taichi to gs-taichi. I assume some github-site pollution.
-if [[ -d /__w/gs-taichi/gs-taichi ]]; then {
-    git config --global --add safe.directory /__w/gs-taichi/gs-taichi
-} fi
+# Note: following depends on the name of the repo:
+git config --global --add safe.directory /__w/gstaichi/gstaichi
 git submodule update --init --jobs 2
 
 wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.4/clang+llvm-15.0.4-x86_64-linux-gnu-rhel-8.4.tar.xz
