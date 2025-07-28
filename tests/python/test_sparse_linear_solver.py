@@ -16,7 +16,7 @@ Therefore, A_psd is modified from A * A^T to A * A^T + np.eye(n) to improve stab
 @pytest.mark.parametrize("dtype", [ti.f32, ti.f64])
 @pytest.mark.parametrize("solver_type", ["LLT", "LDLT", "LU"])
 @pytest.mark.parametrize("ordering", ["AMD", "COLAMD"])
-@test_utils.test(arch=ti.x64)
+@test_utils.test(arch=ti.x64, print_full_traceback=False)
 def test_sparse_LLT_solver(dtype, solver_type, ordering):
     np_dtype = ti.lang.util.to_numpy_type(dtype)
     n = 10

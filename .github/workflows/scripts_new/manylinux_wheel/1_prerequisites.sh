@@ -4,7 +4,8 @@ set -ex
 
 # yum update
 yum install -y git wget libXrandr-devel libXinerama-devel libXcursor-devel libXi-devel
-git config --global --add safe.directory /__w/taichi/taichi
+# Note: following depends on the name of the repo:
+git config --global --add safe.directory /__w/gstaichi/gstaichi
 git submodule update --init --jobs 2
 
 wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.4/clang+llvm-15.0.4-x86_64-linux-gnu-rhel-8.4.tar.xz
