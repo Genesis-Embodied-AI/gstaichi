@@ -194,7 +194,7 @@ class Ndarray:
         ndarray_to_ndarray(self, other)
         impl.get_runtime().sync()
 
-    def _set_grad(self, grad: "ScalarNdarray | VectorNdarray | MatrixNdarray"):
+    def _set_grad(self, grad: "TensorNdarray"):
         """Sets the gradient ndarray.
 
         Args:
