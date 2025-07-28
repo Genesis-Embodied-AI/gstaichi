@@ -1166,12 +1166,9 @@ def test_real_func_write_ndarray_cfg():
 
 @test_utils.test()
 def test_ndarray_max_num_args() -> None:
-    num_args = 3
+    num_args = 512
     kernel_templ = """
 import taichi as ti
-
-# ti.init()
-
 @ti.kernel
 def my_kernel({args}) -> None:
 {arg_uses}
@@ -1181,11 +1178,12 @@ def my_kernel({args}) -> None:
     arg_objs_l = []
     for i in range(num_args):
         args_l.append(f"a{i}: ti.types.NDArray[ti.i32, 1]")
-        arg_uses_l.append(f"    a{i}[0] += 1")
+        arg_uses_l.append(f"    a{i}[0] += {i + 1}")
         arg_objs_l.append(ti.ndarray(ti.i32, (10,)))
     args_str = ", ".join(args_l)
     arg_uses_str = "\n".join(arg_uses_l)
     kernel_str = kernel_templ.format(args=args_str, arg_uses=arg_uses_str)
-    print(kernel_str)
     with load_kernel_from_string(kernel_str, "my_kernel") as my_kernel:
         my_kernel(*arg_objs_l)
+    for i in range(num_args):
+        assert arg_objs_l[i][0] == i + 1

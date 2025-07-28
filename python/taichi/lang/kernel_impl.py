@@ -842,7 +842,7 @@ class Kernel:
 
         actual_argument_slot = 0
         launch_ctx = t_kernel.make_launch_context()
-        max_arg_num = 64
+        max_arg_num = 512
         exceed_max_arg_num = False
 
         def set_arg_ndarray(indices, v):

@@ -280,9 +280,6 @@ class ASTTransformerContext:
 
     def get_pos_info(self, node) -> str:
         msg = f'File "{self.file}", line {node.lineno + self.lineno_offset}, in {self.func.func.__name__}:\n'
-        if version_info < (3, 8):
-            msg += self.src[node.lineno - 1] + "\n"
-            return msg
         col_offset = self.indent + node.col_offset
         end_col_offset = self.indent + node.end_col_offset
 
@@ -297,8 +294,9 @@ class ASTTransformerContext:
             return "".join([c + "\n" + h + "\n" for c, h in zip(code, hint)])
 
         if node.lineno == node.end_lineno:
-            hint = " " * col_offset + "^" * (end_col_offset - col_offset)
-            msg += gen_line(self.src[node.lineno - 1], hint)
+            if node.lineno - 1 < len(self.src):
+                hint = " " * col_offset + "^" * (end_col_offset - col_offset)
+                msg += gen_line(self.src[node.lineno - 1], hint)
         else:
             node_type = node.__class__.__name__
 
