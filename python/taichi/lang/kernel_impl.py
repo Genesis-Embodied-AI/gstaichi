@@ -14,7 +14,7 @@ import types
 import typing
 import warnings
 import weakref
-from typing import Any, Callable, Type, Union
+from typing import Any, Callable, Hashable, Type, Union
 
 import numpy as np
 
@@ -578,7 +578,8 @@ AnnotationType = Union[
     "texture_type.RWTextureType",
     ndarray_type.NdarrayType,
     sparse_matrix_builder,
-    Any,
+    Hashable,
+    Type,
 ]
 
 
