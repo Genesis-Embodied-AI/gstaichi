@@ -1,7 +1,6 @@
 # type: ignore
 
 import atexit
-import functools
 import os
 import shutil
 import tempfile

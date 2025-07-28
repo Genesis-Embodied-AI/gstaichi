@@ -97,8 +97,8 @@ bool CompiledKernelDataFile::update_hash() {
 CompiledKernelData::Creator *const CompiledKernelData::llvm_creator = nullptr;
 #endif
 
-#if !defined(TI_WITH_VULKAN) && \
-    !defined(TI_WITH_DX11) && !defined(TI_WITH_METAL)
+#if !defined(TI_WITH_VULKAN) && !defined(TI_WITH_DX11) && \
+    !defined(TI_WITH_METAL)
 CompiledKernelData::Creator *const CompiledKernelData::spriv_creator = nullptr;
 #endif
 

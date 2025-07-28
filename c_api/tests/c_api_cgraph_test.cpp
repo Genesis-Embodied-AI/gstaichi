@@ -171,4 +171,3 @@ TEST_F(CapiTest, GraphTestMetalTextureGraph) {
     texture_aot_test(arch);
   }
 }
-
