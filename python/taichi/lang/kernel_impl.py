@@ -146,16 +146,16 @@ class TaichiCallable:
     """
 
     def __init__(self, fn: Callable, wrapper: Callable) -> None:
-        self.fn = fn
-        self.wrapper = wrapper
-        self._is_real_function = False
-        self._is_taichi_function = False
-        self._is_wrapped_kernel = False
-        self._is_classkernel = False
+        self.fn: Callable = fn
+        self.wrapper: Callable = wrapper
+        self._is_real_function: bool = False
+        self._is_taichi_function: bool = False
+        self._is_wrapped_kernel: bool = False
+        self._is_classkernel: bool = False
         self._primal: Kernel | None = None
         self._adjoint: Kernel | None = None
         self.grad: Kernel | None = None
-        self._is_staticmethod = False
+        self._is_staticmethod: bool = False
         functools.update_wrapper(self, fn)
 
     def __call__(self, *args, **kwargs):
