@@ -9,6 +9,8 @@ import taichi as ti
 from taichi.lang import impl
 from taichi.lang.misc import get_host_arch_list
 from tests import test_utils
+from taichi.test_tools.load_kernel_string import load_kernel_from_string
+
 
 data_types = [ti.i32, ti.f32, ti.i64, ti.f64]
 field_shapes = [(), 8, (6, 12)]
@@ -439,3 +441,28 @@ def test_field_with_dynamic_index():
         print(tmp0)
 
     collide()
+
+
+@test_utils.test()
+def test_field_max_num_args() -> None:
+    num_args = 512
+    kernel_templ = """
+import taichi as ti
+@ti.kernel
+def my_kernel({args}) -> None:
+{arg_uses}
+"""
+    args_l = []
+    arg_uses_l = []
+    arg_objs_l = []
+    for i in range(num_args):
+        args_l.append(f"a{i}: ti.Template")
+        arg_uses_l.append(f"    a{i}[0] += {i + 1}")
+        arg_objs_l.append(ti.field(ti.i32, (10,)))
+    args_str = ", ".join(args_l)
+    arg_uses_str = "\n".join(arg_uses_l)
+    kernel_str = kernel_templ.format(args=args_str, arg_uses=arg_uses_str)
+    with load_kernel_from_string(kernel_str, "my_kernel") as my_kernel:
+        my_kernel(*arg_objs_l)
+    for i in range(num_args):
+        assert arg_objs_l[i][0] == i + 1
