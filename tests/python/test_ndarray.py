@@ -9,8 +9,8 @@ from taichi.lang.exception import TaichiIndexError, TaichiRuntimeError, TaichiTy
 from taichi.lang.misc import get_host_arch_list
 from taichi.lang.util import has_pytorch
 from taichi.math import ivec3, vec3
-from tests import test_utils
 from taichi.test_tools.load_kernel_string import load_kernel_from_string
+from tests import test_utils
 
 if has_pytorch():
     import torch
@@ -1164,7 +1164,9 @@ def test_real_func_write_ndarray_cfg():
     assert (a[0] == vec3(3)).all()
 
 
-@test_utils.test()
+# exclude metal, because metal limited to < 30 parametrs AFAIK
+# exclude opengl and gles, because they crash
+@test_utils.test(exclude=[ti.opengl, ti.gles, ti.metal])
 def test_ndarray_max_num_args() -> None:
     num_args = 512
     kernel_templ = """
