@@ -28,7 +28,7 @@ def _test_op(dt, taichi_op, np_op):
         else:
             assert (
                 abs(np_op(float(f(i))) - val[i]) < 1e-6
-                if ti.lang.impl.current_cfg().arch not in (ti.vulkan)
+                if ti.lang.impl.current_cfg().arch != ti.vulkan
                 else 1e-5
             )
 

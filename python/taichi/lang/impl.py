@@ -723,7 +723,7 @@ def create_field_member(dtype, name, needs_grad, needs_dual):
             # adjoint checkbit
             x_grad_checkbit = Expr(prog.make_id_expr(""))
             dtype = u8
-            if prog.config().arch in (_ti_core.vulkan):
+            if prog.config().arch == _ti_core.vulkan:
                 dtype = i32
             x_grad_checkbit.ptr = _ti_core.expr_field(x_grad_checkbit.ptr, cook_dtype(dtype))
             x_grad_checkbit.ptr.set_name(name + ".grad_checkbit")
