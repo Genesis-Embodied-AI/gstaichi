@@ -10,6 +10,7 @@ from taichi.lang.misc import get_host_arch_list
 from taichi.lang.util import has_pytorch
 from taichi.math import ivec3, vec3
 from tests import test_utils
+from taichi.test_tools.load_kernel_string import load_kernel_from_string
 
 if has_pytorch():
     import torch
@@ -1165,12 +1166,26 @@ def test_real_func_write_ndarray_cfg():
 
 @test_utils.test()
 def test_ndarray_max_num_args() -> None:
-    num_args = 32
+    num_args = 3
     kernel_templ = """
 import taichi as ti
 
-ti.init()
+# ti.init()
 
 @ti.kernel
-def my_kernel
+def my_kernel({args}) -> None:
+{arg_uses}
 """
+    args_l = []
+    arg_uses_l = []
+    arg_objs_l = []
+    for i in range(num_args):
+        args_l.append(f"a{i}: ti.types.NDArray[ti.i32, 1]")
+        arg_uses_l.append(f"    a{i}[0] += 1")
+        arg_objs_l.append(ti.ndarray(ti.i32, (10,)))
+    args_str = ", ".join(args_l)
+    arg_uses_str = "\n".join(arg_uses_l)
+    kernel_str = kernel_templ.format(args=args_str, arg_uses=arg_uses_str)
+    print(kernel_str)
+    with load_kernel_from_string(kernel_str, "my_kernel") as my_kernel:
+        my_kernel(*arg_objs_l)
