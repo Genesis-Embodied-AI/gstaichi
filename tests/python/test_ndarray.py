@@ -9,7 +9,7 @@ from taichi.lang.exception import TaichiIndexError, TaichiRuntimeError, TaichiTy
 from taichi.lang.misc import get_host_arch_list
 from taichi.lang.util import has_pytorch
 from taichi.math import ivec3, vec3
-from taichi.test_tools.load_kernel_string import load_kernel_from_string
+from taichi._test_tools.load_kernel_string import load_kernel_from_string
 from tests import test_utils
 
 if has_pytorch():
