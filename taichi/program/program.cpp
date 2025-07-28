@@ -6,7 +6,6 @@
 #include "taichi/program/extension.h"
 #include "taichi/codegen/cpu/codegen_cpu.h"
 #include "taichi/struct/struct.h"
-#include "taichi/runtime/program_impls/opengl/opengl_program.h"
 #include "taichi/runtime/program_impls/metal/metal_program.h"
 #include "taichi/platform/cuda/detect_cuda.h"
 #include "taichi/system/timeline.h"
@@ -24,10 +23,6 @@
 #ifdef TI_WITH_VULKAN
 #include "taichi/runtime/program_impls/vulkan/vulkan_program.h"
 #include "taichi/rhi/vulkan/vulkan_loader.h"
-#endif
-#ifdef TI_WITH_OPENGL
-#include "taichi/runtime/program_impls/opengl/opengl_program.h"
-#include "taichi/rhi/opengl/opengl_api.h"
 #endif
 #ifdef TI_WITH_DX11
 #include "taichi/runtime/program_impls/dx/dx_program.h"
@@ -113,20 +108,6 @@ Program::Program(Arch desired_arch) : snode_rw_accessors_bank_(this) {
     program_impl_ = std::make_unique<Dx11ProgramImpl>(config);
 #else
     TI_ERROR("This taichi is not compiled with DX11");
-#endif
-  } else if (config.arch == Arch::opengl) {
-#ifdef TI_WITH_OPENGL
-    TI_ASSERT(opengl::initialize_opengl(false));
-    program_impl_ = std::make_unique<OpenglProgramImpl>(config);
-#else
-    TI_ERROR("This taichi is not compiled with OpenGL");
-#endif
-  } else if (config.arch == Arch::gles) {
-#ifdef TI_WITH_OPENGL
-    TI_ASSERT(opengl::initialize_opengl(true));
-    program_impl_ = std::make_unique<OpenglProgramImpl>(config);
-#else
-    TI_ERROR("This taichi is not compiled with OpenGL");
 #endif
   } else {
     TI_NOT_IMPLEMENTED
@@ -548,8 +529,6 @@ std::unique_ptr<AotModuleBuilder> Program::make_aot_module_builder(
   if (arch_uses_llvm(compile_config().arch) ||
       compile_config().arch == Arch::metal ||
       compile_config().arch == Arch::vulkan ||
-      compile_config().arch == Arch::opengl ||
-      compile_config().arch == Arch::gles ||
       compile_config().arch == Arch::dx12) {
     return program_impl_->make_aot_module_builder(cfg);
   }

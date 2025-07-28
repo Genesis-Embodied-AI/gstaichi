@@ -43,7 +43,7 @@ def test_ternary_op():
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=[ti.cpu, ti.opengl])
+@test_utils.test(arch=[ti.cpu])
 def test_subscript():
     a = ti.ndarray(ti.i32, shape=(10, 10))
 

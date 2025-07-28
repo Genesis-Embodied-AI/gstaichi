@@ -15,11 +15,6 @@
 #define TI_NO_VULKAN_INCLUDES 1
 #endif  // TI_WITH_VULKAN
 
-#ifdef TI_WITH_OPENGL
-#include "glad/gl.h"
-#define TI_NO_OPENGL_INCLUDES 1
-#endif  // TI_WITH_OPENGL
-
 // Then Include all C-API symbols.
 #include "taichi/taichi.h"
 

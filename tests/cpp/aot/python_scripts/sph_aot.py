@@ -184,8 +184,6 @@ if __name__ == "__main__":
         arch = ti.vulkan
     elif args.arch == "metal":
         arch = ti.metal
-    elif args.arch == "opengl":
-        arch = ti.opengl
     else:
         assert False
 

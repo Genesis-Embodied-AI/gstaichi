@@ -2,7 +2,6 @@
 
 #include "taichi/analysis/offline_cache_util.h"
 #include "taichi/codegen/spirv/kernel_compiler.h"
-#include "taichi/rhi/opengl/opengl_api.h"
 #include "taichi/runtime/gfx/aot_module_builder_impl.h"
 #include "taichi/runtime/gfx/kernel_launcher.h"
 #include "taichi/rhi/common/host_memory_pool.h"

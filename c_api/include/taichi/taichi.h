@@ -10,10 +10,6 @@
 #include "taichi_vulkan.h"
 #endif  // TI_WITH_VULKAN
 
-#ifdef TI_WITH_OPENGL
-#include "taichi_opengl.h"
-#endif  // TI_WITH_OPENGL
-
 #ifdef TI_WITH_CUDA
 #include "taichi_cuda.h"
 #endif  // TI_WITH_CUDA

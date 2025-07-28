@@ -9,10 +9,6 @@
 #include "taichi/rhi/vulkan/vulkan_loader.h"
 #endif
 
-#ifdef TI_WITH_OPENGL
-#include "taichi/rhi/opengl/opengl_api.h"
-#endif
-
 namespace capi {
 namespace utils {
 

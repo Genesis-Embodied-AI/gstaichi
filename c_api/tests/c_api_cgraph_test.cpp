@@ -158,13 +158,6 @@ TEST_F(CapiTest, GraphTestVulkanMatrixGraph) {
   }
 }
 
-TEST_F(CapiTest, GraphTestOpenglMatrixGraph) {
-  if (ti::is_arch_available(TI_ARCH_OPENGL)) {
-    TiArch arch = TiArch::TI_ARCH_OPENGL;
-    matrix_aot_test(arch);
-  }
-}
-
 TEST_F(CapiTest, GraphTestVulkanTextureGraph) {
   if (ti::is_arch_available(TI_ARCH_VULKAN)) {
     TiArch arch = TiArch::TI_ARCH_VULKAN;
@@ -179,9 +172,3 @@ TEST_F(CapiTest, GraphTestMetalTextureGraph) {
   }
 }
 
-TEST_F(CapiTest, GraphTestOpenglGraph) {
-  if (ti::is_arch_available(TI_ARCH_OPENGL)) {
-    TiArch arch = TiArch::TI_ARCH_OPENGL;
-    graph_aot_test(arch);
-  }
-}

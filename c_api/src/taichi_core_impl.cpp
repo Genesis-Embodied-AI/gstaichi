@@ -1,5 +1,4 @@
 #include "taichi_core_impl.h"
-#include "taichi_opengl_impl.h"
 #include "taichi_vulkan_impl.h"
 #include "taichi_llvm_impl.h"
 #include "taichi_metal_impl.h"
@@ -13,14 +12,6 @@
 bool is_vulkan_available() {
 #ifdef TI_WITH_VULKAN
   return taichi::lang::vulkan::is_vulkan_api_available();
-#else
-  return false;
-#endif
-}
-
-bool is_opengl_available() {
-#ifdef TI_WITH_OPENGL
-  return taichi::lang::opengl::is_opengl_api_available();
 #else
   return false;
 #endif
@@ -190,9 +181,6 @@ void ti_get_available_archs(uint32_t *arch_count, TiArch *archs) {
     if (is_arm64_available()) {
       AVAILABLE_ARCHS.emplace_back(TI_ARCH_ARM64);
     }
-    if (is_opengl_available()) {
-      AVAILABLE_ARCHS.emplace_back(TI_ARCH_OPENGL);
-    }
   }
 
   size_t n = std::min((size_t)*arch_count, AVAILABLE_ARCHS.size());
@@ -265,13 +253,6 @@ TiRuntime ti_create_runtime(TiArch arch, uint32_t device_index) {
       break;
     }
 #endif  // TI_WITH_VULKAN
-#ifdef TI_WITH_OPENGL
-    case TI_ARCH_OPENGL: {
-      TI_CAPI_NOT_SUPPORTED_IF_RV(device_index != 0);
-      out = (TiRuntime)(static_cast<Runtime *>(new OpenglRuntime));
-      break;
-    }
-#endif  // TI_WITH_OPENGL
 #ifdef TI_WITH_LLVM
     case TI_ARCH_X64: {
       TI_CAPI_NOT_SUPPORTED_IF_RV(device_index != 0);

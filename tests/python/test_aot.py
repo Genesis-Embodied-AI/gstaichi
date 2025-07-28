@@ -13,7 +13,7 @@ import taichi as ti
 from tests import test_utils
 
 
-@test_utils.test(arch=[ti.opengl, ti.vulkan])
+@test_utils.test(arch=[ti.vulkan])
 def test_aot_field_range_hint():
     density = ti.field(float, shape=(8, 8))
 
@@ -35,7 +35,7 @@ def test_aot_field_range_hint():
                     assert range_hint2["end"] - range_hint2["begin"] == 64
 
 
-@test_utils.test(arch=[ti.opengl, ti.vulkan])
+@test_utils.test(arch=[ti.vulkan])
 def test_aot_bind_id():
     density = ti.field(dtype=ti.f32, shape=(8, 8))
     density1 = ti.ndarray(dtype=ti.math.ivec2, shape=(8, 8))
@@ -79,7 +79,7 @@ def test_aot_bind_id():
                     assert arg_1["ptype"] == 1
 
 
-@test_utils.test(arch=[ti.opengl, ti.vulkan])
+@test_utils.test(arch=[ti.vulkan])
 def test_save():
     density = ti.field(float, shape=(4, 4))
 
@@ -97,7 +97,7 @@ def test_save():
             json.load(json_file)
 
 
-@test_utils.test(arch=[ti.opengl, ti.vulkan])
+@test_utils.test(arch=[ti.vulkan])
 def test_save_template_kernel():
     density = ti.field(float, shape=(4, 4))
 
@@ -117,7 +117,7 @@ def test_save_template_kernel():
             json.load(json_file)
 
 
-@test_utils.test(arch=[ti.opengl, ti.vulkan])
+@test_utils.test(arch=[ti.vulkan])
 def test_non_dense_snode():
     n = 8
     x = ti.field(dtype=ti.f32)
@@ -132,7 +132,7 @@ def test_non_dense_snode():
         m.add_field("y", y)
 
 
-@test_utils.test(arch=[ti.opengl, ti.gles, ti.vulkan])
+@test_utils.test(arch=[ti.vulkan])
 def test_mpm88_aot():
     n_particles = 8192
     n_grid = 128
@@ -225,7 +225,7 @@ def test_mpm88_aot():
             json.load(json_file)
 
 
-@test_utils.test(arch=[ti.opengl, ti.vulkan])
+@test_utils.test(arch=[ti.vulkan])
 def test_opengl_8_ssbo():
     # 6 ndarrays + gtmp + args
     n = 4
@@ -263,7 +263,7 @@ def test_opengl_8_ssbo():
     assert (density6.to_numpy() == (np.zeros(shape=(n, n)) + 6)).all()
 
 
-@test_utils.test(arch=[ti.opengl, ti.vulkan])
+@test_utils.test(arch=[ti.vulkan])
 def test_mpm99_aot():
     quality = 1  # Use a larger value for higher-res simulations
     n_particles, n_grid = 9000 * quality**2, 128 * quality
@@ -393,7 +393,7 @@ def test_mpm99_aot():
             json.load(json_file)
 
 
-@test_utils.test(arch=[ti.opengl, ti.vulkan])
+@test_utils.test(arch=[ti.vulkan])
 def test_mpm88_ndarray():
     dim = 2
     N = 64
@@ -487,7 +487,7 @@ def test_mpm88_ndarray():
             json.load(json_file)
 
 
-@test_utils.test(arch=[ti.opengl, ti.vulkan])
+@test_utils.test(arch=[ti.vulkan])
 def test_aot_ndarray_template_mixed():
     @ti.kernel
     def run(arr: ti.types.ndarray(), val1: ti.f32, val2: ti.template()):
@@ -507,7 +507,7 @@ def test_aot_ndarray_template_mixed():
                     assert args_count == 2, res  # `arr` and `val1`
 
 
-@test_utils.test(arch=[ti.opengl, ti.vulkan])
+@test_utils.test(arch=[ti.vulkan])
 def test_aot_ndarray_without_template_args():
     @ti.kernel
     def kernel1(arr: ti.types.ndarray(dtype=ti.f32, ndim=2)):
@@ -530,7 +530,7 @@ def test_aot_ndarray_without_template_args():
     m.add_kernel(kernel3)
 
 
-@test_utils.test(arch=[ti.opengl, ti.vulkan])
+@test_utils.test(arch=[ti.vulkan])
 def test_archive():
     density = ti.field(float, shape=(4, 4))
 
@@ -559,7 +559,7 @@ def test_archive():
         assert first_sha == second_sha
 
 
-@test_utils.test(arch=[ti.opengl, ti.vulkan])
+@test_utils.test(arch=[ti.vulkan])
 def test_sequential_dispatch():
     g_init_builder = ti.graph.GraphBuilder()
     g_init_substep = g_init_builder.create_sequential()

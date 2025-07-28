@@ -48,7 +48,6 @@ def setup_ios(python: Command, pip: Command) -> None:
     cmake_args["TI_WITH_C_API"] = True
     cmake_args["TI_WITH_METAL"] = True
     cmake_args["TI_WITH_VULKAN"] = False
-    cmake_args["TI_WITH_OPENGL"] = False
     cmake_args["TI_WITH_LLVM"] = False
     cmake_args["TI_WITH_CUDA"] = False
     cmake_args["TI_WITH_PYTHON"] = False

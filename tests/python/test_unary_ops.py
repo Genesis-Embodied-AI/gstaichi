@@ -28,7 +28,7 @@ def _test_op(dt, taichi_op, np_op):
         else:
             assert (
                 abs(np_op(float(f(i))) - val[i]) < 1e-6
-                if ti.lang.impl.current_cfg().arch not in (ti.opengl, ti.gles, ti.vulkan)
+                if ti.lang.impl.current_cfg().arch not in (ti.vulkan)
                 else 1e-5
             )
 
@@ -77,7 +77,7 @@ def test_logic_not_invalid():
         test(1.0)
 
 
-@test_utils.test(arch=[ti.cuda, ti.vulkan, ti.opengl, ti.metal])
+@test_utils.test(arch=[ti.cuda, ti.vulkan, ti.metal])
 def test_frexp():
     @ti.kernel
     def get_frac(x: ti.f32) -> ti.f32:

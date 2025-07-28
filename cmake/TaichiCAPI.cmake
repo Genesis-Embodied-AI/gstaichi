@@ -37,13 +37,8 @@ if (TI_WITH_LLVM)
   endif()
 endif()
 
-if (TI_WITH_OPENGL OR TI_WITH_VULKAN OR TI_WITH_METAL)
+if (TI_WITH_VULKAN OR TI_WITH_METAL)
   list(APPEND C_API_SOURCE "c_api/src/taichi_gfx_impl.cpp")
-endif()
-
-if (TI_WITH_OPENGL)
-  list(APPEND C_API_SOURCE "c_api/src/taichi_opengl_impl.cpp")
-  list(APPEND C_API_PUBLIC_HEADERS "c_api/include/taichi/taichi_opengl.h")
 endif()
 
 if (TI_WITH_METAL)

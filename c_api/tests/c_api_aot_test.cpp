@@ -195,13 +195,6 @@ TEST_F(CapiTest, AotTestMetalKernel) {
   }
 }
 
-TEST_F(CapiTest, AotTestOpenglKernel) {
-  if (ti::is_arch_available(TI_ARCH_OPENGL)) {
-    TiArch arch = TiArch::TI_ARCH_OPENGL;
-    kernel_aot_test(arch);
-  }
-}
-
 TEST_F(CapiTest, GraphTestVulkanTextureKernel) {
   if (ti::is_arch_available(TI_ARCH_VULKAN)) {
     TiArch arch = TiArch::TI_ARCH_VULKAN;

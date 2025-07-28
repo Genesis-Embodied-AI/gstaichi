@@ -15,8 +15,6 @@
 // |Metal       |GPU (macOS, iOS) |Tier 2           | No          |
 // |CUDA (LLVM) |GPU (NVIDIA)     |Tier 2           | No          |
 // |CPU (LLVM)  |CPU              |Tier 2           | No          |
-// |OpenGL      |GPU              |Tier 2           | No          |
-// |OpenGL ES   |GPU              |Tier 2           | No          |
 // |DirectX 11  |GPU (Windows)    |N/A              | No          |
 //
 // The backends with tier-1 support are being developed and tested more
@@ -368,9 +366,9 @@ typedef enum TiArch {
   // Arm64 native CPU backend.
   TI_ARCH_ARM64 = 5,
   // OpenGL GPU backend.
-  TI_ARCH_OPENGL = 6,
+  // TI_ARCH_OPENGL = 6,
   // OpenGL ES GPU backend.
-  TI_ARCH_GLES = 7,
+  // TI_ARCH_GLES = 7,
   TI_ARCH_MAX_ENUM = 0xffffffff,
 } TiArch;
 

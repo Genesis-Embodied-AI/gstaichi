@@ -11,7 +11,7 @@ import pytest
 
 import taichi as ti
 from taichi._lib import core as _ti_core
-from taichi.lang import cpu, cuda, dx11, gles, gpu, metal, opengl, vulkan
+from taichi.lang import cpu, cuda, gpu, metal, vulkan
 from taichi.lang.misc import is_arch_supported
 
 
@@ -45,8 +45,6 @@ def verify_image(image, image_name, tolerance=0.1, regerate_groundtruth_images=F
 
 def get_rel_eps():
     arch = ti.lang.impl.current_cfg().arch
-    if arch == ti.opengl:
-        return 1e-3
     if arch == ti.metal:
         # Debatable, different hardware could yield different precisions
         # On AMD Radeon Pro 5500M, 1e-6 works fine...
@@ -141,7 +139,7 @@ def expected_archs():
     """
 
     def get_archs():
-        archs = set([cpu, cuda, metal, vulkan, opengl, gles])
+        archs = set([cpu, cuda, metal, vulkan])
         # TODO: now expected_archs is not called per test so we cannot test it
         archs = set(filter(is_arch_supported, archs))
         return archs
