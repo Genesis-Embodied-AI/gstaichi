@@ -1225,7 +1225,7 @@ class Kernel:
             if isinstance(needed_arg_type, StructType):
                 if in_argpack:
                     return 1
-                if not isinstance(v, type(needed_arg_type)):
+                if not isinstance(v, needed_arg_type):  # type: ignore
                     raise TaichiRuntimeTypeError(
                         f"Argument {provided_arg_type} cannot be converted into required type {needed_arg_type}"
                     )
