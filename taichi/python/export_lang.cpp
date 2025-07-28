@@ -227,8 +227,6 @@ void export_lang(py::module &m) {
                      &CompileConfig::quant_opt_store_fusion)
       .def_readwrite("quant_opt_atomic_demotion",
                      &CompileConfig::quant_opt_atomic_demotion)
-      .def_readwrite("allow_nv_shader_extension",
-                     &CompileConfig::allow_nv_shader_extension)
       .def_readwrite("make_mesh_block_local",
                      &CompileConfig::make_mesh_block_local)
       .def_readwrite("mesh_localize_to_end_mapping",
@@ -1220,7 +1218,6 @@ void export_lang(py::module &m) {
   m.def("test_logging", [] { TI_INFO("test_logging"); });
   m.def("trigger_crash", [] { *(int *)(1) = 0; });
   m.def("get_max_num_indices", [] { return taichi_max_num_indices; });
-  m.def("get_max_num_args", [] { return taichi_max_num_args; });
   m.def("test_threading", test_threading);
   m.def("is_extension_supported", is_extension_supported);
 
