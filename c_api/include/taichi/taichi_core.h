@@ -365,11 +365,9 @@ typedef enum TiArch {
   TI_ARCH_X64 = 4,
   // Arm64 native CPU backend.
   TI_ARCH_ARM64 = 5,
-  // OpenGL and GLES removed in https://github.com/Genesis-Embodied-AI/gstaichi/pull/115
-  // OpenGL GPU backend.
-  // TI_ARCH_OPENGL = 6,
-  // OpenGL ES GPU backend.
-  // TI_ARCH_GLES = 7,
+  // OpenGL and GLES removed in
+  // https://github.com/Genesis-Embodied-AI/gstaichi/pull/115 OpenGL GPU
+  // backend. TI_ARCH_OPENGL = 6, OpenGL ES GPU backend. TI_ARCH_GLES = 7,
   TI_ARCH_MAX_ENUM = 0xffffffff,
 } TiArch;
 
