@@ -6,9 +6,9 @@ import numpy as np
 import pytest
 
 import taichi as ti
+from taichi._test_tools.load_kernel_string import load_kernel_from_string
 from taichi.lang import impl
 from taichi.lang.misc import get_host_arch_list
-from taichi._test_tools.load_kernel_string import load_kernel_from_string
 from tests import test_utils
 
 data_types = [ti.i32, ti.f32, ti.i64, ti.f64]
