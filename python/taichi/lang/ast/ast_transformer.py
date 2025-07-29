@@ -628,13 +628,15 @@ class ASTTransformer(Builder):
         if hasattr(node.func, "caller"):
             node.ptr = func(node.func.caller, *args, **keywords)
             return node.ptr
+
         ASTTransformer.warn_if_is_external_func(ctx, node)
         try:
             node.ptr = func(*args, **keywords)
         except TypeError as e:
             module = inspect.getmodule(func)
             error_msg = re.sub(r"\bExpr\b", "Taichi Expression", str(e))
-            msg = f"TypeError when calling `{func.__name__}`: {error_msg}."
+            func_name = getattr(func, "__name__", func.__class__.__name__)
+            msg = f"TypeError when calling `{func_name}`: {error_msg}."
             if ASTTransformer.is_external_func(ctx, node.func.ptr):
                 args_has_expr = any([isinstance(arg, Expr) for arg in args])
                 if args_has_expr and (module == math or module == np):
@@ -648,7 +650,7 @@ class ASTTransformer(Builder):
             raise TaichiTypeError(msg)
 
         if getattr(func, "_is_taichi_function", False):
-            ctx.func.has_print |= func.func.has_print
+            ctx.func.has_print |= func.wrapper.has_print
 
         return node.ptr
 
@@ -1796,7 +1798,7 @@ class ASTTransformer(Builder):
 build_stmt = ASTTransformer()
 
 
-def build_stmts(ctx: ASTTransformerContext, stmts: list):
+def build_stmts(ctx: ASTTransformerContext, stmts: list[ast.stmt]):
     with ctx.variable_scope_guard():
         for stmt in stmts:
             if ctx.returned != ReturnStatus.NoReturn or ctx.loop_status() != LoopStatus.Normal:
