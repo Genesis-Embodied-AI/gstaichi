@@ -1226,7 +1226,11 @@ class Kernel:
             if isinstance(needed_arg_type, StructType):
                 if in_argpack:
                     return 1
-                if not isinstance(v, needed_arg_type):  # type: ignore
+                # Unclear how to make the following pass typing checks
+                # StructType implements __instancecheck__, which should be a classmethod, but
+                # is currently an instance method
+                # TODO: look into this more deeply at some point
+                if not issubclass(v, needed_arg_type):  # type: ignore
                     raise TaichiRuntimeTypeError(
                         f"Argument {provided_arg_type} cannot be converted into required type {needed_arg_type}"
                     )
