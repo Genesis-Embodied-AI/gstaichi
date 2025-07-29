@@ -578,8 +578,9 @@ AnnotationType = Union[
     "texture_type.RWTextureType",
     ndarray_type.NdarrayType,
     sparse_matrix_builder,
-    Hashable,
+    str,
     Type,
+    Any,
 ]
 
 
