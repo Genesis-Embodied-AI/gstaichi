@@ -1230,7 +1230,7 @@ class Kernel:
                 # StructType implements __instancecheck__, which should be a classmethod, but
                 # is currently an instance method
                 # TODO: look into this more deeply at some point
-                if not issubclass(v, needed_arg_type):  # type: ignore
+                if not isinstance(v, needed_arg_type):  # type: ignore
                     raise TaichiRuntimeTypeError(
                         f"Argument {provided_arg_type} cannot be converted into required type {needed_arg_type}"
                     )
