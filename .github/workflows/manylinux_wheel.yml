@@ -47,7 +47,6 @@ jobs:
     name: Manylinux wheel upload
     runs-on: ubuntu-22.04
     needs: build_wheel
-    environment: aws_storage
     concurrency:
       # group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-upload
       group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-upload
@@ -62,8 +61,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_STORAGE_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_STORAGE_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
       - uses: actions/download-artifact@v4
         with:
@@ -79,7 +78,6 @@ jobs:
     name: Manylinux wheel Test
     runs-on: ubuntu-22.04
     needs: upload_to_storage
-    environment: aws_storage
     concurrency:
       # group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-test
       group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-test
@@ -101,8 +99,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_STORAGE_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_STORAGE_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
       - name: Download artifact
         run: |
@@ -126,13 +124,13 @@ jobs:
     with:
       head_ref: ${{ github.head_ref || github.ref_name }}
     secrets:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_STORAGE_ACCESS_KEY_ID: ${{ secrets.AWS_STORAGE_ACCESS_KEY_ID }}
+      AWS_STORAGE_SECRET_ACCESS_KEY: ${{ secrets.AWS_STORAGE_SECRET_ACCESS_KEY }}
   pyright_linter:
     uses: ./.github/workflows/pyright_linter.yml
     needs: upload_to_storage
     with:
       head_ref: ${{ github.head_ref  || github.ref_name }}
     secrets:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_STORAGE_ACCESS_KEY_ID: ${{ secrets.AWS_STORAGE_ACCESS_KEY_ID }}
+      AWS_STORAGE_SECRET_ACCESS_KEY: ${{ secrets.AWS_STORAGE_SECRET_ACCESS_KEY }}

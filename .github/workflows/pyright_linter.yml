@@ -7,16 +7,15 @@ on:
         required: true
         type: string
     secrets:
-      AWS_ACCESS_KEY_ID:
+      AWS_STORAGE_ACCESS_KEY_ID:
         required: true
-      AWS_SECRET_ACCESS_KEY:
+      AWS_STORAGE_SECRET_ACCESS_KEY:
         required: true
   workflow_dispatch:
 jobs:
   build:
     name: Pyright Linter
     runs-on: ubuntu-latest
-    environment: aws_storage
     steps:
       - uses: actions/checkout@v4
         with:
@@ -24,8 +23,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_STORAGE_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_STORAGE_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
       - name: Download artifact
         run: |

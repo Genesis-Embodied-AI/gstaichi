@@ -1,4 +1,4 @@
-# type: ignore
+from typing import Union
 
 from taichi._lib import core as ti_python_core
 
@@ -174,6 +174,8 @@ integer_type_ids = [id(t) for t in integer_types]
 all_types = real_types + integer_types
 type_ids = [id(t) for t in all_types]
 
+_python_primitive_types = Union[int, float, bool, str, None]
+
 __all__ = [
     "float32",
     "f32",
@@ -200,4 +202,5 @@ __all__ = [
     "uint64",
     "u64",
     "ref",
+    "_python_primitive_types",
 ]
