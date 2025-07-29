@@ -41,9 +41,7 @@ def test_print_docs_scalar_self_documenting_exp(capfd):
     out = filter_lines(out, "TEST_PRINT:")
     # for vulkan, which adds in this extra stuff for some reason, recently
     out = out.replace("vkQueueSubmit():  ", "")
-    print("out", out)
     expected_out = """TEST_PRINT: a[0] = 1.0"""
-    print("expected", expected_out)
     assert out == expected_out and err == ""
 
 
@@ -232,7 +230,6 @@ def test_print_matrix_fstring_with_spec(capfd):
     out = filter_lines(out, "TEST_PRINT: ")
     # for vulkan, which adds in this extra stuff for some reason, recently
     out = out.replace("vkQueueSubmit():  ", "")
-    print("out", out)
     expected_out = """TEST_PRINT: hello [[-1.00, 0.00, 0.00], [0.00, 0.00, 0.00]] world!
 TEST_PRINT: [233.300, 233.300, 233.300] [[-4.286326e-03, 0.000000e+00, 0.000000e+00], [0.000000e+00, 0.000000e+00, 0.000000e+00]] [1.00, 1.00, 1.00]
 TEST_PRINT: hello [[00, 00, 00], [00, 00, 00]] world!"""
