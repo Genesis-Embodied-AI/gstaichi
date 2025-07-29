@@ -1,172 +1,59 @@
-<div align="center">
-  <img width="500px" src="https://github.com/taichi-dev/taichi/raw/master/misc/logo.png"/>
-</div>
+# GS-Taichi
 
----
-[![Latest Release](https://img.shields.io/github/v/release/taichi-dev/taichi?color=blue&label=Latest%20Release)](https://github.com/taichi-dev/taichi/releases/latest)
-[![downloads](https://pepy.tech/badge/taichi)](https://pepy.tech/project/taichi)
-[![CI](https://github.com/taichi-dev/taichi/actions/workflows/testing.yml/badge.svg)](https://github.com/taichi-dev/taichi/actions/workflows/testing.yml)
-[![Nightly Release](https://github.com/taichi-dev/taichi/actions/workflows/release.yml/badge.svg)](https://github.com/taichi-dev/taichi/actions/workflows/release.yml)
-<a href="https://discord.gg/f25GRdXRfg"><img alt="discord invitation link" src="https://dcbadge.vercel.app/api/server/f25GRdXRfg?style=flat"></a>
+[Taichi](https://github.com/taichi-dev/taichi) was forked in June 2025. This repository (or gs-taichi) is now a fully independent project with no intention of maintaining backward compatibility with the original taichi. Whilst the repo largely resembles upstream for now, we have made the following changes:
+- revamped continuous integration, to run using recent python versions (up to 3.13), recent mac os x versions (up to 15), and to run reliably (at least 95% of runs with correct code succeed)
+- added dataclasses.dataclass structs:
+    - work with both ndarrays and fields (cf ti.struct (field only), ti.dataclass (field only), ti.data_oriented (field only), argpack (ndarray only))
+    - can be passed into child `ti.func`tions (cf argpack)
+    - does not affect kernel runtime speed (kernels see only the underlying arrays, no indirection is added within the kernel layer)
+- removed GUI/GGUI
+- upgraded supported OS and Python versions (eg added support for Python 3.13)
 
-```shell
-pip install taichi  # Install Taichi Lang
-ti gallery          # Launch demo gallery
+Planned features:
+- reduce warm cache launch latency
+- (maybe) add launch args caching, to reduce launch latency
+- make dataclasses.dataclass nestable
+
+Planned pruning:
+- remove argpack
+- remove ti CLI
+- remove OpenGL (please use Vulkan)
+- remove mobile device support (Android etc)
+- remove support for NVidia GPUs earlier than sm_60/Pascal
+
+# What is gs-taichi?
+
+GS-Taichi is a high performance multi-platform compiler, targeted at physics simulations. It compiles Python code into parallelizable kernels that can run on:
+- NVidia GPUs, using CUDA
+- Vulkan-compatible GPUs, using SPIR-V
+- Mac Metal GPUs
+- x86 and arm64 CPUs
+
+GS-Taichi supports automatic differentiation. GS-Taichi lets you build fully fused GPU kernels, using Python.
+
+[Genesis simulator](https://genesis-world.readthedocs.io/en/latest/)'s best-in-class performance can be largely attributed to Taichi, its underlying GPU acceleration framework for Python. Given how critical is this component, we decided to fork Taichi and build our own very framework from there, so that from now on, we are free to drive its development in the direction that best supports the continuous improvement of Genesis simulator.
+
+# Installation
+## Prerequisites
+- Python 3.10-3.13
+- Mac OS 14, 15, Windows, or Ubuntu 22.04-24.04 or compatible
+
+## Procedure
+```
+pip install gs-taichi
 ```
 
-## What is Taichi Lang?
+(For how to build from source, see our CI build scripts, e.g. [linux build scripts](.github/workflows/scripts_new/linux_x86/) )
 
-Taichi Lang is an open-source, imperative, parallel programming language for high-performance numerical computation. It is embedded in Python and uses just-in-time (JIT) compiler frameworks, for example LLVM, to offload the compute-intensive Python code to the native GPU or CPU instructions.
+# Documentation
 
-<a href="https://github.com/taichi-dev/taichi/blob/master/python/taichi/examples/simulation/fractal.py#L1-L31"> <img src="https://github.com/taichi-dev/public_files/raw/master/taichi/fractal_code.png" height="270px"></a>  <img src="https://raw.githubusercontent.com/taichi-dev/public_files/master/taichi/fractal_small.gif" height="270px">
+- [docs](docs/lang/articles)
+- [API reference](https://ideal-adventure-2n6lpyw.pages.github.io/taichi.html)
 
-The language has broad applications spanning real-time physical simulation, numerical computation, augmented reality, artificial intelligence, vision and robotics, visual effects in films and games, general-purpose computing, and much more.
+# Something is broken!
 
-<a href="https://github.com/taichi-dev/taichi/blob/master/python/taichi/examples/simulation/mpm128.py"><img src="https://github.com/taichi-dev/public_files/raw/master/taichi/mpm128.gif" height="192px"></a>
-<a href="https://github.com/taichi-dev/quantaichi"> <img src="https://raw.githubusercontent.com/taichi-dev/public_files/master/taichi/smoke_3d.gif" height="192px"></a>
-<a href="https://github.com/taichi-dev/taichi/blob/master/python/taichi/examples/rendering/sdf_renderer.py"><img src="https://github.com/taichi-dev/public_files/raw/master/taichi/sdf_renderer.jpg" height="192px"></a>
-<a href="https://github.com/taichi-dev/taichi/blob/master/python/taichi/examples/simulation/euler.py"><img src="https://github.com/taichi-dev/public_files/raw/master/taichi/euler.gif" height="192px"></a>
+- [Create an issue](https://github.com/Genesis-Embodied-AI/taichi/issues/new/choose)
 
-<a href="https://github.com/taichi-dev/quantaichi"><img src="https://raw.githubusercontent.com/taichi-dev/public_files/master/taichi/elastic_letters.gif" height="213px"></a>
-<a href="https://github.com/taichi-dev/quantaichi"><img src="https://raw.githubusercontent.com/taichi-dev/public_files/master/taichi/fluid_with_bunnies.gif" height="213px"></a>
+# Acknowledgements
 
-[...More](#demos)
-
-## Why Taichi Lang?
-
-- Built around Python: Taichi Lang shares almost the same syntax with Python, allowing you to write algorithms with minimal language barrier. It is also well integrated into the Python ecosystem, including NumPy and PyTorch.
-- Flexibility: Taichi Lang provides a set of generic data containers known as *SNode* (/ˈsnoʊd/), an effective mechanism for composing hierarchical, multi-dimensional fields. This can cover many use patterns in numerical simulation (e.g. [spatially sparse computing](docs/lang/articles/basic/sparse.md)).
-- Performance: With the `@ti.kernel` decorator, Taichi Lang's JIT compiler automatically compiles your Python functions into efficient GPU or CPU machine code for parallel execution.
-- Portability: Write your code once and run it everywhere. Currently, Taichi Lang supports most mainstream GPU APIs, such as CUDA and Vulkan.
-- ... and many more features! A cross-platform, Vulkan-based 3D visualizer, [differentiable programming](docs/lang/articles/differentiable/differentiable_programming.md),  [quantized computation](docs/lang/articles/advanced/quant.md) (experimental), etc.
-
-## Getting Started
-
-### Installation
-
-<details>
-  <summary>Prerequisites</summary>
-
-<!--TODO: Precise OS versions-->
-
-- Operating systems
-  - Windows
-  - Linux
-  - macOS
-- Python: 3.6 ~ 3.10 (64-bit only)
-- Compute backends
-  - x64/ARM CPUs
-  - CUDA
-  - Vulkan
-  - OpenGL (4.3+)
-  - Apple Metal
-  - WebAssembly (experiemental)
-- Other packages:
-  - cmake >= 3.11.0
- </details>
-
-Use Python's package installer **pip** to install Taichi Lang:
-
-```bash
-pip install --upgrade taichi
-```
-
-*We also provide a nightly package. Note that nightly packages may crash because they are not fully tested.  We cannot guarantee their validity, and you are at your own risk trying out our latest, untested features. The nightly packages can be installed from our self-hosted PyPI (Using self-hosted PyPI allows us to provide more frequent releases over a longer period of time)*
-
-```bash
-pip install -i https://pypi.taichi.graphics/simple/ taichi-nightly
-```
-
-Here is how you can calculate prime numbers:
-```py
-# from docs/lang/articles/get-started/accelerate-python.md
-import taichi as ti
-
-ti.init(arch=ti.gpu)
-
-@ti.func
-def is_prime(n: int):
-    result = True
-    for k in range(2, int(n ** 0.5) + 1):
-        if n % k == 0:
-            result = False
-            break
-    return result
-
-@ti.kernel
-def count_primes(n: int) -> int:
-    count = 0
-    for k in range(2, n):
-        if is_prime(k):
-            count += 1
-
-    return count
-
-print(count_primes(1000000))
-```
-
-See [Get started](docs/lang/articles/get-started/hello_world.md) for more information.
-
-### Build from source
-
-If you wish to try our experimental features or build Taichi Lang for your own environments, see [Developer installation](docs/lang/articles/contribution/dev_install.md).
-
-## Documentation
-
-- [Technical documents](docs/lang/articles)
-- [API Reference](https://ideal-adventure-2n6lpyw.pages.github.io/)
-
-## Community activity [![Time period](https://images.repography.com/32602247/taichi-dev/taichi/recent-activity/RlhQybvihwEjfE7ngXyQR9tudBDYAvl27v-NVNMxUrg_badge.svg)](https://repography.com)
-[![Timeline graph](https://images.repography.com/32602247/taichi-dev/taichi/recent-activity/RlhQybvihwEjfE7ngXyQR9tudBDYAvl27v-NVNMxUrg_timeline.svg)](https://github.com/taichi-dev/taichi/commits)
-[![Issue status graph](https://images.repography.com/32602247/taichi-dev/taichi/recent-activity/RlhQybvihwEjfE7ngXyQR9tudBDYAvl27v-NVNMxUrg_issues.svg)](https://github.com/taichi-dev/taichi/issues)
-[![Pull request status graph](https://images.repography.com/32602247/taichi-dev/taichi/recent-activity/RlhQybvihwEjfE7ngXyQR9tudBDYAvl27v-NVNMxUrg_prs.svg)](https://github.com/taichi-dev/taichi/pulls)
-[![Trending topics](https://images.repography.com/32602247/taichi-dev/taichi/recent-activity/RlhQybvihwEjfE7ngXyQR9tudBDYAvl27v-NVNMxUrg_words.svg)](https://github.com/taichi-dev/taichi/commits)
-
-## Contributing
-
-Kudos to all of our amazing contributors! Taichi Lang thrives through open-source. In that spirit, we welcome all kinds of contributions from the community. If you would like to participate, check out the [Contribution Guidelines](CONTRIBUTING.md) first.
-
-<a href="https://github.com/taichi-dev/taichi/graphs/contributors"><img src="https://raw.githubusercontent.com/taichi-dev/public_files/master/taichi/contributors_taichi-dev_taichi_18.png" width="800px"></a>
-
-*Contributor avatars are randomly shuffled.*
-
-## License
-
-Taichi Lang is distributed under the terms of Apache License (Version 2.0).
-
-See [Apache License](https://github.com/taichi-dev/taichi/blob/master/LICENSE) for details.
-
-## Reference
-
-### Demos
-
-- [Nerf with Taichi](https://github.com/taichi-dev/taichi-nerfs)
-- [Taichi Lang examples](https://github.com/taichi-dev/taichi/tree/master/python/taichi/examples)
-- [Advanced Taichi Lang examples](https://github.com/taichi-dev/advanced_examples)
-- [Awesome Taichi](https://github.com/taichi-dev/awesome-taichi)
-- [DiffTaichi](https://github.com/taichi-dev/difftaichi)
-- [Taichi elements](https://github.com/taichi-dev/taichi_elements)
-- [Taichi Houdini](https://github.com/taichi-dev/taichi_houdini)
-- [More...](misc/links.md)
-
-### AOT deployment
-
-- [Taichi AOT demos & tutorial](https://github.com/taichi-dev/taichi-aot-demo/)
-
-
-### Lectures & talks
-
-- SIGGRAPH 2020 course on Taichi basics: [YouTube](https://youtu.be/Y0-76n3aZFA), [Bilibili](https://www.bilibili.com/video/BV1kA411n7jk/), [slides (pdf)](https://yuanming.taichi.graphics/publication/2020-taichi-tutorial/taichi-tutorial.pdf).
-- Chinagraph 2020 用太极编写物理引擎: [哔哩哔哩](https://www.bilibili.com/video/BV1gA411j7H5)
-- GAMES 201 高级物理引擎实战指南 2020: [课件](https://github.com/taichi-dev/games201)
-- 太极图形课第一季：[课件](https://github.com/taichiCourse01)
-- [TaichiCon](https://github.com/taichi-dev/taichicon): Taichi Developer Conferences
-- More to come...
-
-### Citations
-
-If you use Taichi Lang in your research, please cite the corresponding papers:
-
-- [**(SIGGRAPH Asia 2019) Taichi: High-Performance Computation on Sparse Data Structures**](https://yuanming.taichi.graphics/publication/2019-taichi/taichi-lang.pdf) [[Video]](https://youtu.be/wKw8LMF3Djo) [[BibTex]](https://raw.githubusercontent.com/taichi-dev/taichi/master/misc/taichi_bibtex.txt) [[Code]](https://github.com/taichi-dev/taichi)
-- [**(ICLR 2020) DiffTaichi: Differentiable Programming for Physical Simulation**](https://arxiv.org/abs/1910.00935) [[Video]](https://www.youtube.com/watch?v=Z1xvAZve9aE) [[BibTex]](https://raw.githubusercontent.com/taichi-dev/taichi/master/misc/difftaichi_bibtex.txt) [[Code]](https://github.com/yuanming-hu/difftaichi)
-- [**(SIGGRAPH 2021) QuanTaichi: A Compiler for Quantized Simulations**](https://yuanming.taichi.graphics/publication/2021-quantaichi/quantaichi.pdf) [[Video]](https://www.youtube.com/watch?v=0jdrAQOxJlY) [[BibTex]](https://raw.githubusercontent.com/taichi-dev/taichi/master/misc/quantaichi_bibtex.txt) [[Code]](https://github.com/taichi-dev/quantaichi)
+- The original [Taichi](https://github.com/taichi-dev/taichi) was developed with love by many contributors over many years. For the full list of contributors and credits, see [Original taichi contributors](https://github.com/taichi-dev/taichi?tab=readme-ov-file#contributing)
