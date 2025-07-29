@@ -32,11 +32,10 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 
 
@@ -117,15 +116,19 @@ def postprocess_stubs(stub_path: str) -> None:
 
     stub_lines = stub_path.read_text().split("\n")
     yaml = YAML()
-    with open("stub_replacements.yaml") as f:
-        replacements = yaml.load(f)
+    with open("stub_replacements_funcs.yaml") as f:
+        replacements_funcs = yaml.load(f)
+    with open("stub_replacements_global.yaml") as f:
+        replacements_global = yaml.load(f)
     new_stub_lines = []
     for line in stub_lines:
         func_name = line.lstrip().partition("(")[0]
-        if func_name in replacements:
+        if func_name in replacements_funcs:
             print("func_name", func_name)
-            print("found func_name replacing with ", replacements[func_name])
-            line = replacements[func_name]
+            print("found func_name replacing with ", replacements_funcs[func_name])
+            line = replacements_funcs[func_name]
+        for src, dst in replacements_global.items():
+            line = line.replace(src, dst)
         new_stub_lines.append(line)
     stub_path.write_text("\n".join(new_stub_lines))
     print("stub_path", stub_path)

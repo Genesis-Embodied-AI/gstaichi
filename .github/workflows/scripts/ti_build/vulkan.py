@@ -28,12 +28,12 @@ def setup_vulkan():
         os.environ["VULKAN_SDK"] = str(sdk)
         path_prepend("PATH", sdk / "bin")
         path_prepend("LD_LIBRARY_PATH", sdk / "lib")
-        os.environ["VK_LAYER_PATH"] = str(sdk / "etc" / "vulkan" / "explicit_layer.d")
+        os.environ["VK_LAYER_PATH"] = str(sdk / "share" / "vulkan" / "explicit_layer.d")
     # elif (u.system, u.machine) == ("Darwin", "arm64"):
     # elif (u.system, u.machine) == ("Darwin", "x86_64"):
     elif (u.system, u.machine) == ("Windows", "AMD64"):
-        url = "https://sdk.lunarg.com/sdk/download/1.3.236.0/windows/VulkanSDK-1.3.236.0-Installer.exe"
-        prefix = get_cache_home() / "vulkan-1.3.236.0"
+        url = "https://sdk.lunarg.com/sdk/download/1.3.296.0/windows/VulkanSDK-1.3.296.0-Installer.exe"
+        prefix = get_cache_home() / "vulkan-1.3.296.0"
         download_dep(
             url,
             prefix,

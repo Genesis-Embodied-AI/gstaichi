@@ -15,11 +15,13 @@ jobs:
     runs-on: ubuntu-22.04
     container: quay.io/pypa/manylinux_2_28_x86_64:latest
     concurrency:
-      group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-build
+      # group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-build
+      group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-build
       cancel-in-progress: true
     strategy:
       matrix:
-        PYTHON_CP_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
+        # PYTHON_CP_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
+        PYTHON_CP_VERSION: ['cp310']
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -46,11 +48,13 @@ jobs:
     runs-on: ubuntu-22.04
     needs: build_wheel
     concurrency:
-      group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-upload
+      # group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-upload
+      group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-upload
       cancel-in-progress: true
     strategy:
       matrix:
-        PYTHON_CP_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
+        # PYTHON_CP_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
+        PYTHON_CP_VERSION: ['cp310']
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -75,19 +79,20 @@ jobs:
     runs-on: ubuntu-22.04
     needs: upload_to_storage
     concurrency:
-      group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-test
+      # group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-test
+      group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-test
       cancel-in-progress: true
     strategy:
       matrix:
         include:
           - PYTHON_CP_VERSION: 'cp310'
             PYTHON_VERSION: '3.10'
-          - PYTHON_CP_VERSION: 'cp311'
-            PYTHON_VERSION: '3.11'
-          - PYTHON_CP_VERSION: 'cp312'
-            PYTHON_VERSION: '3.12'
-          - PYTHON_CP_VERSION: 'cp313'
-            PYTHON_VERSION: '3.13'
+          # - PYTHON_CP_VERSION: 'cp311'
+          #   PYTHON_VERSION: '3.11'
+          # - PYTHON_CP_VERSION: 'cp312'
+          #   PYTHON_VERSION: '3.12'
+          # - PYTHON_CP_VERSION: 'cp313'
+          #   PYTHON_VERSION: '3.13'
       fail-fast: false
     steps:
       - uses: actions/checkout@v4

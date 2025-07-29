@@ -12,8 +12,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        MAC_OS_VERSION: [15]
-        PYTHON_CP_VERSION: [cp310, cp311, cp312, cp313]
+        # MAC_OS_VERSION: [15]
+        # PYTHON_CP_VERSION: [cp310, cp311, cp312, cp313]
         include:
           - MAC_OS_VERSION: 14
             PYTHON_CP_VERSION: cp310
@@ -43,8 +43,8 @@ jobs:
     needs: build_mac_14_15
     strategy:
       matrix:
-        MAC_OS_VERSION: [15]
-        PYTHON_CP_VERSION: [cp310, cp311, cp312, cp313]
+        # MAC_OS_VERSION: [15]
+        # PYTHON_CP_VERSION: [cp310, cp311, cp312, cp313]
         include:
           - MAC_OS_VERSION: 14
             PYTHON_CP_VERSION: cp310
