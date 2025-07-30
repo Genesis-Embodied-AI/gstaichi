@@ -1,5 +1,3 @@
-# type: ignore
-
 import numbers
 from types import FunctionType, MethodType
 from typing import Any, Iterable, Sequence
@@ -26,7 +24,7 @@ from taichi.lang.exception import (
 from taichi.lang.expr import Expr, make_expr_group
 from taichi.lang.field import Field, ScalarField
 from taichi.lang.kernel_arguments import SparseMatrixProxy
-from taichi.lang.kernel_impl import Kernel
+from taichi.lang.kernel_impl import BoundTaichiCallable, Kernel, TaichiCallable
 from taichi.lang.matrix import (
     Matrix,
     MatrixField,
@@ -88,7 +86,7 @@ def expr_init(rhs):
             compiling_callable.ast_builder().expr_alloca(_ti_core.DebugInfo(get_runtime().get_current_src_info()))
         )
     if isinstance(rhs, Matrix) and (hasattr(rhs, "_DIM")):
-        return Matrix(*rhs.to_list(), ndim=rhs.ndim)
+        return Matrix(*rhs.to_list(), ndim=rhs.ndim)  # type: ignore
     if isinstance(rhs, Matrix):
         return make_matrix(rhs.to_list())
     if isinstance(rhs, SharedArray):
@@ -244,7 +242,7 @@ def subscript(ast_builder, value, *_indices, skip_reordered=False):
     if isinstance(value, SharedArray):
         return value.subscript(*indices)
     if isinstance(value, MeshElementFieldProxy):
-        return value.subscript(*indices)
+        return value.subscript(*indices)  # type: ignore
     if isinstance(value, MeshRelationAccessProxy):
         return value.subscript(*indices)
     if isinstance(value, (MeshReorderedScalarFieldProxy, MeshReorderedMatrixFieldProxy)) and not skip_reordered:
@@ -723,7 +721,7 @@ def create_field_member(dtype, name, needs_grad, needs_dual):
             # adjoint checkbit
             x_grad_checkbit = Expr(prog.make_id_expr(""))
             dtype = u8
-            if prog.config().arch in (_ti_core.opengl, _ti_core.vulkan, _ti_core.gles):
+            if prog.config().arch == _ti_core.vulkan:
                 dtype = i32
             x_grad_checkbit.ptr = _ti_core.expr_field(x_grad_checkbit.ptr, cook_dtype(dtype))
             x_grad_checkbit.ptr.set_name(name + ".grad_checkbit")
@@ -919,7 +917,7 @@ def ti_format_list_to_content_entries(raw):
                 yield _var[1:]
                 continue
             elif hasattr(_var, "__ti_repr__"):
-                res = _var.__ti_repr__()
+                res = _var.__ti_repr__()  # type: ignore
             elif isinstance(_var, (list, tuple)):
                 # If the first element is '__ti_format__', this list is the result of ti_format.
                 if len(_var) > 0 and isinstance(_var[0], str) and _var[0] == "__ti_format__":
@@ -1162,7 +1160,7 @@ def static(x, *xs) -> Any:
         return x
     if isinstance(x, Field):
         return x
-    if isinstance(x, (FunctionType, MethodType)):
+    if isinstance(x, (FunctionType, MethodType, BoundTaichiCallable, TaichiCallable)):
         return x
     raise ValueError(f"Input to ti.static must be compile-time constants or global pointers, instead of {type(x)}")
 

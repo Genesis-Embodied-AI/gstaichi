@@ -92,7 +92,7 @@ def vector_to_fast_image(img: template(), out: ndarray_type.ndarray()):
             r, g, b = color[:3]
 
         idx = j * img.shape[0] + i
-        # We use i32 for |out| since OpenGL and Metal doesn't support u8 types
+        # We use i32 for |out| since Metal doesn't support u8 types
         if static(get_os_name() != "osx"):
             out[idx] = (r << 16) + (g << 8) + b
         else:

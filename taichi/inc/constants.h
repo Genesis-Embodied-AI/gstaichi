@@ -3,8 +3,6 @@
 #include <cstddef>
 
 constexpr int taichi_max_num_indices = 12;
-// legacy: only used in opengl backends
-constexpr int taichi_max_num_args = 8;
 // used in llvm backend: only the first 32 arguments can be types.ndarray
 // TODO: refine argument passing
 constexpr int taichi_max_num_args_total = 64;

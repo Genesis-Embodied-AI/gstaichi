@@ -22,7 +22,7 @@ file(GLOB_RECURSE TAICHI_TESTS_SOURCE
         "tests/cpp/transforms/*.cpp"
         "tests/cpp/offline_cache/*.cpp")
 
-if (TI_WITH_OPENGL OR TI_WITH_VULKAN)
+if (TI_WITH_VULKAN)
     file(GLOB TAICHI_TESTS_GFX_UTILS_SOURCE
         "tests/cpp/aot/gfx_utils.cpp")
     list(APPEND TAICHI_TESTS_SOURCE ${TAICHI_TESTS_GFX_UTILS_SOURCE})
@@ -36,11 +36,6 @@ endif()
 if(TI_WITH_VULKAN)
   file(GLOB TAICHI_TESTS_VULKAN_SOURCE "tests/cpp/aot/vulkan/*.cpp")
   list(APPEND TAICHI_TESTS_SOURCE ${TAICHI_TESTS_VULKAN_SOURCE})
-endif()
-
-if(TI_WITH_OPENGL)
-  file(GLOB TAICHI_TESTS_OPENGL_SOURCE "tests/cpp/aot/opengl/*.cpp")
-  list(APPEND TAICHI_TESTS_SOURCE ${TAICHI_TESTS_OPENGL_SOURCE})
 endif()
 
 if(TI_WITH_DX12)
@@ -72,16 +67,12 @@ if (TI_WITH_BACKTRACE)
     target_link_libraries(${TESTS_NAME} PRIVATE ${BACKWARD_ENABLE})
 endif()
 
-if (TI_WITH_OPENGL OR TI_WITH_VULKAN)
+if (TI_WITH_VULKAN)
   target_link_libraries(${TESTS_NAME} PRIVATE gfx_runtime)
 endif()
 
 if (TI_WITH_VULKAN)
   target_link_libraries(${TESTS_NAME} PRIVATE vulkan_rhi)
-endif()
-
-if (TI_WITH_OPENGL)
-  target_link_libraries(${TESTS_NAME} PRIVATE opengl_rhi)
 endif()
 
 if (TI_WITH_DX12)

@@ -10,7 +10,7 @@ from taichi.lang import impl
 from tests import test_utils
 
 supported_archs_texture = [ti.vulkan]
-supported_archs_texture_excluding_load_store = [ti.vulkan, ti.opengl]
+supported_archs_texture_excluding_load_store = [ti.vulkan]
 
 
 @ti.func

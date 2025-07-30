@@ -52,13 +52,6 @@ TEST_F(CapiTest, DryRunRuntime) {
     ti::Runtime runtime(arch);
     runtime.destroy();
   }
-
-  if (ti::is_arch_available(TI_ARCH_OPENGL)) {
-    // openGL Runtime
-    TiArch arch = TiArch::TI_ARCH_OPENGL;
-    ti::Runtime runtime(arch);
-    runtime.destroy();
-  }
 }
 
 TEST_F(CapiTest, DryRunCapabilities) {
@@ -139,14 +132,6 @@ TEST_F(CapiTest, DryRunMemoryAllocation) {
   if (ti::is_arch_available(TI_ARCH_METAL)) {
     // Vulkan Runtime
     TiArch arch = TiArch::TI_ARCH_METAL;
-    ti::Runtime runtime(arch);
-    ti::Memory memory = runtime.allocate_memory(100);
-    ti::NdArray<uint8_t> ndarray = runtime.allocate_ndarray<uint8_t>({100}, {});
-  }
-
-  if (ti::is_arch_available(TI_ARCH_OPENGL)) {
-    // Opengl Runtime
-    TiArch arch = TiArch::TI_ARCH_OPENGL;
     ti::Runtime runtime(arch);
     ti::Memory memory = runtime.allocate_memory(100);
     ti::NdArray<uint8_t> ndarray = runtime.allocate_ndarray<uint8_t>({100}, {});
@@ -266,23 +251,6 @@ TEST_F(CapiTest, DryRunMetalAotModule) {
       // Vulkan Runtime
       TiArch arch = TiArch::TI_ARCH_METAL;
       ti::Runtime runtime(arch);
-      ti::AotModule aot_mod = runtime.load_aot_module(aot_mod_ss.str());
-    }
-  }
-}
-
-TEST_F(CapiTest, DryRunOpenglAotModule) {
-  if (ti::is_arch_available(TI_ARCH_OPENGL)) {
-    const auto folder_dir = getenv("TAICHI_AOT_FOLDER_PATH");
-
-    std::stringstream aot_mod_ss;
-    aot_mod_ss << folder_dir;
-
-    {
-      // OpenGL Runtime
-      TiArch arch = TiArch::TI_ARCH_OPENGL;
-      ti::Runtime runtime(arch);
-
       ti::AotModule aot_mod = runtime.load_aot_module(aot_mod_ss.str());
     }
   }
@@ -424,17 +392,6 @@ TEST_F(CapiTest, DeviceMemoryLeak) {
     // Vulkan Runtime
     for (size_t i = 0; i < num_runs; i++) {
       TiArch arch = TiArch::TI_ARCH_VULKAN;
-      ti::Runtime runtime(arch);
-      ti::Memory memory = runtime.allocate_memory(memory_size);
-      ti::NdArray<uint8_t> ndarray =
-          runtime.allocate_ndarray<uint8_t>({memory_size}, {});
-    }
-  }
-
-  if (ti::is_arch_available(TI_ARCH_OPENGL)) {
-    // Opengl Runtime
-    for (size_t i = 0; i < num_runs; i++) {
-      TiArch arch = TiArch::TI_ARCH_OPENGL;
       ti::Runtime runtime(arch);
       ti::Memory memory = runtime.allocate_memory(memory_size);
       ti::NdArray<uint8_t> ndarray =

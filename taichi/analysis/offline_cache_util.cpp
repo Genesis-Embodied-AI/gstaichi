@@ -66,9 +66,6 @@ static std::vector<std::uint8_t> get_offline_cache_key_of_compile_config(
   serializer(config.ad_stack_size);
   serializer(config.default_ad_stack_size);
   serializer(config.random_seed);
-  if (config.arch == Arch::opengl || config.arch == Arch::gles) {
-    serializer(config.allow_nv_shader_extension);
-  }
   serializer(config.make_mesh_block_local);
   serializer(config.optimize_mesh_reordered_mapping);
   serializer(config.mesh_localize_to_end_mapping);

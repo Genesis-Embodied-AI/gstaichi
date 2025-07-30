@@ -909,7 +909,7 @@ def test_dictcomp_fail():
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=[ti.cpu, ti.cuda, ti.opengl])
+@test_utils.test(arch=[ti.cpu, ti.cuda])
 def test_ndarray():
     n = 4
     m = 7

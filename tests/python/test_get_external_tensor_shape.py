@@ -45,7 +45,7 @@ def test_get_external_tensor_shape_sum_numpy(size):
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
 @pytest.mark.parametrize("size", [[1, 2, 3, 4]])
-@test_utils.test(exclude=ti.opengl)
+@test_utils.test()
 def test_get_external_tensor_shape_access_torch(size):
     @ti.kernel
     def func(x: ti.types.ndarray(), index: ti.template()) -> ti.i32:
@@ -59,7 +59,7 @@ def test_get_external_tensor_shape_access_torch(size):
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
 @pytest.mark.parametrize("size", [[1, 2, 3, 4]])
-@test_utils.test(arch=[ti.cpu, ti.cuda, ti.opengl])
+@test_utils.test(arch=[ti.cpu, ti.cuda])
 def test_get_external_tensor_shape_access_ndarray(size):
     @ti.kernel
     def func(x: ti.types.ndarray(), index: ti.template()) -> ti.i32:

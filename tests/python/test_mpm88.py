@@ -109,7 +109,7 @@ def _is_appveyor():
 
 @pytest.mark.skipif(os.environ.get("TI_LITE_TEST") or "0", reason="Lite test")
 @pytest.mark.run_in_serial
-@test_utils.test(arch=[ti.cpu, ti.cuda, ti.opengl])
+@test_utils.test(arch=[ti.cpu, ti.cuda])
 def test_mpm88_numpy_and_ndarray():
     import numpy as np
 

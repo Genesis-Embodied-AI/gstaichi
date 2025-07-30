@@ -50,7 +50,5 @@ if __name__ == "__main__":
         compile_dense_field_aot_test(arch=ti.vulkan)
     elif args.arch == "metal":
         compile_dense_field_aot_test(arch=ti.metal)
-    elif args.arch == "opengl":
-        compile_dense_field_aot_test(arch=ti.opengl)
     else:
         assert False

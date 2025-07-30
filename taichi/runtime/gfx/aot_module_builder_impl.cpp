@@ -89,8 +89,7 @@ void AotModuleBuilderImpl::add_field_per_backend(const std::string &identifier,
                                                  int row_num,
                                                  int column_num) {
   // Note that currently we only support adding dense fields in AOT for all
-  // backends. In opengl backend we only error out when a non dense field is
-  // added to the aot module, but in metal backend we error out earlier when
+  // backends. In metal backend we error out when
   // constructing aot module. Ideally we will unify this behavior but it doesn't
   // matter too much for now.
   TI_ERROR_IF(!all_fields_are_dense_in_container(rep_snode->parent),

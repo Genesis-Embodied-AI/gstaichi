@@ -87,7 +87,7 @@ struct ArrayArg {
   std::vector<int> element_shape;
   // Unit: byte
   std::size_t shape_offset_in_args_buf{0};
-  // For Vulkan/OpenGL/Metal, this is the binding index
+  // For Vulkan/Metal, this is the binding index
   int bind_index{0};
   BufferFormat format{BufferFormat::unknown};
 

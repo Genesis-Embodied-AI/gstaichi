@@ -48,7 +48,7 @@ def main():
     print("")
     try_print("import", "ti")
     print("")
-    for arch in ["cpu", "metal", "opengl", "cuda", "vulkan"]:
+    for arch in ["cpu", "metal", "cuda", "vulkan"]:
         try_print(arch, f"ti.lang.misc.is_arch_supported(ti.{arch})")
     print("")
 
@@ -93,13 +93,6 @@ def main():
         print(f"`ti.init()` failed: {e}")
     else:
         print(f"{ti_init_test.decode()}")
-
-    try:
-        ti_opengl_test = subprocess.check_output([executable, "-c", "import taichi as ti; ti.init(arch=ti.opengl)"])
-    except Exception as e:
-        print(f"Taichi OpenGL test failed: {e}")
-    else:
-        print(f"{ti_opengl_test.decode()}")
 
     try:
         ti_cuda_test = subprocess.check_output([executable, "-c", "import taichi as ti; ti.init(arch=ti.cuda)"])

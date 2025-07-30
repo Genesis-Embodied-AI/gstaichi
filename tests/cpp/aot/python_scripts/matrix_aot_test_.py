@@ -58,7 +58,5 @@ if __name__ == "__main__":
         compile_matrix_aot(arch=ti.vulkan)
     elif args.arch == "metal":
         compile_matrix_aot(arch=ti.metal)
-    elif args.arch == "opengl":
-        compile_matrix_aot(arch=ti.opengl)
     else:
         assert False

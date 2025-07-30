@@ -11,7 +11,6 @@
   "lang"            : "Language and syntax",
   "aot"             : "Aot module",
   "metal"           : "Metal backend",
-  "opengl"          : "OpenGL backend",
   "vulkan"          : "Vulkan backend",
   "dx11"            : "DirectX 11 backend",
   "dx12"            : "DirectX 12 backend",

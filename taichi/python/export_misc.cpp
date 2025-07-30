@@ -32,10 +32,6 @@
 #include "taichi/rhi/vulkan/vulkan_loader.h"
 #endif
 
-#ifdef TI_WITH_OPENGL
-#include "taichi/rhi/opengl/opengl_api.h"
-#endif
-
 #ifdef TI_WITH_DX12
 #include "taichi/rhi/dx12/dx12_api.h"
 #endif
@@ -147,12 +143,6 @@ void export_misc(py::module &m) {
   m.def("with_metal", taichi::lang::metal::is_metal_api_available);
 #else
   m.def("with_metal", []() { return false; });
-#endif
-#ifdef TI_WITH_OPENGL
-  m.def("with_opengl", taichi::lang::opengl::is_opengl_api_available,
-        py::arg("use_gles") = false);
-#else
-  m.def("with_opengl", [](bool use_gles) { return false; });
 #endif
 #ifdef TI_WITH_VULKAN
   m.def("with_vulkan", taichi::lang::vulkan::is_vulkan_api_available);

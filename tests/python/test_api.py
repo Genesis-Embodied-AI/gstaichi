@@ -142,7 +142,6 @@ user_api[ti] = [
     "frexp",
     "func",
     "get_addr",
-    "gles",
     "global_thread_idx",
     "gpu",
     "graph",
@@ -189,7 +188,6 @@ user_api[ti] = [
     "ndrange",
     "no_activate",
     "one",
-    "opengl",
     "polar_decompose",
     "pow",
     "profiler",
@@ -441,8 +439,6 @@ user_api[ti.sparse] = ["grid", "usage"]
 @pytest.mark.parametrize("src", user_api.keys())
 @test_utils.test(arch=ti.cpu)
 def test_api(src):
-    expected = user_api[src]
-    actual = [s for s in dir(src) if not s.startswith("_")]
-    assert (
-        sys.version_info < (3, 7) or actual == expected
-    ), f"Failed for API={src}:\n  expected={expected}\n  actual={actual}"
+    expected = sorted(user_api[src])
+    actual = sorted([s for s in dir(src) if not s.startswith("_")])
+    assert actual == expected, f"Failed for API={src}:\n  expected={expected}\n  actual={actual}"

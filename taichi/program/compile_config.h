@@ -71,9 +71,6 @@ struct CompileConfig {
   float64 device_memory_GB;
   float64 device_memory_fraction;
 
-  // Opengl backend options:
-  bool allow_nv_shader_extension{true};
-
   bool quant_opt_store_fusion{true};
   bool quant_opt_atomic_demotion{true};
 

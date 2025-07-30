@@ -48,7 +48,6 @@ TEST_F(CapiTest, TestBehaviorGetRuntimeCapabilities) {
       ASSERT_TAICHI_SUCCESS();
       switch (arch) {
         case TI_ARCH_VULKAN:
-        case TI_ARCH_OPENGL:
           // Always have `TI_CAPABILITY_SPIRV_VERSION`.
           TI_ASSERT(capability_count > 0);
           break;

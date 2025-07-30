@@ -1,6 +1,6 @@
 # GfxRuntime140 convention
 
-GfxRuntime140 is a legacy AOT module convention that serves the Vulkan, Metal and OpenGL backends.
+GfxRuntime140 is a legacy AOT module convention that serves the Vulkan, Metal backends.
 
 GfxRuntime140 only accepts SPIR-V as the only valid code artifact. For each SPIR-V artifact, all of the following requirements *must* be satisfied.
 

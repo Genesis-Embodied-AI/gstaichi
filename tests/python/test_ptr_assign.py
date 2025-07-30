@@ -71,19 +71,25 @@ def test_pythonish_tuple_assign():
 
 @test_utils.test()
 def test_ptr_func():
-    a = ti.field(dtype=ti.f32, shape=())
+    a = ti.field(dtype=ti.f32, shape=(3,))
+
+    def add2numbers_py(x, y):
+        return x + y
 
     @ti.func
-    def add2numbers(x, y):
+    def add2numbers_func(x, y):
         return x + y
 
     @ti.kernel
     def func():
-        add = ti.static(add2numbers)
-        a[None] = add(2, 3)
+        add_py = ti.static(add2numbers_py)
+        add_func = ti.static(add2numbers_func)
+        a[0] = add_py(2, 3)
+        a[1] = add_func(3, 7)
 
     func()
-    assert a[None] == 5.0
+    assert a[0] == 5.0
+    assert a[1] == 10.0
 
 
 @test_utils.test()
@@ -91,17 +97,22 @@ def test_ptr_class_func():
     @ti.data_oriented
     class MyClass:
         def __init__(self):
-            self.a = ti.field(dtype=ti.f32, shape=())
+            self.a = ti.field(dtype=ti.f32, shape=(3))
+
+        def add2numbers_py(self, x, y):
+            return x + y
 
         @ti.func
-        def add2numbers(self, x, y):
+        def add2numbers_func(self, x, y):
             return x + y
 
         @ti.kernel
         def func(self):
-            a, add = ti.static(self.a, self.add2numbers)
-            a[None] = add(2, 3)
+            a, add_py, add_func = ti.static(self.a, self.add2numbers_py, self.add2numbers_func)
+            a[0] = add_py(2, 3)
+            a[1] = add_func(3, 7)
 
     obj = MyClass()
     obj.func()
-    assert obj.a[None] == 5.0
+    assert obj.a[0] == 5.0
+    assert obj.a[1] == 10.0

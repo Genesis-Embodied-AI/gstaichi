@@ -196,7 +196,7 @@ def test_field_initialize_zero():
     assert b[0] == 0
 
 
-@test_utils.test(exclude=[ti.opengl, ti.gles])
+@test_utils.test()
 def test_field_builder_place_grad():
     @ti.kernel
     def mul(arr: ti.template(), out: ti.template()):

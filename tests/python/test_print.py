@@ -64,7 +64,6 @@ def test_print_docs_matrix_self_documenting_exp(capfd):
 # Not really testable..
 # Just making sure it does not crash
 # Metal doesn't support print() or 64-bit data
-# While OpenGL does support print, but not 64-bit data
 @pytest.mark.parametrize("dt", ti.types.primitive_types.all_types)
 @test_utils.test(arch=[ti.cpu, ti.cuda])
 def test_print(dt):

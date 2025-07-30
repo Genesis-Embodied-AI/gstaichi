@@ -4,7 +4,6 @@ option(TI_WITH_METAL "Build with the Metal backend" ON)         # wheel-tag: mtl
 option(TI_WITH_CUDA "Build with the CUDA backend" ON)           # wheel-tag: cu
 option(TI_WITH_CUDA_TOOLKIT "Build with the CUDA toolkit" OFF)  # wheel-tag: cutk
 option(TI_WITH_AMDGPU "Build with the AMDGPU backend" OFF)      # wheel-tag: amd
-option(TI_WITH_OPENGL "Build with the OpenGL backend" ON)       # wheel-tag: gl
 option(TI_WITH_VULKAN "Build with the Vulkan backend" OFF)      # wheel-tag: vk
 option(TI_WITH_DX11 "Build with the DX11 backend" OFF)          # wheel-tag: dx11
 option(TI_WITH_DX12 "Build with the DX12 backend" OFF)          # wheel-tag: dx12
@@ -36,10 +35,6 @@ if (APPLE)
         set(TI_WITH_CUDA OFF)
         message(WARNING "CUDA backend not supported on OS X. Setting TI_WITH_CUDA to OFF.")
     endif()
-    if (TI_WITH_OPENGL)
-        set(TI_WITH_OPENGL OFF)
-        message(WARNING "OpenGL backend not supported on OS X. Setting TI_WITH_OPENGL to OFF.")
-    endif()
     if (TI_WITH_AMDGPU)
         set(TI_WITH_AMDGPU OFF)
         message(WARNING "AMDGPU backend not supported on OS X. Setting TI_WITH_AMDGPU to OFF.")
@@ -60,11 +55,6 @@ endif()
 
 if(TI_WITH_VULKAN)
     set(TI_WITH_GGUI ON)
-endif()
-
-if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/glad/src/gl.c")
-    set(TI_WITH_OPENGL OFF)
-    message(WARNING "external/glad submodule not detected. Settings TI_WITH_OPENGL to OFF.")
 endif()
 
 if(NOT TI_WITH_LLVM)
@@ -116,10 +106,6 @@ endif()
 
 if (TI_WITH_METAL)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTI_WITH_METAL")
-endif()
-
-if (TI_WITH_OPENGL)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTI_WITH_OPENGL")
 endif()
 
 if (TI_WITH_DX11)
@@ -241,7 +227,7 @@ if(TI_WITH_LLVM)
     endif()
 endif()
 
-if (TI_WITH_METAL OR TI_WITH_OPENGL OR TI_WITH_DX11 OR TI_WITH_VULKAN)
+if (TI_WITH_METAL OR TI_WITH_DX11 OR TI_WITH_VULKAN)
     add_subdirectory(taichi/runtime/program_impls/gfx)
     target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE gfx_program_impl)
 endif()
@@ -249,11 +235,6 @@ endif()
 if (TI_WITH_METAL)
     add_subdirectory(taichi/runtime/program_impls/metal)
     target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE metal_program_impl)
-endif()
-
-if (TI_WITH_OPENGL)
-    add_subdirectory(taichi/runtime/program_impls/opengl)
-    target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE opengl_program_impl)
 endif()
 
 if (TI_WITH_DX11)
@@ -290,12 +271,12 @@ add_subdirectory(external/SPIRV-Tools)
 add_subdirectory(taichi/codegen/spirv)
 add_subdirectory(taichi/runtime/gfx)
 
-if (TI_WITH_OPENGL OR TI_WITH_VULKAN OR TI_WITH_DX11 OR TI_WITH_METAL)
+if (TI_WITH_VULKAN OR TI_WITH_DX11 OR TI_WITH_METAL)
   target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE spirv_codegen)
   target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE gfx_runtime)
 endif()
 
-if (TI_WITH_OPENGL OR TI_WITH_DX11 OR TI_WITH_METAL)
+if (TI_WITH_DX11 OR TI_WITH_METAL)
   set(SPIRV_CROSS_CLI false)
   add_subdirectory(${PROJECT_SOURCE_DIR}/external/SPIRV-Cross ${PROJECT_BINARY_DIR}/external/SPIRV-Cross)
 endif()

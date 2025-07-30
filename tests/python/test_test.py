@@ -39,14 +39,9 @@ def test_exclude_list_cpu():
     assert ti.lang.impl.current_cfg().arch not in [ti.cpu]
 
 
-@test_utils.test(arch=ti.opengl)
-def test_arch_opengl():
-    assert ti.lang.impl.current_cfg().arch in [ti.opengl]
-
-
-@test_utils.test(arch=[ti.cpu, ti.opengl, ti.metal])
+@test_utils.test(arch=[ti.cpu, ti.metal])
 def test_multiple_archs():
-    assert ti.lang.impl.current_cfg().arch in [ti.cpu, ti.opengl, ti.metal]
+    assert ti.lang.impl.current_cfg().arch in [ti.cpu, ti.metal]
 
 
 @test_utils.test(arch=ti.cpu, debug=True, advanced_optimization=False)
@@ -60,12 +55,12 @@ def test_require_extensions_1():
     assert ti.lang.impl.current_cfg().arch in [ti.cpu, ti.cuda, ti.metal]
 
 
-@test_utils.test(arch=[ti.cpu, ti.opengl], require=ti.extension.sparse)
+@test_utils.test(arch=[ti.cpu], require=ti.extension.sparse)
 def test_require_extensions_2():
     assert ti.lang.impl.current_cfg().arch in [ti.cpu]
 
 
-@test_utils.test(arch=[ti.cpu, ti.opengl], require=[ti.extension.sparse, ti.extension.bls])
+@test_utils.test(arch=[ti.cpu], require=[ti.extension.sparse, ti.extension.bls])
 def test_require_extensions_2():
     assert ti.lang.impl.current_cfg().arch in [ti.cuda]
 
