@@ -1164,8 +1164,7 @@ def test_real_func_write_ndarray_cfg():
 
 
 # exclude metal, because metal limited to < 30 parametrs AFAIK
-# exclude opengl and gles, because they crash
-@test_utils.test(exclude=[ti.opengl, ti.gles, ti.metal])
+@test_utils.test(exclude=[ti.metal])
 def test_ndarray_max_num_args() -> None:
     num_args = 512
     kernel_templ = """
