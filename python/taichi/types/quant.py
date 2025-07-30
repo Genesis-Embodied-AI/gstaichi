@@ -26,7 +26,7 @@ def int(bits, signed=True, compute=None):  # pylint: disable=W0622
         from taichi.lang import impl  # pylint: disable=C0415
 
         compute = impl.get_runtime().default_ip if signed else impl.get_runtime().default_up
-    if isinstance(compute, _ti_python_core.DataType):
+    if isinstance(compute, _ti_python_core.DataTypeCxx):
         compute = compute.get_ptr()
     return _type_factory.get_quant_int_type(bits, signed, compute)
 
@@ -48,7 +48,7 @@ def fixed(bits, signed=True, max_value=1.0, compute=None, scale=None):
         from taichi.lang import impl  # pylint: disable=C0415
 
         compute = impl.get_runtime().default_fp
-    if isinstance(compute, _ti_python_core.DataType):
+    if isinstance(compute, _ti_python_core.DataTypeCxx):
         compute = compute.get_ptr()
     # TODO: handle cases with bits > 32
     underlying_type = int(bits=bits, signed=signed, compute=i32)
@@ -76,7 +76,7 @@ def float(exp, frac, signed=True, compute=None):  # pylint: disable=W0622
         from taichi.lang import impl  # pylint: disable=C0415
 
         compute = impl.get_runtime().default_fp
-    if isinstance(compute, _ti_python_core.DataType):
+    if isinstance(compute, _ti_python_core.DataTypeCxx):
         compute = compute.get_ptr()
     # Exponent is always unsigned
     exp_type = int(bits=exp, signed=False, compute=i32)

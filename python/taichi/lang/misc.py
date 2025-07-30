@@ -462,7 +462,7 @@ def init(
 
 def no_activate(*args):
     """Deactivates a SNode pointer."""
-    assert isinstance(get_runtime().compiling_callable, _ti_core.Kernel)
+    assert isinstance(get_runtime().compiling_callable, _ti_core.KernelCxx)
     for v in args:
         get_runtime().compiling_callable.no_activate(v._snode.ptr)
 

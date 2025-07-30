@@ -110,7 +110,7 @@ void export_lang(py::module &m) {
       .export_values();
 
   // TODO(type): This should be removed
-  py::class_<DataType>(m, "DataType")
+  py::class_<DataType>(m, "DataTypeCxx")
       .def(py::init<Type *>())
       .def(py::self == py::self)
       .def("__hash__", &DataType::hash)
@@ -493,7 +493,7 @@ void export_lang(py::module &m) {
       .def("dump", &AotModuleBuilder::dump);
 
   py::class_<Axis>(m, "Axis").def(py::init<int>());
-  py::class_<SNode>(m, "SNode")
+  py::class_<SNode>(m, "SNodeCxx")
       .def(py::init<>())
       .def_readwrite("parent", &SNode::parent)
       .def_readonly("type", &SNode::type)
@@ -562,7 +562,7 @@ void export_lang(py::module &m) {
       .def_readonly("offset_bytes_in_parent_cell",
                     &SNode::offset_bytes_in_parent_cell);
 
-  py::class_<SNodeTree>(m, "SNodeTree")
+  py::class_<SNodeTree>(m, "SNodeTreeCxx")
       .def("id", &SNodeTree::id)
       .def("destroy_snode_tree", [](SNodeTree *snode_tree, Program *program) {
         program->destroy_snode_tree(snode_tree);
@@ -579,7 +579,7 @@ void export_lang(py::module &m) {
       .def_readonly("device", &DeviceAllocation::device)
       .def_readonly("alloc_id", &DeviceAllocation::alloc_id);
 
-  py::class_<Ndarray>(m, "Ndarray")
+  py::class_<Ndarray>(m, "NdarrayCxx")
       .def("device_allocation_ptr", &Ndarray::get_device_allocation_ptr_as_int)
       .def("device_allocation", &Ndarray::get_device_allocation)
       .def("element_size", &Ndarray::get_element_size)
@@ -595,7 +595,7 @@ void export_lang(py::module &m) {
       .def_readonly("dtype", &Ndarray::dtype)
       .def_readonly("shape", &Ndarray::shape);
 
-  py::class_<ArgPack>(m, "ArgPack")
+  py::class_<ArgPack>(m, "ArgPackCxx")
       .def("device_allocation_ptr", &ArgPack::get_device_allocation_ptr_as_int)
       .def("device_allocation", &ArgPack::get_device_allocation)
       .def("nelement", &ArgPack::get_nelement)
@@ -612,7 +612,7 @@ void export_lang(py::module &m) {
 #undef PER_EXTENSION
       ;
 
-  py::class_<Texture>(m, "Texture")
+  py::class_<Texture>(m, "TextureCxx")
       .def("device_allocation_ptr", &Texture::get_device_allocation_ptr_as_int)
       .def("from_ndarray", &Texture::from_ndarray)
       .def("from_snode", &Texture::from_snode);
@@ -651,7 +651,7 @@ void export_lang(py::module &m) {
       .def("append", &Sequential::append)
       .def("dispatch", &Sequential::dispatch);
 
-  py::class_<GraphBuilder>(m, "GraphBuilder")
+  py::class_<GraphBuilder>(m, "GraphBuilderCxx")
       .def(py::init<>())
       .def("dispatch", &GraphBuilder::dispatch)
       .def("compile", &GraphBuilder::compile)
@@ -754,7 +754,7 @@ void export_lang(py::module &m) {
         self->jit_run(compile_config, args);
       });
 
-  py::class_<Kernel>(m, "Kernel")
+  py::class_<Kernel>(m, "KernelCxx")
       .def("no_activate",
            [](Kernel *self, SNode *snode) {
              // TODO(#2193): Also apply to @ti.func?
@@ -820,7 +820,7 @@ void export_lang(py::module &m) {
           },
           py::return_value_policy::reference);
 
-  py::class_<Expr> expr(m, "Expr");
+  py::class_<Expr> expr(m, "ExprCxx");
   expr.def("snode", &Expr::snode, py::return_value_policy::reference)
       .def("is_external_tensor_expr",
            [](Expr *expr) { return expr->is<ExternalTensorExpression>(); })

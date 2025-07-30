@@ -24,7 +24,7 @@ class Expr(TaichiOperations):
         self.ptr_type_checked = False
         self.declaration_tb: str = ""
         if len(args) == 1:
-            if isinstance(args[0], _ti_core.Expr):
+            if isinstance(args[0], _ti_core.ExprCxx):
                 self.ptr = args[0]
             elif isinstance(args[0], Expr):
                 self.ptr = args[0].ptr

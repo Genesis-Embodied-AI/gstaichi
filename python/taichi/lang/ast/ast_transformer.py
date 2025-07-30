@@ -1723,7 +1723,7 @@ class ASTTransformer(Builder):
         for entry in entries:
             if isinstance(entry, str):
                 msg += entry
-            elif isinstance(entry, _ti_core.Expr):
+            elif isinstance(entry, _ti_core.ExprCxx):
                 ty = entry.get_rvalue_type()
                 if ty in primitive_types.real_types:
                     msg += "%f"

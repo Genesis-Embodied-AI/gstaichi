@@ -7,7 +7,7 @@ constexpr int taichi_max_num_indices = 12;
 // TODO: refine argument passing
 constexpr int taichi_max_num_args_total = 64;
 constexpr int taichi_max_num_args_extra = 32;
-constexpr int taichi_max_num_snodes = 1024;
+constexpr int taichi_max_num_snodes = 2048;
 constexpr int kMaxNumSnodeTreesLlvm = 512;
 constexpr int taichi_max_gpu_block_dim = 1024;
 constexpr std::size_t taichi_global_tmp_buffer_size = 1024 * 1024;

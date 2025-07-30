@@ -29,10 +29,8 @@ from taichi._lib import core as _ti_core
 from taichi._lib.core.taichi_python import (
     ASTBuilder,
     FunctionKey,
+    KernelCxx,
     KernelLaunchContext,
-)
-from taichi._lib.core.taichi_python import (
-    Kernel as KernelCxx,
 )
 from taichi.lang import impl, ops, runtime_ops
 from taichi.lang._wrap_inspect import getsourcefile, getsourcelines
@@ -609,7 +607,7 @@ class TaichiCallableTemplateMapper:
                 return arg.ptr
             if isinstance(arg, taichi.lang.expr.Expr):
                 return arg.ptr.get_underlying_ptr_address()
-            if isinstance(arg, _ti_core.Expr):
+            if isinstance(arg, _ti_core.ExprCxx):
                 return arg.get_underlying_ptr_address()
             if isinstance(arg, tuple):
                 return tuple(TaichiCallableTemplateMapper.extract_arg(item, annotation, arg_name) for item in arg)
@@ -960,7 +958,7 @@ class Kernel:
 
         actual_argument_slot = 0
         launch_ctx = t_kernel.make_launch_context()
-        max_arg_num = 64
+        max_arg_num = 512
         exceed_max_arg_num = False
 
         def set_arg_ndarray(indices: tuple[int, ...], v: taichi.lang._ndarray.Ndarray) -> None:
