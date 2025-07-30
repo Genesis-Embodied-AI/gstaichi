@@ -254,13 +254,10 @@ class ScalarNdarray(Ndarray):
         self.element_type = dtype
 
     def __del__(self):
-        if (
-            impl is not None
-            and impl.get_runtime is not None
-            and impl.get_runtime() is not None
-            and impl.get_runtime().prog is not None
-        ):
-            impl.get_runtime().prog.delete_ndarray(self.arr)
+        if impl is not None and impl.get_runtime is not None and impl.get_runtime() is not None:
+            prog = impl.get_runtime()._prog
+            if prog is not None:
+                prog.delete_ndarray(self.arr)
 
     @property
     def element_shape(self):
