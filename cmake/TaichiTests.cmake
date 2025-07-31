@@ -15,6 +15,7 @@ file(GLOB_RECURSE TAICHI_TESTS_SOURCE
         "tests/cpp/backends/*.cpp"
         "tests/cpp/codegen/*.cpp"
         "tests/cpp/common/*.cpp"
+        "tests/cpp/compilation_manager/*.cpp"
         "tests/cpp/ir/*.cpp"
         "tests/cpp/program/*.cpp"
         "tests/cpp/rhi/common/*.cpp"
