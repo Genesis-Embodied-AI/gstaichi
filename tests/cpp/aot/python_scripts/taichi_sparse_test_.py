@@ -1,8 +1,21 @@
-import argparse
 import os
 
 import taichi as ti
-from taichi.examples.patterns import taichi_logo
+
+
+@ti.func
+def pattern(pos: ti.template(), scale: float = 1 / 1.11):
+    # adapted from taichi/python/taichi/examples/patterns.py
+    p = (pos - 0.5) / scale + 0.5
+    ret = -1
+    if not (p - 0.60).norm_sqr() <= 0.3**2:
+        if ret == -1:
+            ret = 0
+    if not (p - 0.40).norm_sqr() <= 0.7**2:
+        if ret == -1:
+            ret = 1
+    return 1 - ret
+
 
 ti.init(arch=ti.cuda, debug=True)
 
@@ -48,7 +61,7 @@ def activate(t: ti.f32):
         p = ti.Vector([i, j]) / n
         p = ti.math.rotation2d(ti.sin(t)) @ (p - 0.5) + 0.5
 
-        if taichi_logo(p) == 0:
+        if pattern(p) == 0:
             x[i, j] = 1
 
 
