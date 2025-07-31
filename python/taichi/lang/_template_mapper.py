@@ -1,6 +1,6 @@
 import dataclasses
 import weakref
-from typing import Any, Callable, Union
+from typing import Any, Union
 
 import taichi.lang
 import taichi.lang._ndarray
@@ -22,10 +22,6 @@ from taichi.types import (
     template,
     texture_type,
 )
-from taichi.types.enums import AutodiffMode
-
-CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
-
 
 AnnotationType = Union[
     template,

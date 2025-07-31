@@ -28,7 +28,7 @@ from taichi.types import annotations, ndarray_type, primitive_types, texture_typ
 
 class FunctionDefTransformer:
     @staticmethod
-    def decl_and_create_variable(
+    def _decl_and_create_variable(
         ctx: ASTTransformerContext, annotation, name, arg_features, invoke_later_dict, prefix_name, arg_depth
     ) -> tuple[bool, Any]:
         full_name = prefix_name + "_" + name
@@ -39,7 +39,7 @@ class FunctionDefTransformer:
             d = {}
             items_to_put_in_dict = []
             for j, (_name, anno) in enumerate(annotation.members.items()):
-                result, obj = FunctionDefTransformer.decl_and_create_variable(
+                result, obj = FunctionDefTransformer._decl_and_create_variable(
                     ctx, anno, _name, arg_features[j], invoke_later_dict, full_name, arg_depth + 1
                 )
                 if not result:
@@ -86,7 +86,7 @@ class FunctionDefTransformer:
         return True, kernel_arguments.decl_scalar_arg(annotation, name, arg_depth)
 
     @staticmethod
-    def _process_kernel_arg(
+    def _transform_kernel_arg(
         ctx: ASTTransformerContext,
         invoke_later_dict: dict[str, tuple[Any, str, Callable, list[Any]]],
         create_variable_later: dict[str, Any],
@@ -99,7 +99,7 @@ class FunctionDefTransformer:
             d = {}
             items_to_put_in_dict: list[tuple[str, str, Any]] = []
             for j, (name, anno) in enumerate(argument_type.members.items()):
-                result, obj = FunctionDefTransformer.decl_and_create_variable(
+                result, obj = FunctionDefTransformer._decl_and_create_variable(
                     ctx, anno, name, this_arg_features[j], invoke_later_dict, "__argpack_" + name, 1
                 )
                 if not result:
@@ -116,7 +116,7 @@ class FunctionDefTransformer:
             ctx.create_variable(argument_name, argument_type)
             for field_idx, field in enumerate(dataclasses.fields(argument_type)):
                 flat_name = f"__ti_{argument_name}_{field.name}"
-                result, obj = FunctionDefTransformer.decl_and_create_variable(
+                result, obj = FunctionDefTransformer._decl_and_create_variable(
                     ctx,
                     field.type,
                     flat_name,
@@ -132,7 +132,7 @@ class FunctionDefTransformer:
                     obj = decl_type_func(*type_args)
                     ctx.create_variable(flat_name, obj)
         else:
-            result, obj = FunctionDefTransformer.decl_and_create_variable(
+            result, obj = FunctionDefTransformer._decl_and_create_variable(
                 ctx,
                 argument_type,
                 argument_name,
@@ -160,7 +160,7 @@ class FunctionDefTransformer:
         create_variable_later = dict()
         for i, arg in enumerate(args.args):
             argument = ctx.func.arguments[i]
-            FunctionDefTransformer._process_kernel_arg(
+            FunctionDefTransformer._transform_kernel_arg(
                 ctx,
                 invoke_later_dict,
                 create_variable_later,
@@ -180,7 +180,7 @@ class FunctionDefTransformer:
         node.args.args = []
 
     @staticmethod
-    def _process_func_arg(
+    def _transform_func_arg(
         ctx: ASTTransformerContext,
         argument_name: str,
         argument_type: Any,
@@ -276,7 +276,7 @@ class FunctionDefTransformer:
     def _transform_as_func(ctx: ASTTransformerContext, node: ast.FunctionDef, args: ast.arguments) -> None:
         for data_i, data in enumerate(ctx.argument_data):
             argument = ctx.func.arguments[data_i]
-            FunctionDefTransformer._process_func_arg(
+            FunctionDefTransformer._transform_func_arg(
                 ctx,
                 argument.name,
                 argument.annotation,
