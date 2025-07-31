@@ -1166,7 +1166,7 @@ def test_real_func_write_ndarray_cfg():
 
 @pytest.mark.skipif(
     platform.system() == "Darwin" and ti.lang.impl.current_cfg().arch == ti.vulkan,
-    reason="Mac OS X doesn't support this many parameters"
+    reason="Mac OS X doesn't support this many parameters",
 )
 # exclude metal, because metal limited to < 30 parametrs AFAIK
 @test_utils.test(exclude=[ti.metal])
