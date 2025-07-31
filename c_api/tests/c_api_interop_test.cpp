@@ -122,6 +122,9 @@ TEST_F(CapiTest, AotTestVulkanTextureInterop) {
 
 #ifdef TI_WITH_CUDA
 TEST_F(CapiTest, TestCUDAImport) {
+  if(!ti::is_arch_available(TiArch::TI_ARCH_CUDA)) {
+    return;
+  }
   TiArch arch = TiArch::TI_ARCH_CUDA;
   ti::Runtime runtime(arch);
 
@@ -163,6 +166,9 @@ TEST_F(CapiTest, TestCUDAImport) {
 
 #ifdef TI_WITH_CUDA
 TEST_F(CapiTest, TestCUDAStreamSet) {
+  if(!ti::is_arch_available(TiArch::TI_ARCH_CUDA)) {
+    return;
+  }
   void *temp_stream = nullptr;
 
   ti_get_cuda_stream(&temp_stream);
