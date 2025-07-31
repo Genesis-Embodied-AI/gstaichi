@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        MAC_OS_VERSION: [15]
+        MAC_OS_VERSION: [14]  #  TODO: migrate to 15
         # PYTHON_VERSION: ['3.10', '3.11', '3.12', '3.13']
         PYTHON_VERSION: ['3.10']
         # include:
@@ -57,7 +57,7 @@ jobs:
     needs: build_mac_14_15
     strategy:
       matrix:
-        MAC_OS_VERSION: [15]
+        MAC_OS_VERSION: [14]  #  TODO: migrate to 15
         # PYTHON_CP_VERSION: [cp310, cp311, cp312, cp313]
         PYTHON_CP_VERSION: [cp310]
         # include:
@@ -97,7 +97,7 @@ jobs:
       matrix:
         # PYTHON_CP_VERSION: ["cp310", "cp311", "cp312", "cp313"]
         PYTHON_CP_VERSION: ["cp310"]
-        MAC_OS_VERSION: [15]
+        MAC_OS_VERSION: [14]  #  TODO: migrate to 15
       fail-fast: false
     with:
       artifact_name: mac_wheel_${{ matrix.MAC_OS_VERSION }}_${{ matrix.PYTHON_CP_VERSION }}
