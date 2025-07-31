@@ -11,7 +11,5 @@ assignees: ''
 Before asking a question, please first consider:
 
 - Searching Google
-- Searching [existing issues](https://github.com/taichi-dev/taichi/issues)
-- Searching [Taichi Doc](https://docs.taichi-lang.org/)
-- Searching [Taichi Forum](https://forum.taichi.graphics/)
+- Searching [existing issues](https://github.com/Genesis-Embodied-AI/gstaichi/issues)
 -->
