@@ -1164,8 +1164,7 @@ def test_real_func_write_ndarray_cfg():
     assert (a[0] == vec3(3)).all()
 
 
-@pytest.mark.skipif(
-)
+@pytest.mark.skipif()
 # exclude metal, because metal limited to < 30 parametrs AFAIK
 @test_utils.test(exclude=[ti.metal])
 def test_ndarray_max_num_args() -> None:
