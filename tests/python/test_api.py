@@ -143,7 +143,6 @@ user_api[ti] = [
     "get_addr",
     "global_thread_idx",
     "gpu",
-    "graph",
     "grouped",
     "i",
     "i16",
