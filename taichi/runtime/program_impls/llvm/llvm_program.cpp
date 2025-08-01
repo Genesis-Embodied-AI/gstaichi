@@ -7,9 +7,7 @@
 #include "taichi/program/program.h"
 #include "taichi/codegen/codegen.h"
 #include "taichi/codegen/llvm/struct_llvm.h"
-#include "taichi/runtime/llvm/aot_graph_data.h"
 #include "taichi/runtime/llvm/llvm_offline_cache.h"
-#include "taichi/runtime/llvm/llvm_aot_module_builder.h"
 #include "taichi/runtime/llvm/kernel_launcher.h"
 #include "taichi/runtime/cpu/kernel_launcher.h"
 #include "taichi/analysis/offline_cache_util.h"
@@ -22,11 +20,6 @@
 #if defined(TI_WITH_AMDGPU)
 #include "taichi/codegen/amdgpu/codegen_amdgpu.h"
 #include "taichi/runtime/amdgpu/kernel_launcher.h"
-#endif
-
-#if defined(TI_WITH_DX12)
-#include "taichi/runtime/dx12/aot_module_builder_impl.h"
-#include "taichi/codegen/dx12/codegen_dx12.h"
 #endif
 
 #include "taichi/codegen/llvm/kernel_compiler.h"
@@ -73,25 +66,6 @@ void LlvmProgramImpl::materialize_snode_tree(SNodeTree *tree,
             cache_data_->fields.end());
   initialize_llvm_runtime_snodes(cache_data_->fields.at(snode_tree_id),
                                  result_buffer);
-}
-
-std::unique_ptr<AotModuleBuilder> LlvmProgramImpl::make_aot_module_builder(
-    const DeviceCapabilityConfig &caps) {
-  if (config->arch == Arch::x64 || config->arch == Arch::arm64 ||
-      config->arch == Arch::cuda) {
-    return std::make_unique<LlvmAotModuleBuilder>(
-        get_kernel_compilation_manager(), *config, this);
-  }
-
-#if defined(TI_WITH_DX12)
-  if (config->arch == Arch::dx12) {
-    return std::make_unique<directx12::AotModuleBuilderImpl>(
-        *config, this, *runtime_exec_->get_llvm_context());
-  }
-#endif
-
-  TI_NOT_IMPLEMENTED;
-  return nullptr;
 }
 
 void LlvmProgramImpl::cache_field(int snode_tree_id,

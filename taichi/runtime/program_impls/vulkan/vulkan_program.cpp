@@ -1,13 +1,10 @@
 #include "taichi/runtime/program_impls/vulkan/vulkan_program.h"
 
 #include "taichi/analysis/offline_cache_util.h"
-#include "taichi/aot/graph_data.h"
 #include "taichi/codegen/spirv/kernel_compiler.h"
 #include "taichi/codegen/spirv/compiled_kernel_data.h"
-#include "taichi/runtime/gfx/aot_module_builder_impl.h"
 #include "taichi/runtime/gfx/kernel_launcher.h"
 #include "taichi/runtime/gfx/snode_tree_manager.h"
-#include "taichi/runtime/gfx/aot_module_loader_impl.h"
 #include "taichi/util/offline_cache.h"
 #include "taichi/rhi/common/host_memory_pool.h"
 

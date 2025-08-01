@@ -17,7 +17,6 @@
 #include "taichi/ir/expression_ops.h"
 #include "taichi/ir/frontend_ir.h"
 #include "taichi/ir/statements.h"
-#include "taichi/program/graph_builder.h"
 #include "taichi/program/extension.h"
 #include "taichi/program/ndarray.h"
 #include "taichi/program/matrix.h"
@@ -28,7 +27,6 @@
 #include "taichi/program/sparse_matrix.h"
 #include "taichi/program/sparse_solver.h"
 #include "taichi/program/conjugate_gradient.h"
-#include "taichi/aot/graph_data.h"
 #include "taichi/ir/mesh.h"
 
 #include "taichi/program/kernel_profiler.h"
@@ -398,7 +396,6 @@ void export_lang(py::module &m) {
            &Program::get_snode_num_dynamically_allocated)
       .def("synchronize", &Program::synchronize)
       .def("materialize_runtime", &Program::materialize_runtime)
-      .def("make_aot_module_builder", &Program::make_aot_module_builder)
       .def("get_snode_tree_size", &Program::get_snode_tree_size)
       .def("get_snode_root", &Program::get_snode_root,
            py::return_value_policy::reference)
@@ -484,13 +481,6 @@ void export_lang(py::module &m) {
            py::return_value_policy::reference)
       .def("launch_kernel", &Program::launch_kernel)
       .def("get_device_caps", &Program::get_device_caps);
-
-  py::class_<AotModuleBuilder>(m, "AotModuleBuilder")
-      .def("add_field", &AotModuleBuilder::add_field)
-      .def("add", &AotModuleBuilder::add)
-      .def("add_kernel_template", &AotModuleBuilder::add_kernel_template)
-      .def("add_graph", &AotModuleBuilder::add_graph)
-      .def("dump", &AotModuleBuilder::dump);
 
   py::class_<Axis>(m, "Axis").def(py::init<int>());
   py::class_<SNode>(m, "SNodeCxx")
@@ -617,142 +607,12 @@ void export_lang(py::module &m) {
       .def("from_ndarray", &Texture::from_ndarray)
       .def("from_snode", &Texture::from_snode);
 
-  py::enum_<aot::ArgKind>(m, "ArgKind")
-      .value("SCALAR", aot::ArgKind::kScalar)
-      .value("NDARRAY", aot::ArgKind::kNdarray)
-      // Using this MATRIX as Scalar alias, we can move to native matrix type
-      // when supported
-      .value("MATRIX", aot::ArgKind::kMatrix)
-      .value("TEXTURE", aot::ArgKind::kTexture)
-      .value("RWTEXTURE", aot::ArgKind::kRWTexture)
-      .export_values();
-
-  py::class_<aot::Arg>(m, "Arg")
-      .def(py::init<aot::ArgKind, std::string, DataType &, size_t,
-                    std::vector<int>>(),
-           py::arg("tag"), py::arg("name"), py::arg("dtype"),
-           py::arg("field_dim"), py::arg("element_shape"))
-      .def(py::init<aot::ArgKind, std::string, DataType &, size_t,
-                    std::vector<int>>(),
-           py::arg("tag"), py::arg("name"), py::arg("channel_format"),
-           py::arg("num_channels"), py::arg("shape"))
-      .def_readonly("name", &aot::Arg::name)
-      .def_readonly("element_shape", &aot::Arg::element_shape)
-      .def_readonly("texture_shape", &aot::Arg::element_shape)
-      .def_readonly("field_dim", &aot::Arg::field_dim)
-      .def_readonly("num_channels", &aot::Arg::num_channels)
-      .def("dtype", &aot::Arg::dtype)
-      .def("channel_format", &aot::Arg::dtype);
-
   py::class_<Node>(m, "Node");  // NOLINT(bugprone-unused-raii)
 
   py::class_<Sequential, Node>(m, "Sequential")
       .def(py::init<GraphBuilder *>())
       .def("append", &Sequential::append)
       .def("dispatch", &Sequential::dispatch);
-
-  py::class_<GraphBuilder>(m, "GraphBuilderCxx")
-      .def(py::init<>())
-      .def("dispatch", &GraphBuilder::dispatch)
-      .def("compile", &GraphBuilder::compile)
-      .def("create_sequential", &GraphBuilder::new_sequential_node,
-           py::return_value_policy::reference)
-      .def("seq", &GraphBuilder::seq, py::return_value_policy::reference);
-
-  py::class_<aot::CompiledGraph>(m, "CompiledGraph")
-      .def("jit_run", [](aot::CompiledGraph *self,
-                         const CompileConfig &compile_config,
-                         const py::dict &pyargs) {
-        std::unordered_map<std::string, aot::IValue> args;
-        auto insert_scalar_arg = [&args](std::string arg_name,
-                                         DataType expected_dtype,
-                                         py::object pyarg) {
-          auto type_id = expected_dtype->as<PrimitiveType>()->type;
-          switch (type_id) {
-#define PER_C_TYPE(type, ctype)                                           \
-  case PrimitiveTypeID::type:                                             \
-    args.insert({arg_name, aot::IValue::create(py::cast<ctype>(pyarg))}); \
-    break;
-#include "taichi/inc/data_type_with_c_type.inc.h"
-#undef PER_C_TYPE
-            default:
-              TI_ERROR("Unsupported scalar type {}",
-                       expected_dtype->to_string());
-          }
-        };
-
-        std::vector<std::unique_ptr<char[]>> matrix_buffers;
-        matrix_buffers.reserve(self->args.size());
-        std::vector<Matrix> matrices;
-        // Reserve to avoid changes in element addresses
-        matrices.reserve(self->args.size());
-        for (const auto &[arg_name, arg] : self->args) {
-          auto tag = arg.tag;
-          TI_ASSERT(pyargs.contains(arg_name.c_str()));
-          auto pyarg = pyargs[arg_name.c_str()];
-          if (tag == aot::ArgKind::kNdarray) {
-            auto &val = pyarg.cast<Ndarray &>();
-            args.insert({arg_name, aot::IValue::create(val)});
-          } else if (tag == aot::ArgKind::kTexture ||
-                     tag == aot::ArgKind::kRWTexture) {
-            auto &val = pyarg.cast<Texture &>();
-            args.insert({arg_name, aot::IValue::create(val)});
-          } else if (tag == aot::ArgKind::kScalar) {
-            auto expected_dtype = arg.dtype();
-            insert_scalar_arg(arg_name, expected_dtype, pyarg);
-          } else if (tag == aot::ArgKind::kMatrix) {
-            auto type_id = arg.dtype()->as<PrimitiveType>()->type;
-            switch (type_id) {
-              case PrimitiveTypeID::f16: {
-                auto arr = pyarg.cast<py::array_t<float32>>();
-                py::buffer_info buffer_info = arr.request();
-                auto length = buffer_info.size;
-                auto ptr = reinterpret_cast<intptr_t>(buffer_info.ptr);
-
-                std::unique_ptr<char[]> data(new char[128]);
-                for (uint32_t i = 0; i < length; i++) {
-                  uint16 half = fp16_ieee_from_fp32_value(
-                      reinterpret_cast<float32 *>(ptr)[i]);
-                  reinterpret_cast<uint16 *>(data.get())[i] = half;
-                }
-                matrix_buffers.emplace_back(std::move(data));
-
-                matrices.emplace_back(Matrix(
-                    length, arg.dtype(),
-                    reinterpret_cast<intptr_t>(matrix_buffers.back().get())));
-                args.insert({arg_name, aot::IValue::create(matrices.back())});
-                break;
-              }
-#define PER_C_TYPE(type, ctype)                                           \
-  case PrimitiveTypeID::type: {                                           \
-    auto arr = pyarg.cast<py::array_t<ctype>>();                          \
-    py::buffer_info buffer_info = arr.request();                          \
-    auto length = buffer_info.size;                                       \
-    auto ptr = reinterpret_cast<intptr_t>(buffer_info.ptr);               \
-                                                                          \
-    std::unique_ptr<char[]> data(new char[128]);                          \
-    std::memcpy(data.get(), reinterpret_cast<char *>(ptr),                \
-                sizeof(ctype) * length);                                  \
-    matrix_buffers.emplace_back(std::move(data));                         \
-                                                                          \
-    matrices.emplace_back(                                                \
-        Matrix(length, arg.dtype(),                                       \
-               reinterpret_cast<intptr_t>(matrix_buffers.back().get()))); \
-    args.insert({arg_name, aot::IValue::create(matrices.back())});        \
-    break;                                                                \
-  }
-#include "taichi/inc/data_type_with_c_type.inc.h"
-#undef PER_C_TYPE
-              default:
-                TI_ERROR("Unsupported scalar type {}",
-                         arg.dtype()->to_string());
-            }
-          } else {
-            TI_NOT_IMPLEMENTED;
-          }
-        }
-        self->jit_run(compile_config, args);
-      });
 
   py::class_<Kernel>(m, "KernelCxx")
       .def("no_activate",

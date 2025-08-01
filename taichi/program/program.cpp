@@ -519,22 +519,6 @@ DeviceCapabilityConfig translate_devcaps(const std::vector<std::string> &caps) {
   return cfg;
 }
 
-std::unique_ptr<AotModuleBuilder> Program::make_aot_module_builder(
-    Arch arch,
-    const std::vector<std::string> &caps) {
-  DeviceCapabilityConfig cfg = translate_devcaps(caps);
-  // FIXME: This couples the runtime backend with the target AOT backend. E.g.
-  // If we want to build a Metal AOT module, we have to be on the macOS
-  // platform. Consider decoupling this part
-  if (arch_uses_llvm(compile_config().arch) ||
-      compile_config().arch == Arch::metal ||
-      compile_config().arch == Arch::vulkan ||
-      compile_config().arch == Arch::dx12) {
-    return program_impl_->make_aot_module_builder(cfg);
-  }
-  return nullptr;
-}
-
 int Program::allocate_snode_tree_id() {
   if (free_snode_tree_ids_.empty()) {
     return snode_trees_.size();

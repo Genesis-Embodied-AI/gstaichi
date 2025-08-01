@@ -161,17 +161,8 @@ def _write_env(path):
         f.write(envstr)
 
 
-def write_env(path):
-    cmake_args.writeback()
-    _write_env(path)
-    misc.info(f"Environment variables written to {path}")
-
-
 def handle_alternate_actions():
-    if misc.options.write_env:
-        add_aot_env()
-        write_env(misc.options.write_env)
-    elif misc.options.shell:
+    if misc.options.shell:
         add_aot_env()
         enter_shell()
     else:
