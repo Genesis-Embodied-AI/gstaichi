@@ -5,7 +5,6 @@
 
 #include "taichi/rhi/metal/metal_api.h"
 #include "taichi/runtime/gfx/runtime.h"
-#include "taichi/rhi/dx/dx_api.h"
 #include "taichi/common/core.h"
 #include "taichi/common/interface.h"
 #include "taichi/common/task.h"
