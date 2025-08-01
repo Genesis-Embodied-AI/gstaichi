@@ -200,23 +200,6 @@ endif()
 configure_file(taichi/common/version.h.in ${CMAKE_SOURCE_DIR}/taichi/common/version.h)
 configure_file(taichi/common/commit_hash.h.in ${CMAKE_SOURCE_DIR}/taichi/common/commit_hash.h)
 
-option(TI_WITH_C_API "build taichi runtime c-api library" ON)  # wheel-tag: aot
-option(TI_WITH_STATIC_C_API "build static taichi runtime c-api library" OFF)  # wheel-tag: static_aot
-
-if(TI_WITH_STATIC_C_API)
-    set(TI_WITH_C_API ${TI_WITH_STATIC_C_API})
-    if(NOT APPLE)
-        message(FATAL_ERROR "TI_WITH_STATIC_C_API requires Apple compilation sdk, thus only supported on MacOS")
-    endif()
-endif()
-
-if (TI_WITH_C_API)
-  include(cmake/TaichiCAPI.cmake)
-  if (TI_BUILD_TESTS)
-    include(cmake/TaichiCAPITests.cmake)
-  endif()
-endif()
-
 option(TI_WITH_GRAPHVIZ "generate dependency graphs between targets" OFF)  # wheel-tag: viz
 if (TI_WITH_GRAPHVIZ)
   set(GRAPHVIZ_GRAPH_NAME "ti_targets")
