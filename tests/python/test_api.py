@@ -124,8 +124,6 @@ user_api[ti] = [
     "dataclass",
     "deactivate",
     "deactivate_all_snodes",
-    "dx11",
-    "dx12",
     "eig",
     "exp",
     "experimental",

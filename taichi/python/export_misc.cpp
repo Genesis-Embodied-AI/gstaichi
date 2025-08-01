@@ -151,16 +151,6 @@ void export_misc(py::module &m) {
 #else
   m.def("with_vulkan", []() { return false; });
 #endif
-#ifdef TI_WITH_DX11
-  m.def("with_dx11", taichi::lang::directx11::is_dx_api_available);
-#else
-  m.def("with_dx11", []() { return false; });
-#endif
-#ifdef TI_WITH_DX12
-  m.def("with_dx12", taichi::lang::directx12::is_dx12_api_available);
-#else
-  m.def("with_dx12", []() { return false; });
-#endif
 
   m.def("clean_offline_cache_files",
         lang::offline_cache::clean_offline_cache_files);

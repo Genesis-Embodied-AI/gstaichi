@@ -45,12 +45,6 @@ if (TI_WITH_METAL)
     target_link_libraries(${TAICHI_DEVICE_API} PRIVATE metal_rhi)
 endif()
 
-if (TI_WITH_DX11)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTI_WITH_DX11")
-    add_subdirectory(dx)
-    target_link_libraries(${TAICHI_DEVICE_API} PRIVATE dx_rhi)
-endif()
-
 if (TI_WITH_VULKAN)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTI_WITH_VULKAN")
     if (APPLE)

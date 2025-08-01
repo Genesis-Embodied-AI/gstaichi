@@ -24,14 +24,6 @@
 #include "taichi/runtime/program_impls/vulkan/vulkan_program.h"
 #include "taichi/rhi/vulkan/vulkan_loader.h"
 #endif
-#ifdef TI_WITH_DX11
-#include "taichi/runtime/program_impls/dx/dx_program.h"
-#include "taichi/rhi/dx/dx_api.h"
-#endif
-#ifdef TI_WITH_DX12
-#include "taichi/runtime/program_impls/dx12/dx12_program.h"
-#include "taichi/rhi/dx12/dx12_api.h"
-#endif
 #ifdef TI_WITH_METAL
 #include "taichi/runtime/program_impls/metal/metal_program.h"
 #include "taichi/rhi/metal/metal_api.h"
@@ -101,13 +93,6 @@ Program::Program(Arch desired_arch) : snode_rw_accessors_bank_(this) {
     program_impl_ = std::make_unique<VulkanProgramImpl>(config);
 #else
     TI_ERROR("This taichi is not compiled with Vulkan")
-#endif
-  } else if (config.arch == Arch::dx11) {
-#ifdef TI_WITH_DX11
-    TI_ASSERT(directx11::is_dx_api_available());
-    program_impl_ = std::make_unique<Dx11ProgramImpl>(config);
-#else
-    TI_ERROR("This taichi is not compiled with DX11");
 #endif
   } else {
     TI_NOT_IMPLEMENTED
@@ -194,9 +179,7 @@ static void remove_rw_accessor_cache(
 
 void Program::destroy_snode_tree(SNodeTree *snode_tree) {
   TI_ASSERT(arch_uses_llvm(compile_config().arch) ||
-            compile_config().arch == Arch::vulkan ||
-            compile_config().arch == Arch::dx11 ||
-            compile_config().arch == Arch::dx12);
+            compile_config().arch == Arch::vulkan);
 
   // When accessing a ti.field at Python scope, SNodeRwAccessorsBank creates
   // a Taichi Kernel to read/write the field in a JIT manner, which caches the

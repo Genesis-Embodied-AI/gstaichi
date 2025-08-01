@@ -5,8 +5,6 @@ option(TI_WITH_CUDA "Build with the CUDA backend" ON)           # wheel-tag: cu
 option(TI_WITH_CUDA_TOOLKIT "Build with the CUDA toolkit" OFF)  # wheel-tag: cutk
 option(TI_WITH_AMDGPU "Build with the AMDGPU backend" OFF)      # wheel-tag: amd
 option(TI_WITH_VULKAN "Build with the Vulkan backend" OFF)      # wheel-tag: vk
-option(TI_WITH_DX11 "Build with the DX11 backend" OFF)          # wheel-tag: dx11
-option(TI_WITH_DX12 "Build with the DX12 backend" OFF)          # wheel-tag: dx12
 
 # Force symbols to be 'hidden' by default so nothing is exported from the Taichi
 # library including the third-party dependencies.
@@ -99,16 +97,8 @@ if (TI_WITH_AMDGPU)
   list(APPEND TAIHI_CORE_SOURCE ${TAICHI_AMDGPU_RUNTIME_SOURCE})
 endif()
 
-if (TI_WITH_DX12)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTI_WITH_DX12")
-endif()
-
 if (TI_WITH_METAL)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTI_WITH_METAL")
-endif()
-
-if (TI_WITH_DX11)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTI_WITH_DX11")
 endif()
 
 if (TI_WITH_VULKAN)
@@ -226,7 +216,7 @@ if(TI_WITH_LLVM)
     endif()
 endif()
 
-if (TI_WITH_METAL OR TI_WITH_DX11 OR TI_WITH_VULKAN)
+if (TI_WITH_METAL OR TI_WITH_VULKAN)
     add_subdirectory(taichi/runtime/program_impls/gfx)
     target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE gfx_program_impl)
 endif()
@@ -234,11 +224,6 @@ endif()
 if (TI_WITH_METAL)
     add_subdirectory(taichi/runtime/program_impls/metal)
     target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE metal_program_impl)
-endif()
-
-if (TI_WITH_DX11)
-    add_subdirectory(taichi/runtime/program_impls/dx)
-    target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE dx_program_impl)
 endif()
 
 if (TI_WITH_VULKAN)
@@ -278,12 +263,12 @@ add_subdirectory(external/SPIRV-Tools)
 add_subdirectory(taichi/codegen/spirv)
 add_subdirectory(taichi/runtime/gfx)
 
-if (TI_WITH_VULKAN OR TI_WITH_DX11 OR TI_WITH_METAL)
+if (TI_WITH_VULKAN OR TI_WITH_METAL)
   target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE spirv_codegen)
   target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE gfx_runtime)
 endif()
 
-if (TI_WITH_DX11 OR TI_WITH_METAL)
+if (TI_WITH_METAL)
   set(SPIRV_CROSS_CLI false)
   add_subdirectory(${PROJECT_SOURCE_DIR}/external/SPIRV-Cross ${PROJECT_BINARY_DIR}/external/SPIRV-Cross)
 endif()

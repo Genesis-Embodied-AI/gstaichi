@@ -11,8 +11,6 @@
   "lang"            : "Language and syntax",
   "metal"           : "Metal backend",
   "vulkan"          : "Vulkan backend",
-  "dx11"            : "DirectX 11 backend",
-  "dx12"            : "DirectX 12 backend",
   "spirv"           : "SPIR-V common codegen",
   "gfx"             : "Common graphics runtime",
   "rhi"             : "Unified Device API",

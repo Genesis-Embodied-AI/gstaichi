@@ -36,7 +36,6 @@ def _test_reduction_single(dtype, criterion, op):
     if (
         ti.lang.impl.current_cfg().arch == ti.vulkan
         or ti.lang.impl.current_cfg().arch == ti.metal
-        or ti.lang.impl.current_cfg().arch == ti.dx11
     ) and dtype == ti.f32:
         # Vulkan is not capable of such large number in its float32...
         N = 1024 * 16
