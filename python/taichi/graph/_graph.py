@@ -49,7 +49,7 @@ class Sequential:
 
 class GraphBuilder:
     def __init__(self):
-        self._graph_builder = _ti_core.GraphBuilder()
+        self._graph_builder = _ti_core.GraphBuilderCxx()
 
     def dispatch(self, kernel_fn, *args):
         kernel_cpp = gen_cpp_kernel(kernel_fn, args)
