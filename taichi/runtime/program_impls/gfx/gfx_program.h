@@ -33,7 +33,6 @@ class GfxProgramImpl : public ProgramImpl {
     return runtime_->flush();
   }
 
-
   void destroy_snode_tree(SNodeTree *snode_tree) override {
     TI_ASSERT(snode_tree_mgr_ != nullptr);
     snode_tree_mgr_->destroy_snode_tree(snode_tree);

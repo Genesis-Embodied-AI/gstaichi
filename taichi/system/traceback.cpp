@@ -15,8 +15,7 @@
 #include <mutex>
 #include "spdlog/fmt/bundled/color.h"
 
-#if defined(__APPLE__) || \
-    (defined(__unix__) && !defined(__linux__))
+#if defined(__APPLE__) || (defined(__unix__) && !defined(__linux__))
 #include <execinfo.h>
 #include <cxxabi.h>
 #endif
