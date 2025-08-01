@@ -14,46 +14,6 @@ using namespace taichi::lang::vulkan;
 
 namespace taichi::lang {
 
-namespace {
-std::vector<std::string> get_required_instance_extensions() {
-  std::vector<std::string> extensions;
-
-  uint32_t glfw_ext_count = 0;
-  const char **glfw_extensions;
-  glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_ext_count);
-
-  for (int i = 0; i < glfw_ext_count; ++i) {
-    extensions.push_back(glfw_extensions[i]);
-  }
-  // VulkanDeviceCreator will check that these are supported
-  extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-#if TI_WITH_CUDA
-  // so that we can do cuda-vk interop
-  extensions.push_back(VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
-  extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-#endif  // TI_WITH_CUDA
-  return extensions;
-}
-
-std::vector<std::string> get_required_device_extensions() {
-  static std::vector<std::string> extensions{
-      VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-#if TI_WITH_CUDA
-      // so that we can do cuda-vk interop
-      VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME,
-#ifdef _WIN64
-      VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME,
-#else
-      VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME,
-#endif
-#endif  // TI_WITH_CUDA
-  };
-
-  return extensions;
-}
-
-}  // namespace
-
 VulkanProgramImpl::VulkanProgramImpl(CompileConfig &config)
     : GfxProgramImpl(config) {
 }
@@ -81,25 +41,6 @@ void VulkanProgramImpl::materialize_runtime(KernelProfilerBase *profiler,
   if (config->debug) {
     TI_WARN("Enabling vulkan validation layer in debug mode");
     evd_params.enable_validation_layer = true;
-  }
-  if (glfw_window) {
-    // then we should be able to create a device with graphics abilities
-    evd_params.additional_instance_extensions =
-        get_required_instance_extensions();
-    evd_params.additional_device_extensions = get_required_device_extensions();
-    evd_params.is_for_ui = true;
-    evd_params.surface_creator = [&](VkInstance instance) -> VkSurfaceKHR {
-      VkSurfaceKHR surface = VK_NULL_HANDLE;
-      TI_TRACE("before glfwCreateWindowSurface {} {}", (void *)glfw_window,
-               (void *)instance);
-      uint status = VK_SUCCESS;
-      if ((status = glfwCreateWindowSurface(instance, glfw_window, nullptr,
-                                            &surface)) != VK_SUCCESS) {
-        TI_ERROR("Failed to create window surface! err: {}", status);
-        throw std::runtime_error("failed to create window surface!");
-      }
-      return surface;
-    };
   }
 
   embedded_device_ = std::make_unique<VulkanDeviceCreator>(evd_params);

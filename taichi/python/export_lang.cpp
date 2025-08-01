@@ -607,13 +607,6 @@ void export_lang(py::module &m) {
       .def("from_ndarray", &Texture::from_ndarray)
       .def("from_snode", &Texture::from_snode);
 
-  py::class_<Node>(m, "Node");  // NOLINT(bugprone-unused-raii)
-
-  py::class_<Sequential, Node>(m, "Sequential")
-      .def(py::init<GraphBuilder *>())
-      .def("append", &Sequential::append)
-      .def("dispatch", &Sequential::dispatch);
-
   py::class_<Kernel>(m, "KernelCxx")
       .def("no_activate",
            [](Kernel *self, SNode *snode) {
