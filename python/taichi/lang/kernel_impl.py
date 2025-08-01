@@ -13,7 +13,7 @@ import time
 import types
 import typing
 import warnings
-from typing import Any, Callable, Type, Union
+from typing import Any, Callable, Type
 
 import numpy as np
 
@@ -565,19 +565,6 @@ class Func:
                     raise TaichiSyntaxError(f"Invalid type annotation (argument {i}) of Taichi function: {annotation}")
             self.arguments.append(KernelArgument(annotation, param.name, param.default))
             self.orig_arguments.append(KernelArgument(annotation, param.name, param.default))
-
-
-AnnotationType = Union[
-    template,
-    ArgPackType,
-    "texture_type.TextureType",
-    "texture_type.RWTextureType",
-    ndarray_type.NdarrayType,
-    sparse_matrix_builder,
-    str,
-    Type,
-    Any,
-]
 
 
 def _get_global_vars(_func: Callable) -> dict[str, Any]:
