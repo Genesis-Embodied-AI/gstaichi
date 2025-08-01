@@ -72,7 +72,6 @@ file(GLOB TAICHI_CORE_SOURCE
     "taichi/struct/*"
     "taichi/system/*"
     "taichi/transforms/*"
-    "taichi/aot/*.cpp" "taichi/aot/*.h"
     "taichi/platform/cuda/*" "taichi/platform/amdgpu/*"
     "taichi/platform/mac/*" "taichi/platform/windows/*"
     "taichi/codegen/*.cpp" "taichi/codegen/*.h"
@@ -296,11 +295,7 @@ if (APPLE)
     target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE ${APPLE_FRAMEWORKS})
 endif ()
 
-if (ANDROID)
-    # Android has a custom toolchain so pthread is not available and should
-    # link against other libraries as well for logcat and internal features.
-    target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE android log)
-elseif (LINUX)
+if (LINUX)
     target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE X11 pthread)
     if (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "x86_64")
         # Avoid glibc dependencies
@@ -327,26 +322,18 @@ endforeach ()
 if(TI_WITH_PYTHON)
     message("PYTHON_LIBRARIES: " ${PYTHON_LIBRARIES})
     set(CORE_WITH_PYBIND_LIBRARY_NAME taichi_python)
-    if (NOT ANDROID)
-        # NO_EXTRAS is required here to avoid llvm symbol error during build
-        file(GLOB TAICHI_PYBIND_SOURCE
-            "taichi/python/*.cpp"
-            "taichi/python/*.h"
-        )
-        pybind11_add_module(${CORE_WITH_PYBIND_LIBRARY_NAME} NO_EXTRAS ${TAICHI_PYBIND_SOURCE})
-    else()
-        add_library(${CORE_WITH_PYBIND_LIBRARY_NAME} SHARED)
-    endif ()
+    # NO_EXTRAS is required here to avoid llvm symbol error during build
+    file(GLOB TAICHI_PYBIND_SOURCE
+        "taichi/python/*.cpp"
+        "taichi/python/*.h"
+    )
+    pybind11_add_module(${CORE_WITH_PYBIND_LIBRARY_NAME} NO_EXTRAS ${TAICHI_PYBIND_SOURCE})
 
     # Remove symbols from static libs: https://stackoverflow.com/a/14863432/12003165
     if (LINUX)
         target_link_options(${CORE_WITH_PYBIND_LIBRARY_NAME} PUBLIC -Wl,--exclude-libs=ALL)
-        if (NOT ANDROID)
-            # Excluding Android
-            # Android defaults to static linking with libc++, no tinkering needed.
-            target_link_options(${CORE_WITH_PYBIND_LIBRARY_NAME} PUBLIC -static-libgcc -static-libstdc++)
-            target_link_libraries(${CORE_WITH_PYBIND_LIBRARY_NAME} PUBLIC stdc++fs)
-        endif()
+        target_link_options(${CORE_WITH_PYBIND_LIBRARY_NAME} PUBLIC -static-libgcc -static-libstdc++)
+        target_link_libraries(${CORE_WITH_PYBIND_LIBRARY_NAME} PUBLIC stdc++fs)
     endif()
 
     if (TI_WITH_BACKTRACE)
@@ -373,12 +360,10 @@ if(TI_WITH_PYTHON)
         ${PROJECT_SOURCE_DIR}/external/VulkanMemoryAllocator/include
       )
 
-    if (NOT ANDROID)
-      target_include_directories(${CORE_WITH_PYBIND_LIBRARY_NAME}
-        PRIVATE
-          external/glfw/include
-        )
-    endif()
+    target_include_directories(${CORE_WITH_PYBIND_LIBRARY_NAME}
+    PRIVATE
+        external/glfw/include
+    )
 
     # These commands should apply to the DLL that is loaded from python, not the OBJECT library.
     if (MSVC)

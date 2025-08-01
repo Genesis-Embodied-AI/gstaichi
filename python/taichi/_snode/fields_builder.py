@@ -172,10 +172,6 @@ class FieldsBuilder:
             raise_warning (bool): Raise warning or not."""
         return self._finalize(raise_warning, compile_only=False)
 
-    def _finalize_for_aot(self):
-        """Constructs the SNodeTree and compiles the type for AOT purpose."""
-        return self._finalize(raise_warning=False, compile_only=True)
-
     def _finalize(self, raise_warning, compile_only) -> SNodeTree:
         self._check_not_finalized()
         if self.empty and raise_warning:

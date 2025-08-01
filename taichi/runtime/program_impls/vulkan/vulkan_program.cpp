@@ -16,15 +16,6 @@ namespace taichi::lang {
 
 namespace {
 std::vector<std::string> get_required_instance_extensions() {
-#ifdef ANDROID
-  std::vector<std::string> extensions;
-
-  extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
-  extensions.push_back(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
-  extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-
-  return extensions;
-#else
   std::vector<std::string> extensions;
 
   uint32_t glfw_ext_count = 0;
@@ -42,7 +33,6 @@ std::vector<std::string> get_required_instance_extensions() {
   extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif  // TI_WITH_CUDA
   return extensions;
-#endif
 }
 
 std::vector<std::string> get_required_device_extensions() {
@@ -73,24 +63,6 @@ void VulkanProgramImpl::materialize_runtime(KernelProfilerBase *profiler,
   *result_buffer_ptr = (uint64 *)HostMemoryPool::get_instance().allocate(
       sizeof(uint64) * taichi_result_buffer_entries, 8);
 
-// Android is meant to be embedded in other application only so the creation of
-// the device and other states is left to the caller/host.
-// The following code is only used when Taichi is running on its own.
-#ifndef ANDROID
-  GLFWwindow *glfw_window = nullptr;
-
-  if (window_system::glfw_context_acquire()) {
-    // glfw init success
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfw_window = glfwCreateWindow(1, 1, "Dummy Window", nullptr, nullptr);
-
-    if (glfwVulkanSupported() != GLFW_TRUE) {
-      TI_WARN("GLFW reports no Vulkan support");
-    }
-  }
-#endif
-
   VulkanDeviceCreator::Params evd_params;
   if (config->vk_api_version.empty()) {
     // Don't assign the API version by default. Otherwise we have to provide all
@@ -110,7 +82,6 @@ void VulkanProgramImpl::materialize_runtime(KernelProfilerBase *profiler,
     TI_WARN("Enabling vulkan validation layer in debug mode");
     evd_params.enable_validation_layer = true;
   }
-#if !defined(ANDROID)
   if (glfw_window) {
     // then we should be able to create a device with graphics abilities
     evd_params.additional_instance_extensions =
@@ -130,7 +101,6 @@ void VulkanProgramImpl::materialize_runtime(KernelProfilerBase *profiler,
       return surface;
     };
   }
-#endif
 
   embedded_device_ = std::make_unique<VulkanDeviceCreator>(evd_params);
 

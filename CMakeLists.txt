@@ -114,11 +114,11 @@ if (WIN32)
   message("CMAKE_MSVC_RUNTIME_LIBRARY: ${CMAKE_MSVC_RUNTIME_LIBRARY}")
 endif()
 
-# No support of Python for Android build; or in any case taichi is integrated
+# No support of Python for any case taichi is integrated
 # in another project as submodule.
 set(PYBIND11_VERSION "2.13.6" CACHE STRING "Pybind11 version to use")
 option(TI_WITH_PYTHON "Build with Python language binding" ON)
-if (TI_WITH_PYTHON AND NOT ANDROID)
+if (TI_WITH_PYTHON)
     include(cmake/PythonNumpyPybind11.cmake)
 endif()
 

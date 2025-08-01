@@ -14,10 +14,8 @@ import psutil
 # -- own --
 from . import misc
 from .alter import handle_alternate_actions
-from .android import build_android, setup_android_ndk
 from .cmake import cmake_args
 from .compiler import setup_clang, setup_msvc
-from .ios import build_ios, setup_ios
 from .llvm import setup_llvm
 from .misc import banner, is_manylinux2014
 from .ospkg import setup_os_pkgs

@@ -96,7 +96,6 @@ user_api[ti] = [
     "ad",
     "algorithms",
     "amdgpu",
-    "aot",
     "append",
     "argpack",
     "arm64",
