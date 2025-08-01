@@ -1,5 +1,4 @@
 #include "taichi/codegen/spirv/spirv_ir_builder.h"
-#include "taichi/rhi/dx/dx_device.h"
 #include "fp16.h"
 
 namespace taichi::lang {

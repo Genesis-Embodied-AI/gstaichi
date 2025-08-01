@@ -59,11 +59,6 @@ if (TI_WITH_VULKAN)
   target_link_libraries(${TESTS_NAME} PRIVATE vulkan_rhi)
 endif()
 
-if (TI_WITH_DX12)
-  target_link_libraries(${TESTS_NAME} PRIVATE dx12_runtime)
-  target_link_libraries(${TESTS_NAME} PRIVATE dx12_rhi)
-endif()
-
 target_include_directories(${TESTS_NAME}
   PRIVATE
     ${PROJECT_SOURCE_DIR}

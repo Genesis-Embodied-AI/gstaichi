@@ -156,10 +156,6 @@ if (TI_WITH_AMDGPU)
     set(AMDGPU_ARCH "amdgpu")
 endif()
 
-if (TI_WITH_DX12)
-    set(DX12_ARCH "dx12")
-endif()
-
 if (TI_WITH_LLVM)
     # Setup CLANG_EXECUTABLE
     if (CLANG_EXECUTABLE)

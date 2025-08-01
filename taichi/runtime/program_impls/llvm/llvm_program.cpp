@@ -115,8 +115,6 @@ std::unique_ptr<KernelLauncher> LlvmProgramImpl::make_kernel_launcher() {
 #if defined(TI_WITH_AMDGPU)
     return std::make_unique<amdgpu::KernelLauncher>(std::move(cfg));
 #endif
-  } else if (config->arch == Arch::dx12) {
-    // Not implemented
   }
 
   TI_NOT_IMPLEMENTED;

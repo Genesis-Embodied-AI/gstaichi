@@ -66,17 +66,7 @@ Program::Program(Arch desired_arch) : snode_rw_accessors_bank_(this) {
   profiler = make_profiler(config.arch, config.kernel_profiler);
   if (arch_uses_llvm(config.arch)) {
 #ifdef TI_WITH_LLVM
-    if (config.arch != Arch::dx12) {
-      program_impl_ = std::make_unique<LlvmProgramImpl>(config, profiler.get());
-    } else {
-      // NOTE: use Dx12ProgramImpl to avoid using LlvmRuntimeExecutor for dx12.
-#ifdef TI_WITH_DX12
-      TI_ASSERT(directx12::is_dx12_api_available());
-      program_impl_ = std::make_unique<Dx12ProgramImpl>(config);
-#else
-      TI_ERROR("This taichi is not compiled with DX12");
-#endif
-    }
+    program_impl_ = std::make_unique<LlvmProgramImpl>(config, profiler.get());
 #else
     TI_ERROR("This taichi is not compiled with LLVM");
 #endif
@@ -347,8 +337,7 @@ Ndarray *Program::create_ndarray(const DataType type,
     Arch arch = compile_config().arch;
     if (arch_is_cpu(arch) || arch == Arch::cuda || arch == Arch::amdgpu) {
       fill_ndarray_fast_u32(arr.get(), /*data=*/0);  // NOLINT
-    } else if (arch != Arch::dx12) {
-      // Device api support for dx12 backend are not complete yet
+    } else {
       Stream *stream =
           program_impl_->get_compute_device()->get_compute_stream();
       auto [cmdlist, res] = stream->new_command_list_unique();

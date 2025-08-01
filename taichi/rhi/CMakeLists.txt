@@ -83,11 +83,6 @@ if(TI_WITH_LLVM)
         target_link_libraries(${TAICHI_DEVICE_API} PUBLIC amdgpu_rhi)
     endif()
 
-    if (TI_WITH_DX12)
-        add_subdirectory(dx12)
-        target_link_libraries(${TAICHI_DEVICE_API} PUBLIC dx12_rhi)
-    endif()
-
     add_subdirectory(llvm)
     target_link_libraries(${TAICHI_DEVICE_API} PUBLIC llvm_rhi)
 endif()

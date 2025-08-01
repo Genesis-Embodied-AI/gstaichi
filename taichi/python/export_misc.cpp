@@ -32,10 +32,6 @@
 #include "taichi/rhi/vulkan/vulkan_loader.h"
 #endif
 
-#ifdef TI_WITH_DX12
-#include "taichi/rhi/dx12/dx12_api.h"
-#endif
-
 namespace taichi {
 
 void test_raise_error() {

@@ -58,7 +58,6 @@ endif()
 if(NOT TI_WITH_LLVM)
     set(TI_WITH_CUDA OFF)
     set(TI_WITH_CUDA_TOOLKIT OFF)
-    set(TI_WITH_DX12 OFF)
 endif()
 
 file(GLOB TAICHI_CORE_SOURCE
@@ -185,19 +184,6 @@ if(TI_WITH_LLVM)
 
         target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE amdgpu_codegen)
         target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE amdgpu_runtime)
-    endif()
-
-    if (TI_WITH_DX12)
-        llvm_map_components_to_libnames(llvm_directx_libs DirectX)
-
-        add_subdirectory(taichi/runtime/dx12)
-        add_subdirectory(taichi/codegen/dx12)
-        add_subdirectory(taichi/runtime/program_impls/dx12)
-
-        target_include_directories(${CORE_LIBRARY_NAME} PRIVATE external/DirectX-Headers/include)
-        target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE dx12_codegen)
-        target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE dx12_runtime)
-        target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE dx12_program_impl)
     endif()
 
     add_subdirectory(taichi/codegen/llvm)
