@@ -4,7 +4,6 @@ from taichi import (
     ad,
     algorithms,
     experimental,
-    graph,
     linalg,
     math,
     sparse,
