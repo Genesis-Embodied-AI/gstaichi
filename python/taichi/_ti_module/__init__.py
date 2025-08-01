@@ -1,3 +1,3 @@
-# # type: ignore
+# type: ignore
 
-# from taichi._ti_module.module import _main
+from taichi._ti_module.module import _main
