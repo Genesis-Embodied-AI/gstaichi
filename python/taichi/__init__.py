@@ -28,7 +28,7 @@ from taichi import aot  # isort:skip
 
 def __getattr__(attr):
     if attr == "cfg":
-        return None if lang.impl.get_runtime().prog is None else lang.impl.current_cfg()
+        return None if lang.impl.get_runtime()._prog is None else lang.impl.current_cfg()
     raise AttributeError(f"module '{__name__}' has no attribute '{attr}'")
 
 
