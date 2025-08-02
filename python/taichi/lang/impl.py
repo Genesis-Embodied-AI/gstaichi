@@ -7,6 +7,8 @@ import numpy as np
 from taichi._lib import core as _ti_core
 from taichi._lib.core.taichi_python import (
     DataTypeCxx,
+    Function,
+    KernelCxx,
     Program,
 )
 from taichi._snode.fields_builder import FieldsBuilder
@@ -336,9 +338,7 @@ class PyTaichi:
         self._prog: Program | None = None
         self.src_info_stack = []
         self.inside_kernel: bool = False
-        self.compiling_callable: "KernelCxx | Kernel | Function | None" = (
-            None  # pointer to instance of lang::Kernel/Function
-        )
+        self.compiling_callable: KernelCxx | Kernel | Function | None = None
         self._current_kernel: "Kernel | None" = None
         self.global_vars = []
         self.grad_vars = []

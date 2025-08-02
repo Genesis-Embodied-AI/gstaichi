@@ -1,3 +1,5 @@
+# type: ignore
+
 import ast
 import collections.abc
 import dataclasses

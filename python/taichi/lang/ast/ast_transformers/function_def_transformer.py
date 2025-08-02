@@ -1,3 +1,5 @@
+# type: ignore
+
 import ast
 import dataclasses
 from typing import Any, Callable
