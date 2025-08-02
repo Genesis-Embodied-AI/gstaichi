@@ -196,6 +196,51 @@ class CallTransformer:
         return tuple(args_new)
 
     @staticmethod
+    def _expand_Call_dataclass_kwargs(kwargs: list[ast.keyword]) -> list[ast.keyword]:
+        """
+        We require that each node has a .ptr attribute added to it, that contains
+        the associated Python object
+        """
+        kwargs_new = []
+        for i, kwarg in enumerate(kwargs):
+            val = kwarg.ptr[kwarg.arg]
+            if dataclasses.is_dataclass(val):
+                dataclass_type = val
+                for field in dataclasses.fields(dataclass_type):
+                    src_name = f"{kwarg.value.id}__ti_{field.name}"
+                    if not src_name.startswith("__ti_"):
+                        src_name = f"__ti_{src_name}"
+                    child_name = f"{kwarg.arg}__ti_{field.name}"
+                    if not child_name.startswith("__ti_"):
+                        child_name = f"__ti_{child_name}"
+                    load_ctx = ast.Load()
+                    src_node = ast.Name(
+                        id=src_name,
+                        ctx=load_ctx,
+                        lineno=kwarg.lineno,
+                        end_lineno=kwarg.end_lineno,
+                        col_offset=kwarg.col_offset,
+                        end_col_offset=kwarg.end_col_offset,
+                    )
+                    kwarg_node = ast.keyword(
+                        arg=child_name,
+                        value=src_node,
+                        ctx=load_ctx,
+                        lineno=kwarg.lineno,
+                        end_lineno=kwarg.end_lineno,
+                        col_offset=kwarg.col_offset,
+                        end_col_offset=kwarg.end_col_offset,
+                    )
+                    if dataclasses.is_dataclass(field.type):
+                        kwarg_node.ptr = {child_name: field.type}
+                        kwargs_new.extend(CallTransformer._expand_Call_dataclass_kwargs([kwarg_node]))
+                    else:
+                        kwargs_new.append(kwarg_node)
+            else:
+                kwargs_new.append(kwarg)
+        return kwargs_new
+
+    @staticmethod
     def build_Call(ctx: ASTTransformerContext, node: ast.Call, build_stmt, build_stmts) -> Any | None:
         """
         example ast:
@@ -211,7 +256,9 @@ class CallTransformer:
             # creates variable for the dataclass itself (as well as other variables,
             # not related to dataclasses). Necessary for calling further child functions
             build_stmts(ctx, node.args)
+            build_stmts(ctx, node.keywords)
             node.args = CallTransformer._expand_Call_dataclass_args(node.args)
+            node.keywords = CallTransformer._expand_Call_dataclass_kwargs(node.keywords)
             # create variables for the now-expanded dataclass members
             build_stmts(ctx, node.args)
             build_stmts(ctx, node.keywords)

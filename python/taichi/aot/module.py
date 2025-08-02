@@ -48,7 +48,7 @@ class KernelTemplate:
         for index, (key, value) in enumerate(kwargs.items()):
             template_args[index] = (key, value)
 
-        for arg in kernel.arguments:
+        for arg in kernel.arg_metas:
             if arg.annotation == template or isinstance(arg.annotation, template):
                 (k, v) = template_args[anno_index]
                 key_p += k

@@ -212,7 +212,7 @@ class FunctionDefTransformer:
         invoke_later_dict: dict[str, tuple[Any, str, Callable, list[Any]]] = dict()
         create_variable_later: dict[str, Any] = dict()
         for i, arg in enumerate(args.args):
-            argument = ctx.func.arguments[i]
+            argument = ctx.func.arg_metas[i]
             FunctionDefTransformer._transform_kernel_arg(
                 ctx,
                 invoke_later_dict,
@@ -338,7 +338,7 @@ class FunctionDefTransformer:
         assert ctx.argument_data is not None
         assert ctx.func is not None
         for data_i, data in enumerate(ctx.argument_data):
-            argument = ctx.func.arguments[data_i]
+            argument = ctx.func.arg_metas[data_i]
             FunctionDefTransformer._transform_func_arg(
                 ctx,
                 argument.name,
