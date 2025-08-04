@@ -352,14 +352,13 @@ class ArgLoadExpression : public Expression {
                     DataType dt,
                     bool is_ptr = false,
                     bool create_load = true,
-                    int arg_depth = 0,
                     const DebugInfo &dbg_info = DebugInfo())
       : Expression(dbg_info),
         arg_id(arg_id),
         dt(dt),
         is_ptr(is_ptr),
         create_load(create_load),
-        arg_depth(arg_depth) {
+        arg_depth(0) {
   }
 
   void type_check(const CompileConfig *config) override;

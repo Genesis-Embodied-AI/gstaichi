@@ -61,7 +61,7 @@ def decl_scalar_arg(dtype, name):
 
     argload_di = _ti_core.DebugInfo(impl.get_runtime().get_current_src_info())
     return Expr(
-        _ti_core.make_arg_load_expr(arg_id, dtype, is_ref, create_load=True, arg_depth=0, dbg_info=argload_di)
+        _ti_core.make_arg_load_expr(arg_id, dtype, is_ref, create_load=True, dbg_info=argload_di)
     )
 
 
@@ -91,7 +91,7 @@ def decl_matrix_arg(matrixtype, name):
     arg_id = impl.get_runtime().compiling_callable.insert_scalar_param(arg_type, name)
     argload_di = _ti_core.DebugInfo(impl.get_runtime().get_current_src_info())
     arg_load = Expr(
-        _ti_core.make_arg_load_expr(arg_id, arg_type, create_load=False, arg_depth=0, dbg_info=argload_di)
+        _ti_core.make_arg_load_expr(arg_id, arg_type, create_load=False, dbg_info=argload_di)
     )
     return matrixtype.from_taichi_object(arg_load)
 
@@ -101,7 +101,7 @@ def decl_struct_arg(structtype, name):
     arg_id = impl.get_runtime().compiling_callable.insert_scalar_param(arg_type, name)
     argload_di = _ti_core.DebugInfo(impl.get_runtime().get_current_src_info())
     arg_load = Expr(
-        _ti_core.make_arg_load_expr(arg_id, arg_type, create_load=False, arg_depth=0, dbg_info=argload_di)
+        _ti_core.make_arg_load_expr(arg_id, arg_type, create_load=False, dbg_info=argload_di)
     )
     return structtype.from_taichi_object(arg_load)
 

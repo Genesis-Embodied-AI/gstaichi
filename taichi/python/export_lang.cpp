@@ -999,9 +999,9 @@ void export_lang(py::module &m) {
 
   m.def("make_arg_load_expr",
         Expr::make<ArgLoadExpression, const std::vector<int> &,
-                   const DataType &, bool, bool, int, const DebugInfo &>,
+                   const DataType &, bool, bool, const DebugInfo &>,
         "arg_id"_a, "dt"_a, "is_ptr"_a = false, "create_load"_a = true,
-        "arg_depth"_a = 0, "dbg_info"_a = DebugInfo());
+        "dbg_info"_a = DebugInfo());
 
   m.def("make_reference",
         Expr::make<ReferenceExpression, const Expr &, const DebugInfo &>);
