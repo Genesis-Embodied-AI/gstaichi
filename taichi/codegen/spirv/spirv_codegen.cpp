@@ -577,8 +577,8 @@ class TaskCodegen : public IRVisitor {
   void visit(ArgLoadStmt *stmt) override {
     const auto arg_id = stmt->arg_id;
     const std::vector<int> indices_l(stmt->arg_id.begin(),
-                                     stmt->arg_id.begin() + stmt->arg_depth);
-    const std::vector<int> indices_r(stmt->arg_id.begin() + stmt->arg_depth,
+                                     stmt->arg_id.begin());
+    const std::vector<int> indices_r(stmt->arg_id.begin(),
                                      stmt->arg_id.end());
     const auto arg_type = ctx_attribs_->args_type()->get_element_type(arg_id);
     if (arg_type->is<PointerType>() ||
