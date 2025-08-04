@@ -731,7 +731,7 @@ class Scalarize : public BasicStmtVisitor {
     ret_type = TypeFactory::get_instance().get_pointer_type(ret_type);
     auto arg_load =
         std::make_unique<ArgLoadStmt>(stmt->arg_id, ret_type, stmt->is_ptr,
-                                      stmt->create_load, stmt->arg_depth);
+                                      stmt->create_load, /* arg_depth = */ 0);
 
     immediate_modifier_.replace_usages_with(stmt, arg_load.get());
 
