@@ -376,7 +376,6 @@ class TexturePtrExpression : public Expression {
   const std::vector<int> arg_id;
   int num_dims;
   bool is_storage{false};
-  int arg_depth;
 
   // Optional, for storage textures
   BufferFormat format{BufferFormat::unknown};
@@ -384,20 +383,17 @@ class TexturePtrExpression : public Expression {
 
   explicit TexturePtrExpression(const std::vector<int> &arg_id,
                                 int num_dims,
-                                int arg_depth,
                                 const DebugInfo &dbg_info = DebugInfo())
       : Expression(dbg_info),
         arg_id(arg_id),
         num_dims(num_dims),
         is_storage(false),
-        arg_depth(arg_depth),
         format(BufferFormat::rgba8),
         lod(0) {
   }
 
   TexturePtrExpression(const std::vector<int> &arg_id,
                        int num_dims,
-                       int arg_depth,
                        BufferFormat format,
                        int lod,
                        const DebugInfo &dbg_info = DebugInfo())
@@ -405,7 +401,6 @@ class TexturePtrExpression : public Expression {
         arg_id(arg_id),
         num_dims(num_dims),
         is_storage(true),
-        arg_depth(arg_depth),
         format(format),
         lod(lod) {
   }
