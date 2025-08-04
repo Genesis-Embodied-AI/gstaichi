@@ -172,7 +172,7 @@ void ArgLoadExpression::type_check(const CompileConfig *) {
 
 void ArgLoadExpression::flatten(FlattenContext *ctx) {
   auto arg_load = std::make_unique<ArgLoadStmt>(arg_id, dt, is_ptr, create_load,
-                                                /* arg_depth = */ 0, dbg_info);
+                                                dbg_info);
   arg_load->ret_type = ret_type;
   ctx->push_back(std::move(arg_load));
   stmt = ctx->back_stmt();
@@ -183,7 +183,7 @@ void TexturePtrExpression::type_check(const CompileConfig *config) {
 
 void TexturePtrExpression::flatten(FlattenContext *ctx) {
   ctx->push_back<ArgLoadStmt>(arg_id, PrimitiveType::f32, /*is_ptr=*/true,
-                              /*create_load=*/true, /*arg_depth=*/0,
+                              /*create_load=*/true,
                               dbg_info);
   ctx->push_back<TexturePtrStmt>(ctx->back_stmt(), num_dims, is_storage, format,
                                  lod, dbg_info);
@@ -647,7 +647,7 @@ void ExternalTensorExpression::flatten(FlattenContext *ctx) {
 
   auto ptr = Stmt::make<ArgLoadStmt>(
       arg_id, type, /*is_ptr=*/true,
-      /*create_load=*/false, /*arg_depth=*/0, /*dbg_info=*/dbg_info);
+      /*create_load=*/false, /*dbg_info=*/dbg_info);
 
   ctx->push_back(std::move(ptr));
   stmt = ctx->back_stmt();
