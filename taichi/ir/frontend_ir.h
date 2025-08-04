@@ -346,8 +346,6 @@ class ArgLoadExpression : public Expression {
    */
   bool create_load;
 
-  int arg_depth;
-
   ArgLoadExpression(const std::vector<int> &arg_id,
                     DataType dt,
                     bool is_ptr = false,
@@ -357,8 +355,7 @@ class ArgLoadExpression : public Expression {
         arg_id(arg_id),
         dt(dt),
         is_ptr(is_ptr),
-        create_load(create_load),
-        arg_depth(0) {
+        create_load(create_load) {
   }
 
   void type_check(const CompileConfig *config) override;
