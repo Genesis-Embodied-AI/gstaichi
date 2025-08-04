@@ -578,8 +578,7 @@ class TaskCodegen : public IRVisitor {
     const auto arg_id = stmt->arg_id;
     const std::vector<int> indices_l(stmt->arg_id.begin(),
                                      stmt->arg_id.begin());
-    const std::vector<int> indices_r(stmt->arg_id.begin(),
-                                     stmt->arg_id.end());
+    const std::vector<int> indices_r(stmt->arg_id.begin(), stmt->arg_id.end());
     const auto arg_type = ctx_attribs_->args_type()->get_element_type(arg_id);
     if (arg_type->is<PointerType>() ||
         (arg_type->is<lang::StructType>() &&
