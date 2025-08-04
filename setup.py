@@ -92,7 +92,6 @@ class Clean(clean):
             "dist",
             "python/taichi/assets",
             "python/taichi/_lib/runtime",
-            "python/taichi/_lib/c_api",
             "taichi.egg-info",
             "python/taichi.egg-info",
             "build",
@@ -259,9 +258,6 @@ def sign_development_for_apple_m1():
     if sys.platform == "darwin" and platform.machine() == "arm64":
         try:
             for path in glob.glob("python/taichi/_lib/core/*.so"):
-                print(f"signing {path}..")
-                subprocess.check_call(["codesign", "--force", "--deep", "--sign", "-", path])
-            for path in glob.glob("python/taichi/_lib/c_api/lib/*.so"):
                 print(f"signing {path}..")
                 subprocess.check_call(["codesign", "--force", "--deep", "--sign", "-", path])
         except:

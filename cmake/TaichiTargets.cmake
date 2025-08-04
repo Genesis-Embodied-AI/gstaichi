@@ -14,14 +14,6 @@ set(CMAKE_IMPORT_FILE_VERSION 1)
 set(_cmake_targets_defined "")
 set(_cmake_targets_not_defined "")
 set(_cmake_expected_targets "")
-foreach(_cmake_expected_target IN ITEMS taichi_c_api)
-  list(APPEND _cmake_expected_targets "${_cmake_expected_target}")
-  if(TARGET "${_cmake_expected_target}")
-    list(APPEND _cmake_targets_defined "${_cmake_expected_target}")
-  else()
-    list(APPEND _cmake_targets_not_defined "${_cmake_expected_target}")
-  endif()
-endforeach()
 unset(_cmake_expected_target)
 if(_cmake_targets_defined STREQUAL _cmake_expected_targets)
   unset(_cmake_targets_defined)
@@ -49,42 +41,6 @@ get_filename_component(_IMPORT_PREFIX "${_IMPORT_PREFIX}" PATH)
 get_filename_component(_IMPORT_PREFIX "${_IMPORT_PREFIX}" PATH)
 if(_IMPORT_PREFIX STREQUAL "/")
   set(_IMPORT_PREFIX "")
-endif()
-
-# - [taichi_c_api] -------------------------------------------------------------
-
-add_library(taichi_c_api SHARED IMPORTED)
-
-list(APPEND _cmake_import_check_targets taichi_c_api )
-
-if (APPLE)
-  set_target_properties(taichi_c_api PROPERTIES
-    IMPORTED_LOCATION "${_IMPORT_PREFIX}/lib/libtaichi_c_api.dylib"
-    IMPORTED_SONAME "@rpath/libtaichi_c_api.dylib"
-    INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include"
-  )
-  list(APPEND _cmake_import_check_files_for_taichi_c_api "${_IMPORT_PREFIX}/lib/libtaichi_c_api.dylib" )
-elseif (WIN32)
-  set_target_properties(taichi_c_api PROPERTIES
-    IMPORTED_LOCATION "${_IMPORT_PREFIX}/bin/taichi_c_api.dll"
-    IMPORTED_IMPLIB "${_IMPORT_PREFIX}/lib/taichi_c_api.lib"
-    INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include"
-  )
-  list(APPEND _cmake_import_check_files_for_taichi_c_api "${_IMPORT_PREFIX}/bin/taichi_c_api.dll" )
-elseif (UNIX)
-  # Check if the .so file exists in the lib directory
-  if(EXISTS "${_IMPORT_PREFIX}/lib/libtaichi_c_api.so")
-    set(TAICHI_SO_LOCATION "${_IMPORT_PREFIX}/lib/libtaichi_c_api.so")
-  else()
-    set(TAICHI_SO_LOCATION "${_IMPORT_PREFIX}/lib64/libtaichi_c_api.so")
-  endif()
-
-  set_target_properties(taichi_c_api PROPERTIES
-    IMPORTED_LOCATION "${TAICHI_SO_LOCATION}"
-    IMPORTED_SONAME "libtaichi_c_api.so"
-    INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include"
-  )
-  list(APPEND _cmake_import_check_files_for_taichi_c_api "${TAICHI_SO_LOCATION}" )
 endif()
 
 # ------------------------------------------------------------------------------
