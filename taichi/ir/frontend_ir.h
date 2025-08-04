@@ -536,14 +536,13 @@ class ExternalTensorExpression : public Expression {
                            int ndim,
                            const std::vector<int> &arg_id,
                            bool needs_grad = false,
-                           int arg_depth = false,
                            BoundaryMode boundary = BoundaryMode::kUnsafe) {
-    init(dt, ndim, arg_id, needs_grad, arg_depth, boundary);
+    init(dt, ndim, arg_id, needs_grad, boundary);
   }
 
   explicit ExternalTensorExpression(Expr *expr) : is_grad(true) {
     auto ptr = expr->cast<ExternalTensorExpression>();
-    init(ptr->dt, ptr->ndim, ptr->arg_id, ptr->needs_grad, ptr->arg_depth,
+    init(ptr->dt, ptr->ndim, ptr->arg_id, ptr->needs_grad,
          ptr->boundary);
   }
 
@@ -570,13 +569,11 @@ class ExternalTensorExpression : public Expression {
             int ndim,
             const std::vector<int> &arg_id,
             bool needs_grad,
-            int arg_depth,
             BoundaryMode boundary) {
     this->dt = dt;
     this->ndim = ndim;
     this->arg_id = arg_id;
     this->needs_grad = needs_grad;
-    this->arg_depth = arg_depth;
     this->boundary = boundary;
   }
 };
