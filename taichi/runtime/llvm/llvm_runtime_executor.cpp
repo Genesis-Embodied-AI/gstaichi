@@ -155,14 +155,6 @@ LlvmRuntimeExecutor::LlvmRuntimeExecutor(CompileConfig &config,
     device_ = std::make_shared<amdgpu::AmdgpuDevice>();
   }
 #endif
-#ifdef TI_WITH_DX12
-  else if (config.arch == Arch::dx12) {
-    // FIXME: add dx12 device.
-    // FIXME: set value based on DX12.
-    config.max_block_dim = 1024;
-    device_ = std::make_shared<cpu::CpuDevice>();
-  }
-#endif
   else {
     TI_NOT_IMPLEMENTED
   }
