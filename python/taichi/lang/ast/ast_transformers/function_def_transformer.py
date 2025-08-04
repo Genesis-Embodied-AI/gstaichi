@@ -28,7 +28,7 @@ from taichi.types import annotations, ndarray_type, primitive_types, texture_typ
 class FunctionDefTransformer:
     @staticmethod
     def _decl_and_create_variable(
-        ctx: ASTTransformerContext, annotation, name, arg_features, prefix_name, arg_depth
+        ctx: ASTTransformerContext, annotation, name, arg_features, prefix_name
     ) -> tuple[bool, Any]:
         full_name = prefix_name + "_" + name
         if not isinstance(annotation, primitive_types.RefType):
@@ -62,10 +62,10 @@ class FunctionDefTransformer:
                 (arg_features[0], arg_features[1], arg_features[2], full_name),
             )
         if isinstance(annotation, MatrixType):
-            return True, kernel_arguments.decl_matrix_arg(annotation, name, arg_depth)
+            return True, kernel_arguments.decl_matrix_arg(annotation, name)
         if isinstance(annotation, StructType):
-            return True, kernel_arguments.decl_struct_arg(annotation, name, arg_depth)
-        return True, kernel_arguments.decl_scalar_arg(annotation, name, arg_depth)
+            return True, kernel_arguments.decl_struct_arg(annotation, name)
+        return True, kernel_arguments.decl_scalar_arg(annotation, name)
 
     @staticmethod
     def _transform_kernel_arg(
@@ -85,7 +85,6 @@ class FunctionDefTransformer:
                     flat_name,
                     arg_features[field_idx],
                     "",
-                    0,
                 )
                 if result:
                     ctx.create_variable(flat_name, obj)
@@ -100,7 +99,6 @@ class FunctionDefTransformer:
                 argument_name,
                 this_arg_features if ctx.arg_features is not None else None,
                 "",
-                0,
             )
             if result:
                 ctx.create_variable(argument_name, obj)
