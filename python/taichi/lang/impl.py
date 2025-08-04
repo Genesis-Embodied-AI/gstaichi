@@ -436,13 +436,6 @@ class PyTaichi:
         _root_fb = FieldsBuilder()
 
     @staticmethod
-    def _finalize_root_fb_for_aot():
-        if _root_fb.finalized:
-            raise RuntimeError("AOT: can only finalize the root FieldsBuilder once")
-        assert isinstance(_root_fb, FieldsBuilder)
-        _root_fb._finalize_for_aot()
-
-    @staticmethod
     def _get_tb(_var):
         return getattr(_var, "declaration_tb", str(_var.ptr))
 

@@ -94,19 +94,6 @@ TaichiLLVMContext::TaichiLLVMContext(const CompileConfig &config, Arch arch)
     llvm::InitializeNativeTargetAsmPrinter();
     llvm::InitializeNativeTargetAsmParser();
 #endif
-  } else if (arch == Arch::dx12) {
-    // FIXME: Must initialize these before initializing Arch::dx12
-    // because it uses the jit of CPU right now.
-    llvm::InitializeNativeTarget();
-    llvm::InitializeNativeTargetAsmPrinter();
-    llvm::InitializeNativeTargetAsmParser();
-    // The dx target is used elsewhere, so we need to initialize it too.
-#if defined(TI_WITH_DX12)
-    LLVMInitializeDirectXTarget();
-    LLVMInitializeDirectXTargetMC();
-    LLVMInitializeDirectXTargetInfo();
-    LLVMInitializeDirectXAsmPrinter();
-#endif
   } else if (arch == Arch::amdgpu) {
 #if defined(TI_WITH_AMDGPU)
     LLVMInitializeAMDGPUTarget();
@@ -1119,9 +1106,6 @@ llvm::DataLayout TaichiLLVMContext::get_data_layout(Arch arch) {
         "e-p:64:64-p1:64:64-p2:32:32-p3:32:32-p4:64:64-p5:32:32-p6:32:32-i64:"
         "64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-"
         "v1024:1024-v2048:2048-n32:64-S32-A5-G1-ni:7");
-  } else if (arch == Arch::dx12) {
-    // NOTE: Return the default data layout to avoid crash.
-    return llvm::DataLayout("");
   } else {
     TI_NOT_IMPLEMENTED
   }

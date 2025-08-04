@@ -469,7 +469,7 @@ def test_ad_rand():
     assert "RandStmt not supported" in e.value.args[0]
 
 
-@test_utils.test(exclude=[ti.vulkan, ti.dx11])
+@test_utils.test(exclude=[ti.vulkan])
 def test_ad_frac():
     @ti.func
     def frac(x):

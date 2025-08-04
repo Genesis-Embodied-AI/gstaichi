@@ -6,8 +6,6 @@ target_sources(llvm_runtime
     llvm_runtime_executor.cpp
     llvm_offline_cache.cpp
     llvm_context.cpp
-    llvm_aot_module_loader.cpp
-    llvm_aot_module_builder.cpp
     snode_tree_buffer_manager.cpp
     kernel_launcher.cpp
   )
@@ -33,10 +31,6 @@ endif()
 
 if (TI_WITH_AMDGPU)
     target_link_libraries(llvm_runtime PRIVATE ${llvm_amdgpu_libs})
-endif()
-
-if (TI_WITH_DX12)
-    target_link_libraries(llvm_runtime PRIVATE ${llvm_directx_libs})
 endif()
 
 target_link_libraries(llvm_runtime PRIVATE ti_device_api)

@@ -53,7 +53,7 @@ bool arch_is_cuda(Arch arch) {
 
 bool arch_uses_llvm(Arch arch) {
   return (arch == Arch::x64 || arch == Arch::arm64 || arch == Arch::cuda ||
-          arch == Arch::dx12 || arch == Arch::amdgpu);
+          arch == Arch::amdgpu);
 }
 
 bool arch_is_gpu(Arch arch) {
@@ -61,7 +61,7 @@ bool arch_is_gpu(Arch arch) {
 }
 
 bool arch_uses_spirv(Arch arch) {
-  return arch == Arch::vulkan || arch == Arch::dx11 || arch == Arch::metal;
+  return arch == Arch::vulkan || arch == Arch::metal;
 }
 
 Arch host_arch() {
