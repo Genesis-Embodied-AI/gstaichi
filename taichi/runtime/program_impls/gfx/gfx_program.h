@@ -33,9 +33,6 @@ class GfxProgramImpl : public ProgramImpl {
     return runtime_->flush();
   }
 
-  std::unique_ptr<AotModuleBuilder> make_aot_module_builder(
-      const DeviceCapabilityConfig &caps) override;
-
   void destroy_snode_tree(SNodeTree *snode_tree) override {
     TI_ASSERT(snode_tree_mgr_ != nullptr);
     snode_tree_mgr_->destroy_snode_tree(snode_tree);
@@ -92,7 +89,6 @@ class GfxProgramImpl : public ProgramImpl {
   std::shared_ptr<Device> device_{nullptr};
   std::unique_ptr<gfx::GfxRuntime> runtime_{nullptr};
   std::unique_ptr<gfx::SNodeTreeManager> snode_tree_mgr_{nullptr};
-  std::vector<spirv::CompiledSNodeStructs> aot_compiled_snode_structs_;
 };
 
 }  // namespace taichi::lang

@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING, Any, List
 
 from taichi._lib.core.taichi_python import ASTBuilder
 from taichi.lang import impl
+from taichi.lang._ndrange import ndrange
+from taichi.lang.ast.symbol_resolver import ASTResolver
 from taichi.lang.exception import (
     TaichiCompilationError,
     TaichiNameError,
@@ -323,3 +325,17 @@ class ASTTransformerContext:
                     hint = ""
                 msg += gen_line(self.src[i], hint)
         return msg
+
+
+def get_decorator(ctx: ASTTransformerContext, node) -> str:
+    if not isinstance(node, ast.Call):
+        return ""
+    for wanted, name in [
+        (impl.static, "static"),
+        (impl.static_assert, "static_assert"),
+        (impl.grouped, "grouped"),
+        (ndrange, "ndrange"),
+    ]:
+        if ASTResolver.resolve_to(node.func, wanted, ctx.global_vars):
+            return name
+    return ""
