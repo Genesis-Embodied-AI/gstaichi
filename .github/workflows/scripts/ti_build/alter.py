@@ -22,13 +22,6 @@ from .tinysh import Command
 @banner("Add AOT Related Environment Variables")
 def add_aot_env():
     os.environ["TAICHI_REPO_DIR"] = os.getcwd()
-    pyver = get_desired_python_version()
-    for p in Path(os.getcwd()).glob("**/cmake-install/python/taichi/_lib/c_api"):
-        if p.is_dir() and any(v.name.endswith(f"-{pyver}") for v in p.parents):
-            os.environ["TAICHI_C_API_INSTALL_DIR"] = str(p)
-            break
-    else:
-        misc.warn("Failed to find TAICHI_C_API_INSTALL_DIR (did't build C-API?), skipping")
 
 
 def _write_ti_bashrc():
@@ -168,17 +161,8 @@ def _write_env(path):
         f.write(envstr)
 
 
-def write_env(path):
-    cmake_args.writeback()
-    _write_env(path)
-    misc.info(f"Environment variables written to {path}")
-
-
 def handle_alternate_actions():
-    if misc.options.write_env:
-        add_aot_env()
-        write_env(misc.options.write_env)
-    elif misc.options.shell:
+    if misc.options.shell:
         add_aot_env()
         enter_shell()
     else:

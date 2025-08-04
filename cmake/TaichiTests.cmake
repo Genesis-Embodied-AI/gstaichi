@@ -22,25 +22,9 @@ file(GLOB_RECURSE TAICHI_TESTS_SOURCE
         "tests/cpp/transforms/*.cpp"
         "tests/cpp/offline_cache/*.cpp")
 
-if (TI_WITH_VULKAN)
-    file(GLOB TAICHI_TESTS_GFX_UTILS_SOURCE
-        "tests/cpp/aot/gfx_utils.cpp")
-    list(APPEND TAICHI_TESTS_SOURCE ${TAICHI_TESTS_GFX_UTILS_SOURCE})
-endif()
-
 if(TI_WITH_LLVM)
-  file(GLOB TAICHI_TESTS_LLVM_SOURCE "tests/cpp/aot/llvm/*.cpp" "tests/cpp/llvm/*.cpp")
+  file(GLOB TAICHI_TESTS_LLVM_SOURCE "tests/cpp/llvm/*.cpp")
   list(APPEND TAICHI_TESTS_SOURCE ${TAICHI_TESTS_LLVM_SOURCE})
-endif()
-
-if(TI_WITH_VULKAN)
-  file(GLOB TAICHI_TESTS_VULKAN_SOURCE "tests/cpp/aot/vulkan/*.cpp")
-  list(APPEND TAICHI_TESTS_SOURCE ${TAICHI_TESTS_VULKAN_SOURCE})
-endif()
-
-if(TI_WITH_DX12)
-  file(GLOB TAICHI_TESTS_DX12_SOURCE "tests/cpp/aot/dx12/*.cpp")
-  list(APPEND TAICHI_TESTS_SOURCE ${TAICHI_TESTS_DX12_SOURCE})
 endif()
 
 add_executable(${TESTS_NAME} ${TAICHI_TESTS_SOURCE})
@@ -75,11 +59,6 @@ if (TI_WITH_VULKAN)
   target_link_libraries(${TESTS_NAME} PRIVATE vulkan_rhi)
 endif()
 
-if (TI_WITH_DX12)
-  target_link_libraries(${TESTS_NAME} PRIVATE dx12_runtime)
-  target_link_libraries(${TESTS_NAME} PRIVATE dx12_rhi)
-endif()
-
 target_include_directories(${TESTS_NAME}
   PRIVATE
     ${PROJECT_SOURCE_DIR}
@@ -97,12 +76,10 @@ target_include_directories(${TESTS_NAME} SYSTEM
     ${PROJECT_SOURCE_DIR}/external/VulkanMemoryAllocator/include
   )
 
-if (NOT ANDROID)
-  target_include_directories(${TESTS_NAME}
-  PRIVATE
-    external/glfw/include
-  )
-endif ()
+target_include_directories(${TESTS_NAME}
+PRIVATE
+  external/glfw/include
+)
 
 if(LINUX)
     target_link_options(${TESTS_NAME} PUBLIC -Wl,--exclude-libs=ALL)
