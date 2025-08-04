@@ -521,7 +521,6 @@ class ExternalTensorExpression : public Expression {
   std::vector<int> arg_id;
   bool needs_grad{false};
   bool is_grad{false};
-  int arg_depth{0};
   BoundaryMode boundary{BoundaryMode::kUnsafe};
 
   ExternalTensorExpression(const DataType &dt,

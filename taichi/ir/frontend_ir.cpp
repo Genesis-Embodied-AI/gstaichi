@@ -647,7 +647,7 @@ void ExternalTensorExpression::flatten(FlattenContext *ctx) {
 
   auto ptr = Stmt::make<ArgLoadStmt>(
       arg_id, type, /*is_ptr=*/true,
-      /*create_load=*/false, /*arg_depth=*/arg_depth, /*dbg_info=*/dbg_info);
+      /*create_load=*/false, /*arg_depth=*/0, /*dbg_info=*/dbg_info);
 
   ctx->push_back(std::move(ptr));
   stmt = ctx->back_stmt();
