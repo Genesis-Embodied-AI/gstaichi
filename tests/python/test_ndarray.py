@@ -1178,6 +1178,9 @@ import taichi as ti
 def my_kernel({args}) -> None:
 {arg_uses}
 """
+    if platform.system() == "Darwin" and ti.lang.impl.get_runtime().prog.config().arch == ti.vulkan:
+        # Mac doesn't support so many arguments, on Vulkan
+        return
     args_l = []
     arg_uses_l = []
     arg_objs_l = []

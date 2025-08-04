@@ -5,8 +5,6 @@ option(TI_WITH_CUDA "Build with the CUDA backend" ON)           # wheel-tag: cu
 option(TI_WITH_CUDA_TOOLKIT "Build with the CUDA toolkit" OFF)  # wheel-tag: cutk
 option(TI_WITH_AMDGPU "Build with the AMDGPU backend" OFF)      # wheel-tag: amd
 option(TI_WITH_VULKAN "Build with the Vulkan backend" OFF)      # wheel-tag: vk
-option(TI_WITH_DX11 "Build with the DX11 backend" OFF)          # wheel-tag: dx11
-option(TI_WITH_DX12 "Build with the DX12 backend" OFF)          # wheel-tag: dx12
 
 # Force symbols to be 'hidden' by default so nothing is exported from the Taichi
 # library including the third-party dependencies.
@@ -60,7 +58,6 @@ endif()
 if(NOT TI_WITH_LLVM)
     set(TI_WITH_CUDA OFF)
     set(TI_WITH_CUDA_TOOLKIT OFF)
-    set(TI_WITH_DX12 OFF)
 endif()
 
 file(GLOB TAICHI_CORE_SOURCE
@@ -72,7 +69,6 @@ file(GLOB TAICHI_CORE_SOURCE
     "taichi/struct/*"
     "taichi/system/*"
     "taichi/transforms/*"
-    "taichi/aot/*.cpp" "taichi/aot/*.h"
     "taichi/platform/cuda/*" "taichi/platform/amdgpu/*"
     "taichi/platform/mac/*" "taichi/platform/windows/*"
     "taichi/codegen/*.cpp" "taichi/codegen/*.h"
@@ -100,16 +96,8 @@ if (TI_WITH_AMDGPU)
   list(APPEND TAIHI_CORE_SOURCE ${TAICHI_AMDGPU_RUNTIME_SOURCE})
 endif()
 
-if (TI_WITH_DX12)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTI_WITH_DX12")
-endif()
-
 if (TI_WITH_METAL)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTI_WITH_METAL")
-endif()
-
-if (TI_WITH_DX11)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTI_WITH_DX11")
 endif()
 
 if (TI_WITH_VULKAN)
@@ -198,19 +186,6 @@ if(TI_WITH_LLVM)
         target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE amdgpu_runtime)
     endif()
 
-    if (TI_WITH_DX12)
-        llvm_map_components_to_libnames(llvm_directx_libs DirectX)
-
-        add_subdirectory(taichi/runtime/dx12)
-        add_subdirectory(taichi/codegen/dx12)
-        add_subdirectory(taichi/runtime/program_impls/dx12)
-
-        target_include_directories(${CORE_LIBRARY_NAME} PRIVATE external/DirectX-Headers/include)
-        target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE dx12_codegen)
-        target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE dx12_runtime)
-        target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE dx12_program_impl)
-    endif()
-
     add_subdirectory(taichi/codegen/llvm)
     add_subdirectory(taichi/runtime/llvm)
     add_subdirectory(taichi/runtime/program_impls/llvm)
@@ -227,7 +202,7 @@ if(TI_WITH_LLVM)
     endif()
 endif()
 
-if (TI_WITH_METAL OR TI_WITH_DX11 OR TI_WITH_VULKAN)
+if (TI_WITH_METAL OR TI_WITH_VULKAN)
     add_subdirectory(taichi/runtime/program_impls/gfx)
     target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE gfx_program_impl)
 endif()
@@ -235,11 +210,6 @@ endif()
 if (TI_WITH_METAL)
     add_subdirectory(taichi/runtime/program_impls/metal)
     target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE metal_program_impl)
-endif()
-
-if (TI_WITH_DX11)
-    add_subdirectory(taichi/runtime/program_impls/dx)
-    target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE dx_program_impl)
 endif()
 
 if (TI_WITH_VULKAN)
@@ -251,9 +221,9 @@ add_subdirectory(taichi/util)
 add_subdirectory(taichi/common)
 add_subdirectory(taichi/compilation_manager)
 
-target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE taichi_util)
-target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE taichi_common)
 target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE compilation_manager)
+target_link_libraries(${CORE_LIBRARY_NAME} PUBLIC taichi_util)
+target_link_libraries(${CORE_LIBRARY_NAME} PUBLIC taichi_common)
 
 if (TI_WITH_CUDA AND TI_WITH_CUDA_TOOLKIT)
     find_package(CUDAToolkit REQUIRED)
@@ -271,12 +241,12 @@ add_subdirectory(external/SPIRV-Tools)
 add_subdirectory(taichi/codegen/spirv)
 add_subdirectory(taichi/runtime/gfx)
 
-if (TI_WITH_VULKAN OR TI_WITH_DX11 OR TI_WITH_METAL)
+if (TI_WITH_VULKAN OR TI_WITH_METAL)
   target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE spirv_codegen)
   target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE gfx_runtime)
 endif()
 
-if (TI_WITH_DX11 OR TI_WITH_METAL)
+if (TI_WITH_METAL)
   set(SPIRV_CROSS_CLI false)
   add_subdirectory(${PROJECT_SOURCE_DIR}/external/SPIRV-Cross ${PROJECT_BINARY_DIR}/external/SPIRV-Cross)
 endif()
@@ -296,11 +266,7 @@ if (APPLE)
     target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE ${APPLE_FRAMEWORKS})
 endif ()
 
-if (ANDROID)
-    # Android has a custom toolchain so pthread is not available and should
-    # link against other libraries as well for logcat and internal features.
-    target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE android log)
-elseif (LINUX)
+if (LINUX)
     target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE X11 pthread)
     if (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "x86_64")
         # Avoid glibc dependencies
@@ -327,26 +293,18 @@ endforeach ()
 if(TI_WITH_PYTHON)
     message("PYTHON_LIBRARIES: " ${PYTHON_LIBRARIES})
     set(CORE_WITH_PYBIND_LIBRARY_NAME taichi_python)
-    if (NOT ANDROID)
-        # NO_EXTRAS is required here to avoid llvm symbol error during build
-        file(GLOB TAICHI_PYBIND_SOURCE
-            "taichi/python/*.cpp"
-            "taichi/python/*.h"
-        )
-        pybind11_add_module(${CORE_WITH_PYBIND_LIBRARY_NAME} NO_EXTRAS ${TAICHI_PYBIND_SOURCE})
-    else()
-        add_library(${CORE_WITH_PYBIND_LIBRARY_NAME} SHARED)
-    endif ()
+    # NO_EXTRAS is required here to avoid llvm symbol error during build
+    file(GLOB TAICHI_PYBIND_SOURCE
+        "taichi/python/*.cpp"
+        "taichi/python/*.h"
+    )
+    pybind11_add_module(${CORE_WITH_PYBIND_LIBRARY_NAME} NO_EXTRAS ${TAICHI_PYBIND_SOURCE})
 
     # Remove symbols from static libs: https://stackoverflow.com/a/14863432/12003165
     if (LINUX)
         target_link_options(${CORE_WITH_PYBIND_LIBRARY_NAME} PUBLIC -Wl,--exclude-libs=ALL)
-        if (NOT ANDROID)
-            # Excluding Android
-            # Android defaults to static linking with libc++, no tinkering needed.
-            target_link_options(${CORE_WITH_PYBIND_LIBRARY_NAME} PUBLIC -static-libgcc -static-libstdc++)
-            target_link_libraries(${CORE_WITH_PYBIND_LIBRARY_NAME} PUBLIC stdc++fs)
-        endif()
+        target_link_options(${CORE_WITH_PYBIND_LIBRARY_NAME} PUBLIC -static-libgcc -static-libstdc++)
+        target_link_libraries(${CORE_WITH_PYBIND_LIBRARY_NAME} PUBLIC stdc++fs)
     endif()
 
     if (TI_WITH_BACKTRACE)
@@ -373,12 +331,10 @@ if(TI_WITH_PYTHON)
         ${PROJECT_SOURCE_DIR}/external/VulkanMemoryAllocator/include
       )
 
-    if (NOT ANDROID)
-      target_include_directories(${CORE_WITH_PYBIND_LIBRARY_NAME}
-        PRIVATE
-          external/glfw/include
-        )
-    endif()
+    target_include_directories(${CORE_WITH_PYBIND_LIBRARY_NAME}
+    PRIVATE
+        external/glfw/include
+    )
 
     # These commands should apply to the DLL that is loaded from python, not the OBJECT library.
     if (MSVC)

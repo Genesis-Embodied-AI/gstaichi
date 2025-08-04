@@ -1,5 +1,4 @@
 #pragma once
-#include "taichi/aot/module_loader.h"
 #include "taichi/codegen/spirv/spirv_codegen.h"
 #include "taichi/codegen/spirv/snode_struct_compiler.h"
 #include "taichi/codegen/spirv/kernel_utils.h"

@@ -7,7 +7,7 @@ from taichi.lang.util import taichi_scope
 
 
 def arch_uses_spv(arch):
-    return arch == _ti_core.vulkan or arch == _ti_core.metal or arch == _ti_core.dx11
+    return arch == _ti_core.vulkan or arch == _ti_core.metal
 
 
 def sync():
