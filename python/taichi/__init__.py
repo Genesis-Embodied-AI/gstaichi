@@ -4,7 +4,6 @@ from taichi import (
     ad,
     algorithms,
     experimental,
-    graph,
     linalg,
     math,
     sparse,
@@ -21,9 +20,6 @@ from taichi.types.annotations import *
 
 # Provide a shortcut to types since they're commonly used.
 from taichi.types.primitive_types import *
-
-# Issue#2223: Do not reorder, or we're busted with partially initialized module
-from taichi import aot  # isort:skip
 
 
 def __getattr__(attr):

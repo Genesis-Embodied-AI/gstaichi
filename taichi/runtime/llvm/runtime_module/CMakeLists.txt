@@ -26,7 +26,7 @@ function(COMPILE_CUSTOM_CUDA_LIBRARY cuda_path)
 endfunction()
 
 # Build llvm-runtime for host arch and cuda (if available)
-foreach(arch IN LISTS HOST_ARCH CUDA_ARCH DX12_ARCH AMDGPU_ARCH)
+foreach(arch IN LISTS HOST_ARCH CUDA_ARCH AMDGPU_ARCH)
   compile_llvm_runtime(${arch})
 endforeach()
 

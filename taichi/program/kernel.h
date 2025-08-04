@@ -7,7 +7,6 @@
 #include "taichi/program/callable.h"
 #include "taichi/program/ndarray.h"
 #include "taichi/program/texture.h"
-#include "taichi/aot/graph_data.h"
 #include "taichi/program/launch_context_builder.h"
 
 namespace taichi::lang {
