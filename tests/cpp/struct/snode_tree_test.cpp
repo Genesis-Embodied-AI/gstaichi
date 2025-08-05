@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 
-#include "taichi/struct/snode_tree.h"
+#include "gstaichi/struct/snode_tree.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 
 TEST(SNodeTree, GetSNodeToRootMapping) {
   constexpr int kSNodeSize = 16;
@@ -25,4 +25,4 @@ TEST(SNodeTree, GetSNodeToRootMapping) {
   }
 }
 
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang
