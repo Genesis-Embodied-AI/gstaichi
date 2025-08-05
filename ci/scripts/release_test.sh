@@ -1,29 +1,29 @@
 #!/usr/bin/env bash
 
-# Taichi release test suite
+# GsTaichi release test suite
 
 # Usage: `bash release_test.sh`
 
 # This script is created mainly for eyeball-testing
 # that if all of the official examples are still working
-# with the latest version of Taichi.
+# with the latest version of GsTaichi.
 
 # Some of the test cases are fetched from external repositories
 # please reach out to us if you are the owner of those
 # repos and don't like us to do it.
 
 # You can add more tests into this script and plug-n-play
-# existing tests in the `taichi::test::main` function as
+# existing tests in the `gstaichi::test::main` function as
 # you need.
 
-function taichi::utils::set_debug {
+function gstaichi::utils::set_debug {
     if [ ${DEBUG} == "true" ]; then
         set -x
     fi
     set -euo pipefail
 }
 
-function taichi::utils::logger {
+function gstaichi::utils::logger {
     # default: gray
     if [ "$1" == "info" ]; then
         printf '\e[1;90m%-6s\e[m\n' "$(date +"[%m-%d %H:%M:%S]") $2"
@@ -46,83 +46,83 @@ function taichi::utils::logger {
     fi
 }
 
-function taichi::utils::logger::info {
-    taichi::utils::logger "info" "$1"
+function gstaichi::utils::logger::info {
+    gstaichi::utils::logger "info" "$1"
 }
 
-function taichi::utils::logger::error {
-    taichi::utils::logger "error" "$1"
+function gstaichi::utils::logger::error {
+    gstaichi::utils::logger "error" "$1"
 }
 
-function taichi::utils::logger::success {
-    taichi::utils::logger "success" "$1"
+function gstaichi::utils::logger::success {
+    gstaichi::utils::logger "success" "$1"
 }
 
-function taichi::utils::logger::warning {
-    taichi::utils::logger "warning" "$1"
+function gstaichi::utils::logger::warning {
+    gstaichi::utils::logger "warning" "$1"
 }
 
-function taichi::utils::logger::debug {
-    taichi::utils::logger "debug" "$1"
+function gstaichi::utils::logger::debug {
+    gstaichi::utils::logger "debug" "$1"
 }
 
-function taichi::utils::line {
+function gstaichi::utils::line {
     printf '%.0s-' {1..20}; echo
 }
 
-function taichi::utils::git_clone {
+function gstaichi::utils::git_clone {
     local GIT_ORG=$1
     local GIT_REPO=$2
     git clone "git@github.com:${GIT_ORG}/${GIT_REPO}.git"
 }
 
-function taichi::utils::pause {
+function gstaichi::utils::pause {
     read -p "Press enter to continue"
 }
 
-function taichi::utils::pkill {
+function gstaichi::utils::pkill {
     sleep 5
     pkill -f "$1"
 }
 
-function taichi::test::difftaichi {
+function gstaichi::test::diffgstaichi {
     local WORKDIR=${1}
     local PATTERN="*.py"
-    local ORG="taichi-dev"
-    local REPO="difftaichi"
+    local ORG="gstaichi-dev"
+    local REPO="diffgstaichi"
 
     # divider
-    taichi::utils::line
-    taichi::utils::logger::info "Running DiffTaichi examples"
+    gstaichi::utils::line
+    gstaichi::utils::logger::info "Running DiffGsTaichi examples"
 
     # clone the repo
-    taichi::utils::git_clone "${ORG}" "${REPO}"
+    gstaichi::utils::git_clone "${ORG}" "${REPO}"
     cd "${REPO}/examples"
 
     # run tests
     for match in $(find ./ -name "${PATTERN}"); do
         python "${match}" &
-        taichi::utils::pkill "${match}"
-        taichi::utils::line
-        # taichi::utils::pause
+        gstaichi::utils::pkill "${match}"
+        gstaichi::utils::line
+        # gstaichi::utils::pause
     done
 
     # go back to workdir
     cd "${WORKDIR}"
 }
 
-function taichi::test::taichi_elements {
+function gstaichi::test::gstaichi_elements {
     local WORKDIR=${1}
     local PATTERN="demo_*.py"
-    local ORG="taichi-dev"
-    local REPO="taichi_elements"
+    local ORG="gstaichi-dev"
+    local REPO="gstaichi_elements"
 
     # divider
-    taichi::utils::line
-    taichi::utils::logger::info "Running Taichi Elements examples"
+    gstaichi::utils::line
+    gstaichi::utils::logger::info "Running GsTaichi Elements examples"
 
     # clone the repo
-    taichi::utils::git_clone "${ORG}" "${REPO}"
+    gstaichi::utils::git_clone "${ORG}" "${REPO}"
     cd "${REPO}"
 
     # install dependencies
@@ -133,14 +133,14 @@ function taichi::test::taichi_elements {
     cd "${REPO}/demo"
     for match in $(find ./ -name "${PATTERN}"); do
         python "${match}" &
-        taichi::utils::pkill "${match}"
-        taichi::utils::line
-        # taichi::utils::pause
+        gstaichi::utils::pkill "${match}"
+        gstaichi::utils::line
+        # gstaichi::utils::pause
     done
 
     # run special tests
     # FIXME: this does not work properly yet
-    # taichi::utils::logger::success $(ls)
+    # gstaichi::utils::logger::success $(ls)
     # read -p "Please input the directory containing the generated particles, e.g. sim_2022-01-01_20-55-48" particles_dir
     # python render_particles.py -i ./"${particles_dir}" \
     #                            -b 0 -e 400 -s 1 \
@@ -154,87 +154,87 @@ function taichi::test::taichi_elements {
     cd "${WORKDIR}"
 }
 
-function taichi::test::stannum {
+function gstaichi::test::stannum {
     local WORKDIR=${1}
     local ORG="ifsheldon"
     local REPO="stannum"
 
     # divider
-    taichi::utils::line
-    taichi::utils::logger::info "Running Stannum examples"
+    gstaichi::utils::line
+    gstaichi::utils::logger::info "Running Stannum examples"
 
     # clone the repo
-    taichi::utils::git_clone "${ORG}" "${REPO}"
+    gstaichi::utils::git_clone "${ORG}" "${REPO}"
     cd "${REPO}"
 
     # run tests
     pytest -v -s ./
-    taichi::utils::line
+    gstaichi::utils::line
 
     # go back to workdir
     cd "${WORKDIR}"
 }
 
-function taichi::test::sandyfluid {
+function gstaichi::test::sandyfluid {
     local WORKDIR=${1}
     local ORG="ethz-pbs21"
     local REPO="SandyFluid"
 
     # divider
-    taichi::utils::line
-    taichi::utils::logger::info "Running SandyFluid examples"
+    gstaichi::utils::line
+    gstaichi::utils::logger::info "Running SandyFluid examples"
 
     # clone the repo
-    taichi::utils::git_clone "${ORG}" "${REPO}"
+    gstaichi::utils::git_clone "${ORG}" "${REPO}"
     cd "${REPO}"
 
     # install dependencies
-    # remove the line contains pinned Taichi version for testing purposes
-    grep -v "taichi" requirements.txt > tmpfile && mv tmpfile requirements.txt
+    # remove the line contains pinned GsTaichi version for testing purposes
+    grep -v "gstaichi" requirements.txt > tmpfile && mv tmpfile requirements.txt
     pip install -r requirements.txt
 
     # run tests
     python src/main.py &
-    taichi::utils::pkill "src/main.py"
-    taichi::utils::line
+    gstaichi::utils::pkill "src/main.py"
+    gstaichi::utils::line
     # go back to workdir
     cd "${WORKDIR}"
 }
 
-function taichi::test::voxel_editor {
+function gstaichi::test::voxel_editor {
     local WORKDIR=${1}
-    local ORG="taichi-dev"
+    local ORG="gstaichi-dev"
     local REPO="voxel_editor"
 
     # divider
-    taichi::utils::line
-    taichi::utils::logger::info "Running Voxel Editor examples"
+    gstaichi::utils::line
+    gstaichi::utils::logger::info "Running Voxel Editor examples"
 
     # clone the repo
-    taichi::utils::git_clone "${ORG}" "${REPO}"
+    gstaichi::utils::git_clone "${ORG}" "${REPO}"
     cd "${REPO}"
 
     # run tests
     python voxel_editor.py &
-    taichi::utils::pkill "voxel_editor.py"
-    taichi::utils::line
+    gstaichi::utils::pkill "voxel_editor.py"
+    gstaichi::utils::line
 
     # go back to workdir
     cd "${WORKDIR}"
 }
 
-function taichi::test::generate_videos {
+function gstaichi::test::generate_videos {
     local WORKDIR=${1}
     local PATTERN="test_*.py"
-    local ORG="taichi-dev"
-    local REPO="taichi"
+    local ORG="gstaichi-dev"
+    local REPO="gstaichi"
 
     # divider
-    taichi::utils::line
-    taichi::utils::logger::info "Generating examples videos"
+    gstaichi::utils::line
+    gstaichi::utils::logger::info "Generating examples videos"
 
     # clone the repo
-    taichi::utils::git_clone "${ORG}" "${REPO}"
+    gstaichi::utils::git_clone "${ORG}" "${REPO}"
     # mkdir "${REPO}/misc/output_videos"
 
     # run tests
@@ -243,8 +243,8 @@ function taichi::test::generate_videos {
         cd "${directory}"
         for match in $(find ./ -maxdepth 1 -name "${PATTERN}" -type f); do
             pytest -v "${match}"
-            taichi::utils::line
-            # taichi::utils::pause
+            gstaichi::utils::line
+            # gstaichi::utils::pause
         done
         cd ..
     done
@@ -253,13 +253,13 @@ function taichi::test::generate_videos {
     cd "${WORKDIR}"
 }
 
-function taichi::test::main {
+function gstaichi::test::main {
     # set debugging flag
     DEBUG="false"
 
     # create a temporary directory for testing
     WORKDIR="$(mktemp -d)"
-    taichi::utils::logger::info "Running all tests within ${WORKDIR}"
+    gstaichi::utils::logger::info "Running all tests within ${WORKDIR}"
 
     # make sure to clean up the temp dir on exit
     trap '{ rm -rf -- "$WORKDIR"; }' EXIT
@@ -267,20 +267,20 @@ function taichi::test::main {
     # walk into the working dir
     cd "${WORKDIR}"
 
-    # difftaichi examples
-    taichi::test::difftaichi "${WORKDIR}"
+    # diffgstaichi examples
+    gstaichi::test::diffgstaichi "${WORKDIR}"
 
-    # taichi_elements examples
-    taichi::test::taichi_elements "${WORKDIR}"
+    # gstaichi_elements examples
+    gstaichi::test::gstaichi_elements "${WORKDIR}"
 
     # stannum tests
-    taichi::test::stannum "${WORKDIR}"
+    gstaichi::test::stannum "${WORKDIR}"
 
     # sandyfluid tests
-    taichi::test::sandyfluid "${WORKDIR}"
+    gstaichi::test::sandyfluid "${WORKDIR}"
 
     # voxel editor tests
-    taichi::test::voxel_editor "${WORKDIR}"
+    gstaichi::test::voxel_editor "${WORKDIR}"
 }
 
-taichi::test::main
+gstaichi::test::main

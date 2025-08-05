@@ -1,11 +1,11 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/statements.h"
-#include "taichi/ir/ir_builder.h"
-#include "taichi/ir/transforms.h"
+#include "gstaichi/ir/statements.h"
+#include "gstaichi/ir/ir_builder.h"
+#include "gstaichi/ir/transforms.h"
 #include "tests/cpp/program/test_program.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 
 class BinaryOpSimplifyTest : public ::testing::Test {
  protected:
@@ -100,4 +100,4 @@ TEST_F(BinaryOpSimplifyTest, ModPOT) {
   EXPECT_EQ(ir_block->statements[3]->as<ReturnStmt>()->values[0], bin_op);
 }
 
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

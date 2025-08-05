@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 
-#include "taichi/rhi/common/host_memory_pool.h"
+#include "gstaichi/rhi/common/host_memory_pool.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 
 class HostMemoryPoolTestHelper {
  public:
@@ -34,4 +34,4 @@ TEST(HostMemoryPool, AllocateMemory) {
   HostMemoryPoolTestHelper::setDefaultAllocatorSize(oldAllocatorSize);
 }
 
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

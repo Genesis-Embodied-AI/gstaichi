@@ -2,7 +2,7 @@ import requests
 
 
 def print_active_contributors():
-    api_prefix = "https://api.github.com/repos/taichi-dev/taichi"
+    api_prefix = "https://api.github.com/repos/gstaichi-dev/gstaichi"
     per_page = 100
 
     contributors = []

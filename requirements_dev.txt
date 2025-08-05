@@ -16,6 +16,7 @@ wheel
 astunparse
 pre-commit
 scikit-build
+setuptools_scm>=6.0
 numpy
 ninja; platform_system != 'Windows'
 ruamel.yaml

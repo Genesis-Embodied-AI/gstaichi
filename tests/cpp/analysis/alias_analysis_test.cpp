@@ -3,12 +3,12 @@
 #include <vector>
 
 #include "gtest/gtest.h"
-#include "taichi/ir/analysis.h"
-#include "taichi/ir/ir_builder.h"
-#include "taichi/ir/snode.h"
-#include "taichi/ir/statements.h"
+#include "gstaichi/ir/analysis.h"
+#include "gstaichi/ir/ir_builder.h"
+#include "gstaichi/ir/snode.h"
+#include "gstaichi/ir/statements.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 namespace irpass {
 namespace analysis {
 namespace {
@@ -173,4 +173,4 @@ TEST(AliasAnalysis, ExternalPtr_GradDiff) {
 
 }  // namespace analysis
 }  // namespace irpass
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

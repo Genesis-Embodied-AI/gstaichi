@@ -1,8 +1,9 @@
 import numpy as np
 import pytest
 
-import taichi as ti
-from taichi.lang.exception import TaichiRuntimeError
+import gstaichi as ti
+from gstaichi.lang.exception import GsTaichiRuntimeError
+
 from tests import test_utils
 
 
@@ -39,7 +40,7 @@ def test_fields_with_shape():
         assert x[i] == i
 
 
-@test_utils.test(arch=[ti.cpu, ti.cuda, ti.vulkan, ti.dx11, ti.metal])
+@test_utils.test(arch=[ti.cpu, ti.cuda, ti.vulkan, ti.metal])
 def test_fields_builder_dense():
     shape = 5
     fb1 = ti.FieldsBuilder()
@@ -143,7 +144,7 @@ def test_fields_builder_pointer():
 # See https://docs.taichi-lang.org/docs/type#primitive-types for more details.
 @pytest.mark.parametrize("test_1d_size", [1, 10, 100])
 @pytest.mark.parametrize("field_type", [ti.f32, ti.i32])
-@test_utils.test(arch=[ti.cpu, ti.cuda, ti.vulkan, ti.dx11, ti.metal])
+@test_utils.test(arch=[ti.cpu, ti.cuda, ti.vulkan, ti.metal])
 def test_fields_builder_destroy(test_1d_size, field_type):
     def test_for_single_destroy_multi_fields():
         fb = ti.FieldsBuilder()
@@ -176,12 +177,12 @@ def test_fields_builder_destroy(test_1d_size, field_type):
         fb.dense(ti.i, test_1d_size).place(a)
         c = fb.finalize()
 
-        with pytest.raises(TaichiRuntimeError):
+        with pytest.raises(GsTaichiRuntimeError):
             c.destroy()
             c.destroy()
 
 
-@test_utils.test(arch=[ti.cpu, ti.cuda, ti.vulkan, ti.dx11])
+@test_utils.test(arch=[ti.cpu, ti.cuda, ti.vulkan])
 def test_field_initialize_zero():
     fb0 = ti.FieldsBuilder()
     a = ti.field(ti.i32)

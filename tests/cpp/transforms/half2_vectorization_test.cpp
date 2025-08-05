@@ -1,10 +1,10 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/statements.h"
-#include "taichi/ir/transforms.h"
+#include "gstaichi/ir/statements.h"
+#include "gstaichi/ir/transforms.h"
 #include "tests/cpp/program/test_program.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 
 TEST(Half2Vectorization, Ndarray) {
   // Basic tests within a basic block
@@ -210,4 +210,4 @@ TEST(Half2Vectorization, Field) {
   EXPECT_EQ(block->statements[7]->is<AtomicOpStmt>(), true);
 }
 
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

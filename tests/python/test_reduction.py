@@ -2,7 +2,8 @@ import numpy as np
 import pytest
 from pytest import approx
 
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
 OP_ADD = 0
@@ -34,9 +35,7 @@ np_ops = {
 def _test_reduction_single(dtype, criterion, op):
     N = 1024 * 1024
     if (
-        ti.lang.impl.current_cfg().arch == ti.vulkan
-        or ti.lang.impl.current_cfg().arch == ti.metal
-        or ti.lang.impl.current_cfg().arch == ti.dx11
+        ti.lang.impl.current_cfg().arch == ti.vulkan or ti.lang.impl.current_cfg().arch == ti.metal
     ) and dtype == ti.f32:
         # Vulkan is not capable of such large number in its float32...
         N = 1024 * 16

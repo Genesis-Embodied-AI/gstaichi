@@ -1,4 +1,4 @@
-print("* Taichi Installer")
+print("* GsTaichi Installer")
 
 import os
 import platform
@@ -18,12 +18,12 @@ assert struct.calcsize("P") * 8 == 64, "Only 64-bit platforms are supported. Cur
 )
 
 if sys.version_info[0] < 3 or sys.version_info[1] < 6:
-    print("\nPlease restart with python3. \n(Taichi supports Python 3.6+)\n")
+    print("\nPlease restart with python3. \n(GsTaichi supports Python 3.6+)\n")
     print("Current version:", sys.version_info)
     exit(-1)
 
 print(
-    "Note: this is the setup script for the taichi compiler DEVELOPERS. Language users please use pip to install the python wheels."
+    "Note: this is the setup script for the gstaichi compiler DEVELOPERS. Language users please use pip to install the python wheels."
 )
 
 
@@ -122,7 +122,7 @@ def get_path_separator():
 
 
 def test_installation():
-    return subprocess.run([get_python_executable(), "-c", "import taichi as tc"]).returncode == 0
+    return subprocess.run([get_python_executable(), "-c", "import gstaichi as tc"]).returncode == 0
 
 
 # (Stateful) Installer class
@@ -233,19 +233,19 @@ class Installer:
 
         self.setup_repo()
 
-        # TODO: Make sure there is no existing Taichi ENV
+        # TODO: Make sure there is no existing GsTaichi ENV
         if self.build_type != "ci":
             self.repo_dir = os.getcwd()
-            set_env("TAICHI_REPO_DIR", self.repo_dir)
+            set_env("GSTAICHI_REPO_DIR", self.repo_dir)
 
             set_env(
                 "PYTHONPATH",
-                "\$TAICHI_REPO_DIR/python/" + get_path_separator() + "\$PYTHONPATH",
+                "\$GSTAICHI_REPO_DIR/python/" + get_path_separator() + "\$PYTHONPATH",
                 "{}/python/".format(self.repo_dir) + get_path_separator() + os.environ.get("PYTHONPATH", ""),
             )
             set_env(
                 "PATH",
-                "\$TAICHI_REPO_DIR/bin/" + get_path_separator() + "\$PATH",
+                "\$GSTAICHI_REPO_DIR/bin/" + get_path_separator() + "\$PATH",
                 os.path.join(self.repo_dir, "bin") + get_path_separator() + os.environ.get("PATH", ""),
             )
 
@@ -256,12 +256,12 @@ class Installer:
         else:
             # compile ..
             arg = environ.get("CI_SETUP_CMAKE_ARGS", "")
-            os.environ["TAICHI_CMAKE_ARGS"] = arg
+            os.environ["GSTAICHI_CMAKE_ARGS"] = arg
             os.makedirs("build", exist_ok=True)
             execute_command(f"{sys.executable} setup.py install --user")
         return
         if test_installation():
-            print("  Successfully Installed Taichi at {}.".format(self.repo_dir))
+            print("  Successfully Installed GsTaichi at {}.".format(self.repo_dir))
             if execute_command("ti") != 0:
                 print('  Warning: shortcut "ti" does not work.')
             print("  Please execute")

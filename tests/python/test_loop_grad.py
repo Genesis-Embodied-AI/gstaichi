@@ -1,8 +1,9 @@
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
 
-@test_utils.test(exclude=[ti.vulkan, ti.dx11])
+@test_utils.test(exclude=[ti.vulkan])
 def test_loop_grad():
     x = ti.field(ti.f32)
 
@@ -33,7 +34,7 @@ def test_loop_grad():
         assert x.grad[k, 0] == 2 ** (m - 1 - 0)
 
 
-@test_utils.test(exclude=[ti.vulkan, ti.dx11])
+@test_utils.test(exclude=[ti.vulkan])
 def test_loop_grad_complex():
     return  # This case is not supported yet
     x = ti.field(ti.f32)

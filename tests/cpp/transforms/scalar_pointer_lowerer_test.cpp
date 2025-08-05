@@ -1,16 +1,16 @@
 #include <memory>
 
 #include "gtest/gtest.h"
-#include "taichi/analysis/arithmetic_interpretor.h"
-#include "taichi/ir/ir.h"
-#include "taichi/ir/ir_builder.h"
-#include "taichi/ir/snode.h"
-#include "taichi/ir/statements.h"
-#include "taichi/ir/transforms.h"
-#include "taichi/transforms/scalar_pointer_lowerer.h"
+#include "gstaichi/analysis/arithmetic_interpretor.h"
+#include "gstaichi/ir/ir.h"
+#include "gstaichi/ir/ir_builder.h"
+#include "gstaichi/ir/snode.h"
+#include "gstaichi/ir/statements.h"
+#include "gstaichi/ir/transforms.h"
+#include "gstaichi/transforms/scalar_pointer_lowerer.h"
 #include "tests/cpp/struct/fake_struct_compiler.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 namespace {
 
 constexpr int kPointerSize = 4;
@@ -131,4 +131,4 @@ TEST(ScalarPointerLowerer, EliminateModDiv) {
   }
 }
 }  // namespace
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

@@ -1,12 +1,12 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/analysis.h"
-#include "taichi/ir/statements.h"
-#include "taichi/ir/ir_builder.h"
-#include "taichi/ir/transforms.h"
-#include "taichi/program/program.h"
+#include "gstaichi/ir/analysis.h"
+#include "gstaichi/ir/statements.h"
+#include "gstaichi/ir/ir_builder.h"
+#include "gstaichi/ir/transforms.h"
+#include "gstaichi/program/program.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 
 class DetermineAdStackSizeTest
     : public ::testing::TestWithParam<std::tuple<int, int>> {
@@ -183,4 +183,4 @@ TEST_F(DetermineAdStackSizeTest, EmptyNodes) {
   EXPECT_EQ(stack->max_size, 2);
 }
 
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

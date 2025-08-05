@@ -1,12 +1,12 @@
 import ast
 from collections import namedtuple
 
-from taichi.lang.ast.symbol_resolver import ASTResolver
+from gstaichi.lang.ast.symbol_resolver import ASTResolver
 
 
 def test_ast_resolver_basic():
     # import within the function to avoid polluting the global scope
-    import taichi as ti
+    import gstaichi as ti
 
     ti.init()
     node = ast.parse("ti.kernel", mode="eval").body
@@ -14,30 +14,30 @@ def test_ast_resolver_basic():
 
 
 def test_ast_resolver_direct_import():
-    import taichi as ti
+    import gstaichi as ti
 
     ti.init()
-    from taichi import kernel
+    from gstaichi import kernel
 
     node = ast.parse("kernel", mode="eval").body
     assert ASTResolver.resolve_to(node, kernel, locals())
 
 
 def test_ast_resolver_alias():
-    import taichi
+    import gstaichi
 
-    taichi.init()
-    node = ast.parse("taichi.kernel", mode="eval").body
-    assert ASTResolver.resolve_to(node, taichi.kernel, locals())
+    gstaichi.init()
+    node = ast.parse("gstaichi.kernel", mode="eval").body
+    assert ASTResolver.resolve_to(node, gstaichi.kernel, locals())
 
-    import taichi as tc
+    import gstaichi as tc
 
     node = ast.parse("tc.kernel", mode="eval").body
     assert ASTResolver.resolve_to(node, tc.kernel, locals())
 
 
 def test_ast_resolver_chain():
-    import taichi as ti
+    import gstaichi as ti
 
     ti.init()
     node = ast.parse("ti.lang.ops.atomic_add", mode="eval").body
@@ -45,10 +45,10 @@ def test_ast_resolver_chain():
 
 
 def test_ast_resolver_wrong_ti():
-    import taichi
+    import gstaichi
 
-    taichi.init()
+    gstaichi.init()
     fake_ti = namedtuple("FakeTi", ["kernel"])
     ti = fake_ti(kernel="fake")
     node = ast.parse("ti.kernel", mode="eval").body
-    assert not ASTResolver.resolve_to(node, taichi.kernel, locals())
+    assert not ASTResolver.resolve_to(node, gstaichi.kernel, locals())

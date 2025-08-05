@@ -3,8 +3,9 @@ import math
 import numpy as np
 import pytest
 
-import taichi as ti
-from taichi.lang.util import has_paddle, has_pytorch
+import gstaichi as ti
+from gstaichi.lang.util import has_paddle, has_pytorch
+
 from tests import test_utils
 
 archs_support_f16 = [ti.cpu, ti.cuda, ti.vulkan]
@@ -110,7 +111,7 @@ def test_from_torch():
 
 @pytest.mark.sm70
 @pytest.mark.skipif(not has_paddle(), reason="Paddle not installed.")
-@test_utils.test(arch=archs_support_f16, exclude=[ti.vulkan, ti.dx11])
+@test_utils.test(arch=archs_support_f16, exclude=[ti.vulkan])
 def test_to_paddle():
     import paddle
 
@@ -133,7 +134,7 @@ def test_to_paddle():
 
 @pytest.mark.sm70
 @pytest.mark.skipif(not has_paddle(), reason="Paddle not installed.")
-@test_utils.test(arch=archs_support_f16, exclude=[ti.vulkan, ti.dx11])
+@test_utils.test(arch=archs_support_f16, exclude=[ti.vulkan])
 def test_from_paddle():
     import paddle
 

@@ -1,6 +1,7 @@
 import pytest
 
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
 
@@ -99,7 +100,7 @@ def test_argpack_nested():
 def test_argpack_as_return():
     pack_type = ti.types.argpack(a=ti.i32, b=bool)
 
-    with pytest.raises(ti.TaichiSyntaxError):
+    with pytest.raises(ti.GsTaichiSyntaxError):
 
         @ti.kernel
         def foo(pack: pack_type) -> pack_type:

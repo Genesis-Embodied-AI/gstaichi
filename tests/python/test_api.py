@@ -2,7 +2,8 @@ import sys
 
 import pytest
 
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
 
@@ -78,13 +79,13 @@ user_api[ti] = [
     "Struct",
     "StructField",
     "TRACE",
-    "TaichiAssertionError",
-    "TaichiCompilationError",
-    "TaichiNameError",
-    "TaichiRuntimeError",
-    "TaichiRuntimeTypeError",
-    "TaichiSyntaxError",
-    "TaichiTypeError",
+    "GsTaichiAssertionError",
+    "GsTaichiCompilationError",
+    "GsTaichiNameError",
+    "GsTaichiRuntimeError",
+    "GsTaichiRuntimeTypeError",
+    "GsTaichiSyntaxError",
+    "GsTaichiTypeError",
     "Template",
     "Texture",
     "Vector",
@@ -96,7 +97,6 @@ user_api[ti] = [
     "ad",
     "algorithms",
     "amdgpu",
-    "aot",
     "append",
     "argpack",
     "arm64",
@@ -125,8 +125,6 @@ user_api[ti] = [
     "dataclass",
     "deactivate",
     "deactivate_all_snodes",
-    "dx11",
-    "dx12",
     "eig",
     "exp",
     "experimental",
@@ -144,7 +142,6 @@ user_api[ti] = [
     "get_addr",
     "global_thread_idx",
     "gpu",
-    "graph",
     "grouped",
     "i",
     "i16",

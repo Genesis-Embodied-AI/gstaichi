@@ -3,7 +3,8 @@ import functools
 import numpy as np
 import pytest
 
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
 has_autograd = False
@@ -469,7 +470,7 @@ def test_ad_rand():
     assert "RandStmt not supported" in e.value.args[0]
 
 
-@test_utils.test(exclude=[ti.vulkan, ti.dx11])
+@test_utils.test(exclude=[ti.vulkan])
 def test_ad_frac():
     @ti.func
     def frac(x):

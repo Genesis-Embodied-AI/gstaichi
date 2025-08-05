@@ -14,10 +14,8 @@ import psutil
 # -- own --
 from . import misc
 from .alter import handle_alternate_actions
-from .android import build_android, setup_android_ndk
 from .cmake import cmake_args
 from .compiler import setup_clang, setup_msvc
-from .ios import build_ios, setup_ios
 from .llvm import setup_llvm
 from .misc import banner, is_manylinux2014
 from .ospkg import setup_os_pkgs
@@ -29,10 +27,10 @@ from .tinysh import Command, CommandFailed, git, nice
 
 
 # -- code --
-@banner("Build Taichi Wheel")
+@banner("Build GsTaichi Wheel")
 def build_wheel(python: Command, pip: Command) -> None:
     """
-    Build the Taichi wheel
+    Build the GsTaichi wheel
     """
 
     git.fetch("origin", "main", "--tags", "--force")
@@ -48,7 +46,7 @@ def build_wheel(python: Command, pip: Command) -> None:
         wheel_tag = ""
 
     if misc.options.nightly:
-        os.environ["PROJECT_NAME"] = "taichi-nightly"
+        os.environ["PROJECT_NAME"] = "gstaichi-nightly"
         now = datetime.datetime.now().strftime("%Y%m%d")
         proj_tags.extend(["egg_info", f"--tag-build=.post{now}{wheel_tag}"])
     elif wheel_tag:
@@ -129,24 +127,6 @@ def action_wheel():
         pass
 
 
-def action_android():
-    sccache, python, pip = setup_basic_build_env()
-    setup_android_ndk()
-    handle_alternate_actions()
-    build_android(python, pip)
-    try:
-        sccache("-s")
-    except CommandFailed:
-        pass
-
-
-def action_ios():
-    sccache, python, pip = setup_basic_build_env()
-    setup_ios(python, pip)
-    handle_alternate_actions()
-    build_ios()
-
-
 def action_open_cache_dir():
     d = misc.get_cache_home()
     misc.info(f"Opening cache directory: {d}")
@@ -164,10 +144,8 @@ def parse_args():
 
     # Possible actions:
     #   wheel: build the wheel
-    #   android: build the Android C-API shared library
-    #   ios: build the iOS C-API shared library
     #   cache: open the cache directory
-    help = 'Action, may be build target "wheel" / "android" / "ios", or "cache" for opening the cache directory.'
+    help = 'Action, may be build target "wheel", or "cache" for opening the cache directory.'
     parser.add_argument("action", type=str, nargs="?", default="wheel", help=help)
 
     help = "Do not build, write environment variables to file instead"
@@ -207,8 +185,6 @@ def main() -> int:
 
     dispatch = {
         "wheel": action_wheel,
-        "android": action_android,
-        "ios": action_ios,
         "cache": action_open_cache_dir,
     }
 

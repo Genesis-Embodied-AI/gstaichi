@@ -1,7 +1,8 @@
 import pytest
 
-import taichi as ti
-from taichi.lang import impl
+import gstaichi as ti
+from gstaichi.lang import impl
+
 from tests import test_utils
 
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ "$CONDA_DEFAULT_ENV" != "taichi-dev" ]; then
-    echo "Please run inside taichi-dev conda env"
+if [ "$CONDA_DEFAULT_ENV" != "gstaichi-dev" ]; then
+    echo "Please run inside gstaichi-dev conda env"
     exit 1
 fi
 
@@ -9,7 +9,7 @@ fi
 export MY_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 export SCRIPTS_DIR=$MY_DIR/scripts
 
-# installs the activation/deactivation scripts for taichi-dev
+# installs the activation/deactivation scripts for gstaichi-dev
 
 # See https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#macos-and-linux
 

@@ -1,6 +1,6 @@
 import time
 
-import taichi as ti
+import gstaichi as ti
 
 ti.init(arch=ti.cuda)
 

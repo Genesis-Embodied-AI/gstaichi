@@ -21,14 +21,7 @@ from .tinysh import Command
 # -- code --
 @banner("Add AOT Related Environment Variables")
 def add_aot_env():
-    os.environ["TAICHI_REPO_DIR"] = os.getcwd()
-    pyver = get_desired_python_version()
-    for p in Path(os.getcwd()).glob("**/cmake-install/python/taichi/_lib/c_api"):
-        if p.is_dir() and any(v.name.endswith(f"-{pyver}") for v in p.parents):
-            os.environ["TAICHI_C_API_INSTALL_DIR"] = str(p)
-            break
-    else:
-        misc.warn("Failed to find TAICHI_C_API_INSTALL_DIR (did't build C-API?), skipping")
+    os.environ["GSTAICHI_REPO_DIR"] = os.getcwd()
 
 
 def _write_ti_bashrc():
@@ -39,7 +32,7 @@ def _write_ti_bashrc():
         f.write(
             "[ -f /etc/bashrc ] && source /etc/bashrc\n"
             "[ -f ~/.bashrc ] && source ~/.bashrc\n"
-            r'export PS1="\[\e]0;[Taichi Build Environment]\a\]\[\033[01;31m\][Taichi Build] \[\033[00m\]$PS1"'
+            r'export PS1="\[\e]0;[GsTaichi Build Environment]\a\]\[\033[01;31m\][GsTaichi Build] \[\033[00m\]$PS1"'
             "\n"
             f"source {envs}\n"
         )
@@ -57,7 +50,7 @@ def _write_ti_zshrc():
         f.write(
             "[ -f /etc/zsh/zshrc ] && source /etc/zsh/zshrc\n"
             "[ -f $HOME/.zshrc ] && source $HOME/.zshrc\n"
-            r"export PROMPT='%{$fg_bold[red]%}[Taichi Build] %{$reset_color%}'$PROMPT"
+            r"export PROMPT='%{$fg_bold[red]%}[GsTaichi Build] %{$reset_color%}'$PROMPT"
             "\n"
             f"source {envs}\n"
         )
@@ -120,7 +113,7 @@ def enter_shell():
             pwsh("-ExecutionPolicy", "Bypass", "-NoExit", "-File", str(path))
         elif shell.name == "cmd.exe":
             cmd = Command(shell.exe)
-            cmd("/k", "set", "PROMPT=TaichiBuild $P$G")
+            cmd("/k", "set", "PROMPT=GsTaichiBuild $P$G")
         else:
             # Unknown shell, not doing anything fancy
             os.execl(shell.exe, shell.exe)
@@ -168,17 +161,8 @@ def _write_env(path):
         f.write(envstr)
 
 
-def write_env(path):
-    cmake_args.writeback()
-    _write_env(path)
-    misc.info(f"Environment variables written to {path}")
-
-
 def handle_alternate_actions():
-    if misc.options.write_env:
-        add_aot_env()
-        write_env(misc.options.write_env)
-    elif misc.options.shell:
+    if misc.options.shell:
         add_aot_env()
         enter_shell()
     else:

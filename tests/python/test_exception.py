@@ -3,14 +3,15 @@ from sys import version_info
 
 import pytest
 
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
 
 @test_utils.test(print_full_traceback=False)
 def test_exception_multiline():
     frameinfo = getframeinfo(currentframe())
-    with pytest.raises(ti.TaichiNameError) as e:
+    with pytest.raises(ti.GsTaichiNameError) as e:
         # yapf: disable
         @ti.kernel
         def foo():
@@ -37,7 +38,7 @@ File "{frameinfo.filename}", line {frameinfo.lineno + 5}, in foo:
 @test_utils.test(print_full_traceback=False)
 def test_exception_from_func():
     frameinfo = getframeinfo(currentframe())
-    with pytest.raises(ti.TaichiNameError) as e:
+    with pytest.raises(ti.GsTaichiNameError) as e:
 
         @ti.func
         def baz():
@@ -80,7 +81,7 @@ File "{file}", line {lineno + 5}, in baz:
 @test_utils.test(print_full_traceback=False)
 def test_tab():
     frameinfo = getframeinfo(currentframe())
-    with pytest.raises(ti.TaichiNameError) as e:
+    with pytest.raises(ti.GsTaichiNameError) as e:
         # yapf: disable
         @ti.kernel
         def foo():
@@ -105,7 +106,7 @@ File "{file}", line {lineno + 5}, in foo:
 @test_utils.test(print_full_traceback=False)
 def test_super_long_line():
     frameinfo = getframeinfo(currentframe())
-    with pytest.raises(ti.TaichiNameError) as e:
+    with pytest.raises(ti.GsTaichiNameError) as e:
         # yapf: disable
         @ti.kernel
         def foo():
@@ -143,7 +144,7 @@ def test_exception_in_node_with_body():
             c = 1
             d = 1
 
-    with pytest.raises(ti.TaichiCompilationError) as e:
+    with pytest.raises(ti.GsTaichiCompilationError) as e:
         foo()
     lineno = frameinfo.lineno
     file = frameinfo.filename
