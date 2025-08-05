@@ -95,3 +95,4 @@ imgui.ini
 *.so
 stubs/
 CHANGELOG.md
+python/taichi/_version.py
