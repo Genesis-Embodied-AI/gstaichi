@@ -88,9 +88,7 @@ def decl_matrix_arg(matrixtype, name):
     arg_type = get_type_for_kernel_args(matrixtype, name)
     arg_id = impl.get_runtime().compiling_callable.insert_scalar_param(arg_type, name)
     argload_di = _ti_core.DebugInfo(impl.get_runtime().get_current_src_info())
-    arg_load = Expr(
-        _ti_core.make_arg_load_expr(arg_id, arg_type, create_load=False, dbg_info=argload_di)
-    )
+    arg_load = Expr(_ti_core.make_arg_load_expr(arg_id, arg_type, create_load=False, dbg_info=argload_di))
     return matrixtype.from_gstaichi_object(arg_load)
 
 
@@ -98,9 +96,7 @@ def decl_struct_arg(structtype, name):
     arg_type = get_type_for_kernel_args(structtype, name)
     arg_id = impl.get_runtime().compiling_callable.insert_scalar_param(arg_type, name)
     argload_di = _ti_core.DebugInfo(impl.get_runtime().get_current_src_info())
-    arg_load = Expr(
-        _ti_core.make_arg_load_expr(arg_id, arg_type, create_load=False, dbg_info=argload_di)
-    )
+    arg_load = Expr(_ti_core.make_arg_load_expr(arg_id, arg_type, create_load=False, dbg_info=argload_di))
     return structtype.from_gstaichi_object(arg_load)
 
 
