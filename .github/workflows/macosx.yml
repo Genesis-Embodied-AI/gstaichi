@@ -81,7 +81,7 @@ jobs:
           ls -l *.whl
           mkdir -p dist
           mv *.whl dist/
-          aws s3 sync dist/ s3://genesis-ai-compiler/ci/taichi/${GITHUB_SHA:0:7}/mac-${{ matrix.MAC_OS_VERSION }}-${{ matrix.PYTHON_CP_VERSION }}/
+          aws s3 sync dist/ s3://genesis-ai-compiler/ci/gstaichi/${GITHUB_SHA:0:7}/mac-${{ matrix.MAC_OS_VERSION }}-${{ matrix.PYTHON_CP_VERSION }}/
   publish_pypi:
     uses: ./.github/workflows/publish_pypi.yml
     if: github.event_name == 'release' && github.event.action == 'created'

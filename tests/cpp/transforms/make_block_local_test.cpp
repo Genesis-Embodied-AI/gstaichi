@@ -1,15 +1,15 @@
 #include <memory>
 
 #include "gtest/gtest.h"
-#include "taichi/analysis/arithmetic_interpretor.h"
-#include "taichi/ir/ir_builder.h"
-#include "taichi/ir/snode.h"
-#include "taichi/ir/statements.h"
-#include "taichi/ir/transforms.h"
-#include "taichi/struct/struct.h"
+#include "gstaichi/analysis/arithmetic_interpretor.h"
+#include "gstaichi/ir/ir_builder.h"
+#include "gstaichi/ir/snode.h"
+#include "gstaichi/ir/statements.h"
+#include "gstaichi/ir/transforms.h"
+#include "gstaichi/struct/struct.h"
 #include "tests/cpp/struct/fake_struct_compiler.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 namespace {
 
 class MakeBlockLocalTest : public ::testing::Test {
@@ -191,4 +191,4 @@ TEST_F(MakeBlockLocalTest, Basic) {
 }
 
 }  // namespace
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

@@ -1,6 +1,6 @@
 import taichi as ti
-from taichi.lang.kernel_arguments import ArgMetadata
-from taichi.lang.kernel_impl import TemplateMapper
+from gstaichi.lang.kernel_arguments import ArgMetadata
+from gstaichi.lang.kernel_impl import TemplateMapper
 from tests import test_utils
 
 

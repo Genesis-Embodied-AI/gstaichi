@@ -1,11 +1,11 @@
 #include "gtest/gtest.h"
 
-#include "taichi/common/core.h"
+#include "gstaichi/common/core.h"
 
-namespace taichi {
+namespace gstaichi {
 
 TEST(CoreTest, Basic) {
-  EXPECT_EQ(trim_string("hello taichi  "), "hello taichi");
+  EXPECT_EQ(trim_string("hello gstaichi  "), "hello gstaichi");
 }
 
-}  // namespace taichi
+}  // namespace gstaichi

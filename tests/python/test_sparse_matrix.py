@@ -1,6 +1,7 @@
 import pytest
 
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
 
@@ -492,10 +493,10 @@ def test_gpu_sparse_matrix_ops(N):
     A = A_builder.build()
     B = B_builder.build()
 
-    def verify(scipy_spm, taichi_spm):
+    def verify(scipy_spm, gstaichi_spm):
         scipy_spm = scipy_spm.tocoo()
         for i, j, v in zip(scipy_spm.row, scipy_spm.col, scipy_spm.data):
-            assert v == test_utils.approx(taichi_spm[i, j], rel=1e-5)
+            assert v == test_utils.approx(gstaichi_spm[i, j], rel=1e-5)
 
     C = A + B
     S3 = S1 + S2

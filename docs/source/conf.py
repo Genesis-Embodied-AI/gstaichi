@@ -1,6 +1,6 @@
 import os
 
-import taichi as ti
+import gstaichi as ti
 
 __version__ = ".".join([str(v) for v in ti.__version__])
 # Configuration file for the Sphinx documentation builder.
@@ -11,13 +11,13 @@ __version__ = ".".join([str(v) for v in ti.__version__])
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "Taichi"
-copyright = "2023 Taichi Graphics Inc; 2025 Genesis AI Inc"
+project = "GsTaichi"
+copyright = "2023 GsTaichi Graphics Inc; 2025 Genesis AI Inc"
 author = ""
 release = __version__
 version = __version__
 
-autoapi_dirs = ["../../python/taichi"]
+autoapi_dirs = ["../../python/gstaichi"]
 autoapi_options = ["members", "undoc-members", "show-inheritance", "show-module-summary"]
 autoapi_python_use_implicit_namespaces = True
 

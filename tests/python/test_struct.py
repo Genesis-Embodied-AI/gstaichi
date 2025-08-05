@@ -1,6 +1,7 @@
 import pytest
 
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
 
@@ -158,7 +159,7 @@ def test_nested_data_class_func():
 
 @test_utils.test()
 def test_nested_data_class_func():
-    with pytest.raises(ti.TaichiSyntaxError, match="Default value in @dataclass is not supported."):
+    with pytest.raises(ti.GsTaichiSyntaxError, match="Default value in @dataclass is not supported."):
 
         @ti.dataclass
         class Foo:

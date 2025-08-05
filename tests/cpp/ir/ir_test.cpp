@@ -1,9 +1,9 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/ir.h"
-#include "taichi/ir/statements.h"
+#include "gstaichi/ir/ir.h"
+#include "gstaichi/ir/statements.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 namespace {
 
 std::unique_ptr<ConstStmt> make_const_i32(int32_t value) {
@@ -42,4 +42,4 @@ TEST(Block, EraseRange) {
 }
 
 }  // namespace
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang
