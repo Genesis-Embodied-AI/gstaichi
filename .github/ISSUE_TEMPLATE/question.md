@@ -1,6 +1,6 @@
 ---
 name: Ask a Question
-about: Ask anything about Taichi
+about: Ask anything about GsTaichi
 title: ''
 labels: question
 assignees: ''

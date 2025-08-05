@@ -1,10 +1,10 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/statements.h"
-#include "taichi/ir/transforms.h"
+#include "gstaichi/ir/statements.h"
+#include "gstaichi/ir/transforms.h"
 #include "tests/cpp/program/test_program.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 
 class AlgebraicSimplicationTest : public ::testing::Test {
  protected:
@@ -164,4 +164,4 @@ TEST_F(AlgebraicSimplicationTest, SimplifyAndMinusOne) {
   EXPECT_TRUE((*block)[0]->is<GlobalTemporaryStmt>());
 }
 
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

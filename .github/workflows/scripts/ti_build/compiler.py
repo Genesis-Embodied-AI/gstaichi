@@ -126,13 +126,13 @@ def setup_msvc() -> None:
             if not vs.exists():
                 continue
 
-            if os.environ.get("TI_CI") and not os.environ.get("TAICHI_USE_MSBUILD"):
+            if os.environ.get("TI_CI") and not os.environ.get("GSTAICHI_USE_MSBUILD"):
                 # Use Ninja + MSVC in CI, for better caching
                 _vs_devshell(vs)
                 cmake_args["CMAKE_C_COMPILER"] = "cl.exe"
                 cmake_args["CMAKE_CXX_COMPILER"] = "cl.exe"
             else:
-                os.environ["TAICHI_USE_MSBUILD"] = "1"
+                os.environ["GSTAICHI_USE_MSBUILD"] = "1"
 
             return
     else:

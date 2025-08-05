@@ -1,7 +1,8 @@
 import pytest
 
-import taichi as ti
-from taichi.lang.misc import get_host_arch_list
+import gstaichi as ti
+from gstaichi.lang.misc import get_host_arch_list
+
 from tests import test_utils
 
 
@@ -130,7 +131,7 @@ def test_static_assert_message():
     def func():
         ti.static_assert(x == 4, "Oh, no!")
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -163,5 +164,5 @@ def test_static_assert_nonstatic_condition():
         value = False
         ti.static_assert(value, "Oh, no!")
 
-    with pytest.raises(ti.TaichiTypeError, match="Static assert with non-static condition"):
+    with pytest.raises(ti.GsTaichiTypeError, match="Static assert with non-static condition"):
         foo()

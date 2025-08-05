@@ -29,19 +29,19 @@ jobs:
       - name: Download artifact
         run: |
           set -x
-          aws s3 sync s3://genesis-ai-compiler/ci/taichi/${GITHUB_SHA:0:7}/cp310/ dist/
+          aws s3 sync s3://genesis-ai-compiler/ci/gstaichi/${GITHUB_SHA:0:7}/cp310/ dist/
       - name: Python check
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      - name: install stubs, from wheel, and dev install taichi
+      - name: install stubs, from wheel, and dev install gstaichi
         run: |
           set -x
           ls -lh dist/
           unzip dist/*.whl -d dist
-          mkdir -p stubs/taichi/_lib/core
-          cp dist/taichi/_lib/core/taichi_python.pyi stubs/taichi/_lib/core/
-          touch stubs/taichi/_lib/core/py.typed
+          mkdir -p stubs/gstaichi/_lib/core
+          cp dist/gstaichi/_lib/core/gstaichi_python.pyi stubs/gstaichi/_lib/core/
+          touch stubs/gstaichi/_lib/core/py.typed
           pip install setuptools_scm
           pip install -e .
       - name: install torch and pyright
