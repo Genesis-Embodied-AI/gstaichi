@@ -87,7 +87,7 @@ def main() -> None:
 def test():
     event = {
         "action": "opened",
-        "repository": {"full_name": "taichi-dev/taichi"},
+        "repository": {"full_name": "gstaichi-dev/gstaichi"},
         "pull_request": {
             "id": 841657847,
             "number": 4224,

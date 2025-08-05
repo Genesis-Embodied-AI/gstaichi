@@ -1,4 +1,5 @@
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
 
@@ -14,7 +15,7 @@ def test_argument_error():
         def set_i32_notype(v):
             pass
 
-    except ti.TaichiSyntaxError:
+    except ti.GsTaichiSyntaxError:
         pass
 
     try:
@@ -23,7 +24,7 @@ def test_argument_error():
         def set_i32_args(*args):
             pass
 
-    except ti.TaichiSyntaxError:
+    except ti.GsTaichiSyntaxError:
         pass
 
     try:
@@ -32,7 +33,7 @@ def test_argument_error():
         def set_i32_kwargs(**kwargs):
             pass
 
-    except ti.TaichiSyntaxError:
+    except ti.GsTaichiSyntaxError:
         pass
 
     @ti.kernel
