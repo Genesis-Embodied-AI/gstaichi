@@ -63,9 +63,6 @@ class LlvmProgramImpl : public ProgramImpl {
   std::unique_ptr<StructCompiler> compile_snode_tree_types_impl(
       SNodeTree *tree);
 
-  std::unique_ptr<AotModuleBuilder> make_aot_module_builder(
-      const DeviceCapabilityConfig &caps) override;
-
   /* -------------------------------- */
   /* ---- JIT-Runtime Interfaces ---- */
   /* -------------------------------- */
@@ -249,8 +246,6 @@ class LlvmProgramImpl : public ProgramImpl {
   // 1. LlvmOfflineCache::CachedKernelData(direct owner)
   // 2. LlvmOfflineCache
   //   3.1 LlvmProgramImpl
-  //   3.2 LlvmAotModuleBuilder
-  //   3.3 llvm_aot::KernelImpl (for use in CGraph)
   //
   // Objects owning llvm::Context (from direct to indirect)
   // 1. TaichiLLVMContext

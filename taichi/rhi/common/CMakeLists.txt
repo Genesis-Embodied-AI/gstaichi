@@ -14,7 +14,7 @@ target_include_directories(${COMMON_RHI}
     ${PROJECT_SOURCE_DIR}
   )
 
-if (TI_WITH_VULKAN AND NOT ANDROID)
+if (TI_WITH_VULKAN)
   target_compile_definitions(${COMMON_RHI} PUBLIC TI_WITH_GLFW)
 
   target_include_directories(${COMMON_RHI}

@@ -228,7 +228,7 @@ def to_taichi_type(dt):
         DataType: The counterpart data type in taichi.
 
     """
-    if type(dt) == _ti_core.DataType:
+    if type(dt) == _ti_core.DataTypeCxx:
         return dt
 
     if dt == np.float32:
@@ -317,10 +317,10 @@ def to_taichi_type(dt):
 
 
 def cook_dtype(dtype):
-    if isinstance(dtype, _ti_core.DataType):
+    if isinstance(dtype, _ti_core.DataTypeCxx):
         return dtype
     if isinstance(dtype, _ti_core.Type):
-        return _ti_core.DataType(dtype)
+        return _ti_core.DataTypeCxx(dtype)
     if dtype is float:
         return impl.get_runtime().default_fp
     if dtype is int:

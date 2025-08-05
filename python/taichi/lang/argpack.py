@@ -296,7 +296,7 @@ class ArgPackType(CompoundType):
                 self.members[k] = dtype
                 elements.append(
                     [
-                        _ti_core.DataType(
+                        _ti_core.DataTypeCxx(
                             _ti_core.get_type_factory_instance().get_struct_type_for_argpack_ptr(dtype.dtype)
                         ),
                         k,

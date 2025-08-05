@@ -39,13 +39,6 @@ std::unique_ptr<JITSession> JITSession::create(TaichiLLVMContext *tlctx,
 #else
     TI_NOT_IMPLEMENTED
 #endif
-  } else if (arch == Arch::dx12) {
-#ifdef TI_WITH_DX12
-    // NOTE: there's no jit for dx12. Create cpu session to avoid crash.
-    return create_llvm_jit_session_cpu(tlctx, config, Arch::x64);
-#else
-    TI_NOT_IMPLEMENTED
-#endif
   } else if (arch == Arch::amdgpu) {
 #ifdef TI_WITH_AMDGPU
     return create_llvm_jit_session_amdgpu(tlctx, config, arch);
