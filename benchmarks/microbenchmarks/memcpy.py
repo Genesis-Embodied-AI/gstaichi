@@ -1,9 +1,8 @@
+import gstaichi as ti
 from microbenchmarks._items import Container, DataSize, DataType
 from microbenchmarks._metric import MetricType
 from microbenchmarks._plan import BenchmarkPlan
 from microbenchmarks._utils import dtype_size, fill_random, scaled_repeat_times
-
-import taichi as ti
 
 
 def memcpy_default(arch, repeat, container, dtype, dsize, get_metric):

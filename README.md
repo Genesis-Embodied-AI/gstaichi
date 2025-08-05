@@ -1,7 +1,7 @@
 # GsTaichi
 
-[Taichi](https://github.com/taichi-dev/taichi) was forked in June 2025. This repository (or gstaichi) is now a fully independent project with no intention of maintaining backward compatibility with the original taichi. Whilst the repo largely resembles upstream for now, we have made the following changes:
-- revamped continuous integration, to run on recent OS versions, and to run reliably (at least 95% of runs with correct code succeed)
+[GsTaichi](https://github.com/Genesis-Embodied-AI/gstaichi) was forked in June 2025. This repository (or gstaichi) is now a fully independent project with no intention of maintaining backward compatibility with the original taichi. Whilst the repo largely resembles upstream for now, we have made the following changes:
+- revamped continuous integration, to run using recent python versions (up to 3.13), recent mac os x versions (up to 15), and to run reliably (at least 95% of runs with correct code succeed)
 - added dataclasses.dataclass structs:
     - work with both ndarrays and fields (cf ti.struct (field only), ti.dataclass (field only), ti.data_oriented (field only), argpack (ndarray only))
     - can be passed into child `ti.func`tions (cf argpack)

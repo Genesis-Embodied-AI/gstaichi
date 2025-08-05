@@ -1,6 +1,6 @@
 #include "tests/cpp/program/test_program.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 
 void TestProgram::setup(Arch arch) {
   prog_ = std::make_unique<Program>(arch);
@@ -9,4 +9,4 @@ void TestProgram::setup(Arch arch) {
                         /*compile_only=*/false);
 }
 
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

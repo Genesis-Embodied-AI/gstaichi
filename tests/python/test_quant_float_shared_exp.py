@@ -1,7 +1,8 @@
 import pytest
 from pytest import approx
 
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
 
