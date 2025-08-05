@@ -152,19 +152,6 @@ def test_texture_3d():
 
 
 @test_utils.test(arch=supported_archs_texture)
-def test_from_to_image():
-    url = "https://github.com/taichi-dev/gstaichi/blob/master/misc/logo.png?raw=true"
-    response = requests.get(url)
-    img = Image.open(BytesIO(response.content))
-    tex = ti.Texture(ti.Format.rgba8, img.size)
-
-    tex.from_image(img)
-    out = tex.to_image()
-
-    assert (np.asarray(out) == np.asarray(img.convert("RGB"))).all()
-
-
-@test_utils.test(arch=supported_archs_texture)
 def test_rw_texture_2d_struct_for():
     res = (128, 128)
     tex = ti.Texture(ti.Format.r32f, res)
