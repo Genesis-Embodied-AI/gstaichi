@@ -402,7 +402,7 @@ class Func:
 
         struct_locals = _kernel_impl_dataclass.populate_struct_locals(ctx)
 
-        tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
+        tree = _kernel_impl_dataclass.FlattenAttributeNameTransformer.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
         ret = transform_tree(tree, ctx)
         if not self.is_real_function:
             if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
