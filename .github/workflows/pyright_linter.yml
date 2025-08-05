@@ -42,6 +42,7 @@ jobs:
           mkdir -p stubs/taichi/_lib/core
           cp dist/taichi/_lib/core/taichi_python.pyi stubs/taichi/_lib/core/
           touch stubs/taichi/_lib/core/py.typed
+          pip install setuptools_scm
           pip install -e .
       - name: install torch and pyright
         run: |
