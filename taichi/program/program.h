@@ -9,7 +9,6 @@
 #include <shared_mutex>
 
 #define TI_RUNTIME_HOST
-#include "taichi/aot/module_builder.h"
 #include "taichi/ir/frontend_ir.h"
 #include "taichi/ir/ir.h"
 #include "taichi/ir/type_factory.h"
@@ -220,10 +219,6 @@ class TI_DLL_EXPORT Program {
    * @return Root of the tree
    */
   SNode *get_snode_root(int tree_id);
-
-  std::unique_ptr<AotModuleBuilder> make_aot_module_builder(
-      Arch arch,
-      const std::vector<std::string> &caps);
 
   size_t get_field_in_tree_offset(int tree_id, const SNode *child) {
     return program_impl_->get_field_in_tree_offset(tree_id, child);

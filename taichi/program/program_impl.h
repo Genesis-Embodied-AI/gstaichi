@@ -1,6 +1,5 @@
 #pragma once
 
-#include "taichi/aot/module_builder.h"
 #include "taichi/ir/statements.h"
 #include "taichi/common/logging.h"
 #include "taichi/struct/snode_tree.h"
@@ -8,7 +7,6 @@
 #include "taichi/program/kernel_profiler.h"
 #include "taichi/program/kernel_launcher.h"
 #include "taichi/rhi/device.h"
-#include "taichi/aot/graph_data.h"
 #include "taichi/codegen/kernel_compiler.h"
 #include "taichi/compilation_manager/kernel_compilation_manager.h"
 
@@ -67,12 +65,6 @@ class ProgramImpl {
     synchronize();
     return nullptr;
   }
-
-  /**
-   * Make a AotModulerBuilder.
-   */
-  virtual std::unique_ptr<AotModuleBuilder> make_aot_module_builder(
-      const DeviceCapabilityConfig &caps) = 0;
 
   /**
    * Dump Offline-cache data to disk
