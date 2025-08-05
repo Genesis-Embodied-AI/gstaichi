@@ -1,4 +1,4 @@
-import taichi as ti
+import gstaichi as ti
 
 ti.init(print_ir=True)
 

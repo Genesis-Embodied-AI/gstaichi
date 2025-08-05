@@ -5,7 +5,7 @@ import sys
 import requests
 
 
-def upload_taichi_version():
+def upload_gstaichi_version():
     username = os.getenv("METADATA_USERNAME")
     password = os.getenv("METADATA_PASSWORD")
     url = os.getenv("METADATA_URL")
@@ -34,15 +34,15 @@ def upload_taichi_version():
             print(response["message"])
 
 
-def upload_artifact(is_taichi):
-    pwd_env = "PROD_PWD" if is_taichi else "NIGHT_PWD"
+def upload_artifact(is_gstaichi):
+    pwd_env = "PROD_PWD" if is_gstaichi else "NIGHT_PWD"
     twine_password = os.getenv(pwd_env)
     if not twine_password:
         sys.exit(f"Missing password env var {pwd_env}")
     command = [sys.executable, "-m", "twine", "upload"]
-    if not is_taichi:
-        command.extend(["--repository-url", "https://pypi.taichi.graphics/simple/"])
-    uname = "__token__" if is_taichi else os.getenv("NIGHT_USERNAME")
+    if not is_gstaichi:
+        command.extend(["--repository-url", "https://pypi.gstaichi.graphics/simple/"])
+    uname = "__token__" if is_gstaichi else os.getenv("NIGHT_USERNAME")
     command.extend(["--verbose", "-u", uname, "-p", twine_password, "dist/*"])
 
     try:
@@ -52,10 +52,10 @@ def upload_artifact(is_taichi):
 
 
 if __name__ == "__main__":
-    if os.getenv("GITHUB_REPOSITORY", "taichi-dev/taichi") != "taichi-dev/taichi":
-        print("This script should be run from taichi repo")
+    if os.getenv("GITHUB_REPOSITORY", "gstaichi-dev/gstaichi") != "gstaichi-dev/gstaichi":
+        print("This script should be run from gstaichi repo")
         sys.exit(0)
-    is_taichi = os.getenv("PROJECT_NAME", "taichi") == "taichi"
-    upload_artifact(is_taichi)
-    if is_taichi:
-        upload_taichi_version()
+    is_gstaichi = os.getenv("PROJECT_NAME", "gstaichi") == "gstaichi"
+    upload_artifact(is_gstaichi)
+    if is_gstaichi:
+        upload_gstaichi_version()

@@ -1,15 +1,15 @@
 #*********************************************************************
-# The Taichi Programming Language
+# The GsTaichi Programming Language
 #*********************************************************************
 
 cmake_minimum_required(VERSION 3.17)
 
-project(taichi)
+project(gstaichi)
 
 include("cmake/utils.cmake")
 
 if (NOT DEFINED TI_VERSION_MAJOR)
-    message(WARNING "It seems that you are running cmake manually, which may cause issues. Please use setup.py to build taichi from source, see https://docs.taichi-lang.org/docs/dev_install for more details.")
+    message(WARNING "It seems that you are running cmake manually, which may cause issues. Please use setup.py to build gstaichi from source, see https://docs.taichi-lang.org/docs/dev_install for more details.")
     file(READ "${CMAKE_CURRENT_LIST_DIR}/version.txt" TI_VERSION_LITERAL)
     string(REGEX MATCH "v([0-9]+)\\.([0-9]+)\\.([0-9]+)" TI_VERSION_LITERAL ${TI_VERSION_LITERAL})
     set(TI_VERSION_MAJOR ${CMAKE_MATCH_1})
@@ -34,7 +34,7 @@ execute_process(
 string(STRIP ${TI_COMMIT_HASH} TI_COMMIT_HASH)
 string(STRIP ${TI_COMMIT_SHORT_HASH} TI_COMMIT_SHORT_HASH)
 
-message("Taichi Version ${TI_VERSION_MAJOR}.${TI_VERSION_MINOR}.${TI_VERSION_PATCH}")
+message("GsTaichi Version ${TI_VERSION_MAJOR}.${TI_VERSION_MINOR}.${TI_VERSION_PATCH}")
 message("       Commit ${TI_COMMIT_HASH}")
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -44,7 +44,7 @@ RelWithDebInfo MinSizeRel."
             FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
-set(TAICHI_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake/")
+set(GSTAICHI_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake/")
 
 if (WIN32)
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/")
@@ -114,7 +114,7 @@ if (WIN32)
   message("CMAKE_MSVC_RUNTIME_LIBRARY: ${CMAKE_MSVC_RUNTIME_LIBRARY}")
 endif()
 
-# No support of Python for any case taichi is integrated
+# No support of Python for any case gstaichi is integrated
 # in another project as submodule.
 set(PYBIND11_VERSION "2.13.6" CACHE STRING "Pybind11 version to use")
 option(TI_WITH_PYTHON "Build with Python language binding" ON)
@@ -130,14 +130,14 @@ if (TI_DISTRIBUTED_COMPILE)
     include(cmake/Distributed.cmake)
 endif()
 
-include(cmake/TaichiCXXFlags.cmake)
-include(cmake/TaichiCore.cmake)
+include(cmake/GsTaichiCXXFlags.cmake)
+include(cmake/GsTaichiCore.cmake)
 
 option(TI_BUILD_TESTS "Build the CPP tests" OFF)
 
 if (TI_BUILD_TESTS)
   add_subdirectory(external/googletest EXCLUDE_FROM_ALL)
-  include(cmake/TaichiTests.cmake)
+  include(cmake/GsTaichiTests.cmake)
 endif()
 
 message("C++ Flags: ${CMAKE_CXX_FLAGS}")
@@ -190,11 +190,11 @@ if (TI_WITH_LLVM)
 
     check_clang_version()
 
-    add_subdirectory(taichi/runtime/llvm/runtime_module)
+    add_subdirectory(gstaichi/runtime/llvm/runtime_module)
 endif()
 
-configure_file(taichi/common/version.h.in ${CMAKE_SOURCE_DIR}/taichi/common/version.h)
-configure_file(taichi/common/commit_hash.h.in ${CMAKE_SOURCE_DIR}/taichi/common/commit_hash.h)
+configure_file(gstaichi/common/version.h.in ${CMAKE_SOURCE_DIR}/gstaichi/common/version.h)
+configure_file(gstaichi/common/commit_hash.h.in ${CMAKE_SOURCE_DIR}/gstaichi/common/commit_hash.h)
 
 option(TI_WITH_GRAPHVIZ "generate dependency graphs between targets" OFF)  # wheel-tag: viz
 if (TI_WITH_GRAPHVIZ)

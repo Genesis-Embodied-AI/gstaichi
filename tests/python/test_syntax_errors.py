@@ -1,6 +1,7 @@
 import pytest
 
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
 
@@ -17,7 +18,7 @@ def test_try():
         except:
             a = 1
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -34,7 +35,7 @@ def test_for_else():
         else:
             pass
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -51,7 +52,7 @@ def test_while_else():
         else:
             pass
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -61,7 +62,7 @@ def test_raise():
     def foo():
         raise Exception()
 
-    with pytest.raises(ti.TaichiSyntaxError, match='Unsupported node "Raise"') as e:
+    with pytest.raises(ti.GsTaichiSyntaxError, match='Unsupported node "Raise"') as e:
         foo()
 
 
@@ -77,7 +78,7 @@ def test_loop_var_range():
         for i in range(10):
             pass
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -93,7 +94,7 @@ def test_loop_var_struct():
         for i in x:
             pass
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -109,7 +110,7 @@ def test_loop_var_struct():
         for i, j in x:
             pass
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -123,7 +124,7 @@ def test_func_def_in_kernel():
 
         print(func())
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         kernel()
 
 
@@ -141,13 +142,13 @@ def test_func_def_in_func():
     def kernel():
         print(func())
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         kernel()
 
 
 @test_utils.test(arch=ti.cpu)
 def test_kernel_bad_argument_annotation():
-    with pytest.raises(ti.TaichiSyntaxError, match="annotation"):
+    with pytest.raises(ti.GsTaichiSyntaxError, match="annotation"):
 
         @ti.kernel
         def kernel(x: "bar"):
@@ -156,7 +157,7 @@ def test_kernel_bad_argument_annotation():
 
 @test_utils.test(arch=ti.cpu)
 def test_func_bad_argument_annotation():
-    with pytest.raises(ti.TaichiSyntaxError, match="annotation"):
+    with pytest.raises(ti.GsTaichiSyntaxError, match="annotation"):
 
         @ti.func
         def func(x: "foo"):
@@ -170,7 +171,7 @@ def test_nested_static():
         for i in ti.static(ti.static(range(1))):
             pass
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -181,7 +182,7 @@ def test_nested_grouped():
         for i in ti.grouped(ti.grouped(range(1))):
             pass
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -192,7 +193,7 @@ def test_nested_ndrange():
         for i in ti.ndrange(ti.ndrange(1)):
             pass
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -207,7 +208,7 @@ def test_static_grouped_struct_for():
         for I in ti.static(ti.grouped(val)):
             pass
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         test()
 
 
@@ -220,7 +221,7 @@ def test_is():
     def func():
         a = b is c
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -233,7 +234,7 @@ def test_is_not():
     def func():
         a = b is not c
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -246,7 +247,7 @@ def test_in():
     def func():
         a = b in c
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -259,7 +260,7 @@ def test_not_in():
     def func():
         a = b not in c
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -269,7 +270,7 @@ def test_expr_set():
     def func():
         x = {2, 4, 6}
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -279,7 +280,7 @@ def test_redefining_template_args():
     def foo(a: ti.template()):
         a = 5
 
-    with pytest.raises(ti.TaichiSyntaxError, match='Kernel argument "a" is immutable in the kernel'):
+    with pytest.raises(ti.GsTaichiSyntaxError, match='Kernel argument "a" is immutable in the kernel'):
         foo(1)
 
 
@@ -290,7 +291,7 @@ def test_break_in_outermost_for():
         for i in range(10):
             break
 
-    with pytest.raises(ti.TaichiSyntaxError, match="Cannot break in the outermost loop"):
+    with pytest.raises(ti.GsTaichiSyntaxError, match="Cannot break in the outermost loop"):
         foo()
 
 
@@ -301,7 +302,7 @@ def test_funcdef_in_kernel():
         def bar():
             pass
 
-    with pytest.raises(ti.TaichiSyntaxError, match="Function definition is not allowed in 'ti.kernel'"):
+    with pytest.raises(ti.GsTaichiSyntaxError, match="Function definition is not allowed in 'ti.kernel'"):
         foo()
 
 
@@ -316,7 +317,7 @@ def test_funcdef_in_func():
     def baz():
         foo()
 
-    with pytest.raises(ti.TaichiSyntaxError, match="Function definition is not allowed in 'ti.func'"):
+    with pytest.raises(ti.GsTaichiSyntaxError, match="Function definition is not allowed in 'ti.func'"):
         baz()
 
 
@@ -329,7 +330,7 @@ def test_continue_in_static_for_in_non_static_if():
             if x == 0.0:
                 continue
 
-    with pytest.raises(ti.TaichiSyntaxError, match="You are trying to `continue` a static `for` loop"):
+    with pytest.raises(ti.GsTaichiSyntaxError, match="You are trying to `continue` a static `for` loop"):
         test_static_loop()
 
 
@@ -342,5 +343,5 @@ def test_break_in_static_for_in_non_static_if():
             if x == 0.0:
                 break
 
-    with pytest.raises(ti.TaichiSyntaxError, match="You are trying to `break` a static `for` loop"):
+    with pytest.raises(ti.GsTaichiSyntaxError, match="You are trying to `break` a static `for` loop"):
         test_static_loop()

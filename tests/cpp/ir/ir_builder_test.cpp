@@ -1,14 +1,14 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/ir_builder.h"
-#include "taichi/ir/statements.h"
+#include "gstaichi/ir/ir_builder.h"
+#include "gstaichi/ir/statements.h"
 #include "tests/cpp/program/test_program.h"
 #include "tests/cpp/ir/ndarray_kernel.h"
 #ifdef TI_WITH_VULKAN
-#include "taichi/rhi/vulkan/vulkan_loader.h"
+#include "gstaichi/rhi/vulkan/vulkan_loader.h"
 #endif
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 
 TEST(IRBuilder, Basic) {
   IRBuilder builder;
@@ -128,8 +128,8 @@ TEST(IRBuilder, ExternalPtr) {
 TEST(IRBuilder, Ndarray) {
   TestProgram test_prog;
 #ifdef TI_WITH_VULKAN
-  Arch arch = taichi::lang::vulkan::is_vulkan_api_available() ? Arch::vulkan
-                                                              : Arch::x64;
+  Arch arch = gstaichi::lang::vulkan::is_vulkan_api_available() ? Arch::vulkan
+                                                                : Arch::x64;
 #else
   Arch arch = Arch::x64;
 #endif
@@ -192,4 +192,4 @@ TEST(IRBuilder, AtomicOp) {
   prog->launch_kernel(compiled_kernel_data, launch_ctx);
   EXPECT_EQ(array[0], 3);
 }
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

@@ -1,11 +1,11 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/statements.h"
-#include "taichi/ir/ir_builder.h"
-#include "taichi/ir/transforms.h"
+#include "gstaichi/ir/statements.h"
+#include "gstaichi/ir/ir_builder.h"
+#include "gstaichi/ir/transforms.h"
 #include "tests/cpp/program/test_program.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 
 TEST(IRTypePromotionTest, ShiftOp) {
   IRBuilder builder;
@@ -55,4 +55,4 @@ TEST(IRPromotionTest, TensorType) {
               ret_type->cast<TensorType>()->get_element_type()->is_primitive(
                   PrimitiveTypeID::f32));
 }
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

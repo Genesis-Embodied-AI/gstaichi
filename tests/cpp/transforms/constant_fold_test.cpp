@@ -1,11 +1,11 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/statements.h"
-#include "taichi/ir/ir_builder.h"
-#include "taichi/ir/transforms.h"
+#include "gstaichi/ir/statements.h"
+#include "gstaichi/ir/ir_builder.h"
+#include "gstaichi/ir/transforms.h"
 #include "tests/cpp/program/test_program.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 
 class ConstantFoldTest : public ::testing::Test {
  protected:
@@ -565,4 +565,4 @@ TEST_F(ConstantFoldTest, BinaryAtan2) {
   EXPECT_EQ(ir->as<Block>()->statements[1]->as<ConstStmt>()->val.val_float(),
             0.);
 }
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

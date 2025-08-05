@@ -1,10 +1,10 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/statements.h"
-#include "taichi/ir/transforms.h"
+#include "gstaichi/ir/statements.h"
+#include "gstaichi/ir/transforms.h"
 #include "tests/cpp/program/test_program.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 
 TEST(Scalarize, ScalarizeGlobalStore) {
   // Basic tests within a basic block
@@ -234,4 +234,4 @@ TEST(Scalarize, ScalarizeLocalLoad) {
   EXPECT_EQ(block->statements[7]->is<LocalLoadStmt>(), true);
 }
 
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

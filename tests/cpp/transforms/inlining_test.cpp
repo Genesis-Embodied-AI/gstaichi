@@ -1,12 +1,12 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/analysis.h"
-#include "taichi/ir/ir_builder.h"
-#include "taichi/ir/statements.h"
-#include "taichi/ir/transforms.h"
-#include "taichi/program/program.h"
+#include "gstaichi/ir/analysis.h"
+#include "gstaichi/ir/ir_builder.h"
+#include "gstaichi/ir/statements.h"
+#include "gstaichi/ir/transforms.h"
+#include "gstaichi/program/program.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 
 class InliningTest : public ::testing::Test {
  protected:
@@ -59,4 +59,4 @@ TEST_F(InliningTest, ArgLoadOfArgLoad) {
   EXPECT_TRUE(irpass::analysis::same_statements(func_block, kernel_block));
 }
 
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang
