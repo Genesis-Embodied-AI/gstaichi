@@ -1,5 +1,3 @@
-# type: ignore
-
 import numbers
 from types import FunctionType, MethodType
 from typing import Any, Iterable, Sequence
@@ -8,7 +6,7 @@ import numpy as np
 
 from taichi._lib import core as _ti_core
 from taichi._lib.core.taichi_python import (
-    DataType,
+    DataTypeCxx,
     Function,
     Program,
 )
@@ -26,7 +24,7 @@ from taichi.lang.exception import (
 from taichi.lang.expr import Expr, make_expr_group
 from taichi.lang.field import Field, ScalarField
 from taichi.lang.kernel_arguments import SparseMatrixProxy
-from taichi.lang.kernel_impl import Kernel
+from taichi.lang.kernel_impl import BoundTaichiCallable, Kernel, TaichiCallable
 from taichi.lang.matrix import (
     Matrix,
     MatrixField,
@@ -88,7 +86,7 @@ def expr_init(rhs):
             compiling_callable.ast_builder().expr_alloca(_ti_core.DebugInfo(get_runtime().get_current_src_info()))
         )
     if isinstance(rhs, Matrix) and (hasattr(rhs, "_DIM")):
-        return Matrix(*rhs.to_list(), ndim=rhs.ndim)
+        return Matrix(*rhs.to_list(), ndim=rhs.ndim)  # type: ignore
     if isinstance(rhs, Matrix):
         return make_matrix(rhs.to_list())
     if isinstance(rhs, SharedArray):
@@ -101,7 +99,7 @@ def expr_init(rhs):
         return tuple(expr_init(e) for e in rhs)
     if isinstance(rhs, dict):
         return dict((key, expr_init(val)) for key, val in rhs.items())
-    if isinstance(rhs, _ti_core.DataType):
+    if isinstance(rhs, _ti_core.DataTypeCxx):
         return rhs
     if isinstance(rhs, _ti_core.Arch):
         return rhs
@@ -244,7 +242,7 @@ def subscript(ast_builder, value, *_indices, skip_reordered=False):
     if isinstance(value, SharedArray):
         return value.subscript(*indices)
     if isinstance(value, MeshElementFieldProxy):
-        return value.subscript(*indices)
+        return value.subscript(*indices)  # type: ignore
     if isinstance(value, MeshRelationAccessProxy):
         return value.subscript(*indices)
     if isinstance(value, (MeshReorderedScalarFieldProxy, MeshReorderedMatrixFieldProxy)) and not skip_reordered:
@@ -338,9 +336,9 @@ class PyTaichi:
         self.materialized = False
         self._prog: Program | None = None
         self.src_info_stack = []
-        self.inside_kernel = False
-        self.compiling_callable: Function | None = None  # pointer to instance of lang::Kernel/Function
-        self.current_kernel: Kernel | None = None
+        self.inside_kernel: bool = False
+        self.compiling_callable: Kernel | Function | None = None  # pointer to instance of lang::Kernel/Function
+        self._current_kernel: Kernel | None = None
         self.global_vars = []
         self.grad_vars = []
         self.dual_vars = []
@@ -361,6 +359,14 @@ class PyTaichi:
         if self._prog is None:
             raise TaichiRuntimeError("_prog attribute not initialized. Maybe you forgot to call `ti.init()` first?")
         return self._prog
+
+    @property
+    def current_kernel(self) -> Kernel:
+        if self._current_kernel is None:
+            raise TaichiRuntimeError(
+                "_pr_current_kernelog attribute not initialized. Maybe you forgot to call `ti.init()` first?"
+            )
+        return self._current_kernel
 
     def initialize_fields_builder(self, builder):
         self.unfinalized_fields_builder[builder] = get_traceback(2)
@@ -428,13 +434,6 @@ class PyTaichi:
         root.finalize(raise_warning=not is_first_call)
         global _root_fb
         _root_fb = FieldsBuilder()
-
-    @staticmethod
-    def _finalize_root_fb_for_aot():
-        if _root_fb.finalized:
-            raise RuntimeError("AOT: can only finalize the root FieldsBuilder once")
-        assert isinstance(_root_fb, FieldsBuilder)
-        _root_fb._finalize_for_aot()
 
     @staticmethod
     def _get_tb(_var):
@@ -715,7 +714,7 @@ def create_field_member(dtype, name, needs_grad, needs_dual):
             # adjoint checkbit
             x_grad_checkbit = Expr(prog.make_id_expr(""))
             dtype = u8
-            if prog.config().arch in (_ti_core.opengl, _ti_core.vulkan, _ti_core.gles):
+            if prog.config().arch == _ti_core.vulkan:
                 dtype = i32
             x_grad_checkbit.ptr = _ti_core.expr_field(x_grad_checkbit.ptr, cook_dtype(dtype))
             x_grad_checkbit.ptr.set_name(name + ".grad_checkbit")
@@ -875,7 +874,7 @@ def ndarray(dtype, shape, needs_grad=False):
     else:
         raise TaichiRuntimeError(f"{dtype} is not supported as ndarray element type")
     if needs_grad:
-        assert isinstance(dt, DataType)
+        assert isinstance(dt, DataTypeCxx)
         if not _ti_core.is_real(dt):
             raise TaichiRuntimeError(f"{dt} is not supported for ndarray with `needs_grad=True` or `needs_dual=True`.")
         x_grad = ndarray(dtype, shape, needs_grad=False)
@@ -911,7 +910,7 @@ def ti_format_list_to_content_entries(raw):
                 yield _var[1:]
                 continue
             elif hasattr(_var, "__ti_repr__"):
-                res = _var.__ti_repr__()
+                res = _var.__ti_repr__()  # type: ignore
             elif isinstance(_var, (list, tuple)):
                 # If the first element is '__ti_format__', this list is the result of ti_format.
                 if len(_var) > 0 and isinstance(_var[0], str) and _var[0] == "__ti_format__":
@@ -1154,7 +1153,7 @@ def static(x, *xs) -> Any:
         return x
     if isinstance(x, Field):
         return x
-    if isinstance(x, (FunctionType, MethodType)):
+    if isinstance(x, (FunctionType, MethodType, BoundTaichiCallable, TaichiCallable)):
         return x
     raise ValueError(f"Input to ti.static must be compile-time constants or global pointers, instead of {type(x)}")
 

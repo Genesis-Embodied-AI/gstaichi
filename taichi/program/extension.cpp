@@ -21,13 +21,8 @@ bool is_extension_supported(Arch arch, Extension ext) {
         Extension::assertion, Extension::mesh}},
       {Arch::amdgpu, {Extension::assertion}},
       {Arch::metal, {}},
-      {Arch::opengl, {Extension::extfunc}},
-      {Arch::gles, {}},
       {Arch::vulkan, {}},
-      {Arch::dx11, {}},
   };
-  // if (with_opengl_extension_data64())
-  // arch2ext[Arch::opengl].insert(Extension::data64); // TODO: singleton
   const auto &exts = arch2ext[arch];
   return exts.find(ext) != exts.end();
 }

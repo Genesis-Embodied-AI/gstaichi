@@ -382,9 +382,6 @@ def print_kernel_profiler_info(mode="count"):
         >>> ti.profiler.print_kernel_profiler_info('trace')
 
     Note:
-        Currently the result of `KernelProfiler` could be incorrect on OpenGL
-        backend due to its lack of support for `ti.sync()`.
-
         For advanced mode of `KernelProfiler`, please visit https://docs.taichi-lang.org/docs/profiler#advanced-mode.
     """
     get_default_kernel_profiler().print_info(mode)
@@ -427,9 +424,6 @@ def query_kernel_profiler_info(name):
     Note:
         [1] To get the correct result, query_kernel_profiler_info() must be used in conjunction with
         clear_kernel_profiler_info().
-
-        [2] Currently the result of `KernelProfiler` could be incorrect on OpenGL
-        backend due to its lack of support for `ti.sync()`.
     """
     return get_default_kernel_profiler().query_info(name)
 

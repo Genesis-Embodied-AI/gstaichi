@@ -95,7 +95,7 @@ def test_cli_run():
 
 
 def test_cli_cache():
-    archs = {ti.cpu, ti.cuda, ti.opengl, ti.vulkan, ti.metal, ti.gles, ti.amdgpu}
+    archs = {ti.cpu, ti.cuda, ti.vulkan, ti.metal, ti.amdgpu}
     expected_archs = test_utils.expected_archs()
     archs = {v for v in archs if v in test_utils.expected_archs()}
     exts = ("tic", "tcb", "lock")

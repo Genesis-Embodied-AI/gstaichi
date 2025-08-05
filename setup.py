@@ -32,27 +32,14 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 
 
-def get_version():
-    if os.getenv("RELEASE_VERSION"):
-        version = os.environ["RELEASE_VERSION"]
-    else:
-        version_file = os.path.join(os.path.dirname(__file__), "version.txt")
-        with open(version_file, "r") as f:
-            version = f.read().strip()
-    return version.lstrip("v")
-
-
-project_name = os.getenv("PROJECT_NAME", "taichi")
-version = get_version()
-TI_VERSION_MAJOR, TI_VERSION_MINOR, TI_VERSION_PATCH = version.split(".")
+project_name = os.getenv("PROJECT_NAME", "gstaichi")
 
 data_files = glob.glob("python/_lib/runtime/*")
 print(data_files)
@@ -61,6 +48,21 @@ print(packages)
 
 # Our python package root dir is python/
 package_dir = "python"
+
+
+def get_version():
+    try:
+        from setuptools_scm import get_version as scm_get_version
+
+        version = scm_get_version()
+        # Parse version string (e.g., "1.2.3" or "1.2.3.dev0+g1234567")
+        version_parts = version.split("+")[0].split(".dev")[0].split(".")
+        major = version_parts[0] if len(version_parts) > 0 else "0"
+        minor = version_parts[1] if len(version_parts) > 1 else "0"
+        patch = version_parts[2] if len(version_parts) > 2 else "0"
+    except Exception:
+        major, minor, patch = "0", "0", "0"
+    return major, minor, patch
 
 
 def remove_tmp(taichi_dir):
@@ -117,15 +119,19 @@ def postprocess_stubs(stub_path: str) -> None:
 
     stub_lines = stub_path.read_text().split("\n")
     yaml = YAML()
-    with open("stub_replacements.yaml") as f:
-        replacements = yaml.load(f)
+    with open("stub_replacements_funcs.yaml") as f:
+        replacements_funcs = yaml.load(f)
+    with open("stub_replacements_global.yaml") as f:
+        replacements_global = yaml.load(f)
     new_stub_lines = []
     for line in stub_lines:
         func_name = line.lstrip().partition("(")[0]
-        if func_name in replacements:
+        if func_name in replacements_funcs:
             print("func_name", func_name)
-            print("found func_name replacing with ", replacements[func_name])
-            line = replacements[func_name]
+            print("found func_name replacing with ", replacements_funcs[func_name])
+            line = replacements_funcs[func_name]
+        for src, dst in replacements_global.items():
+            line = line.replace(src, dst)
         new_stub_lines.append(line)
     stub_path.write_text("\n".join(new_stub_lines))
     print("stub_path", stub_path)
@@ -203,10 +209,11 @@ def get_cmake_args():
             build_options.extend(["-G", "Xcode", "--skip-generator-test"])
     sys.argv[2:2] = build_options
 
+    major, minor, patch = get_version()
     cmake_args += [
-        f"-DTI_VERSION_MAJOR={TI_VERSION_MAJOR}",
-        f"-DTI_VERSION_MINOR={TI_VERSION_MINOR}",
-        f"-DTI_VERSION_PATCH={TI_VERSION_PATCH}",
+        f"-DTI_VERSION_MAJOR={major}",
+        f"-DTI_VERSION_MINOR={minor}",
+        f"-DTI_VERSION_PATCH={patch}",
     ]
 
     if sys.platform == "darwin" and use_xcode:
@@ -277,12 +284,15 @@ setup(
     name=project_name,
     packages=packages,
     package_dir={"": package_dir},
-    version=version,
     description="The Taichi Programming Language",
     author="Taichi developers",
-    author_email="yuanmhu@gmail.com",
-    url="https://github.com/taichi-dev/taichi",
+    url="https://github.com/Genesis-Embedded-AI/taichi",
     python_requires=">=3.10,<4.0",
+    setup_requires=["setuptools_scm>=6.0"],
+    use_scm_version={
+        "write_to": "python/taichi/_version.py",
+        "write_to_template": "__version__ = '{version}'\n",
+    },
     install_requires=[
         "numpy",
         "colorama",
@@ -291,6 +301,19 @@ setup(
         "setuptools>=68.0.0",  # Required for Python 3.12+ compatibility
         "cffi>=1.16.0",
     ],
+    extras_require={
+        "docs": [
+            "sphinx",
+            "sphinx-copybutton",
+            "myst_parser",
+            "sphinx-subfigure",
+            "sphinxcontrib-video",
+            "sphinx-togglebutton",
+            "sphinx-design",
+            "pydata-sphinx-theme",
+            "sphinx-autoapi",
+        ],
+    },
     data_files=[
         (os.path.join("_lib", "runtime"), data_files),
     ],
@@ -299,6 +322,7 @@ setup(
     },
     keywords=["graphics", "simulation"],
     license="Apache Software License (http://www.apache.org/licenses/LICENSE-2.0)",
+    license_files=("LICENSE",),
     include_package_data=True,
     entry_points={
         "console_scripts": [

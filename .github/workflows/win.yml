@@ -4,9 +4,11 @@ on:
     branches:
       - main
   workflow_dispatch:
+  release:
+    types: [published]
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'release' }}
 jobs:
   win_build:
     name: Windows 2025 Build
@@ -14,12 +16,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        PYTHON_VERSION: ['3.10', '3.11', '3.12', '3.13']
+        # PYTHON_VERSION: ['3.10', '3.11', '3.12', '3.13']
+        PYTHON_VERSION: ['3.10']
     steps:
       - name: Python check
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ MATRIX.PYTHON_VERSION}}
+          python-version: ${{ matrix.PYTHON_VERSION}}
       - name: Set Python CP version
         id: set_cp_version
         run: |
@@ -55,18 +58,18 @@ jobs:
     name: Windows wheel upload
     runs-on: ubuntu-22.04
     needs: win_build
-    environment: aws_storage
     strategy:
       matrix:
-        PYTHON_CP_VERSION: ["cp310", "cp311", "cp312", "cp313"]
+        # PYTHON_CP_VERSION: ["cp310", "cp311", "cp312", "cp313"]
+        PYTHON_CP_VERSION: ["cp310"]
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_STORAGE_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_STORAGE_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
       - uses: actions/download-artifact@v4
         with:
@@ -78,3 +81,22 @@ jobs:
           mkdir -p dist
           mv *.whl dist/
           aws s3 sync dist/ s3://genesis-ai-compiler/ci/taichi/${GITHUB_SHA:0:7}/win-${{ matrix.PYTHON_CP_VERSION }}/
+  publish_pypi:
+    uses: ./.github/workflows/publish_pypi.yml
+    if: github.event_name == 'release' && github.event.action == 'created'
+    needs: win_build
+    permissions:
+      id-token: write
+      contents: read
+    concurrency:
+      # group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-test
+      group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-test
+      cancel-in-progress: true
+    strategy:
+      matrix:
+        # PYTHON_CP_VERSION: ["cp310", "cp311", "cp312", "cp313"]
+        PYTHON_CP_VERSION: ["cp310"]
+      fail-fast: false
+    with:
+      artifact_name: win_wheel_${{ matrix.PYTHON_CP_VERSION }}
+    secrets: inherit

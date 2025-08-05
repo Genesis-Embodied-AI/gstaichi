@@ -1,6 +1,5 @@
-# type: ignore
-
 import ast
+import dataclasses
 import functools
 import inspect
 import json
@@ -14,7 +13,6 @@ import time
 import types
 import typing
 import warnings
-import weakref
 from typing import Any, Callable, Type
 
 import numpy as np
@@ -22,13 +20,17 @@ import numpy as np
 import taichi.lang
 import taichi.lang._ndarray
 import taichi.lang._texture
-import taichi.lang.expr
-import taichi.lang.snode
 import taichi.types.annotations
 from taichi import _logging
 from taichi._lib import core as _ti_core
-from taichi._lib.core.taichi_python import ASTBuilder
+from taichi._lib.core.taichi_python import (
+    ASTBuilder,
+    FunctionKey,
+    KernelCxx,
+    KernelLaunchContext,
+)
 from taichi.lang import impl, ops, runtime_ops
+from taichi.lang._template_mapper import TaichiCallableTemplateMapper
 from taichi.lang._wrap_inspect import getsourcefile, getsourcelines
 from taichi.lang.any_array import AnyArray
 from taichi.lang.argpack import ArgPack, ArgPackType
@@ -51,7 +53,7 @@ from taichi.lang.kernel_arguments import KernelArgument
 from taichi.lang.matrix import MatrixType
 from taichi.lang.shell import _shell_pop_print
 from taichi.lang.struct import StructType
-from taichi.lang.util import cook_dtype, has_paddle, has_pytorch, to_taichi_type
+from taichi.lang.util import cook_dtype, has_paddle, has_pytorch
 from taichi.types import (
     ndarray_type,
     primitive_types,
@@ -63,8 +65,126 @@ from taichi.types.compound_types import CompoundType
 from taichi.types.enums import AutodiffMode, Layout
 from taichi.types.utils import is_signed
 
+CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
 
-def func(fn: Callable, is_real_function: bool = False):
+
+class TaichiCallable:
+    """
+    BoundTaichiCallable is used to enable wrapping a bindable function with a class.
+
+    Design requirements for TaichiCallable:
+    - wrap/contain a reference to a class Func instance, and allow (the TaichiCallable) being passed around
+      like normal function pointer
+    - expose attributes of the wrapped class Func, such as `_if_real_function`, `_primal`, etc
+    - allow for (now limited) strong typing, and enable type checkers, such as pyright/mypy
+        - currently TaichiCallable is a shared type used for all functions marked with @ti.func, @ti.kernel,
+          python functions (?)
+        - note: current type-checking implementation does not distinguish between different type flavors of
+          TaichiCallable, with different values of `_if_real_function`, `_primal`, etc
+    - handle not only class-less functions, but also class-instance methods (where determining the `self`
+      reference is a challenge)
+
+    Let's take the following example:
+
+    def test_ptr_class_func():
+    @ti.data_oriented
+    class MyClass:
+        def __init__(self):
+            self.a = ti.field(dtype=ti.f32, shape=(3))
+
+        def add2numbers_py(self, x, y):
+            return x + y
+
+        @ti.func
+        def add2numbers_func(self, x, y):
+            return x + y
+
+        @ti.kernel
+        def func(self):
+            a, add_py, add_func = ti.static(self.a, self.add2numbers_py, self.add2numbers_func)
+            a[0] = add_py(2, 3)
+            a[1] = add_func(3, 7)
+
+    (taken from test_ptr_assign.py).
+
+    When the @ti.func decorator is parsed, the function `add2numbers_func` exists, but there is not yet any `self`
+    - it is not possible for the method to be bound, to a `self` instance
+    - however, the @ti.func annotation, runs the kernel_imp.py::func function --- it is at this point
+      that Taichi's original code creates a class Func instance (that wraps the add2numbers_func)
+      and immediately we create a TaichiCallable instance that wraps the Func instance.
+    - effectively, we have two layers of wrapping TaichiCallable->Func->function pointer
+      (actual function definition)
+    - later on, when we call self.add2numbers_py, here:
+
+            a, add_py, add_func = ti.static(self.a, self.add2numbers_py, self.add2numbers_func)
+
+      ... we want to call the bound method, `self.add2numbers_py`.
+    - an actual python function reference, created by doing somevar = MyClass.add2numbers, can automatically
+      binds to self, when called from self in this way (however, add2numbers_py is actually a class
+      Func instance, wrapping python function reference -- now also all wrapped by a TaichiCallable
+      instance -- returned by the kernel_impl.py::func function, run by @ti.func)
+    - however, in order to be able to add strongly typed attributes to the wrapped python function, we need
+      to wrap the wrapped python function in a class
+    - the wrapped python function, wrapped in a TaichiCallable class (which is callable, and will
+      execute the underlying double-wrapped python function), will NOT automatically bind
+    - when we invoke TaichiCallable, the wrapped function is invoked. The wrapped function is unbound, and
+      so `self` is not automatically passed in, as an argument, and things break
+
+    To address this we need to use the `__get__` method, in our function wrapper, ie TaichiCallable,
+    and have the `__get__` method return the `BoundTaichiCallable` object. The `__get__` method handles
+    running the binding for us, and effectively binds `BoundFunc` object to `self` object, by passing
+    in the instance, as an argument into `BoundTaichiCallable.__init__`.
+
+    `BoundFunc` can then be used as a normal bound func - even though it's just an object instance -
+    using its `__call__` method. Effectively, at the time of actually invoking the underlying python
+    function, we have 3 layers of wrapper instances:
+        BoundTaichiCallabe -> TaichiCallable -> Func -> python function reference/definition
+    """
+
+    def __init__(self, fn: Callable, wrapper: Callable) -> None:
+        self.fn: Callable = fn
+        self.wrapper: Callable = wrapper
+        self._is_real_function: bool = False
+        self._is_taichi_function: bool = False
+        self._is_wrapped_kernel: bool = False
+        self._is_classkernel: bool = False
+        self._primal: Kernel | None = None
+        self._adjoint: Kernel | None = None
+        self.grad: Kernel | None = None
+        self._is_staticmethod: bool = False
+        functools.update_wrapper(self, fn)
+
+    def __call__(self, *args, **kwargs):
+        return self.wrapper.__call__(*args, **kwargs)
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        return BoundTaichiCallable(instance, self)
+
+
+class BoundTaichiCallable:
+    def __init__(self, instance: Any, taichi_callable: "TaichiCallable"):
+        self.wrapper = taichi_callable.wrapper
+        self.instance = instance
+        self.taichi_callable = taichi_callable
+
+    def __call__(self, *args, **kwargs):
+        return self.wrapper(self.instance, *args, **kwargs)
+
+    def __getattr__(self, k: str) -> Any:
+        res = getattr(self.taichi_callable, k)
+        return res
+
+    def __setattr__(self, k: str, v: Any) -> None:
+        # Note: these have to match the name of any attributes on this class.
+        if k in ("wrapper", "instance", "taichi_callable"):
+            object.__setattr__(self, k, v)
+        else:
+            setattr(self.taichi_callable, k, v)
+
+
+def func(fn: Callable, is_real_function: bool = False) -> TaichiCallable:
     """Marks a function as callable in Taichi-scope.
 
     This decorator transforms a Python function into a Taichi one. Taichi
@@ -90,22 +210,17 @@ def func(fn: Callable, is_real_function: bool = False):
     is_classfunc = _inside_class(level_of_class_stackframe=3 + is_real_function)
 
     fun = Func(fn, _classfunc=is_classfunc, is_real_function=is_real_function)
-
-    @functools.wraps(fn)
-    def decorated(*args, **kwargs):
-        return fun.__call__(*args, **kwargs)
-
-    decorated._is_taichi_function = True
-    decorated._is_real_function = is_real_function
-    decorated.func = fun
-    return decorated
+    taichi_callable = TaichiCallable(fn, fun)
+    taichi_callable._is_taichi_function = True
+    taichi_callable._is_real_function = is_real_function
+    return taichi_callable
 
 
-def real_func(fn: Callable):
+def real_func(fn: Callable) -> TaichiCallable:
     return func(fn, is_real_function=True)
 
 
-def pyfunc(fn: Callable):
+def pyfunc(fn: Callable) -> TaichiCallable:
     """Marks a function as callable in both Taichi and Python scopes.
 
     When called inside the Taichi scope, Taichi will JIT compile it into
@@ -122,33 +237,28 @@ def pyfunc(fn: Callable):
     """
     is_classfunc = _inside_class(level_of_class_stackframe=3)
     fun = Func(fn, _classfunc=is_classfunc, _pyfunc=True)
-
-    @functools.wraps(fn)
-    def decorated(*args, **kwargs):
-        return fun.__call__(*args, **kwargs)
-
-    decorated._is_taichi_function = True
-    decorated._is_real_function = False
-    decorated.func = fun
-    return decorated
+    taichi_callable = TaichiCallable(fn, fun)
+    taichi_callable._is_taichi_function = True
+    taichi_callable._is_real_function = False
+    return taichi_callable
 
 
 def _get_tree_and_ctx(
     self: "Func | Kernel",
+    args: tuple[Any, ...],
     excluded_parameters=(),
     is_kernel: bool = True,
     arg_features=None,
-    args=None,
     ast_builder: ASTBuilder | None = None,
     is_real_function: bool = False,
-):
+) -> tuple[ast.Module, ASTTransformerContext]:
     file = getsourcefile(self.func)
     src, start_lineno = getsourcelines(self.func)
     src = [textwrap.fill(line, tabsize=4, width=9999) for line in src]
     tree = ast.parse(textwrap.dedent("\n".join(src)))
 
     func_body = tree.body[0]
-    func_body.decorator_list = []
+    func_body.decorator_list = []  # type: ignore , kick that can down the road...
 
     global_vars = _get_global_vars(self.func)
 
@@ -157,6 +267,13 @@ def _get_tree_and_ctx(
         for i in self.template_slot_locations:
             template_var_name = self.arguments[i].name
             global_vars[template_var_name] = args[i]
+        parameters = inspect.signature(self.func).parameters
+        for arg_i, (param_name, param) in enumerate(parameters.items()):
+            if dataclasses.is_dataclass(param.annotation):
+                for member_field in dataclasses.fields(param.annotation):
+                    child_value = getattr(args[arg_i], member_field.name)
+                    flat_name = f"__ti_{param_name}_{member_field.name}"
+                    global_vars[flat_name] = child_value
 
     return tree, ASTTransformerContext(
         excluded_parameters=excluded_parameters,
@@ -173,18 +290,36 @@ def _get_tree_and_ctx(
     )
 
 
-def _process_args(self: "Func | Kernel", args, kwargs):
-    ret = [argument.default for argument in self.arguments]
+def expand_func_arguments(arguments: list[KernelArgument]) -> list[KernelArgument]:
+    new_arguments = []
+    for argument in arguments:
+        if dataclasses.is_dataclass(argument.annotation):
+            for field in dataclasses.fields(argument.annotation):
+                new_argument = KernelArgument(
+                    _annotation=field.type,
+                    _name=f"__ti_{argument.name}_{field.name}",
+                )
+                new_arguments.append(new_argument)
+        else:
+            new_arguments.append(argument)
+    return new_arguments
+
+
+def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
+    if is_func:
+        self.arguments = expand_func_arguments(self.arguments)
+    fused_args = [argument.default for argument in self.arguments]
+    ret: list[Any] = [argument.default for argument in self.arguments]
     len_args = len(args)
 
-    if len_args > len(ret):
+    if len_args > len(fused_args):
         arg_str = ", ".join([str(arg) for arg in args])
         expected_str = ", ".join([f"{arg.name} : {arg.annotation}" for arg in self.arguments])
         msg = f"Too many arguments. Expected ({expected_str}), got ({arg_str})."
         raise TaichiSyntaxError(msg)
 
     for i, arg in enumerate(args):
-        ret[i] = arg
+        fused_args[i] = arg
 
     for key, value in kwargs.items():
         found = False
@@ -192,13 +327,13 @@ def _process_args(self: "Func | Kernel", args, kwargs):
             if key == arg.name:
                 if i < len_args:
                     raise TaichiSyntaxError(f"Multiple values for argument '{key}'.")
-                ret[i] = value
+                fused_args[i] = value
                 found = True
                 break
         if not found:
             raise TaichiSyntaxError(f"Unexpected argument '{key}'.")
 
-    for i, arg in enumerate(ret):
+    for i, arg in enumerate(fused_args):
         if arg is inspect.Parameter.empty:
             if self.arguments[i].annotation is inspect._empty:
                 raise TaichiSyntaxError(f"Parameter `{self.arguments[i].name}` missing.")
@@ -207,13 +342,53 @@ def _process_args(self: "Func | Kernel", args, kwargs):
                     f"Parameter `{self.arguments[i].name} : {self.arguments[i].annotation}` missing."
                 )
 
-    return ret
+    return tuple(fused_args)
+
+
+def unpack_ndarray_struct(tree: ast.Module, struct_locals: set[str]) -> ast.Module:
+    class AttributeToNameTransformer(ast.NodeTransformer):
+        def visit_Attribute(self, node: ast.Attribute):
+            if isinstance(node.value, ast.Attribute):
+                return node
+            if not isinstance(node.value, ast.Name):
+                return node
+            base_id = node.value.id
+            attr_name = node.attr
+            new_id = f"__ti_{base_id}_{attr_name}"
+            if new_id not in struct_locals:
+                return node
+            return ast.copy_location(ast.Name(id=new_id, ctx=node.ctx), node)
+
+    transformer = AttributeToNameTransformer()
+    new_tree = transformer.visit(tree)
+    ast.fix_missing_locations(new_tree)
+    return new_tree
+
+
+def extract_struct_locals_from_context(ctx: ASTTransformerContext):
+    """
+    - Uses ctx.func.func to get the function signature.
+    - Searches this for any dataclasses:
+      - If it finds any dataclasses, then converts them into expanded names.
+      - E.g. my_struct: MyStruct, and MyStruct contains a, b, c would become:
+          {"__ti_my_struct_a", "__ti_my_struct_b, "__ti_my_struct_c"}
+    """
+    assert ctx.func is not None
+    sig = inspect.signature(ctx.func.func)
+    parameters = sig.parameters
+    struct_locals = set()
+    for param_name, parameter in parameters.items():
+        if dataclasses.is_dataclass(parameter.annotation):
+            for field in dataclasses.fields(parameter.annotation):
+                child_name = f"__ti_{param_name}_{field.name}"
+                struct_locals.add(child_name)
+    return struct_locals
 
 
 class Func:
     function_counter = 0
 
-    def __init__(self, _func: Callable, _classfunc=False, _pyfunc=False, is_real_function=False):
+    def __init__(self, _func: Callable, _classfunc=False, _pyfunc=False, is_real_function=False) -> None:
         self.func = _func
         self.func_id = Func.function_counter
         Func.function_counter += 1
@@ -222,9 +397,10 @@ class Func:
         self.pyfunc = _pyfunc
         self.is_real_function = is_real_function
         self.arguments: list[KernelArgument] = []
+        self.orig_arguments: list[KernelArgument] = []
         self.return_type: tuple[Type, ...] | None = None
         self.extract_arguments()
-        self.template_slot_locations = []
+        self.template_slot_locations: list[int] = []
         for i, arg in enumerate(self.arguments):
             if arg.annotation == template or isinstance(arg.annotation, template):
                 self.template_slot_locations.append(i)
@@ -232,8 +408,8 @@ class Func:
         self.taichi_functions = {}  # The |Function| class in C++
         self.has_print = False
 
-    def __call__(self, *args, **kwargs):
-        args = _process_args(self, args, kwargs)
+    def __call__(self, *args, **kwargs) -> Any:
+        args = _process_args(self, is_func=True, args=args, kwargs=kwargs)
 
         if not impl.inside_kernel():
             if not self.pyfunc:
@@ -241,7 +417,6 @@ class Func:
             return self.func(*args)
 
         current_kernel = impl.get_runtime().current_kernel
-        assert current_kernel is not None
         if self.is_real_function:
             if current_kernel.autodiff_mode != AutodiffMode.NONE:
                 raise TaichiSyntaxError("Real function in gradient kernels unsupported.")
@@ -257,13 +432,16 @@ class Func:
             ast_builder=current_kernel.ast_builder(),
             is_real_function=self.is_real_function,
         )
+
+        struct_locals = extract_struct_locals_from_context(ctx)
+        tree = unpack_ndarray_struct(tree, struct_locals=struct_locals)
         ret = transform_tree(tree, ctx)
         if not self.is_real_function:
             if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
                 raise TaichiSyntaxError("Function has a return type but does not have a return statement")
         return ret
 
-    def func_call_rvalue(self, key, args):
+    def func_call_rvalue(self, key: FunctionKey, args: tuple[Any, ...]) -> Any:
         # Skip the template args, e.g., |self|
         assert self.is_real_function
         non_template_args = []
@@ -311,7 +489,7 @@ class Func:
             return ret[0]
         return tuple(ret)
 
-    def do_compile(self, key, args, arg_features):
+    def do_compile(self, key: FunctionKey, args: tuple[Any, ...], arg_features: tuple[Any, ...]) -> None:
         tree, ctx = _get_tree_and_ctx(
             self, is_kernel=False, args=args, arg_features=arg_features, is_real_function=self.is_real_function
         )
@@ -333,10 +511,12 @@ class Func:
         if sig.return_annotation not in (inspect.Signature.empty, None):
             self.return_type = sig.return_annotation
             if (
-                isinstance(self.return_type, (types.GenericAlias, typing._GenericAlias))
-                and self.return_type.__origin__ is tuple
+                isinstance(self.return_type, (types.GenericAlias, typing._GenericAlias))  # type: ignore
+                and self.return_type.__origin__ is tuple  # type: ignore
             ):
-                self.return_type = self.return_type.__args__
+                self.return_type = self.return_type.__args__  # type: ignore
+            if self.return_type is None:
+                return
             if not isinstance(self.return_type, (list, tuple)):
                 self.return_type = (self.return_type,)
             for i, return_type in enumerate(self.return_type):
@@ -375,160 +555,19 @@ class Func:
                     pass
                 elif type(annotation) == taichi.types.annotations.Template:
                     pass
-                elif isinstance(annotation, template):
+                elif isinstance(annotation, template) or annotation == taichi.types.annotations.Template:
                     pass
                 elif isinstance(annotation, primitive_types.RefType):
+                    pass
+                elif isinstance(annotation, type) and dataclasses.is_dataclass(annotation):
                     pass
                 else:
                     raise TaichiSyntaxError(f"Invalid type annotation (argument {i}) of Taichi function: {annotation}")
             self.arguments.append(KernelArgument(annotation, param.name, param.default))
+            self.orig_arguments.append(KernelArgument(annotation, param.name, param.default))
 
 
-class TaichiCallableTemplateMapper:
-    def __init__(self, arguments, template_slot_locations):
-        self.arguments = arguments
-        self.num_args = len(arguments)
-        self.template_slot_locations = template_slot_locations
-        self.mapping = {}
-
-    @staticmethod
-    def extract_arg(arg, anno, arg_name):
-        if anno == template or isinstance(anno, template):
-            if isinstance(arg, taichi.lang.snode.SNode):
-                return arg.ptr
-            if isinstance(arg, taichi.lang.expr.Expr):
-                return arg.ptr.get_underlying_ptr_address()
-            if isinstance(arg, _ti_core.Expr):
-                return arg.get_underlying_ptr_address()
-            if isinstance(arg, tuple):
-                return tuple(TaichiCallableTemplateMapper.extract_arg(item, anno, arg_name) for item in arg)
-            if isinstance(arg, taichi.lang._ndarray.Ndarray):
-                raise TaichiRuntimeTypeError(
-                    "Ndarray shouldn't be passed in via `ti.template()`, please annotate your kernel using `ti.types.ndarray(...)` instead"
-                )
-
-            if isinstance(arg, (list, tuple, dict, set)) or hasattr(arg, "_data_oriented"):
-                # [Composite arguments] Return weak reference to the object
-                # Taichi kernel will cache the extracted arguments, thus we can't simply return the original argument.
-                # Instead, a weak reference to the original value is returned to avoid memory leak.
-
-                # TODO(zhanlue): replacing "tuple(args)" with "hash of argument values"
-                # This can resolve the following issues:
-                # 1. Invalid weak-ref will leave a dead(dangling) entry in both caches: "self.mapping" and "self.compiled_functions"
-                # 2. Different argument instances with same type and same value, will get templatized into seperate kernels.
-                return weakref.ref(arg)
-
-            # [Primitive arguments] Return the value
-            return arg
-        if isinstance(anno, ArgPackType):
-            if not isinstance(arg, ArgPack):
-                raise TaichiRuntimeTypeError(f"Argument {arg_name} must be a argument pack, got {type(arg)}")
-            return tuple(
-                TaichiCallableTemplateMapper.extract_arg(arg[name], dtype, arg_name)
-                for index, (name, dtype) in enumerate(anno.members.items())
-            )
-        if isinstance(anno, texture_type.TextureType):
-            if not isinstance(arg, taichi.lang._texture.Texture):
-                raise TaichiRuntimeTypeError(f"Argument {arg_name} must be a texture, got {type(arg)}")
-            if arg.num_dims != anno.num_dimensions:
-                raise TaichiRuntimeTypeError(
-                    f"TextureType dimension mismatch for argument {arg_name}: expected {anno.num_dimensions}, got {arg.num_dims}"
-                )
-            return (arg.num_dims,)
-        if isinstance(anno, texture_type.RWTextureType):
-            if not isinstance(arg, taichi.lang._texture.Texture):
-                raise TaichiRuntimeTypeError(f"Argument {arg_name} must be a texture, got {type(arg)}")
-            if arg.num_dims != anno.num_dimensions:
-                raise TaichiRuntimeTypeError(
-                    f"RWTextureType dimension mismatch for argument {arg_name}: expected {anno.num_dimensions}, got {arg.num_dims}"
-                )
-            if arg.fmt != anno.fmt:
-                raise TaichiRuntimeTypeError(
-                    f"RWTextureType format mismatch for argument {arg_name}: expected {anno.fmt}, got {arg.fmt}"
-                )
-            # (penguinliong) '0' is the assumed LOD level. We currently don't
-            # support mip-mapping.
-            return arg.num_dims, arg.fmt, 0
-        if isinstance(anno, ndarray_type.NdarrayType):
-            if isinstance(arg, taichi.lang._ndarray.Ndarray):
-                anno.check_matched(arg.get_type(), arg_name)
-                needs_grad = (arg.grad is not None) if anno.needs_grad is None else anno.needs_grad
-                assert arg.shape is not None
-                return arg.element_type, len(arg.shape), needs_grad, anno.boundary
-            if isinstance(arg, AnyArray):
-                ty = arg.get_type()
-                anno.check_matched(arg.get_type(), arg_name)
-                return ty.element_type, len(arg.shape), ty.needs_grad, anno.boundary
-            # external arrays
-            shape = getattr(arg, "shape", None)
-            if shape is None:
-                raise TaichiRuntimeTypeError(f"Invalid type for argument {arg_name}, got {arg}")
-            shape = tuple(shape)
-            element_shape: tuple[int, ...] = ()
-            dtype = to_taichi_type(arg.dtype)
-            if isinstance(anno.dtype, MatrixType):
-                if anno.ndim is not None:
-                    if len(shape) != anno.dtype.ndim + anno.ndim:
-                        raise ValueError(
-                            f"Invalid value for argument {arg_name} - required array has ndim={anno.ndim} element_dim={anno.dtype.ndim}, "
-                            f"array with {len(shape)} dimensions is provided"
-                        )
-                else:
-                    if len(shape) < anno.dtype.ndim:
-                        raise ValueError(
-                            f"Invalid value for argument {arg_name} - required element_dim={anno.dtype.ndim}, "
-                            f"array with {len(shape)} dimensions is provided"
-                        )
-                element_shape = shape[-anno.dtype.ndim :]
-                anno_element_shape = anno.dtype.get_shape()
-                if None not in anno_element_shape and element_shape != anno_element_shape:
-                    raise ValueError(
-                        f"Invalid value for argument {arg_name} - required element_shape={anno_element_shape}, "
-                        f"array with element shape of {element_shape} is provided"
-                    )
-            elif anno.dtype is not None:
-                # User specified scalar dtype
-                if anno.dtype != dtype:
-                    raise ValueError(
-                        f"Invalid value for argument {arg_name} - required array has dtype={anno.dtype.to_string()}, "
-                        f"array with dtype={dtype.to_string()} is provided"
-                    )
-
-                if anno.ndim is not None and len(shape) != anno.ndim:
-                    raise ValueError(
-                        f"Invalid value for argument {arg_name} - required array has ndim={anno.ndim}, "
-                        f"array with {len(shape)} dimensions is provided"
-                    )
-            needs_grad = getattr(arg, "requires_grad", False) if anno.needs_grad is None else anno.needs_grad
-            element_type = (
-                _ti_core.get_type_factory_instance().get_tensor_type(element_shape, dtype)
-                if len(element_shape) != 0
-                else arg.dtype
-            )
-            return element_type, len(shape) - len(element_shape), needs_grad, anno.boundary
-        if isinstance(anno, sparse_matrix_builder):
-            return arg.dtype
-        # Use '#' as a placeholder because other kinds of arguments are not involved in template instantiation
-        return "#"
-
-    def extract(self, args):
-        extracted = []
-        for arg, kernel_arg in zip(args, self.arguments):
-            extracted.append(self.extract_arg(arg, kernel_arg.annotation, kernel_arg.name))
-        return tuple(extracted)
-
-    def lookup(self, args):
-        if len(args) != self.num_args:
-            raise TypeError(f"{self.num_args} argument(s) needed but {len(args)} provided.")
-
-        key = self.extract(args)
-        if key not in self.mapping:
-            count = len(self.mapping)
-            self.mapping[key] = count
-        return self.mapping[key], key
-
-
-def _get_global_vars(_func):
+def _get_global_vars(_func: Callable) -> dict[str, Any]:
     # Discussions: https://github.com/taichi-dev/taichi/issues/282
     global_vars = _func.__globals__.copy()
 
@@ -545,7 +584,7 @@ def _get_global_vars(_func):
 class Kernel:
     counter = 0
 
-    def __init__(self, _func: Callable, autodiff_mode, _classkernel=False):
+    def __init__(self, _func: Callable, autodiff_mode: AutodiffMode, _classkernel=False) -> None:
         self.func = _func
         self.kernel_counter = Kernel.counter
         Kernel.counter += 1
@@ -557,7 +596,7 @@ class Kernel:
         )
         self.autodiff_mode = autodiff_mode
         self.grad: Kernel | None = None
-        self.arguments = []
+        self.arguments: list[KernelArgument] = []
         self.return_type = None
         self.classkernel = _classkernel
         self.extract_arguments()
@@ -569,30 +608,26 @@ class Kernel:
         impl.get_runtime().kernels.append(self)
         self.reset()
         self.kernel_cpp = None
-        self.compiled_kernels = {}
+        self.compiled_kernels: dict[CompiledKernelKeyType, KernelCxx] = {}
         self.has_print = False
 
     def ast_builder(self) -> ASTBuilder:
         assert self.kernel_cpp is not None
         return self.kernel_cpp.ast_builder()
 
-    def reset(self):
+    def reset(self) -> None:
         self.runtime = impl.get_runtime()
         self.compiled_kernels = {}
 
-    def extract_arguments(self):
+    def extract_arguments(self) -> None:
         sig = inspect.signature(self.func)
         if sig.return_annotation not in (inspect._empty, None):
             self.return_type = sig.return_annotation
-            if sys.version_info >= (3, 9):
-                if (
-                    isinstance(self.return_type, (types.GenericAlias, typing._GenericAlias))
-                    and self.return_type.__origin__ is tuple
-                ):
-                    self.return_type = self.return_type.__args__
-            else:
-                if isinstance(self.return_type, typing._GenericAlias) and self.return_type.__origin__ is tuple:
-                    self.return_type = self.return_type.__args__
+            if (
+                isinstance(self.return_type, (types.GenericAlias, typing._GenericAlias))  # type: ignore
+                and self.return_type.__origin__ is tuple
+            ):
+                self.return_type = self.return_type.__args__
             if not isinstance(self.return_type, (list, tuple)):
                 self.return_type = (self.return_type,)
             for return_type in self.return_type:
@@ -641,11 +676,13 @@ class Kernel:
                     pass
                 elif annotation == template:
                     pass
+                elif isinstance(annotation, type) and dataclasses.is_dataclass(annotation):
+                    pass
                 else:
                     raise TaichiSyntaxError(f"Invalid type annotation (argument {i}) of Taichi kernel: {annotation}")
             self.arguments.append(KernelArgument(annotation, param.name, param.default))
 
-    def materialize(self, key, args: list[Any], arg_features):
+    def materialize(self, key: CompiledKernelKeyType | None, args: tuple[Any, ...], arg_features):
         if key is None:
             key = (self.func, 0, self.autodiff_mode)
         self.runtime.materialize()
@@ -668,7 +705,8 @@ class Kernel:
 
         # Do not change the name of 'taichi_ast_generator'
         # The warning system needs this identifier to remove unnecessary messages
-        def taichi_ast_generator(kernel_cxx):
+        def taichi_ast_generator(kernel_cxx: Kernel):  # not sure if this type is correct, seems doubtful
+            nonlocal tree
             if self.runtime.inside_kernel:
                 raise TaichiSyntaxError(
                     "Kernels cannot call other kernels. I.e., nested kernels are not allowed. "
@@ -678,13 +716,13 @@ class Kernel:
                 )
             self.kernel_cpp = kernel_cxx
             self.runtime.inside_kernel = True
-            self.runtime.current_kernel = self
+            self.runtime._current_kernel = self
             assert self.runtime.compiling_callable is None
             self.runtime.compiling_callable = kernel_cxx
             try:
                 ctx.ast_builder = kernel_cxx.ast_builder()
 
-                def ast_to_dict(node):
+                def ast_to_dict(node: ast.AST | list | primitive_types._python_primitive_types):
                     if isinstance(node, ast.AST):
                         fields = {k: ast_to_dict(v) for k, v in ast.iter_fields(node)}
                         return {
@@ -717,20 +755,22 @@ class Kernel:
                     output_file.write_text(
                         json.dumps({"elapsed_txt": elapsed_txt, "elapsed_json": elapsed_json}, indent=2)
                     )
+                struct_locals = extract_struct_locals_from_context(ctx)
+                tree = unpack_ndarray_struct(tree, struct_locals=struct_locals)
                 transform_tree(tree, ctx)
                 if not ctx.is_real_function:
                     if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
                         raise TaichiSyntaxError("Kernel has a return type but does not have a return statement")
             finally:
                 self.runtime.inside_kernel = False
-                self.runtime.current_kernel = None
+                self.runtime._current_kernel = None
                 self.runtime.compiling_callable = None
 
         taichi_kernel = impl.get_runtime().prog.create_kernel(taichi_ast_generator, kernel_name, self.autodiff_mode)
         assert key not in self.compiled_kernels
         self.compiled_kernels[key] = taichi_kernel
 
-    def launch_kernel(self, t_kernel, *args):
+    def launch_kernel(self, t_kernel: KernelCxx, *args) -> Any:
         assert len(args) == len(self.arguments), f"{len(self.arguments)} arguments needed but {len(args)} provided"
 
         tmps = []
@@ -738,24 +778,27 @@ class Kernel:
 
         actual_argument_slot = 0
         launch_ctx = t_kernel.make_launch_context()
-        max_arg_num = 64
+        max_arg_num = 512
         exceed_max_arg_num = False
 
-        def set_arg_ndarray(indices, v):
+        def set_arg_ndarray(indices: tuple[int, ...], v: taichi.lang._ndarray.Ndarray) -> None:
             v_primal = v.arr
             v_grad = v.grad.arr if v.grad else None
             if v_grad is None:
-                launch_ctx.set_arg_ndarray(indices, v_primal)
+                launch_ctx.set_arg_ndarray(indices, v_primal)  # type: ignore , solvable probably, just not today
             else:
-                launch_ctx.set_arg_ndarray_with_grad(indices, v_primal, v_grad)
+                launch_ctx.set_arg_ndarray_with_grad(indices, v_primal, v_grad)  # type: ignore
 
-        def set_arg_texture(indices, v):
+        def set_arg_texture(indices: tuple[int, ...], v: taichi.lang._texture.Texture) -> None:
             launch_ctx.set_arg_texture(indices, v.tex)
 
-        def set_arg_rw_texture(indices, v):
+        def set_arg_rw_texture(indices: tuple[int, ...], v: taichi.lang._texture.Texture) -> None:
             launch_ctx.set_arg_rw_texture(indices, v.tex)
 
-        def set_arg_ext_array(indices, v, needed):
+        def set_arg_ext_array(indices: tuple[int, ...], v: Any, needed: ndarray_type.NdarrayType) -> None:
+            # v is things like torch Tensor and numpy array
+            # Not adding type for this, since adds additional dependencies
+            #
             # Element shapes are already specialized in Taichi codegen.
             # The shape information for element dims are no longer needed.
             # Therefore we strip the element shapes from the shape vector,
@@ -770,6 +813,7 @@ class Kernel:
                 element_dim = needed.dtype.ndim
                 array_shape = v.shape[element_dim:] if is_soa else v.shape[:-element_dim]
             if isinstance(v, np.ndarray):
+                # numpy
                 if v.flags.c_contiguous:
                     launch_ctx.set_arg_external_array_with_shape(indices, int(v.ctypes.data), v.nbytes, array_shape, 0)
                 elif v.flags.f_contiguous:
@@ -840,11 +884,11 @@ class Kernel:
                         int(v.grad.data_ptr()) if v.grad is not None else 0,
                     )
                 else:
-                    raise TaichiRuntimeTypeError(
-                        f"Argument {needed.to_string()} cannot be converted into required type {v}"
-                    )
+                    raise TaichiRuntimeTypeError(f"Argument {needed} cannot be converted into required type {type(v)}")
             elif has_paddle():
-                import paddle  # pylint: disable=C0415
+                # Do we want to continue to support paddle? :thinking_face:
+                # #maybeprunable
+                import paddle  # pylint: disable=C0415  # type: ignore
 
                 if isinstance(v, paddle.Tensor):
                     # For now, paddle.fluid.core.Tensor._ptr() is only available on develop branch
@@ -875,26 +919,22 @@ class Kernel:
                         indices, int(tmp._ptr()), v.element_size() * v.size, array_shape, 0
                     )
                 else:
-                    raise TaichiRuntimeTypeError(
-                        f"Argument {needed.to_string()} cannot be converted into required type {v}"
-                    )
+                    raise TaichiRuntimeTypeError(f"Argument {needed} cannot be converted into required type {v}")
             else:
-                raise TaichiRuntimeTypeError(
-                    f"Argument {needed.to_string()} cannot be converted into required type {v}"
-                )
+                raise TaichiRuntimeTypeError(f"Argument {needed} cannot be converted into required type {v}")
 
-        def set_arg_matrix(indices, v, needed):
-            def cast_float(x):
+        def set_arg_matrix(indices: tuple[int, ...], v, needed) -> None:
+            def cast_float(x: float | np.floating | np.integer | int) -> float:
                 if not isinstance(x, (int, float, np.integer, np.floating)):
                     raise TaichiRuntimeTypeError(
-                        f"Argument {needed.dtype.to_string()} cannot be converted into required type {type(x)}"
+                        f"Argument {needed.dtype} cannot be converted into required type {type(x)}"
                     )
                 return float(x)
 
-            def cast_int(x):
+            def cast_int(x: int | np.integer) -> int:
                 if not isinstance(x, (int, np.integer)):
                     raise TaichiRuntimeTypeError(
-                        f"Argument {needed.dtype.to_string()} cannot be converted into required type {type(x)}"
+                        f"Argument {needed.dtype} cannot be converted into required type {type(x)}"
                     )
                 return int(x)
 
@@ -913,96 +953,120 @@ class Kernel:
             v = needed(*v)
             needed.set_kernel_struct_args(v, launch_ctx, indices)
 
-        def set_arg_sparse_matrix_builder(indices, v):
+        def set_arg_sparse_matrix_builder(indices: tuple[int, ...], v) -> None:
             # Pass only the base pointer of the ti.types.sparse_matrix_builder() argument
             launch_ctx.set_arg_uint(indices, v._get_ndarray_addr())
 
         set_later_list = []
 
-        def recursive_set_args(needed, provided, v, indices):
+        def recursive_set_args(needed_arg_type: Type, provided_arg_type: Type, v: Any, indices: tuple[int, ...]) -> int:
+            """
+            Returns the number of kernel args set
+            e.g. templates don't set kernel args, so returns 0
+            a single ndarray is 1 kernel arg, so returns 1
+            a struct of 3 ndarrays would set 3 kernel args, so return 3
+            """
             in_argpack = len(indices) > 1
             nonlocal actual_argument_slot, exceed_max_arg_num, set_later_list
             if actual_argument_slot >= max_arg_num:
                 exceed_max_arg_num = True
                 return 0
             actual_argument_slot += 1
-            if isinstance(needed, ArgPackType):
+            if isinstance(needed_arg_type, ArgPackType):
                 if not isinstance(v, ArgPack):
-                    raise TaichiRuntimeTypeError.get(indices, str(needed), str(provided))
+                    raise TaichiRuntimeTypeError.get(indices, str(needed_arg_type), str(provided_arg_type))
                 idx_new = 0
-                for j, (name, anno) in enumerate(needed.members.items()):
+                for j, (name, anno) in enumerate(needed_arg_type.members.items()):
                     idx_new += recursive_set_args(anno, type(v[name]), v[name], indices + (idx_new,))
                 launch_ctx.set_arg_argpack(indices, v._ArgPack__argpack)  # type: ignore
                 return 1
             # Note: do not use sth like "needed == f32". That would be slow.
-            if id(needed) in primitive_types.real_type_ids:
+            if id(needed_arg_type) in primitive_types.real_type_ids:
                 if not isinstance(v, (float, int, np.floating, np.integer)):
-                    raise TaichiRuntimeTypeError.get(indices, needed.to_string(), provided)
+                    raise TaichiRuntimeTypeError.get(indices, needed_arg_type.to_string(), provided_arg_type)
                 if in_argpack:
                     return 1
                 launch_ctx.set_arg_float(indices, float(v))
                 return 1
-            if id(needed) in primitive_types.integer_type_ids:
+            if id(needed_arg_type) in primitive_types.integer_type_ids:
                 if not isinstance(v, (int, np.integer)):
-                    raise TaichiRuntimeTypeError.get(indices, needed.to_string(), provided)
+                    raise TaichiRuntimeTypeError.get(indices, needed_arg_type.to_string(), provided_arg_type)
                 if in_argpack:
                     return 1
-                if is_signed(cook_dtype(needed)):
+                if is_signed(cook_dtype(needed_arg_type)):
                     launch_ctx.set_arg_int(indices, int(v))
                 else:
                     launch_ctx.set_arg_uint(indices, int(v))
                 return 1
-            if isinstance(needed, sparse_matrix_builder):
+            if isinstance(needed_arg_type, sparse_matrix_builder):
                 if in_argpack:
                     set_later_list.append((set_arg_sparse_matrix_builder, (v,)))
                     return 0
                 set_arg_sparse_matrix_builder(indices, v)
                 return 1
-            if isinstance(needed, ndarray_type.NdarrayType) and isinstance(v, taichi.lang._ndarray.Ndarray):
+            if dataclasses.is_dataclass(needed_arg_type):
+                assert provided_arg_type == needed_arg_type
+                idx = 0
+                for j, field in enumerate(dataclasses.fields(needed_arg_type)):
+                    assert not isinstance(field.type, str)
+                    field_value = getattr(v, field.name)
+                    idx += recursive_set_args(field.type, field.type, field_value, (indices[0] + idx,))
+                return idx
+            if isinstance(needed_arg_type, ndarray_type.NdarrayType) and isinstance(v, taichi.lang._ndarray.Ndarray):
                 if in_argpack:
                     set_later_list.append((set_arg_ndarray, (v,)))
                     return 0
                 set_arg_ndarray(indices, v)
                 return 1
-            if isinstance(needed, texture_type.TextureType) and isinstance(v, taichi.lang._texture.Texture):
+            if isinstance(needed_arg_type, texture_type.TextureType) and isinstance(v, taichi.lang._texture.Texture):
                 if in_argpack:
                     set_later_list.append((set_arg_texture, (v,)))
                     return 0
                 set_arg_texture(indices, v)
                 return 1
-            if isinstance(needed, texture_type.RWTextureType) and isinstance(v, taichi.lang._texture.Texture):
+            if isinstance(needed_arg_type, texture_type.RWTextureType) and isinstance(v, taichi.lang._texture.Texture):
                 if in_argpack:
                     set_later_list.append((set_arg_rw_texture, (v,)))
                     return 0
                 set_arg_rw_texture(indices, v)
                 return 1
-            if isinstance(needed, ndarray_type.NdarrayType):
+            if isinstance(needed_arg_type, ndarray_type.NdarrayType):
                 if in_argpack:
-                    set_later_list.append((set_arg_ext_array, (v, needed)))
+                    set_later_list.append((set_arg_ext_array, (v, needed_arg_type)))
                     return 0
-                set_arg_ext_array(indices, v, needed)
+                set_arg_ext_array(indices, v, needed_arg_type)
                 return 1
-            if isinstance(needed, MatrixType):
+            if isinstance(needed_arg_type, MatrixType):
                 if in_argpack:
                     return 1
-                set_arg_matrix(indices, v, needed)
+                set_arg_matrix(indices, v, needed_arg_type)
                 return 1
-            if isinstance(needed, StructType):
+            if isinstance(needed_arg_type, StructType):
                 if in_argpack:
                     return 1
-                if not isinstance(v, needed):
-                    raise TaichiRuntimeTypeError(f"Argument {provided} cannot be converted into required type {needed}")
-                needed.set_kernel_struct_args(v, launch_ctx, indices)
+                # Unclear how to make the following pass typing checks
+                # StructType implements __instancecheck__, which should be a classmethod, but
+                # is currently an instance method
+                # TODO: look into this more deeply at some point
+                if not isinstance(v, needed_arg_type):  # type: ignore
+                    raise TaichiRuntimeTypeError(
+                        f"Argument {provided_arg_type} cannot be converted into required type {needed_arg_type}"
+                    )
+                needed_arg_type.set_kernel_struct_args(v, launch_ctx, indices)
                 return 1
-            raise ValueError(f"Argument type mismatch. Expecting {needed}, got {type(v)}.")
+            if needed_arg_type == template or isinstance(needed_arg_type, template):
+                return 0
+            raise ValueError(f"Argument type mismatch. Expecting {needed_arg_type}, got {type(v)}.")
 
         template_num = 0
-        for i, val in enumerate(args):
-            needed_ = self.arguments[i].annotation
+        i_out = 0
+        for i_in, val in enumerate(args):
+            needed_ = self.arguments[i_in].annotation
             if needed_ == template or isinstance(needed_, template):
                 template_num += 1
+                i_out += 1
                 continue
-            recursive_set_args(needed_, type(val), val, (i - template_num,))
+            i_out += recursive_set_args(needed_, type(val), val, (i_out - template_num,))
 
         for i, (set_arg_func, params) in enumerate(set_later_list):
             set_arg_func((len(args) - template_num + i,), *params)
@@ -1043,7 +1107,7 @@ class Kernel:
 
         return ret
 
-    def construct_kernel_ret(self, launch_ctx, ret_type, index=()):
+    def construct_kernel_ret(self, launch_ctx: KernelLaunchContext, ret_type: Any, index: tuple[int, ...] = ()):
         if isinstance(ret_type, CompoundType):
             return ret_type.from_kernel_struct_ret(launch_ctx, index)
         if ret_type in primitive_types.integer_types:
@@ -1054,7 +1118,7 @@ class Kernel:
             return launch_ctx.get_struct_ret_float(index)
         raise TaichiRuntimeTypeError(f"Invalid return type on index={index}")
 
-    def ensure_compiled(self, *args):
+    def ensure_compiled(self, *args: tuple[Any, ...]) -> tuple[Callable, int, AutodiffMode]:
         instance_id, arg_features = self.mapper.lookup(args)
         key = (self.func, instance_id, self.autodiff_mode)
         self.materialize(key=key, args=args, arg_features=arg_features)
@@ -1063,8 +1127,8 @@ class Kernel:
     # For small kernels (< 3us), the performance can be pretty sensitive to overhead in __call__
     # Thus this part needs to be fast. (i.e. < 3us on a 4 GHz x64 CPU)
     @_shell_pop_print
-    def __call__(self, *args, **kwargs):
-        args = _process_args(self, args, kwargs)
+    def __call__(self, *args, **kwargs) -> Any:
+        args = _process_args(self, is_func=False, args=args, kwargs=kwargs)
 
         # Transform the primal kernel to forward mode grad kernel
         # then recover to primal when exiting the forward mode manager
@@ -1113,7 +1177,7 @@ _KERNEL_CLASS_STACKFRAME_STMT_RES = [
 ]
 
 
-def _inside_class(level_of_class_stackframe):
+def _inside_class(level_of_class_stackframe: int) -> bool:
     try:
         maybe_class_frame = sys._getframe(level_of_class_stackframe)
         statement_list = inspect.getframeinfo(maybe_class_frame)[3]
@@ -1128,7 +1192,7 @@ def _inside_class(level_of_class_stackframe):
     return False
 
 
-def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool = False):
+def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool = False) -> TaichiCallable:
     # Can decorators determine if a function is being defined inside a class?
     # https://stackoverflow.com/a/8793684/12003165
     is_classkernel = _inside_class(level_of_class_stackframe + 1)
@@ -1140,6 +1204,7 @@ def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool 
     # Having |primal| contains |grad| makes the tape work.
     primal.grad = adjoint
 
+    wrapped: TaichiCallable
     if is_classkernel:
         # For class kernels, their primal/adjoint callables are constructed
         # when the kernel is accessed via the instance inside
@@ -1149,17 +1214,18 @@ def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool 
         #
         # See also: _BoundedDifferentiableMethod, data_oriented.
         @functools.wraps(_func)
-        def wrapped(*args, **kwargs):
+        def wrapped_classkernel(*args, **kwargs):
             # If we reach here (we should never), it means the class is not decorated
             # with @ti.data_oriented, otherwise getattr would have intercepted the call.
             clsobj = type(args[0])
             assert not hasattr(clsobj, "_data_oriented")
             raise TaichiSyntaxError(f"Please decorate class {clsobj.__name__} with @ti.data_oriented")
 
+        wrapped = TaichiCallable(_func, wrapped_classkernel)
     else:
 
         @functools.wraps(_func)
-        def wrapped(*args, **kwargs):
+        def wrapped_func(*args, **kwargs):
             try:
                 return primal(*args, **kwargs)
             except (TaichiCompilationError, TaichiRuntimeError) as e:
@@ -1167,6 +1233,7 @@ def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool 
                     raise e
                 raise type(e)("\n" + str(e)) from None
 
+        wrapped = TaichiCallable(_func, wrapped_func)
         wrapped.grad = adjoint
 
     wrapped._is_wrapped_kernel = True
@@ -1208,7 +1275,7 @@ def kernel(fn: Callable):
 
 
 class _BoundedDifferentiableMethod:
-    def __init__(self, kernel_owner, wrapped_kernel_func):
+    def __init__(self, kernel_owner: Any, wrapped_kernel_func: TaichiCallable | BoundTaichiCallable):
         clsobj = type(kernel_owner)
         if not getattr(clsobj, "_data_oriented", False):
             raise TaichiSyntaxError(f"Please decorate class {clsobj.__name__} with @ti.data_oriented")
@@ -1220,15 +1287,18 @@ class _BoundedDifferentiableMethod:
 
     def __call__(self, *args, **kwargs):
         try:
+            assert self._primal is not None
             if self._is_staticmethod:
                 return self._primal(*args, **kwargs)
             return self._primal(self._kernel_owner, *args, **kwargs)
+
         except (TaichiCompilationError, TaichiRuntimeError) as e:
             if impl.get_runtime().print_full_traceback:
                 raise e
             raise type(e)("\n" + str(e)) from None
 
-    def grad(self, *args, **kwargs):
+    def grad(self, *args, **kwargs) -> Kernel:
+        assert self._adjoint is not None
         return self._adjoint(self._kernel_owner, *args, **kwargs)
 
 
@@ -1275,11 +1345,11 @@ def data_oriented(cls):
                 wrapped = x.__func__
             else:
                 wrapped = x
+            assert isinstance(wrapped, (BoundTaichiCallable, TaichiCallable))
             wrapped._is_staticmethod = is_staticmethod
-            assert inspect.isfunction(wrapped)
             if wrapped._is_classkernel:
                 ret = _BoundedDifferentiableMethod(self, wrapped)
-                ret.__name__ = wrapped.__name__
+                ret.__name__ = wrapped.__name__  # type: ignore
                 if is_property:
                     return ret()
                 return ret

@@ -5,7 +5,6 @@
 
 #include "taichi/rhi/metal/metal_api.h"
 #include "taichi/runtime/gfx/runtime.h"
-#include "taichi/rhi/dx/dx_api.h"
 #include "taichi/common/core.h"
 #include "taichi/common/interface.h"
 #include "taichi/common/task.h"
@@ -30,14 +29,6 @@
 
 #ifdef TI_WITH_VULKAN
 #include "taichi/rhi/vulkan/vulkan_loader.h"
-#endif
-
-#ifdef TI_WITH_OPENGL
-#include "taichi/rhi/opengl/opengl_api.h"
-#endif
-
-#ifdef TI_WITH_DX12
-#include "taichi/rhi/dx12/dx12_api.h"
 #endif
 
 namespace taichi {
@@ -148,28 +139,12 @@ void export_misc(py::module &m) {
 #else
   m.def("with_metal", []() { return false; });
 #endif
-#ifdef TI_WITH_OPENGL
-  m.def("with_opengl", taichi::lang::opengl::is_opengl_api_available,
-        py::arg("use_gles") = false);
-#else
-  m.def("with_opengl", [](bool use_gles) { return false; });
-#endif
 #ifdef TI_WITH_VULKAN
   m.def("with_vulkan", taichi::lang::vulkan::is_vulkan_api_available);
   m.def("set_vulkan_visible_device",
         taichi::lang::vulkan::set_vulkan_visible_device);
 #else
   m.def("with_vulkan", []() { return false; });
-#endif
-#ifdef TI_WITH_DX11
-  m.def("with_dx11", taichi::lang::directx11::is_dx_api_available);
-#else
-  m.def("with_dx11", []() { return false; });
-#endif
-#ifdef TI_WITH_DX12
-  m.def("with_dx12", taichi::lang::directx12::is_dx12_api_available);
-#else
-  m.def("with_dx12", []() { return false; });
 #endif
 
   m.def("clean_offline_cache_files",

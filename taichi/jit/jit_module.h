@@ -12,7 +12,7 @@ namespace taichi::lang {
 
 // A architecture-specific JIT module that initializes with an **LLVM** module
 // and allows the user to call its functions
-// TODO: should we generalize this to include the Metal and OpenGL backends as
+// TODO: should we generalize this to include the Metal backends as
 // well?
 
 class JITModule {

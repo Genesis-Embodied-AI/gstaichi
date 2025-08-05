@@ -91,3 +91,8 @@ imgui.ini
 *.dylib
 *.ply
 !pyrightconfig.json
+*.whl
+*.so
+stubs/
+CHANGELOG.md
+python/taichi/_version.py

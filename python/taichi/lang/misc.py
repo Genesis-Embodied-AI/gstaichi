@@ -1,7 +1,6 @@
 # type: ignore
 
 import atexit
-import functools
 import os
 import shutil
 import tempfile
@@ -129,34 +128,14 @@ metal = _ti_core.metal
 """
 # ----------------------
 
-opengl = _ti_core.opengl
-"""The OpenGL backend. OpenGL 4.3 required.
-"""
-# ----------------------
-
-gles = _ti_core.gles
-"""The OpenGL ES backend. OpenGL ES 3.1 required.
-"""
-# ----------------------
-
 vulkan = _ti_core.vulkan
 """The Vulkan backend.
 """
 # ----------------------
 
-dx11 = _ti_core.dx11
-"""The DX11 backend.
-"""
-# ----------------------
-
-dx12 = _ti_core.dx12
-"""The DX11 backend.
-"""
-# ----------------------
-
-gpu = [cuda, metal, vulkan, opengl, dx11, dx12, gles, amdgpu]
+gpu = [cuda, metal, vulkan, amdgpu]
 """A list of GPU backends supported on the current system.
-Currently contains 'cuda', 'metal', 'opengl', 'vulkan', 'dx11', 'dx12', 'gles', 'amdgpu'.
+Currently contains 'cuda', 'metal', 'vulkan', 'amdgpu'.
 
 When this is used, Taichi automatically picks the matching GPU backend. If no
 GPU is detected, Taichi falls back to the CPU backend.
@@ -473,7 +452,7 @@ def init(
 
 def no_activate(*args):
     """Deactivates a SNode pointer."""
-    assert isinstance(get_runtime().compiling_callable, _ti_core.Kernel)
+    assert isinstance(get_runtime().compiling_callable, _ti_core.KernelCxx)
     for v in args:
         get_runtime().compiling_callable.no_activate(v._snode.ptr)
 
@@ -726,11 +705,7 @@ def is_arch_supported(arch):
         cuda: _ti_core.with_cuda,
         amdgpu: _ti_core.with_amdgpu,
         metal: _ti_core.with_metal,
-        opengl: functools.partial(_ti_core.with_opengl, False),
-        gles: functools.partial(_ti_core.with_opengl, True),
         vulkan: _ti_core.with_vulkan,
-        dx11: _ti_core.with_dx11,
-        dx12: _ti_core.with_dx12,
         cpu: lambda: True,
     }
     with_arch = arch_table.get(arch, lambda: False)
@@ -782,16 +757,12 @@ __all__ = [
     "l",
     "x86_64",
     "x64",
-    "dx11",
-    "dx12",
     "arm64",
     "cpu",
     "cuda",
     "amdgpu",
-    "gles",
     "gpu",
     "metal",
-    "opengl",
     "vulkan",
     "extension",
     "loop_config",

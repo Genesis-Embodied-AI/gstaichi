@@ -3,6 +3,7 @@
 from typing import Any, Optional, Sequence, Union
 
 from taichi._lib import core as _ti_core
+from taichi._lib.core.taichi_python import SNodeCxx
 from taichi._snode.snode_tree import SNodeTree
 from taichi.lang import impl, snode
 from taichi.lang.exception import TaichiRuntimeError
@@ -37,7 +38,7 @@ class FieldsBuilder:
     """
 
     def __init__(self):
-        self.ptr = _snode_registry.create_root(impl.get_runtime().prog)
+        self.ptr: SNodeCxx = _snode_registry.create_root(impl.get_runtime().prog)
         self.root = snode.SNode(self.ptr)
         self.finalized = False
         self.empty = True
@@ -171,17 +172,15 @@ class FieldsBuilder:
             raise_warning (bool): Raise warning or not."""
         return self._finalize(raise_warning, compile_only=False)
 
-    def _finalize_for_aot(self):
-        """Constructs the SNodeTree and compiles the type for AOT purpose."""
-        return self._finalize(raise_warning=False, compile_only=True)
-
-    def _finalize(self, raise_warning, compile_only):
+    def _finalize(self, raise_warning, compile_only) -> SNodeTree:
         self._check_not_finalized()
         if self.empty and raise_warning:
             warning("Finalizing an empty FieldsBuilder!")
         self.finalized = True
         impl.get_runtime().finalize_fields_builder(self)
-        return SNodeTree(_ti_core.finalize_snode_tree(_snode_registry, self.ptr, impl.get_runtime().prog, compile_only))
+        return SNodeTree(
+            _ti_core.finalize_snode_tree(_snode_registry, self.ptr, impl.get_runtime()._prog, compile_only)
+        )
 
     def _check_not_finalized(self):
         if self.finalized:

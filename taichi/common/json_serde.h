@@ -36,6 +36,7 @@
 #include <unordered_map>
 #include <type_traits>
 #include <optional>
+#include <utility>
 #include "taichi/common/json.h"
 
 namespace liong {

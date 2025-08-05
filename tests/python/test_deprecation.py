@@ -9,26 +9,6 @@ from tests import test_utils
 
 
 @test_utils.test()
-def test_remove_element_shape_scalar():
-    with pytest.raises(
-        ti.TaichiRuntimeError,
-        match="The element_shape argument for scalar is deprecated in v1.6.0, and is removed in v1.7.0. "
-        "Please remove them.",
-    ):
-        sym_x = ti.graph.Arg(ti.graph.ArgKind.SCALAR, "x", dtype=ti.f32, element_shape=())
-
-
-@test_utils.test()
-def test_remove_element_shape_ndarray_arg():
-    with pytest.raises(
-        ti.TaichiRuntimeError,
-        match="The element_shape argument for ndarray is deprecated in v1.6.0, and it is removed in v1.7.0. "
-        "Please use vector or matrix data type instead.",
-    ):
-        ti.graph.Arg(ti.graph.ArgKind.NDARRAY, "x", ti.f32, ndim=1, element_shape=(1,))
-
-
-@test_utils.test()
 def test_remove_is_is_not():
     with pytest.raises(ti.TaichiSyntaxError, match='Operator "is" in Taichi scope is not supported'):
 

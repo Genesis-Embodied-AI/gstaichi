@@ -41,7 +41,7 @@ extensions = [
 ]
 
 # https://myst-parser.readthedocs.io/en/latest/syntax/optional.html
-myst_enable_extensions = ["colon_fence", "dollarmath"]
+myst_enable_extensions = ["colon_fence", "dollarmath", "amsmath"]
 # https://github.com/executablebooks/MyST-Parser/issues/519#issuecomment-1037239655
 myst_heading_anchors = 4
 
@@ -53,35 +53,6 @@ templates_path = ["_templates"]
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "pydata_sphinx_theme"
-# html_logo = "_static/bigger_text.png"
-# html_favicon = "_static/option2_shadow_1.svg"
-
-# json_url = "_static/version_switcher.json"
-# version_match = os.environ.get("READTHEDOCS_VERSION")
-# if version_match is None:
-#     version_match = "v" + __version__
-# html_theme_options = {
-#     "show_nav_level": 2,
-#     "use_edit_page_button": True,
-#     "logo": {
-#         "image_dark": "_static/bigger_text_white.png",
-#     },
-#     "navbar_center": ["version-switcher", "navbar-nav"],
-#     "show_version_warning_banner": False,
-#     "switcher": {
-#         "json_url": json_url,
-#         "version_match": version_match,
-#     },
-# }
-
-# html_context = {
-#     "display_github": True,
-#     "github_user": "genesis-embodied-ai",
-#     "github_repo": "genesis-doc",
-#     "github_version": "main",
-#     "conf_py_path": "/source/",
-#     "doc_path": "/source",
-# }
 html_css_files = [
     "css/custom.css",
 ]

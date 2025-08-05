@@ -2,8 +2,6 @@
 
 #include "taichi/analysis/offline_cache_util.h"
 #include "taichi/codegen/spirv/kernel_compiler.h"
-#include "taichi/rhi/opengl/opengl_api.h"
-#include "taichi/runtime/gfx/aot_module_builder_impl.h"
 #include "taichi/runtime/gfx/kernel_launcher.h"
 #include "taichi/rhi/common/host_memory_pool.h"
 
@@ -18,26 +16,12 @@ void GfxProgramImpl::compile_snode_tree_types(SNodeTree *tree) {
   } else {
     gfx::CompiledSNodeStructs compiled_structs =
         gfx::compile_snode_structs(*tree->root());
-    aot_compiled_snode_structs_.push_back(compiled_structs);
   }
 }
 
 void GfxProgramImpl::materialize_snode_tree(SNodeTree *tree,
                                             uint64 *result_buffer) {
   snode_tree_mgr_->materialize_snode_tree(tree);
-}
-
-std::unique_ptr<AotModuleBuilder> GfxProgramImpl::make_aot_module_builder(
-    const DeviceCapabilityConfig &caps) {
-  if (runtime_) {
-    return std::make_unique<gfx::AotModuleBuilderImpl>(
-        snode_tree_mgr_->get_compiled_structs(),
-        get_kernel_compilation_manager(), *config, caps);
-  } else {
-    return std::make_unique<gfx::AotModuleBuilderImpl>(
-        aot_compiled_snode_structs_, get_kernel_compilation_manager(), *config,
-        caps);
-  }
 }
 
 DeviceAllocation GfxProgramImpl::allocate_memory_on_device(
@@ -68,8 +52,7 @@ GfxProgramImpl::~GfxProgramImpl() {
 
 std::unique_ptr<KernelCompiler> GfxProgramImpl::make_kernel_compiler() {
   spirv::KernelCompiler::Config cfg;
-  cfg.compiled_struct_data = runtime_ ? &snode_tree_mgr_->get_compiled_structs()
-                                      : &aot_compiled_snode_structs_;
+  cfg.compiled_struct_data = &snode_tree_mgr_->get_compiled_structs();
   return std::make_unique<spirv::KernelCompiler>(std::move(cfg));
 }
 

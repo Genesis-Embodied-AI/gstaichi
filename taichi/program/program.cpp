@@ -6,7 +6,6 @@
 #include "taichi/program/extension.h"
 #include "taichi/codegen/cpu/codegen_cpu.h"
 #include "taichi/struct/struct.h"
-#include "taichi/runtime/program_impls/opengl/opengl_program.h"
 #include "taichi/runtime/program_impls/metal/metal_program.h"
 #include "taichi/platform/cuda/detect_cuda.h"
 #include "taichi/system/timeline.h"
@@ -24,18 +23,6 @@
 #ifdef TI_WITH_VULKAN
 #include "taichi/runtime/program_impls/vulkan/vulkan_program.h"
 #include "taichi/rhi/vulkan/vulkan_loader.h"
-#endif
-#ifdef TI_WITH_OPENGL
-#include "taichi/runtime/program_impls/opengl/opengl_program.h"
-#include "taichi/rhi/opengl/opengl_api.h"
-#endif
-#ifdef TI_WITH_DX11
-#include "taichi/runtime/program_impls/dx/dx_program.h"
-#include "taichi/rhi/dx/dx_api.h"
-#endif
-#ifdef TI_WITH_DX12
-#include "taichi/runtime/program_impls/dx12/dx12_program.h"
-#include "taichi/rhi/dx12/dx12_api.h"
 #endif
 #ifdef TI_WITH_METAL
 #include "taichi/runtime/program_impls/metal/metal_program.h"
@@ -79,17 +66,7 @@ Program::Program(Arch desired_arch) : snode_rw_accessors_bank_(this) {
   profiler = make_profiler(config.arch, config.kernel_profiler);
   if (arch_uses_llvm(config.arch)) {
 #ifdef TI_WITH_LLVM
-    if (config.arch != Arch::dx12) {
-      program_impl_ = std::make_unique<LlvmProgramImpl>(config, profiler.get());
-    } else {
-      // NOTE: use Dx12ProgramImpl to avoid using LlvmRuntimeExecutor for dx12.
-#ifdef TI_WITH_DX12
-      TI_ASSERT(directx12::is_dx12_api_available());
-      program_impl_ = std::make_unique<Dx12ProgramImpl>(config);
-#else
-      TI_ERROR("This taichi is not compiled with DX12");
-#endif
-    }
+    program_impl_ = std::make_unique<LlvmProgramImpl>(config, profiler.get());
 #else
     TI_ERROR("This taichi is not compiled with LLVM");
 #endif
@@ -106,27 +83,6 @@ Program::Program(Arch desired_arch) : snode_rw_accessors_bank_(this) {
     program_impl_ = std::make_unique<VulkanProgramImpl>(config);
 #else
     TI_ERROR("This taichi is not compiled with Vulkan")
-#endif
-  } else if (config.arch == Arch::dx11) {
-#ifdef TI_WITH_DX11
-    TI_ASSERT(directx11::is_dx_api_available());
-    program_impl_ = std::make_unique<Dx11ProgramImpl>(config);
-#else
-    TI_ERROR("This taichi is not compiled with DX11");
-#endif
-  } else if (config.arch == Arch::opengl) {
-#ifdef TI_WITH_OPENGL
-    TI_ASSERT(opengl::initialize_opengl(false));
-    program_impl_ = std::make_unique<OpenglProgramImpl>(config);
-#else
-    TI_ERROR("This taichi is not compiled with OpenGL");
-#endif
-  } else if (config.arch == Arch::gles) {
-#ifdef TI_WITH_OPENGL
-    TI_ASSERT(opengl::initialize_opengl(true));
-    program_impl_ = std::make_unique<OpenglProgramImpl>(config);
-#else
-    TI_ERROR("This taichi is not compiled with OpenGL");
 #endif
   } else {
     TI_NOT_IMPLEMENTED
@@ -213,9 +169,7 @@ static void remove_rw_accessor_cache(
 
 void Program::destroy_snode_tree(SNodeTree *snode_tree) {
   TI_ASSERT(arch_uses_llvm(compile_config().arch) ||
-            compile_config().arch == Arch::vulkan ||
-            compile_config().arch == Arch::dx11 ||
-            compile_config().arch == Arch::dx12);
+            compile_config().arch == Arch::vulkan);
 
   // When accessing a ti.field at Python scope, SNodeRwAccessorsBank creates
   // a Taichi Kernel to read/write the field in a JIT manner, which caches the
@@ -383,8 +337,7 @@ Ndarray *Program::create_ndarray(const DataType type,
     Arch arch = compile_config().arch;
     if (arch_is_cpu(arch) || arch == Arch::cuda || arch == Arch::amdgpu) {
       fill_ndarray_fast_u32(arr.get(), /*data=*/0);  // NOLINT
-    } else if (arch != Arch::dx12) {
-      // Device api support for dx12 backend are not complete yet
+    } else {
       Stream *stream =
           program_impl_->get_compute_device()->get_compute_stream();
       auto [cmdlist, res] = stream->new_command_list_unique();
@@ -536,24 +489,6 @@ DeviceCapabilityConfig translate_devcaps(const std::vector<std::string> &caps) {
     cfg.set(DeviceCapability::spirv_version, 0x10300);
   }
   return cfg;
-}
-
-std::unique_ptr<AotModuleBuilder> Program::make_aot_module_builder(
-    Arch arch,
-    const std::vector<std::string> &caps) {
-  DeviceCapabilityConfig cfg = translate_devcaps(caps);
-  // FIXME: This couples the runtime backend with the target AOT backend. E.g.
-  // If we want to build a Metal AOT module, we have to be on the macOS
-  // platform. Consider decoupling this part
-  if (arch_uses_llvm(compile_config().arch) ||
-      compile_config().arch == Arch::metal ||
-      compile_config().arch == Arch::vulkan ||
-      compile_config().arch == Arch::opengl ||
-      compile_config().arch == Arch::gles ||
-      compile_config().arch == Arch::dx12) {
-    return program_impl_->make_aot_module_builder(cfg);
-  }
-  return nullptr;
 }
 
 int Program::allocate_snode_tree_id() {
