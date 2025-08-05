@@ -1,6 +1,6 @@
 import re
 
-from taichi_json import (
+from gstaichi_json import (
     Alias,
     BitField,
     BuiltInType,
@@ -227,7 +227,7 @@ def get_declr(x: EntryBase):
                 "#if (UNITY_IOS || UNITY_TVOS || UNITY_WEBGL) && !UNITY_EDITOR",
                 '    [DllImport ("__Internal")]',
                 "#else",
-                '    [DllImport("taichi_unity")]' if x.vendor == "unity" else '    [DllImport("taichi_c_api")]',
+                '    [DllImport("gstaichi_unity")]' if x.vendor == "unity" else '    [DllImport("gstaichi_c_api")]',
                 "#endif",
                 "private static extern " + return_value_type + " " + _T(x.name.snake_case) + "(",
                 ",\n".join(c_function_params),
@@ -274,7 +274,7 @@ def print_module_header(module):
         "using System.Runtime.InteropServices;",
         "using System.Collections.Generic;",
         "",
-        "namespace Taichi.Generated {",
+        "namespace GsTaichi.Generated {",
     ]
 
     for x in module.declr_reg:
@@ -286,7 +286,7 @@ def print_module_header(module):
 
     out += [
         "",
-        "} // namespace Taichi.Generated",
+        "} // namespace GsTaichi.Generated",
         "",
     ]
 
@@ -298,8 +298,8 @@ def generate_module_header(module):
         return
 
     print(f"processing module '{module.name}'")
-    assert re.match("taichi/\w+.h", module.name)
-    module_name = module.name[len("taichi/") : -len(".h")]
+    assert re.match("gstaichi/\w+.h", module.name)
+    module_name = module.name[len("gstaichi/") : -len(".h")]
     path = f"c_api/unity/{module_name}.cs"
     with open(path, "w") as f:
         f.write(print_module_header(module))

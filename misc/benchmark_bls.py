@@ -1,6 +1,6 @@
 import sys
 
-import taichi as ti
+import gstaichi as ti
 
 sys.path.append("../tests/python/")
 

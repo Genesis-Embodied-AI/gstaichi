@@ -2,8 +2,9 @@ import math
 
 import pytest
 
-import taichi as ti
-from taichi.linalg import LinearOperator, MatrixFreeCG
+import gstaichi as ti
+from gstaichi.linalg import LinearOperator, MatrixFreeCG
+
 from tests import test_utils
 
 vk_on_mac = (ti.vulkan, "Darwin")

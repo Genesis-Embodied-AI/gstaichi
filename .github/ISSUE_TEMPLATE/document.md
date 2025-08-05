@@ -1,6 +1,6 @@
 ---
 name: Doc
-about: Have doubts or suggestions about Taichi Docs
+about: Have doubts or suggestions about GsTaichi Docs
 title: ''
 labels: doc
 assignees: ''

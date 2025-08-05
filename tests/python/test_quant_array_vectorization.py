@@ -1,4 +1,5 @@
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
 
@@ -107,7 +108,7 @@ def test_offset_load():
 
 
 # FIXME:
-#   this test fails after we introduced type u1. Actually before we introduced u1 to taichi, this test has already
+#   this test fails after we introduced type u1. Actually before we introduced u1 to gstaichi, this test has already
 #   appeared to be problematic. All problems are related to this code:
 #   `y[i, j] = (num_active_neighbors == 3) | ((num_active_neighbors == 2) & (x[i, j] == 1))`
 #   Before we introduce new type u1, problems arise when:

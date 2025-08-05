@@ -1,7 +1,8 @@
 import pytest
 
-import taichi as ti
-from taichi.lang.misc import get_host_arch_list
+import gstaichi as ti
+from gstaichi.lang.misc import get_host_arch_list
+
 from tests import test_utils
 
 
@@ -49,7 +50,7 @@ def test_assign2_mismatch3():
     def func():
         a[None], b[None] = 2, 3, 4
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -62,7 +63,7 @@ def test_assign2_mismatch1():
     def func():
         a[None], b[None] = 2
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -146,7 +147,7 @@ def test_unpack_mismatch_tuple():
     def func():
         a[None], b[None] = list
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -177,7 +178,7 @@ def test_unpack_mismatch_vector():
         vector = ti.Vector([2, 3, 4])
         a[None], b[None] = vector
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -192,7 +193,7 @@ def test_unpack_mismatch_type():
     def func():
         a[None], b[None] = bad
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -208,7 +209,7 @@ def test_unpack_mismatch_matrix():
         bad = ti.Matrix([[2, 3], [4, 5]])
         a[None], b[None], c[None], d[None] = bad
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 

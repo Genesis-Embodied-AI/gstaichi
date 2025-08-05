@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
 
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
 
@@ -38,7 +39,7 @@ def test_raise_no_gradient():
 
     x[None] = 5.0
     with pytest.raises(
-        ti.TaichiCompilationError,
+        ti.GsTaichiCompilationError,
         match="Gradient x.grad has not been placed, check whether `needs_grad=True`",
     ):
         func(x)

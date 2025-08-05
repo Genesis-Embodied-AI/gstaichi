@@ -1,6 +1,6 @@
 import test_utils
 
-import taichi as ti
+import gstaichi as ti
 
 
 @test_utils.test()

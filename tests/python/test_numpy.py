@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
 
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
 
@@ -168,7 +169,7 @@ def test_numpy_3d_error():
 
     a = np.empty(shape=(n, m, p), dtype=np.int32)
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         test_numpy(a)
 
 

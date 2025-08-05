@@ -15,18 +15,18 @@ Run the following commands:
 $ cd conda
 
 $ conda env create -f conda_env.yaml
-$ conda activate taichi-dev
+$ conda activate gstaichi-dev
 
-# This will only install the dependencies to the 'taichi-dev' environment.
-(taichi-dev) $ python3 -m pip install -r ../requirements_dev.txt
+# This will only install the dependencies to the 'gstaichi-dev' environment.
+(gstaichi-dev) $ python3 -m pip install -r ../requirements_dev.txt
 ```
 
-# Update `taichi-dev`'s environment variables
+# Update `gstaichi-dev`'s environment variables
 
 ```bash
 # Change scripts/activate_env_vars.sh
 
-$ conda activate taichi-dev
+$ conda activate gstaichi-dev
 
-(taichi-dev) $ ./update_env_vars.sh
+(gstaichi-dev) $ ./update_env_vars.sh
 ```
