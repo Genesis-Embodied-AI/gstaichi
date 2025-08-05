@@ -7,6 +7,8 @@ on:
     branches:
       - main
   workflow_dispatch:
+  release:
+    types: [published]
 permissions:
   contents: write
 jobs:
@@ -15,9 +17,9 @@ jobs:
     runs-on: ubuntu-22.04
     container: quay.io/pypa/manylinux_2_28_x86_64:latest
     concurrency:
-      # group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-build
-      group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-build
-      cancel-in-progress: true
+      # group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-build
+      group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-build
+      cancel-in-progress: ${{ github.event_name != 'release' }}
     strategy:
       matrix:
         # PYTHON_CP_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
@@ -27,6 +29,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: manylinux wheel prerequisites
         run: |
+          export PATH=/opt/python/${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION }}/bin:$PATH
+          python -V
           bash .github/workflows/scripts_new/manylinux_wheel/1_prerequisites.sh
       - name: manylinux wheel build
         run: |
@@ -48,9 +52,9 @@ jobs:
     runs-on: ubuntu-22.04
     needs: build_wheel
     concurrency:
-      # group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-upload
-      group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-upload
-      cancel-in-progress: true
+      # group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-upload
+      group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-upload
+      cancel-in-progress: ${{ github.event_name != 'release' }}
     strategy:
       matrix:
         # PYTHON_CP_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
@@ -79,9 +83,9 @@ jobs:
     runs-on: ubuntu-22.04
     needs: upload_to_storage
     concurrency:
-      # group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-test
-      group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-test
-      cancel-in-progress: true
+      # group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-test
+      group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-test
+      cancel-in-progress: ${{ github.event_name != 'release' }}
     strategy:
       matrix:
         include:
@@ -134,3 +138,22 @@ jobs:
     secrets:
       AWS_STORAGE_ACCESS_KEY_ID: ${{ secrets.AWS_STORAGE_ACCESS_KEY_ID }}
       AWS_STORAGE_SECRET_ACCESS_KEY: ${{ secrets.AWS_STORAGE_SECRET_ACCESS_KEY }}
+  publish_pypi:
+    uses: ./.github/workflows/publish_pypi.yml
+    if: github.event_name == 'release' && github.event.action == 'created'
+    needs: test_wheel
+    permissions:
+      id-token: write
+      contents: read
+    concurrency:
+      # group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-test
+      group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-test
+      cancel-in-progress: true
+    strategy:
+      matrix:
+        # PYTHON_CP_VERSION: ["cp310", "cp311", "cp312", "cp313"]
+        PYTHON_CP_VERSION: ["cp310"]
+      fail-fast: false
+    with:
+      artifact_name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}
+    secrets: inherit

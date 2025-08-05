@@ -133,19 +133,9 @@ vulkan = _ti_core.vulkan
 """
 # ----------------------
 
-dx11 = _ti_core.dx11
-"""The DX11 backend.
-"""
-# ----------------------
-
-dx12 = _ti_core.dx12
-"""The DX11 backend.
-"""
-# ----------------------
-
-gpu = [cuda, metal, vulkan, dx11, dx12, amdgpu]
+gpu = [cuda, metal, vulkan, amdgpu]
 """A list of GPU backends supported on the current system.
-Currently contains 'cuda', 'metal', 'vulkan', 'dx11', 'dx12', 'amdgpu'.
+Currently contains 'cuda', 'metal', 'vulkan', 'amdgpu'.
 
 When this is used, Taichi automatically picks the matching GPU backend. If no
 GPU is detected, Taichi falls back to the CPU backend.
@@ -716,8 +706,6 @@ def is_arch_supported(arch):
         amdgpu: _ti_core.with_amdgpu,
         metal: _ti_core.with_metal,
         vulkan: _ti_core.with_vulkan,
-        dx11: _ti_core.with_dx11,
-        dx12: _ti_core.with_dx12,
         cpu: lambda: True,
     }
     with_arch = arch_table.get(arch, lambda: False)
@@ -769,8 +757,6 @@ __all__ = [
     "l",
     "x86_64",
     "x64",
-    "dx11",
-    "dx12",
     "arm64",
     "cpu",
     "cuda",
