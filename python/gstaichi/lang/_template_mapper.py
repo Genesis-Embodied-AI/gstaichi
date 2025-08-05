@@ -22,6 +22,7 @@ from gstaichi.types import (
     template,
     texture_type,
 )
+
 from taichi.types.enums import AutodiffMode
 
 CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]

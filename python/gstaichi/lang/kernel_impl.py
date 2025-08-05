@@ -534,7 +534,9 @@ class Func:
                 elif isinstance(annotation, type) and dataclasses.is_dataclass(annotation):
                     pass
                 else:
-                    raise GsTaichiSyntaxError(f"Invalid type annotation (argument {i}) of GsTaichi function: {annotation}")
+                    raise GsTaichiSyntaxError(
+                        f"Invalid type annotation (argument {i}) of GsTaichi function: {annotation}"
+                    )
             self.arg_metas.append(ArgMetadata(annotation, param.name, param.default))
             self.orig_arguments.append(ArgMetadata(annotation, param.name, param.default))
 
