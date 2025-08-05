@@ -62,7 +62,7 @@ def _populate_struct_locals_from_params_dict(basename: str, struct_locals, struc
             struct_locals.add(child_name)
 
 
-def populate_struct_locals(ctx: ASTTransformerContext) -> set[str]:
+def extract_struct_locals_from_context(ctx: ASTTransformerContext) -> set[str]:
     """
     Provides meta information for later tarnsformation of nodes in AST
 
@@ -142,6 +142,7 @@ class FlattenAttributeNameTransformer(ast.NodeTransformer):
             integrated_flat_name = f"{child_flat_name}__ti_{node.attr}"
             return integrated_flat_name
         return None
+
 
 def unpack_ast_struct_expressions(tree: ast.Module, struct_locals: set[str]) -> ast.Module:
     """

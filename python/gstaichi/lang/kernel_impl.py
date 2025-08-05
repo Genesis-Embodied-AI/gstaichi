@@ -316,7 +316,7 @@ def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], k
     if is_func:
         self.arg_metas = _kernel_impl_dataclass.expand_func_arguments(self.arg_metas)
 
-    fused_args: list[Any] = [argument.default for argument in self.arg_metas]
+    fused_args: list[Any] = [arg_meta.default for arg_meta in self.arg_metas]
     len_args = len(args)
 
     if len_args > len(fused_args):
@@ -400,9 +400,9 @@ class Func:
             is_real_function=self.is_real_function,
         )
 
-        struct_locals = _kernel_impl_dataclass.populate_struct_locals(ctx)
+        struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
 
-        tree = _kernel_impl_dataclass.FlattenAttributeNameTransformer.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
+        tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
         ret = transform_tree(tree, ctx)
         if not self.is_real_function:
             if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
@@ -593,27 +593,6 @@ class Kernel:
         self.runtime = impl.get_runtime()
         self.compiled_kernels = {}
 
-    def expand_dataclasses(self, params: dict[str, Any]) -> dict[str, Any]:
-        new_params = {}
-        arg_names = params.keys()
-        for i, arg_name in enumerate(arg_names):
-            param = params[arg_name]
-            annotation = param.annotation
-            if isinstance(annotation, type) and dataclasses.is_dataclass(annotation):
-                for field in dataclasses.fields(annotation):
-                    # Create a new inspect.Parameter for each dataclass field
-                    field_name = "__ti_" + field.name
-                    new_param = inspect.Parameter(
-                        name=field_name,
-                        kind=inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                        default=inspect.Parameter.empty,
-                        annotation=field.type,
-                    )
-                    new_params[field_name] = new_param
-            else:
-                new_params[arg_name] = param
-        return new_params
-
     def extract_arguments(self) -> None:
         sig = inspect.signature(self.func)
         if sig.return_annotation not in (inspect._empty, None):
@@ -754,7 +733,7 @@ class Kernel:
                     output_file.write_text(
                         json.dumps({"elapsed_txt": elapsed_txt, "elapsed_json": elapsed_json}, indent=2)
                     )
-                struct_locals = _kernel_impl_dataclass.populate_struct_locals(ctx)
+                struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
                 tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
                 transform_tree(tree, ctx)
                 if not ctx.is_real_function:
