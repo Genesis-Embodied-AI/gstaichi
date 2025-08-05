@@ -1241,13 +1241,13 @@ class MatrixField(Field):
             if self.ndim != 1:
                 assert len(val[0]) == self.m
         if in_python_scope():
-            from gstaichi._kernels import (
+            from gstaichi._kernels import (  # pylint: disable=C0415
                 field_fill_python_scope,  # pylint: disable=C0415
             )
 
             field_fill_python_scope(self, val)
         else:
-            from gstaichi._funcs import (
+            from gstaichi._funcs import (  # pylint: disable=C0415
                 field_fill_gstaichi_scope,  # pylint: disable=C0415
             )
 

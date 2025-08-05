@@ -288,7 +288,7 @@ class ScalarField(Field):
 
             fill_field(self, val)
         else:
-            from gstaichi._funcs import (
+            from gstaichi._funcs import (  # pylint: disable=C0415
                 field_fill_gstaichi_scope,  # pylint: disable=C0415
             )
 
