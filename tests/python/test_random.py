@@ -1,4 +1,5 @@
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
 
@@ -129,7 +130,7 @@ def test_random_seed_per_program():
 def test_random_f64():
     """
     Tests the granularity of float64 random numbers.
-    See https://github.com/taichi-dev/taichi/issues/2251 for an explanation.
+    See https://github.com/taichi-dev/gstaichi/issues/2251 for an explanation.
     """
     import numpy as np
 

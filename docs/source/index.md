@@ -1,8 +1,8 @@
-# Taichi
+# GsTaichi
 
 
 ```{toctree}
-:caption: Taichi
+:caption: GsTaichi
 :maxdepth: 1
 
 user_guide/index

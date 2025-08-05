@@ -1,5 +1,5 @@
 results*
-taichi.h
+gstaichi.h
 *.png
 atomics
 ma

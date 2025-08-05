@@ -1,8 +1,9 @@
 import numpy as np
 import pytest
 
-import taichi as ti
-from taichi.lang.misc import get_host_arch_list
+import gstaichi as ti
+from gstaichi.lang.misc import get_host_arch_list
+
 from tests import test_utils
 
 

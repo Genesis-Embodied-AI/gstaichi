@@ -4,7 +4,7 @@ import os
 import shutil
 import tempfile
 
-import taichi as ti
+import gstaichi as ti
 
 
 def _test_python(args, default_dir="python"):
@@ -39,7 +39,7 @@ def _test_python(args, default_dir="python"):
         pytest_args += ["--reruns", args.rerun]
     try:
         if args.coverage:
-            pytest_args += ["--cov-branch", "--cov=python/taichi"]
+            pytest_args += ["--cov-branch", "--cov=python/gstaichi"]
         if args.cov_append:
             pytest_args += ["--cov-append"]
         if args.keys:
@@ -83,7 +83,7 @@ def _test_python(args, default_dir="python"):
 
 def test():
     """Run the tests"""
-    parser = argparse.ArgumentParser(description=f"Run taichi python test")
+    parser = argparse.ArgumentParser(description=f"Run gstaichi python test")
     parser.add_argument("files", nargs="*", help='Test name(s) to be run, e.g. "cli"')
     parser.add_argument(
         "-c",

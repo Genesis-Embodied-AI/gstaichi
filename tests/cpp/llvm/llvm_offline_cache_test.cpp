@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 
-#include "taichi/common/platform_macros.h"
-#include "taichi/common/cleanup.h"
-#include "taichi/common/filesystem.hpp"
+#include "gstaichi/common/platform_macros.h"
+#include "gstaichi/common/cleanup.h"
+#include "gstaichi/common/filesystem.hpp"
 
 #ifdef TI_WITH_LLVM
 #if defined(TI_PLATFORM_LINUX) || defined(TI_PLATFORM_WINDOWS)
@@ -18,14 +18,14 @@ namespace fs = std::filesystem;
 #include "llvm/Support/Host.h"
 #include "llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h"
 
-#include "taichi/rhi/arch.h"
-#include "taichi/runtime/llvm/llvm_context.h"
-#include "taichi/runtime/llvm/llvm_offline_cache.h"
-#include "taichi/runtime/program_impls/llvm/llvm_program.h"
-#include "taichi/program/compile_config.h"
-#include "taichi/program/program.h"
+#include "gstaichi/rhi/arch.h"
+#include "gstaichi/runtime/llvm/llvm_context.h"
+#include "gstaichi/runtime/llvm/llvm_offline_cache.h"
+#include "gstaichi/runtime/program_impls/llvm/llvm_program.h"
+#include "gstaichi/program/compile_config.h"
+#include "gstaichi/program/program.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 namespace {
 
 static llvm::Triple get_host_target_triple() {
@@ -108,9 +108,9 @@ class LlvmOfflineCacheTest : public testing::TestWithParam<Format> {
 
   CompileConfig config_;
   // Program is *absolutely unnecessary* in this test. However, it is by far the
-  // easiest approach in Taichi to use LLVM infra (e.g. JIT session).
+  // easiest approach in GsTaichi to use LLVM infra (e.g. JIT session).
   std::unique_ptr<Program> prog_{nullptr};
-  TaichiLLVMContext *tlctx_{nullptr};
+  GsTaichiLLVMContext *tlctx_{nullptr};
   LlvmRuntimeExecutor *executor_{nullptr};
 };
 
@@ -197,7 +197,7 @@ INSTANTIATE_TEST_SUITE_P(Format,
                          testing::Values(Format::LL, Format::BC));
 
 }  // namespace
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang
 
 #endif  // #if defined(TI_PLATFORM_LINUX) || defined(TI_PLATFORM_WINDOWS)
 #endif  // #ifdef TI_WITH_LLVM

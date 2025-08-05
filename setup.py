@@ -1,9 +1,9 @@
 # Optional environment variables supported by setup.py:
 #   {DEBUG, RELWITHDEBINFO, MINSIZEREL}
-#     build the C++ taichi_python extension with various build types.
+#     build the C++ gstaichi_python extension with various build types.
 #
-#   TAICHI_CMAKE_ARGS
-#     extra cmake args for C++ taichi_python extension.
+#   GSTAICHI_CMAKE_ARGS
+#     extra cmake args for C++ gstaichi_python extension.
 
 import glob
 import multiprocessing
@@ -65,8 +65,8 @@ def get_version():
     return major, minor, patch
 
 
-def remove_tmp(taichi_dir):
-    shutil.rmtree(os.path.join(taichi_dir, "assets"), ignore_errors=True)
+def remove_tmp(gstaichi_dir):
+    shutil.rmtree(os.path.join(gstaichi_dir, "assets"), ignore_errors=True)
 
 
 class EggInfo(egg_info):
@@ -78,10 +78,10 @@ class EggInfo(egg_info):
 
 
 def copy_assets():
-    taichi_dir = os.path.join(package_dir, "taichi")
-    remove_tmp(taichi_dir)
+    gstaichi_dir = os.path.join(package_dir, "gstaichi")
+    remove_tmp(gstaichi_dir)
 
-    shutil.copytree("external/assets", os.path.join(taichi_dir, "assets"))
+    shutil.copytree("external/assets", os.path.join(gstaichi_dir, "assets"))
 
 
 class Clean(clean):
@@ -93,20 +93,20 @@ class Clean(clean):
         generated_folders = (
             "bin",
             "dist",
-            "python/taichi/assets",
-            "python/taichi/_lib/runtime",
-            "python/taichi/_lib/c_api",
-            "taichi.egg-info",
-            "python/taichi.egg-info",
+            "python/gstaichi/assets",
+            "python/gstaichi/_lib/runtime",
+            "python/gstaichi/_lib/c_api",
+            "gstaichi.egg-info",
+            "python/gstaichi.egg-info",
             "build",
         )
         for d in generated_folders:
             if os.path.exists(d):
                 remove_tree(d, dry_run=self.dry_run)
-        generated_files = ["taichi/common/commit_hash.h", "taichi/common/version.h"]
-        generated_files += glob.glob("taichi/runtime/llvm/runtime_*.bc")
-        generated_files += glob.glob("python/taichi/_lib/core/*.so")
-        generated_files += glob.glob("python/taichi/_lib/core/*.pyd")
+        generated_files = ["gstaichi/common/commit_hash.h", "gstaichi/common/version.h"]
+        generated_files += glob.glob("gstaichi/runtime/llvm/runtime_*.bc")
+        generated_files += glob.glob("python/gstaichi/_lib/core/*.so")
+        generated_files += glob.glob("python/gstaichi/_lib/core/*.pyd")
         for f in generated_files:
             if os.path.exists(f):
                 print(f"removing generated file {f}")
@@ -139,21 +139,21 @@ def postprocess_stubs(stub_path: str) -> None:
 
 def generate_pybind11_stubs(build_lib: str):
     build_lib_path = pathlib.Path(build_lib).resolve()
-    taichi_path = build_lib_path.parent.parent / "cmake-install" / "python"
+    gstaichi_path = build_lib_path.parent.parent / "cmake-install" / "python"
     env = os.environ.copy()
-    env["PYTHONPATH"] = str(taichi_path) + os.pathsep + env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = str(gstaichi_path) + os.pathsep + env.get("PYTHONPATH", "")
 
     # command that works:
     # PYTHONPATH=_skbuild/linux-x86_64-3.10/cmake-install/python pybind11-stubgen \
-    #     taichi._lib.core.taichi_python --ignore-all-errors
-    cmd_line = ["pybind11-stubgen", "taichi._lib.core.taichi_python", "--ignore-all-errors"]
+    #     gstaichi._lib.core.gstaichi_python --ignore-all-errors
+    cmd_line = ["pybind11-stubgen", "gstaichi._lib.core.gstaichi_python", "--ignore-all-errors"]
     print(" ".join(cmd_line))
     subprocess.check_call(cmd_line, env=env)
-    stub_filepath = pathlib.Path("stubs/taichi/_lib/core/taichi_python.pyi")
+    stub_filepath = pathlib.Path("stubs/gstaichi/_lib/core/gstaichi_python.pyi")
     postprocess_stubs(stub_filepath)
 
-    target_filepath = build_lib_path / "taichi" / "_lib" / "core" / "taichi_python.pyi"
-    py_typed_dst = build_lib_path / "taichi" / "_lib" / "core" / "py.typed"
+    target_filepath = build_lib_path / "gstaichi" / "_lib" / "core" / "gstaichi_python.pyi"
+    py_typed_dst = build_lib_path / "gstaichi" / "_lib" / "core" / "py.typed"
     os.makedirs(os.path.dirname(target_filepath), exist_ok=True)
     print("copying ", stub_filepath, "to", target_filepath)
     shutil.copy(stub_filepath, target_filepath)
@@ -179,7 +179,7 @@ def get_cmake_args():
     import shlex
 
     num_threads = os.getenv("BUILD_NUM_THREADS", multiprocessing.cpu_count())
-    cmake_args = shlex.split(os.getenv("TAICHI_CMAKE_ARGS", "").strip())
+    cmake_args = shlex.split(os.getenv("GSTAICHI_CMAKE_ARGS", "").strip())
 
     use_msbuild = False
     use_xcode = False
@@ -196,14 +196,14 @@ def get_cmake_args():
     if cfg:
         build_options.extend(["--build-type", cfg])
     if sys.platform == "win32":
-        if os.getenv("TAICHI_USE_MSBUILD", "0") in ("1", "ON"):
+        if os.getenv("GSTAICHI_USE_MSBUILD", "0") in ("1", "ON"):
             use_msbuild = True
         if use_msbuild:
             build_options.extend(["-G", "Visual Studio 17 2022"])
         else:
             build_options.extend(["-G", "Ninja", "--skip-generator-test"])
     if sys.platform == "darwin":
-        if os.getenv("TAICHI_USE_XCODE", "0") in ("1", "ON"):
+        if os.getenv("GSTAICHI_USE_XCODE", "0") in ("1", "ON"):
             use_xcode = True
         if use_xcode:
             build_options.extend(["-G", "Xcode", "--skip-generator-test"])
@@ -262,10 +262,10 @@ def sign_development_for_apple_m1():
     """
     if sys.platform == "darwin" and platform.machine() == "arm64":
         try:
-            for path in glob.glob("python/taichi/_lib/core/*.so"):
+            for path in glob.glob("python/gstaichi/_lib/core/*.so"):
                 print(f"signing {path}..")
                 subprocess.check_call(["codesign", "--force", "--deep", "--sign", "-", path])
-            for path in glob.glob("python/taichi/_lib/c_api/lib/*.so"):
+            for path in glob.glob("python/gstaichi/_lib/c_api/lib/*.so"):
                 print(f"signing {path}..")
                 subprocess.check_call(["codesign", "--force", "--deep", "--sign", "-", path])
         except:
@@ -274,7 +274,7 @@ def sign_development_for_apple_m1():
 
 copy_assets()
 
-force_plat_name = os.getenv("TAICHI_FORCE_PLAT_NAME", "").strip()
+force_plat_name = os.getenv("GSTAICHI_FORCE_PLAT_NAME", "").strip()
 if force_plat_name:
     from skbuild.constants import set_skbuild_plat_name
 
@@ -284,13 +284,13 @@ setup(
     name=project_name,
     packages=packages,
     package_dir={"": package_dir},
-    description="The Taichi Programming Language",
-    author="Taichi developers",
-    url="https://github.com/Genesis-Embedded-AI/taichi",
+    description="The GsTaichi Programming Language",
+    author="GsTaichi developers",
+    url="https://github.com/Genesis-Embedded-AI/gstaichi",
     python_requires=">=3.10,<4.0",
     setup_requires=["setuptools_scm>=6.0"],
     use_scm_version={
-        "write_to": "python/taichi/_version.py",
+        "write_to": "python/gstaichi/_version.py",
         "write_to_template": "__version__ = '{version}'\n",
     },
     install_requires=[
@@ -318,7 +318,7 @@ setup(
         (os.path.join("_lib", "runtime"), data_files),
     ],
     package_data={
-        "taichi._lib.core": ["taichi_python.pyi", "py.typed"],
+        "gstaichi._lib.core": ["gstaichi_python.pyi", "py.typed"],
     },
     keywords=["graphics", "simulation"],
     license="Apache Software License (http://www.apache.org/licenses/LICENSE-2.0)",
@@ -326,7 +326,7 @@ setup(
     include_package_data=True,
     entry_points={
         "console_scripts": [
-            "ti=taichi._main:main",
+            "ti=gstaichi._main:main",
         ],
     },
     classifiers=classifiers,

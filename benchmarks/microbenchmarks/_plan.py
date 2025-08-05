@@ -1,10 +1,9 @@
 import itertools
 
+import gstaichi as ti
 from microbenchmarks._items import AtomicOps, DataType
 from microbenchmarks._metric import MetricType
 from microbenchmarks._utils import get_ti_arch, tags2name
-
-import taichi as ti
 
 
 class Funcs:
@@ -48,7 +47,7 @@ class BenchmarkPlan:
     def run(self):
         for case, plan in self.plan.items():
             tag_list = plan["tags"]
-            MetricType.init_taichi(self.arch, tag_list)
+            MetricType.init_gstaichi(self.arch, tag_list)
             _ms = self.funcs.get_func(tag_list)(self.arch, self.basic_repeat_times, **self._get_kwargs(tag_list))
             plan["result"] = _ms
             print(f"{tag_list}={_ms}")
