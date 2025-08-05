@@ -397,12 +397,6 @@ class TaskCodeGenCUDA : public TaskCodeGenLLVM {
 
     // Half2 atomic_add is supported starting from sm_60
     //
-    // TODO(zhanlue): Add capability support & validation for CUDA AOT
-    //
-    // For now, the following code may potentially cause trouble for CUDA AOT.
-    // With half2 vectorization enabled, if one compiles the code on GPU with
-    // caps >= 60, then distribute it to runtime machine with GPU caps < 60,
-    // it's likely gonna crash
 
     std::string cuda_library_path = get_custom_cuda_library_path();
     int cap = CUDAContext::get_instance().get_compute_capability();

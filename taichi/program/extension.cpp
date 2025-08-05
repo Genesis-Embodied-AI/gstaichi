@@ -22,7 +22,6 @@ bool is_extension_supported(Arch arch, Extension ext) {
       {Arch::amdgpu, {Extension::assertion}},
       {Arch::metal, {}},
       {Arch::vulkan, {}},
-      {Arch::dx11, {}},
   };
   const auto &exts = arch2ext[arch];
   return exts.find(ext) != exts.end();

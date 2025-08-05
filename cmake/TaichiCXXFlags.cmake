@@ -77,10 +77,8 @@ else()
 
     # Due to limited CI coverage, -Werror is only turned on with Clang-compiler for now.
     if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-        if (NOT ANDROID) # (penguinliong) Blocking builds on Android.
-            # [Global] CXX compilation option to treat all warnings as errors.
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror ")
-        endif()
+        # [Global] CXX compilation option to treat all warnings as errors.
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror ")
     endif()
 
     # [Global] By default, CXX compiler will throw a warning if it decides to ignore an attribute, for example "[[ maybe unused ]]".
