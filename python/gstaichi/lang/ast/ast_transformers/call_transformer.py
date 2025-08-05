@@ -19,6 +19,7 @@ from gstaichi.lang import (
     matrix,
 )
 from gstaichi.lang import ops as ti_ops
+from gstaichi.lang._dataclass_util import create_flat_name
 from gstaichi.lang.ast.ast_transformer_utils import (
     ASTTransformerContext,
     get_decorator,
@@ -176,9 +177,7 @@ class CallTransformer:
             if dataclasses.is_dataclass(val):
                 dataclass_type = val
                 for field in dataclasses.fields(dataclass_type):
-                    child_name = f"{arg.id}__ti_{field.name}"
-                    if not child_name.startswith("__ti_"):
-                        child_name = f"__ti_{child_name}"
+                    child_name = create_flat_name(arg.id, field.name)
                     load_ctx = ast.Load()
                     arg_node = ast.Name(
                         id=child_name,
@@ -209,12 +208,8 @@ class CallTransformer:
             if dataclasses.is_dataclass(val):
                 dataclass_type = val
                 for field in dataclasses.fields(dataclass_type):
-                    src_name = f"{kwarg.value.id}__ti_{field.name}"
-                    if not src_name.startswith("__ti_"):
-                        src_name = f"__ti_{src_name}"
-                    child_name = f"{kwarg.arg}__ti_{field.name}"
-                    if not child_name.startswith("__ti_"):
-                        child_name = f"__ti_{child_name}"
+                    src_name = create_flat_name(kwarg.value.id, field.name)
+                    child_name = create_flat_name(kwarg.arg, field.name)
                     load_ctx = ast.Load()
                     src_node = ast.Name(
                         id=src_name,

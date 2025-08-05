@@ -13,6 +13,7 @@ from gstaichi.lang import (
     matrix,
 )
 from gstaichi.lang import ops as ti_ops
+from gstaichi.lang._dataclass_util import create_flat_name
 from gstaichi.lang.argpack import ArgPackType
 from gstaichi.lang.ast.ast_transformer_utils import (
     ASTTransformerContext,
@@ -152,9 +153,7 @@ class FunctionDefTransformer:
         elif dataclasses.is_dataclass(argument_type):
             ctx.create_variable(argument_name, argument_type)
             for field_idx, field in enumerate(dataclasses.fields(argument_type)):
-                flat_name = f"{argument_name}__ti_{field.name}"
-                if not flat_name.startswith("__ti_"):
-                    flat_name = f"__ti_{flat_name}"
+                flat_name = create_flat_name(argument_name, field.name)
                 # if a field is a dataclass, then feed back into process_kernel_arg recursively
                 if dataclasses.is_dataclass(field.type):
                     FunctionDefTransformer._transform_kernel_arg(
@@ -248,9 +247,7 @@ class FunctionDefTransformer:
 
         if dataclasses.is_dataclass(argument_type):
             for field in dataclasses.fields(argument_type):
-                flat_name = f"{argument_name}__ti_{field.name}"
-                if not flat_name.startswith("__ti_"):
-                    flat_name = f"__ti_{flat_name}"
+                flat_name = create_flat_name(argument_name, field.name)
                 data_child = getattr(data, field.name)
                 if isinstance(
                     data_child,

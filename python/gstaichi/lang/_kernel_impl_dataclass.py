@@ -3,6 +3,7 @@ import dataclasses
 import inspect
 from typing import Any
 
+from gstaichi.lang._dataclass_util import create_flat_name
 from gstaichi.lang.ast import (
     ASTTransformerContext,
 )
@@ -95,9 +96,7 @@ def expand_func_arguments(arguments: list[ArgMetadata]) -> list[ArgMetadata]:
     for i, argument in enumerate(arguments):
         if dataclasses.is_dataclass(argument.annotation):
             for field in dataclasses.fields(argument.annotation):
-                child_name = f"{argument.name}__ti_{field.name}"
-                if not child_name.startswith("__ti_"):
-                    child_name = f"__ti_{child_name}"
+                child_name = create_flat_name(argument.name, field.name)
                 if dataclasses.is_dataclass(field.type):
                     child_args = expand_func_arguments(
                         [
@@ -204,9 +203,7 @@ def populate_global_vars_from_dataclass(
 ):
     for field in dataclasses.fields(param_type):
         child_value = getattr(py_arg, field.name)
-        flat_name = f"{param_name}__ti_{field.name}"
-        if not flat_name.startswith("__ti_"):
-            flat_name = f"__ti_{flat_name}"
+        flat_name = create_flat_name(param_name, field.name)
         if dataclasses.is_dataclass(field.type):
             populate_global_vars_from_dataclass(
                 param_name=flat_name,
