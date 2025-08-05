@@ -1,4 +1,4 @@
-import taichi as ti
+import gstaichi as ti
 from tests import test_utils
 
 
@@ -208,7 +208,7 @@ def test_linear_k():
 
 @test_utils.test(require=ti.extension.sparse)
 def test_struct_for_branching():
-    # Related issue: https://github.com/taichi-dev/taichi/issues/704
+    # Related issue: https://github.com/taichi-dev/gstaichi/issues/704
     x = ti.field(dtype=ti.i32)
     y = ti.field(dtype=ti.i32)
     ti.root.pointer(ti.ij, 128 // 4).dense(ti.ij, 4).place(x, y)
@@ -281,7 +281,7 @@ def test_struct_for_quant():
 
 @test_utils.test(require=ti.extension.sparse)
 def test_struct_for_continue():
-    # Related issue: https://github.com/taichi-dev/taichi/issues/3272
+    # Related issue: https://github.com/taichi-dev/gstaichi/issues/3272
     x = ti.field(dtype=ti.i32)
     n = 4
     ti.root.pointer(ti.i, n).dense(ti.i, n).place(x)

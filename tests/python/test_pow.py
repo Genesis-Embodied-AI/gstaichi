@@ -1,7 +1,7 @@
 import pytest
 
-import taichi as ti
-from taichi.lang.exception import TaichiRuntimeError
+import gstaichi as ti
+from gstaichi.lang.exception import GsTaichiRuntimeError
 from tests import test_utils
 
 
@@ -58,7 +58,7 @@ def _ipow_negative_exp(dt):
     def foo(x: dt, y: ti.template()):
         z[None] = x**y
 
-    with pytest.raises(TaichiRuntimeError):
+    with pytest.raises(GsTaichiRuntimeError):
         foo(10, -10)
 
 

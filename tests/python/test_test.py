@@ -1,5 +1,5 @@
 """
-This file tests if Taichi's testing utilities are functional.
+This file tests if GsTaichi's testing utilities are functional.
 
 TODO: Skips these tests after all tests are using @ti.test
 """
@@ -8,7 +8,7 @@ import os
 
 import pytest
 
-import taichi as ti
+import gstaichi as ti
 from tests import test_utils
 
 ### `ti.test`

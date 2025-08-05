@@ -1,6 +1,6 @@
 import pytest
 
-import taichi as ti
+import gstaichi as ti
 from tests import test_utils
 
 
@@ -80,7 +80,7 @@ def test_assign_ann_over():
         d: my_int = 2
         d: ti.f32 = 2.0
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func_ann_over()
 
 

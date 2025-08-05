@@ -27,7 +27,7 @@ CMakeFiles/
 cmake_install.cmake
 CMakeCache.txt
 FindNumpyPath.py
-runtimes/Taichi.pyd
+runtimes/GsTaichi.pyd
 runtimes/tmp*
 runtimes/task*
 runtimes/*.exe
@@ -36,8 +36,8 @@ runtimes/Release
 runtimes/Debug
 runtimes/RelWithDebInfo
 runtimes/*.png
-runtimes/taichi_python*
-runtimes/libtaichi_python*
+runtimes/gstaichi_python*
+runtimes/libgstaichi_python*
 .pypirc
 dist/
 python/MANIFEST
@@ -57,11 +57,11 @@ __pycache__
 !docs/**/*.jpg
 !docs/**/*.png
 !tests/python/expected/*.png
-!python/taichi/examples/algorithm/circle-packing/*.png
+!python/gstaichi/examples/algorithm/circle-packing/*.png
 *.egg-info
 .tlang_cache
-/taichi/common/version.h
-/taichi/common/commit_hash.h
+/gstaichi/common/version.h
+/gstaichi/common/commit_hash.h
 /python/test_env
 /CHANGELOG.md
 /.coverage
@@ -95,4 +95,4 @@ imgui.ini
 *.so
 stubs/
 CHANGELOG.md
-python/taichi/_version.py
+python/gstaichi/_version.py

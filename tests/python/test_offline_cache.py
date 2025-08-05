@@ -9,7 +9,7 @@ from tempfile import mkdtemp
 
 import pytest
 
-import taichi as ti
+import gstaichi as ti
 from tests import test_utils
 
 OFFLINE_CACHE_TEMP_DIR = mkdtemp()

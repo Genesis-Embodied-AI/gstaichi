@@ -1,7 +1,7 @@
 import pytest
 
-import taichi as ti
-from taichi.lang import impl
+import gstaichi as ti
+from gstaichi.lang import impl
 from tests import test_utils
 
 _TI_TYPES = [ti.i8, ti.i16, ti.i32, ti.u8, ti.u16, ti.u32, ti.f32]
@@ -148,7 +148,7 @@ def test_overflow64(dt, n):
 )
 @test_utils.test(require=ti.extension.data64)
 def test_uint_max(dt, val):
-    # https://github.com/taichi-dev/taichi/issues/2060
+    # https://github.com/taichi-dev/gstaichi/issues/2060
     impl.get_runtime().default_ip = dt
     N = 16
     f = ti.field(dt, shape=N)

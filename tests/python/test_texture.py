@@ -5,8 +5,8 @@ import pytest
 import requests
 from PIL import Image
 
-import taichi as ti
-from taichi.lang import impl
+import gstaichi as ti
+from gstaichi.lang import impl
 from tests import test_utils
 
 supported_archs_texture = [ti.vulkan]
@@ -14,7 +14,7 @@ supported_archs_texture_excluding_load_store = [ti.vulkan]
 
 
 @ti.func
-def taichi_logo(pos: ti.template(), scale: float = 1 / 1.11):
+def gstaichi_logo(pos: ti.template(), scale: float = 1 / 1.11):
     p = (pos - 0.5) / scale + 0.5
     ret = -1
     if not (p - 0.50).norm_sqr() <= 0.52**2:
@@ -47,14 +47,14 @@ def taichi_logo(pos: ti.template(), scale: float = 1 / 1.11):
 @ti.kernel
 def make_texture_2d_r32f(tex: ti.types.rw_texture(num_dimensions=2, fmt=ti.Format.r32f, lod=0), n: ti.i32):
     for i, j in ti.ndrange(n, n):
-        ret = ti.cast(taichi_logo(ti.Vector([i, j]) / n), ti.f32)
+        ret = ti.cast(gstaichi_logo(ti.Vector([i, j]) / n), ti.f32)
         tex.store(ti.Vector([i, j]), ti.Vector([ret, 0.0, 0.0, 0.0]))
 
 
 @ti.kernel
 def make_texture_2d_rgba8(tex: ti.types.rw_texture(num_dimensions=2, fmt=ti.Format.rgba8, lod=0), n: ti.i32):
     for i, j in ti.ndrange(n, n):
-        ret = ti.cast(taichi_logo(ti.Vector([i, j]) / n), ti.f32)
+        ret = ti.cast(gstaichi_logo(ti.Vector([i, j]) / n), ti.f32)
         tex.store(ti.Vector([i, j]), ti.Vector([ret, 0.0, 0.0, 0.0]))
 
 
@@ -119,11 +119,11 @@ def test_texture_from_field():
     tex = ti.Texture(ti.Format.r32f, res)
 
     @ti.kernel
-    def init_taichi_logo_field():
+    def init_gstaichi_logo_field():
         for i, j in f:
-            f[i, j] = [taichi_logo(ti.Vector([i / res[0], j / res[1]])), 0]
+            f[i, j] = [gstaichi_logo(ti.Vector([i / res[0], j / res[1]])), 0]
 
-    init_taichi_logo_field()
+    init_gstaichi_logo_field()
     tex.from_field(f)
 
 
@@ -134,11 +134,11 @@ def test_texture_from_ndarray():
     tex = ti.Texture(ti.Format.r32f, res)
 
     @ti.kernel
-    def init_taichi_logo_ndarray(f: ti.types.ndarray(ndim=2)):
+    def init_gstaichi_logo_ndarray(f: ti.types.ndarray(ndim=2)):
         for i, j in f:
-            f[i, j] = [taichi_logo(ti.Vector([i / res[0], j / res[1]])), 0]
+            f[i, j] = [gstaichi_logo(ti.Vector([i / res[0], j / res[1]])), 0]
 
-    init_taichi_logo_ndarray(f)
+    init_gstaichi_logo_ndarray(f)
     tex.from_ndarray(f)
 
 
@@ -152,7 +152,7 @@ def test_texture_3d():
 
 @test_utils.test(arch=supported_archs_texture)
 def test_from_to_image():
-    url = "https://github.com/taichi-dev/taichi/blob/master/misc/logo.png?raw=true"
+    url = "https://github.com/taichi-dev/gstaichi/blob/master/misc/logo.png?raw=true"
     response = requests.get(url)
     img = Image.open(BytesIO(response.content))
     tex = ti.Texture(ti.Format.rgba8, img.size)
@@ -194,7 +194,7 @@ def test_rw_texture_2d_struct_for_dim_check():
             tex.store(ti.Vector([i, j]), ti.Vector([1.0, 0.0, 0.0, 0.0]))
 
     with pytest.raises(
-        ti.TaichiRuntimeError,
+        ti.GsTaichiRuntimeError,
         match="RWTextureType dimension mismatch for argument tex: expected 2, got 3",
     ) as e:
         write(tex)
@@ -210,7 +210,7 @@ def test_rw_texture_wrong_fmt():
             tex.store(ti.Vector([i, j]), ti.Vector([1.0, 0.0, 0.0, 0.0]))
 
     with pytest.raises(
-        ti.TaichiRuntimeError,
+        ti.GsTaichiRuntimeError,
         match="RWTextureType format mismatch for argument tex: expected Format.r32f, got Format.rgba8",
     ) as e:
         write(tex)
@@ -226,7 +226,7 @@ def test_rw_texture_wrong_ndim():
             tex.store(ti.Vector([i, j]), ti.Vector([1.0, 0.0, 0.0, 0.0]))
 
     with pytest.raises(
-        ti.TaichiRuntimeError,
+        ti.GsTaichiRuntimeError,
         match="RWTextureType dimension mismatch for argument tex: expected 1, got 2",
     ) as e:
         write(tex)

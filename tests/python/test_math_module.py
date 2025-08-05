@@ -2,8 +2,8 @@ import errno
 
 import pytest
 
-import taichi as ti
-from taichi.math import inf, isinf, isnan, nan, pi, vdir
+import gstaichi as ti
+from gstaichi.math import inf, isinf, isnan, nan, pi, vdir
 from tests import test_utils
 
 

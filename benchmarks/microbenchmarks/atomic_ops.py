@@ -3,7 +3,7 @@ from microbenchmarks._metric import MetricType
 from microbenchmarks._plan import BenchmarkPlan
 from microbenchmarks._utils import dtype_size, fill_random, scaled_repeat_times
 
-import taichi as ti
+import gstaichi as ti
 
 
 def reduction_default(arch, repeat, atomic_op, container, dtype, dsize, get_metric):

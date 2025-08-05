@@ -1,10 +1,10 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/transforms.h"
-#include "taichi/ir/analysis.h"
-#include "taichi/ir/statements.h"
+#include "gstaichi/ir/transforms.h"
+#include "gstaichi/ir/analysis.h"
+#include "gstaichi/ir/statements.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 
 TEST(SameStatements, TestSameBlock) {
   auto block = std::make_unique<Block>();
@@ -167,4 +167,4 @@ TEST(SameStatements, TestSameLoopIndex) {
   EXPECT_TRUE(irpass::analysis::same_value(loop_index_a, loop_index_b));
 }
 
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

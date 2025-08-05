@@ -2,7 +2,7 @@ from typing import Any
 
 import pytest
 
-import taichi as ti
+import gstaichi as ti
 from tests import test_utils
 
 

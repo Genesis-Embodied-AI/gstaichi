@@ -1,6 +1,6 @@
 import pytest
 
-import taichi as ti
+import gstaichi as ti
 from tests import test_utils
 
 
@@ -141,7 +141,7 @@ def test_gdar_mpm():
 
         x_avg[None] = [0, 0]
 
-        with pytest.raises(ti.TaichiAssertionError):
+        with pytest.raises(ti.GsTaichiAssertionError):
             with ti.ad.Tape(loss=loss, validation=True):
                 set_v()
                 for s in range(steps - 1):

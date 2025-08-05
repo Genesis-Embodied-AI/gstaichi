@@ -1,6 +1,6 @@
-import taichi as ti
-from taichi.lang.kernel_arguments import KernelArgument
-from taichi.lang.kernel_impl import TaichiCallableTemplateMapper
+import gstaichi as ti
+from gstaichi.lang.kernel_arguments import KernelArgument
+from gstaichi.lang.kernel_impl import GsTaichiCallableTemplateMapper
 from tests import test_utils
 
 
@@ -11,7 +11,7 @@ def test_callable_template_mapper():
 
     ti.root.place(x, y)
 
-    mapper = TaichiCallableTemplateMapper(
+    mapper = GsTaichiCallableTemplateMapper(
         (
             KernelArgument(ti.template(), ti.template()),
             KernelArgument(ti.template(), ti.template()),
@@ -25,7 +25,7 @@ def test_callable_template_mapper():
     assert mapper.lookup((0, 0, 1))[0] == 2
     assert mapper.lookup((0, 1, 0))[0] == 1
 
-    mapper = TaichiCallableTemplateMapper(
+    mapper = GsTaichiCallableTemplateMapper(
         (
             KernelArgument(ti.i32, ti.i32),
             KernelArgument(ti.i32, ti.i32),
@@ -39,7 +39,7 @@ def test_callable_template_mapper():
     assert mapper.lookup((0, 0, 1))[0] == 0
     assert mapper.lookup((0, 1, 0))[0] == 0
 
-    mapper = TaichiCallableTemplateMapper(
+    mapper = GsTaichiCallableTemplateMapper(
         (
             KernelArgument(ti.i32, ti.i32),
             KernelArgument(ti.template(), ti.template()),
@@ -67,7 +67,7 @@ def test_callable_template_mapper_numpy():
 
     import numpy as np
 
-    mapper = TaichiCallableTemplateMapper(annotations, (0, 1, 2))
+    mapper = GsTaichiCallableTemplateMapper(annotations, (0, 1, 2))
     assert mapper.lookup((0, 0, np.ones(shape=(1, 2, 3), dtype=np.float32)))[0] == 0
     assert mapper.lookup((0, 0, np.ones(shape=(1, 2, 4), dtype=np.float32)))[0] == 0
     assert mapper.lookup((0, 0, np.ones(shape=(1, 2, 1), dtype=np.int32)))[0] == 1

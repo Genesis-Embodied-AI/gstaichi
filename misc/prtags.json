@@ -1,5 +1,5 @@
 {
-  "javascript"      : "Taichi in javascript",
+  "javascript"      : "GsTaichi in javascript",
   "ci"              : "CI/CD workflow",
   "cpu"             : "CPU backends",
   "cuda"            : "CUDA backend",
@@ -26,7 +26,7 @@
   "bug"             : "Bug fixes",
   "test"            : "Tests",
   "benchmark"       : "Benchmarking",
-  "mesh"            : "MeshTaichi",
+  "mesh"            : "MeshGsTaichi",
   "workflow"        : "GitHub Actions/Workflows",
   "linux"           : "Linux",
   "mac"             : "Mac OS X",

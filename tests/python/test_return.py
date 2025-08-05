@@ -4,7 +4,7 @@ from typing import Tuple
 import pytest
 from pytest import approx
 
-import taichi as ti
+import gstaichi as ti
 from tests import test_utils
 
 
@@ -14,7 +14,7 @@ def test_return_without_type_hint():
     def kernel():
         return 1
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         kernel()
 
 
@@ -91,7 +91,7 @@ def test_func_multiple_return():
         print(safe_sqrt(a))
 
     with pytest.raises(
-        ti.TaichiCompilationError,
+        ti.GsTaichiCompilationError,
         match="Return inside non-static if/for is not supported",
     ):
         kern(-233)
@@ -113,7 +113,7 @@ def test_return_inside_static_for():
 @test_utils.test()
 def test_return_inside_non_static_for():
     with pytest.raises(
-        ti.TaichiCompilationError,
+        ti.GsTaichiCompilationError,
         match="Return inside non-static if/for is not supported",
     ):
 
@@ -128,7 +128,7 @@ def test_return_inside_non_static_for():
 @test_utils.test()
 def test_kernel_no_return():
     with pytest.raises(
-        ti.TaichiSyntaxError,
+        ti.GsTaichiSyntaxError,
         match="Kernel has a return type but does not have a return statement",
     ):
 
@@ -142,7 +142,7 @@ def test_kernel_no_return():
 @test_utils.test()
 def test_func_no_return():
     with pytest.raises(
-        ti.TaichiCompilationError,
+        ti.GsTaichiCompilationError,
         match="Function has a return type but does not have a return statement",
     ):
 
@@ -274,7 +274,7 @@ def test_real_func_tuple_ret():
 
 @test_utils.test(print_full_traceback=False)
 def test_return_type_mismatch_1():
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
 
         @ti.kernel
         def foo() -> ti.i32:
@@ -285,7 +285,7 @@ def test_return_type_mismatch_1():
 
 @test_utils.test(print_full_traceback=False)
 def test_return_type_mismatch_2():
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
 
         @ti.kernel
         def foo() -> ti.math.vec4:
@@ -308,10 +308,10 @@ def test_return_type_mismatch_3():
     def bar() -> sphere_type:
         return sphere_type_(center=ti.math.vec3([1, 2, 3]), radius=2)
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         foo()
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         bar()
 
 

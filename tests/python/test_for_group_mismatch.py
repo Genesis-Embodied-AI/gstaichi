@@ -1,7 +1,7 @@
 import pytest
 
-import taichi as ti
-from taichi.lang.misc import get_host_arch_list
+import gstaichi as ti
+from gstaichi.lang.misc import get_host_arch_list
 from tests import test_utils
 
 
@@ -14,7 +14,7 @@ def test_struct_for_mismatch():
         for i in x:
             print(i)
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -27,7 +27,7 @@ def test_struct_for_mismatch2():
         for i, j, k in x:
             print(i, j, k)
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -44,7 +44,7 @@ def _test_grouped_struct_for_mismatch():
         for i, j in ti.grouped(x):
             print(i, j)
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -57,7 +57,7 @@ def _test_ndrange_for_mismatch():
         for i in ti.ndrange(3, 4):
             print(i)
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -70,7 +70,7 @@ def _test_ndrange_for_mismatch2():
         for i, j, k in ti.ndrange(3, 4):
             print(i, j, k)
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -83,7 +83,7 @@ def _test_grouped_ndrange_for_mismatch():
         for i in ti.grouped(ti.ndrange(3, 4)):
             print(i)
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()
 
 
@@ -96,5 +96,5 @@ def _test_static_ndrange_for_mismatch():
         for i in ti.static(ti.ndrange(3, 4)):
             print(i)
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         func()

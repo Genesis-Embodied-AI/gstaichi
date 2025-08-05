@@ -2,7 +2,7 @@ from microbenchmarks._items import BenchmarkItem, DataType
 from microbenchmarks._metric import MetricType
 from microbenchmarks._plan import BenchmarkPlan
 
-import taichi as ti
+import gstaichi as ti
 
 
 def matrix_operations_default(arch, repeat, matrix_op, block_mn, element_num, dtype, get_metric):

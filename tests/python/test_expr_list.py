@@ -1,4 +1,4 @@
-import taichi as ti
+import gstaichi as ti
 from tests import test_utils
 
 
@@ -18,7 +18,7 @@ def test_listcomp_multiple_ifs():
 
     @ti.kernel
     def test() -> ti.i32:
-        # Taichi doesn't support global fields appearing anywhere after "for"
+        # GsTaichi doesn't support global fields appearing anywhere after "for"
         # here.
         a = [x[0] for j in range(100) if j > 2 if j < 5]
         return sum(a)

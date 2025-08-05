@@ -1,7 +1,7 @@
 import pytest
 
-import taichi as ti
-from taichi.lang.misc import get_host_arch_list
+import gstaichi as ti
+from gstaichi.lang.misc import get_host_arch_list
 from tests import test_utils
 
 
@@ -80,7 +80,7 @@ def test_negative_valued_indices():
         print(x[:-1])
 
     with pytest.raises(
-        ti.TaichiSyntaxError,
-        match="Negative indices are not supported in Taichi kernels.",
+        ti.GsTaichiSyntaxError,
+        match="Negative indices are not supported in GsTaichi kernels.",
     ):
         foo(0)

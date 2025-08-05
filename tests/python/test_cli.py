@@ -10,8 +10,8 @@ from unittest.mock import patch
 
 import pytest
 
-import taichi as ti
-from taichi._main import TaichiMain
+import gstaichi as ti
+from gstaichi._main import GsTaichiMain
 from tests import test_utils
 
 
@@ -28,68 +28,68 @@ def patch_sys_argv_helper(custom_argv: list):
 
 def test_cli_exit_one_with_no_command_provided():
     with patch_sys_argv_helper(["ti"]):
-        cli = TaichiMain(test_mode=True)
+        cli = GsTaichiMain(test_mode=True)
         assert cli() == 1
 
 
 def test_cli_exit_one_with_bogus_command_provided():
     with patch_sys_argv_helper(["ti", "bogus-command-not-registered-yet"]):
-        cli = TaichiMain(test_mode=True)
+        cli = GsTaichiMain(test_mode=True)
         assert cli() == 1
 
 
 def test_cli_can_dispatch_commands_to_methods_correctly():
     with patch_sys_argv_helper(["ti", "example", "bogus_example_name_for_test"]):
-        with patch.object(TaichiMain, "example", return_value=None) as mock_method:
-            cli = TaichiMain(test_mode=False)
+        with patch.object(GsTaichiMain, "example", return_value=None) as mock_method:
+            cli = GsTaichiMain(test_mode=False)
             cli()
             mock_method.assert_called_once_with(["bogus_example_name_for_test"])
 
 
 def test_cli_example():
     with patch_sys_argv_helper(["ti", "example", "minimal"]) as custom_argv:
-        cli = TaichiMain(test_mode=True)
+        cli = GsTaichiMain(test_mode=True)
         args = cli()
         assert args.name == "minimal"
 
     with patch_sys_argv_helper(["ti", "example", "minimal.py"]) as custom_argv:
-        cli = TaichiMain(test_mode=True)
+        cli = GsTaichiMain(test_mode=True)
         args = cli()
         assert args.name == "minimal"
 
     with patch_sys_argv_helper(["ti", "example", "-s", "minimal.py"]) as custom_argv:
-        cli = TaichiMain(test_mode=True)
+        cli = GsTaichiMain(test_mode=True)
         args = cli()
         assert args.name == "minimal" and args.save == True
 
     with patch_sys_argv_helper(["ti", "example", "-p", "minimal.py"]) as custom_argv:
-        cli = TaichiMain(test_mode=True)
+        cli = GsTaichiMain(test_mode=True)
         args = cli()
         assert args.name == "minimal" and args.print == True
 
     with patch_sys_argv_helper(["ti", "example", "-P", "minimal.py"]) as custom_argv:
-        cli = TaichiMain(test_mode=True)
+        cli = GsTaichiMain(test_mode=True)
         args = cli()
         assert args.name == "minimal" and args.pretty_print == True
 
 
 def test_cli_regression():
     with patch_sys_argv_helper(["ti", "regression", "a.py", "b.py"]) as custom_argv:
-        cli = TaichiMain(test_mode=True)
+        cli = GsTaichiMain(test_mode=True)
         args = cli()
         assert args.files == ["a.py", "b.py"]
 
 
 def test_cli_debug():
     with patch_sys_argv_helper(["ti", "debug", "a.py"]) as custom_argv:
-        cli = TaichiMain(test_mode=True)
+        cli = GsTaichiMain(test_mode=True)
         args = cli()
         assert args.filename == "a.py"
 
 
 def test_cli_run():
     with patch_sys_argv_helper(["ti", "run", "a.py"]) as custom_argv:
-        cli = TaichiMain(test_mode=True)
+        cli = GsTaichiMain(test_mode=True)
         args = cli()
         assert args.filename == "a.py"
 
@@ -124,7 +124,7 @@ def test_cli_cache():
     assert found
 
     with patch_sys_argv_helper(["ti", "cache", "clean", "-p", tmp_path]) as custom_argv:
-        cli = TaichiMain()
+        cli = GsTaichiMain()
         cli()
 
     for root, dirs, files in os.walk(tmp_path):

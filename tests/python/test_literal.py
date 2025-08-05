@@ -1,6 +1,6 @@
 import pytest
 
-import taichi as ti
+import gstaichi as ti
 from tests import test_utils
 
 
@@ -23,7 +23,7 @@ def test_literal_multi_args_error():
         a = ti.i64(1, 2)
 
     with pytest.raises(
-        ti.TaichiSyntaxError,
+        ti.GsTaichiSyntaxError,
         match="A primitive type can only decorate a single expression.",
     ):
         multi_args_error()
@@ -36,7 +36,7 @@ def test_literal_keywords_error():
         a = ti.f64(1, x=2)
 
     with pytest.raises(
-        ti.TaichiSyntaxError,
+        ti.GsTaichiSyntaxError,
         match="A primitive type can only decorate a single expression.",
     ):
         keywords_error()
@@ -50,7 +50,7 @@ def test_literal_compound_error():
         b = ti.f16(a)
 
     with pytest.raises(
-        ti.TaichiSyntaxError,
+        ti.GsTaichiSyntaxError,
         match="A primitive type cannot decorate an expression with a compound type.",
     ):
         expr_error()
@@ -63,7 +63,7 @@ def test_literal_int_annotation_error():
         a = ti.f32(0)
 
     with pytest.raises(
-        ti.TaichiTypeError,
+        ti.GsTaichiTypeError,
         match="Integer literals must be annotated with a integer type. For type casting, use `ti.cast`.",
     ):
         int_annotation_error()
@@ -76,7 +76,7 @@ def test_literal_float_annotation_error():
         a = ti.i32(0.0)
 
     with pytest.raises(
-        ti.TaichiTypeError,
+        ti.GsTaichiTypeError,
         match="Floating-point literals must be annotated with a floating-point type. For type casting, use `ti.cast`.",
     ):
         float_annotation_error()
@@ -88,7 +88,7 @@ def test_literal_exceed_default_ip():
     def func():
         b = 0x80000000
 
-    with pytest.raises(ti.TaichiTypeError, match="exceeded the range of default_ip"):
+    with pytest.raises(ti.GsTaichiTypeError, match="exceeded the range of default_ip"):
         func()
 
 
@@ -98,5 +98,5 @@ def test_literal_exceed_specified_dtype():
     def func():
         b = ti.u16(-1)
 
-    with pytest.raises(ti.TaichiTypeError, match="exceeded the range of specified dtype"):
+    with pytest.raises(ti.GsTaichiTypeError, match="exceeded the range of specified dtype"):
         func()

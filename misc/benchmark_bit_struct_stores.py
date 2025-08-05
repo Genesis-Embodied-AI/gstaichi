@@ -1,4 +1,4 @@
-import taichi as ti
+import gstaichi as ti
 
 ti.init(arch=ti.cpu, kernel_profiler=True, print_ir=True)
 

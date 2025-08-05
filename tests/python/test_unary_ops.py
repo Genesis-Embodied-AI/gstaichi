@@ -1,12 +1,12 @@
 import numpy as np
 import pytest
 
-import taichi as ti
-from taichi.lang.exception import TaichiTypeError
+import gstaichi as ti
+from gstaichi.lang.exception import GsTaichiTypeError
 from tests import test_utils
 
 
-def _test_op(dt, taichi_op, np_op):
+def _test_op(dt, gstaichi_op, np_op):
     print("arch={} default_fp={}".format(ti.lang.impl.current_cfg().arch, ti.lang.impl.current_cfg().default_fp))
     n = 4
     val = ti.field(dt, shape=n)
@@ -17,7 +17,7 @@ def _test_op(dt, taichi_op, np_op):
     @ti.kernel
     def fill():
         for i in range(n):
-            val[i] = taichi_op(ti.func(f)(ti.cast(i, dt)))
+            val[i] = gstaichi_op(ti.func(f)(ti.cast(i, dt)))
 
     fill()
 
@@ -41,16 +41,16 @@ op_pairs = [
 ]
 
 
-@pytest.mark.parametrize("taichi_op,np_op", op_pairs)
+@pytest.mark.parametrize("gstaichi_op,np_op", op_pairs)
 @test_utils.test(default_fp=ti.f32)
-def test_trig_f32(taichi_op, np_op):
-    _test_op(ti.f32, taichi_op, np_op)
+def test_trig_f32(gstaichi_op, np_op):
+    _test_op(ti.f32, gstaichi_op, np_op)
 
 
-@pytest.mark.parametrize("taichi_op,np_op", op_pairs)
+@pytest.mark.parametrize("gstaichi_op,np_op", op_pairs)
 @test_utils.test(require=ti.extension.data64, default_fp=ti.f64)
-def test_trig_f64(taichi_op, np_op):
-    _test_op(ti.f64, taichi_op, np_op)
+def test_trig_f64(gstaichi_op, np_op):
+    _test_op(ti.f64, gstaichi_op, np_op)
 
 
 @test_utils.test(print_full_traceback=False)
@@ -59,7 +59,7 @@ def test_bit_not_invalid():
     def test(x: ti.f32) -> ti.i32:
         return ~x
 
-    with pytest.raises(TaichiTypeError, match=r"takes integral inputs only"):
+    with pytest.raises(GsTaichiTypeError, match=r"takes integral inputs only"):
         test(1.0)
 
 
@@ -69,7 +69,7 @@ def test_logic_not_invalid():
     def test(x: ti.f32) -> ti.i32:
         return not x
 
-    with pytest.raises(TaichiTypeError, match=r"takes integral inputs only"):
+    with pytest.raises(GsTaichiTypeError, match=r"takes integral inputs only"):
         test(1.0)
 
 

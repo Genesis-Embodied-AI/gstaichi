@@ -1,6 +1,6 @@
 import pytest
 
-import taichi as ti
+import gstaichi as ti
 from tests import test_utils
 
 
@@ -14,5 +14,5 @@ def test_nested_kernel_error():
     def A():
         B()
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         A()

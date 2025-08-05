@@ -1,6 +1,6 @@
 import pytest
 
-import taichi as ti
+import gstaichi as ti
 from tests import test_utils
 
 n = 128
@@ -14,8 +14,8 @@ def run_atomic_add_global_case(vartype, step, valproc=lambda x: x):
     ti.root.dense(ti.i, n).place(x, y)
     ti.root.place(c)
 
-    # Make Taichi correctly infer the type
-    # TODO: Taichi seems to treat numpy.int32 as a float type, fix that.
+    # Make GsTaichi correctly infer the type
+    # TODO: GsTaichi seems to treat numpy.int32 as a float type, fix that.
     init_ck = 0 if vartype == ti.i32 else 0.0
 
     @ti.kernel
@@ -405,7 +405,7 @@ def test_atomic_min_rvalue_as_frist_op():
         y = ti.Vector([1, 2, 3])
         z = ti.atomic_min([3, 2, 1], y)
 
-    with pytest.raises(ti.TaichiSyntaxError) as e:
+    with pytest.raises(ti.GsTaichiSyntaxError) as e:
         func()
 
     assert "atomic_min" in str(e.value)

@@ -1,6 +1,6 @@
 import pytest
 
-import taichi as ti
+import gstaichi as ti
 from tests import test_utils
 
 
@@ -180,7 +180,7 @@ def test_experimental_templates():
 
 @test_utils.test(arch=[ti.cpu, ti.cuda])
 def test_missing_arg_annotation():
-    with pytest.raises(ti.TaichiSyntaxError, match="must be type annotated"):
+    with pytest.raises(ti.GsTaichiSyntaxError, match="must be type annotated"):
 
         @ti.real_func
         def add(a, b: ti.i32) -> ti.i32:
@@ -189,7 +189,7 @@ def test_missing_arg_annotation():
 
 @test_utils.test(arch=[ti.cpu, ti.cuda])
 def test_missing_return_annotation():
-    with pytest.raises(ti.TaichiCompilationError, match="return value must be annotated"):
+    with pytest.raises(ti.GsTaichiCompilationError, match="return value must be annotated"):
 
         @ti.real_func
         def add(a: ti.i32, b: ti.i32):
@@ -388,7 +388,7 @@ def test_func_ndarray_arg():
 
     assert arr[0] == [20, 20, 20]
 
-    with pytest.raises(ti.TaichiCompilationError, match=r"Invalid value for argument a"):
+    with pytest.raises(ti.GsTaichiCompilationError, match=r"Invalid value for argument a"):
         test_error(arr)
 
 
@@ -424,7 +424,7 @@ def test_func_matrix_arg_with_error():
         x = ti.Matrix([3, 4])
         test(x)
 
-    with pytest.raises(ti.TaichiSyntaxError, match=r"is expected to be a Matrix with n 3, but got 2"):
+    with pytest.raises(ti.GsTaichiSyntaxError, match=r"is expected to be a Matrix with n 3, but got 2"):
         test_error()
 
 

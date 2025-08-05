@@ -1,5 +1,5 @@
-# https://forum.taichi.graphics/t/taichi/1003
-import taichi as ti
+# https://forum.gstaichi.graphics/t/gstaichi/1003
+import gstaichi as ti
 
 ti.init(arch=ti.cpu)
 
