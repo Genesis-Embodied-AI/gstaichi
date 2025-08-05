@@ -3,6 +3,7 @@ import pytest
 
 import gstaichi as ti
 from gstaichi.lang.exception import GsTaichiTypeError
+
 from tests import test_utils
 
 

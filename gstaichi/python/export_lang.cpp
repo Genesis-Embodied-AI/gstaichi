@@ -52,15 +52,15 @@ void export_lang(py::module &m) {
   using namespace std::placeholders;
 
   py::register_exception<GsTaichiTypeError>(m, "GsTaichiTypeError",
-                                          PyExc_TypeError);
+                                            PyExc_TypeError);
   py::register_exception<GsTaichiSyntaxError>(m, "GsTaichiSyntaxError",
-                                            PyExc_SyntaxError);
+                                              PyExc_SyntaxError);
   py::register_exception<GsTaichiIndexError>(m, "GsTaichiIndexError",
-                                           PyExc_IndexError);
+                                             PyExc_IndexError);
   py::register_exception<GsTaichiRuntimeError>(m, "GsTaichiRuntimeError",
-                                             PyExc_RuntimeError);
+                                               PyExc_RuntimeError);
   py::register_exception<GsTaichiAssertionError>(m, "GsTaichiAssertionError",
-                                               PyExc_AssertionError);
+                                                 PyExc_AssertionError);
   py::enum_<Arch>(m, "Arch", py::arithmetic())
 #define PER_ARCH(x) .value(#x, Arch::x)
 #include "gstaichi/inc/archs.inc.h"
@@ -125,7 +125,8 @@ void export_lang(py::module &m) {
              // Defining __call__ here to make DataType callable in Python,
              // which enables us to write `typing.Tuple[ti.i32, ti.i32]`.
              throw GsTaichiSyntaxError(
-                 "GsTaichi data types cannot be called outside GsTaichi kernels.");
+                 "GsTaichi data types cannot be called outside GsTaichi "
+                 "kernels.");
            })
       .def(py::pickle(
           [](const DataType &dt) {

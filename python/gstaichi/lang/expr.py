@@ -7,7 +7,7 @@ from gstaichi.lang import impl
 from gstaichi.lang.common_ops import GsTaichiOperations
 from gstaichi.lang.exception import GsTaichiCompilationError, GsTaichiTypeError
 from gstaichi.lang.matrix import make_matrix
-from gstaichi.lang.util import is_matrix_class, is_gstaichi_class, to_numpy_type
+from gstaichi.lang.util import is_gstaichi_class, is_matrix_class, to_numpy_type
 from gstaichi.types import primitive_types
 from gstaichi.types.primitive_types import integer_types, real_types
 

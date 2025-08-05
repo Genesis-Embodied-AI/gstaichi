@@ -12,6 +12,7 @@ import pytest
 
 import gstaichi as ti
 from gstaichi._main import GsTaichiMain
+
 from tests import test_utils
 
 

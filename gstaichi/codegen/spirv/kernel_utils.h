@@ -140,10 +140,10 @@ struct TaskAttributes {
  * This class contains the attributes descriptors for both the input args and
  * the return values of a GsTaichi kernel.
  *
- * Note that all SPIRV tasks (shaders) belonging to the same GsTaichi kernel will
- * share the same kernel args (i.e. they use the same device buffer for input
- * args and return values). This is because kernel arguments is a GsTaichi-level
- * concept.
+ * Note that all SPIRV tasks (shaders) belonging to the same GsTaichi kernel
+ * will share the same kernel args (i.e. they use the same device buffer for
+ * input args and return values). This is because kernel arguments is a
+ * GsTaichi-level concept.
  *
  * Memory layout
  *

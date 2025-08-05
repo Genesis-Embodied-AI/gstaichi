@@ -131,8 +131,9 @@ CUDADriver::CUDADriver() {
 
   // CUDA versions should >= 10.
   if (version < 10000) {
-    TI_WARN("The GsTaichi CUDA backend requires at least CUDA 10.0, got v{}.{}.",
-            version / 1000, version % 1000 / 10);
+    TI_WARN(
+        "The GsTaichi CUDA backend requires at least CUDA 10.0, got v{}.{}.",
+        version / 1000, version % 1000 / 10);
     return;
   }
 

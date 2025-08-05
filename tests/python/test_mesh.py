@@ -3,6 +3,7 @@ import os
 import numpy as np
 
 import gstaichi as ti
+
 from tests import test_utils
 
 this_dir = os.path.dirname(os.path.abspath(__file__))

@@ -129,7 +129,7 @@ TEST(IRBuilder, Ndarray) {
   TestProgram test_prog;
 #ifdef TI_WITH_VULKAN
   Arch arch = gstaichi::lang::vulkan::is_vulkan_api_available() ? Arch::vulkan
-                                                              : Arch::x64;
+                                                                : Arch::x64;
 #else
   Arch arch = Arch::x64;
 #endif

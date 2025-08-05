@@ -527,9 +527,13 @@ class Func:
         for i, arg_name in enumerate(arg_names):
             param = params[arg_name]
             if param.kind == inspect.Parameter.VAR_KEYWORD:
-                raise GsTaichiSyntaxError("GsTaichi functions do not support variable keyword parameters (i.e., **kwargs)")
+                raise GsTaichiSyntaxError(
+                    "GsTaichi functions do not support variable keyword parameters (i.e., **kwargs)"
+                )
             if param.kind == inspect.Parameter.VAR_POSITIONAL:
-                raise GsTaichiSyntaxError("GsTaichi functions do not support variable positional parameters (i.e., *args)")
+                raise GsTaichiSyntaxError(
+                    "GsTaichi functions do not support variable positional parameters (i.e., *args)"
+                )
             if param.kind == inspect.Parameter.KEYWORD_ONLY:
                 raise GsTaichiSyntaxError("GsTaichi functions do not support keyword parameters")
             if param.kind != inspect.Parameter.POSITIONAL_OR_KEYWORD:
@@ -562,7 +566,9 @@ class Func:
                 elif isinstance(annotation, type) and dataclasses.is_dataclass(annotation):
                     pass
                 else:
-                    raise GsTaichiSyntaxError(f"Invalid type annotation (argument {i}) of GsTaichi function: {annotation}")
+                    raise GsTaichiSyntaxError(
+                        f"Invalid type annotation (argument {i}) of GsTaichi function: {annotation}"
+                    )
             self.arguments.append(KernelArgument(annotation, param.name, param.default))
             self.orig_arguments.append(KernelArgument(annotation, param.name, param.default))
 
@@ -638,9 +644,13 @@ class Kernel:
         for i, arg_name in enumerate(arg_names):
             param = params[arg_name]
             if param.kind == inspect.Parameter.VAR_KEYWORD:
-                raise GsTaichiSyntaxError("GsTaichi kernels do not support variable keyword parameters (i.e., **kwargs)")
+                raise GsTaichiSyntaxError(
+                    "GsTaichi kernels do not support variable keyword parameters (i.e., **kwargs)"
+                )
             if param.kind == inspect.Parameter.VAR_POSITIONAL:
-                raise GsTaichiSyntaxError("GsTaichi kernels do not support variable positional parameters (i.e., *args)")
+                raise GsTaichiSyntaxError(
+                    "GsTaichi kernels do not support variable positional parameters (i.e., *args)"
+                )
             if param.default is not inspect.Parameter.empty:
                 raise GsTaichiSyntaxError("GsTaichi kernels do not support default values for arguments")
             if param.kind == inspect.Parameter.KEYWORD_ONLY:
@@ -679,7 +689,9 @@ class Kernel:
                 elif isinstance(annotation, type) and dataclasses.is_dataclass(annotation):
                     pass
                 else:
-                    raise GsTaichiSyntaxError(f"Invalid type annotation (argument {i}) of GsTaichi kernel: {annotation}")
+                    raise GsTaichiSyntaxError(
+                        f"Invalid type annotation (argument {i}) of GsTaichi kernel: {annotation}"
+                    )
             self.arguments.append(KernelArgument(annotation, param.name, param.default))
 
     def materialize(self, key: CompiledKernelKeyType | None, args: tuple[Any, ...], arg_features):
@@ -884,7 +896,9 @@ class Kernel:
                         int(v.grad.data_ptr()) if v.grad is not None else 0,
                     )
                 else:
-                    raise GsTaichiRuntimeTypeError(f"Argument {needed} cannot be converted into required type {type(v)}")
+                    raise GsTaichiRuntimeTypeError(
+                        f"Argument {needed} cannot be converted into required type {type(v)}"
+                    )
             elif has_paddle():
                 # Do we want to continue to support paddle? :thinking_face:
                 # #maybeprunable
@@ -1024,7 +1038,9 @@ class Kernel:
                     return 0
                 set_arg_texture(indices, v)
                 return 1
-            if isinstance(needed_arg_type, texture_type.RWTextureType) and isinstance(v, gstaichi.lang._texture.Texture):
+            if isinstance(needed_arg_type, texture_type.RWTextureType) and isinstance(
+                v, gstaichi.lang._texture.Texture
+            ):
                 if in_argpack:
                     set_later_list.append((set_arg_rw_texture, (v,)))
                     return 0

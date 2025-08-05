@@ -9,9 +9,9 @@
 
 namespace gstaichi::lang {
 
-static_assert(
-    sizeof(real) == sizeof(float32),
-    "Please build the gstaichi compiler with single precision (TI_USE_DOUBLE=0)");
+static_assert(sizeof(real) == sizeof(float32),
+              "Please build the gstaichi compiler with single precision "
+              "(TI_USE_DOUBLE=0)");
 
 // Var lookup and Type inference
 class TypeCheck : public IRVisitor {

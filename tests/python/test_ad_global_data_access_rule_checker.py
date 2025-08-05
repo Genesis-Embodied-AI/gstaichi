@@ -2,6 +2,7 @@ import pytest
 
 import gstaichi as ti
 from gstaichi.types.enums import AutodiffMode
+
 from tests import test_utils
 
 

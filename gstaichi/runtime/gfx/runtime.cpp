@@ -254,7 +254,8 @@ CompiledGsTaichiKernel::CompiledGsTaichiKernel(const Params &ti_params)
   }
 }
 
-const GsTaichiKernelAttributes &CompiledGsTaichiKernel::ti_kernel_attribs() const {
+const GsTaichiKernelAttributes &CompiledGsTaichiKernel::ti_kernel_attribs()
+    const {
   return ti_kernel_attribs_;
 }
 
@@ -788,7 +789,8 @@ GfxRuntime::RegisterParams run_codegen(
     const std::vector<CompiledSNodeStructs> &compiled_structs,
     const CompileConfig &compile_config) {
   const auto id = Program::get_kernel_id();
-  const auto gstaichi_kernel_name(fmt::format("{}_k{:04d}_vk", kernel->name, id));
+  const auto gstaichi_kernel_name(
+      fmt::format("{}_k{:04d}_vk", kernel->name, id));
   TI_TRACE("VK codegen for GsTaichi kernel={}", gstaichi_kernel_name);
   spirv::KernelCodegen::Params params;
   params.ti_kernel_name = gstaichi_kernel_name;

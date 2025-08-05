@@ -1,6 +1,7 @@
 import gstaichi as ti
 from gstaichi.lang.kernel_arguments import KernelArgument
 from gstaichi.lang.kernel_impl import GsTaichiCallableTemplateMapper
+
 from tests import test_utils
 
 

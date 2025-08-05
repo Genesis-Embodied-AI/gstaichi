@@ -167,8 +167,8 @@ void SparseMatrixBuilder::build_template(std::unique_ptr<SparseMatrix> &m) {
   num_triplets_ = data[0];
   data += 1;
   for (int i = 0; i < num_triplets_; i++) {
-    triplets.push_back(
-        V(data[i * 3], data[i * 3 + 1], gstaichi_union_cast<T>(data[i * 3 + 2])));
+    triplets.push_back(V(data[i * 3], data[i * 3 + 1],
+                         gstaichi_union_cast<T>(data[i * 3 + 2])));
   }
   m->build_triplets(static_cast<void *>(&triplets));
   clear();
@@ -367,8 +367,8 @@ void build_ndarray_template(SparseMatrix &sm,
   std::vector<V> triplets;
   T *data = reinterpret_cast<T *>(data_ptr);
   for (int i = 0; i < num_triplets; i++) {
-    triplets.push_back(
-        V(data[i * 3], data[i * 3 + 1], gstaichi_union_cast<T>(data[i * 3 + 2])));
+    triplets.push_back(V(data[i * 3], data[i * 3 + 1],
+                         gstaichi_union_cast<T>(data[i * 3 + 2])));
   }
   sm.build_triplets(static_cast<void *>(&triplets));
 }

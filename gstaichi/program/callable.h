@@ -41,9 +41,10 @@ class TI_DLL_EXPORT CallableBase {
 
     /* [arguments with TensorType]
 
-    GsTaichi used to represent TensorType with the combination of "PrimitiveType"
-    & "element_shape" and there are a bunch of interfaces designed like this (it
-    allows creating TensorType by passing in PrimitiveType + element_shape)
+    GsTaichi used to represent TensorType with the combination of
+    "PrimitiveType" & "element_shape" and there are a bunch of interfaces
+    designed like this (it allows creating TensorType by passing in
+    PrimitiveType + element_shape)
 
     Here we removed the "element_shape" member in the underlying objects (class
     Arg, class ExternalTensorExpression, ...), and forced them to use TensorType

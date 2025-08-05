@@ -2,6 +2,7 @@ import pytest
 
 import gstaichi as ti
 from gstaichi.lang.misc import get_host_arch_list
+
 from tests import test_utils
 
 

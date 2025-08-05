@@ -10,6 +10,7 @@ import gstaichi as ti
 from gstaichi.lang import impl
 from gstaichi.lang.exception import GsTaichiCompilationError, GsTaichiTypeError
 from gstaichi.lang.misc import get_host_arch_list
+
 from tests import test_utils
 
 matrix_operation_types = [operator.add, operator.sub, operator.matmul]

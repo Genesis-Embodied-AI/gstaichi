@@ -23,9 +23,9 @@ from gstaichi.lang.field import Field, ScalarField, SNodeHostAccess
 from gstaichi.lang.util import (
     cook_dtype,
     get_traceback,
+    gstaichi_scope,
     in_python_scope,
     python_scope,
-    gstaichi_scope,
     to_numpy_type,
     to_paddle_type,
     to_pytorch_type,
@@ -1241,11 +1241,15 @@ class MatrixField(Field):
             if self.ndim != 1:
                 assert len(val[0]) == self.m
         if in_python_scope():
-            from gstaichi._kernels import field_fill_python_scope  # pylint: disable=C0415
+            from gstaichi._kernels import (
+                field_fill_python_scope,  # pylint: disable=C0415
+            )
 
             field_fill_python_scope(self, val)
         else:
-            from gstaichi._funcs import field_fill_gstaichi_scope  # pylint: disable=C0415
+            from gstaichi._funcs import (
+                field_fill_gstaichi_scope,  # pylint: disable=C0415
+            )
 
             field_fill_gstaichi_scope(self, val)
 

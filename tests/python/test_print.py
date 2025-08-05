@@ -1,6 +1,7 @@
 import pytest
 
 import gstaichi as ti
+
 from tests import test_utils
 
 # TODO: validation layer support on macos vulkan backend is not working.

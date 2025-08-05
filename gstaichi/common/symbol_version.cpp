@@ -20,7 +20,8 @@ extern "C" {
 // Related issue: https://github.com/taichi-dev/gstaichi/issues/3174
 // log2f is used by a third party .a file, so we have to define a wrapper.
 // https://stackoverflow.com/questions/8823267/linking-against-older-symbol-version-in-a-so-file
-// The wrapper should be linked using target_link_libraries in GsTaichiCore.cmake
+// The wrapper should be linked using target_link_libraries in
+// GsTaichiCore.cmake
 __asm__(".symver log2f,log2f@GLIBC_2.2.5");
 float __wrap_log2f(float x) {
   return log2f(x);

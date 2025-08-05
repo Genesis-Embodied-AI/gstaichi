@@ -4,6 +4,7 @@ import pytest
 
 import gstaichi as ti
 from gstaichi.linalg import LinearOperator, MatrixFreeBICGSTAB
+
 from tests import test_utils
 
 vk_on_mac = (ti.vulkan, "Darwin")

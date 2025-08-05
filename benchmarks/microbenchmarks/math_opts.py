@@ -1,9 +1,8 @@
+import gstaichi as ti
 from microbenchmarks._items import BenchmarkItem, DataType, MathOps
 from microbenchmarks._metric import MetricType
 from microbenchmarks._plan import BenchmarkPlan
 from microbenchmarks._utils import dtype_size, scaled_repeat_times
-
-import gstaichi as ti
 
 
 def unary_ops_throughput_default(arch, repeat, math_op, dtype, element_num, thread_for_loop, get_metric):

@@ -1,4 +1,5 @@
 import gstaichi as myowngstaichi
+
 from tests import test_utils
 
 

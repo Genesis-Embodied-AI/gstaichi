@@ -59,7 +59,8 @@ HackedSignalRegister::HackedSignalRegister() {
 #undef TI_REGISTER_SIGNAL_HANDLER
 
   Logger::get_instance().set_print_stacktrace_func(print_traceback);
-  TI_TRACE("GsTaichi signal handlers registered. Thread ID = {}", PID::get_pid());
+  TI_TRACE("GsTaichi signal handlers registered. Thread ID = {}",
+           PID::get_pid());
 }
 
 HackedSignalRegister::~HackedSignalRegister() {

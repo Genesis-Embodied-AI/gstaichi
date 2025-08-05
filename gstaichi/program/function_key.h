@@ -31,7 +31,8 @@ class FunctionKey {
 namespace std {
 template <>
 struct hash<gstaichi::lang::FunctionKey> {
-  std::size_t operator()(const gstaichi::lang::FunctionKey &key) const noexcept {
+  std::size_t operator()(
+      const gstaichi::lang::FunctionKey &key) const noexcept {
     return key.func_id ^ (key.instance_id << 16);
   }
 };

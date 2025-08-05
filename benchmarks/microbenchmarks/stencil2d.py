@@ -1,3 +1,4 @@
+import gstaichi as ti
 from microbenchmarks._items import BenchmarkItem, Container, DataType
 from microbenchmarks._metric import MetricType
 from microbenchmarks._plan import BenchmarkPlan
@@ -7,8 +8,6 @@ from microbenchmarks._utils import (
     scaled_repeat_times,
     size2tag,
 )
-
-import gstaichi as ti
 
 stencil_common = [(0, 0), (0, -1), (0, 1), (1, 0)]
 

@@ -6,9 +6,9 @@
 
 namespace gstaichi::lang {
 
-// The GsTaichi core feature set (dense SNode) should probably be supported by all
-// the backends. In addition, each backend can optionally support features in
-// the extension set.
+// The GsTaichi core feature set (dense SNode) should probably be supported by
+// all the backends. In addition, each backend can optionally support features
+// in the extension set.
 //
 // The notion of core vs. extension feature set is defined mainly because the
 // Metal backend can only support the dense SNodes. We may need to define this

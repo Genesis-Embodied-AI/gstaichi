@@ -177,19 +177,19 @@ void TaskCodeGenLLVM::emit_extra_unary(UnaryOpStmt *stmt) {
   auto op = stmt->op_type;
   auto input_type = input->getType();
 
-#define UNARY_STD(x)                                                    \
-  else if (op == UnaryOpType::x) {                                      \
+#define UNARY_STD(x)                                                      \
+  else if (op == UnaryOpType::x) {                                        \
     if (input_gstaichi_type->is_primitive(PrimitiveTypeID::f32)) {        \
-      llvm_val[stmt] = call(#x "_f32", input);                          \
+      llvm_val[stmt] = call(#x "_f32", input);                            \
     } else if (input_gstaichi_type->is_primitive(PrimitiveTypeID::f64)) { \
-      llvm_val[stmt] = call(#x "_f64", input);                          \
+      llvm_val[stmt] = call(#x "_f64", input);                            \
     } else if (input_gstaichi_type->is_primitive(PrimitiveTypeID::i32)) { \
-      llvm_val[stmt] = call(#x "_i32", input);                          \
+      llvm_val[stmt] = call(#x "_i32", input);                            \
     } else if (input_gstaichi_type->is_primitive(PrimitiveTypeID::i64)) { \
-      llvm_val[stmt] = call(#x "_i64", input);                          \
-    } else {                                                            \
-      TI_NOT_IMPLEMENTED                                                \
-    }                                                                   \
+      llvm_val[stmt] = call(#x "_i64", input);                            \
+    } else {                                                              \
+      TI_NOT_IMPLEMENTED                                                  \
+    }                                                                     \
   }
   if (false) {
   }
@@ -1955,8 +1955,8 @@ void TaskCodeGenLLVM::visit(ExternalPtrStmt *stmt) {
 
       "getelementptr <10 x i32>* %1, 0, 1" is interpreted as "%1 + 16(aligned)"
 
-    However, this does not fit with GsTaichi's Ndarray semantics. We will have to
-    do pointer arithmetics to manually calculate the offset.
+    However, this does not fit with GsTaichi's Ndarray semantics. We will have
+    to do pointer arithmetics to manually calculate the offset.
   */
   if (operand_dtype->is<TensorType>()) {
     // Access PtrOffset via: base_ptr + offset * sizeof(element)
@@ -2058,8 +2058,9 @@ void TaskCodeGenLLVM::finalize_offloaded_task_function() {
   builder->CreateBr(func_body_bb);
 
   if (compile_config.print_kernel_llvm_ir) {
-    static FileSequenceWriter writer("gstaichi_kernel_generic_llvm_ir_{:04d}.ll",
-                                     "unoptimized LLVM IR (generic)");
+    static FileSequenceWriter writer(
+        "gstaichi_kernel_generic_llvm_ir_{:04d}.ll",
+        "unoptimized LLVM IR (generic)");
     writer.write(module.get());
   }
   TI_ASSERT(!llvm::verifyFunction(*func, &llvm::errs()));

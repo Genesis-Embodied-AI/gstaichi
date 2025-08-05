@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 import gstaichi as ti
+
 from tests import test_utils
 
 

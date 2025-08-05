@@ -7,6 +7,7 @@ import pytest
 
 import gstaichi as ti
 from gstaichi.lang.util import has_clangpp
+
 from tests import test_utils
 
 

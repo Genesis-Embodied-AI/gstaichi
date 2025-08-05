@@ -71,7 +71,8 @@ class GsTaichiLLVMContext {
 
   template <typename T>
   llvm::Type *get_data_type() {
-    return GsTaichiLLVMContext::get_data_type(gstaichi::lang::get_data_type<T>());
+    return GsTaichiLLVMContext::get_data_type(
+        gstaichi::lang::get_data_type<T>());
   }
 
   std::size_t get_type_size(llvm::Type *type);

@@ -279,7 +279,8 @@ void LlvmRuntimeExecutor::check_runtime_error(uint64 *result_buffer) {
     for (int i = 0;; i++) {
       runtime_jit_module->call<void *>("runtime_retrieve_error_message",
                                        llvm_runtime_, i);
-      auto c = fetch_result<char>(gstaichi_result_buffer_error_id, result_buffer);
+      auto c =
+          fetch_result<char>(gstaichi_result_buffer_error_id, result_buffer);
       error_message_template += c;
       if (c == '\0') {
         break;

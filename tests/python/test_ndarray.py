@@ -7,10 +7,15 @@ import pytest
 import gstaichi as ti
 from gstaichi._test_tools.load_kernel_string import load_kernel_from_string
 from gstaichi.lang import impl
-from gstaichi.lang.exception import GsTaichiIndexError, GsTaichiRuntimeError, GsTaichiTypeError
+from gstaichi.lang.exception import (
+    GsTaichiIndexError,
+    GsTaichiRuntimeError,
+    GsTaichiTypeError,
+)
 from gstaichi.lang.misc import get_host_arch_list
 from gstaichi.lang.util import has_pytorch
 from gstaichi.math import ivec3, vec3
+
 from tests import test_utils
 
 if has_pytorch():

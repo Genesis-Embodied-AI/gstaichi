@@ -11,7 +11,12 @@ from gstaichi._lib import core as _ti_core
 from gstaichi.lang import expr, impl
 from gstaichi.lang.exception import GsTaichiSyntaxError
 from gstaichi.lang.field import Field
-from gstaichi.lang.util import cook_dtype, is_matrix_class, is_gstaichi_class, gstaichi_scope
+from gstaichi.lang.util import (
+    cook_dtype,
+    gstaichi_scope,
+    is_gstaichi_class,
+    is_matrix_class,
+)
 
 
 def stack_info():

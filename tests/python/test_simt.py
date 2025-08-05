@@ -4,6 +4,7 @@ from pytest import approx
 
 import gstaichi as ti
 from gstaichi.lang.simt import subgroup
+
 from tests import test_utils
 
 

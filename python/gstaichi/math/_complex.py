@@ -1,8 +1,9 @@
 # type: ignore
 
-from .mathimpl import dot, vec2
 from gstaichi.lang import ops
 from gstaichi.lang.kernel_impl import func
+
+from .mathimpl import dot, vec2
 
 
 @func

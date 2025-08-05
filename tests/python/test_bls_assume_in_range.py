@@ -1,4 +1,5 @@
 import gstaichi as ti
+
 from .bls_test_template import bls_particle_grid
 from tests import test_utils
 

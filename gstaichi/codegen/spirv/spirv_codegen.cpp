@@ -673,8 +673,8 @@ class TaskCodegen : public IRVisitor {
     // Function to traverse struct tree in depth-first order recursively to
     // calculate AccessChain indices.
     std::function<void(const gstaichi::lang::Type *, int &, std::vector<int> &)>
-        calc_indices_and_store = [&](const gstaichi::lang::Type *type, int &index,
-                                     std::vector<int> &indices) {
+        calc_indices_and_store = [&](const gstaichi::lang::Type *type,
+                                     int &index, std::vector<int> &indices) {
           if (auto struct_type = type->cast<gstaichi::lang::StructType>()) {
             for (int i = 0; i < struct_type->elements().size(); ++i) {
               indices.push_back(i);

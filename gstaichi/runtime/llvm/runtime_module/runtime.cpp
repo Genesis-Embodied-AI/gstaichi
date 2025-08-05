@@ -77,14 +77,14 @@ __asm__(".symver expf,expf@GLIBC_2.2.5");
   };
 
 // For fetching struct fields from device to host
-#define RUNTIME_STRUCT_FIELD(S, F)                                    \
-  extern "C" void runtime_##S##_get_##F(LLVMRuntime *runtime, S *s) { \
+#define RUNTIME_STRUCT_FIELD(S, F)                                      \
+  extern "C" void runtime_##S##_get_##F(LLVMRuntime *runtime, S *s) {   \
     runtime->set_result(gstaichi_result_buffer_runtime_query_id, s->F); \
   }
 
 #define RUNTIME_STRUCT_FIELD_ARRAY(S, F)                                     \
   extern "C" void runtime_##S##_get_##F(LLVMRuntime *runtime, S *s, int i) { \
-    runtime->set_result(gstaichi_result_buffer_runtime_query_id, s->F[i]);     \
+    runtime->set_result(gstaichi_result_buffer_runtime_query_id, s->F[i]);   \
   }
 
 using int8 = int8_t;
@@ -374,7 +374,8 @@ template <typename T>
 T debug_mul(RuntimeContext *ctx, T a, T b, const char *tb) {
   T c;
   if (__builtin_mul_overflow(a, b, &c)) {
-    gstaichi_printf(ctx->runtime, "Multiplication overflow detected in %s\n", tb);
+    gstaichi_printf(ctx->runtime, "Multiplication overflow detected in %s\n",
+                    tb);
   }
   return c;
 }
@@ -439,8 +440,9 @@ struct ListManager {
       : element_size(element_size),
         max_num_elements_per_chunk(num_elements_per_chunk),
         runtime(runtime) {
-    gstaichi_assert_runtime(runtime, is_power_of_two(max_num_elements_per_chunk),
-                          "max_num_elements_per_chunk must be POT.");
+    gstaichi_assert_runtime(runtime,
+                            is_power_of_two(max_num_elements_per_chunk),
+                            "max_num_elements_per_chunk must be POT.");
     lock = 0;
     num_elements = 0;
     log2chunk_num_elements = gstaichi::log2int(num_elements_per_chunk);
@@ -764,10 +766,10 @@ void gstaichi_assert(RuntimeContext *context, u1 test, const char *msg) {
 }
 
 void gstaichi_assert_format(LLVMRuntime *runtime,
-                          u1 test,
-                          const char *format,
-                          int num_arguments,
-                          uint64 *arguments) {
+                            u1 test,
+                            const char *format,
+                            int num_arguments,
+                            uint64 *arguments) {
 #ifdef ARCH_amdgpu
   // TODO: find out why error with mark_force_no_inline
   //  llvm::SDValue llvm::SelectionDAG::getNode(unsigned int, const llvm::SDLoc
@@ -880,9 +882,9 @@ void runtime_memory_allocate_aligned(LLVMRuntime *runtime,
                                      std::size_t size,
                                      std::size_t alignment,
                                      uint64 *result) {
-  *result =
-      gstaichi_union_cast_with_different_sizes<uint64>(runtime->allocate_aligned(
-          runtime->runtime_memory_chunk, size, alignment));
+  *result = gstaichi_union_cast_with_different_sizes<uint64>(
+      runtime->allocate_aligned(runtime->runtime_memory_chunk, size,
+                                alignment));
 }
 
 // External API
@@ -897,10 +899,10 @@ void runtime_get_memory_requirements(Ptr result_buffer,
     size += gstaichi::iroundup(i64(sizeof(LLVMRuntime)), gstaichi_page_size);
   }
 
-  size +=
-      gstaichi::iroundup(i64(gstaichi_global_tmp_buffer_size), gstaichi_page_size);
+  size += gstaichi::iroundup(i64(gstaichi_global_tmp_buffer_size),
+                             gstaichi_page_size);
   size += gstaichi::iroundup(i64(sizeof(RandState)) * num_rand_states,
-                           gstaichi_page_size);
+                             gstaichi_page_size);
 
   reinterpret_cast<i64 *>(result_buffer)[0] = size;
 }
@@ -1663,7 +1665,7 @@ i32 linear_thread_idx(RuntimeContext *context) {
 
 void ListManager::touch_chunk(int chunk_id) {
   gstaichi_assert_runtime(runtime, chunk_id < max_num_chunks,
-                        "List manager out of chunks.");
+                          "List manager out of chunks.");
   if (!chunks[chunk_id]) {
     locked_task(&lock, [&] {
       // may have been allocated during lock contention
@@ -1966,8 +1968,8 @@ f32 rounding_prepare_f32(f32 f) {
   */
 
   // Branch-free implementation: copy the sign bit of "f" to "0.5"
-  i32 delta_bits =
-      (gstaichi_union_cast<i32>(f) & 0x80000000) | gstaichi_union_cast<i32>(0.5f);
+  i32 delta_bits = (gstaichi_union_cast<i32>(f) & 0x80000000) |
+                   gstaichi_union_cast<i32>(0.5f);
   f32 delta = gstaichi_union_cast<f32>(delta_bits);
   return f + delta;
 }

@@ -68,9 +68,9 @@ task_invoke(const T &func, const std::vector<std::string> &params) {
 }
 
 #define TI_REGISTER_TASK(task)                                             \
-  class Task_##task : public gstaichi::Task {                                \
+  class Task_##task : public gstaichi::Task {                              \
     std::string run(const std::vector<std::string> &parameters) override { \
-      return gstaichi::task_invoke<decltype(task)>(task, parameters);        \
+      return gstaichi::task_invoke<decltype(task)>(task, parameters);      \
     }                                                                      \
   };                                                                       \
   TI_IMPLEMENTATION(Task, Task_##task, #task)

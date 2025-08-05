@@ -12,7 +12,8 @@ namespace gstaichi::lang {
 // Note:
 // It would be ideal to create a CUDA context per GsTaichi program, yet CUDA
 // context creation takes time. Therefore we use a shared context to accelerate
-// cases such as unit testing where many GsTaichi programs are created/destroyed.
+// cases such as unit testing where many GsTaichi programs are
+// created/destroyed.
 
 class CUDADriver;
 

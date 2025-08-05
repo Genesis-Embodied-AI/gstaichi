@@ -7,6 +7,7 @@ from PIL import Image
 
 import gstaichi as ti
 from gstaichi.lang import impl
+
 from tests import test_utils
 
 supported_archs_texture = [ti.vulkan]

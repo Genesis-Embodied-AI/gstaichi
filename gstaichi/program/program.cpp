@@ -364,12 +364,12 @@ void Program::delete_ndarray(Ndarray *ndarray) {
   // [Note] Ndarray memory deallocation
   // Ndarray's memory allocation is managed by GsTaichi and Python can control
   // this via GsTaichi indirectly. For example, when an ndarray is GC-ed in
-  // Python, it signals GsTaichi to free its memory allocation. But GsTaichi will
-  // make sure **no pending kernels to be executed needs the ndarray** before it
-  // actually frees the memory. When `ti.reset()` is called, all ndarrays
-  // allocated in this program should be gone and no longer valid in Python.
-  // This isn't the best implementation, ndarrays should be managed by gstaichi
-  // runtime instead of this giant program and it should be freed when:
+  // Python, it signals GsTaichi to free its memory allocation. But GsTaichi
+  // will make sure **no pending kernels to be executed needs the ndarray**
+  // before it actually frees the memory. When `ti.reset()` is called, all
+  // ndarrays allocated in this program should be gone and no longer valid in
+  // Python. This isn't the best implementation, ndarrays should be managed by
+  // gstaichi runtime instead of this giant program and it should be freed when:
   // - Python GC signals gstaichi that it's no longer useful
   // - All kernels using it are executed.
   if (ndarrays_.count(ndarray) &&
@@ -382,12 +382,12 @@ void Program::delete_argpack(ArgPack *argpack) {
   // [Note] Argpack memory deallocation
   // Argpack's memory allocation is managed by GsTaichi and Python can control
   // this via GsTaichi indirectly. For example, when an argpack is GC-ed in
-  // Python, it signals GsTaichi to free its memory allocation. But GsTaichi will
-  // make sure **no pending kernels to be executed needs the argpack** before it
-  // actually frees the memory. When `ti.reset()` is called, all argpack
-  // allocated in this program should be gone and no longer valid in Python.
-  // This isn't the best implementation, argpacks should be managed by gstaichi
-  // runtime instead of this giant program and it should be freed when:
+  // Python, it signals GsTaichi to free its memory allocation. But GsTaichi
+  // will make sure **no pending kernels to be executed needs the argpack**
+  // before it actually frees the memory. When `ti.reset()` is called, all
+  // argpack allocated in this program should be gone and no longer valid in
+  // Python. This isn't the best implementation, argpacks should be managed by
+  // gstaichi runtime instead of this giant program and it should be freed when:
   // - Python GC signals gstaichi that it's no longer useful
   // - All kernels using it are executed.
   if (argpacks_.count(argpack) &&

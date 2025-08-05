@@ -3,6 +3,7 @@ import pytest
 
 import gstaichi as ti
 from gstaichi.lang.util import has_paddle, has_pytorch
+
 from tests import test_utils
 
 if has_pytorch():

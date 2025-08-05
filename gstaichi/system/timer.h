@@ -24,7 +24,7 @@ namespace gstaichi {
   {                                                                  \
     char timer_name[1000];                                           \
     sprintf_s(timer_name, "%s[%d]: %s", __FILENAME__, __LINE__, #x); \
-    gstaichi::Time::Timer _(timer_name);                               \
+    gstaichi::Time::Timer _(timer_name);                             \
     x;                                                               \
   }
 #define TI_TIME(x) TIME(x)

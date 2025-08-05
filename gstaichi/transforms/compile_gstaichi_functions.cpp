@@ -11,7 +11,7 @@ class CompileGsTaichiFunctions : public BasicStmtVisitor {
   using BasicStmtVisitor::visit;
 
   CompileGsTaichiFunctions(const CompileConfig &compile_config,
-                         Function::IRStage target_stage)
+                           Function::IRStage target_stage)
       : compile_config_(compile_config), target_stage_(target_stage) {
   }
 
@@ -42,8 +42,8 @@ class CompileGsTaichiFunctions : public BasicStmtVisitor {
 namespace irpass {
 
 void compile_gstaichi_functions(IRNode *ir,
-                              const CompileConfig &compile_config,
-                              Function::IRStage target_stage) {
+                                const CompileConfig &compile_config,
+                                Function::IRStage target_stage) {
   TI_AUTO_PROF;
   CompileGsTaichiFunctions::run(ir, compile_config, target_stage);
 }

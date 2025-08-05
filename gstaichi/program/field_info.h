@@ -36,7 +36,7 @@ struct FieldInfo {
 };
 
 gstaichi::lang::DevicePtr get_device_ptr(gstaichi::lang::Program *program,
-                                       gstaichi::lang::SNode *snode);
+                                         gstaichi::lang::SNode *snode);
 
 }  // namespace ui
 

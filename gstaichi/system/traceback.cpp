@@ -245,7 +245,8 @@ void print_traceback() {
   std::lock_guard<std::mutex> guard(traceback_printer_mutex);
   printf("\n");
   printf(
-      "                            * GsTaichi Core - Stack Traceback *           "
+      "                            * GsTaichi Core - Stack Traceback *         "
+      "  "
       "                  \n");
   printf(
       "========================================================================"
@@ -287,7 +288,8 @@ void print_traceback() {
 #elif defined(_WIN64)
   // Windows
   fmt::print(fg(fmt::color::magenta), "***********************************\n");
-  fmt::print(fg(fmt::color::magenta), "* GsTaichi Compiler Stack Traceback *\n");
+  fmt::print(fg(fmt::color::magenta),
+             "* GsTaichi Compiler Stack Traceback *\n");
   fmt::print(fg(fmt::color::magenta), "***********************************\n");
 
   std::vector<dbg::StackFrame> stack = dbg::stack_trace();
@@ -317,7 +319,8 @@ void print_traceback() {
   }
 
   fmt::print(fg(fmt::color::magenta), "***********************************\n");
-  fmt::print(fg(fmt::color::magenta), "* GsTaichi Compiler Stack Traceback *\n");
+  fmt::print(fg(fmt::color::magenta),
+             "* GsTaichi Compiler Stack Traceback *\n");
   fmt::print(fg(fmt::color::magenta), "***********************************\n");
 
   // j = 0: gstaichi::print_traceback

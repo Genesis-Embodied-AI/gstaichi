@@ -13,15 +13,15 @@ namespace gstaichi {
 
 #define TI_CHECK_EQUAL(A, B, tolerance)              \
   {                                                  \
-    if (!gstaichi::math::equal(A, B, tolerance)) {     \
+    if (!gstaichi::math::equal(A, B, tolerance)) {   \
       std::cout << A << std::endl << B << std::endl; \
     }                                                \
-    CHECK(gstaichi::math::equal(A, B, tolerance));     \
+    CHECK(gstaichi::math::equal(A, B, tolerance));   \
   }
 
 #define TI_ASSERT_EQUAL(A, B, tolerance)             \
   {                                                  \
-    if (!gstaichi::math::equal(A, B, tolerance)) {     \
+    if (!gstaichi::math::equal(A, B, tolerance)) {   \
       std::cout << A << std::endl << B << std::endl; \
       TI_ERROR(#A " != " #B);                        \
     }                                                \

@@ -24,7 +24,7 @@ from gstaichi.lang.exception import (
 from gstaichi.lang.expr import Expr, make_expr_group
 from gstaichi.lang.field import Field, ScalarField
 from gstaichi.lang.kernel_arguments import SparseMatrixProxy
-from gstaichi.lang.kernel_impl import BoundGsTaichiCallable, Kernel, GsTaichiCallable
+from gstaichi.lang.kernel_impl import BoundGsTaichiCallable, GsTaichiCallable, Kernel
 from gstaichi.lang.matrix import (
     Matrix,
     MatrixField,
@@ -49,9 +49,9 @@ from gstaichi.lang.struct import Struct, StructField, _IntermediateStruct
 from gstaichi.lang.util import (
     cook_dtype,
     get_traceback,
+    gstaichi_scope,
     is_gstaichi_class,
     python_scope,
-    gstaichi_scope,
     warning,
 )
 from gstaichi.types.enums import SNodeGradType
@@ -766,7 +766,9 @@ def _field(
             offset = (offset,)
         dim = len(shape)
         if offset is not None and dim != len(offset):
-            raise GsTaichiSyntaxError(f"The dimensionality of shape and offset must be the same ({dim} != {len(offset)})")
+            raise GsTaichiSyntaxError(
+                f"The dimensionality of shape and offset must be the same ({dim} != {len(offset)})"
+            )
         axis_seq = []
         shape_seq = []
         if order is not None:
@@ -876,7 +878,9 @@ def ndarray(dtype, shape, needs_grad=False):
     if needs_grad:
         assert isinstance(dt, DataTypeCxx)
         if not _ti_core.is_real(dt):
-            raise GsTaichiRuntimeError(f"{dt} is not supported for ndarray with `needs_grad=True` or `needs_dual=True`.")
+            raise GsTaichiRuntimeError(
+                f"{dt} is not supported for ndarray with `needs_grad=True` or `needs_dual=True`."
+            )
         x_grad = ndarray(dtype, shape, needs_grad=False)
         x._set_grad(x_grad)
     return x

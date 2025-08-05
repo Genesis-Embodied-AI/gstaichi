@@ -1,8 +1,8 @@
 #include "gstaichi/rhi/metal/metal_device.h"
-#include "spirv_msl.hpp"
 #include "gstaichi/rhi/device.h"
 #include "gstaichi/rhi/device_capability.h"
 #include "gstaichi/rhi/impl_support.h"
+#include "spirv_msl.hpp"
 
 namespace gstaichi::lang {
 namespace metal {

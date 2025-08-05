@@ -235,8 +235,8 @@ LLVMCompiledTask KernelCodeGenCPU::compile_task(
     const CompileConfig &config,
     std::unique_ptr<llvm::Module> &&module,
     IRNode *block) {
-  TaskCodeGenCPU gen(task_codegen_id, config, get_gstaichi_llvm_context(), kernel,
-                     block);
+  TaskCodeGenCPU gen(task_codegen_id, config, get_gstaichi_llvm_context(),
+                     kernel, block);
   return gen.run_compilation();
 }
 

@@ -2,6 +2,7 @@ import pytest
 
 import gstaichi as ti
 from gstaichi.lang.exception import GsTaichiCompilationError
+
 from tests import test_utils
 
 

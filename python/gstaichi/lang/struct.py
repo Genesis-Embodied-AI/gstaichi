@@ -15,7 +15,7 @@ from gstaichi.lang.exception import (
 from gstaichi.lang.expr import Expr
 from gstaichi.lang.field import Field, ScalarField, SNodeHostAccess
 from gstaichi.lang.matrix import Matrix, MatrixType
-from gstaichi.lang.util import cook_dtype, in_python_scope, python_scope, gstaichi_scope
+from gstaichi.lang.util import cook_dtype, gstaichi_scope, in_python_scope, python_scope
 from gstaichi.types import primitive_types
 from gstaichi.types.compound_types import CompoundType
 from gstaichi.types.enums import Layout

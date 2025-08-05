@@ -2,6 +2,7 @@ import pytest
 
 import gstaichi as ti
 from gstaichi.lang import impl
+
 from tests import test_utils
 
 _TI_TYPES = [ti.i8, ti.i16, ti.i32, ti.u8, ti.u16, ti.u32, ti.f32]

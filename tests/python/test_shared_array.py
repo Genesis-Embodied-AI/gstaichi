@@ -3,6 +3,7 @@ import pytest
 
 import gstaichi as ti
 from gstaichi.math import vec4
+
 from tests import test_utils
 
 

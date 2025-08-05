@@ -1,6 +1,5 @@
-from microbenchmarks._utils import size2tag
-
 import gstaichi as ti
+from microbenchmarks._utils import size2tag
 
 
 class BenchmarkItem:

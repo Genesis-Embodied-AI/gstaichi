@@ -656,7 +656,7 @@ void GsTaichiLLVMContext::link_module_with_amdgpu_libdevice(
 }
 
 void GsTaichiLLVMContext::add_struct_module(std::unique_ptr<Module> module,
-                                          int tree_id) {
+                                            int tree_id) {
   TI_AUTO_PROF;
   TI_ASSERT(std::this_thread::get_id() == main_thread_id_);
   auto this_thread_data = get_this_thread_data();
@@ -746,8 +746,9 @@ std::size_t GsTaichiLLVMContext::get_type_size(llvm::Type *type) {
   return get_data_layout().getTypeAllocSize(type);
 }
 
-std::size_t GsTaichiLLVMContext::get_struct_element_offset(llvm::StructType *type,
-                                                         int idx) {
+std::size_t GsTaichiLLVMContext::get_struct_element_offset(
+    llvm::StructType *type,
+    int idx) {
   return get_data_layout().getStructLayout(type)->getElementOffset(idx);
 }
 
@@ -795,8 +796,8 @@ llvm::DataLayout GsTaichiLLVMContext::get_data_layout() {
 }
 
 void GsTaichiLLVMContext::insert_nvvm_annotation(llvm::Function *func,
-                                               std::string key,
-                                               int val) {
+                                                 std::string key,
+                                                 int val) {
   /*******************************************************************
   Example annotation from llvm PTX doc:
 
@@ -822,7 +823,7 @@ void GsTaichiLLVMContext::insert_nvvm_annotation(llvm::Function *func,
 }
 
 void GsTaichiLLVMContext::mark_function_as_cuda_kernel(llvm::Function *func,
-                                                     int block_dim) {
+                                                       int block_dim) {
   // Mark kernel function as a CUDA __global__ function
   // Add the nvvm annotation that it is considered a kernel function.
   insert_nvvm_annotation(func, "kernel", 1);
@@ -861,7 +862,8 @@ void GsTaichiLLVMContext::eliminate_unused_functions(
   manager.run(*module, ana);
 }
 
-GsTaichiLLVMContext::ThreadLocalData *GsTaichiLLVMContext::get_this_thread_data() {
+GsTaichiLLVMContext::ThreadLocalData *
+GsTaichiLLVMContext::get_this_thread_data() {
   std::lock_guard<std::mutex> _(thread_map_mut_);
   auto tid = std::this_thread::get_id();
   if (per_thread_data_.find(tid) == per_thread_data_.end()) {
@@ -982,8 +984,9 @@ llvm::Module *GsTaichiLLVMContext::get_this_thread_runtime_module() {
   return data->runtime_module.get();
 }
 
-llvm::Function *GsTaichiLLVMContext::get_struct_function(const std::string &name,
-                                                       int tree_id) {
+llvm::Function *GsTaichiLLVMContext::get_struct_function(
+    const std::string &name,
+    int tree_id) {
   auto *data = get_this_thread_data();
   return data->struct_modules[tree_id]->getFunction(name);
 }
@@ -1060,7 +1063,7 @@ LLVMCompiledKernel GsTaichiLLVMContext::link_compiled_tasks(
 }
 
 void GsTaichiLLVMContext::add_struct_for_func(llvm::Module *module,
-                                            int tls_size) {
+                                              int tls_size) {
   // Note that on CUDA local array allocation must have a compile-time
   // constant size. Therefore, instead of passing in the tls_buffer_size
   // argument, we directly clone the "parallel_struct_for" function and
@@ -1122,8 +1125,9 @@ std::string GsTaichiLLVMContext::get_data_layout_string() {
 }
 
 std::pair<const StructType *, size_t>
-GsTaichiLLVMContext::get_struct_type_with_data_layout(const StructType *old_ty,
-                                                    const std::string &layout) {
+GsTaichiLLVMContext::get_struct_type_with_data_layout(
+    const StructType *old_ty,
+    const std::string &layout) {
   auto *llvm_struct_type = llvm::cast<llvm::StructType>(get_data_type(old_ty));
   auto data_layout = llvm::DataLayout::parse(layout);
   TI_ASSERT(data_layout);

@@ -1,6 +1,7 @@
 from pytest import approx
 
 import gstaichi as ti
+
 from tests import test_utils
 
 

@@ -13,7 +13,7 @@ namespace gstaichi::lang {
   do {                                                                     \
     if (x->ret_type == PrimitiveType::unknown) {                           \
       ErrorEmitter(                                                        \
-          GsTaichiTypeError(), x.expr.get(),                                 \
+          GsTaichiTypeError(), x.expr.get(),                               \
           fmt::format("[{}] was not type-checked",                         \
                       ExpressionHumanFriendlyPrinter::expr_to_string(x))); \
     }                                                                      \

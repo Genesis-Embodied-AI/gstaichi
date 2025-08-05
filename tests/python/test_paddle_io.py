@@ -4,6 +4,7 @@ import pytest
 import gstaichi as ti
 from gstaichi.lang import impl
 from gstaichi.lang.util import has_paddle
+
 from tests import test_utils
 
 if has_paddle():

@@ -36,7 +36,7 @@ template <typename T>
 std::unique_ptr<T> create_instance_unique(const std::string &alias);
 
 ////////////////////////////////////////////////////////////////////////////////
-//                   A Minimalist Serializer for GsTaichi                       //
+//                   A Minimalist Serializer for GsTaichi //
 //                           (Requires C++17)                                 //
 ////////////////////////////////////////////////////////////////////////////////
 

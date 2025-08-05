@@ -4,6 +4,7 @@ import pytest
 
 import gstaichi as ti
 from gstaichi.math import inf, isinf, isnan, nan, pi, vdir
+
 from tests import test_utils
 
 

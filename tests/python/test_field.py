@@ -9,6 +9,7 @@ import gstaichi as ti
 from gstaichi._test_tools.load_kernel_string import load_kernel_from_string
 from gstaichi.lang import impl
 from gstaichi.lang.misc import get_host_arch_list
+
 from tests import test_utils
 
 data_types = [ti.i32, ti.f32, ti.i64, ti.f64]
