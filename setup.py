@@ -95,7 +95,6 @@ class Clean(clean):
             "dist",
             "python/gstaichi/assets",
             "python/gstaichi/_lib/runtime",
-            "python/gstaichi/_lib/c_api",
             "gstaichi.egg-info",
             "python/gstaichi.egg-info",
             "build",
@@ -263,9 +262,6 @@ def sign_development_for_apple_m1():
     if sys.platform == "darwin" and platform.machine() == "arm64":
         try:
             for path in glob.glob("python/gstaichi/_lib/core/*.so"):
-                print(f"signing {path}..")
-                subprocess.check_call(["codesign", "--force", "--deep", "--sign", "-", path])
-            for path in glob.glob("python/gstaichi/_lib/c_api/lib/*.so"):
                 print(f"signing {path}..")
                 subprocess.check_call(["codesign", "--force", "--deep", "--sign", "-", path])
         except:

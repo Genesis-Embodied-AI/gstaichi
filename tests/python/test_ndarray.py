@@ -1169,9 +1169,13 @@ def test_real_func_write_ndarray_cfg():
     assert (a[0] == vec3(3)).all()
 
 
+@pytest.mark.skipif()
 # exclude metal, because metal limited to < 30 parametrs AFAIK
 @test_utils.test(exclude=[ti.metal])
 def test_ndarray_max_num_args() -> None:
+    if platform.system() == "Darwin" and ti.lang.impl.current_cfg().arch == ti.vulkan:
+        # Mac doesn't support so many arguments, on Vulkan
+        return
     num_args = 512
     kernel_templ = """
 import gstaichi as ti
