@@ -67,7 +67,7 @@ class TemplateMapper:
                 return arg.get_underlying_ptr_address()
             if isinstance(arg, tuple):
                 return tuple(TemplateMapper.extract_arg(item, annotation, arg_name) for item in arg)
-            if isinstance(arg, taichi.lang._ndarray.Ndarray):
+            if isinstance(arg, gstaichi.lang._ndarray.Ndarray):
                 raise GsTaichiRuntimeTypeError(
                     "Ndarray shouldn't be passed in via `ti.template()`, please annotate your kernel using `ti.types.ndarray(...)` instead"
                 )

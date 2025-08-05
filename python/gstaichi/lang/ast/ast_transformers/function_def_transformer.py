@@ -351,7 +351,7 @@ class FunctionDefTransformer:
         # deal with dataclasses
 
         # pylint: disable=import-outside-toplevel
-        from taichi.lang.kernel_impl import Func
+        from gstaichi.lang.kernel_impl import Func
 
         assert isinstance(ctx.func, Func)
         for v in ctx.func.orig_arguments:
