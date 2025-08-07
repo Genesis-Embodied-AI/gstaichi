@@ -33,7 +33,7 @@ def ti_annotation(use_ndarray: bool) -> Any:
 
 
 @test_utils.test()
-def test_ndarray_struct_l4_kwargs():
+def test_ndarray_struct_kwargs():
     gc.collect()
     gc.collect()
 
@@ -121,7 +121,7 @@ def test_ndarray_struct_l4_kwargs():
 
 @test_utils.test()
 @pytest.mark.parametrize("use_ndarray", [False, True])
-def test_ndarray_struct_l4(ti_type: Any, ti_annotation: Any) -> None:
+def test_ndarray_struct(ti_type: Any, ti_annotation: Any) -> None:
     gc.collect()
     gc.collect()
     a = ti_type(ti.i32, shape=(55,))
@@ -364,7 +364,7 @@ def test_ndarray_struct_diverse_params():
 
 @test_utils.test()
 @pytest.mark.parametrize("use_ndarray", [False, True])
-def test_ndarray_struct_prim1(ti_type: Any, ti_annotation: Any) -> None:
+def test_ndarray_struct_primitives(ti_type: Any, ti_annotation: Any) -> None:
     gc.collect()
     gc.collect()
 
