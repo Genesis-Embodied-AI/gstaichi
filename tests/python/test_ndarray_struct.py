@@ -406,7 +406,7 @@ def test_ndarray_struct_primitives(ti_type: Any, ti_annotation: Any) -> None:
 
 @test_utils.test()
 def test_ndarray_struct_nested_ndarray():
-    a = ti.ndarray(ti.i32, shape=(55,))
+    a = ti.ndarray(ti.i32, shape=(101,))
     b = ti.ndarray(ti.i32, shape=(57,))
     c = ti.ndarray(ti.i32, shape=(211,))
     d = ti.ndarray(ti.i32, shape=(211,))
@@ -502,15 +502,15 @@ def test_ndarray_struct_nested_ndarray():
     assert f[58] == 44
 
     # shapes
-    assert a[50] == 55
+    assert a[50] == 101
     assert a[51] == 211
     assert a[52] == 251
 
-    assert a[60] == 55
+    assert a[60] == 101
     assert a[61] == 211
     assert a[62] == 251
 
-    assert a[70] == 55
+    assert a[70] == 101
     assert a[71] == 211
     assert a[72] == 251
 
