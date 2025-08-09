@@ -2,6 +2,7 @@
 
 import ast
 import collections.abc
+import dataclasses
 import itertools
 import warnings
 from ast import unparse
@@ -620,10 +621,10 @@ class ASTTransformer(Builder):
                 Matrix._keygroup_to_checker[keygroup](node.value.ptr, node.attr)
                 attr_len = len(node.attr)
                 if attr_len == 1:
+                    compiling_callable = impl.get_runtime().compiling_callable
+                    assert compiling_callable is not None
                     node.ptr = Expr(
-                        impl.get_runtime()
-                        .compiling_callable.ast_builder()
-                        .expr_subscript(
+                        compiling_callable.ast_builder().expr_subscript(
                             node.value.ptr.ptr,
                             make_expr_group(keygroup.index(node.attr)),
                             _ti_core.DebugInfo(impl.get_runtime().get_current_src_info()),
@@ -645,6 +646,10 @@ class ASTTransformer(Builder):
 
                 node.ptr = getattr(tensor_ops, node.attr)
                 setattr(node, "caller", node.value.ptr)
+        elif dataclasses.is_dataclass(node.value.ptr):
+            type_by_name = {field.name: field.type for field in dataclasses.fields(node.value.ptr)}
+            child_type = type_by_name[node.attr]
+            node.ptr = child_type
         else:
             node.ptr = getattr(node.value.ptr, node.attr)
         return node.ptr
@@ -1309,6 +1314,10 @@ build_stmt = ASTTransformer()
 
 
 def build_stmts(ctx: ASTTransformerContext, stmts: list[ast.stmt]):
+    """
+    Should we just make this part of ASTTransformer? Then, easier to pass around (just
+    pass the ASTTransformer object around)
+    """
     with ctx.variable_scope_guard():
         for stmt in stmts:
             if ctx.returned != ReturnStatus.NoReturn or ctx.loop_status() != LoopStatus.Normal:
