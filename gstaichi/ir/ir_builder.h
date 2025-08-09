@@ -147,13 +147,11 @@ class IRBuilder {
   // Load kernel arguments.
   ArgLoadStmt *create_arg_load(const std::vector<int> &arg_id,
                                DataType dt,
-                               bool is_ptr,
-                               int arg_depth);
+                               bool is_ptr);
   // Load kernel arguments.
   ArgLoadStmt *create_ndarray_arg_load(const std::vector<int> &arg_id,
                                        DataType dt,
-                                       int total_dim,
-                                       int arg_depth);
+                                       int total_dim);
 
   // The return value of the kernel.
   ReturnStmt *create_return(Stmt *value);

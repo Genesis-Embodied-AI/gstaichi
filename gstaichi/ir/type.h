@@ -325,23 +325,6 @@ class TI_DLL_EXPORT StructType : public AbstractDictionaryType {
   TI_IO_DEF(elements_, layout_);
 };
 
-class TI_DLL_EXPORT ArgPackType : public AbstractDictionaryType {
- public:
-  ArgPackType() : AbstractDictionaryType(TypeKind::ArgPack) {};
-  explicit ArgPackType(const std::vector<AbstractDictionaryMember> &elements,
-                       const std::string &layout = "none")
-      : AbstractDictionaryType(TypeKind::ArgPack, elements, layout) {
-  }
-
-  size_t get_element_offset(const std::vector<int> &indices) const;
-
-  std::string to_string() const override;
-
-  const Type *get_type() const override;
-
-  TI_IO_DEF(elements_, layout_);
-};
-
 class TI_DLL_EXPORT QuantIntType : public Type {
  public:
   QuantIntType() : Type(TypeKind::QuantInt) {};

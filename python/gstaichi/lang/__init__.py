@@ -4,7 +4,6 @@ from gstaichi.lang import impl, simt
 from gstaichi.lang._ndarray import *
 from gstaichi.lang._ndrange import ndrange
 from gstaichi.lang._texture import Texture
-from gstaichi.lang.argpack import *
 from gstaichi.lang.exception import *
 from gstaichi.lang.field import *
 from gstaichi.lang.impl import *

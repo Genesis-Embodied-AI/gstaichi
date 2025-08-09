@@ -166,12 +166,6 @@ llvm::Type *GsTaichiLLVMContext::get_data_type(DataType dt) {
       types.push_back(get_data_type(element.type));
     }
     return llvm::StructType::get(*ctx, types);
-  } else if (const auto *argpack_type = dt->cast<ArgPackType>()) {
-    std::vector<llvm::Type *> types;
-    for (const auto &element : argpack_type->elements()) {
-      types.push_back(get_data_type(element.type));
-    }
-    return llvm::StructType::get(*ctx, types);
   } else if (const auto *pointer_type = dt->cast<PointerType>()) {
     return llvm::PointerType::get(
         get_data_type(pointer_type->get_pointee_type()), 0);

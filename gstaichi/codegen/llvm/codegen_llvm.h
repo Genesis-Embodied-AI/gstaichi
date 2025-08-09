@@ -87,10 +87,6 @@ class TaskCodeGenLLVM : public IRVisitor, public LLVMModuleBuilder {
 
   llvm::Value *get_arg(int i);
 
-  llvm::Value *get_argpack_arg(const std::vector<int> &index,
-                               int arg_depth,
-                               bool create_load);
-
   llvm::Value *get_struct_arg(const std::vector<int> &index, bool create_load);
 
   llvm::Value *get_args_ptr(const Callable *callable, llvm::Value *context);

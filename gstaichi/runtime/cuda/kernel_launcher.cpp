@@ -121,22 +121,6 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
         ctx.set_ndarray_ptrs(key, (uint64)device_ptrs[data_ptr_idx],
                              (uint64)device_ptrs[grad_ptr_idx]);
       }
-    } else if (parameter.is_argpack) {
-      std::vector<int> data_ptr_idx = key;
-      data_ptr_idx.push_back(TypeFactory::DATA_PTR_POS_IN_ARGPACK);
-      auto *argpack = ctx.argpack_ptrs[key];
-      auto argpack_ptr = argpack->get_device_allocation();
-      device_ptrs[data_ptr_idx] =
-          executor->get_device_alloc_info_ptr(argpack_ptr);
-      if (key.size() == 1) {
-        ctx.set_argpack_ptr(key, (uint64)device_ptrs[data_ptr_idx]);
-      } else {
-        auto key_parent = key;
-        key_parent.pop_back();
-        auto *argpack_parent = ctx.argpack_ptrs[key_parent];
-        argpack_parent->set_arg_nested_argpack_ptr(
-            key.back(), (uint64)device_ptrs[data_ptr_idx]);
-      }
     }
   }
   if (transfers.size() > 0) {

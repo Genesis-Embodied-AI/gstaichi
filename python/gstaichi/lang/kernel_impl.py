@@ -33,7 +33,6 @@ from gstaichi.lang import impl, ops, runtime_ops
 from gstaichi.lang._template_mapper import GsTaichiCallableTemplateMapper
 from gstaichi.lang._wrap_inspect import getsourcefile, getsourcelines
 from gstaichi.lang.any_array import AnyArray
-from gstaichi.lang.argpack import ArgPack, ArgPackType
 from gstaichi.lang.ast import (
     ASTTransformerContext,
     KernelSimplicityASTChecker,
@@ -682,8 +681,6 @@ class Kernel:
                     pass
                 elif isinstance(annotation, StructType):
                     pass
-                elif isinstance(annotation, ArgPackType):
-                    pass
                 elif annotation == template:
                     pass
                 elif isinstance(annotation, type) and dataclasses.is_dataclass(annotation):
@@ -979,43 +976,28 @@ class Kernel:
             e.g. templates don't set kernel args, so returns 0
             a single ndarray is 1 kernel arg, so returns 1
             a struct of 3 ndarrays would set 3 kernel args, so return 3
+            note: len(indices) > 1 only happens with argpack (which we are removing support for)
             """
-            in_argpack = len(indices) > 1
             nonlocal actual_argument_slot, exceed_max_arg_num, set_later_list
             if actual_argument_slot >= max_arg_num:
                 exceed_max_arg_num = True
                 return 0
             actual_argument_slot += 1
-            if isinstance(needed_arg_type, ArgPackType):
-                if not isinstance(v, ArgPack):
-                    raise GsTaichiRuntimeTypeError.get(indices, str(needed_arg_type), str(provided_arg_type))
-                idx_new = 0
-                for j, (name, anno) in enumerate(needed_arg_type.members.items()):
-                    idx_new += recursive_set_args(anno, type(v[name]), v[name], indices + (idx_new,))
-                launch_ctx.set_arg_argpack(indices, v._ArgPack__argpack)  # type: ignore
-                return 1
             # Note: do not use sth like "needed == f32". That would be slow.
             if id(needed_arg_type) in primitive_types.real_type_ids:
                 if not isinstance(v, (float, int, np.floating, np.integer)):
                     raise GsTaichiRuntimeTypeError.get(indices, needed_arg_type.to_string(), provided_arg_type)
-                if in_argpack:
-                    return 1
                 launch_ctx.set_arg_float(indices, float(v))
                 return 1
             if id(needed_arg_type) in primitive_types.integer_type_ids:
                 if not isinstance(v, (int, np.integer)):
                     raise GsTaichiRuntimeTypeError.get(indices, needed_arg_type.to_string(), provided_arg_type)
-                if in_argpack:
-                    return 1
                 if is_signed(cook_dtype(needed_arg_type)):
                     launch_ctx.set_arg_int(indices, int(v))
                 else:
                     launch_ctx.set_arg_uint(indices, int(v))
                 return 1
             if isinstance(needed_arg_type, sparse_matrix_builder):
-                if in_argpack:
-                    set_later_list.append((set_arg_sparse_matrix_builder, (v,)))
-                    return 0
                 set_arg_sparse_matrix_builder(indices, v)
                 return 1
             if dataclasses.is_dataclass(needed_arg_type):
@@ -1027,39 +1009,23 @@ class Kernel:
                     idx += recursive_set_args(field.type, field.type, field_value, (indices[0] + idx,))
                 return idx
             if isinstance(needed_arg_type, ndarray_type.NdarrayType) and isinstance(v, gstaichi.lang._ndarray.Ndarray):
-                if in_argpack:
-                    set_later_list.append((set_arg_ndarray, (v,)))
-                    return 0
                 set_arg_ndarray(indices, v)
                 return 1
             if isinstance(needed_arg_type, texture_type.TextureType) and isinstance(v, gstaichi.lang._texture.Texture):
-                if in_argpack:
-                    set_later_list.append((set_arg_texture, (v,)))
-                    return 0
                 set_arg_texture(indices, v)
                 return 1
             if isinstance(needed_arg_type, texture_type.RWTextureType) and isinstance(
                 v, gstaichi.lang._texture.Texture
             ):
-                if in_argpack:
-                    set_later_list.append((set_arg_rw_texture, (v,)))
-                    return 0
                 set_arg_rw_texture(indices, v)
                 return 1
             if isinstance(needed_arg_type, ndarray_type.NdarrayType):
-                if in_argpack:
-                    set_later_list.append((set_arg_ext_array, (v, needed_arg_type)))
-                    return 0
                 set_arg_ext_array(indices, v, needed_arg_type)
                 return 1
             if isinstance(needed_arg_type, MatrixType):
-                if in_argpack:
-                    return 1
                 set_arg_matrix(indices, v, needed_arg_type)
                 return 1
             if isinstance(needed_arg_type, StructType):
-                if in_argpack:
-                    return 1
                 # Unclear how to make the following pass typing checks
                 # StructType implements __instancecheck__, which should be a classmethod, but
                 # is currently an instance method
