@@ -4,6 +4,10 @@ import ast
 import dataclasses
 from typing import Any, Callable
 
+from gstaichi._lib.core.gstaichi_python import (
+    BoundaryMode,
+    DataTypeCxx,
+)
 from gstaichi.lang import (
     _ndarray,
     any_array,
@@ -72,14 +76,19 @@ class FunctionDefTransformer:
             )
         if isinstance(annotation, ndarray_type.NdarrayType):
             assert this_arg_features is not None
+            raw_element_type: DataTypeCxx
+            ndim: int
+            needs_grad: bool
+            boundary: BoundaryMode
+            raw_element_type, ndim, needs_grad, boundary = this_arg_features
             return False, (
                 kernel_arguments.decl_ndarray_arg,
                 (
-                    to_gstaichi_type(this_arg_features[0]),
-                    this_arg_features[1],
+                    to_gstaichi_type(raw_element_type),
+                    ndim,
                     full_name,
-                    this_arg_features[2],
-                    this_arg_features[3],
+                    needs_grad,
+                    boundary,
                 ),
             )
         if isinstance(annotation, texture_type.TextureType):
@@ -91,33 +100,6 @@ class FunctionDefTransformer:
                 kernel_arguments.decl_rw_texture_arg,
                 (this_arg_features[0], this_arg_features[1], this_arg_features[2], full_name),
             )
-        if dataclasses.is_dataclass(annotation):
-            """
-            So, what needs to happen now is ...
-            - we'll need to expand out the nested struct too
-            - eg if we have:
-            @ti.kernel
-            def f1(some_struct: SomeStruct):
-                ...
-
-            and SomeStruct is:
-            @dataclasses.dataclass
-            class SomeStruct:
-                a: ti.types.NDArray[ti.32, 1]
-                child: ChildStruct
-
-            and ChildStruct is:
-            @datatclasses.dataclass
-            class ChildStruct:
-                b: ti.types.NDArray[ti.32, 1]
-
-            ... so we'll expand the paramters to:
-            - __ti_some_struct_a: ti.types.NDArray[ti.32, 1]
-            - __ti_some_struct__ti_child__ti_b: ti.types.NDArray[ti.32, 1]
-            (or sometihng smilar ish)
-
-            So... we'll loop over the fields, and send those each to
-            """
         if isinstance(annotation, MatrixType):
             return True, kernel_arguments.decl_matrix_arg(annotation, name, arg_depth)
         if isinstance(annotation, StructType):
@@ -212,7 +194,7 @@ class FunctionDefTransformer:
 
         invoke_later_dict: dict[str, tuple[Any, str, Callable, list[Any]]] = dict()
         create_variable_later: dict[str, Any] = dict()
-        for i, _ in enumerate(args.args):
+        for i in range(len(args.args)):
             arg_meta = ctx.func.arg_metas[i]
             FunctionDefTransformer._transform_kernel_arg(
                 ctx,
@@ -276,13 +258,7 @@ class FunctionDefTransformer:
         # Ndarray arguments are passed by reference.
         if isinstance(argument_type, (ndarray_type.NdarrayType)):
             if not isinstance(
-                data,
-                (
-                    _ndarray.ScalarNdarray,
-                    matrix.VectorNdarray,
-                    matrix.MatrixNdarray,
-                    any_array.AnyArray,
-                ),
+                data, (_ndarray.ScalarNdarray, matrix.VectorNdarray, matrix.MatrixNdarray, any_array.AnyArray)
             ):
                 raise GsTaichiSyntaxError(f"Argument {argument_name} of type {argument_type} is not recognized.")
             argument_type.check_matched(data.get_type(), argument_name)
@@ -338,12 +314,7 @@ class FunctionDefTransformer:
         assert ctx.func is not None
         for data_i, data in enumerate(ctx.argument_data):
             argument = ctx.func.arg_metas[data_i]
-            FunctionDefTransformer._transform_func_arg(
-                ctx,
-                argument.name,
-                argument.annotation,
-                data,
-            )
+            FunctionDefTransformer._transform_func_arg(ctx, argument.name, argument.annotation, data)
 
         # deal with dataclasses
 

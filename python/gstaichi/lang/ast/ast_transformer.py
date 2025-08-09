@@ -6,7 +6,7 @@ import dataclasses
 import itertools
 import warnings
 from ast import unparse
-from typing import Any, Type, Sequence
+from typing import Any, Sequence, Type
 
 import numpy as np
 
@@ -622,7 +622,9 @@ class ASTTransformer(Builder):
                 attr_len = len(node.attr)
                 if attr_len == 1:
                     node.ptr = Expr(
-                        impl.get_runtime().compiling_callable.ast_builder().expr_subscript(
+                        impl.get_runtime()
+                        .compiling_callable.ast_builder()
+                        .expr_subscript(
                             node.value.ptr.ptr,
                             make_expr_group(keygroup.index(node.attr)),
                             _ti_core.DebugInfo(impl.get_runtime().get_current_src_info()),
@@ -645,9 +647,7 @@ class ASTTransformer(Builder):
                 node.ptr = getattr(tensor_ops, node.attr)
                 setattr(node, "caller", node.value.ptr)
         elif dataclasses.is_dataclass(node.value.ptr):
-            type_by_name = {field.name: field.type for field in dataclasses.fields(node.value.ptr)}
-            child_type = type_by_name[node.attr]
-            node.ptr = child_type
+            node.ptr = next(field.type for field in dataclasses.fields(node.value.ptr))
         else:
             node.ptr = getattr(node.value.ptr, node.attr)
         return node.ptr
@@ -1313,7 +1313,7 @@ build_stmt = ASTTransformer()
 
 def build_stmts(ctx: ASTTransformerContext, stmts: list[ast.stmt]):
     """
-    Should we just make this part of ASTTransformer? Then, easier to pass around (just
+    TODO: Should we just make this part of ASTTransformer? Then, easier to pass around (just
     pass the ASTTransformer object around)
     """
     with ctx.variable_scope_guard():

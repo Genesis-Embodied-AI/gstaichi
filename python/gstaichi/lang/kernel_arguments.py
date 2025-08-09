@@ -4,6 +4,10 @@ import inspect
 
 import gstaichi.lang
 from gstaichi._lib import core as _ti_core
+from gstaichi._lib.core.gstaichi_python import (
+    BoundaryMode,
+    DataTypeCxx,
+)
 from gstaichi.lang import impl, ops
 from gstaichi.lang._texture import RWTextureAccessor, TextureSampler
 from gstaichi.lang.any_array import AnyArray
@@ -133,7 +137,9 @@ def decl_sparse_matrix(dtype, name):
     )
 
 
-def decl_ndarray_arg(element_type, ndim, name, needs_grad, boundary):
+def decl_ndarray_arg(
+    element_type: DataTypeCxx, ndim: int, name: str, needs_grad: bool, boundary: BoundaryMode
+) -> AnyArray:
     arg_id = impl.get_runtime().compiling_callable.insert_ndarray_param(element_type, ndim, name, needs_grad)
     return AnyArray(_ti_core.make_external_tensor_expr(element_type, ndim, arg_id, needs_grad, 0, boundary))
 

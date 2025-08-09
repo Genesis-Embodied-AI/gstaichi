@@ -3,12 +3,12 @@ import dataclasses
 import inspect
 from typing import Any
 
+from gstaichi.lang import util
 from gstaichi.lang._dataclass_util import create_flat_name
 from gstaichi.lang.ast import (
     ASTTransformerContext,
 )
 from gstaichi.lang.kernel_arguments import ArgMetadata
-from gstaichi.lang import util
 
 
 def _populate_struct_locals_from_params_dict(basename: str, struct_locals, struct_type) -> None:

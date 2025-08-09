@@ -71,8 +71,10 @@ from gstaichi.types.primitive_types import (
 
 @gstaichi_scope
 def expr_init_shared_array(shape, element_type):
-    return get_runtime().compiling_callable.ast_builder().expr_alloca_shared_array(
-        shape, element_type, _ti_core.DebugInfo(get_runtime().get_current_src_info())
+    return (
+        get_runtime()
+        .compiling_callable.ast_builder()
+        .expr_alloca_shared_array(shape, element_type, _ti_core.DebugInfo(get_runtime().get_current_src_info()))
     )
 
 
@@ -353,7 +355,9 @@ class PyGsTaichi:
     @property
     def compiling_callable(self) -> KernelCxx | Kernel | Function:
         if self._compiling_callable is None:
-            raise GsTaichiRuntimeError("_compiling_callable attribute not initialized. Maybe you forgot to call `ti.init()` first?")
+            raise GsTaichiRuntimeError(
+                "_compiling_callable attribute not initialized. Maybe you forgot to call `ti.init()` first?"
+            )
         return self._compiling_callable
 
     @property

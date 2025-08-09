@@ -8,6 +8,7 @@ import gstaichi.lang._texture
 import gstaichi.lang.expr
 import gstaichi.lang.snode
 from gstaichi._lib import core as _ti_core
+from gstaichi.lang import _dataclass_util
 from gstaichi.lang.any_array import AnyArray
 from gstaichi.lang.argpack import ArgPack, ArgPackType
 from gstaichi.lang.exception import (
@@ -15,8 +16,7 @@ from gstaichi.lang.exception import (
 )
 from gstaichi.lang.kernel_arguments import ArgMetadata
 from gstaichi.lang.matrix import MatrixType
-from gstaichi.lang.util import to_gstaichi_type, is_ti_template
-from gstaichi.lang import _dataclass_util
+from gstaichi.lang.util import is_ti_template, to_gstaichi_type
 from gstaichi.types import (
     ndarray_type,
     sparse_matrix_builder,
