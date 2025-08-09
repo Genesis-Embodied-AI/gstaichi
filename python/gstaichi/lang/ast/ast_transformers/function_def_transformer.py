@@ -310,18 +310,16 @@ class FunctionDefTransformer:
 
     @staticmethod
     def _transform_as_func(ctx: ASTTransformerContext, node: ast.FunctionDef, args: ast.arguments) -> None:
+        # pylint: disable=import-outside-toplevel
+        from gstaichi.lang.kernel_impl import Func
+
+        assert isinstance(ctx.func, Func)
         assert ctx.argument_data is not None
-        assert ctx.func is not None
         for data_i, data in enumerate(ctx.argument_data):
             argument = ctx.func.arg_metas[data_i]
             FunctionDefTransformer._transform_func_arg(ctx, argument.name, argument.annotation, data)
 
         # deal with dataclasses
-
-        # pylint: disable=import-outside-toplevel
-        from gstaichi.lang.kernel_impl import Func
-
-        assert isinstance(ctx.func, Func)
         for v in ctx.func.orig_arguments:
             if dataclasses.is_dataclass(v.annotation):
                 ctx.create_variable(v.name, v.annotation)
