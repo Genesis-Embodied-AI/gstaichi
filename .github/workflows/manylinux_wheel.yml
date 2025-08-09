@@ -22,8 +22,7 @@ jobs:
       cancel-in-progress: ${{ github.event_name != 'release' }}
     strategy:
       matrix:
-        # PYTHON_CP_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
-        PYTHON_CP_VERSION: ['cp310']
+        PYTHON_CP_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -57,8 +56,7 @@ jobs:
       cancel-in-progress: ${{ github.event_name != 'release' }}
     strategy:
       matrix:
-        # PYTHON_CP_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
-        PYTHON_CP_VERSION: ['cp310']
+        PYTHON_CP_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -91,25 +89,18 @@ jobs:
         include:
           - PYTHON_CP_VERSION: 'cp310'
             PYTHON_VERSION: '3.10'
-          # - PYTHON_CP_VERSION: 'cp311'
-          #   PYTHON_VERSION: '3.11'
-          # - PYTHON_CP_VERSION: 'cp312'
-          #   PYTHON_VERSION: '3.12'
-          # - PYTHON_CP_VERSION: 'cp313'
-          #   PYTHON_VERSION: '3.13'
+          - PYTHON_CP_VERSION: 'cp311'
+            PYTHON_VERSION: '3.11'
+          - PYTHON_CP_VERSION: 'cp312'
+            PYTHON_VERSION: '3.12'
+          - PYTHON_CP_VERSION: 'cp313'
+            PYTHON_VERSION: '3.13'
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - uses: actions/download-artifact@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_STORAGE_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_STORAGE_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-      - name: Download artifact
-        run: |
-          set -x
-          aws s3 sync s3://genesis-ai-compiler/ci/gstaichi/${GITHUB_SHA:0:7}/${{ matrix.PYTHON_CP_VERSION }}/ dist/
+          name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}
       - name: Python check
         uses: actions/setup-python@v4
         with:
@@ -117,6 +108,8 @@ jobs:
       - name: manylinux install wheel
         run: |
           set -x
+          mkdir -p dist
+          mv *.whl dist/
           ls -l dist/
           bash .github/workflows/scripts_new/manylinux_wheel/4_install_wheel.sh
       - name: manylinux test
@@ -127,20 +120,16 @@ jobs:
     needs: upload_to_storage
     with:
       head_ref: ${{ github.head_ref || github.ref_name }}
-    secrets:
-      AWS_STORAGE_ACCESS_KEY_ID: ${{ secrets.AWS_STORAGE_ACCESS_KEY_ID }}
-      AWS_STORAGE_SECRET_ACCESS_KEY: ${{ secrets.AWS_STORAGE_SECRET_ACCESS_KEY }}
+      artifact_name: manylinux_wheel_cp310
   pyright_linter:
     uses: ./.github/workflows/pyright_linter.yml
     needs: upload_to_storage
     with:
       head_ref: ${{ github.head_ref  || github.ref_name }}
-    secrets:
-      AWS_STORAGE_ACCESS_KEY_ID: ${{ secrets.AWS_STORAGE_ACCESS_KEY_ID }}
-      AWS_STORAGE_SECRET_ACCESS_KEY: ${{ secrets.AWS_STORAGE_SECRET_ACCESS_KEY }}
+      artifact_name: manylinux_wheel_cp310
   publish_pypi:
     uses: ./.github/workflows/publish_pypi.yml
-    if: github.event_name == 'release' && github.event.action == 'created'
+    if: github.event_name == 'release'
     needs: test_wheel
     permissions:
       id-token: write
@@ -151,8 +140,7 @@ jobs:
       cancel-in-progress: true
     strategy:
       matrix:
-        # PYTHON_CP_VERSION: ["cp310", "cp311", "cp312", "cp313"]
-        PYTHON_CP_VERSION: ["cp310"]
+        PYTHON_CP_VERSION: ["cp310", "cp311", "cp312", "cp313"]
       fail-fast: false
     with:
       artifact_name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}
