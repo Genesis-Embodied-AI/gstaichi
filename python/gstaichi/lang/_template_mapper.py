@@ -15,7 +15,8 @@ from gstaichi.lang.exception import (
 )
 from gstaichi.lang.kernel_arguments import ArgMetadata
 from gstaichi.lang.matrix import MatrixType
-from gstaichi.lang.util import to_gstaichi_type
+from gstaichi.lang.util import to_gstaichi_type, is_ti_template
+from gstaichi.lang import _dataclass_util
 from gstaichi.types import (
     ndarray_type,
     sparse_matrix_builder,
@@ -58,7 +59,7 @@ class TemplateMapper:
 
     @staticmethod
     def extract_arg(arg: Any, annotation: AnnotationType, arg_name: str) -> Any:
-        if annotation == template or isinstance(annotation, template):
+        if is_ti_template(annotation):
             if isinstance(arg, gstaichi.lang.snode.SNode):
                 return arg.ptr
             if isinstance(arg, gstaichi.lang.expr.Expr):
@@ -96,10 +97,7 @@ class TemplateMapper:
             _res_l = []
             for field in dataclasses.fields(annotation):
                 field_value = getattr(arg, field.name)
-                child_name = arg_name
-                if not child_name.startswith("__ti_"):
-                    child_name = f"__ti_{child_name}"
-                child_name = f"{child_name}__ti_{field.name}"
+                child_name = _dataclass_util.create_flat_name(arg_name, field.name)
                 field_extracted = TemplateMapper.extract_arg(field_value, field.type, child_name)
                 _res_l.append(field_extracted)
             return tuple(_res_l)

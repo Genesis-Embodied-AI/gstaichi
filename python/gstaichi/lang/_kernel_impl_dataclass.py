@@ -8,7 +8,7 @@ from gstaichi.lang.ast import (
     ASTTransformerContext,
 )
 from gstaichi.lang.kernel_arguments import ArgMetadata
-from gstaichi.types import Template
+from gstaichi.lang import util
 
 
 def _populate_struct_locals_from_params_dict(basename: str, struct_locals, struct_type) -> None:
@@ -52,11 +52,9 @@ def _populate_struct_locals_from_params_dict(basename: str, struct_locals, struc
     - __ti_struct_ab__ti_struct_cd__ti_d
     - __ti_struct_ab__ti_struct_cd__ti_struct_ef__ti_e
     - __ti_struct_ab__ti_struct_cd__ti_struct_ef__ti_f
-
-
     """
     for field in dataclasses.fields(struct_type):
-        child_name = f"{basename}__ti_{field.name}"
+        child_name = create_flat_name(basename, field.name)
         if dataclasses.is_dataclass(field.type):
             _populate_struct_locals_from_params_dict(child_name, struct_locals, field.type)
         else:
@@ -80,7 +78,8 @@ def extract_struct_locals_from_context(ctx: ASTTransformerContext) -> set[str]:
     for param_name, parameter in parameters.items():
         if dataclasses.is_dataclass(parameter.annotation):
             for field in dataclasses.fields(parameter.annotation):
-                child_name = f"__ti_{param_name}__ti_{field.name}"
+                child_name = create_flat_name(param_name, field.name)
+                # child_name = f"__ti_{param_name}__ti_{field.name}"
                 if dataclasses.is_dataclass(field.type):
                     _populate_struct_locals_from_params_dict(child_name, struct_locals, field.type)
                     continue
@@ -92,31 +91,28 @@ def expand_func_arguments(arguments: list[ArgMetadata]) -> list[ArgMetadata]:
     """
     Used to expand arguments for @ti.func
     """
-    new_arguments = []
+    expanded_arguments = []
     for i, argument in enumerate(arguments):
         if dataclasses.is_dataclass(argument.annotation):
             for field in dataclasses.fields(argument.annotation):
                 child_name = create_flat_name(argument.name, field.name)
                 if dataclasses.is_dataclass(field.type):
-                    child_args = expand_func_arguments(
-                        [
-                            ArgMetadata(
-                                field.type,
-                                child_name,
-                                argument.default,
-                            )
-                        ]
+                    new_arg = ArgMetadata(
+                        annotation=field.type,
+                        name=child_name,
+                        default=argument.default,
                     )
-                    new_arguments.extend(child_args)
+                    child_args = expand_func_arguments([new_arg])
+                    expanded_arguments += child_args
                 else:
                     new_argument = ArgMetadata(
-                        _annotation=field.type,
-                        _name=child_name,
+                        annotation=field.type,
+                        name=child_name,
                     )
-                    new_arguments.append(new_argument)
+                    expanded_arguments.append(new_argument)
         else:
-            new_arguments.append(argument)
-    return new_arguments
+            expanded_arguments.append(argument)
+    return expanded_arguments
 
 
 class FlattenAttributeNameTransformer(ast.NodeTransformer):
@@ -135,11 +131,12 @@ class FlattenAttributeNameTransformer(ast.NodeTransformer):
         see unpack_ast_struct_expressions docstring for more explanation
         """
         if isinstance(node.value, ast.Name):
-            return f"__ti_{node.value.id}__ti_{node.attr}"
+            return create_flat_name(node.value.id, node.attr)
         if isinstance(node.value, ast.Attribute):
             child_flat_name = FlattenAttributeNameTransformer._flatten_attribute_name(node.value)
-            integrated_flat_name = f"{child_flat_name}__ti_{node.attr}"
-            return integrated_flat_name
+            if not child_flat_name:
+                return None
+            return create_flat_name(child_flat_name, node.attr)
         return None
 
 
@@ -211,7 +208,5 @@ def populate_global_vars_from_dataclass(
                 py_arg=child_value,
                 global_vars=global_vars,
             )
-        elif isinstance(field.type, (Template,)) or field.type == Template:
+        elif util.is_ti_template(field.type):
             global_vars[flat_name] = child_value
-        else:
-            pass

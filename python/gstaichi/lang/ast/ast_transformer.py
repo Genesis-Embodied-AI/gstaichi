@@ -6,7 +6,7 @@ import dataclasses
 import itertools
 import warnings
 from ast import unparse
-from typing import Any, Iterable, Type
+from typing import Any, Type, Sequence
 
 import numpy as np
 
@@ -41,7 +41,7 @@ from gstaichi.types import primitive_types
 from gstaichi.types.utils import is_integral
 
 
-def reshape_list(flat_list: list[Any], target_shape: Iterable[int]) -> list[Any]:
+def reshape_list(flat_list: list[Any], target_shape: Sequence[int]) -> list[Any]:
     if len(target_shape) < 2:
         return flat_list
 
@@ -621,10 +621,8 @@ class ASTTransformer(Builder):
                 Matrix._keygroup_to_checker[keygroup](node.value.ptr, node.attr)
                 attr_len = len(node.attr)
                 if attr_len == 1:
-                    compiling_callable = impl.get_runtime().compiling_callable
-                    assert compiling_callable is not None
                     node.ptr = Expr(
-                        compiling_callable.ast_builder().expr_subscript(
+                        impl.get_runtime().compiling_callable.ast_builder().expr_subscript(
                             node.value.ptr.ptr,
                             make_expr_group(keygroup.index(node.attr)),
                             _ti_core.DebugInfo(impl.get_runtime().get_current_src_info()),

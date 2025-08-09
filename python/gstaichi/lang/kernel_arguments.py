@@ -20,10 +20,10 @@ class ArgMetadata:
     Metadata about an argument to a function
     """
 
-    def __init__(self, _annotation, _name, _default=inspect.Parameter.empty):
-        self.annotation = _annotation
-        self.name = _name
-        self.default = _default
+    def __init__(self, annotation, name, default=inspect.Parameter.empty):
+        self.annotation = annotation
+        self.name = name
+        self.default = default
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(annotation={self.annotation}, name={self.name}, default={self.default})"

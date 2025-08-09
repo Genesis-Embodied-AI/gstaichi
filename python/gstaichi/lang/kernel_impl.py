@@ -465,10 +465,10 @@ class Func:
 
         def func_body():
             old_callable = impl.get_runtime().compiling_callable
-            impl.get_runtime().compiling_callable = fn
+            impl.get_runtime()._compiling_callable = fn
             ctx.ast_builder = fn.ast_builder()
             transform_tree(tree, ctx)
-            impl.get_runtime().compiling_callable = old_callable
+            impl.get_runtime()._compiling_callable = old_callable
 
         self.gstaichi_functions[key.instance_id] = fn
         self.compiled[key.instance_id] = func_body
@@ -695,8 +695,8 @@ class Kernel:
             self.kernel_cpp = kernel_cxx
             self.runtime.inside_kernel = True
             self.runtime._current_kernel = self
-            assert self.runtime.compiling_callable is None
-            self.runtime.compiling_callable = kernel_cxx
+            assert self.runtime._compiling_callable is None
+            self.runtime._compiling_callable = kernel_cxx
             try:
                 ctx.ast_builder = kernel_cxx.ast_builder()
 
@@ -742,7 +742,7 @@ class Kernel:
             finally:
                 self.runtime.inside_kernel = False
                 self.runtime._current_kernel = None
-                self.runtime.compiling_callable = None
+                self.runtime._compiling_callable = None
 
         gstaichi_kernel = impl.get_runtime().prog.create_kernel(gstaichi_ast_generator, kernel_name, self.autodiff_mode)
         assert key not in self.compiled_kernels
