@@ -13,12 +13,18 @@ cuda_on_windows = (ti.cuda, "Windows")
 
 def filter_lines(target: str, match: str) -> str:
     """
-    Returns target string, with only lines included that contains `match` string
+    Returns target string, with
+    - only lines included that contains `match` string
+        - this is so we can filter out various other stdout messages
+    - anything before `match` string is removed
+        - this is so we can handle Vulkan print messages, which are often prefixed with something like
+          `vkSubmitQueue():  `
     """
     lines = []
     for line in target.split("\n"):
         if match in line:
-            lines.append(line)
+            _, splitter, post = line.partition(match)
+            lines.append(f"{splitter}{post}")
     return "\n".join(lines)
 
 
