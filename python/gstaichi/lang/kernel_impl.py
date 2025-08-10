@@ -250,7 +250,13 @@ def _populate_global_vars_for_templates(
     fn: Callable,
     py_args: tuple[Any, ...],
 ):
-    # inject template parameters into globals
+    """
+    inject template parameters into globals
+
+    globals are being abused to store the python objects associated
+    with templates. we continue this approach, and in addition this function
+    handles injecting expanded python variables from dataclasses
+    """
     for i in template_slot_locations:
         template_var_name = argument_metas[i].name
         global_vars[template_var_name] = py_args[i]
@@ -320,8 +326,8 @@ def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], k
     len_args = len(args)
 
     if len_args > len(fused_args):
-        arg_str = ", ".join([str(arg) for arg in args])
-        expected_str = ", ".join([f"{arg.name} : {arg.annotation}" for arg in self.arg_metas])
+        arg_str = ", ".join(str(arg) for arg in args)
+        expected_str = ", ".join(f"{arg.name} : {arg.annotation}" for arg in self.arg_metas)
         msg = f"Too many arguments. Expected ({expected_str}), got ({arg_str})."
         raise GsTaichiSyntaxError(msg)
 
@@ -329,15 +335,13 @@ def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], k
         fused_args[i] = arg
 
     for key, value in kwargs.items():
-        found = False
         for i, arg in enumerate(self.arg_metas):
             if key == arg.name:
                 if i < len_args:
                     raise GsTaichiSyntaxError(f"Multiple values for argument '{key}'.")
                 fused_args[i] = value
-                found = True
                 break
-        if not found:
+        else:
             raise GsTaichiSyntaxError(f"Unexpected argument '{key}'.")
 
     for i, arg in enumerate(fused_args):
