@@ -6,7 +6,10 @@ import pytest
 
 import gstaichi as ti
 import gstaichi._test_tools.dataclass_test_tools as dataclass_test_tools
-from gstaichi.lang.ast.ast_transformers.function_def_transformer import FunctionDefTransformer
+from gstaichi.lang.ast.ast_transformers.function_def_transformer import (
+    FunctionDefTransformer,
+)
+
 from tests import test_utils
 
 

@@ -11,9 +11,10 @@ from typing import Any
 import pytest
 
 import gstaichi as ti
-import gstaichi.lang._kernel_impl_dataclass as _kernel_impl_dataclass
 import gstaichi._test_tools.dataclass_test_tools as dataclass_test_tools
+import gstaichi.lang._kernel_impl_dataclass as _kernel_impl_dataclass
 from gstaichi.lang.kernel_arguments import ArgMetadata
+
 from tests import test_utils
 
 __all__ = [
