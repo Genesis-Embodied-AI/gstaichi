@@ -15,8 +15,8 @@ def test_wrap_inspect() -> None:
     wrap_inspect = importlib.import_module("wrap_inspect")
     source_info, src = _wrap_inspect.get_source_info_and_src(wrap_inspect.my_func)
     assert source_info.function_name == "my_func"
-    assert source_info.start_lineno == 5
-    assert source_info.end_lineno == 8
+    assert source_info.start_lineno == 2
+    assert source_info.end_lineno == 5
     assert len(src) == 4
     assert all([line != "" and len(line) > 2 for line in src])
     actual_src = "".join(src)
@@ -29,8 +29,8 @@ def test_wrap_inspect() -> None:
 
     source_info, src = _wrap_inspect.get_source_info_and_src(wrap_inspect.Foo.my_func2)
     assert source_info.function_name == "my_func2"
-    assert source_info.start_lineno == 13
-    assert source_info.end_lineno == 16
+    assert source_info.start_lineno == 10
+    assert source_info.end_lineno == 13
     assert len(src) == 4
     assert all([line != "" and len(line) > 2 for line in src])
     actual_src = "".join(src)
