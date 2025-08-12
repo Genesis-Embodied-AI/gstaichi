@@ -113,15 +113,22 @@ class TI_DLL_EXPORT Program {
 
   int get_snode_tree_size();
 
-  Kernel &kernel(const std::function<void(Kernel *)> &body,
-                 const std::string &name = "",
-                 AutodiffMode autodiff_mode = AutodiffMode::kNone) {
-    // Expr::set_allow_store(true);
-    auto func = std::make_unique<Kernel>(*this, body, name, autodiff_mode);
-    // Expr::set_allow_store(false);
-    kernels.emplace_back(std::move(func));
-    return *kernels.back();
-  }
+  void dump_cache_data_to_disk();
+
+  void store_fast_cache(const std::string &checksum,
+                        const Kernel &kernel,
+                        const CompileConfig &compile_config,
+                        const DeviceCapabilityConfig &caps,
+                        CompiledKernelData &ckd);
+
+  const CompiledKernelData *load_fast_cache(const std::string &checksum,
+                                            const std::string &kernel_name,
+                                            const CompileConfig &compile_config,
+                                            const DeviceCapabilityConfig &caps);
+
+  Kernel &create_kernel(const std::function<void(Kernel *)> &body,
+                        const std::string &name = "",
+                        AutodiffMode autodiff_mode = AutodiffMode::kNone);
 
   Function *create_function(const FunctionKey &func_key);
 

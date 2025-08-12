@@ -123,12 +123,40 @@ TypeFactory &Program::get_type_factory() {
   return TypeFactory::get_instance();
 }
 
+void Program::store_fast_cache(const std::string &checksum,
+                               const Kernel &kernel,
+                               const CompileConfig &compile_config,
+                               const DeviceCapabilityConfig &caps,
+                               CompiledKernelData &ckd) {
+  auto &mgr = program_impl_->get_kernel_compilation_manager();
+  mgr.store_fast_cache(checksum, kernel, compile_config, caps, ckd);
+}
+
+const CompiledKernelData *Program::load_fast_cache(
+    const std::string &checksum,
+    const std::string &kernel_name,
+    const CompileConfig &compile_config,
+    const DeviceCapabilityConfig &caps) {
+  auto &mgr = program_impl_->get_kernel_compilation_manager();
+  return mgr.load_fast_cache(checksum, kernel_name, compile_config, caps);
+}
+
 Function *Program::create_function(const FunctionKey &func_key) {
   TI_TRACE("Creating function {}...", func_key.get_full_name());
   functions_.emplace_back(std::make_unique<Function>(this, func_key));
   TI_ASSERT(function_map_.count(func_key) == 0);
   function_map_[func_key] = functions_.back().get();
   return functions_.back().get();
+}
+
+Kernel &Program::create_kernel(const std::function<void(Kernel *)> &body,
+                               const std::string &name,
+                               AutodiffMode autodiff_mode) {
+  // Expr::set_allow_store(true);
+  auto func = std::make_unique<Kernel>(*this, body, name, autodiff_mode);
+  // Expr::set_allow_store(false);
+  kernels.emplace_back(std::move(func));
+  return *kernels.back();
 }
 
 const CompiledKernelData &Program::compile_kernel(
@@ -227,7 +255,7 @@ int Program::get_snode_tree_size() {
 Kernel &Program::get_snode_reader(SNode *snode) {
   TI_ASSERT(snode->type == SNodeType::place);
   auto kernel_name = fmt::format("snode_reader_{}", snode->id);
-  auto &ker = kernel([snode, this](Kernel *kernel) {
+  auto &ker = create_kernel([snode, this](Kernel *kernel) {
     ExprGroup indices;
     for (int i = 0; i < snode->num_active_indices; i++) {
       auto argload_expr = Expr::make<ArgLoadExpression>(std::vector<int>{i},
@@ -253,7 +281,7 @@ Kernel &Program::get_snode_reader(SNode *snode) {
 Kernel &Program::get_snode_writer(SNode *snode) {
   TI_ASSERT(snode->type == SNodeType::place);
   auto kernel_name = fmt::format("snode_writer_{}", snode->id);
-  auto &ker = kernel([snode, this](Kernel *kernel) {
+  auto &ker = create_kernel([snode, this](Kernel *kernel) {
     ExprGroup indices;
     for (int i = 0; i < snode->num_active_indices; i++) {
       auto argload_expr = Expr::make<ArgLoadExpression>(std::vector<int>{i},
@@ -283,6 +311,10 @@ Kernel &Program::get_snode_writer(SNode *snode) {
 
 uint64 Program::fetch_result_uint64(int i) {
   return program_impl_->fetch_result_uint64(i, result_buffer);
+}
+
+void Program::dump_cache_data_to_disk() {
+  program_impl_->dump_cache_data_to_disk();
 }
 
 void Program::finalize() {
