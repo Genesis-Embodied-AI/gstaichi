@@ -251,11 +251,11 @@ def _populate_global_vars_for_templates(
     py_args: tuple[Any, ...],
 ):
     """
-    inject template parameters into globals
+    Inject template parameters into globals
 
-    globals are being abused to store the python objects associated
-    with templates. we continue this approach, and in addition this function
-    handles injecting expanded python variables from dataclasses
+    Globals are being abused to store the python objects associated
+    with templates. We continue this approach, and in addition this function
+    handles injecting expanded python variables from dataclasses.
     """
     for i in template_slot_locations:
         template_var_name = argument_metas[i].name
@@ -315,10 +315,6 @@ def _get_tree_and_ctx(
 
 
 def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
-    """
-    used for both Func and Kernel
-    """
-
     if is_func:
         self.arg_metas = _kernel_impl_dataclass.expand_func_arguments(self.arg_metas)
 
@@ -326,7 +322,7 @@ def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], k
     len_args = len(args)
 
     if len_args > len(fused_args):
-        arg_str = ", ".join(str(arg) for arg in args)
+        arg_str = ", ".join(map(str, args))
         expected_str = ", ".join(f"{arg.name} : {arg.annotation}" for arg in self.arg_metas)
         msg = f"Too many arguments. Expected ({expected_str}), got ({arg_str})."
         raise GsTaichiSyntaxError(msg)

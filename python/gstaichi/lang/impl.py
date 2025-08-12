@@ -71,11 +71,9 @@ from gstaichi.types.primitive_types import (
 
 @gstaichi_scope
 def expr_init_shared_array(shape, element_type):
-    return (
-        get_runtime()
-        .compiling_callable.ast_builder()
-        .expr_alloca_shared_array(shape, element_type, _ti_core.DebugInfo(get_runtime().get_current_src_info()))
-    )
+    ast_builder = get_runtime().compiling_callable.ast_builder()
+    debug_info = _ti_core.DebugInfo(get_runtime().get_current_src_info())
+    return ast_builder.expr_alloca_shared_array(shape, element_type, debug_info)
 
 
 @gstaichi_scope
@@ -968,9 +966,9 @@ def ti_print(*_vars, sep=" ", end="\n"):
 
     _vars = add_separators(_vars)
     contents, formats = ti_format_list_to_content_entries(_vars)
-    get_runtime().compiling_callable.ast_builder().create_print(
-        contents, formats, _ti_core.DebugInfo(get_runtime().get_current_src_info())
-    )
+    ast_builder = get_runtime().compiling_callable.ast_builder()
+    debug_info = _ti_core.DebugInfo(get_runtime().get_current_src_info())
+    ast_builder.create_print(contents, formats, debug_info)
 
 
 @gstaichi_scope
@@ -1000,7 +998,8 @@ def ti_format(*args):
 def ti_assert(cond, msg, extra_args, dbg_info):
     # Mostly a wrapper to help us convert from Expr (defined in Python) to
     # _ti_core.Expr (defined in C++)
-    get_runtime().compiling_callable.ast_builder().create_assert_stmt(Expr(cond).ptr, msg, extra_args, dbg_info)
+    ast_builder = get_runtime().compiling_callable.ast_builder()
+    ast_builder.create_assert_stmt(Expr(cond).ptr, msg, extra_args, dbg_info)
 
 
 @gstaichi_scope

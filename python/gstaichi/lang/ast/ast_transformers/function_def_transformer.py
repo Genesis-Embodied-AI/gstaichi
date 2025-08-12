@@ -172,12 +172,10 @@ class FunctionDefTransformer:
                 "",
                 0,
             )
-            if result:
-                ctx.create_variable(argument_name, obj)
-            else:
+            if not result:
                 decl_type_func, type_args = obj
                 obj = decl_type_func(*type_args)
-                ctx.create_variable(argument_name, obj)
+            ctx.create_variable(argument_name, obj)
 
     @staticmethod
     def _transform_as_kernel(ctx: ASTTransformerContext, node: ast.FunctionDef, args: ast.arguments) -> None:
