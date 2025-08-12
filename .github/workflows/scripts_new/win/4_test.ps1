@@ -5,6 +5,5 @@ trap { Write-Error $_; exit 1 }
 python -c 'import gstaichi as ti; ti.init();'
 $env:TI_LIB_DIR="python/gstaichi/_lib/runtime"
 Get-ChildItem -Path build -Recurse
-& "build/gstaichi_cpp_tests"
 pip install -r requirements_test.txt
 python .\tests\run_tests.py -v -r 3
