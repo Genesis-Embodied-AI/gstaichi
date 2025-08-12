@@ -29,9 +29,9 @@ from gstaichi._lib.core.gstaichi_python import (
     KernelCxx,
     KernelLaunchContext,
 )
-from gstaichi.lang import impl, ops, runtime_ops
+from gstaichi.lang import _kernel_impl_dataclass, impl, ops, runtime_ops
 from gstaichi.lang._fast_caching import src_hasher
-from gstaichi.lang._template_mapper import GsTaichiCallableTemplateMapper
+from gstaichi.lang._template_mapper import TemplateMapper
 from gstaichi.lang._wrap_inspect import FunctionSourceInfo, get_source_info_and_src
 from gstaichi.lang.any_array import AnyArray
 from gstaichi.lang.argpack import ArgPack, ArgPackType
@@ -50,7 +50,7 @@ from gstaichi.lang.exception import (
     handle_exception_from_cpp,
 )
 from gstaichi.lang.expr import Expr
-from gstaichi.lang.kernel_arguments import KernelArgument
+from gstaichi.lang.kernel_arguments import ArgMetadata
 from gstaichi.lang.matrix import MatrixType
 from gstaichi.lang.shell import _shell_pop_print
 from gstaichi.lang.struct import StructType
@@ -245,6 +245,34 @@ def pyfunc(fn: Callable) -> GsTaichiCallable:
     return gstaichi_callable
 
 
+def _populate_global_vars_for_templates(
+    template_slot_locations: list[int],
+    argument_metas: list[ArgMetadata],
+    global_vars: dict[str, Any],
+    fn: Callable,
+    py_args: tuple[Any, ...],
+):
+    """
+    Inject template parameters into globals
+
+    Globals are being abused to store the python objects associated
+    with templates. We continue this approach, and in addition this function
+    handles injecting expanded python variables from dataclasses.
+    """
+    for i in template_slot_locations:
+        template_var_name = argument_metas[i].name
+        global_vars[template_var_name] = py_args[i]
+    parameters = inspect.signature(fn).parameters
+    for i, (parameter_name, parameter) in enumerate(parameters.items()):
+        if dataclasses.is_dataclass(parameter.annotation):
+            _kernel_impl_dataclass.populate_global_vars_from_dataclass(
+                parameter_name,
+                parameter.annotation,
+                py_args[i],
+                global_vars=global_vars,
+            )
+
+
 def _get_tree_and_ctx(
     self: "Func | Kernel",
     args: tuple[Any, ...],
@@ -265,17 +293,13 @@ def _get_tree_and_ctx(
     global_vars = _get_global_vars(self.func)
 
     if is_kernel or is_real_function:
-        # inject template parameters into globals
-        for i in self.template_slot_locations:
-            template_var_name = self.arguments[i].name
-            global_vars[template_var_name] = args[i]
-        parameters = inspect.signature(self.func).parameters
-        for arg_i, (param_name, param) in enumerate(parameters.items()):
-            if dataclasses.is_dataclass(param.annotation):
-                for member_field in dataclasses.fields(param.annotation):
-                    child_value = getattr(args[arg_i], member_field.name)
-                    flat_name = f"__ti_{param_name}_{member_field.name}"
-                    global_vars[flat_name] = child_value
+        _populate_global_vars_for_templates(
+            template_slot_locations=self.template_slot_locations,
+            argument_metas=self.arg_metas,
+            global_vars=global_vars,
+            fn=self.func,
+            py_args=args,
+        )
 
     if current_kernel is not None:  # Kernel
         current_kernel.kernel_function_info = function_source_info
@@ -300,31 +324,16 @@ def _get_tree_and_ctx(
     )
 
 
-def expand_func_arguments(arguments: list[KernelArgument]) -> list[KernelArgument]:
-    new_arguments = []
-    for argument in arguments:
-        if dataclasses.is_dataclass(argument.annotation):
-            for field in dataclasses.fields(argument.annotation):
-                new_argument = KernelArgument(
-                    _annotation=field.type,
-                    _name=f"__ti_{argument.name}_{field.name}",
-                )
-                new_arguments.append(new_argument)
-        else:
-            new_arguments.append(argument)
-    return new_arguments
-
-
 def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
     if is_func:
-        self.arguments = expand_func_arguments(self.arguments)
-    fused_args = [argument.default for argument in self.arguments]
-    ret: list[Any] = [argument.default for argument in self.arguments]
+        self.arg_metas = _kernel_impl_dataclass.expand_func_arguments(self.arg_metas)
+
+    fused_args: list[Any] = [arg_meta.default for arg_meta in self.arg_metas]
     len_args = len(args)
 
     if len_args > len(fused_args):
-        arg_str = ", ".join([str(arg) for arg in args])
-        expected_str = ", ".join([f"{arg.name} : {arg.annotation}" for arg in self.arguments])
+        arg_str = ", ".join(map(str, args))
+        expected_str = ", ".join(f"{arg.name} : {arg.annotation}" for arg in self.arg_metas)
         msg = f"Too many arguments. Expected ({expected_str}), got ({arg_str})."
         raise GsTaichiSyntaxError(msg)
 
@@ -332,67 +341,25 @@ def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], k
         fused_args[i] = arg
 
     for key, value in kwargs.items():
-        found = False
-        for i, arg in enumerate(self.arguments):
+        for i, arg in enumerate(self.arg_metas):
             if key == arg.name:
                 if i < len_args:
                     raise GsTaichiSyntaxError(f"Multiple values for argument '{key}'.")
                 fused_args[i] = value
-                found = True
                 break
-        if not found:
+        else:
             raise GsTaichiSyntaxError(f"Unexpected argument '{key}'.")
 
     for i, arg in enumerate(fused_args):
         if arg is inspect.Parameter.empty:
-            if self.arguments[i].annotation is inspect._empty:
-                raise GsTaichiSyntaxError(f"Parameter `{self.arguments[i].name}` missing.")
+            if self.arg_metas[i].annotation is inspect._empty:
+                raise GsTaichiSyntaxError(f"Parameter `{self.arg_metas[i].name}` missing.")
             else:
                 raise GsTaichiSyntaxError(
-                    f"Parameter `{self.arguments[i].name} : {self.arguments[i].annotation}` missing."
+                    f"Parameter `{self.arg_metas[i].name} : {self.arg_metas[i].annotation}` missing."
                 )
 
     return tuple(fused_args)
-
-
-def unpack_ndarray_struct(tree: ast.Module, struct_locals: set[str]) -> ast.Module:
-    class AttributeToNameTransformer(ast.NodeTransformer):
-        def visit_Attribute(self, node: ast.Attribute):
-            if isinstance(node.value, ast.Attribute):
-                return node
-            if not isinstance(node.value, ast.Name):
-                return node
-            base_id = node.value.id
-            attr_name = node.attr
-            new_id = f"__ti_{base_id}_{attr_name}"
-            if new_id not in struct_locals:
-                return node
-            return ast.copy_location(ast.Name(id=new_id, ctx=node.ctx), node)
-
-    transformer = AttributeToNameTransformer()
-    new_tree = transformer.visit(tree)
-    ast.fix_missing_locations(new_tree)
-    return new_tree
-
-
-def extract_struct_locals_from_context(ctx: ASTTransformerContext):
-    """
-    - Uses ctx.func.func to get the function signature.
-    - Searches this for any dataclasses:
-      - If it finds any dataclasses, then converts them into expanded names.
-      - E.g. my_struct: MyStruct, and MyStruct contains a, b, c would become:
-          {"__ti_my_struct_a", "__ti_my_struct_b, "__ti_my_struct_c"}
-    """
-    assert ctx.func is not None
-    sig = inspect.signature(ctx.func.func)
-    parameters = sig.parameters
-    struct_locals = set()
-    for param_name, parameter in parameters.items():
-        if dataclasses.is_dataclass(parameter.annotation):
-            for field in dataclasses.fields(parameter.annotation):
-                child_name = f"__ti_{param_name}_{field.name}"
-                struct_locals.add(child_name)
-    return struct_locals
 
 
 class Func:
@@ -406,19 +373,19 @@ class Func:
         self.classfunc = _classfunc
         self.pyfunc = _pyfunc
         self.is_real_function = is_real_function
-        self.arguments: list[KernelArgument] = []
-        self.orig_arguments: list[KernelArgument] = []
+        self.arg_metas: list[ArgMetadata] = []
+        self.orig_arguments: list[ArgMetadata] = []
         self.return_type: tuple[Type, ...] | None = None
         self.extract_arguments()
         self.template_slot_locations: list[int] = []
-        for i, arg in enumerate(self.arguments):
+        for i, arg in enumerate(self.arg_metas):
             if arg.annotation == template or isinstance(arg.annotation, template):
                 self.template_slot_locations.append(i)
-        self.mapper = GsTaichiCallableTemplateMapper(self.arguments, self.template_slot_locations)
+        self.mapper = TemplateMapper(self.arg_metas, self.template_slot_locations)
         self.gstaichi_functions = {}  # The |Function| class in C++
         self.has_print = False
 
-    def __call__(self, *args, **kwargs) -> Any:
+    def __call__(self: "Func", *args, **kwargs) -> Any:
         args = _process_args(self, is_func=True, args=args, kwargs=kwargs)
 
         if not impl.inside_kernel():
@@ -443,8 +410,9 @@ class Func:
             is_real_function=self.is_real_function,
         )
 
-        struct_locals = extract_struct_locals_from_context(ctx)
-        tree = unpack_ndarray_struct(tree, struct_locals=struct_locals)
+        struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
+
+        tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
         ret = transform_tree(tree, ctx)
         if not self.is_real_function:
             if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
@@ -456,7 +424,7 @@ class Func:
         assert self.is_real_function
         non_template_args = []
         dbg_info = _ti_core.DebugInfo(impl.get_runtime().get_current_src_info())
-        for i, kernel_arg in enumerate(self.arguments):
+        for i, kernel_arg in enumerate(self.arg_metas):
             anno = kernel_arg.annotation
             if not isinstance(anno, template):
                 if id(anno) in primitive_types.type_ids:
@@ -507,10 +475,10 @@ class Func:
 
         def func_body():
             old_callable = impl.get_runtime().compiling_callable
-            impl.get_runtime().compiling_callable = fn
+            impl.get_runtime()._compiling_callable = fn
             ctx.ast_builder = fn.ast_builder()
             transform_tree(tree, ctx)
-            impl.get_runtime().compiling_callable = old_callable
+            impl.get_runtime()._compiling_callable = old_callable
 
         self.gstaichi_functions[key.instance_id] = fn
         self.compiled[key.instance_id] = func_body
@@ -579,8 +547,8 @@ class Func:
                     raise GsTaichiSyntaxError(
                         f"Invalid type annotation (argument {i}) of GsTaichi function: {annotation}"
                     )
-            self.arguments.append(KernelArgument(annotation, param.name, param.default))
-            self.orig_arguments.append(KernelArgument(annotation, param.name, param.default))
+            self.arg_metas.append(ArgMetadata(annotation, param.name, param.default))
+            self.orig_arguments.append(ArgMetadata(annotation, param.name, param.default))
 
 
 def _get_global_vars(_func: Callable) -> dict[str, Any]:
@@ -611,16 +579,16 @@ class Kernel:
             AutodiffMode.REVERSE,
         )
         self.autodiff_mode = autodiff_mode
-        self.grad: Kernel | None = None
-        self.arguments: list[KernelArgument] = []
+        self.grad: "Kernel | None" = None
+        self.arg_metas: list[ArgMetadata] = []
         self.return_type = None
         self.classkernel = _classkernel
         self.extract_arguments()
         self.template_slot_locations = []
-        for i, arg in enumerate(self.arguments):
+        for i, arg in enumerate(self.arg_metas):
             if arg.annotation == template or isinstance(arg.annotation, template):
                 self.template_slot_locations.append(i)
-        self.mapper = GsTaichiCallableTemplateMapper(self.arguments, self.template_slot_locations)
+        self.mapper = TemplateMapper(self.arg_metas, self.template_slot_locations)
         impl.get_runtime().kernels.append(self)
         self.reset()
         self.kernel_cpp = None
@@ -652,7 +620,7 @@ class Kernel:
             for return_type in self.return_type:
                 if return_type is Ellipsis:
                     raise GsTaichiSyntaxError("Ellipsis is not supported in return type annotations")
-        params = sig.parameters
+        params = dict(sig.parameters)
         arg_names = params.keys()
         for i, arg_name in enumerate(arg_names):
             param = params[arg_name]
@@ -702,12 +670,10 @@ class Kernel:
                 elif isinstance(annotation, type) and dataclasses.is_dataclass(annotation):
                     pass
                 else:
-                    raise GsTaichiSyntaxError(
-                        f"Invalid type annotation (argument {i}) of GsTaichi kernel: {annotation}"
-                    )
-            self.arguments.append(KernelArgument(annotation, param.name, param.default))
+                    raise GsTaichiSyntaxError(f"Invalid type annotation (argument {i}) of Taichi kernel: {annotation}")
+            self.arg_metas.append(ArgMetadata(annotation, param.name, param.default))
 
-    def materialize(self, key: CompiledKernelKeyType | None, args: tuple[Any, ...], arg_features):
+    def materialize(self, key: CompiledKernelKeyType | None, args: tuple[Any, ...], arg_features=None):
         if key is None:
             key = (self.func, 0, self.autodiff_mode)
         self.runtime.materialize()
@@ -745,7 +711,7 @@ class Kernel:
 
         # Do not change the name of 'gstaichi_ast_generator'
         # The warning system needs this identifier to remove unnecessary messages
-        def gstaichi_ast_generator(kernel_cxx: Kernel):  # not sure if this type is correct, seems doubtful
+        def gstaichi_ast_generator(kernel_cxx: KernelCxx):
             nonlocal tree
             if self.runtime.inside_kernel:
                 raise GsTaichiSyntaxError(
@@ -757,8 +723,8 @@ class Kernel:
             self.kernel_cpp = kernel_cxx
             self.runtime.inside_kernel = True
             self.runtime._current_kernel = self
-            assert self.runtime.compiling_callable is None
-            self.runtime.compiling_callable = kernel_cxx
+            assert self.runtime._compiling_callable is None
+            self.runtime._compiling_callable = kernel_cxx
             try:
                 ctx.ast_builder = kernel_cxx.ast_builder()
 
@@ -795,8 +761,8 @@ class Kernel:
                     output_file.write_text(
                         json.dumps({"elapsed_txt": elapsed_txt, "elapsed_json": elapsed_json}, indent=2)
                     )
-                struct_locals = extract_struct_locals_from_context(ctx)
-                tree = unpack_ndarray_struct(tree, struct_locals=struct_locals)
+                struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
+                tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
                 ctx.only_parse_function_def = self.compiled_kernel_data is not None
                 transform_tree(tree, ctx)
                 if not ctx.is_real_function:
@@ -805,14 +771,14 @@ class Kernel:
             finally:
                 self.runtime.inside_kernel = False
                 self.runtime._current_kernel = None
-                self.runtime.compiling_callable = None
+                self.runtime._compiling_callable = None
 
         gstaichi_kernel = impl.get_runtime().prog.create_kernel(gstaichi_ast_generator, kernel_name, self.autodiff_mode)
         assert key not in self.materialized_kernels
         self.materialized_kernels[key] = gstaichi_kernel
 
     def launch_kernel(self, t_kernel: KernelCxx, *args) -> Any:
-        assert len(args) == len(self.arguments), f"{len(self.arguments)} arguments needed but {len(args)} provided"
+        assert len(args) == len(self.arg_metas), f"{len(self.arg_metas)} arguments needed but {len(args)} provided"
 
         tmps = []
         callbacks = []
@@ -926,7 +892,7 @@ class Kernel:
                     )
                 else:
                     raise GsTaichiRuntimeTypeError(
-                        f"Argument {needed} cannot be converted into required type {type(v)}"
+                        f"Argument of type {type(v)} cannot be converted into required type {needed}"
                     )
             elif has_paddle():
                 # Do we want to continue to support paddle? :thinking_face:
@@ -1106,7 +1072,7 @@ class Kernel:
         template_num = 0
         i_out = 0
         for i_in, val in enumerate(args):
-            needed_ = self.arguments[i_in].annotation
+            needed_ = self.arg_metas[i_in].annotation
             if needed_ == template or isinstance(needed_, template):
                 template_num += 1
                 i_out += 1

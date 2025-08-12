@@ -4,6 +4,10 @@ import ast
 import dataclasses
 from typing import Any, Callable
 
+from gstaichi._lib.core.gstaichi_python import (
+    BoundaryMode,
+    DataTypeCxx,
+)
 from gstaichi.lang import (
     _ndarray,
     any_array,
@@ -13,6 +17,7 @@ from gstaichi.lang import (
     matrix,
 )
 from gstaichi.lang import ops as ti_ops
+from gstaichi.lang._dataclass_util import create_flat_name
 from gstaichi.lang.argpack import ArgPackType
 from gstaichi.lang.ast.ast_transformer_utils import (
     ASTTransformerContext,
@@ -29,18 +34,25 @@ from gstaichi.types import annotations, ndarray_type, primitive_types, texture_t
 class FunctionDefTransformer:
     @staticmethod
     def _decl_and_create_variable(
-        ctx: ASTTransformerContext, annotation, name, arg_features, invoke_later_dict, prefix_name, arg_depth
+        ctx: ASTTransformerContext,
+        annotation: Any,
+        name: str,
+        this_arg_features: tuple[tuple[Any, ...], ...] | None,
+        invoke_later_dict: dict[str, tuple[Any, str, Callable, list[Any]]],
+        prefix_name: str,
+        arg_depth: int,
     ) -> tuple[bool, Any]:
         full_name = prefix_name + "_" + name
         if not isinstance(annotation, primitive_types.RefType):
             ctx.kernel_args.append(name)
         if isinstance(annotation, ArgPackType):
+            assert this_arg_features is not None
             kernel_arguments.push_argpack_arg(name)
             d = {}
             items_to_put_in_dict = []
             for j, (_name, anno) in enumerate(annotation.members.items()):
                 result, obj = FunctionDefTransformer._decl_and_create_variable(
-                    ctx, anno, _name, arg_features[j], invoke_later_dict, full_name, arg_depth + 1
+                    ctx, anno, _name, this_arg_features[j], invoke_later_dict, full_name, arg_depth + 1
                 )
                 if not result:
                     d[_name] = None
@@ -52,32 +64,41 @@ class FunctionDefTransformer:
                 invoke_later_dict[item[0]] = argpack, item[1], *item[2]
             return True, argpack
         if annotation == annotations.template or isinstance(annotation, annotations.template):
+            assert ctx.global_vars is not None
             return True, ctx.global_vars[name]
         if isinstance(annotation, annotations.sparse_matrix_builder):
             return False, (
                 kernel_arguments.decl_sparse_matrix,
                 (
-                    to_gstaichi_type(arg_features),
+                    to_gstaichi_type(this_arg_features),
                     full_name,
                 ),
             )
         if isinstance(annotation, ndarray_type.NdarrayType):
+            assert this_arg_features is not None
+            raw_element_type: DataTypeCxx
+            ndim: int
+            needs_grad: bool
+            boundary: BoundaryMode
+            raw_element_type, ndim, needs_grad, boundary = this_arg_features
             return False, (
                 kernel_arguments.decl_ndarray_arg,
                 (
-                    to_gstaichi_type(arg_features[0]),
-                    arg_features[1],
+                    to_gstaichi_type(raw_element_type),
+                    ndim,
                     full_name,
-                    arg_features[2],
-                    arg_features[3],
+                    needs_grad,
+                    boundary,
                 ),
             )
         if isinstance(annotation, texture_type.TextureType):
-            return False, (kernel_arguments.decl_texture_arg, (arg_features[0], full_name))
+            assert this_arg_features is not None
+            return False, (kernel_arguments.decl_texture_arg, (this_arg_features[0], full_name))
         if isinstance(annotation, texture_type.RWTextureType):
+            assert this_arg_features is not None
             return False, (
                 kernel_arguments.decl_rw_texture_arg,
-                (arg_features[0], arg_features[1], arg_features[2], full_name),
+                (this_arg_features[0], this_arg_features[1], this_arg_features[2], full_name),
             )
         if isinstance(annotation, MatrixType):
             return True, kernel_arguments.decl_matrix_arg(annotation, name, arg_depth)
@@ -112,25 +133,35 @@ class FunctionDefTransformer:
                 invoke_later_dict[item[0]] = argpack, item[1], *item[2]
             create_variable_later[argument_name] = argpack
         elif dataclasses.is_dataclass(argument_type):
-            arg_features = this_arg_features
             ctx.create_variable(argument_name, argument_type)
             for field_idx, field in enumerate(dataclasses.fields(argument_type)):
-                flat_name = f"__ti_{argument_name}_{field.name}"
-                result, obj = FunctionDefTransformer._decl_and_create_variable(
-                    ctx,
-                    field.type,
-                    flat_name,
-                    arg_features[field_idx],
-                    invoke_later_dict,
-                    "",
-                    0,
-                )
-                if result:
-                    ctx.create_variable(flat_name, obj)
+                flat_name = create_flat_name(argument_name, field.name)
+                # if a field is a dataclass, then feed back into process_kernel_arg recursively
+                if dataclasses.is_dataclass(field.type):
+                    FunctionDefTransformer._transform_kernel_arg(
+                        ctx,
+                        invoke_later_dict,
+                        create_variable_later,
+                        flat_name,
+                        field.type,
+                        this_arg_features[field_idx],
+                    )
                 else:
-                    decl_type_func, type_args = obj
-                    obj = decl_type_func(*type_args)
-                    ctx.create_variable(flat_name, obj)
+                    result, obj = FunctionDefTransformer._decl_and_create_variable(
+                        ctx,
+                        field.type,
+                        flat_name,
+                        this_arg_features[field_idx],
+                        invoke_later_dict,
+                        "",
+                        0,
+                    )
+                    if result:
+                        ctx.create_variable(flat_name, obj)
+                    else:
+                        decl_type_func, type_args = obj
+                        obj = decl_type_func(*type_args)
+                        ctx.create_variable(flat_name, obj)
         else:
             result, obj = FunctionDefTransformer._decl_and_create_variable(
                 ctx,
@@ -141,31 +172,34 @@ class FunctionDefTransformer:
                 "",
                 0,
             )
-            if result:
-                ctx.create_variable(argument_name, obj)
-            else:
+            if not result:
                 decl_type_func, type_args = obj
                 obj = decl_type_func(*type_args)
-                ctx.create_variable(argument_name, obj)
+            ctx.create_variable(argument_name, obj)
 
     @staticmethod
     def _transform_as_kernel(ctx: ASTTransformerContext, node: ast.FunctionDef, args: ast.arguments) -> None:
+        assert ctx.func is not None
+        assert ctx.arg_features is not None
         if node.returns is not None:
             if not isinstance(node.returns, ast.Constant):
+                assert ctx.func.return_type is not None
                 for return_type in ctx.func.return_type:
                     kernel_arguments.decl_ret(return_type)
-        impl.get_runtime().compiling_callable.finalize_rets()
+        compiling_callable = impl.get_runtime().compiling_callable
+        assert compiling_callable is not None
+        compiling_callable.finalize_rets()
 
-        invoke_later_dict: dict[str, tuple[Any, str, Any]] = dict()
-        create_variable_later = dict()
-        for i, arg in enumerate(args.args):
-            argument = ctx.func.arguments[i]
+        invoke_later_dict: dict[str, tuple[Any, str, Callable, list[Any]]] = dict()
+        create_variable_later: dict[str, Any] = dict()
+        for i in range(len(args.args)):
+            arg_meta = ctx.func.arg_metas[i]
             FunctionDefTransformer._transform_kernel_arg(
                 ctx,
                 invoke_later_dict,
                 create_variable_later,
-                argument.name,
-                argument.annotation,
+                arg_meta.name,
+                arg_meta.annotation,
                 ctx.arg_features[i] if ctx.arg_features is not None else (),
             )
 
@@ -175,7 +209,7 @@ class FunctionDefTransformer:
         for k, v in create_variable_later.items():
             ctx.create_variable(k, v)
 
-        impl.get_runtime().compiling_callable.finalize_params()
+        compiling_callable.finalize_params()
         # remove original args
         node.args.args = []
 
@@ -186,15 +220,16 @@ class FunctionDefTransformer:
         argument_type: Any,
         data: Any,
     ) -> None:
+        # Template arguments are passed by reference.
         if isinstance(argument_type, annotations.template):
             ctx.create_variable(argument_name, data)
             return None
 
         if dataclasses.is_dataclass(argument_type):
-            dataclass_type = argument_type
-            for field in dataclasses.fields(dataclass_type):
+            for field in dataclasses.fields(argument_type):
+                flat_name = create_flat_name(argument_name, field.name)
                 data_child = getattr(data, field.name)
-                if not isinstance(
+                if isinstance(
                     data_child,
                     (
                         _ndarray.ScalarNdarray,
@@ -203,33 +238,33 @@ class FunctionDefTransformer:
                         any_array.AnyArray,
                     ),
                 ):
-                    raise GsTaichiSyntaxError(
-                        f"Argument {argument_name} of type {dataclass_type} {field.type} is not recognized."
+                    field.type.check_matched(data_child.get_type(), field.name)
+                    ctx.create_variable(flat_name, data_child)
+                elif dataclasses.is_dataclass(data_child):
+                    FunctionDefTransformer._transform_func_arg(
+                        ctx,
+                        flat_name,
+                        field.type,
+                        getattr(data, field.name),
                     )
-                field.type.check_matched(data_child.get_type(), field.name)
-                var_name = f"__ti_{argument_name}_{field.name}"
-                ctx.create_variable(var_name, data_child)
+                else:
+                    raise GsTaichiSyntaxError(
+                        f"Argument {field.name} of type {argument_type} {field.type} is not recognized."
+                    )
             return None
 
         # Ndarray arguments are passed by reference.
         if isinstance(argument_type, (ndarray_type.NdarrayType)):
             if not isinstance(
-                data,
-                (
-                    _ndarray.ScalarNdarray,
-                    matrix.VectorNdarray,
-                    matrix.MatrixNdarray,
-                    any_array.AnyArray,
-                ),
+                data, (_ndarray.ScalarNdarray, matrix.VectorNdarray, matrix.MatrixNdarray, any_array.AnyArray)
             ):
-                raise GsTaichiSyntaxError(f"Argument {arg.arg} of type {argument_type} is not recognized.")
+                raise GsTaichiSyntaxError(f"Argument {argument_name} of type {argument_type} is not recognized.")
             argument_type.check_matched(data.get_type(), argument_name)
             ctx.create_variable(argument_name, data)
             return None
 
         # Matrix arguments are passed by value.
         if isinstance(argument_type, (MatrixType)):
-            var_name = argument_name
             # "data" is expected to be an Expr here,
             # so we simply call "impl.expr_init_func(data)" to perform:
             #
@@ -239,32 +274,31 @@ class FunctionDefTransformer:
             # We created local variable "t" - a copy of the passed-in argument "data"
             if not isinstance(data, expr.Expr) or not data.ptr.is_tensor():
                 raise GsTaichiSyntaxError(
-                    f"Argument {var_name} of type {argument_type} is expected to be a Matrix, but got {type(data)}."
+                    f"Argument {argument_name} of type {argument_type} is expected to be a Matrix, but got {type(data)}."
                 )
 
             element_shape = data.ptr.get_rvalue_type().shape()
             if len(element_shape) != argument_type.ndim:
                 raise GsTaichiSyntaxError(
-                    f"Argument {var_name} of type {argument_type} is expected to be a Matrix with ndim {argument_type.ndim}, but got {len(element_shape)}."
+                    f"Argument {argument_name} of type {argument_type} is expected to be a Matrix with ndim {argument_type.ndim}, but got {len(element_shape)}."
                 )
 
             assert argument_type.ndim > 0
             if element_shape[0] != argument_type.n:
                 raise GsTaichiSyntaxError(
-                    f"Argument {var_name} of type {argument_type} is expected to be a Matrix with n {argument_type.n}, but got {element_shape[0]}."
+                    f"Argument {argument_name} of type {argument_type} is expected to be a Matrix with n {argument_type.n}, but got {element_shape[0]}."
                 )
 
             if argument_type.ndim == 2 and element_shape[1] != argument_type.m:
                 raise GsTaichiSyntaxError(
-                    f"Argument {var_name} of type {argument_type} is expected to be a Matrix with m {argument_type.m}, but got {element_shape[0]}."
+                    f"Argument {argument_name} of type {argument_type} is expected to be a Matrix with m {argument_type.m}, but got {element_shape[0]}."
                 )
 
-            ctx.create_variable(var_name, impl.expr_init_func(data))
+            ctx.create_variable(argument_name, impl.expr_init_func(data))
             return None
 
         if id(argument_type) in primitive_types.type_ids:
-            var_name = argument_name
-            ctx.create_variable(var_name, impl.expr_init_func(ti_ops.cast(data, argument_type)))
+            ctx.create_variable(argument_name, impl.expr_init_func(ti_ops.cast(data, argument_type)))
             return None
         # Create a copy for non-template arguments,
         # so that they are passed by value.
@@ -274,15 +308,16 @@ class FunctionDefTransformer:
 
     @staticmethod
     def _transform_as_func(ctx: ASTTransformerContext, node: ast.FunctionDef, args: ast.arguments) -> None:
-        for data_i, data in enumerate(ctx.argument_data):
-            argument = ctx.func.arguments[data_i]
-            FunctionDefTransformer._transform_func_arg(
-                ctx,
-                argument.name,
-                argument.annotation,
-                data,
-            )
+        # pylint: disable=import-outside-toplevel
+        from gstaichi.lang.kernel_impl import Func
 
+        assert isinstance(ctx.func, Func)
+        assert ctx.argument_data is not None
+        for data_i, data in enumerate(ctx.argument_data):
+            argument = ctx.func.arg_metas[data_i]
+            FunctionDefTransformer._transform_func_arg(ctx, argument.name, argument.annotation, data)
+
+        # deal with dataclasses
         for v in ctx.func.orig_arguments:
             if dataclasses.is_dataclass(v.annotation):
                 ctx.create_variable(v.name, v.annotation)
@@ -312,6 +347,8 @@ class FunctionDefTransformer:
             return None
 
         if not ctx.is_kernel:  # ti.func
+            assert ctx.argument_data is not None
+            assert ctx.func is not None
             if ctx.is_real_function:
                 FunctionDefTransformer._transform_as_kernel(ctx, node, args)
             else:

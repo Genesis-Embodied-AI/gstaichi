@@ -27,7 +27,8 @@ if TYPE_CHECKING:
 
 class Builder:
     def __call__(self, ctx: "ASTTransformerContext", node: ast.AST):
-        method = getattr(self, "build_" + node.__class__.__name__, None)
+        method_name = "build_" + node.__class__.__name__
+        method = getattr(self, method_name, None)
         try:
             if method is None:
                 error_msg = f'Unsupported node "{node.__class__.__name__}"'
@@ -159,7 +160,7 @@ class ASTTransformerContext:
         end_lineno: int,
         is_kernel: bool,
         func: "Func | Kernel",
-        arg_features,
+        arg_features: list[tuple[Any, ...]],
         global_vars: dict[str, Any],
         argument_data,
         file: str,

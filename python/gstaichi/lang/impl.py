@@ -8,6 +8,7 @@ from gstaichi._lib import core as _ti_core
 from gstaichi._lib.core.gstaichi_python import (
     DataTypeCxx,
     Function,
+    KernelCxx,
     Program,
 )
 from gstaichi._snode.fields_builder import FieldsBuilder
@@ -70,17 +71,14 @@ from gstaichi.types.primitive_types import (
 
 @gstaichi_scope
 def expr_init_shared_array(shape, element_type):
-    compiling_callable = get_runtime().compiling_callable
-    assert compiling_callable is not None
-    return compiling_callable.ast_builder().expr_alloca_shared_array(
-        shape, element_type, _ti_core.DebugInfo(get_runtime().get_current_src_info())
-    )
+    ast_builder = get_runtime().compiling_callable.ast_builder()
+    debug_info = _ti_core.DebugInfo(get_runtime().get_current_src_info())
+    return ast_builder.expr_alloca_shared_array(shape, element_type, debug_info)
 
 
 @gstaichi_scope
 def expr_init(rhs):
     compiling_callable = get_runtime().compiling_callable
-    assert compiling_callable is not None
     if rhs is None:
         return Expr(
             compiling_callable.ast_builder().expr_alloca(_ti_core.DebugInfo(get_runtime().get_current_src_info()))
@@ -194,9 +192,7 @@ def validate_subscript_index(value, index):
 @gstaichi_scope
 def subscript(ast_builder, value, *_indices, skip_reordered=False):
     dbg_info = _ti_core.DebugInfo(get_runtime().get_current_src_info())
-    compiling_callable = get_runtime().compiling_callable
-    assert compiling_callable is not None
-    ast_builder = compiling_callable.ast_builder()
+    ast_builder = get_runtime().compiling_callable.ast_builder()
     # Directly evaluate in Python for non-GsTaichi types
     if not isinstance(
         value,
@@ -337,8 +333,8 @@ class PyGsTaichi:
         self._prog: Program | None = None
         self.src_info_stack = []
         self.inside_kernel: bool = False
-        self.compiling_callable: Kernel | Function | None = None  # pointer to instance of lang::Kernel/Function
-        self._current_kernel: Kernel | None = None
+        self._compiling_callable: KernelCxx | Kernel | Function | None = None
+        self._current_kernel: "Kernel | None" = None
         self.global_vars = []
         self.grad_vars = []
         self.dual_vars = []
@@ -353,6 +349,14 @@ class PyGsTaichi:
         self.kernels: list[Kernel] = kernels or []
         self._signal_handler_registry = None
         self.unfinalized_fields_builder = {}
+
+    @property
+    def compiling_callable(self) -> KernelCxx | Kernel | Function:
+        if self._compiling_callable is None:
+            raise GsTaichiRuntimeError(
+                "_compiling_callable attribute not initialized. Maybe you forgot to call `ti.init()` first?"
+            )
+        return self._compiling_callable
 
     @property
     def prog(self) -> Program:
@@ -962,11 +966,9 @@ def ti_print(*_vars, sep=" ", end="\n"):
 
     _vars = add_separators(_vars)
     contents, formats = ti_format_list_to_content_entries(_vars)
-    compiling_callable = get_runtime().compiling_callable
-    assert compiling_callable is not None
-    compiling_callable.ast_builder().create_print(
-        contents, formats, _ti_core.DebugInfo(get_runtime().get_current_src_info())
-    )
+    ast_builder = get_runtime().compiling_callable.ast_builder()
+    debug_info = _ti_core.DebugInfo(get_runtime().get_current_src_info())
+    ast_builder.create_print(contents, formats, debug_info)
 
 
 @gstaichi_scope
@@ -996,9 +998,8 @@ def ti_format(*args):
 def ti_assert(cond, msg, extra_args, dbg_info):
     # Mostly a wrapper to help us convert from Expr (defined in Python) to
     # _ti_core.Expr (defined in C++)
-    compiling_callable = get_runtime().compiling_callable
-    assert compiling_callable is not None
-    compiling_callable.ast_builder().create_assert_stmt(Expr(cond).ptr, msg, extra_args, dbg_info)
+    ast_builder = get_runtime().compiling_callable.ast_builder()
+    ast_builder.create_assert_stmt(Expr(cond).ptr, msg, extra_args, dbg_info)
 
 
 @gstaichi_scope

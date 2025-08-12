@@ -1,6 +1,6 @@
 import dataclasses
 import weakref
-from typing import Any, Union
+from typing import Any, Callable, Union
 
 import gstaichi.lang
 import gstaichi.lang._ndarray
@@ -8,20 +8,25 @@ import gstaichi.lang._texture
 import gstaichi.lang.expr
 import gstaichi.lang.snode
 from gstaichi._lib import core as _ti_core
+from gstaichi.lang import _dataclass_util
 from gstaichi.lang.any_array import AnyArray
 from gstaichi.lang.argpack import ArgPack, ArgPackType
 from gstaichi.lang.exception import (
     GsTaichiRuntimeTypeError,
 )
-from gstaichi.lang.kernel_arguments import KernelArgument
+from gstaichi.lang.kernel_arguments import ArgMetadata
 from gstaichi.lang.matrix import MatrixType
-from gstaichi.lang.util import to_gstaichi_type
+from gstaichi.lang.util import is_ti_template, to_gstaichi_type
 from gstaichi.types import (
     ndarray_type,
     sparse_matrix_builder,
     template,
     texture_type,
 )
+from gstaichi.types.enums import AutodiffMode
+
+CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
+
 
 AnnotationType = Union[
     template,
@@ -34,7 +39,7 @@ AnnotationType = Union[
 ]
 
 
-class GsTaichiCallableTemplateMapper:
+class TemplateMapper:
     """
     This should probably be renamed to sometihng like FeatureMapper, or
     FeatureExtractor, since:
@@ -46,15 +51,15 @@ class GsTaichiCallableTemplateMapper:
     - these are returned as a heterogeneous tuple, whose contents depends on the type
     """
 
-    def __init__(self, arguments: list[KernelArgument], template_slot_locations: list[int]) -> None:
-        self.arguments: list[KernelArgument] = arguments
+    def __init__(self, arguments: list[ArgMetadata], template_slot_locations: list[int]) -> None:
+        self.arguments: list[ArgMetadata] = arguments
         self.num_args: int = len(arguments)
         self.template_slot_locations: list[int] = template_slot_locations
         self.mapping: dict[tuple[Any, ...], int] = {}
 
     @staticmethod
-    def extract_arg(arg, annotation: AnnotationType, arg_name: str) -> Any:
-        if annotation == template or isinstance(annotation, template):
+    def extract_arg(arg: Any, annotation: AnnotationType, arg_name: str) -> Any:
+        if is_ti_template(annotation):
             if isinstance(arg, gstaichi.lang.snode.SNode):
                 return arg.ptr
             if isinstance(arg, gstaichi.lang.expr.Expr):
@@ -62,7 +67,7 @@ class GsTaichiCallableTemplateMapper:
             if isinstance(arg, _ti_core.ExprCxx):
                 return arg.get_underlying_ptr_address()
             if isinstance(arg, tuple):
-                return tuple(GsTaichiCallableTemplateMapper.extract_arg(item, annotation, arg_name) for item in arg)
+                return tuple(TemplateMapper.extract_arg(item, annotation, arg_name) for item in arg)
             if isinstance(arg, gstaichi.lang._ndarray.Ndarray):
                 raise GsTaichiRuntimeTypeError(
                     "Ndarray shouldn't be passed in via `ti.template()`, please annotate your kernel using `ti.types.ndarray(...)` instead"
@@ -85,15 +90,15 @@ class GsTaichiCallableTemplateMapper:
             if not isinstance(arg, ArgPack):
                 raise GsTaichiRuntimeTypeError(f"Argument {arg_name} must be a argument pack, got {type(arg)}")
             return tuple(
-                GsTaichiCallableTemplateMapper.extract_arg(arg[name], dtype, arg_name)
+                TemplateMapper.extract_arg(arg[name], dtype, arg_name)
                 for index, (name, dtype) in enumerate(annotation.members.items())
             )
         if dataclasses.is_dataclass(annotation):
             _res_l = []
             for field in dataclasses.fields(annotation):
                 field_value = getattr(arg, field.name)
-                arg_name = f"__ti_{arg_name}_{field.name}"
-                field_extracted = GsTaichiCallableTemplateMapper.extract_arg(field_value, field.type, arg_name)
+                child_name = _dataclass_util.create_flat_name(arg_name, field.name)
+                field_extracted = TemplateMapper.extract_arg(field_value, field.type, child_name)
                 _res_l.append(field_extracted)
             return tuple(_res_l)
         if isinstance(annotation, texture_type.TextureType):

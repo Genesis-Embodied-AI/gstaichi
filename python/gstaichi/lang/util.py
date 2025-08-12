@@ -10,6 +10,7 @@ from colorama import Fore, Style
 from gstaichi._lib import core as _ti_core
 from gstaichi._logging import is_logging_effective
 from gstaichi.lang import impl
+from gstaichi.types import Template
 from gstaichi.types.primitive_types import (
     f16,
     f32,
@@ -56,6 +57,8 @@ def has_paddle():
     if not _env_paddle or int(_env_paddle):
         try:
             import paddle  # type: ignore pylint: disable=C0415
+
+            _ = paddle
 
             _has_paddle = True
         except:
@@ -379,6 +382,10 @@ def get_traceback(stacklevel=1):
 
 def is_data_oriented(obj: Any) -> bool:
     return getattr(obj, "_data_oriented", False)
+
+
+def is_ti_template(annotation: Any) -> bool:
+    return annotation == Template or isinstance(annotation, Template)
 
 
 __all__ = []
