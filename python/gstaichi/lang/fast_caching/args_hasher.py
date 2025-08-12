@@ -68,7 +68,6 @@ def to_representative_str(arg: Any) -> str | None:
         return str(arg_type)
     if isinstance(arg, enum.Enum):
         return f"enum-{arg.name}-{arg.value}"
-    print("arg not recognized", type(arg))
     return None
 
 

@@ -19,9 +19,7 @@ def _hash_function(function_info: FunctionSourceInfo) -> str:
     with open(function_info.filepath) as f:
         contents = f.read().split("\n")
     lines = contents[function_info.start_lineno : function_info.end_lineno]
-    print("_hash_function, lines", "\n".join(lines))
     _hash = hash_string("\n".join(lines))
-    print("hash", _hash)
     return _hash
 
 
