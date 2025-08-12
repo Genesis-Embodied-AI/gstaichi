@@ -8,8 +8,8 @@ import pytest
 import gstaichi as ti
 from gstaichi._test_tools import ti_init_same_arch
 from gstaichi.lang import _wrap_inspect
+from gstaichi.lang._fast_caching import function_hasher, src_hasher
 from gstaichi.lang._wrap_inspect import get_source_info_and_src
-from gstaichi.lang.fast_caching import function_hasher, src_hasher
 
 from tests import test_utils
 

@@ -1,5 +1,5 @@
 import gstaichi as ti
-from gstaichi.lang.fast_caching import config_hasher
+from gstaichi.lang._fast_caching import config_hasher
 
 from tests import test_utils
 

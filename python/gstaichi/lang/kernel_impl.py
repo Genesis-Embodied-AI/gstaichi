@@ -30,6 +30,7 @@ from gstaichi._lib.core.gstaichi_python import (
     KernelLaunchContext,
 )
 from gstaichi.lang import impl, ops, runtime_ops
+from gstaichi.lang._fast_caching import src_hasher
 from gstaichi.lang._template_mapper import GsTaichiCallableTemplateMapper
 from gstaichi.lang._wrap_inspect import FunctionSourceInfo, get_source_info_and_src
 from gstaichi.lang.any_array import AnyArray
@@ -49,7 +50,6 @@ from gstaichi.lang.exception import (
     handle_exception_from_cpp,
 )
 from gstaichi.lang.expr import Expr
-from gstaichi.lang.fast_caching import src_hasher
 from gstaichi.lang.kernel_arguments import KernelArgument
 from gstaichi.lang.matrix import MatrixType
 from gstaichi.lang.shell import _shell_pop_print

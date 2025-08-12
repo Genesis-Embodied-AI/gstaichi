@@ -188,6 +188,7 @@ user_api[ti] = [
     "polar_decompose",
     "pow",
     "profiler",
+    "pure",
     "pyfunc",
     "randn",
     "random",

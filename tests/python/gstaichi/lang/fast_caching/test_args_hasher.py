@@ -3,7 +3,7 @@ import dataclasses
 import numpy as np
 
 import gstaichi as ti
-from gstaichi.lang.fast_caching import FIELD_METADATA_CACHE_VALUE, args_hasher
+from gstaichi.lang._fast_caching import FIELD_METADATA_CACHE_VALUE, args_hasher
 
 from tests import test_utils
 

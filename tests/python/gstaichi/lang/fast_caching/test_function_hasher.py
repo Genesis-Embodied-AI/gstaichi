@@ -4,8 +4,8 @@ import shutil
 from typing import Callable
 
 from gstaichi.lang import _wrap_inspect
-from gstaichi.lang.fast_caching import function_hasher
-from gstaichi.lang.fast_caching.fast_caching_types import HashedFunctionSourceInfo
+from gstaichi.lang._fast_caching import function_hasher
+from gstaichi.lang._fast_caching.fast_caching_types import HashedFunctionSourceInfo
 
 from tests import test_utils
 
