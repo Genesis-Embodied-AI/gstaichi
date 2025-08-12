@@ -95,7 +95,7 @@ class NdarrayType:
         if isinstance(self.dtype, CompoundType):
             if not self.dtype.check_matched(ndarray_type.element_type):  # type: ignore
                 raise ValueError(
-                    f"Invalid value for argument {arg_name} - required element type: {self.dtype}, but {ndarray_type.element_type} is provided"
+                    f"Invalid value for argument {arg_name} - required element type: {self.dtype.to_string()}, but {ndarray_type.element_type} is provided"  # type: ignore
                 )
         else:
             if self.dtype is not None:
