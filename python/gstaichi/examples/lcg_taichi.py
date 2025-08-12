@@ -1,6 +1,6 @@
 import time
 
-import taichi as ti
+import gstaichi as ti
 
 
 @ti.kernel
@@ -25,8 +25,8 @@ def main() -> None:
     end = time.time()
     print("elapsed", end - start)
 
-    # [Taichi] version 1.8.0, llvm 15.0.7, commit 5afed1c9, osx, python 3.10.16
-    # [Taichi] Starting on arch=metal
+    # [GsTaichi] version 1.8.0, llvm 15.0.7, commit 5afed1c9, osx, python 3.10.16
+    # [GsTaichi] Starting on arch=metal
     # elapsed 0.04660296440124512
     # (on mac air m4)
 

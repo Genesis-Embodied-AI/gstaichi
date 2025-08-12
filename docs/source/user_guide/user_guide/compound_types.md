@@ -51,7 +51,7 @@ The members are read-only. However, ndarrays and fields are stored as references
 Example:
 
 ```
-import taichi as ti
+import gstaichi as ti
 from dataclasses import dataclass
 
 ti.init(arch=ti.gpu)
