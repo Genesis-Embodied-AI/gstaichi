@@ -100,8 +100,6 @@ class FunctionDefTransformer:
                 if dataclasses.is_dataclass(field.type):
                     FunctionDefTransformer._transform_kernel_arg(
                         ctx,
-                        invoke_later_dict,
-                        create_variable_later,
                         flat_name,
                         field.type,
                         this_arg_features[field_idx],
@@ -112,7 +110,6 @@ class FunctionDefTransformer:
                         field.type,
                         flat_name,
                         this_arg_features[field_idx],
-                        invoke_later_dict,
                         "",
                         0,
                     )
