@@ -2,10 +2,11 @@
 
 import ast
 import collections.abc
+import dataclasses
 import itertools
 import warnings
 from ast import unparse
-from typing import Any, Iterable, Type
+from typing import Any, Sequence, Type
 
 import numpy as np
 
@@ -40,7 +41,7 @@ from gstaichi.types import primitive_types
 from gstaichi.types.utils import is_integral
 
 
-def reshape_list(flat_list: list[Any], target_shape: Iterable[int]) -> list[Any]:
+def reshape_list(flat_list: list[Any], target_shape: Sequence[int]) -> list[Any]:
     if len(target_shape) < 2:
         return flat_list
 
@@ -645,6 +646,8 @@ class ASTTransformer(Builder):
 
                 node.ptr = getattr(tensor_ops, node.attr)
                 setattr(node, "caller", node.value.ptr)
+        elif dataclasses.is_dataclass(node.value.ptr):
+            node.ptr = next(field.type for field in dataclasses.fields(node.value.ptr))
         else:
             node.ptr = getattr(node.value.ptr, node.attr)
         return node.ptr
@@ -1309,6 +1312,8 @@ build_stmt = ASTTransformer()
 
 
 def build_stmts(ctx: ASTTransformerContext, stmts: list[ast.stmt]):
+    # TODO: Should we just make this part of ASTTransformer? Then, easier to pass around (just
+    # pass the ASTTransformer object around)
     with ctx.variable_scope_guard():
         for stmt in stmts:
             if ctx.returned != ReturnStatus.NoReturn or ctx.loop_status() != LoopStatus.Normal:
