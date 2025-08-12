@@ -111,7 +111,6 @@ class FunctionDefTransformer:
                         flat_name,
                         this_arg_features[field_idx],
                         "",
-                        0,
                     )
                     if result:
                         ctx.create_variable(flat_name, obj)
