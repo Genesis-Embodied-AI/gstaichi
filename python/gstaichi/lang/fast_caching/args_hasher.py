@@ -1,10 +1,8 @@
 import dataclasses
 import enum
 import time
-from typing import Any, Sequence
-
 import numpy as np
-import torch
+from typing import Any, Sequence
 
 from gstaichi.lang._ndarray import ScalarNdarray
 from gstaichi.lang.fast_caching import FIELD_METADATA_CACHE_VALUE
@@ -48,7 +46,7 @@ def to_representative_str(arg: Any) -> str | None:
         return f"[f-{arg.snode._id}-{arg.dtype}-{arg.shape}]"
     if isinstance(arg, MatrixNdarray):
         return f"[ndm-{arg.m}-{arg.n}-{arg.dtype}-{len(arg.shape)}]"
-    if isinstance(arg, torch.Tensor):
+    if "torch.Tensor" in str(arg_type):
         return f"[pt-{arg.dtype}-{arg.ndim}]"
     if isinstance(arg, np.ndarray):
         return f"[np-{arg.dtype}-{arg.ndim}]"
