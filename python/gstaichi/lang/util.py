@@ -1,9 +1,8 @@
-# type: ignore
-
 import functools
 import os
 import traceback
 import warnings
+from typing import Any
 
 import numpy as np
 from colorama import Fore, Style
@@ -11,6 +10,7 @@ from colorama import Fore, Style
 from gstaichi._lib import core as _ti_core
 from gstaichi._logging import is_logging_effective
 from gstaichi.lang import impl
+from gstaichi.types import Template
 from gstaichi.types.primitive_types import (
     f16,
     f32,
@@ -299,6 +299,10 @@ def warning(msg, warning_type=UserWarning, stacklevel=1, print_stack=True):
 def get_traceback(stacklevel=1):
     s = traceback.extract_stack()[: -1 - stacklevel]
     return "".join(traceback.format_list(s))
+
+
+def is_ti_template(annotation: Any) -> bool:
+    return annotation == Template or isinstance(annotation, Template)
 
 
 __all__ = []
