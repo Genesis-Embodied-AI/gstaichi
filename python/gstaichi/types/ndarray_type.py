@@ -1,4 +1,4 @@
-# type: ignore
+from typing import Any
 
 from gstaichi.types.compound_types import CompoundType, matrix, vector
 from gstaichi.types.enums import Layout, to_boundary_enum
@@ -93,9 +93,9 @@ class NdarrayType:
 
         # Check dtype match
         if isinstance(self.dtype, CompoundType):
-            if not self.dtype.check_matched(ndarray_type.element_type):
+            if not self.dtype.check_matched(ndarray_type.element_type):  # type: ignore
                 raise ValueError(
-                    f"Invalid value for argument {arg_name} - required element type: {self.dtype.to_string()}, but {ndarray_type.element_type.to_string()} is provided"
+                    f"Invalid value for argument {arg_name} - required element type: {self.dtype}, but {ndarray_type.element_type} is provided"
                 )
         else:
             if self.dtype is not None:
@@ -125,6 +125,9 @@ class NdarrayType:
 
     def __str__(self):
         return self.__repr__()
+
+    def __getitem__(self, i: Any) -> Any:
+        raise NotImplemented
 
 
 ndarray = NdarrayType

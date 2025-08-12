@@ -6,6 +6,7 @@ from gstaichi.lang._ndrange import ndrange
 from gstaichi.lang._texture import Texture
 from gstaichi.lang.argpack import *
 from gstaichi.lang.exception import *
+from gstaichi.lang.fast_caching.function_hasher import pure
 from gstaichi.lang.field import *
 from gstaichi.lang.impl import *
 from gstaichi.lang.kernel_impl import *

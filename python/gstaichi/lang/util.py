@@ -1,9 +1,8 @@
-# type: ignore
-
 import functools
 import os
 import traceback
 import warnings
+from typing import Any
 
 import numpy as np
 from colorama import Fore, Style
@@ -56,7 +55,7 @@ def has_paddle():
     _env_paddle = os.environ.get("TI_ENABLE_PADDLE", "1")
     if not _env_paddle or int(_env_paddle):
         try:
-            import paddle  # pylint: disable=C0415
+            import paddle  # type: ignore pylint: disable=C0415
 
             _has_paddle = True
         except:
@@ -193,7 +192,7 @@ def to_paddle_type(dt):
         DataType: The counterpart data type in paddle.
 
     """
-    import paddle  # pylint: disable=C0415
+    import paddle  # type: ignore pylint: disable=C0415
 
     if dt == f32:
         return paddle.float32
@@ -290,7 +289,7 @@ def to_gstaichi_type(dt):
         raise RuntimeError(f"PyTorch doesn't support {dt.to_string()} data type before version 2.3.0.")
 
     if has_paddle():
-        import paddle  # pylint: disable=C0415
+        import paddle  # type: ignore pylint: disable=C0415
 
         if dt == paddle.float32:
             return f32
@@ -376,6 +375,10 @@ def warning(msg, warning_type=UserWarning, stacklevel=1, print_stack=True):
 def get_traceback(stacklevel=1):
     s = traceback.extract_stack()[: -1 - stacklevel]
     return "".join(traceback.format_list(s))
+
+
+def is_data_oriented(obj: Any) -> bool:
+    return getattr(obj, "_data_oriented", False)
 
 
 __all__ = []

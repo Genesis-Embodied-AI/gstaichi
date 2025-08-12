@@ -350,7 +350,7 @@ class PyGsTaichi:
         self.target_tape = None
         self.fwd_mode_manager = None
         self.grad_replaced = False
-        self.kernels = kernels or []
+        self.kernels: list[Kernel] = kernels or []
         self._signal_handler_registry = None
         self.unfinalized_fields_builder = {}
 
@@ -364,7 +364,7 @@ class PyGsTaichi:
     def current_kernel(self) -> Kernel:
         if self._current_kernel is None:
             raise GsTaichiRuntimeError(
-                "_pr_current_kernelog attribute not initialized. Maybe you forgot to call `ti.init()` first?"
+                "_current_kernel attribute not initialized. Maybe you forgot to call `ti.init()` first?"
             )
         return self._current_kernel
 
@@ -373,7 +373,7 @@ class PyGsTaichi:
 
     def clear_compiled_functions(self):
         for k in self.kernels:
-            k.compiled_kernels.clear()
+            k.materialized_kernels.clear()
 
     def finalize_fields_builder(self, builder):
         self.unfinalized_fields_builder.pop(builder)
@@ -390,7 +390,7 @@ class PyGsTaichi:
     def get_num_compiled_functions(self):
         count = 0
         for k in self.kernels:
-            count += len(k.compiled_kernels)
+            count += len(k.materialized_kernels)
         return count
 
     def src_info_guard(self, info):
