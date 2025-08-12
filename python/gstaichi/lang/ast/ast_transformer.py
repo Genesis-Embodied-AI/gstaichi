@@ -1312,10 +1312,8 @@ build_stmt = ASTTransformer()
 
 
 def build_stmts(ctx: ASTTransformerContext, stmts: list[ast.stmt]):
-    """
-    TODO: Should we just make this part of ASTTransformer? Then, easier to pass around (just
-    pass the ASTTransformer object around)
-    """
+    # TODO: Should we just make this part of ASTTransformer? Then, easier to pass around (just
+    # pass the ASTTransformer object around)
     with ctx.variable_scope_guard():
         for stmt in stmts:
             if ctx.returned != ReturnStatus.NoReturn or ctx.loop_status() != LoopStatus.Normal:
