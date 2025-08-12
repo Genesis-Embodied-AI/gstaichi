@@ -320,11 +320,6 @@ setup(
     license="Apache Software License (http://www.apache.org/licenses/LICENSE-2.0)",
     license_files=("LICENSE",),
     include_package_data=True,
-    entry_points={
-        "console_scripts": [
-            "ti=gstaichi._main:main",
-        ],
-    },
     classifiers=classifiers,
     cmake_args=get_cmake_args(),
     cmake_process_manifest_hook=cmake_install_manifest_filter,

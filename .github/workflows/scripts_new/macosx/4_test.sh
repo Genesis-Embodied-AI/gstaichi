@@ -2,7 +2,7 @@
 
 set -ex
 
-pip install -r requirements_test.txt
+pip install --prefer-binary -r requirements_test.txt
 find . -name '*.bc'
 ls -lh build/
 ls -lh python/gstaichi/_lib/runtime/
