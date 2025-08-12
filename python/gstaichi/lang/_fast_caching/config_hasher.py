@@ -12,5 +12,6 @@ def hash_compile_config() -> str:
         v = getattr(config, k)
         config_l.append(f"{k}={v}")
     config_str = "\n".join(config_l)
+    print(config_str)
     config_hash = hash_string(config_str)
     return config_hash
