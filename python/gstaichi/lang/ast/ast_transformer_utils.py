@@ -160,7 +160,7 @@ class ASTTransformerContext:
         end_lineno: int,
         is_kernel: bool,
         func: "Func | Kernel",
-        arg_features: list[tuple[Any, ...]],
+        arg_features: list[tuple[Any, ...]] | None,
         global_vars: dict[str, Any],
         argument_data,
         file: str,
