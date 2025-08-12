@@ -7,11 +7,10 @@ on:
         description: 'The head ref (branch name or PR ref)'
         required: true
         type: string
-    secrets:
-      AWS_STORAGE_ACCESS_KEY_ID:
+      artifact_name:
+        description: 'Name of the artifact to download'
         required: true
-      AWS_STORAGE_SECRET_ACCESS_KEY:
-        required: true
+        type: string
   workflow_dispatch:
 concurrency:
   group: gh-pages-deploy-${{ github.event.inputs.head_ref || github.head_ref }}
@@ -23,16 +22,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - uses: actions/download-artifact@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_STORAGE_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_STORAGE_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-      - name: Download artifact
-        run: |
-          set -x
-          aws s3 sync s3://genesis-ai-compiler/ci/gstaichi/${GITHUB_SHA:0:7}/cp310/ dist/
+          name: ${{ inputs.artifact_name }}
       - name: Python check
         uses: actions/setup-python@v4
         with:
@@ -40,6 +32,8 @@ jobs:
       - name: manylinux install wheel
         run: |
           set -x
+          mkdir -p dist
+          mv *.whl dist/
           ls -lh dist/
           pip install "$(ls dist/*.whl)[docs]"
           python -c 'import gstaichi as ti; ti.init(arch=ti.cpu); print(ti.__version__)'
