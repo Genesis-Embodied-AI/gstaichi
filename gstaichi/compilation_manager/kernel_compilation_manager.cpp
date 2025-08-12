@@ -264,47 +264,30 @@ void KernelCompilationManager::store_fast_cache(
     const CompileConfig &compile_config,
     const DeviceCapabilityConfig &caps,
     CompiledKernelData &ckd) {
-  // std::cout << "store_fast_cache kernel.ir_is_ast() " << kernel.ir_is_ast()
-  // << std::endl;
   auto cache_mode = get_cache_mode(compile_config, kernel.ir_is_ast());
   TI_INFO_IF(cache_mode == CacheData::MemAndDiskCache,
              "store_fast_cache Cache kernel '{}' (key='{}')", kernel.get_name(),
              checksum);
   TI_INFO("Store fast cache for kernel '{}' (key='{}')", kernel.get_name(),
           checksum);
-  // std::cout << " kernel.compiled_kernel data " <<
-  // kernel.compiled_kernel_data.get() << std::endl;
-  // TI_ASSERT(caching_kernels_.find(checksum) == caching_kernels_.end());
   KernelCacheData k;
-  // caching_kernels_[checksum] = std::move(k);
-  std::cout << "store fast cache kernel key " << checksum << " cache mode "
-            << cache_mode << std::endl;
   k.kernel_key = checksum;
   k.created_at = k.last_used_at = std::time(nullptr);
   k.compiled_kernel_data = ckd.clone();
   k.size = 0;
   k.cache_mode = cache_mode;
   caching_kernels_[checksum] = std::move(k);
-  // dump();
 }
 
 const CompiledKernelData *KernelCompilationManager::load_fast_cache(
     const std::string &checksum,
-    // const Kernel &kernel,
     const std::string &kernel_name,
     const CompileConfig &compile_config,
     const DeviceCapabilityConfig &caps) {
-  // auto iter = caching_kernels_.find(checksum);
-  // return nullptr;
   auto cache_mode = get_cache_mode(compile_config, true);
   auto res = try_load_cached_kernel(kernel_name, checksum, compile_config.arch,
                                     cache_mode);
-  // std::cout << "try_load_cached_kernel " << kernel_name << " checksum" <<
-  // checksum << " arch " << arch_name(compile_config.arch)
-  //   << " cache mode " << cache_mode << " res " << res << std::endl;
   return res;
-  // try_load_cached_kernel(kernel_name, checksum, compile_config.arch,
-  //                               get_cache_mode(compile_config, true));
 }
 
 std::unique_ptr<CompiledKernelData> KernelCompilationManager::load_ckd(
