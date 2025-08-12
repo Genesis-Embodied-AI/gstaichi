@@ -53,7 +53,7 @@ from gstaichi.lang.kernel_arguments import KernelArgument
 from gstaichi.lang.matrix import MatrixType
 from gstaichi.lang.shell import _shell_pop_print
 from gstaichi.lang.struct import StructType
-from gstaichi.lang.util import cook_dtype, has_paddle, has_pytorch
+from gstaichi.lang.util import cook_dtype, has_pytorch
 from gstaichi.types import (
     ndarray_type,
     primitive_types,
@@ -899,41 +899,6 @@ class Kernel:
                     raise GsTaichiRuntimeTypeError(
                         f"Argument {needed} cannot be converted into required type {type(v)}"
                     )
-            elif has_paddle():
-                # Do we want to continue to support paddle? :thinking_face:
-                # #maybeprunable
-                import paddle  # pylint: disable=C0415  # type: ignore
-
-                if isinstance(v, paddle.Tensor):
-                    # For now, paddle.fluid.core.Tensor._ptr() is only available on develop branch
-                    def get_call_back(u, v):
-                        def call_back():
-                            u.copy_(v, False)
-
-                        return call_back
-
-                    tmp = v.value().get_tensor()
-                    gstaichi_arch = self.runtime.prog.config().arch
-                    if v.place.is_gpu_place():
-                        if gstaichi_arch != _ti_core.Arch.cuda:
-                            # Paddle cuda tensor on GsTaichi non-cuda arch
-                            host_v = v.cpu()
-                            tmp = host_v.value().get_tensor()
-                            callbacks.append(get_call_back(v, host_v))
-                    elif v.place.is_cpu_place():
-                        if gstaichi_arch == _ti_core.Arch.cuda:
-                            # Paddle cpu tensor on GsTaichi cuda arch
-                            gpu_v = v.cuda()
-                            tmp = gpu_v.value().get_tensor()
-                            callbacks.append(get_call_back(v, gpu_v))
-                    else:
-                        # Paddle do support many other backends like XPU, NPU, MLU, IPU
-                        raise GsTaichiRuntimeTypeError(f"GsTaichi do not support backend {v.place} that Paddle support")
-                    launch_ctx.set_arg_external_array_with_shape(
-                        indices, int(tmp._ptr()), v.element_size() * v.size, array_shape, 0
-                    )
-                else:
-                    raise GsTaichiRuntimeTypeError(f"Argument {needed} cannot be converted into required type {v}")
             else:
                 raise GsTaichiRuntimeTypeError(f"Argument {needed} cannot be converted into required type {v}")
 

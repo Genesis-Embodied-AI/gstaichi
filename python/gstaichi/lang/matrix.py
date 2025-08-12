@@ -27,7 +27,6 @@ from gstaichi.lang.util import (
     in_python_scope,
     python_scope,
     to_numpy_type,
-    to_paddle_type,
     to_pytorch_type,
     warning,
 )
@@ -1295,33 +1294,6 @@ class MatrixField(Field):
         shape_ext = (self.n,) if as_vector else (self.n, self.m)
         # pylint: disable=E1101
         arr = torch.empty(self.shape + shape_ext, dtype=to_pytorch_type(self.dtype), device=device)
-        from gstaichi._kernels import matrix_to_ext_arr  # pylint: disable=C0415
-
-        matrix_to_ext_arr(self, arr, as_vector)
-        runtime_ops.sync()
-        return arr
-
-    def to_paddle(self, place=None, keep_dims=False):
-        """Converts the field instance to a Paddle tensor.
-
-        Args:
-            place (paddle.CPUPlace()/CUDAPlace(n), optional): The desired place of returned tensor.
-            keep_dims (bool, optional): Whether to keep the dimension after conversion.
-                See :meth:`~gstaichi.lang.field.MatrixField.to_numpy` for more detailed explanation.
-
-        Returns:
-            paddle.Tensor: The result paddle tensor.
-        """
-        import paddle  # pylint: disable=C0415
-
-        as_vector = self.m == 1 and not keep_dims and self.ndim == 1
-        shape_ext = (self.n,) if as_vector else (self.n, self.m)
-        # pylint: disable=E1101
-        # paddle.empty() doesn't support argument `place``
-        arr = paddle.to_tensor(
-            paddle.empty(self.shape + shape_ext, to_paddle_type(self.dtype)),
-            place=place,
-        )
         from gstaichi._kernels import matrix_to_ext_arr  # pylint: disable=C0415
 
         matrix_to_ext_arr(self, arr, as_vector)
