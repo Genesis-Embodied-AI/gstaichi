@@ -64,7 +64,7 @@ def validate_cache_key(cache_key: str) -> bool:
     checks the hashes against the current source code
     """
     maybe_hashed_function_source_infos = _try_load(cache_key)
-    print("source infos" , maybe_hashed_function_source_infos)
+    print("source infos", maybe_hashed_function_source_infos)
     if not maybe_hashed_function_source_infos:
         return False
     return function_hasher.validate_hashed_function_infos(maybe_hashed_function_source_infos)

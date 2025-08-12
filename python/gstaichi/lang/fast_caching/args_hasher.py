@@ -1,8 +1,9 @@
 import dataclasses
 import enum
 import time
-import numpy as np
 from typing import Any, Sequence
+
+import numpy as np
 
 from gstaichi.lang._ndarray import ScalarNdarray
 from gstaichi.lang.fast_caching import FIELD_METADATA_CACHE_VALUE

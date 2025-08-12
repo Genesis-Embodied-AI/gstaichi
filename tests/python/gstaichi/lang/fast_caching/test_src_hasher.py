@@ -1,8 +1,9 @@
 import importlib
 import pathlib
 import shutil
-import pytest
 from typing import Callable
+
+import pytest
 
 import gstaichi as ti
 from gstaichi._test_tools import ti_init_same_arch
@@ -110,7 +111,9 @@ def test_src_hasher_store_validate(monkeypatch: pytest.MonkeyPatch, tmp_path: pa
     monkeypatch.syspath_prepend(temp_import_path)
 
     def setup_folder(filename: str) -> None:
-        shutil.copy2(str(test_files_path / filename), str(temp_import_path / "child_diff_test_src_hasher_store_validate.py"))
+        shutil.copy2(
+            str(test_files_path / filename), str(temp_import_path / "child_diff_test_src_hasher_store_validate.py")
+        )
 
     def get_fileinfos(functions: list[Callable]) -> list[_wrap_inspect.FunctionSourceInfo]:
         fileinfos = []

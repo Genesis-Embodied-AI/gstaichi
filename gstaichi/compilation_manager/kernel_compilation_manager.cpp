@@ -218,11 +218,11 @@ const CompiledKernelData *KernelCompilationManager::try_load_cached_kernel(
       auto &k = iter->second;
       if (k.compiled_kernel_data) {
         TI_DEBUG("Create kernel '{}' from cache (key='{}')", kernel_name,
-		         kernel_key);
+                 kernel_key);
         return k.compiled_kernel_data.get();
       } else if (auto loaded = load_ckd(kernel_key, arch)) {
         TI_DEBUG("Create kernel '{}' from cache (key='{}')", kernel_name,
-		         kernel_key);
+                 kernel_key);
         TI_ASSERT(loaded->arch() == arch);
         k.last_used_at = std::time(nullptr);
         k.compiled_kernel_data = std::move(loaded);
