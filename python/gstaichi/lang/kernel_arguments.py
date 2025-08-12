@@ -4,6 +4,10 @@ import inspect
 
 import gstaichi.lang
 from gstaichi._lib import core as _ti_core
+from gstaichi._lib.core.gstaichi_python import (
+    BoundaryMode,
+    DataTypeCxx,
+)
 from gstaichi.lang import impl, ops
 from gstaichi.lang._texture import RWTextureAccessor, TextureSampler
 from gstaichi.lang.any_array import AnyArray
@@ -15,11 +19,18 @@ from gstaichi.types.compound_types import CompoundType
 from gstaichi.types.primitive_types import RefType, u64
 
 
-class KernelArgument:
-    def __init__(self, _annotation, _name, _default=inspect.Parameter.empty):
-        self.annotation = _annotation
-        self.name = _name
-        self.default = _default
+class ArgMetadata:
+    """
+    Metadata about an argument to a function
+    """
+
+    def __init__(self, annotation, name, default=inspect.Parameter.empty):
+        self.annotation = annotation
+        self.name = name
+        self.default = default
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(annotation={self.annotation}, name={self.name}, default={self.default})"
 
 
 class SparseMatrixEntry:
@@ -111,7 +122,9 @@ def decl_sparse_matrix(dtype, name):
     )
 
 
-def decl_ndarray_arg(element_type, ndim, name, needs_grad, boundary):
+def decl_ndarray_arg(
+    element_type: DataTypeCxx, ndim: int, name: str, needs_grad: bool, boundary: BoundaryMode
+) -> AnyArray:
     arg_id = impl.get_runtime().compiling_callable.insert_ndarray_param(element_type, ndim, name, needs_grad)
     return AnyArray(_ti_core.make_external_tensor_expr(element_type, ndim, arg_id, needs_grad, boundary))
 
