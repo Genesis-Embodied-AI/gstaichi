@@ -247,13 +247,11 @@ user_api[ti.Field] = [
     "dtype",
     "fill",
     "from_numpy",
-    "from_paddle",
     "from_torch",
     "parent",
     "shape",
     "snode",
     "to_numpy",
-    "to_paddle",
     "to_torch",
 ]
 user_api[ti.FieldsBuilder] = [
@@ -347,14 +345,12 @@ user_api[ti.MatrixField] = [
     "dtype",
     "fill",
     "from_numpy",
-    "from_paddle",
     "from_torch",
     "get_scalar_field",
     "parent",
     "shape",
     "snode",
     "to_numpy",
-    "to_paddle",
     "to_torch",
 ]
 user_api[ti.MatrixNdarray] = [
@@ -385,13 +381,11 @@ user_api[ti.ScalarField] = [
     "dtype",
     "fill",
     "from_numpy",
-    "from_paddle",
     "from_torch",
     "parent",
     "shape",
     "snode",
     "to_numpy",
-    "to_paddle",
     "to_torch",
 ]
 user_api[ti.ScalarNdarray] = [
@@ -408,7 +402,6 @@ user_api[ti.StructField] = [
     "dtype",
     "fill",
     "from_numpy",
-    "from_paddle",
     "from_torch",
     "get_member_field",
     "keys",
@@ -416,7 +409,6 @@ user_api[ti.StructField] = [
     "shape",
     "snode",
     "to_numpy",
-    "to_paddle",
     "to_torch",
 ]
 user_api[ti.VectorNdarray] = [
