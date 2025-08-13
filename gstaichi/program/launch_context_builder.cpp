@@ -97,13 +97,6 @@ void LaunchContextBuilder::set_ndarray_ptrs(const std::vector<int> &arg_id,
   }
 }
 
-void LaunchContextBuilder::set_argpack_ptr(const std::vector<int> &arg_id,
-                                           uint64 data_ptr) {
-  auto param_indices = arg_id;
-  param_indices.push_back(TypeFactory::DATA_PTR_POS_IN_ARGPACK);
-  set_struct_arg(param_indices, data_ptr);
-}
-
 template void LaunchContextBuilder::set_struct_arg(std::vector<int> arg_indices,
                                                    uint64 v);
 template void LaunchContextBuilder::set_struct_arg(std::vector<int> arg_indices,
@@ -247,17 +240,6 @@ void LaunchContextBuilder::set_arg_ndarray(const std::vector<int> &arg_id,
   TI_ASSERT_INFO(arr.shape.size() <= gstaichi_max_num_indices,
                  "External array cannot have > {max_num_indices} indices");
   set_arg_ndarray_impl(arg_id, ptr, arr.shape);
-}
-
-void LaunchContextBuilder::set_arg_argpack(const std::vector<int> &arg_id,
-                                           const ArgPack &argpack) {
-  argpack_ptrs[arg_id] = &argpack;
-  if (arg_id.size() == 1) {
-    // Only set ptr to arg buffer if this argpack is not nested
-    set_argpack_ptr(arg_id, argpack.get_device_allocation_ptr_as_int());
-  }
-  // TODO: Consider renaming this method to `set_device_allocation_type`
-  set_array_device_allocation_type(arg_id, DevAllocType::kArgPack);
 }
 
 void LaunchContextBuilder::set_arg_ndarray_with_grad(

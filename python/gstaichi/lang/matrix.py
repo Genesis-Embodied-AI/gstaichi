@@ -27,7 +27,6 @@ from gstaichi.lang.util import (
     in_python_scope,
     python_scope,
     to_numpy_type,
-    to_paddle_type,
     to_pytorch_type,
     warning,
 )
@@ -1301,33 +1300,6 @@ class MatrixField(Field):
         runtime_ops.sync()
         return arr
 
-    def to_paddle(self, place=None, keep_dims=False):
-        """Converts the field instance to a Paddle tensor.
-
-        Args:
-            place (paddle.CPUPlace()/CUDAPlace(n), optional): The desired place of returned tensor.
-            keep_dims (bool, optional): Whether to keep the dimension after conversion.
-                See :meth:`~gstaichi.lang.field.MatrixField.to_numpy` for more detailed explanation.
-
-        Returns:
-            paddle.Tensor: The result paddle tensor.
-        """
-        import paddle  # pylint: disable=C0415
-
-        as_vector = self.m == 1 and not keep_dims and self.ndim == 1
-        shape_ext = (self.n,) if as_vector else (self.n, self.m)
-        # pylint: disable=E1101
-        # paddle.empty() doesn't support argument `place``
-        arr = paddle.to_tensor(
-            paddle.empty(self.shape + shape_ext, to_paddle_type(self.dtype)),
-            place=place,
-        )
-        from gstaichi._kernels import matrix_to_ext_arr  # pylint: disable=C0415
-
-        matrix_to_ext_arr(self, arr, as_vector)
-        runtime_ops.sync()
-        return arr
-
     @python_scope
     def _from_external_arr(self, arr):
         if len(arr.shape) == len(self.shape) + 1:
@@ -1490,24 +1462,6 @@ class MatrixType(CompoundType):
                 set_arg_func = launch_ctx.set_struct_arg_uint
         elif self.dtype in primitive_types.real_types:
             set_arg_func = launch_ctx.set_struct_arg_float
-        else:
-            raise GsTaichiRuntimeTypeError(f"Invalid return type on index={ret_index}")
-        if self.ndim == 1:
-            for i in range(self.n):
-                set_arg_func(ret_index + (i,), mat[i])
-        else:
-            for i in range(self.n):
-                for j in range(self.m):
-                    set_arg_func(ret_index + (i * self.m + j,), mat[i, j])
-
-    def set_argpack_struct_args(self, mat, argpack, ret_index=()):
-        if self.dtype in primitive_types.integer_types:
-            if is_signed(cook_dtype(self.dtype)):
-                set_arg_func = argpack.set_arg_int
-            else:
-                set_arg_func = argpack.set_arg_uint
-        elif self.dtype in primitive_types.real_types:
-            set_arg_func = argpack.set_arg_float
         else:
             raise GsTaichiRuntimeTypeError(f"Invalid return type on index={ret_index}")
         if self.ndim == 1:

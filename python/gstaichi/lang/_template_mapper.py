@@ -10,7 +10,6 @@ import gstaichi.lang.snode
 from gstaichi._lib import core as _ti_core
 from gstaichi.lang import _dataclass_util
 from gstaichi.lang.any_array import AnyArray
-from gstaichi.lang.argpack import ArgPack, ArgPackType
 from gstaichi.lang.exception import (
     GsTaichiRuntimeTypeError,
 )
@@ -30,7 +29,6 @@ CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
 
 AnnotationType = Union[
     template,
-    ArgPackType,
     "texture_type.TextureType",
     "texture_type.RWTextureType",
     ndarray_type.NdarrayType,
@@ -86,13 +84,6 @@ class TemplateMapper:
 
             # [Primitive arguments] Return the value
             return arg
-        if isinstance(annotation, ArgPackType):
-            if not isinstance(arg, ArgPack):
-                raise GsTaichiRuntimeTypeError(f"Argument {arg_name} must be a argument pack, got {type(arg)}")
-            return tuple(
-                TemplateMapper.extract_arg(arg[name], dtype, arg_name)
-                for index, (name, dtype) in enumerate(annotation.members.items())
-            )
         if dataclasses.is_dataclass(annotation):
             _res_l = []
             for field in dataclasses.fields(annotation):

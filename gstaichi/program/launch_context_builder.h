@@ -1,7 +1,6 @@
 #pragma once
 #include <gstaichi/program/callable.h>
 #include "gstaichi/program/ndarray.h"
-#include "gstaichi/program/argpack.h"
 #include "gstaichi/program/texture.h"
 #include "gstaichi/program/matrix.h"
 
@@ -15,8 +14,8 @@ class LaunchContextBuilder {
     kNone = 0,
     kNdarray = 1,
     kTexture = 2,
-    kRWTexture = 3,
-    kArgPack = 4,
+    kRWTexture = 3
+    // kArgPack = 4,
   };
 
   explicit LaunchContextBuilder(CallableBase *kernel);
@@ -54,7 +53,6 @@ class LaunchContextBuilder {
   void set_ndarray_ptrs(const std::vector<int> &arg_id,
                         uint64 data_ptr,
                         uint64 grad_ptr);
-  void set_argpack_ptr(const std::vector<int> &arg_id, uint64 data_ptr);
 
   template <typename T>
   T get_arg(const std::vector<int> &i);
@@ -76,7 +74,6 @@ class LaunchContextBuilder {
                             const std::vector<int> &shape,
                             intptr_t devalloc_ptr_grad = 0);
   void set_arg_ndarray(const std::vector<int> &arg_id, const Ndarray &arr);
-  void set_arg_argpack(const std::vector<int> &arg_id, const ArgPack &argpack);
   void set_arg_ndarray_with_grad(const std::vector<int> &arg_id,
                                  const Ndarray &arr,
                                  const Ndarray &arr_grad);
@@ -134,10 +131,6 @@ class LaunchContextBuilder {
   std::
       unordered_map<std::vector<int>, void *, hashing::Hasher<std::vector<int>>>
           array_ptrs;
-  std::unordered_map<std::vector<int>,
-                     const ArgPack *,
-                     hashing::Hasher<std::vector<int>>>
-      argpack_ptrs;
 };
 
 }  // namespace gstaichi::lang
