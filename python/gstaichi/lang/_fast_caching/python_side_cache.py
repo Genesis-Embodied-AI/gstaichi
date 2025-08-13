@@ -4,6 +4,24 @@ from .. import impl
 
 
 class PythonSideCache:
+    """
+    Manages a cache that is managed from the python side (we also have c++-side caches)
+
+    The cache is disk-based. When we create teh PythonSideCache object, the cache
+    path is created as a sub-folder of CompileConfig.offline_cache_file_path.
+
+    Note that constructing this object is cheap, so there is no need to maintain some
+    kind of conceptual singleton instance or similar.
+
+    Each cache key value is stored to a single file, with the cache key as the filename.
+
+    No metadata is associated with the file, making management very lightweight.
+
+    We update the file date/time when we read from a particular file, so we can easily
+    implement an LRU cleaning strategy at some point in the future, based on the file
+    date/times.
+    """
+
     def __init__(self) -> None:
         _cache_parent_folder = impl.get_runtime().prog.config().offline_cache_file_path
         self.cache_folder = os.path.join(_cache_parent_folder, "python_side_cache")
