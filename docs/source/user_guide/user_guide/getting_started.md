@@ -4,8 +4,8 @@
 
 ## Pre-requisites
 - one of the operating systems described in [Supported systems](./supported_systems.md)
-- a supported Python version installed, and in the PATH
-- a supported GPU
+- a supported Python version installed, and in the PATH, see [Supported systems](./supported_systems.md)
+- a supported GPU, see [Supported systems](./supported_systems.md)
 
 ## Procedure
 ```
@@ -59,7 +59,7 @@ You can find the full code also at [lcg_python.py](../../../../python/gstaichi/e
 
 On a Macbook Air M4, this gives the following output:
 ```
-# elapsed 5.552601099014282 on macbook air m4
+# elapsed 5.552601099014282
 ```
 
 Now let's convert it to gstaichi
@@ -229,4 +229,4 @@ iteration time 21.44002914428711 us
 ```
 => in this test, fields are around 28% faster than ndarrays.
 
-(The exact ratio obviously depends on the kernel. In addition it's possible to construct toy examples like this where ndarray appears to be faster than fields, but in actual kernels, such as Genesis func narrow phase kernel, for collisions, we observe fields are around ~30% faster)
+Technical note: the exact ratio depends on the kernel. In addition it's possible to construct toy examples like this where ndarray appears to be faster than fields, but in many commonly used kernels, such as Genesis func narrow phase kernel, for collisions, we observe fields are around ~30% faster
