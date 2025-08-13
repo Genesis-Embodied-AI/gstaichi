@@ -529,17 +529,6 @@ class StructField(Field):
             v.from_torch(array_dict[k])
 
     @python_scope
-    def from_paddle(self, array_dict):
-        """Copies the data from a set of `paddle.Tensor` into this field.
-
-        The argument `array_dict` must be a dictionay-like object, it
-        contains all the keys in this field and the copying process
-        between corresponding items can be performed.
-        """
-        for k, v in self._items:
-            v.from_paddle(array_dict[k])
-
-    @python_scope
     def to_numpy(self):
         """Converts the Struct field instance to a dictionary of NumPy arrays.
 
@@ -565,22 +554,6 @@ class StructField(Field):
                 PyTorch tensor.
         """
         return {k: v.to_torch(device=device) for k, v in self._items}
-
-    @python_scope
-    def to_paddle(self, place=None):
-        """Converts the Struct field instance to a dictionary of Paddle tensors.
-
-        The dictionary may be nested when converting nested structs.
-
-        Args:
-            place (paddle.CPUPlace()/CUDAPlace(n), optional): The
-                desired place of returned tensor.
-
-        Returns:
-            Dict[str, Union[paddle.Tensor, Dict]]: The result
-                Paddle tensor.
-        """
-        return {k: v.to_paddle(place=place) for k, v in self._items}
 
     @python_scope
     def __setitem__(self, indices, element):
@@ -739,24 +712,6 @@ class StructType(CompoundType):
                         launch_ctx.set_struct_arg_uint(ret_index + (index,), struct[name])
                 elif dtype in primitive_types.real_types:
                     launch_ctx.set_struct_arg_float(ret_index + (index,), struct[name])
-                else:
-                    raise GsTaichiRuntimeTypeError(f"Invalid argument type on index={ret_index + (index, )}")
-
-    def set_argpack_struct_args(self, struct, argpack, ret_index=()):
-        # TODO: move this to class Struct after we add dtype to Struct
-        items = self.members.items()
-        for index, pair in enumerate(items):
-            name, dtype = pair
-            if isinstance(dtype, CompoundType):
-                dtype.set_kernel_struct_args(struct[name], argpack, ret_index + (index,))
-            else:
-                if dtype in primitive_types.integer_types:
-                    if is_signed(cook_dtype(dtype)):
-                        argpack.set_arg_int(ret_index + (index,), struct[name])
-                    else:
-                        argpack.set_arg_uint(ret_index + (index,), struct[name])
-                elif dtype in primitive_types.real_types:
-                    argpack.set_arg_float(ret_index + (index,), struct[name])
                 else:
                     raise GsTaichiRuntimeTypeError(f"Invalid argument type on index={ret_index + (index, )}")
 

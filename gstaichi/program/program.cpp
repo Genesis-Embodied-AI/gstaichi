@@ -385,13 +385,6 @@ Ndarray *Program::create_ndarray(const DataType type,
   return arr_ptr;
 }
 
-ArgPack *Program::create_argpack(const DataType dt) {
-  auto pack = std::make_unique<ArgPack>(this, dt);
-  auto pack_ptr = pack.get();
-  argpacks_.insert({pack_ptr, std::move(pack)});
-  return pack_ptr;
-}
-
 void Program::delete_ndarray(Ndarray *ndarray) {
   // [Note] Ndarray memory deallocation
   // Ndarray's memory allocation is managed by GsTaichi and Python can control
@@ -407,24 +400,6 @@ void Program::delete_ndarray(Ndarray *ndarray) {
   if (ndarrays_.count(ndarray) &&
       !program_impl_->used_in_kernel(ndarray->ndarray_alloc_.alloc_id)) {
     ndarrays_.erase(ndarray);
-  }
-}
-
-void Program::delete_argpack(ArgPack *argpack) {
-  // [Note] Argpack memory deallocation
-  // Argpack's memory allocation is managed by GsTaichi and Python can control
-  // this via GsTaichi indirectly. For example, when an argpack is GC-ed in
-  // Python, it signals GsTaichi to free its memory allocation. But GsTaichi
-  // will make sure **no pending kernels to be executed needs the argpack**
-  // before it actually frees the memory. When `ti.reset()` is called, all
-  // argpack allocated in this program should be gone and no longer valid in
-  // Python. This isn't the best implementation, argpacks should be managed by
-  // gstaichi runtime instead of this giant program and it should be freed when:
-  // - Python GC signals gstaichi that it's no longer useful
-  // - All kernels using it are executed.
-  if (argpacks_.count(argpack) &&
-      !program_impl_->used_in_kernel(argpack->argpack_alloc_.alloc_id)) {
-    argpacks_.erase(argpack);
   }
 }
 
@@ -465,25 +440,6 @@ void Program::fill_ndarray_fast_u32(Ndarray *ndarray, uint32_t val) {
       ndarray->ndarray_alloc_,
       ndarray->get_nelement() * ndarray->get_element_size() / sizeof(uint32_t),
       val);
-}
-
-std::pair<const ArgPackType *, size_t>
-Program::get_argpack_type_with_data_layout(const ArgPackType *old_ty,
-                                           const std::string &layout) {
-  // Convert to StructType
-  auto *struct_type_old =
-      TypeFactory::get_instance()
-          .get_struct_type(old_ty->elements(), old_ty->get_layout())
-          ->as<StructType>();
-  // Call get_struct_type_with_data_layout
-  auto [struct_type, size] = program_impl_->get_struct_type_with_data_layout(
-      const_cast<StructType *>(struct_type_old), layout);
-  // Convert back to ArgPackType
-  auto *new_ty =
-      TypeFactory::get_instance()
-          .get_argpack_type(struct_type->elements(), struct_type->get_layout())
-          ->as<ArgPackType>();
-  return {new_ty, size};
 }
 
 std::pair<const StructType *, size_t> Program::get_struct_type_with_data_layout(

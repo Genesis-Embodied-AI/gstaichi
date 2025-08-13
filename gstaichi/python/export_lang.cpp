@@ -450,13 +450,6 @@ void export_lang(py::module &m) {
           py::return_value_policy::reference)
       .def("delete_ndarray", &Program::delete_ndarray)
       .def(
-          "create_argpack",
-          [&](Program *program, const DataType &dt) -> ArgPack * {
-            return program->create_argpack(dt);
-          },
-          py::arg("dt"), py::return_value_policy::reference)
-      .def("delete_argpack", &Program::delete_argpack)
-      .def(
           "create_texture",
           [&](Program *program, BufferFormat fmt, const std::vector<int> &shape)
               -> Texture * { return program->create_texture(fmt, shape); },
@@ -590,17 +583,6 @@ void export_lang(py::module &m) {
       .def_readonly("dtype", &Ndarray::dtype)
       .def_readonly("shape", &Ndarray::shape);
 
-  py::class_<ArgPack>(m, "ArgPackCxx")
-      .def("device_allocation_ptr", &ArgPack::get_device_allocation_ptr_as_int)
-      .def("device_allocation", &ArgPack::get_device_allocation)
-      .def("nelement", &ArgPack::get_nelement)
-      .def("data_type", &ArgPack::get_data_type)
-      .def("set_arg_float", &ArgPack::set_arg_float)
-      .def("set_arg_int", &ArgPack::set_arg_int)
-      .def("set_arg_uint", &ArgPack::set_arg_uint)
-      .def("set_arg_nested_argpack", &ArgPack::set_arg_nested_argpack)
-      .def_readonly("dtype", &ArgPack::dtype);
-
   py::enum_<BufferFormat>(m, "Format")
 #define PER_BUFFER_FORMAT(x) .value(#x, BufferFormat::x)
 #include "gstaichi/inc/rhi_constants.inc.h"
@@ -624,9 +606,6 @@ void export_lang(py::module &m) {
       .def("insert_texture_param", &Kernel::insert_texture_param)
       .def("insert_pointer_param", &Kernel::insert_pointer_param)
       .def("insert_rw_texture_param", &Kernel::insert_rw_texture_param)
-      .def("insert_argpack_param_and_push",
-           &Kernel::insert_argpack_param_and_push)
-      .def("pop_argpack_stack", &Kernel::pop_argpack_stack)
       .def("insert_ret", &Kernel::insert_ret)
       .def("finalize_rets", &Kernel::finalize_rets)
       .def("finalize_params", &Kernel::finalize_params)
@@ -648,7 +627,6 @@ void export_lang(py::module &m) {
            &LaunchContextBuilder::set_struct_arg<double>)
       .def("set_arg_external_array_with_shape",
            &LaunchContextBuilder::set_arg_external_array_with_shape)
-      .def("set_arg_argpack", &LaunchContextBuilder::set_arg_argpack)
       .def("set_arg_ndarray", &LaunchContextBuilder::set_arg_ndarray)
       .def("set_arg_ndarray_with_grad",
            &LaunchContextBuilder::set_arg_ndarray_with_grad)
@@ -879,16 +857,16 @@ void export_lang(py::module &m) {
 
   m.def("make_arg_load_expr",
         Expr::make<ArgLoadExpression, const std::vector<int> &,
-                   const DataType &, bool, bool, int, const DebugInfo &>,
+                   const DataType &, bool, bool, const DebugInfo &>,
         "arg_id"_a, "dt"_a, "is_ptr"_a = false, "create_load"_a = true,
-        "arg_depth"_a = 0, "dbg_info"_a = DebugInfo());
+        "dbg_info"_a = DebugInfo());
 
   m.def("make_reference",
         Expr::make<ReferenceExpression, const Expr &, const DebugInfo &>);
 
   m.def("make_external_tensor_expr",
         Expr::make<ExternalTensorExpression, const DataType &, int,
-                   const std::vector<int> &, bool, int, const BoundaryMode &>);
+                   const std::vector<int> &, bool, const BoundaryMode &>);
 
   m.def("make_external_tensor_grad_expr",
         Expr::make<ExternalTensorExpression, Expr *>);
@@ -906,10 +884,10 @@ void export_lang(py::module &m) {
         Expr::make<ConstExpression, const DataType &, float64>);
 
   m.def("make_texture_ptr_expr",
-        Expr::make<TexturePtrExpression, const std::vector<int> &, int, int,
+        Expr::make<TexturePtrExpression, const std::vector<int> &, int,
                    const DebugInfo &>);
   m.def("make_rw_texture_ptr_expr",
-        Expr::make<TexturePtrExpression, const std::vector<int> &, int, int,
+        Expr::make<TexturePtrExpression, const std::vector<int> &, int,
                    const BufferFormat &, int, const DebugInfo &>);
 
   auto &&texture =
@@ -1132,22 +1110,7 @@ void export_lang(py::module &m) {
            py::return_value_policy::reference)
       .def("get_ndarray_struct_type", &TypeFactory::get_ndarray_struct_type,
            py::arg("dt"), py::arg("ndim"), py::arg("needs_grad"),
-           py::return_value_policy::reference)
-      .def("get_struct_type_for_argpack_ptr",
-           &TypeFactory::get_struct_type_for_argpack_ptr, py::arg("dt"),
-           py::arg("layout") = "none", py::return_value_policy::reference)
-      .def(
-          "get_argpack_type",
-          [&](TypeFactory *factory,
-              std::vector<std::pair<DataType, std::string>> elements) {
-            std::vector<AbstractDictionaryMember> members;
-            size_t pos = 0;
-            for (auto &[type, name] : elements) {
-              members.push_back({type, name, ++pos});
-            }
-            return DataType(factory->get_argpack_type(members));
-          },
-          py::return_value_policy::reference);
+           py::return_value_policy::reference);
 
   m.def("get_type_factory_instance", TypeFactory::get_instance,
         py::return_value_policy::reference);
