@@ -1,7 +1,9 @@
 import importlib
 import sys
+import textwrap
 
 from gstaichi.lang import _wrap_inspect
+from gstaichi._test_tools import textwrap2
 
 from tests import test_utils
 
@@ -20,11 +22,12 @@ def test_wrap_inspect() -> None:
     assert len(src) == 4
     assert all([line != "" and len(line) > 2 for line in src])
     actual_src = "".join(src)
-    expected = """def my_func(a: int, b: int) -> int:
-    a += 5
-    b += a
-    return a + b
-"""
+    expected = textwrap.dedent("""\
+    def my_func(a: int, b: int) -> int:
+        a += 5
+        b += a
+        return a + b
+    """)
     assert actual_src == expected
 
     source_info, src = _wrap_inspect.get_source_info_and_src(wrap_inspect.Foo.my_func2)
@@ -34,11 +37,12 @@ def test_wrap_inspect() -> None:
     assert len(src) == 4
     assert all([line != "" and len(line) > 2 for line in src])
     actual_src = "".join(src)
-    expected = """    def my_func2(self, a: int, b: int) -> int:
-        a += 5
-        b += a
-        return a + b
-"""
+    expected = textwrap2.dedent(4, """\
+        def my_func2(self, a: int, b: int) -> int:
+            a += 5
+            b += a
+            return a + b
+    """)
     assert actual_src == expected
 
     sys.path.remove(test_files_path)

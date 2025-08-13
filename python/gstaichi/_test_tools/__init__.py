@@ -1,5 +1,4 @@
-from typing import Any
-
+from . import textwrap2
 import gstaichi as ti
 
 
@@ -12,3 +11,6 @@ def ti_init_same_arch(**options) -> None:
     assert ti.cfg is not None
     options["arch"] = getattr(ti, ti.cfg.arch.name)
     ti.init(**options)
+
+
+__all__ = ['textwrap2']
