@@ -591,6 +591,9 @@ class Kernel:
         impl.get_runtime().kernels.append(self)
         self.reset()
         self.kernel_cpp = None
+        # A materialized kernel is a KernelCxx object which may or may not have
+        # been compiled. It generally has been converted at least as far as AST
+        # and front-end IR, but not necessarily any further.
         self.materialized_kernels: dict[CompiledKernelKeyType, KernelCxx] = {}
         self.has_print = False
         self.gstaichi_callable: GsTaichiCallable | None = None

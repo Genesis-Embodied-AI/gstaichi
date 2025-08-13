@@ -32,8 +32,8 @@ class CacheValue(BaseModel):
 
 def store(cache_key: str, function_source_infos: Iterable[FunctionSourceInfo]) -> None:
     """
-    Note that unlike other caches, this cache is not going to store the actual value we want. This cache is only used for verification
-    that our cache key is valid. Big picture:
+    Note that unlike other caches, this cache is not going to store the actual value we want.
+    This cache is only used for verification that our cache key is valid. Big picture:
     - we have a cache key, based on args and top level kernel function
     - we want to use this to look up LLVM IR, in C++ side cache
     - however, before doing that, we first want to validate that the source code didn't change
@@ -46,8 +46,7 @@ def store(cache_key: str, function_source_infos: Iterable[FunctionSourceInfo]) -
     cache = PythonSideCache()
     hashed_function_source_infos = function_hasher.hash_functions(function_source_infos)
     cache_value_obj = CacheValue(hashed_function_source_infos=list(hashed_function_source_infos))
-    cache_value_json = cache_value_obj.json()
-    cache.store(cache_key, cache_value_json)
+    cache.store(cache_key, cache_value_obj.json())
 
 
 def _try_load(cache_key: str) -> Sequence[HashedFunctionSourceInfo] | None:

@@ -1,5 +1,6 @@
-from . import textwrap2
 import gstaichi as ti
+
+from . import textwrap2
 
 
 def ti_init_same_arch(**options) -> None:
@@ -13,4 +14,4 @@ def ti_init_same_arch(**options) -> None:
     ti.init(**options)
 
 
-__all__ = ['textwrap2']
+__all__ = ["textwrap2"]

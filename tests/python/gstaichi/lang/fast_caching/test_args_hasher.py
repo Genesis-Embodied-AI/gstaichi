@@ -11,8 +11,8 @@ from tests import test_utils
 @test_utils.test()
 def test_args_hasher_numeric() -> None:
     seen = set()
-    for arg in [3, 5.3, np.int32(3), np.int64(5), np.float32(2), np.float64(2)]:
-        for it in [0, 1]:
+    for arg in (3, 5.3, np.int32(3), np.int64(5), np.float32(2), np.float64(2)):
+        for it in (0, 1):
             hash = args_hasher.hash_args([arg])
             assert hash is not None
             if it == 0:
@@ -91,7 +91,7 @@ def _ti_init_same_arch() -> None:
 def test_args_hasher_field() -> None:
     """
     This is trickier than the others, since we need to take into account snode id, and we need to reinitialize
-    taichi each attempt 🤔
+    taichi each attempt.
 
     Reminder: fields have an snode id, that is assigned at creation, and is assigned sequentially, from
     the time of ti.init. If you recreate the same field, without calling ti.init in between you'll get

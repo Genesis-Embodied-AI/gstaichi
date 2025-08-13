@@ -49,11 +49,8 @@ def test_src_hasher_create_cache_key_vary_fn(monkeypatch, temporary_module) -> N
         return cache_key
 
     key_base = get_cache_key("f1_base")
-    print(key_base)
     key_same = get_cache_key("f1_same")
-    print(key_same)
     key_diff = get_cache_key("f1_diff")
-    print(key_diff)
 
     assert key_base is not None
     assert key_base != ""
@@ -64,7 +61,7 @@ def test_src_hasher_create_cache_key_vary_fn(monkeypatch, temporary_module) -> N
 @test_utils.test()
 def test_src_hasher_validate_hashed_function_infos(monkeypatch, tmp_path: pathlib.Path, temporary_module) -> None:
     test_files_path = pathlib.Path("tests/python/gstaichi/lang/fast_caching/test_files")
-    monkeypatch.syspath_prepend(str(tmp_path))
+    monkeypatch.syspath_prepend(tmp_path)
 
     def setup_folder(filename: str) -> None:
         shutil.copy2(test_files_path / filename, tmp_path / "child_diff.py")
@@ -97,24 +94,16 @@ def test_src_hasher_validate_hashed_function_infos(monkeypatch, tmp_path: pathli
 def test_src_hasher_store_validate(monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path, temporary_module) -> None:
     test_files_path = pathlib.Path("tests/python/gstaichi/lang/fast_caching/test_files")
 
-    tmp_path = tmp_path / test_src_hasher_store_validate.__name__
-    tmp_path.mkdir(exist_ok=True)
-
     offline_cache_path = tmp_path / "cache"
     temp_import_path = tmp_path / "temp_import"
     temp_import_path.mkdir(exist_ok=True)
-    print("tmp_path", tmp_path)
-    print("temp_import_path", temp_import_path)
-    print("offline_cache_path", offline_cache_path)
 
     ti_init_same_arch(offline_cache_file_path=str(offline_cache_path))
 
     monkeypatch.syspath_prepend(temp_import_path)
 
     def setup_folder(filename: str) -> None:
-        shutil.copy2(
-            str(test_files_path / filename), str(temp_import_path / "child_diff_test_src_hasher_store_validate.py")
-        )
+        shutil.copy2(test_files_path / filename, temp_import_path / "child_diff_test_src_hasher_store_validate.py")
 
     def get_fileinfos(functions: list[Callable]) -> list[_wrap_inspect.FunctionSourceInfo]:
         fileinfos = []
