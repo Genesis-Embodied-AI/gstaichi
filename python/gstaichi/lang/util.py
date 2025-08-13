@@ -46,26 +46,6 @@ def has_pytorch():
     return _has_pytorch
 
 
-def has_paddle():
-    """Whether has paddle in the current Python environment.
-
-    Returns:
-        bool: True if has paddle else False.
-    """
-    _has_paddle = False
-    _env_paddle = os.environ.get("TI_ENABLE_PADDLE", "1")
-    if not _env_paddle or int(_env_paddle):
-        try:
-            import paddle  # type: ignore pylint: disable=C0415
-
-            _ = paddle
-
-            _has_paddle = True
-        except:
-            pass
-    return _has_paddle
-
-
 def get_clangpp():
     from distutils.spawn import find_executable  # pylint: disable=C0415
 
@@ -185,43 +165,8 @@ def to_pytorch_type(dt):
     raise RuntimeError(f"PyTorch doesn't support {dt.to_string()} data type.")
 
 
-def to_paddle_type(dt):
-    """Convert gstaichi data type to its counterpart in paddle.
-
-    Args:
-        dt (DataType): The desired data type to convert.
-
-    Returns:
-        DataType: The counterpart data type in paddle.
-
-    """
-    import paddle  # type: ignore pylint: disable=C0415
-
-    if dt == f32:
-        return paddle.float32
-    if dt == f64:
-        return paddle.float64
-    if dt == i32:
-        return paddle.int32
-    if dt == i64:
-        return paddle.int64
-    if dt == i8:
-        return paddle.int8
-    if dt == i16:
-        return paddle.int16
-    if dt == u1:
-        return paddle.bool
-    if dt == u8:
-        return paddle.uint8
-    if dt == f16:
-        return paddle.float16
-    if dt in (u16, u32, u64):
-        raise RuntimeError(f"Paddle doesn't support {dt.to_string()} data type.")
-    assert False
-
-
 def to_gstaichi_type(dt):
-    """Convert numpy or torch or paddle data type to its counterpart in gstaichi.
+    """Convert numpy or torch data type to its counterpart in gstaichi.
 
     Args:
         dt (DataType): The desired data type to convert.
@@ -290,30 +235,6 @@ def to_gstaichi_type(dt):
                 return u64
 
         raise RuntimeError(f"PyTorch doesn't support {dt.to_string()} data type before version 2.3.0.")
-
-    if has_paddle():
-        import paddle  # type: ignore pylint: disable=C0415
-
-        if dt == paddle.float32:
-            return f32
-        if dt == paddle.float64:
-            return f64
-        if dt == paddle.int32:
-            return i32
-        if dt == paddle.int64:
-            return i64
-        if dt == paddle.int8:
-            return i8
-        if dt == paddle.int16:
-            return i16
-        if dt == paddle.bool:
-            return u1
-        if dt == paddle.uint8:
-            return u8
-        if dt == paddle.float16:
-            return f16
-        if dt in (u16, u32, u64):
-            raise RuntimeError(f"Paddle doesn't support {dt.to_string()} data type.")
 
     raise AssertionError(f"Unknown type {dt}")
 

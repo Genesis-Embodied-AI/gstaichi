@@ -56,7 +56,6 @@ def _get_expected_matrix_apis():
 
 user_api = {}
 user_api[ti] = [
-    "ArgPack",
     "BitpackedFields",
     "CRITICAL",
     "DEBUG",
@@ -98,7 +97,6 @@ user_api[ti] = [
     "algorithms",
     "amdgpu",
     "append",
-    "argpack",
     "arm64",
     "asin",
     "assume_in_range",
@@ -249,13 +247,11 @@ user_api[ti.Field] = [
     "dtype",
     "fill",
     "from_numpy",
-    "from_paddle",
     "from_torch",
     "parent",
     "shape",
     "snode",
     "to_numpy",
-    "to_paddle",
     "to_torch",
 ]
 user_api[ti.FieldsBuilder] = [
@@ -349,14 +345,12 @@ user_api[ti.MatrixField] = [
     "dtype",
     "fill",
     "from_numpy",
-    "from_paddle",
     "from_torch",
     "get_scalar_field",
     "parent",
     "shape",
     "snode",
     "to_numpy",
-    "to_paddle",
     "to_torch",
 ]
 user_api[ti.MatrixNdarray] = [
@@ -387,13 +381,11 @@ user_api[ti.ScalarField] = [
     "dtype",
     "fill",
     "from_numpy",
-    "from_paddle",
     "from_torch",
     "parent",
     "shape",
     "snode",
     "to_numpy",
-    "to_paddle",
     "to_torch",
 ]
 user_api[ti.ScalarNdarray] = [
@@ -405,13 +397,11 @@ user_api[ti.ScalarNdarray] = [
     "to_numpy",
 ]
 user_api[ti.Struct] = ["entries", "field", "items", "keys", "methods", "to_dict"]
-user_api[ti.ArgPack] = ["items", "keys", "to_dict"]
 user_api[ti.StructField] = [
     "copy_from",
     "dtype",
     "fill",
     "from_numpy",
-    "from_paddle",
     "from_torch",
     "get_member_field",
     "keys",
@@ -419,7 +409,6 @@ user_api[ti.StructField] = [
     "shape",
     "snode",
     "to_numpy",
-    "to_paddle",
     "to_torch",
 ]
 user_api[ti.VectorNdarray] = [

@@ -12,9 +12,6 @@ namespace spirv {
 
 // static
 std::string TaskAttributes::buffers_name(BufferInfo b) {
-  if (b.type == BufferType::ArgPack) {
-    return "ArgPack";
-  }
   if (b.type == BufferType::Args) {
     return "Args";
   }
@@ -64,7 +61,6 @@ KernelContextAttributes::KernelContextAttributes(
     ArgAttributes aa;
     aa.name = ka.name;
     aa.is_array = ka.is_array;
-    aa.is_argpack = ka.is_argpack;
     aa.indices = k;
     if (ka.is_array && ka.get_dtype()->is<StructType>()) {
       auto struct_type = ka.get_dtype()->as<StructType>();
@@ -92,12 +88,6 @@ KernelContextAttributes::KernelContextAttributes(
     RetAttributes ra;
     ra.dtype = PrimitiveTypeID::i32;
     ret_attribs_vec_.push_back(ra);
-  }
-
-  for (const auto &kv : kernel.argpack_types) {
-    const auto &k = kv.first;
-    const auto *type = kv.second;
-    argpack_types_.push_back({k, type});
   }
 
   args_type_ = kernel.args_type;

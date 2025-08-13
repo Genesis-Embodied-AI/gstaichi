@@ -46,10 +46,8 @@ class HostDeviceContextBlitter {
                                hashing::Hasher<std::vector<int>>> &ext_arrays,
       const std::unordered_map<std::vector<int>,
                                size_t,
-                               hashing::Hasher<std::vector<int>>> &ext_arr_size,
-      const std::unordered_map<std::vector<int>,
-                               const ArgPack *,
-                               hashing::Hasher<std::vector<int>>> &argpacks) {
+                               hashing::Hasher<std::vector<int>>>
+          &ext_arr_size) {
     if (!ctx_attribs_->has_args()) {
       return;
     }
@@ -411,10 +409,6 @@ void GfxRuntime::launch_kernel(KernelHandle handle,
   std::unordered_map<std::vector<int>, DeviceAllocation,
                      hashing::Hasher<std::vector<int>>>
       textures;
-  // `argpacks` holds argpacks that passed to this kernel.
-  std::unordered_map<std::vector<int>, const ArgPack *,
-                     hashing::Hasher<std::vector<int>>>
-      argpacks;
 
   // Prepare context buffers & arrays
   if (ctx_blitter) {
@@ -478,20 +472,7 @@ void GfxRuntime::launch_kernel(KernelHandle handle,
       }
     }
 
-    auto argpack_types =
-        ti_kernel->ti_kernel_attribs().ctx_attribs.argpack_types();
-    for (const auto &kv : argpack_types) {
-      const auto &indices = kv.first;
-      TI_ASSERT(host_ctx.device_allocation_type[indices] ==
-                LaunchContextBuilder::DevAllocType::kArgPack);
-      TI_ASSERT(host_ctx.argpack_ptrs.count(indices));
-      const ArgPack *argpack = host_ctx.argpack_ptrs[indices];
-      DeviceAllocation devalloc = argpack->get_device_allocation();
-      argpacks_in_use_.insert(devalloc.alloc_id);
-      argpacks[indices] = argpack;
-    }
-
-    ctx_blitter->host_to_device(any_arrays, ext_array_size, argpacks);
+    ctx_blitter->host_to_device(any_arrays, ext_array_size);
   }
 
   ensure_current_cmdlist();
@@ -515,10 +496,6 @@ void GfxRuntime::launch_kernel(KernelHandle handle,
       } else if (bind.buffer.type == BufferType::Args) {
         bindings->buffer(bind.binding,
                          args_buffer ? *args_buffer : kDeviceNullAllocation);
-      } else if (bind.buffer.type == BufferType::ArgPack) {
-        DeviceAllocation alloc =
-            argpacks.at(bind.buffer.root_id)->get_device_allocation();
-        bindings->buffer(bind.binding, alloc);
       } else if (bind.buffer.type == BufferType::Rets) {
         bindings->rw_buffer(bind.binding,
                             ret_buffer ? *ret_buffer : kDeviceNullAllocation);
