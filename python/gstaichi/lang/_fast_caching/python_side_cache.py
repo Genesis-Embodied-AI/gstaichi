@@ -33,9 +33,7 @@ class PythonSideCache:
 
     def _touch(self, filepath):
         """
-        We can then simply remove any files older than ~24 hours or so,
-        to keep the cache automatically clean.
-        No need for metadata and stuff :)
+        Updates file date/time.
         """
         with open(filepath, "a"):
             os.utime(filepath, None)
