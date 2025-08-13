@@ -6,7 +6,7 @@ from .._wrap_inspect import FunctionSourceInfo
 from . import args_hasher, config_hasher, function_hasher
 from .fast_caching_types import HashedFunctionSourceInfo
 from .hash_utils import hash_iterable_strings
-from .pyside_cache import PysideCache
+from .python_side_cache import PythonSideCache
 
 
 def create_cache_key(kernel_source_info: FunctionSourceInfo, args: Sequence[Any]) -> str | None:
@@ -43,7 +43,7 @@ def store(cache_key: str, function_source_infos: Iterable[FunctionSourceInfo]) -
     """
     if not cache_key:
         return
-    cache = PysideCache()
+    cache = PythonSideCache()
     hashed_function_source_infos = function_hasher.hash_functions(function_source_infos)
     cache_value_obj = CacheValue(hashed_function_source_infos=list(hashed_function_source_infos))
     cache_value_json = cache_value_obj.json()
@@ -51,7 +51,7 @@ def store(cache_key: str, function_source_infos: Iterable[FunctionSourceInfo]) -
 
 
 def _try_load(cache_key: str) -> Sequence[HashedFunctionSourceInfo] | None:
-    cache = PysideCache()
+    cache = PythonSideCache()
     maybe_cache_value_json = cache.try_load(cache_key)
     if maybe_cache_value_json is None:
         return None

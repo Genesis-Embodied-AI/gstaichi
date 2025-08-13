@@ -3,10 +3,10 @@ import os
 from .. import impl
 
 
-class PysideCache:
+class PythonSideCache:
     def __init__(self) -> None:
         _cache_parent_folder = impl.get_runtime().prog.config().offline_cache_file_path
-        self.cache_folder = os.path.join(_cache_parent_folder, "pyside_cache")
+        self.cache_folder = os.path.join(_cache_parent_folder, "python_side_cache")
         os.makedirs(self.cache_folder, exist_ok=True)
 
     def _get_filepath(self, key: str) -> str:

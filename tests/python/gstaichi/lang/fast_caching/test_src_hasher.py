@@ -1,4 +1,3 @@
-import importlib
 import pathlib
 import shutil
 from typing import Callable
@@ -39,12 +38,12 @@ def test_src_hasher_create_cache_key_vary_config() -> None:
 
 
 @test_utils.test()
-def test_src_hasher_create_cache_key_vary_fn(monkeypatch) -> None:
+def test_src_hasher_create_cache_key_vary_fn(monkeypatch, temporary_module) -> None:
     test_files_path = "tests/python/gstaichi/lang/fast_caching/test_files"
     monkeypatch.syspath_prepend(test_files_path)
 
     def get_cache_key(name: str) -> _wrap_inspect.FunctionSourceInfo:
-        mod = importlib.import_module(name)
+        mod = temporary_module(name)
         info, _src = _wrap_inspect.get_source_info_and_src(mod.f1.fn)
         cache_key = src_hasher.create_cache_key(info, [])
         return cache_key
@@ -63,7 +62,7 @@ def test_src_hasher_create_cache_key_vary_fn(monkeypatch) -> None:
 
 
 @test_utils.test()
-def test_src_hasher_validate_hashed_function_infos(monkeypatch, tmp_path: pathlib.Path) -> None:
+def test_src_hasher_validate_hashed_function_infos(monkeypatch, tmp_path: pathlib.Path, temporary_module) -> None:
     test_files_path = pathlib.Path("tests/python/gstaichi/lang/fast_caching/test_files")
     monkeypatch.syspath_prepend(str(tmp_path))
 
@@ -71,7 +70,7 @@ def test_src_hasher_validate_hashed_function_infos(monkeypatch, tmp_path: pathli
         shutil.copy2(test_files_path / filename, tmp_path / "child_diff.py")
 
     setup_folder("child_diff_base.py")
-    mod = importlib.import_module("child_diff")
+    mod = temporary_module("child_diff")
 
     def get_fileinfos(functions: list[Callable]) -> list[_wrap_inspect.FunctionSourceInfo]:
         fileinfos = []
@@ -95,7 +94,7 @@ def test_src_hasher_validate_hashed_function_infos(monkeypatch, tmp_path: pathli
 
 
 @test_utils.test()
-def test_src_hasher_store_validate(monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path) -> None:
+def test_src_hasher_store_validate(monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path, temporary_module) -> None:
     test_files_path = pathlib.Path("tests/python/gstaichi/lang/fast_caching/test_files")
 
     tmp_path = tmp_path / test_src_hasher_store_validate.__name__
@@ -125,7 +124,7 @@ def test_src_hasher_store_validate(monkeypatch: pytest.MonkeyPatch, tmp_path: pa
         return fileinfos
 
     setup_folder("child_diff_base.py")
-    mod = importlib.import_module("child_diff_test_src_hasher_store_validate")
+    mod = temporary_module("child_diff_test_src_hasher_store_validate")
     kernel_info = get_fileinfos([mod.f1.fn])[0]
     fileinfos = get_fileinfos([mod.f1.fn, mod.f2.fn])
     cache_key = src_hasher.create_cache_key(kernel_info, [])

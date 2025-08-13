@@ -27,8 +27,8 @@ def _hash_function(function_info: FunctionSourceInfo) -> str:
 def hash_functions(function_infos: Iterable[FunctionSourceInfo]) -> list[HashedFunctionSourceInfo]:
     results = []
     for f_info in function_infos:
-        _hash = _hash_function(f_info)
-        results.append(HashedFunctionSourceInfo(function_source_info=f_info, hash=_hash))
+        hash_ = _hash_function(f_info)
+        results.append(HashedFunctionSourceInfo(function_source_info=f_info, hash=hash_))
     return results
 
 
