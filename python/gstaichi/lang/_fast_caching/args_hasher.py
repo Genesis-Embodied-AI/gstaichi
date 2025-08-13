@@ -5,13 +5,12 @@ from typing import Any, Sequence
 
 import numpy as np
 
-from gstaichi.lang._fast_caching import FIELD_METADATA_CACHE_VALUE
-from gstaichi.lang._ndarray import ScalarNdarray
-from gstaichi.lang.field import ScalarField
-from gstaichi.lang.matrix import MatrixField, MatrixNdarray, VectorNdarray
-from gstaichi.lang.util import is_data_oriented
-
-from .hash_utils import hash_string
+from .._ndarray import ScalarNdarray
+from ..field import ScalarField
+from ..matrix import MatrixField, MatrixNdarray, VectorNdarray
+from ..util import is_data_oriented
+from . import FIELD_METADATA_CACHE_VALUE
+from .hash_utils import hash_iterable_strings
 
 g_num_calls = 0
 g_num_args = 0
@@ -24,7 +23,7 @@ def dataclass_to_repr(arg: Any) -> str:
     repr_l = []
     for field in dataclasses.fields(arg):
         child_value = getattr(arg, field.name)
-        _repr = to_representative_str(child_value)
+        _repr = stringify_obj_type(child_value)
         full_repr = f"{field.name}: ({_repr})"
         if field.metadata.get(FIELD_METADATA_CACHE_VALUE, False):
             full_repr += f" = {child_value}"
@@ -32,33 +31,35 @@ def dataclass_to_repr(arg: Any) -> str:
     return "[" + ",".join(repr_l) + "]"
 
 
-def to_representative_str(arg: Any) -> str | None:
+def stringify_obj_type(obj: Any) -> str | None:
     """
-    string should somehow represent the type of arg. Doesnt have to be hashed, nor does it have
+    stringify the type of obj
+
+    String should somehow represent the type of obj. Doesnt have to be hashed, nor does it have
     to be the actual python type string, just something representative of the type, and won't collide
-    with different (allowed) types
+    with different (allowed) types.
     """
-    arg_type = type(arg)
-    if isinstance(arg, ScalarNdarray):
-        return f"[nd-{arg.dtype}-{len(arg.shape)}]"
-    if isinstance(arg, VectorNdarray):
-        return f"[ndv-{arg.n}-{arg.dtype}-{len(arg.shape)}]"
-    if isinstance(arg, ScalarField):
-        return f"[f-{arg.snode._id}-{arg.dtype}-{arg.shape}]"
-    if isinstance(arg, MatrixNdarray):
-        return f"[ndm-{arg.m}-{arg.n}-{arg.dtype}-{len(arg.shape)}]"
+    arg_type = type(obj)
+    if isinstance(obj, ScalarNdarray):
+        return f"[nd-{obj.dtype}-{len(obj.shape)}]"
+    if isinstance(obj, VectorNdarray):
+        return f"[ndv-{obj.n}-{obj.dtype}-{len(obj.shape)}]"
+    if isinstance(obj, ScalarField):
+        return f"[f-{obj.snode._id}-{obj.dtype}-{obj.shape}]"
+    if isinstance(obj, MatrixNdarray):
+        return f"[ndm-{obj.m}-{obj.n}-{obj.dtype}-{len(obj.shape)}]"
     if "torch.Tensor" in str(arg_type):
-        return f"[pt-{arg.dtype}-{arg.ndim}]"
-    if isinstance(arg, np.ndarray):
-        return f"[np-{arg.dtype}-{arg.ndim}]"
-    if isinstance(arg, MatrixField):
-        return f"[fm-{arg.m}-{arg.n}-{arg.snode._id}-{arg.dtype}-{arg.shape}]"
-    if dataclasses.is_dataclass(arg):
-        return dataclass_to_repr(arg)
-    if is_data_oriented(arg):
+        return f"[pt-{obj.dtype}-{obj.ndim}]"
+    if isinstance(obj, np.ndarray):
+        return f"[np-{obj.dtype}-{obj.ndim}]"
+    if isinstance(obj, MatrixField):
+        return f"[fm-{obj.m}-{obj.n}-{obj.snode._id}-{obj.dtype}-{obj.shape}]"
+    if dataclasses.is_dataclass(obj):
+        return dataclass_to_repr(obj)
+    if is_data_oriented(obj):
         child_repr_l = []
-        for k, v in arg.__dict__.items():
-            _child_repr = to_representative_str(v)
+        for k, v in obj.__dict__.items():
+            _child_repr = stringify_obj_type(v)
             if _child_repr is None:
                 print("not representable child", k, type(v))
                 return None
@@ -66,8 +67,8 @@ def to_representative_str(arg: Any) -> str | None:
         return ", ".join(child_repr_l)
     if arg_type in [int, float, np.float32, np.float64, np.int32, np.int64, bool, np.bool]:
         return str(arg_type)
-    if isinstance(arg, enum.Enum):
-        return f"enum-{arg.name}-{arg.value}"
+    if isinstance(obj, enum.Enum):
+        return f"enum-{obj.name}-{obj.value}"
     return None
 
 
@@ -78,14 +79,14 @@ def hash_args(args: Sequence[Any]) -> str | None:
     hash_l = []
     for arg in args:
         start = time.time()
-        _hash = to_representative_str(arg)
+        _hash = stringify_obj_type(arg)
         g_repr_time += time.time() - start
         if not _hash:
             g_num_ignored_calls += 1
             return None
         hash_l.append(_hash)
     start = time.time()
-    res = hash_string("_".join(hash_l))
+    res = hash_iterable_strings(hash_l)
     g_hashing_time += time.time() - start
     return res
 

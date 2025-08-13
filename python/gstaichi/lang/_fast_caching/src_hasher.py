@@ -2,9 +2,10 @@ from typing import Any, Iterable, Sequence
 
 from pydantic import BaseModel
 
+from .._wrap_inspect import FunctionSourceInfo
 from . import args_hasher, config_hasher, function_hasher
-from .fast_caching_types import FunctionSourceInfo, HashedFunctionSourceInfo
-from .hash_utils import hash_string
+from .fast_caching_types import HashedFunctionSourceInfo
+from .hash_utils import hash_iterable_strings
 from .pyside_cache import PysideCache
 
 
@@ -21,7 +22,7 @@ def create_cache_key(kernel_source_info: FunctionSourceInfo, args: Sequence[Any]
         return None
     kernel_hash = function_hasher.hash_kernel(kernel_source_info)
     config_hash = config_hasher.hash_compile_config()
-    cache_key = hash_string(f"{kernel_hash}_{args_hash}_{config_hash}")
+    cache_key = hash_iterable_strings((kernel_hash, args_hash, config_hash))
     return cache_key
 
 

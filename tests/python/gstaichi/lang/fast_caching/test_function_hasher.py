@@ -11,6 +11,32 @@ from tests import test_utils
 
 
 @test_utils.test()
+def test_read_file(tmp_path: pathlib.Path) -> None:
+    out_filepath = tmp_path / "somefile.txt"
+    with open(out_filepath, "w") as f:
+        f.write(
+            """0
+1
+2
+3
+4
+5
+"""
+        )
+    info = _wrap_inspect.FunctionSourceInfo(
+        function_name="foo", filepath=str(out_filepath), start_lineno=1, end_lineno=3
+    )
+    src = function_hasher._read_file(info)
+    assert (
+        "".join(src)
+        == """1
+2
+3
+"""
+    )
+
+
+@test_utils.test()
 def test_function_hasher_hash_kernel(monkeypatch) -> None:
     test_files_path = "tests/python/gstaichi/lang/fast_caching/test_files"
     monkeypatch.syspath_prepend(test_files_path)
@@ -52,15 +78,17 @@ def test_function_hasher_hash_functions(monkeypatch) -> None:
 
 
 @test_utils.test()
-def test_function_hasher_validate_hashed_function_infos(monkeypatch, tmp_path: pathlib.Path) -> None:
+def test_function_hasher_validate_hashed_function_infos(monkeypatch, tmp_path: pathlib.Path, temporary_module) -> None:
     test_files_path = pathlib.Path("tests/python/gstaichi/lang/fast_caching/test_files")
     monkeypatch.syspath_prepend(str(tmp_path))
 
+    name = "child_diff"
+
     def setup_folder(filename: str) -> None:
-        shutil.copy2(test_files_path / filename, tmp_path / "child_diff.py")
+        shutil.copy2(test_files_path / filename, tmp_path / f"{name}.py")
 
     setup_folder("child_diff_base.py")
-    mod = importlib.import_module("child_diff")
+    mod = temporary_module(name)
 
     def get_fileinfos(functions: list[Callable]) -> list[_wrap_inspect.FunctionSourceInfo]:
         fileinfos = []

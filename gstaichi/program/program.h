@@ -117,13 +117,14 @@ class TI_DLL_EXPORT Program {
   void store_fast_cache(const std::string &checksum,
                         const Kernel &kernel,
                         const CompileConfig &compile_config,
-                        const DeviceCapabilityConfig &caps,
-                        CompiledKernelData &ckd);
+                        const DeviceCapabilityConfig &device_caps,
+                        CompiledKernelData &compiled);
 
-  const CompiledKernelData *load_fast_cache(const std::string &checksum,
-                                            const std::string &kernel_name,
-                                            const CompileConfig &compile_config,
-                                            const DeviceCapabilityConfig &caps);
+  const CompiledKernelData *load_fast_cache(
+      const std::string &checksum,
+      const std::string &kernel_name,
+      const CompileConfig &compile_config,
+      const DeviceCapabilityConfig &device_caps);
 
   Kernel &create_kernel(const std::function<void(Kernel *)> &body,
                         const std::string &name = "",
@@ -131,9 +132,10 @@ class TI_DLL_EXPORT Program {
 
   Function *create_function(const FunctionKey &func_key);
 
-  const CompiledKernelData &compile_kernel(const CompileConfig &compile_config,
-                                           const DeviceCapabilityConfig &caps,
-                                           const Kernel &kernel_def);
+  const CompiledKernelData &compile_kernel(
+      const CompileConfig &compile_config,
+      const DeviceCapabilityConfig &device_caps,
+      const Kernel &kernel_def);
 
   void launch_kernel(const CompiledKernelData &compiled_kernel_data,
                      LaunchContextBuilder &ctx);

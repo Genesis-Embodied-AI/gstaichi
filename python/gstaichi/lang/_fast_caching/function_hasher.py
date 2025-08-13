@@ -1,10 +1,10 @@
 import os
+from itertools import islice
 from typing import TYPE_CHECKING, Iterable
 
-from gstaichi.lang._wrap_inspect import FunctionSourceInfo
-
+from .._wrap_inspect import FunctionSourceInfo
 from .fast_caching_types import HashedFunctionSourceInfo
-from .hash_utils import hash_string
+from .hash_utils import hash_iterable_strings
 
 if TYPE_CHECKING:
     from gstaichi.lang.kernel_impl import GsTaichiCallable
@@ -15,12 +15,13 @@ def pure(fn: "GsTaichiCallable") -> "GsTaichiCallable":
     return fn
 
 
-def _hash_function(function_info: FunctionSourceInfo) -> str:
+def _read_file(function_info: FunctionSourceInfo) -> list[str]:
     with open(function_info.filepath) as f:
-        contents = f.read().split("\n")
-    lines = contents[function_info.start_lineno : function_info.end_lineno]
-    _hash = hash_string("\n".join(lines))
-    return _hash
+        return list(islice(f, function_info.start_lineno, function_info.end_lineno + 1))
+
+
+def _hash_function(function_info: FunctionSourceInfo) -> str:
+    return hash_iterable_strings(_read_file(function_info))
 
 
 def hash_functions(function_infos: Iterable[FunctionSourceInfo]) -> list[HashedFunctionSourceInfo]:

@@ -22,15 +22,15 @@ def test_src_hasher_create_cache_key_vary_config() -> None:
 
     # for some reason, print_ir_dbg_info is being set to True after a bit
     # so we are forcing it to false each initialization for now
-    ti_init_same_arch(options={"print_ir_dbg_info": False})
+    ti_init_same_arch(print_ir_dbg_info=False)
     kernel_info, _src = get_source_info_and_src(f1.fn)
     cache_key_base = src_hasher.create_cache_key(kernel_info, [])
 
-    ti_init_same_arch(options={"print_ir_dbg_info": False})
+    ti_init_same_arch(print_ir_dbg_info=False)
     kernel_info, _src = get_source_info_and_src(f1.fn)
     cache_key_same = src_hasher.create_cache_key(kernel_info, [])
 
-    ti_init_same_arch(options={"print_ir_dbg_info": False, "offline_cache_max_size_of_files": 123})
+    ti_init_same_arch(print_ir_dbg_info=False, random_seed=123)
     kernel_info, _src = get_source_info_and_src(f1.fn)
     cache_key_diff = src_hasher.create_cache_key(kernel_info, [])
 
@@ -108,7 +108,7 @@ def test_src_hasher_store_validate(monkeypatch: pytest.MonkeyPatch, tmp_path: pa
     print("temp_import_path", temp_import_path)
     print("offline_cache_path", offline_cache_path)
 
-    ti_init_same_arch(options={"offline_cache_file_path": str(offline_cache_path)})
+    ti_init_same_arch(offline_cache_file_path=str(offline_cache_path))
 
     monkeypatch.syspath_prepend(temp_import_path)
 

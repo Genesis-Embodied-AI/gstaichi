@@ -126,19 +126,20 @@ TypeFactory &Program::get_type_factory() {
 void Program::store_fast_cache(const std::string &checksum,
                                const Kernel &kernel,
                                const CompileConfig &compile_config,
-                               const DeviceCapabilityConfig &caps,
-                               CompiledKernelData &ckd) {
+                               const DeviceCapabilityConfig &device_caps,
+                               CompiledKernelData &compiled) {
   auto &mgr = program_impl_->get_kernel_compilation_manager();
-  mgr.store_fast_cache(checksum, kernel, compile_config, caps, ckd);
+  mgr.store_fast_cache(checksum, kernel, compile_config, device_caps, compiled);
 }
 
 const CompiledKernelData *Program::load_fast_cache(
     const std::string &checksum,
     const std::string &kernel_name,
     const CompileConfig &compile_config,
-    const DeviceCapabilityConfig &caps) {
+    const DeviceCapabilityConfig &device_caps) {
   auto &mgr = program_impl_->get_kernel_compilation_manager();
-  return mgr.load_fast_cache(checksum, kernel_name, compile_config, caps);
+  return mgr.load_fast_cache(checksum, kernel_name, compile_config,
+                             device_caps);
 }
 
 Function *Program::create_function(const FunctionKey &func_key) {
@@ -152,23 +153,22 @@ Function *Program::create_function(const FunctionKey &func_key) {
 Kernel &Program::create_kernel(const std::function<void(Kernel *)> &body,
                                const std::string &name,
                                AutodiffMode autodiff_mode) {
-  // Expr::set_allow_store(true);
   auto func = std::make_unique<Kernel>(*this, body, name, autodiff_mode);
-  // Expr::set_allow_store(false);
   kernels.emplace_back(std::move(func));
   return *kernels.back();
 }
 
 const CompiledKernelData &Program::compile_kernel(
     const CompileConfig &compile_config,
-    const DeviceCapabilityConfig &caps,
+    const DeviceCapabilityConfig &device_caps,
     const Kernel &kernel_def) {
   auto start_t = Time::get_time();
   TI_AUTO_PROF;
   auto &mgr = program_impl_->get_kernel_compilation_manager();
-  const auto &ckd = mgr.load_or_compile(compile_config, caps, kernel_def);
+  const auto &compiled =
+      mgr.load_or_compile(compile_config, device_caps, kernel_def);
   total_compilation_time_ += Time::get_time() - start_t;
-  return ckd;
+  return compiled;
 }
 
 void Program::launch_kernel(const CompiledKernelData &compiled_kernel_data,
@@ -452,12 +452,13 @@ Program::~Program() {
   finalize();
 }
 
-DeviceCapabilityConfig translate_devcaps(const std::vector<std::string> &caps) {
+DeviceCapabilityConfig translate_devcaps(
+    const std::vector<std::string> &device_caps) {
   // Each device capability assignment is named like this:
   // - `spirv_version=1.3`
   // - `spirv_has_int8`
   DeviceCapabilityConfig cfg{};
-  for (const std::string &cap : caps) {
+  for (const std::string &cap : device_caps) {
     std::string_view key;
     uint32_t value;
     size_t ieq = cap.find('=');
@@ -472,7 +473,7 @@ DeviceCapabilityConfig translate_devcaps(const std::vector<std::string> &caps) {
     cfg.set(devcap, value);
   }
 
-  // Assign default caps (that always present).
+  // Assign default device_caps (that always present).
   if (!cfg.contains(DeviceCapability::spirv_version)) {
     cfg.set(DeviceCapability::spirv_version, 0x10300);
   }

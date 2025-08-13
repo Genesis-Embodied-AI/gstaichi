@@ -108,3 +108,33 @@ def pytest_runtest_logreport(report):
             break
 
     interactor.retire(layoff=layoff)
+
+
+import importlib
+import sys
+
+import pytest
+
+
+@pytest.fixture
+def temporary_module():
+    """
+    Fixture to import and then unload a module after test
+
+    Use like:
+
+    def test_with_temporary_module(temporary_module):
+        module = temporary_module('your_module')
+    """
+    modules_to_delete = []
+
+    def _import(module_name):
+        assert module_name not in sys.modules
+        mod = importlib.import_module(module_name)
+        modules_to_delete.append(module_name)
+        return mod
+
+    yield _import
+
+    for name in modules_to_delete:
+        del sys.modules[name]

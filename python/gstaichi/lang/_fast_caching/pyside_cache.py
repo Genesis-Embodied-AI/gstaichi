@@ -1,6 +1,6 @@
 import os
 
-from gstaichi.lang import impl
+from .. import impl
 
 
 class PysideCache:
