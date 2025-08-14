@@ -126,6 +126,12 @@ class NdarrayType:
     def __str__(self):
         return self.__repr__()
 
+    def __getitem__(self, i: Any) -> Any:
+        raise NotImplemented
+
+    def __setitem__(self, i: Any, v: Any) -> None:
+        raise NotImplemented
+
 
 ndarray = NdarrayType
 NDArray = NdarrayType

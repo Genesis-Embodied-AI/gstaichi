@@ -165,7 +165,7 @@ def _calc_slice(index, default_stop):
                 "GsTaichi does not support variables in slice now, please use constant instead of it."
             )
 
-    check_validity(start), check_validity(stop), check_validity(step)
+    _, _, _ = check_validity(start), check_validity(stop), check_validity(step)
     return [_ for _ in range(start, stop, step)]
 
 
