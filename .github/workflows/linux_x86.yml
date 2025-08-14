@@ -17,6 +17,10 @@ jobs:
     runs-on: ${{ matrix.OS }}
     steps:
       - uses: actions/checkout@v4
+      - name: Python check
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
       - name: Linux x86 prerequisites
         run: |
           bash .github/workflows/scripts_new/linux_x86/1_prerequisites.sh
