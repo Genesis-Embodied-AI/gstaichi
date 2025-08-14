@@ -564,6 +564,14 @@ def _get_global_vars(_func: Callable) -> dict[str, Any]:
     return global_vars
 
 
+@dataclasses.dataclass
+class SrcLlCacheObservations:
+    cache_key_generated: bool = False
+    cache_validated: bool = False
+    cache_loaded: bool = False
+    cache_stored: bool = False
+
+
 class Kernel:
     counter = 0
 
@@ -599,6 +607,8 @@ class Kernel:
         self.gstaichi_callable: GsTaichiCallable | None = None
         self.visited_functions: set[FunctionSourceInfo] = set()
         self.kernel_function_info: FunctionSourceInfo | None = None
+
+        self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
 
     def ast_builder(self) -> ASTBuilder:
         assert self.kernel_cpp is not None
@@ -686,7 +696,10 @@ class Kernel:
         if self.gstaichi_callable and self.gstaichi_callable.is_pure:
             kernel_source_info, _src = get_source_info_and_src(self.func)
             self.fast_checksum = src_hasher.create_cache_key(kernel_source_info, args)
+            if self.fast_checksum:
+                self.src_ll_cache_observations.cache_key_generated = True
             if self.fast_checksum and src_hasher.validate_cache_key(self.fast_checksum):
+                self.src_ll_cache_observations.cache_validated = True
                 prog = impl.get_runtime().prog
                 self.compiled_kernel_data = prog.load_fast_cache(
                     self.fast_checksum,
@@ -694,6 +707,8 @@ class Kernel:
                     prog.config(),
                     prog.get_device_caps(),
                 )
+                if self.compiled_kernel_data:
+                    self.src_ll_cache_observations.cache_loaded = True
 
         kernel_name = f"{self.func.__name__}_c{self.kernel_counter}_{key[1]}"
         _logging.trace(f"Materializing kernel {kernel_name} in {self.autodiff_mode}...")
@@ -1034,6 +1049,7 @@ class Kernel:
                         prog.get_device_caps(),
                         self.compiled_kernel_data,
                     )
+                    self.src_ll_cache_observations.cache_stored = True
             prog.launch_kernel(self.compiled_kernel_data, launch_ctx)
         except Exception as e:
             e = handle_exception_from_cpp(e)

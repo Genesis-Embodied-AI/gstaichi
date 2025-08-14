@@ -26,6 +26,5 @@ def hash_compile_config() -> str:
             continue
         v = getattr(config, k)
         config_l.append(f"{k}={v}")
-    print("\n".join(config_l))
     config_hash = hash_iterable_strings(config_l, separator="\n")
     return config_hash
