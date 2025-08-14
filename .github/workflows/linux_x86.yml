@@ -9,8 +9,12 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build:
+    strategy:
+      fail-fast: false
+      matrix:
+        OS: ["ubuntu-22.04", "gpu-t4-4-core"]
     name: Linux x86 Build
-    runs-on: ubuntu-22.04, gpu-t4-4-core
+    runs-on: ${{ matrix.OS }}
     steps:
       - uses: actions/checkout@v4
       - name: Linux x86 prerequisites
