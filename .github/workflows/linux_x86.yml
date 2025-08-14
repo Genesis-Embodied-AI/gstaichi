@@ -10,7 +10,7 @@ concurrency:
 jobs:
   build:
     name: Linux x86 Build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04, gpu-t4-4-core
     steps:
       - uses: actions/checkout@v4
       - name: Linux x86 prerequisites
