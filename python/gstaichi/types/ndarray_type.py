@@ -1,4 +1,4 @@
-# type: ignore
+from typing import Any
 
 from gstaichi.types.compound_types import CompoundType, matrix, vector
 from gstaichi.types.enums import Layout, to_boundary_enum
@@ -93,9 +93,10 @@ class NdarrayType:
 
         # Check dtype match
         if isinstance(self.dtype, CompoundType):
-            if not self.dtype.check_matched(ndarray_type.element_type):
+            if not self.dtype.check_matched(ndarray_type.element_type):  # type: ignore
                 raise ValueError(
-                    f"Invalid value for argument {arg_name} - required element type: {self.dtype.to_string()}, but {ndarray_type.element_type.to_string()} is provided"
+                    f"Invalid value for argument {arg_name} - required element type: {self.dtype.to_string()}, "  # type: ignore
+                    f"but {ndarray_type.element_type.to_string()} is provided"
                 )
         else:
             if self.dtype is not None:
@@ -110,14 +111,16 @@ class NdarrayType:
         # Check ndim match
         if self.ndim is not None and ndarray_type.shape is not None and self.ndim != len(ndarray_type.shape):
             raise ValueError(
-                f"Invalid value for argument {arg_name} - required ndim={self.ndim}, but {len(ndarray_type.shape)}d ndarray with shape {ndarray_type.shape} is provided"
+                f"Invalid value for argument {arg_name} - required ndim={self.ndim}, but {len(ndarray_type.shape)}d "
+                f"ndarray with shape {ndarray_type.shape} is provided"
             )
 
         # Check needs_grad
         if self.needs_grad is not None and self.needs_grad > ndarray_type.needs_grad:
             # It's okay to pass a needs_grad=True ndarray at runtime to a need_grad=False arg but not vice versa.
             raise ValueError(
-                f"Invalid value for argument {arg_name} - required needs_grad={self.needs_grad}, but {ndarray_type.needs_grad} is provided"
+                f"Invalid value for argument {arg_name} - required needs_grad={self.needs_grad}, but {ndarray_type.needs_grad} "
+                "is provided"
             )
 
     def __repr__(self):
