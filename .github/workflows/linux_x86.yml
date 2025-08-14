@@ -9,18 +9,10 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build:
-    strategy:
-      fail-fast: false
-      matrix:
-        OS: ["ubuntu-22.04", "gpu-t4-4-core"]
     name: Linux x86 Build
-    runs-on: ${{ matrix.OS }}
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - name: Python check
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
       - name: Linux x86 prerequisites
         run: |
           bash .github/workflows/scripts_new/linux_x86/1_prerequisites.sh
