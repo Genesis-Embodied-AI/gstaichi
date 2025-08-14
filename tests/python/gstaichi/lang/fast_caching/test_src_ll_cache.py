@@ -1,8 +1,10 @@
 import pathlib
+
 import gstaichi as ti
-from tests import test_utils
-from gstaichi._test_tools import ti_init_same_arch
 from gstaichi._lib.core import gstaichi_python
+from gstaichi._test_tools import ti_init_same_arch
+
+from tests import test_utils
 
 
 @test_utils.test()
