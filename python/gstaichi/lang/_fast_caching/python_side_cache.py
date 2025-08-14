@@ -7,7 +7,7 @@ class PythonSideCache:
     """
     Manages a cache that is managed from the python side (we also have c++-side caches)
 
-    The cache is disk-based. When we create teh PythonSideCache object, the cache
+    The cache is disk-based. When we create the PythonSideCache object, the cache
     path is created as a sub-folder of CompileConfig.offline_cache_file_path.
 
     Note that constructing this object is cheap, so there is no need to maintain some

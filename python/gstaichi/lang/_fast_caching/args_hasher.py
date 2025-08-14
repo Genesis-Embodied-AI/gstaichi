@@ -9,7 +9,6 @@ from .._ndarray import ScalarNdarray
 from ..field import ScalarField
 from ..matrix import MatrixField, MatrixNdarray, VectorNdarray
 from ..util import is_data_oriented
-from . import FIELD_METADATA_CACHE_VALUE
 from .hash_utils import hash_iterable_strings
 
 g_num_calls = 0
@@ -17,6 +16,9 @@ g_num_args = 0
 g_hashing_time = 0
 g_repr_time = 0
 g_num_ignored_calls = 0
+
+
+FIELD_METADATA_CACHE_VALUE = "add_value_to_cache_key"
 
 
 def dataclass_to_repr(arg: Any) -> str:

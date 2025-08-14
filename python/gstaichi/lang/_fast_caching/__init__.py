@@ -1,1 +1,4 @@
-FIELD_METADATA_CACHE_VALUE = "add_value_to_cache_key"
+from .args_hasher import FIELD_METADATA_CACHE_VALUE
+
+
+__all__ = ["FIELD_METADATA_CACHE_VALUE"]
