@@ -1172,6 +1172,9 @@ def test_real_func_write_ndarray_cfg():
 # exclude metal, because metal limited to < 30 parametrs AFAIK
 @test_utils.test(exclude=[ti.metal])
 def test_ndarray_max_num_args() -> None:
+    if platform.system() == "Darwin" and ti.lang.impl.current_cfg().arch == ti.vulkan:
+        # Mac doesn't support so many arguments, on Vulkan
+        return
     num_args = 512
     kernel_templ = """
 import gstaichi as ti
@@ -1180,8 +1183,7 @@ def my_kernel({args}) -> None:
 {arg_uses}
 """
     if platform.system() == "Darwin" and ti.lang.impl.get_runtime().prog.config().arch == ti.vulkan:
-        # Mac doesn't support so many arguments, on Vulkan
-        return
+        pytest.skip(reason="Mac doesn't support so many arguments, on Vulkan")
     args_l = []
     arg_uses_l = []
     arg_objs_l = []

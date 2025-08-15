@@ -2,5 +2,7 @@
 
 set -ex
 
-pip3 install -r requirements_test.txt
-python3.10 tests/run_tests.py -v -r 3
+pip install -r requirements_test.txt
+export TI_LIB_DIR="$(python -c 'import gstaichi as ti; print(ti.__path__[0])' | tail -n 1)/_lib/runtime"
+./build/gstaichi_cpp_tests
+python tests/run_tests.py -v -r 3
