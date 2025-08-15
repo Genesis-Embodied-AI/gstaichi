@@ -5,7 +5,6 @@
 #include "gstaichi/codegen/spirv/compiled_kernel_data.h"
 #include "gstaichi/runtime/gfx/kernel_launcher.h"
 #include "gstaichi/runtime/gfx/snode_tree_manager.h"
-#include "gstaichi/util/offline_cache.h"
 #include "gstaichi/rhi/common/host_memory_pool.h"
 
 #include "gstaichi/rhi/common/window_system.h"

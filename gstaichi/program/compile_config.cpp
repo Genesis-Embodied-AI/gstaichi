@@ -72,7 +72,6 @@ void CompileConfig::fit() {
   if (arch_uses_spirv(arch)) {
     demote_dense_struct_fors = true;
   }
-  offline_cache::disable_offline_cache_if_needed(this);
 }
 
 }  // namespace gstaichi::lang

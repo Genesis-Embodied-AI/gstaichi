@@ -13,6 +13,7 @@ namespace gstaichi::lang {
 
 class GsTaichiLLVMContext;
 struct CompileConfig;
+class ProgramImpl;
 
 class JITSession {
  protected:
@@ -37,7 +38,8 @@ class JITSession {
 
   static std::unique_ptr<JITSession> create(GsTaichiLLVMContext *tlctx,
                                             const CompileConfig &config,
-                                            Arch arch);
+                                            Arch arch,
+                                            ProgramImpl *program_impl);
 
   virtual ~JITSession() = default;
 };

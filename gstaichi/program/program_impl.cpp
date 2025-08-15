@@ -37,4 +37,14 @@ KernelLauncher &ProgramImpl::get_kernel_launcher() {
   return *(kernel_launcher_ = make_kernel_launcher());
 }
 
+void ProgramImpl::register_needs_finalizing(NeedsFinalizing *needs_finalizing) {
+  need_finalizing_.push_back(needs_finalizing);
+}
+
+void ProgramImpl::run_need_finalizing() {
+  for (auto &node : need_finalizing_) {
+    node->finalize();
+  }
+}
+
 }  // namespace gstaichi::lang

@@ -6,7 +6,6 @@
 #include "gstaichi/rhi/metal/metal_device.h"
 #include "gstaichi/runtime/gfx/snode_tree_manager.h"
 #include "gstaichi/runtime/gfx/kernel_launcher.h"
-#include "gstaichi/util/offline_cache.h"
 #include "gstaichi/rhi/common/host_memory_pool.h"
 
 namespace gstaichi::lang {

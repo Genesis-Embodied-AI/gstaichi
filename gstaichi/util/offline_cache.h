@@ -18,15 +18,6 @@
 namespace gstaichi::lang {
 namespace offline_cache {
 
-constexpr char kLlvmCacheFilenameLLExt[] = "ll";
-constexpr char kLlvmCacheFilenameBCExt[] = "bc";
-constexpr char kSpirvCacheFilenameExt[] = "spv";
-constexpr char kMetalCacheFilenameExt[] = "metal";
-constexpr char kTiCacheFilenameExt[] = "tic";
-constexpr char kLlvmCachSubPath[] = "llvm";
-constexpr char kSpirvCacheSubPath[] = "gfx";
-constexpr char kMetalCacheSubPath[] = "metal";
-
 using Version = std::uint16_t[3];  // {MAJOR, MINOR, PATCH}
 
 enum CleanCacheFlags {
@@ -116,42 +107,52 @@ struct CacheCleanerConfig {
 
 template <typename MetadataType>
 struct CacheCleanerUtils {
-  using KernelMetaData = typename MetadataType::KernelMetadata;
+  using MetaData = typename MetadataType::Metadata;
 
   // To save metadata as file
   static bool save_metadata(const CacheCleanerConfig &config,
                             const MetadataType &data) {
-    TI_NOT_IMPLEMENTED;
+    write_to_binary_file(
+        data, gstaichi::join_path(config.path, config.metadata_filename));
+    return true;
   }
 
   static bool save_debugging_metadata(const CacheCleanerConfig &config,
                                       const MetadataType &data) {
-    TI_NOT_IMPLEMENTED;
+    TextSerializer ts;
+    ts.serialize_to_json("cache", data);
+    ts.write_to_file(
+        gstaichi::join_path(config.path, config.debugging_metadata_filename));
+    return true;
   }
 
   // To get cache files name
   static std::vector<std::string> get_cache_files(
       const CacheCleanerConfig &config,
-      const KernelMetaData &kernel_meta) {
-    TI_NOT_IMPLEMENTED;
+      const MetaData &kernel_meta) {
+    std::vector<std::string> result;
+    for (const auto &f :
+         get_possible_llvm_cache_filename_by_key(kernel_meta.kernel_key)) {
+      result.push_back(f);
+    }
+    return result;
   }
 
   // To remove other files except cache files and offline cache metadta files
   static void remove_other_files(const CacheCleanerConfig &config) {
-    TI_NOT_IMPLEMENTED;
   }
 
   // To check if a file is cache file
   static bool is_valid_cache_file(const CacheCleanerConfig &config,
                                   const std::string &name) {
-    TI_NOT_IMPLEMENTED;
+    return true;
   }
 };
 
 template <typename MetadataType>
 class CacheCleaner {
   using Utils = CacheCleanerUtils<MetadataType>;
-  using KernelMetadata = typename MetadataType::KernelMetadata;
+  using DataWrapper = typename MetadataType::DataWrapper;
 
  public:
   static void run(const CacheCleanerConfig &config) {
@@ -224,12 +225,13 @@ class CacheCleaner {
 
       if (cache_data.size < config.max_size ||
           static_cast<std::size_t>(config.cleaning_factor *
-                                   cache_data.kernels.size()) == 0) {
+                                   cache_data.dataWrapperByCacheKey.size()) ==
+              0) {
         return;
       }
 
       // LRU or FIFO
-      using KerData = std::pair<const std::string, KernelMetadata>;
+      using KerData = std::pair<const std::string, DataWrapper>;
       using Comparator = std::function<bool(const KerData *, const KerData *)>;
       using PriQueue =
           std::priority_queue<const KerData *, std::vector<const KerData *>,
@@ -238,19 +240,21 @@ class CacheCleaner {
       Comparator cmp{nullptr};
       if (policy & CleanOldUsed) {  // LRU
         cmp = [](const KerData *a, const KerData *b) -> bool {
-          return a->second.last_used_at < b->second.last_used_at;
+          return a->second.metadata.last_used_at <
+                 b->second.metadata.last_used_at;
         };
       } else if (policy & CleanOldCreated) {  // FIFO
         cmp = [](const KerData *a, const KerData *b) -> bool {
-          return a->second.created_at < b->second.created_at;
+          return a->second.metadata.created_at < b->second.metadata.created_at;
         };
       }
 
       if (cmp) {
         PriQueue q(cmp);
-        std::size_t cnt = config.cleaning_factor * cache_data.kernels.size();
+        std::size_t cnt =
+            config.cleaning_factor * cache_data.dataWrapperByCacheKey.size();
         TI_ASSERT(cnt != 0);
-        for (const auto &e : cache_data.kernels) {
+        for (const auto &e : cache_data.dataWrapperByCacheKey) {
           if (q.size() == cnt && cmp(&e, q.top())) {
             q.pop();
           }
@@ -264,12 +268,12 @@ class CacheCleaner {
           for (const auto &f : Utils::get_cache_files(config, e->second)) {
             files_to_rm.push_back(f);
           }
-          cache_data.size -= e->second.size;
-          cache_data.kernels.erase(e->first);
+          cache_data.size -= e->second.metadata.size;
+          cache_data.dataWrapperByCacheKey.erase(e->first);
           q.pop();
         }
 
-        if (cache_data.kernels.empty()) {  // Remove
+        if (cache_data.dataWrapperByCacheKey.empty()) {  // Remove
           ok_rm_meta = gstaichi::remove(metadata_file);
           gstaichi::remove(debugging_metadata_file);
           Utils::remove_other_files(config);
@@ -282,7 +286,7 @@ class CacheCleaner {
 
     // 2. Remove cache files
     if (ok_rm_meta) {
-      if (!cache_data.kernels.empty()) {
+      if (!cache_data.dataWrapperByCacheKey.empty()) {
         // For debugging (Not safe: without locking)
         Utils::save_debugging_metadata(config, cache_data);
       }
@@ -294,15 +298,10 @@ class CacheCleaner {
   }
 };
 
-void disable_offline_cache_if_needed(CompileConfig *config);
-std::string get_cache_path_by_arch(const std::string &base_path, Arch arch);
 std::string mangle_name(const std::string &primal_name, const std::string &key);
 bool try_demangle_name(const std::string &mangled_name,
                        std::string &primal_name,
                        std::string &key);
-
-// utils to manage the offline cache files
-std::size_t clean_offline_cache_files(const std::string &path);
 
 }  // namespace offline_cache
 }  // namespace gstaichi::lang

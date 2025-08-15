@@ -18,6 +18,7 @@ file(GLOB_RECURSE GSTAICHI_TESTS_SOURCE
         "tests/cpp/ir/*.cpp"
         "tests/cpp/program/*.cpp"
         "tests/cpp/rhi/common/*.cpp"
+        "tests/cpp/runtime/cuda/*.cpp"
         "tests/cpp/struct/*.cpp"
         "tests/cpp/transforms/*.cpp"
         "tests/cpp/offline_cache/*.cpp")

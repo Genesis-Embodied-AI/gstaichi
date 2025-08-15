@@ -68,8 +68,17 @@ bool JITModuleCUDA::direct_dispatch() const {
 
 JITSessionCUDA::JITSessionCUDA(GsTaichiLLVMContext *tlctx,
                                const CompileConfig &config,
-                               llvm::DataLayout data_layout)
-    : JITSession(tlctx, config), data_layout(data_layout) {
+                               llvm::DataLayout data_layout,
+                               ProgramImpl *program_impl)
+    : JITSession(tlctx, config),
+      data_layout(data_layout),
+      program_impl_(program_impl) {
+  PtxCache::Config ptx_cache_config;
+  ptx_cache_config.offline_cache_path = config.offline_cache_file_path;
+  ptx_cache_ = std::make_unique<PtxCache>(ptx_cache_config, config);
+
+  finalizer_ = std::make_unique<Finalizer>(ptx_cache_.get());
+  program_impl_->register_needs_finalizing(finalizer_.get());
 }
 
 JITModule *JITSessionCUDA::add_module(std::unique_ptr<llvm::Module> M,
@@ -212,6 +221,18 @@ std::string JITSessionCUDA::compile_module_to_ptx(
     static FileSequenceWriter writer("gstaichi_kernel_cuda_llvm_ir_{:04d}.ll",
                                      "unoptimized LLVM IR (CUDA)");
     writer.write(module.get());
+  }
+
+  std::string llvm_ir_str;
+  llvm::raw_string_ostream llvm_ir_stream(llvm_ir_str);
+  module->print(llvm_ir_stream, nullptr);
+  llvm_ir_stream.flush();
+  std::string ptx_cache_key =
+      ptx_cache_->make_cache_key(llvm_ir_str, this->config_.fast_math);
+  std::optional<std::string> maybe_ptx = ptx_cache_->load_ptx(ptx_cache_key);
+  if (maybe_ptx.has_value()) {
+    TI_TRACE("Loaded PTX from cache for module {}", module->getName().str());
+    return maybe_ptx.value();
   }
 
   for (auto &f : module->globals())
@@ -360,23 +381,26 @@ std::string JITSessionCUDA::compile_module_to_ptx(
 
   // Null-terminate the ptx source
   buffer.push_back(0);
+  ptx_cache_->store_ptx(ptx_cache_key, buffer);
   return buffer;
 }
 
 std::unique_ptr<JITSession> create_llvm_jit_session_cuda(
     GsTaichiLLVMContext *tlctx,
     const CompileConfig &config,
-    Arch arch) {
+    Arch arch,
+    ProgramImpl *program_impl) {
   TI_ASSERT(arch == Arch::cuda);
   // https://docs.nvidia.com/cuda/nvvm-ir-spec/index.html#data-layout
   auto data_layout = GsTaichiLLVMContext::get_data_layout(arch);
-  return std::make_unique<JITSessionCUDA>(tlctx, config, data_layout);
+  return std::make_unique<JITSessionCUDA>(tlctx, config, data_layout,
+                                          program_impl);
 }
 #else
 std::unique_ptr<JITSession> create_llvm_jit_session_cuda(
     GsTaichiLLVMContext *tlctx,
     const CompileConfig &config,
-    Arch arch) {
+    Arch arch const ProgramImpl *program_impl) {
   TI_NOT_IMPLEMENTED
 }
 #endif
