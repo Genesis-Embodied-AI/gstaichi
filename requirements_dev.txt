@@ -4,6 +4,7 @@ coverage
 Pillow
 pybind11
 pybind11-stubgen
+pydantic
 GitPython
 yapf
 distro

@@ -1,4 +1,4 @@
-# type: ignore
+from typing import Any
 
 from gstaichi.types.compound_types import CompoundType, matrix, vector
 from gstaichi.types.enums import Layout, to_boundary_enum
@@ -32,7 +32,8 @@ def _make_matrix_dtype_from_element_shape(element_dim, element_shape, primitive_
         # Check dim consistency. The matrix dtype will be cooked later.
         if element_shape is not None and len(element_shape) != element_dim:
             raise ValueError(
-                f"Both element_shape and element_dim are specified, but shape doesn't match specified dim: {len(element_shape)}!={element_dim}"
+                f"Both element_shape and element_dim are specified, but shape doesn't match specified dim: "
+                f"{len(element_shape)}!={element_dim}"
             )
         mat_dtype = vector(None, primitive_dtype) if element_dim == 1 else matrix(None, None, primitive_dtype)
     elif element_shape is not None:
@@ -50,14 +51,24 @@ class NdarrayType:
     """Type annotation for arbitrary arrays, including external arrays (numpy ndarrays and torch tensors) and GsTaichi ndarrays.
 
     For external arrays, we treat it as a GsTaichi data container with Scalar, Vector or Matrix elements.
-    For GsTaichi vector/matrix ndarrays, we will automatically identify element dimension and their corresponding axis by the dimension of datatype, say scalars, matrices or vectors.
-    For example, given type annotation `ti.types.ndarray(dtype=ti.math.vec3)`, a numpy array `np.zeros(10, 10, 3)` will be recognized as a 10x10 matrix composed of vec3 elements.
+    For GsTaichi vector/matrix ndarrays, we will automatically identify element dimension and their corresponding axis by the
+    dimension of datatype, say scalars, matrices or vectors.
+    For example, given type annotation `ti.types.ndarray(dtype=ti.math.vec3)`, a numpy array `np.zeros(10, 10, 3)` will be
+    recognized as a 10x10 matrix composed of vec3 elements.
 
     Args:
         dtype (Union[PrimitiveType, VectorType, MatrixType, NoneType], optional): None if not speicified.
-        ndim (Union[Int, NoneType]): None if not specified, number of field dimensions. This argument is ignored for external arrays for now.
-        element_dim (Union[Int, NoneType], optional): None if not specified (will be treated as 0 for external arrays), 0 if scalar elements, 1 if vector elements, and 2 if matrix elements.
-        element_shape (Union[Tuple[Int], NoneType]): None if not specified, shapes of each element. For example, element_shape must be 1d for vector and 2d tuple for matrix. This argument is ignored for external arrays for now.
+        ndim (Union[Int, NoneType]): None if not specified, number of field dimensions. This argument is ignored for externa
+        arrays for now.
+        element_dim (Union[Int, NoneType], optional):
+          None if not specified (will be treated as 0 for external arrays),
+          0 if scalar elements,
+          1 if vector elements, and
+          2 if matrix elements.
+        element_shape (Union[Tuple[Int], NoneType]):
+          None if not specified, shapes of each element.
+          For example, element_shape must be 1d for vector and 2d tuple for matrix.
+          This argument is ignored for external arrays for now.
     """
 
     def __init__(
@@ -93,9 +104,10 @@ class NdarrayType:
 
         # Check dtype match
         if isinstance(self.dtype, CompoundType):
-            if not self.dtype.check_matched(ndarray_type.element_type):
+            if not self.dtype.check_matched(ndarray_type.element_type):  # type: ignore
                 raise ValueError(
-                    f"Invalid value for argument {arg_name} - required element type: {self.dtype.to_string()}, but {ndarray_type.element_type.to_string()} is provided"
+                    f"Invalid value for argument {arg_name} - required element type: {self.dtype.to_string()}, "  # type: ignore
+                    f"but {ndarray_type.element_type.to_string()} is provided"
                 )
         else:
             if self.dtype is not None:
@@ -110,14 +122,16 @@ class NdarrayType:
         # Check ndim match
         if self.ndim is not None and ndarray_type.shape is not None and self.ndim != len(ndarray_type.shape):
             raise ValueError(
-                f"Invalid value for argument {arg_name} - required ndim={self.ndim}, but {len(ndarray_type.shape)}d ndarray with shape {ndarray_type.shape} is provided"
+                f"Invalid value for argument {arg_name} - required ndim={self.ndim}, but {len(ndarray_type.shape)}d "
+                f"ndarray with shape {ndarray_type.shape} is provided"
             )
 
         # Check needs_grad
         if self.needs_grad is not None and self.needs_grad > ndarray_type.needs_grad:
             # It's okay to pass a needs_grad=True ndarray at runtime to a need_grad=False arg but not vice versa.
             raise ValueError(
-                f"Invalid value for argument {arg_name} - required needs_grad={self.needs_grad}, but {ndarray_type.needs_grad} is provided"
+                f"Invalid value for argument {arg_name} - required needs_grad={self.needs_grad}, but "
+                f"{ndarray_type.needs_grad} is provided"
             )
 
     def __repr__(self):
@@ -125,6 +139,12 @@ class NdarrayType:
 
     def __str__(self):
         return self.__repr__()
+
+    def __getitem__(self, i: Any) -> Any:
+        raise NotImplemented
+
+    def __setitem__(self, i: Any, v: Any) -> None:
+        raise NotImplemented
 
 
 ndarray = NdarrayType
