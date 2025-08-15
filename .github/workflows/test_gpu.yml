@@ -31,8 +31,8 @@ jobs:
           sudo apt-get install -y vulkan-validationlayers
       - name: install cuda stuff
         run: |
-          sudo apt-get install -y libcusolver-dev-12-4
-          sudo apt-get install -y libcusparse-dev-12-4
+          sudo apt-get install -y libcusolver-dev-12-8
+          sudo apt-get install -y libcusparse-dev-12-8
           ls -lhd /usr/local/cuda*
           ls -l /usr/local/cuda/lib64/libcusolver*
           ls -l /usr/local/cuda/lib64/libcusparse*
