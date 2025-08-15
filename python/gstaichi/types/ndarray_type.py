@@ -106,8 +106,8 @@ class NdarrayType:
         if isinstance(self.dtype, CompoundType):
             if not self.dtype.check_matched(ndarray_type.element_type):  # type: ignore
                 raise ValueError(
-                    f"Invalid value for argument {arg_name} - required element type: {self.dtype.to_string()}, but "  # type: ignore
-                    f"{ndarray_type.element_type} is provided"
+                    f"Invalid value for argument {arg_name} - required element type: {self.dtype.to_string()}, "  # type: ignore
+                    f"but {ndarray_type.element_type.to_string()} is provided"
                 )
         else:
             if self.dtype is not None:
@@ -141,6 +141,9 @@ class NdarrayType:
         return self.__repr__()
 
     def __getitem__(self, i: Any) -> Any:
+        raise NotImplemented
+
+    def __setitem__(self, i: Any, v: Any) -> None:
         raise NotImplemented
 
 
