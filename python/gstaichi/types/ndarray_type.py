@@ -141,9 +141,11 @@ class NdarrayType:
         return self.__repr__()
 
     def __getitem__(self, i: Any) -> Any:
+        # needed for pyright
         raise NotImplemented
 
     def __setitem__(self, i: Any, v: Any) -> None:
+        # needed for pyright
         raise NotImplemented
 
 
