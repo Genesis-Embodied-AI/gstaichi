@@ -301,6 +301,10 @@ def get_traceback(stacklevel=1):
     return "".join(traceback.format_list(s))
 
 
+def is_data_oriented(obj: Any) -> bool:
+    return getattr(obj, "_data_oriented", False)
+
+
 def is_ti_template(annotation: Any) -> bool:
     return annotation == Template or isinstance(annotation, Template)
 

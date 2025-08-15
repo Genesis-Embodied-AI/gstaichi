@@ -297,6 +297,7 @@ setup(
         "numpy",
         "colorama",
         "dill",
+        "pydantic",
         "rich",
         "setuptools>=68.0.0",  # Required for Python 3.12+ compatibility
         "cffi>=1.16.0",
