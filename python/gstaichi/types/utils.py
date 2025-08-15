@@ -1,5 +1,3 @@
-# type: ignore
-
 from gstaichi._lib import core as ti_python_core
 
 is_signed = ti_python_core.is_signed

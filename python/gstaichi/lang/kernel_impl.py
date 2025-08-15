@@ -30,8 +30,9 @@ from gstaichi._lib.core.gstaichi_python import (
     KernelLaunchContext,
 )
 from gstaichi.lang import _kernel_impl_dataclass, impl, ops, runtime_ops
+from gstaichi.lang._fast_caching import src_hasher
 from gstaichi.lang._template_mapper import TemplateMapper
-from gstaichi.lang._wrap_inspect import getsourcefile, getsourcelines
+from gstaichi.lang._wrap_inspect import FunctionSourceInfo, get_source_info_and_src
 from gstaichi.lang.any_array import AnyArray
 from gstaichi.lang.ast import (
     ASTTransformerContext,
@@ -151,6 +152,7 @@ class GsTaichiCallable:
         self._adjoint: Kernel | None = None
         self.grad: Kernel | None = None
         self._is_staticmethod: bool = False
+        self.is_pure = False
         functools.update_wrapper(self, fn)
 
     def __call__(self, *args, **kwargs):
@@ -276,11 +278,11 @@ def _get_tree_and_ctx(
     excluded_parameters=(),
     is_kernel: bool = True,
     arg_features=None,
-    ast_builder: ASTBuilder | None = None,
+    ast_builder: "ASTBuilder | None" = None,
     is_real_function: bool = False,
+    current_kernel: "Kernel | None" = None,
 ) -> tuple[ast.Module, ASTTransformerContext]:
-    file = getsourcefile(self.func)
-    src, start_lineno = getsourcelines(self.func)
+    function_source_info, src = get_source_info_and_src(self.func)
     src = [textwrap.fill(line, tabsize=4, width=9999) for line in src]
     tree = ast.parse(textwrap.dedent("\n".join(src)))
 
@@ -298,6 +300,13 @@ def _get_tree_and_ctx(
             py_args=args,
         )
 
+    if current_kernel is not None:  # Kernel
+        current_kernel.kernel_function_info = function_source_info
+    if current_kernel is None:
+        current_kernel = impl.get_runtime()._current_kernel
+    assert current_kernel is not None
+    current_kernel.visited_functions.add(function_source_info)
+
     return tree, ASTTransformerContext(
         excluded_parameters=excluded_parameters,
         is_kernel=is_kernel,
@@ -306,8 +315,9 @@ def _get_tree_and_ctx(
         global_vars=global_vars,
         argument_data=args,
         src=src,
-        start_lineno=start_lineno,
-        file=file,
+        start_lineno=function_source_info.start_lineno,
+        end_lineno=function_source_info.end_lineno,
+        file=function_source_info.filepath,
         ast_builder=ast_builder,
         is_real_function=is_real_function,
     )
@@ -554,6 +564,14 @@ def _get_global_vars(_func: Callable) -> dict[str, Any]:
     return global_vars
 
 
+@dataclasses.dataclass
+class SrcLlCacheObservations:
+    cache_key_generated: bool = False
+    cache_validated: bool = False
+    cache_loaded: bool = False
+    cache_stored: bool = False
+
+
 class Kernel:
     counter = 0
 
@@ -581,8 +599,16 @@ class Kernel:
         impl.get_runtime().kernels.append(self)
         self.reset()
         self.kernel_cpp = None
-        self.compiled_kernels: dict[CompiledKernelKeyType, KernelCxx] = {}
+        # A materialized kernel is a KernelCxx object which may or may not have
+        # been compiled. It generally has been converted at least as far as AST
+        # and front-end IR, but not necessarily any further.
+        self.materialized_kernels: dict[CompiledKernelKeyType, KernelCxx] = {}
         self.has_print = False
+        self.gstaichi_callable: GsTaichiCallable | None = None
+        self.visited_functions: set[FunctionSourceInfo] = set()
+        self.kernel_function_info: FunctionSourceInfo | None = None
+
+        self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
 
     def ast_builder(self) -> ASTBuilder:
         assert self.kernel_cpp is not None
@@ -590,7 +616,7 @@ class Kernel:
 
     def reset(self) -> None:
         self.runtime = impl.get_runtime()
-        self.compiled_kernels = {}
+        self.materialized_kernels = {}
 
     def extract_arguments(self) -> None:
         sig = inspect.signature(self.func)
@@ -661,18 +687,38 @@ class Kernel:
         if key is None:
             key = (self.func, 0, self.autodiff_mode)
         self.runtime.materialize()
+        self.compiled_kernel_data = None
+        self.fast_checksum = None
 
-        if key in self.compiled_kernels:
+        if key in self.materialized_kernels:
             return
 
+        if self.gstaichi_callable and self.gstaichi_callable.is_pure:
+            kernel_source_info, _src = get_source_info_and_src(self.func)
+            self.fast_checksum = src_hasher.create_cache_key(kernel_source_info, args)
+            if self.fast_checksum:
+                self.src_ll_cache_observations.cache_key_generated = True
+            if self.fast_checksum and src_hasher.validate_cache_key(self.fast_checksum):
+                self.src_ll_cache_observations.cache_validated = True
+                prog = impl.get_runtime().prog
+                self.compiled_kernel_data = prog.load_fast_cache(
+                    self.fast_checksum,
+                    self.func.__name__,
+                    prog.config(),
+                    prog.get_device_caps(),
+                )
+                if self.compiled_kernel_data:
+                    self.src_ll_cache_observations.cache_loaded = True
+
         kernel_name = f"{self.func.__name__}_c{self.kernel_counter}_{key[1]}"
-        _logging.trace(f"Compiling kernel {kernel_name} in {self.autodiff_mode}...")
+        _logging.trace(f"Materializing kernel {kernel_name} in {self.autodiff_mode}...")
 
         tree, ctx = _get_tree_and_ctx(
             self,
             args=args,
             excluded_parameters=self.template_slot_locations,
             arg_features=arg_features,
+            current_kernel=self,
         )
 
         if self.autodiff_mode != AutodiffMode.NONE:
@@ -732,6 +778,7 @@ class Kernel:
                     )
                 struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
                 tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
+                ctx.only_parse_function_def = self.compiled_kernel_data is not None
                 transform_tree(tree, ctx)
                 if not ctx.is_real_function:
                     if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
@@ -742,8 +789,8 @@ class Kernel:
                 self.runtime._compiling_callable = None
 
         gstaichi_kernel = impl.get_runtime().prog.create_kernel(gstaichi_ast_generator, kernel_name, self.autodiff_mode)
-        assert key not in self.compiled_kernels
-        self.compiled_kernels[key] = gstaichi_kernel
+        assert key not in self.materialized_kernels
+        self.materialized_kernels[key] = gstaichi_kernel
 
     def launch_kernel(self, t_kernel: KernelCxx, *args) -> Any:
         assert len(args) == len(self.arg_metas), f"{len(self.arg_metas)} arguments needed but {len(args)} provided"
@@ -991,10 +1038,19 @@ class Kernel:
 
         try:
             prog = impl.get_runtime().prog
-            # Compile kernel (& Online Cache & Offline Cache)
-            compiled_kernel_data = prog.compile_kernel(prog.config(), prog.get_device_caps(), t_kernel)
-            # Launch kernel
-            prog.launch_kernel(compiled_kernel_data, launch_ctx)
+            if not self.compiled_kernel_data:
+                self.compiled_kernel_data = prog.compile_kernel(prog.config(), prog.get_device_caps(), t_kernel)
+                if self.fast_checksum:
+                    src_hasher.store(self.fast_checksum, self.visited_functions)
+                    prog.store_fast_cache(
+                        self.fast_checksum,
+                        self.kernel_cpp,
+                        prog.config(),
+                        prog.get_device_caps(),
+                        self.compiled_kernel_data,
+                    )
+                    self.src_ll_cache_observations.cache_stored = True
+            prog.launch_kernel(self.compiled_kernel_data, launch_ctx)
         except Exception as e:
             e = handle_exception_from_cpp(e)
             if impl.get_runtime().print_full_traceback:
@@ -1067,7 +1123,7 @@ class Kernel:
             _logging.warn("""opt_level = 1 is enforced to enable gradient computation.""")
             impl.current_cfg().opt_level = 1
         key = self.ensure_compiled(*args)
-        kernel_cpp = self.compiled_kernels[key]
+        kernel_cpp = self.materialized_kernels[key]
         return self.launch_kernel(kernel_cpp, *args)
 
 
@@ -1153,6 +1209,7 @@ def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool 
     wrapped._is_classkernel = is_classkernel
     wrapped._primal = primal
     wrapped._adjoint = adjoint
+    primal.gstaichi_callable = wrapped
     return wrapped
 
 

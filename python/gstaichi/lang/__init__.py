@@ -1,6 +1,7 @@
 # type: ignore
 
 from gstaichi.lang import impl, simt
+from gstaichi.lang._fast_caching.function_hasher import pure
 from gstaichi.lang._ndarray import *
 from gstaichi.lang._ndrange import ndrange
 from gstaichi.lang._texture import Texture
