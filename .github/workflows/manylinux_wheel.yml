@@ -145,3 +145,9 @@ jobs:
     with:
       artifact_name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}
     secrets: inherit
+  test_gpu:
+    uses: ./.github/workflows/test_gpu.yml
+    needs: upload_to_storage
+    with:
+      head_ref: ${{ github.head_ref || github.ref_name }}
+      artifact_name: manylinux_wheel_cp310

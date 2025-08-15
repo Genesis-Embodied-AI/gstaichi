@@ -1,0 +1,51 @@
+name: Test gpu
+on:
+  workflow_call:
+    inputs:
+      head_ref:
+        description: 'The head ref (branch name or PR ref)'
+        required: true
+        type: string
+      artifact_name:
+        description: 'Name of the artifact to download'
+        required: true
+        type: string
+  workflow_dispatch:
+jobs:
+  build:
+    name: Test gpu
+    runs-on: gpu-t4-4-core
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+      - name: Python check
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: install vulkan validation layer
+        run: |
+          sudo apt-get install -y vulkan-validationlayers
+      - name: install cuda stuff
+        run: |
+          sudo apt-get install -y libcusolver-dev-12-8
+          sudo apt-get install -y libcusparse-dev-12-8
+          ls -lhd /usr/local/cuda*
+          ls -l /usr/local/cuda/lib64/libcusolver*
+          ls -l /usr/local/cuda/lib64/libcusparse*
+      - name: install gstaichi
+        run: |
+          set -x
+          mkdir -p dist
+          mv *.whl dist/
+          pip install dist/*.whl
+      - name: install torch and requirements_test.txt
+        run: |
+          pip install torch
+          pip install -r requirements_test.txt
+      - name: run tests
+        run: |
+          python tests/run_tests.py -r 3 -v
