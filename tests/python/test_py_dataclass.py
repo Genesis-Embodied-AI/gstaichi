@@ -1,4 +1,3 @@
-# TODO: rename this to test_py_dataclasses (not doing now because would make PR review harder)
 import gc
 from dataclasses import dataclass
 from typing import Any
@@ -263,7 +262,7 @@ def test_ndarray_struct_diverse_params():
     def s2(
         my_struct_ab3: MyStructAB,
         z3: ti.types.NDArray[ti.i32, 1],
-        fieldparam1_3: ti.template(),
+        fieldparam1_3: ti.Template,
         my_struct_c3: MyStructC,
         bar3: ti.types.NDArray[ti.i32, 1],
     ) -> None:
@@ -280,7 +279,7 @@ def test_ndarray_struct_diverse_params():
         z2: ti.types.NDArray[ti.i32, 1],
         my_struct_c2: MyStructC,
         my_struct_ab2: MyStructAB,
-        fieldparam1_2: ti.template(),
+        fieldparam1_2: ti.Template,
         bar2: ti.types.NDArray[ti.i32, 1],
     ) -> None:
         # stores
@@ -299,7 +298,7 @@ def test_ndarray_struct_diverse_params():
         my_struct_ab: MyStructAB,
         bar: ti.types.NDArray[ti.i32, 1],
         my_struct_c: MyStructC,
-        fieldparam1: ti.template(),
+        fieldparam1: ti.Template,
     ) -> None:
         # stores
         z[33] += 2

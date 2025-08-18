@@ -1,7 +1,9 @@
-# type: ignore
+from typing import Any, Generic, TypeVar
+
+T = TypeVar("T")
 
 
-class Template:
+class Template(Generic[T]):
     """Type annotation for template kernel parameter.
     Useful for passing parameters to kernels by reference.
 
@@ -30,9 +32,12 @@ class Template:
         >>> test_template(a)  # will print 2
     """
 
-    def __init__(self, tensor=None, dim=None):
-        self.tensor = tensor
-        self.dim = dim
+    def __init__(self, element_type: type[T] = object, ndim: int | None = None):
+        self.element_type = element_type
+        self.ndim = ndim
+
+    def __getitem__(self, i: Any) -> T:
+        raise NotImplemented
 
 
 template = Template
