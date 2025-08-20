@@ -1,6 +1,6 @@
-from io import StringIO
 import pathlib
 import sys
+from io import StringIO
 
 import gstaichi as ti
 from gstaichi._lib.core import gstaichi_python
@@ -48,7 +48,7 @@ def test_src_ll_cache_arg_warnings(tmp_path: pathlib.Path, monkeypatch) -> None:
     ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
 
     stderr_capture = StringIO()
-    monkeypatch.setattr(sys, 'stderr', stderr_capture)
+    monkeypatch.setattr(sys, "stderr", stderr_capture)
 
     class RandomClass:
         pass
