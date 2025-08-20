@@ -43,7 +43,7 @@ def test_src_ll_cache1(tmp_path: pathlib.Path) -> None:
 # stdout/stderr capture is fairly flaky on other arch
 @test_utils.test(arch=ti.cpu)
 def test_src_ll_cache_arg_warnings(tmp_path: pathlib.Path, capfd) -> None:
-    ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
+    ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True, debug=True)
 
     class RandomClass:
         pass
