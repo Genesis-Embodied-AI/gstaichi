@@ -694,7 +694,6 @@ class Kernel:
             return
 
         if self.runtime.src_ll_cache and self.gstaichi_callable and self.gstaichi_callable.is_pure:
-            print('check src ll cache')
             kernel_source_info, _src = get_source_info_and_src(self.func)
             self.fast_checksum = src_hasher.create_cache_key(kernel_source_info, args)
             if self.fast_checksum:
