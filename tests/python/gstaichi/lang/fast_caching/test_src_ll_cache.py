@@ -1,4 +1,5 @@
 import pathlib
+
 import pytest
 
 import gstaichi as ti
@@ -42,11 +43,12 @@ def test_src_ll_cache1(tmp_path: pathlib.Path) -> None:
 
 @test_utils.test()
 @pytest.mark.parametrize(
-    "flag_value", [
+    "flag_value",
+    [
         None,
         False,
         True,
-    ]
+    ],
 )
 def test_src_ll_cache_flag(tmp_path: pathlib.Path, flag_value: bool) -> None:
     """
@@ -56,6 +58,7 @@ def test_src_ll_cache_flag(tmp_path: pathlib.Path, flag_value: bool) -> None:
         ti_init_same_arch(offline_cache_file_path=str(tmp_path), src_ll_cache=flag_value)
     else:
         ti_init_same_arch()
+
     @ti.pure
     @ti.kernel
     def k1() -> None:
