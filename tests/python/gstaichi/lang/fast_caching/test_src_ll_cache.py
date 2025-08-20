@@ -1,4 +1,6 @@
+from io import StringIO
 import pathlib
+import sys
 
 import gstaichi as ti
 from gstaichi._lib.core import gstaichi_python
@@ -42,8 +44,11 @@ def test_src_ll_cache1(tmp_path: pathlib.Path) -> None:
 # Should be enough to run these on cpu I think, and anything involving
 # stdout/stderr capture is fairly flaky on other arch
 @test_utils.test(arch=ti.cpu)
-def test_src_ll_cache_arg_warnings(tmp_path: pathlib.Path, capfd) -> None:
-    ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True, debug=True)
+def test_src_ll_cache_arg_warnings(tmp_path: pathlib.Path, monkeypatch) -> None:
+    ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
+
+    stderr_capture = StringIO()
+    monkeypatch.setattr(sys, 'stderr', stderr_capture)
 
     class RandomClass:
         pass
@@ -54,7 +59,7 @@ def test_src_ll_cache_arg_warnings(tmp_path: pathlib.Path, capfd) -> None:
         pass
 
     k1(foo=RandomClass())
-    _out, err = capfd.readouterr()
+    err = stderr_capture.getvalue()
     assert "FASTCACHE_PARAM_INVALID" in err
     assert RandomClass.__name__ in err
     assert "FASTCACHE_INVALID_FUNC" in err
@@ -64,8 +69,9 @@ def test_src_ll_cache_arg_warnings(tmp_path: pathlib.Path, capfd) -> None:
     def not_pure_k1(foo: ti.Template) -> None:
         pass
 
+    stderr_capture.truncate(0)
     not_pure_k1(foo=RandomClass())
-    _out, err = capfd.readouterr()
+    err = stderr_capture.getvalue()
     assert "FASTCACHE_PARAM_INVALID" not in err
     assert RandomClass.__name__ not in err
     assert "FASTCACHE_INVALID_FUNC" not in err
