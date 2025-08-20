@@ -37,3 +37,22 @@ def test_src_ll_cache1(tmp_path: pathlib.Path) -> None:
     assert has_pure._primal.src_ll_cache_observations.cache_key_generated
     assert has_pure._primal.src_ll_cache_observations.cache_validated
     assert has_pure._primal.src_ll_cache_observations.cache_loaded
+
+
+# Should be enough to run these on cpu I think, and anything involving
+# stdout/stderr capture is fairly flaky on other arch
+@test_utils.test(arch=ti.cpu)
+def test_src_ll_cache_arg_warnings(tmp_path: pathlib.Path, capfd) -> None:
+    ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
+
+    class RandomClass:
+        pass
+
+    @ti.pure
+    @ti.kernel
+    def k1(foo: ti.Template) -> None:
+        pass
+
+    k1(foo=RandomClass())
+    _out, err = capfd.readouterr()
+    assert "FASTCACHE_PARAM_INVALID" in err
