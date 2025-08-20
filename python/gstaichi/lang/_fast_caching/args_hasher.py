@@ -6,6 +6,7 @@ from typing import Any, Sequence
 import numpy as np
 
 from gstaichi import _logging
+
 from .._ndarray import ScalarNdarray
 from ..field import ScalarField
 from ..matrix import MatrixField, MatrixNdarray, VectorNdarray
