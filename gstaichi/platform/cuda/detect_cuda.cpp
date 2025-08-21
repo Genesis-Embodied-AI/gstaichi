@@ -11,12 +11,14 @@ bool is_cuda_api_available() {
   try {
     auto &instance = lang::CUDADriver::get_instance_without_context();
     // Note that one must be careful when detecting if CUDA is available.
-    // See https://github.com/Genesis-Embodied-AI/gstaichi/pull/139#discussion_r2291124463.
+    // See
+    // https://github.com/Genesis-Embodied-AI/gstaichi/pull/139#discussion_r2291124463.
     // More detail:
-    // When trying to run C-API tests (now removed), trying to use cuda would segfault
-    // when no cuda devices available. I tried counting the number of devices at this point
-    // of the code, which fixed that segfault, but broke cuda in wheels built in manylinux.
-    // Strangely, cuda worked on wheels built on Ubuntu 24.04, but not on manylinux.
+    // When trying to run C-API tests (now removed), trying to use cuda would
+    // segfault when no cuda devices available. I tried counting the number of
+    // devices at this point of the code, which fixed that segfault, but broke
+    // cuda in wheels built in manylinux. Strangely, cuda worked on wheels built
+    // on Ubuntu 24.04, but not on manylinux.
     return instance.detected();
   } catch (const std::exception &e) {
     std::cerr << "Error occurred while checking CUDA availability: " << e.what()
