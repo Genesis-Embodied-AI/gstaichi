@@ -32,7 +32,7 @@ def test_no_debug(capfd):
 
 
 def supports_overflow(arch):
-    return arch != ti.vulkan or platform.system() != "Darwin"  # Vulkan on macOS do not have the validation layer.
+    return arch != ti.vulkan or platform.system() != "Darwin"  # Vulkan on macOS does not have a validation layer.
 
 
 add_table = [
@@ -51,7 +51,7 @@ add_table = [
 @test_utils.test(arch=[ti.cpu, ti.cuda, ti.vulkan], debug=True)
 def test_add_overflow(capfd, ty, num):
     if not supports_overflow(ti.lang.impl.current_cfg().arch):
-        return
+        pytest.skip("current arch doesnt support overflow")
     capfd.readouterr()
 
     @ti.kernel
@@ -71,7 +71,7 @@ def test_add_overflow(capfd, ty, num):
 @test_utils.test(arch=[ti.cpu, ti.cuda, ti.vulkan], debug=True)
 def test_add_no_overflow(capfd, ty, num):
     if not supports_overflow(ti.lang.impl.current_cfg().arch):
-        return
+        pytest.skip("current arch doesnt support overflow")
     capfd.readouterr()
 
     @ti.kernel
@@ -99,7 +99,7 @@ sub_table = [
 @test_utils.test(arch=[ti.cpu, ti.cuda, ti.vulkan], debug=True)
 def test_sub_overflow_i(capfd, ty, num):
     if not supports_overflow(ti.lang.impl.current_cfg().arch):
-        return
+        pytest.skip("current arch doesnt support overflow")
     capfd.readouterr()
 
     @ti.kernel
@@ -119,7 +119,7 @@ def test_sub_overflow_i(capfd, ty, num):
 @test_utils.test(arch=[ti.cpu, ti.cuda, ti.vulkan], debug=True)
 def test_sub_no_overflow_i(capfd, ty, num):
     if not supports_overflow(ti.lang.impl.current_cfg().arch):
-        return
+        pytest.skip("current arch doesnt support overflow")
     capfd.readouterr()
 
     @ti.kernel
@@ -139,7 +139,7 @@ def test_sub_no_overflow_i(capfd, ty, num):
 @test_utils.test(arch=[ti.cpu, ti.cuda, ti.vulkan], debug=True)
 def test_sub_overflow_u(capfd, ty):
     if not supports_overflow(ti.lang.impl.current_cfg().arch):
-        return
+        pytest.skip("current arch doesnt support overflow")
     capfd.readouterr()
 
     @ti.kernel
@@ -159,7 +159,7 @@ def test_sub_overflow_u(capfd, ty):
 @test_utils.test(arch=[ti.cpu, ti.cuda, ti.vulkan], debug=True)
 def test_sub_no_overflow_u(capfd, ty):
     if not supports_overflow(ti.lang.impl.current_cfg().arch):
-        return
+        pytest.skip("current arch doesnt support overflow")
     capfd.readouterr()
 
     @ti.kernel
@@ -191,7 +191,7 @@ mul_table = [
 @test_utils.test(arch=[ti.cpu, ti.cuda, ti.vulkan], debug=True)
 def test_mul_overflow(capfd, ty, num1, num2):
     if not supports_overflow(ti.lang.impl.current_cfg().arch):
-        return
+        pytest.skip("current arch doesnt support overflow")
     # 64-bit Multiplication overflow detection does not function correctly on old drivers.
     # See https://github.com/taichi-dev/gstaichi/issues/6303
     if ti.lang.impl.current_cfg().arch == ti.vulkan and id(ty) in [
@@ -218,7 +218,7 @@ def test_mul_overflow(capfd, ty, num1, num2):
 @test_utils.test(arch=[ti.cpu, ti.cuda, ti.vulkan], debug=True)
 def test_mul_no_overflow(capfd, ty, num1, num2):
     if not supports_overflow(ti.lang.impl.current_cfg().arch):
-        return
+        pytest.skip("current arch doesnt support overflow")
     capfd.readouterr()
 
     @ti.kernel
@@ -250,7 +250,7 @@ shl_table = [
 @test_utils.test(arch=[ti.cpu, ti.cuda, ti.vulkan], debug=True)
 def test_shl_overflow(capfd, ty, num):
     if not supports_overflow(ti.lang.impl.current_cfg().arch):
-        return
+        pytest.skip("current arch doesnt support overflow")
     capfd.readouterr()
 
     @ti.kernel
@@ -270,7 +270,7 @@ def test_shl_overflow(capfd, ty, num):
 @test_utils.test(arch=[ti.cpu, ti.cuda, ti.vulkan], debug=True)
 def test_shl_no_overflow(capfd, ty, num):
     if not supports_overflow(ti.lang.impl.current_cfg().arch):
-        return
+        pytest.skip("current arch doesnt support overflow")
     capfd.readouterr()
 
     @ti.kernel
