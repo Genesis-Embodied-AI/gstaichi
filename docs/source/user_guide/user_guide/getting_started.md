@@ -4,7 +4,7 @@
 
 ## Pre-requisites
 - one of the operating systems described in [Supported systems](./supported_systems.md)
-- a supported Python version installed, and in the PATH, see [Supported systems](./supported_systems.md)
+- a supported Python version installed, see [Supported systems](./supported_systems.md)
 - a supported GPU, see [Supported systems](./supported_systems.md)
 
 ## Procedure
