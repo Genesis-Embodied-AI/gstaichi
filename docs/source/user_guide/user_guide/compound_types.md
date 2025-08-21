@@ -14,11 +14,11 @@ The following compound types are available:
 |------------------------------------|-----------------------------|---------------------------|----------------------|--------------------|-------------------------------------|---------------------------|----------------|-------------------|----------|
 | `@ti.struct`, `@ti.dataclass`      |                         yes | yes                       |                   no |                yes | yes                                 | yes                       | yes            | no                |          |
 | `@ti.data_oriented`                |yes                          | yes                       | no                   |  yes               |yes                                   | yes                       | no             | no                |          |
-| `@dataclasses.dataclass`            | yes                         | yes                       | yes                  | yes                | yes                                   | yes                     |planned         | no                | recommended approach |
+| `@dataclasses.dataclass`            | yes                         | yes                       | yes                  | yes                | yes                                   | yes                     |yes         | no                | recommended approach |
 
 `@dataclass.dataclass` is the current recommended approach:
 - supports both fields and ndarrays
-- planned to be nestable
+- can be nested
 - can be used in both kernel and func calls
 - can be combined with other parameters, in a kernel or func call
 
@@ -38,8 +38,12 @@ This struct:
 The members are read-only. However, ndarrays and fields are stored as references (pointers), so the contents of the ndarrays and fields can be freely mutated by the kernels and ti.func's.
 
 ## Limitations:
+- on Mac, can only be used with Fields, not with ndarray [*1]
 - Passing python dataclasses to `@ti.real_func` it not supported currently
 - automatic differentiation is not supported currently
+
+Notes:
+- [*1] technically can be used with ndarray, but in practice, the current implementation will result in exceeding the number of allowed kernel parameters
 
 ## Usage:
 
