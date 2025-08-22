@@ -60,7 +60,7 @@ def test_src_ll_cache_arg_warnings(tmp_path: pathlib.Path, capfd) -> None:
     _out, err = capfd.readouterr()
     assert "FASTCACHE_PARAM_INVALID" in err
     assert RandomClass.__name__ in err
-    assert "FASTCACHE_INVALID_FUNC" in err
+    assert "[FASTCACHE][INVALID_FUNC]" in err
     assert k1.__name__ in err
 
     @ti.kernel
@@ -71,5 +71,5 @@ def test_src_ll_cache_arg_warnings(tmp_path: pathlib.Path, capfd) -> None:
     _out, err = capfd.readouterr()
     assert "FASTCACHE_PARAM_INVALID" not in err
     assert RandomClass.__name__ not in err
-    assert "FASTCACHE_INVALID_FUNC" not in err
+    assert "[FASTCACHE][INVALID_FUNC]" not in err
     assert k1.__name__ not in err

@@ -24,7 +24,7 @@ def create_cache_key(kernel_source_info: FunctionSourceInfo, args: Sequence[Any]
         # the bit in caps at start should not be modified without modifying corresponding text
         # freetext bit can be freely modified
         _logging.warn(
-            f"FASTCACHE_INVALID_FUNC The pure function {kernel_source_info.function_name} could not be "
+            f"[FASTCACHE][INVALID_FUNC] The pure function {kernel_source_info.function_name} could not be "
             "fast cached, because one or more parameter types were invalid"
         )
         return None
