@@ -59,7 +59,7 @@ In this case, we provide the field to the kernel via a parameter, with typing ty
 
 | Tensor type | Launch latency | Runtime speed |Resizable without recompile? [*1]|Encapsulation?[*2]|
 |-------------|----------------|-------------|----------------------------|----------------|
-|ndarray      | Slowest        | Slower      | yes | Yes |
+| ndarray     | Slowest        | Slower      | yes | Yes |
 | global field | Fastest       | Fast        | no | No |
 | field arg.  | Medium          | Fast       | no | Yes |
 
