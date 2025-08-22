@@ -20,6 +20,8 @@
 
 namespace gstaichi::lang {
 
+class ProgramImpl;
+
 namespace cuda {
 class CudaDevice;
 }  // namespace cuda
@@ -34,7 +36,9 @@ class CpuDevice;
 
 class LlvmRuntimeExecutor {
  public:
-  LlvmRuntimeExecutor(CompileConfig &config, KernelProfilerBase *profiler);
+  LlvmRuntimeExecutor(CompileConfig &config,
+                      KernelProfilerBase *profiler,
+                      gstaichi::lang::ProgramImpl *program_impl);
   virtual ~LlvmRuntimeExecutor();
   /**
    * Initializes the runtime system for LLVM based backends.
@@ -162,6 +166,7 @@ class LlvmRuntimeExecutor {
   bool use_device_memory_pool_ = false;
   bool finalized_{false};
   KernelProfilerBase *profiler_ = nullptr;
+  ProgramImpl *program_impl_;
 };
 
 }  // namespace gstaichi::lang
