@@ -1,5 +1,6 @@
 import dataclasses
 import enum
+import numbers
 import time
 from typing import Any, Sequence
 
@@ -37,14 +38,11 @@ def dataclass_to_repr(path: tuple[str, ...], arg: Any) -> str:
 
 def stringify_obj_type(path: tuple[str, ...], obj: Any) -> str | None:
     """
-    stringify the type of obj
+    Convert an object into a string representation that only depends on its type.
 
     String should somehow represent the type of obj. Doesnt have to be hashed, nor does it have
-    to be the actual python type string, just something representative of the type, and won't collide
+    to be the actual python type string, just a string that is representative of the type, and won't collide
     with different (allowed) types.
-
-        path is used during debugging. We should have a way of printing this without
-        having to hack the code really. Using logger perhaps?
     """
     arg_type = type(obj)
     if isinstance(obj, ScalarNdarray):
@@ -66,13 +64,13 @@ def stringify_obj_type(path: tuple[str, ...], obj: Any) -> str | None:
     if is_data_oriented(obj):
         child_repr_l = []
         for k, v in obj.__dict__.items():
-            _child_repr = stringify_obj_type(path + (k,), v)
+            _child_repr = stringify_obj_type((*path, k), v)
             if _child_repr is None:
                 print("not representable child", k, type(v), "path", path)
                 return None
             child_repr_l.append(f"{k}: {_child_repr}")
         return ", ".join(child_repr_l)
-    if arg_type in [int, float, np.float32, np.float64, np.int32, np.int64, bool]:
+    if issubclass(arg_type, (numbers.Number, np.number)):
         return str(arg_type)
     if arg_type is np.bool_:
         # np is deprecating bool. Treat specially/carefully
@@ -91,9 +89,9 @@ def hash_args(args: Sequence[Any]) -> str | None:
     g_num_calls += 1
     g_num_args += len(args)
     hash_l = []
-    for arg_i, arg in enumerate(args):
+    for i_arg, arg in enumerate(args):
         start = time.time()
-        _hash = stringify_obj_type((str(arg_i),), arg)
+        _hash = stringify_obj_type((str(i_arg),), arg)
         g_repr_time += time.time() - start
         if not _hash:
             g_num_ignored_calls += 1

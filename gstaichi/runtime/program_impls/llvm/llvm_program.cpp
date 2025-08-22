@@ -7,7 +7,6 @@
 #include "gstaichi/program/program.h"
 #include "gstaichi/codegen/codegen.h"
 #include "gstaichi/codegen/llvm/struct_llvm.h"
-#include "gstaichi/runtime/llvm/llvm_offline_cache.h"
 #include "gstaichi/runtime/llvm/kernel_launcher.h"
 #include "gstaichi/runtime/cpu/kernel_launcher.h"
 #include "gstaichi/analysis/offline_cache_util.h"
@@ -31,7 +30,8 @@ LlvmProgramImpl::LlvmProgramImpl(CompileConfig &config_,
     : ProgramImpl(config_),
       compilation_workers("compile",
                           config_.print_ir ? 1 : config_.num_compile_threads) {
-  runtime_exec_ = std::make_unique<LlvmRuntimeExecutor>(config_, profiler);
+  runtime_exec_ =
+      std::make_unique<LlvmRuntimeExecutor>(config_, profiler, this);
   cache_data_ = std::make_unique<LlvmOfflineCache>();
 }
 

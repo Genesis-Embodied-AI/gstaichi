@@ -37,12 +37,12 @@ def test_read_file(tmp_path: pathlib.Path) -> None:
 
 
 @test_utils.test()
-def test_function_hasher_hash_kernel(monkeypatch) -> None:
+def test_function_hasher_hash_kernel(monkeypatch, temporary_module) -> None:
     test_files_path = "tests/python/gstaichi/lang/fast_caching/test_files"
     monkeypatch.syspath_prepend(test_files_path)
 
     def get_hash(name: str) -> _wrap_inspect.FunctionSourceInfo:
-        mod = importlib.import_module(name)
+        mod = temporary_module(name)
         info, _src = _wrap_inspect.get_source_info_and_src(mod.f1.fn)
         hash = function_hasher.hash_kernel(info)
         return hash
@@ -57,12 +57,12 @@ def test_function_hasher_hash_kernel(monkeypatch) -> None:
 
 
 @test_utils.test()
-def test_function_hasher_hash_functions(monkeypatch) -> None:
+def test_function_hasher_hash_functions(monkeypatch, temporary_module) -> None:
     test_files_path = "tests/python/gstaichi/lang/fast_caching/test_files"
     monkeypatch.syspath_prepend(test_files_path)
 
     def get_infos(name: str) -> list[HashedFunctionSourceInfo]:
-        mod = importlib.import_module(name)
+        mod = temporary_module(name)
         info, _src = _wrap_inspect.get_source_info_and_src(mod.f1.fn)
         hashed_infos = function_hasher.hash_functions([info])
         return hashed_infos
