@@ -1174,6 +1174,7 @@ def test_real_func_write_ndarray_cfg():
 def test_ndarray_max_num_args() -> None:
     if platform.system() == "Darwin" and ti.lang.impl.current_cfg().arch == ti.vulkan:
         pytest.skip(reason="Mac doesn't support so many arguments, on Vulkan")
+
     num_args = 512
     kernel_templ = """
 import gstaichi as ti
