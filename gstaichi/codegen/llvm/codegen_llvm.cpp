@@ -9,7 +9,6 @@
 #include "gstaichi/analysis/offline_cache_util.h"
 #include "gstaichi/ir/statements.h"
 #include "gstaichi/ir/transforms.h"
-#include "gstaichi/runtime/llvm/llvm_offline_cache.h"
 #include "gstaichi/program/extension.h"
 #include "gstaichi/runtime/program_impls/llvm/llvm_program.h"
 #include "gstaichi/codegen/llvm/struct_llvm.h"

@@ -4,7 +4,6 @@
 
 #if defined(TI_WITH_LLVM)
 #include "gstaichi/codegen/cpu/codegen_cpu.h"
-#include "gstaichi/runtime/llvm/llvm_offline_cache.h"
 #include "gstaichi/runtime/program_impls/llvm/llvm_program.h"
 #endif
 #if defined(TI_WITH_CUDA)

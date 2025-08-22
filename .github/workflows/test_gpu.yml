@@ -6,8 +6,12 @@ on:
         description: 'The head ref (branch name or PR ref)'
         required: true
         type: string
-      artifact_name:
-        description: 'Name of the artifact to download'
+      wheel_artifact_name:
+        description: 'Name of the wheel artifact to download'
+        required: true
+        type: string
+      cpptests_artifact_name:
+        description: 'Name of the cpp tests artifact to download'
         required: true
         type: string
   workflow_dispatch:
@@ -21,7 +25,10 @@ jobs:
           fetch-depth: 0
       - uses: actions/download-artifact@v4
         with:
-          name: ${{ inputs.artifact_name }}
+          name: ${{ inputs.cpptests_artifact_name }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.wheel_artifact_name }}
       - name: Python check
         uses: actions/setup-python@v4
         with:
@@ -48,4 +55,10 @@ jobs:
           pip install -r requirements_test.txt
       - name: run tests
         run: |
-          python tests/run_tests.py -r 3 -v
+          ls -lh
+          chmod +x gstaichi_cpp_tests
+          ls -lh
+          export TI_LIB_DIR="$(python -c 'import gstaichi as ti; print(ti.__path__[0])' | tail -n 1)/_lib/runtime"
+          ./gstaichi_cpp_tests
+          python tests/run_tests.py -r 3 -v --arch cuda
+          python tests/run_tests.py -r 3 -v --arch vulkan

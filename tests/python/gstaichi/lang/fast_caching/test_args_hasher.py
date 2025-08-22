@@ -23,6 +23,21 @@ def test_args_hasher_numeric() -> None:
 
 
 @test_utils.test()
+def test_args_hasher_bool() -> None:
+    seen = set()
+    for arg in (False, np.bool(False)):
+        print("arg", arg, type(arg))
+        for it in (0, 1):
+            hash = args_hasher.hash_args([arg])
+            assert hash is not None
+            if it == 0:
+                assert hash not in seen
+                seen.add(hash)
+            else:
+                assert hash in seen
+
+
+@test_utils.test()
 def test_args_hasher_unsupported_data_oriented() -> None:
     @ti.data_oriented
     class Foo: ...

@@ -13,4 +13,5 @@ user_guide/scalar_tensors
 user_guide/synchronization
 user_guide/compound_types
 user_guide/quirks
+user_guide/troubleshooting
 ```
