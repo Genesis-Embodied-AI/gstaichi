@@ -4,7 +4,7 @@ Since running code on GPUs is inherently multi-threaded, synchronization of writ
 
 # Why is this an issue?
 
-- when one thread writes to global memory, the write doesn't take place immediately. It takes a long time (at computer speeds) for the data to work its way across to global memory, which is not on the GPU die itself, but in other chips, albeit on the same GPU card.
+- when one thread writes to global memory, the write doesn't take place immediately. It takes 10-150ns for the data to work its way across to global memory, which is not on the GPU die itself, but in other chips, albeit on the same GPU card.
     - think of it like sending a snail mail letter, whilst you work on other things, and lead your life
 - after the store statement has executed, the kernel continues to execute other statements, whilst the data works its way to memory
 ```
