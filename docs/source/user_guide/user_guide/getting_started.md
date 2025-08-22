@@ -3,7 +3,7 @@
 # Installation
 
 ## Pre-requisites
-- cross-platform (MacOS>=14, Ubuntu>=22.04, Windows>=10), see [Supported systems](./supported_systems.md)
+- a supported platform (MacOS Arm64, Linux x64, Windows x64), see [Supported systems](./supported_systems.md)
 - a supported Python version installed, see [Supported systems](./supported_systems.md)
 - optionally, a supported GPU, see [Supported systems](./supported_systems.md)
 
