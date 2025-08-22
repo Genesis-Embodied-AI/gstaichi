@@ -80,7 +80,9 @@ def stringify_obj_type(path: tuple[str, ...], obj: Any) -> str | None:
     # The bit in caps should not be modified without updating corresponding test
     # The rest of free text can be freely modified
     # (will probably formalize this in more general doc / contributor guidelines at some point)
-    _logging.warn(f"[FASTCACHE][PARAM_INVALID] Parameter with path {path} and type {arg_type} not allowed by fast cache.")
+    _logging.warn(
+        f"[FASTCACHE][PARAM_INVALID] Parameter with path {path} and type {arg_type} not allowed by fast cache."
+    )
     return None
 
 
