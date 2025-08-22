@@ -3,9 +3,9 @@
 # Installation
 
 ## Pre-requisites
-- one of the operating systems described in [Supported systems](./supported_systems.md)
+- cross-platform (MacOS>=14, Ubuntu>=22.04, Windows>=10), see [Supported systems](./supported_systems.md)
 - a supported Python version installed, see [Supported systems](./supported_systems.md)
-- a supported GPU, see [Supported systems](./supported_systems.md)
+- optionally, a supported GPU, see [Supported systems](./supported_systems.md)
 
 ## Procedure
 ```
