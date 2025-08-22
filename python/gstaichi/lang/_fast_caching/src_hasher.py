@@ -2,6 +2,8 @@ from typing import Any, Iterable, Sequence
 
 from pydantic import BaseModel
 
+from gstaichi import _logging
+
 from .._wrap_inspect import FunctionSourceInfo
 from . import args_hasher, config_hasher, function_hasher
 from .fast_caching_types import HashedFunctionSourceInfo
@@ -19,6 +21,12 @@ def create_cache_key(kernel_source_info: FunctionSourceInfo, args: Sequence[Any]
     """
     args_hash = args_hasher.hash_args(args)
     if args_hash is None:
+        # the bit in caps at start should not be modified without modifying corresponding text
+        # freetext bit can be freely modified
+        _logging.warn(
+            f"[FASTCACHE][INVALID_FUNC] The pure function {kernel_source_info.function_name} could not be "
+            "fast cached, because one or more parameter types were invalid"
+        )
         return None
     kernel_hash = function_hasher.hash_kernel(kernel_source_info)
     config_hash = config_hasher.hash_compile_config()

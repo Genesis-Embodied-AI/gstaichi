@@ -6,6 +6,8 @@ from typing import Any, Sequence
 
 import numpy as np
 
+from gstaichi import _logging
+
 from .._ndarray import ScalarNdarray
 from ..field import ScalarField
 from ..matrix import MatrixField, MatrixNdarray, VectorNdarray
@@ -41,11 +43,7 @@ def stringify_obj_type(path: tuple[str, ...], obj: Any) -> str | None:
     String should somehow represent the type of obj. Doesnt have to be hashed, nor does it have
     to be the actual python type string, just a string that is representative of the type, and won't collide
     with different (allowed) types.
-
-    `path` is used during debugging.
     """
-    # TODO: We should have a way of printing this without having to hack the code really. Using logger perhaps?
-    # (I have another PR that addreses this https://github.com/Genesis-Embodied-AI/gstaichi/pull/144/files)
     arg_type = type(obj)
     if isinstance(obj, ScalarNdarray):
         return f"[nd-{obj.dtype}-{len(obj.shape)}]"
@@ -79,6 +77,12 @@ def stringify_obj_type(path: tuple[str, ...], obj: Any) -> str | None:
         return "np.bool_"
     if isinstance(obj, enum.Enum):
         return f"enum-{obj.name}-{obj.value}"
+    # The bit in caps should not be modified without updating corresponding test
+    # The rest of free text can be freely modified
+    # (will probably formalize this in more general doc / contributor guidelines at some point)
+    _logging.warn(
+        f"[FASTCACHE][PARAM_INVALID] Parameter with path {path} and type {arg_type} not allowed by fast cache."
+    )
     return None
 
 
