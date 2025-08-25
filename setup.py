@@ -223,10 +223,8 @@ def get_cmake_args():
         # /M uses multi-threaded build (similar to -j)
         os.environ["SKBUILD_BUILD_OPTIONS"] = f"/M"
     if sys.platform == "darwin":
-        if platform.machine() == "arm64":
-            cmake_args += ["-DCMAKE_OSX_ARCHITECTURES=arm64"]
-        else:
-            cmake_args += ["-DCMAKE_OSX_ARCHITECTURES=x86_64"]
+        # We're only going to support Silicon/arm64 for the foreseeable future
+        cmake_args += ["-DCMAKE_OSX_ARCHITECTURES=arm64"]
     return cmake_args
 
 
