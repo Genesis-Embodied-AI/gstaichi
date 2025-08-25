@@ -122,7 +122,7 @@ void PtxCache::dump() {
   // Dump cached CompiledKernelData to disk
   for (auto &[_, k] : dataWrapperByCacheKey) {
     if (!k.ptx.has_value()) {
-      TI_WARN("PTX for cache_key {} is not set, skipping dump",
+      TI_DEBUG("PTX for cache_key {} is not set, skipping dump",
               k.metadata.cache_key);
       continue;
     }
