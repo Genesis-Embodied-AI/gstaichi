@@ -221,10 +221,7 @@ def warn_restricted_version():
             import gstaichi as ti  # pylint: disable=import-outside-toplevel
 
             wheel_tag = try_get_wheel_tag(ti)
-            if wheel_tag and "manylinux2014" in wheel_tag:
-                print_yellow_bold(
-                    "You have installed a restricted version of gstaichi, certain features (e.g. Vulkan & GGUI) will not work."
-                )
+            if wheel_tag and "manylinux" in wheel_tag:
                 libc_ver = try_get_loaded_libc_version()
                 if libc_ver and libc_ver < (2, 27):
                     print_yellow_bold(
@@ -242,8 +239,5 @@ def warn_restricted_version():
                     print_yellow_bold("    $ python3 -m pip install --force-reinstall gstaichi")
                     print()
 
-                print_yellow_bold(
-                    "You can suppress this warning by setting the environment variable TI_MANYLINUX2014_OK=1."
-                )
         except Exception:
             pass
