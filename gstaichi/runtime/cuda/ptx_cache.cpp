@@ -123,7 +123,7 @@ void PtxCache::dump() {
   for (auto &[_, k] : dataWrapperByCacheKey) {
     if (!k.ptx.has_value()) {
       TI_TRACE("PTX for cache_key {} is not set, skipping dump",
-              k.metadata.cache_key);
+               k.metadata.cache_key);
       continue;
     }
     TI_TRACE("Dumping PTX for cache_key {}", k.metadata.cache_key);
