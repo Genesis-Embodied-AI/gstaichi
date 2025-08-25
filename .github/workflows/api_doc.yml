@@ -42,6 +42,8 @@ jobs:
         run: |
           cd docs
           make html
+          grep '<title>' build/html/index.html
+          cat build/html/index.html
       - name: Deploy docs
         uses: peaceiris/actions-gh-pages@v3
         with:

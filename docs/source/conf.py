@@ -3,6 +3,7 @@ import os
 import gstaichi as ti
 
 __version__ = ".".join([str(v) for v in ti.__version__])
+print("sphinx doccs conf.py __version__", __version__)
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
