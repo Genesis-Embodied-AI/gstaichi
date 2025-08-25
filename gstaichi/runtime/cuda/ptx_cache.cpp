@@ -122,11 +122,11 @@ void PtxCache::dump() {
   // Dump cached CompiledKernelData to disk
   for (auto &[_, k] : dataWrapperByCacheKey) {
     if (!k.ptx.has_value()) {
-      TI_WARN("PTX for cache_key {} is not set, skipping dump",
+      TI_TRACE("PTX for cache_key {} is not set, skipping dump",
               k.metadata.cache_key);
       continue;
     }
-    TI_DEBUG("Dumping PTX for cache_key {}", k.metadata.cache_key);
+    TI_TRACE("Dumping PTX for cache_key {}", k.metadata.cache_key);
     auto cache_filename = make_filename(k.metadata.cache_key);
     std::ofstream fs{cache_filename, std::ios::out | std::ios::binary};
     TI_ASSERT(fs.is_open());
