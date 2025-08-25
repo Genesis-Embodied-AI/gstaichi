@@ -709,6 +709,10 @@ class Kernel:
                 )
                 if self.compiled_kernel_data:
                     self.src_ll_cache_observations.cache_loaded = True
+        elif self.gstaichi_callable and not self.gstaichi_callable.is_pure and self.runtime.print_non_pure:
+            # bit in caps should not be modified without updating corresponding test
+            # freetext can be freely modified
+            print(f"[NOT_PURE] Not pure: {self.func.__name__}")
 
         kernel_name = f"{self.func.__name__}_c{self.kernel_counter}_{key[1]}"
         _logging.trace(f"Materializing kernel {kernel_name} in {self.autodiff_mode}...")

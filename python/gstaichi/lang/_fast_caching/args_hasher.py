@@ -41,11 +41,7 @@ def stringify_obj_type(path: tuple[str, ...], obj: Any) -> str | None:
     String should somehow represent the type of obj. Doesnt have to be hashed, nor does it have
     to be the actual python type string, just a string that is representative of the type, and won't collide
     with different (allowed) types.
-
-    `path` is used during debugging.
     """
-    # TODO: We should have a way of printing this without having to hack the code really. Using logger perhaps?
-    # (I have another PR that addreses this https://github.com/Genesis-Embodied-AI/gstaichi/pull/144/files)
     arg_type = type(obj)
     if isinstance(obj, ScalarNdarray):
         return f"[nd-{obj.dtype}-{len(obj.shape)}]"

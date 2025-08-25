@@ -133,3 +133,48 @@ def test_src_hasher_store_validate(monkeypatch: pytest.MonkeyPatch, tmp_path: pa
     assert src_hasher.validate_cache_key(cache_key)
 
     assert not src_hasher.validate_cache_key("abcdefg")
+
+
+# Should be enough to run these on cpu I think, and anything involving
+# stdout/stderr capture is fairly flaky on other arch
+@test_utils.test(arch=ti.cpu)
+@pytest.mark.parametrize(
+    "print_non_pure",
+    [
+        None,
+        False,
+        True,
+    ],
+)
+def test_src_hasher_print_non_pure(tmp_path: pathlib.Path, print_non_pure: bool | None, capfd) -> None:
+    """
+    Test ti.init parameter print_non_pure, which should print non pure functions when enabled
+    """
+    if print_non_pure:
+        ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True, print_non_pure=print_non_pure)
+    else:
+        ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
+
+    @ti.pure
+    @ti.kernel
+    def k1_pure() -> None:
+        pass
+
+    k1_pure()
+    out, _err = capfd.readouterr()
+    output_contains_not_pure = "[NOT_PURE]" in out
+    assert not output_contains_not_pure
+
+    @ti.kernel
+    def not_pure_k1() -> None:
+        pass
+
+    not_pure_k1()
+    out, _err = capfd.readouterr()
+    output_contains_not_pure = "[NOT_PURE]" in out
+    if output_contains_not_pure:
+        assert not_pure_k1.__name__ in out
+    if print_non_pure is None:
+        assert not output_contains_not_pure
+    else:
+        assert output_contains_not_pure == print_non_pure

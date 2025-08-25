@@ -349,6 +349,7 @@ class PyGsTaichi:
         self.kernels: list[Kernel] = kernels or []
         self._signal_handler_registry = None
         self.unfinalized_fields_builder = {}
+        self.print_non_pure: bool = False
 
     @property
     def compiling_callable(self) -> KernelCxx | Kernel | Function:

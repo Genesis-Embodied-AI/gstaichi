@@ -307,6 +307,7 @@ def init(
     _test_mode=False,
     enable_fallback=True,
     require_version=None,
+    print_non_pure: bool = False,
     **kwargs,
 ):
     """Initializes the GsTaichi runtime.
@@ -419,6 +420,7 @@ def init(
         impl.get_runtime().short_circuit_operators = spec_cfg.short_circuit_operators
         impl.get_runtime().print_full_traceback = spec_cfg.print_full_traceback
         impl.get_runtime().unrolling_limit = spec_cfg.unrolling_limit
+        impl.get_runtime().print_non_pure = print_non_pure
         _logging.set_logging_level(spec_cfg.log_level.lower())
 
     # select arch (backend):
