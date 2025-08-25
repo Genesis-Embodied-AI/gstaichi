@@ -127,7 +127,7 @@ def test_ndarray_1d():
     n = 4
 
     @ti.kernel
-    def run(x: ti.types.ndarray(), y: ti.types.ndarray()):
+    def run(x: ti.types.NDArray[ti.i32, 1], y: ti.types.NDArray[ti.i32, 1]):
         for i in range(n):
             x[i] += i + y[i]
 
@@ -148,7 +148,7 @@ def _test_ndarray_2d():
     m = 7
 
     @ti.kernel
-    def run(x: ti.types.ndarray(), y: ti.types.ndarray()):
+    def run(x: ti.types.NDArray[ti.i32, 2], y: ti.types.NDArray[ti.i32, 2]):
         for i in range(n):
             for j in range(m):
                 x[i, j] += i + j + y[i, j]
@@ -393,7 +393,7 @@ def test_matrix_ndarray_python_scope():
 
 def _test_matrix_ndarray_gstaichi_scope():
     @ti.kernel
-    def func(a: ti.types.ndarray()):
+    def func(a: ti.types.NDArray[ti.types.matrix(2, 2, ti.i32), 1]):
         for i in range(5):
             for j, k in ti.ndrange(2, 2):
                 a[i][j, k] = j * j + k * k
@@ -419,7 +419,7 @@ def test_matrix_ndarray_gstaichi_scope_real_matrix():
 
 def _test_matrix_ndarray_gstaichi_scope_struct_for():
     @ti.kernel
-    def func(a: ti.types.ndarray()):
+    def func(a: ti.types.NDArray[ti.types.matrix(2, 2, ti.i32), 1]):
         for i in a:
             for j, k in ti.ndrange(2, 2):
                 a[i][j, k] = j * j + k * k
@@ -458,7 +458,7 @@ def test_vector_ndarray_python_scope():
 
 def _test_vector_ndarray_gstaichi_scope():
     @ti.kernel
-    def func(a: ti.types.ndarray()):
+    def func(a: ti.types.NDArray[ti.types.vector(10, ti.i32), 1]):
         for i in range(5):
             for j in range(4):
                 a[i][j * j] = j * j
@@ -485,7 +485,7 @@ def test_vector_ndarray_gstaichi_scope_real_matrix():
 # number of compiled functions
 def _test_compiled_functions():
     @ti.kernel
-    def func(a: ti.types.ndarray(ti.types.vector(n=10, dtype=ti.i32))):
+    def func(a: ti.types.NDArray[ti.types.vector(n=10, dtype=ti.i32), 1]):
         for i in range(5):
             for j in range(4):
                 a[i][j * j] = j * j
@@ -508,7 +508,7 @@ def test_compiled_functions():
 
 def _test_arg_not_match():
     @ti.kernel
-    def func1(a: ti.types.ndarray(dtype=ti.types.vector(2, ti.i32))):
+    def func1(a: ti.types.NDArray[ti.types.vector(2, ti.i32), 2]):
         pass
 
     x = ti.Matrix.ndarray(2, 3, ti.i32, shape=(4, 7))
@@ -526,7 +526,7 @@ def _test_arg_not_match():
         func1(x)
 
     @ti.kernel
-    def func2(a: ti.types.ndarray(dtype=ti.types.matrix(2, 2, ti.i32))):
+    def func2(a: ti.types.NDArray[ti.types.matrix(2, 2, ti.i32), 2]):
         pass
 
     x = ti.Vector.ndarray(2, ti.i32, shape=(4, 7))
@@ -537,7 +537,7 @@ def _test_arg_not_match():
         func2(x)
 
     @ti.kernel
-    def func3(a: ti.types.ndarray(dtype=ti.types.matrix(2, 1, ti.i32))):
+    def func3(a: ti.types.NDArray[ti.types.matrix(2, 1, ti.i32), 2]):
         pass
 
     x = ti.Vector.ndarray(2, ti.i32, shape=(4, 7))
@@ -548,7 +548,7 @@ def _test_arg_not_match():
         func3(x)
 
     @ti.kernel
-    def func5(a: ti.types.ndarray(dtype=ti.types.matrix(2, 3, dtype=ti.i32))):
+    def func5(a: ti.types.NDArray[ti.types.matrix(2, 3, dtype=ti.i32), 2]):
         pass
 
     x = ti.Vector.ndarray(2, ti.i32, shape=(4, 7))
@@ -559,7 +559,7 @@ def _test_arg_not_match():
         func5(x)
 
     @ti.kernel
-    def func7(a: ti.types.ndarray(ndim=2)):
+    def func7(a: ti.types.NDArray[ti.i32, 2]):
         pass
 
     x = ti.ndarray(ti.i32, shape=(3,))
@@ -570,7 +570,7 @@ def _test_arg_not_match():
         func7(x)
 
     @ti.kernel
-    def func8(x: ti.types.ndarray(dtype=ti.f32)):
+    def func8(x: ti.types.NDArray[ti.f32, 2]):
         pass
 
     x = ti.ndarray(dtype=ti.i32, shape=(16, 16))
@@ -604,7 +604,7 @@ def test_different_shape():
     x = ti.ndarray(dtype=ti.f32, shape=(n1, n1))
 
     @ti.kernel
-    def init(d: ti.i32, arr: ti.types.ndarray()):
+    def init(d: ti.i32, arr: ti.types.NDArray):
         for i, j in arr:
             arr[i, j] = d
 
@@ -618,7 +618,7 @@ def test_different_shape():
 
 def _test_ndarray_grouped():
     @ti.kernel
-    def func(a: ti.types.ndarray()):
+    def func(a: ti.types.NDArray):
         for i in ti.grouped(a):
             for j, k in ti.ndrange(2, 2):
                 a[i][j, k] = j * j
@@ -652,7 +652,7 @@ def test_ndarray_grouped_real_matrix():
 @test_utils.test(arch=supported_archs_gstaichi_ndarray)
 def test_ndarray_as_template():
     @ti.kernel
-    def func(arr_src: ti.template(), arr_dst: ti.template()):
+    def func(arr_src: ti.Template, arr_dst: ti.Template):
         for i, j in ti.ndrange(*arr_src.shape):
             arr_dst[i, j] = arr_src[i, j]
 
@@ -684,7 +684,7 @@ def test_gaussian_kernel():
         return ti.exp(-0.5 * ti.pow(x / sigma, 2)) / (sigma * ti.sqrt(2.0 * M_PI))
 
     @ti.kernel
-    def fill_gaussian_kernel(ker: ti.types.ndarray(ti.f32, ndim=1), N: ti.i32):
+    def fill_gaussian_kernel(ker: ti.types.NDArray[ti.f32, 1], N: ti.i32):
         sum = 0.0
         for i in range(2 * N + 1):
             ker[i] = gaussian(i - N, ti.sqrt(N))
@@ -717,7 +717,7 @@ def test_ndarray_numpy_matrix():
 @test_utils.test(arch=supported_archs_gstaichi_ndarray, require=ti.extension.data64)
 def test_ndarray_python_scope_read_64bit(dtype):
     @ti.kernel
-    def run(x: ti.types.ndarray()):
+    def run(x: ti.types.NDArray[dtype, 1]):
         for i in x:
             x[i] = i + ti.i64(2**40)
 
@@ -779,12 +779,12 @@ def test_ndarray_with_fp16():
     half2 = ti.types.vector(n=2, dtype=ti.f16)
 
     @ti.kernel
-    def init(x: ti.types.ndarray(dtype=half2, ndim=1)):
+    def init(x: ti.types.NDArray[half2, 1]):
         for i in x:
             x[i] = half2(2.0)
 
     @ti.kernel
-    def test(table: ti.types.ndarray(dtype=half2, ndim=1)):
+    def test(table: ti.types.NDArray[half2, 1]):
         tmp = ti.Vector([ti.f16(0.0), ti.f16(0.0)])
         for i in ti.static(range(2)):
             tmp = tmp + 4.0 * table[i]
@@ -809,7 +809,7 @@ def test_ndarray_with_fp16():
 )
 def test_scalar_ndarray_oob():
     @ti.kernel
-    def access_arr(input: ti.types.ndarray(), x: ti.i32) -> ti.f32:
+    def access_arr(input: ti.types.NDArray, x: ti.i32) -> ti.f32:
         return input[x]
 
     input = np.random.randn(4)
@@ -834,11 +834,11 @@ def test_scalar_ndarray_oob():
 )
 def test_matrix_ndarray_oob():
     @ti.kernel
-    def access_arr(input: ti.types.ndarray(), p: ti.i32, q: ti.i32, x: ti.i32, y: ti.i32) -> ti.f32:
+    def access_arr(input: ti.types.NDArray[ti.math.mat2, 2], p: ti.i32, q: ti.i32, x: ti.i32, y: ti.i32) -> ti.f32:
         return input[p, q][x, y]
 
     @ti.kernel
-    def valid_access(indices: ti.types.ndarray(dtype=ivec3, ndim=1), dummy: ti.types.ndarray(dtype=ivec3, ndim=1)):
+    def valid_access(indices: ti.types.NDArray[ivec3, 1], dummy: ti.types.NDArray[ivec3, 1]):
         for i in indices:
             index_vec = ti.Vector([0, 0, 0])
             for j in ti.static(range(3)):
@@ -897,7 +897,7 @@ def test_0dim_ndarray_read_write_gstaichi_scope():
     x = ti.ndarray(dtype=ti.f32, shape=())
 
     @ti.kernel
-    def write(x: ti.types.ndarray()):
+    def write(x: ti.types.NDArray):
         a = x[()] + 1
         x[None] = 2 * a
 
@@ -943,7 +943,7 @@ def test_ndarray_fill():
 @test_utils.test(arch=supported_archs_gstaichi_ndarray)
 def test_ndarray_wrong_dtype():
     @ti.kernel
-    def test2(arr: ti.types.ndarray(dtype=ti.f32)):
+    def test2(arr: ti.types.NDArray[ti.f32, 2]):
         for I in ti.grouped(arr):
             arr[I] = 2.0
 
@@ -959,7 +959,7 @@ def test_ndarray_bad_assign():
     tp_ivec3 = ti.types.vector(3, ti.i32)
 
     @ti.kernel
-    def test4(arr: ti.types.ndarray(dtype=tp_ivec3)):
+    def test4(arr: ti.types.NDArray[tp_ivec3, 2]):
         for I in ti.grouped(arr):
             arr[I] = [1, 2]
 
@@ -973,7 +973,7 @@ def test_bad_ndim():
     x = ti.ndarray(ti.f32, shape=(12, 13))
 
     @ti.kernel
-    def test5(arr: ti.types.ndarray(ndim=1)):
+    def test5(arr: ti.types.NDArray[ti.f32, 1]):
         for i, j in arr:
             arr[i, j] = 0
 
@@ -984,7 +984,7 @@ def test_bad_ndim():
 @test_utils.test(arch=supported_archs_gstaichi_ndarray)
 def test_type_hint_matrix():
     @ti.kernel
-    def test(x: ti.types.ndarray(dtype=ti.types.matrix())):
+    def test(x: ti.types.NDArray[ti.types.matrix(), 1]):
         for I in ti.grouped(x):
             x[I] = 1.0
 
@@ -1004,7 +1004,7 @@ def test_type_hint_matrix():
 @test_utils.test(arch=supported_archs_gstaichi_ndarray)
 def test_type_hint_vector():
     @ti.kernel
-    def test(x: ti.types.ndarray(dtype=ti.types.vector())):
+    def test(x: ti.types.NDArray[ti.types.vector(), 1]):
         for I in ti.grouped(x):
             x[I] = 1.0
 
@@ -1024,11 +1024,11 @@ def test_type_hint_vector():
 @test_utils.test(arch=supported_archs_gstaichi_ndarray)
 def test_pass_ndarray_to_func():
     @ti.func
-    def bar(weight: ti.types.ndarray(ti.f32, ndim=3)) -> ti.f32:
+    def bar(weight: ti.types.NDArray[ti.f32, 3]) -> ti.f32:
         return weight[1, 1, 1]
 
     @ti.kernel
-    def foo(weight: ti.types.ndarray(ti.f32, ndim=3)) -> ti.f32:
+    def foo(weight: ti.types.NDArray[ti.f32, 3]) -> ti.f32:
         return bar(weight)
 
     weight = ti.ndarray(dtype=ti.f32, shape=(2, 2, 2))
@@ -1039,11 +1039,11 @@ def test_pass_ndarray_to_func():
 @test_utils.test(arch=[ti.cpu, ti.cuda])
 def test_pass_ndarray_to_real_func():
     @ti.real_func
-    def bar(weight: ti.types.ndarray(ti.f32, ndim=3)) -> ti.f32:
+    def bar(weight: ti.types.NDArray[ti.f32, 3]) -> ti.f32:
         return weight[1, 1, 1]
 
     @ti.kernel
-    def foo(weight: ti.types.ndarray(ti.f32, ndim=3)) -> ti.f32:
+    def foo(weight: ti.types.NDArray[ti.f32, 3]) -> ti.f32:
         return bar(weight)
 
     weight = ti.ndarray(dtype=ti.f32, shape=(2, 2, 2))
@@ -1056,7 +1056,7 @@ def test_pass_ndarray_outside_kernel_to_real_func():
     weight = ti.ndarray(dtype=ti.f32, shape=(2, 2, 2))
 
     @ti.real_func
-    def bar(weight: ti.types.ndarray(ti.f32, ndim=3)) -> ti.f32:
+    def bar(weight: ti.types.NDArray[ti.f32, 3]) -> ti.f32:
         return weight[1, 1, 1]
 
     @ti.kernel
@@ -1127,7 +1127,7 @@ def test_ndarray_clamp_verify():
 @test_utils.test(arch=supported_archs_gstaichi_ndarray)
 def test_ndarray_arg_builtin_float_type():
     @ti.kernel
-    def foo(x: ti.types.ndarray(float, ndim=0)) -> ti.f32:
+    def foo(x: ti.types.NDArray[float, 0]) -> ti.f32:
         return x[None]
 
     x = ti.ndarray(ti.f32, shape=())
@@ -1138,11 +1138,11 @@ def test_ndarray_arg_builtin_float_type():
 @test_utils.test(arch=[ti.cpu, ti.cuda])
 def test_real_func_vector_ndarray_arg():
     @ti.real_func
-    def foo(x: ti.types.ndarray(ndim=1)) -> vec3:
+    def foo(x: ti.types.NDArray[vec3, 1]) -> vec3:
         return x[0]
 
     @ti.kernel
-    def test(x: ti.types.ndarray(ndim=1)) -> vec3:
+    def test(x: ti.types.NDArray[vec3, 1]) -> vec3:
         return foo(x)
 
     x = ti.Vector.ndarray(3, ti.f32, shape=(1))
@@ -1153,12 +1153,12 @@ def test_real_func_vector_ndarray_arg():
 @test_utils.test(arch=[ti.cpu, ti.cuda])
 def test_real_func_write_ndarray_cfg():
     @ti.real_func
-    def bar(a: ti.types.ndarray(ndim=1)):
+    def bar(a: ti.types.NDArray[ti.types.vector(3, float), 1]):
         a[0] = vec3(1)
 
     @ti.kernel
     def foo(
-        a: ti.types.ndarray(ndim=1),
+        a: ti.types.NDArray[ti.types.vector(3, float), 1],
     ):
         a[0] = vec3(3)
         bar(a)
