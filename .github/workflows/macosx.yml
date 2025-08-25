@@ -95,7 +95,7 @@ jobs:
       - name: 'Test wheel on 14'
         run: |
           pip install *.whl
-          python -c "import taichi; print(taichi.__version__); ti.init(arch=ti.metal)"
+          python -c "import gstaichi as ti; print(ti.__version__); ti.init(arch=ti.metal)"
           pip install -r requirements_test.txt
           python tests/run_tests.py -v -k test_smoke.py --arch metal,vulkan,cpu
   publish_pypi:
