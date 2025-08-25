@@ -304,9 +304,10 @@ def init(
     arch=None,
     default_fp=None,
     default_ip=None,
-    _test_mode=False,
-    enable_fallback=True,
-    require_version=None,
+    _test_mode: bool = False,
+    enable_fallback: bool = True,
+    require_version: str | None = None,
+    src_ll_cache: bool = True,
     **kwargs,
 ):
     """Initializes the GsTaichi runtime.
@@ -318,7 +319,9 @@ def init(
         arch: Backend to use. This is usually :const:`~gstaichi.lang.cpu` or :const:`~gstaichi.lang.gpu`.
         default_fp (Optional[type]): Default floating-point type.
         default_ip (Optional[type]): Default integral type.
-        require_version (Optional[string]): A version string.
+        require_version: A version string.
+        src_ll_cache: enable SRC-LL-CACHE, which will accelerate loading from cache, across all architectures,
+                      for pure kernels (i.e. kernels declared as @ti.pure)
         **kwargs: GsTaichi provides highly customizable compilation through
             ``kwargs``, which allows for fine grained control of GsTaichi compiler
             behavior. Below we list some of the most frequently used ones. For a
@@ -419,6 +422,7 @@ def init(
         impl.get_runtime().short_circuit_operators = spec_cfg.short_circuit_operators
         impl.get_runtime().print_full_traceback = spec_cfg.print_full_traceback
         impl.get_runtime().unrolling_limit = spec_cfg.unrolling_limit
+        impl.get_runtime().src_ll_cache = src_ll_cache
         _logging.set_logging_level(spec_cfg.log_level.lower())
 
     # select arch (backend):
