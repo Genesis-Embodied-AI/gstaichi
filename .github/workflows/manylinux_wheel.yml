@@ -45,6 +45,10 @@ jobs:
         with:
           name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}
           path: wheelhouse/*.whl
+      - uses: actions/upload-artifact@v4
+        with:
+          name: manylinux_cpptests_${{ matrix.PYTHON_CP_VERSION }}
+          path: build/gstaichi_cpp_tests
 
   upload_to_storage:
     name: Manylinux wheel upload
@@ -79,7 +83,7 @@ jobs:
   test_wheel:
     name: Manylinux wheel Test
     runs-on: ubuntu-22.04
-    needs: upload_to_storage
+    needs: build_wheel
     concurrency:
       # group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-test
       group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-test
@@ -117,13 +121,13 @@ jobs:
           bash .github/workflows/scripts_new/manylinux_wheel/5_test.sh
   api_docs:
     uses: ./.github/workflows/api_doc.yml
-    needs: upload_to_storage
+    needs: build_wheel
     with:
       head_ref: ${{ github.head_ref || github.ref_name }}
       artifact_name: manylinux_wheel_cp310
   pyright_linter:
     uses: ./.github/workflows/pyright_linter.yml
-    needs: upload_to_storage
+    needs: build_wheel
     with:
       head_ref: ${{ github.head_ref  || github.ref_name }}
       artifact_name: manylinux_wheel_cp310
@@ -145,3 +149,10 @@ jobs:
     with:
       artifact_name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}
     secrets: inherit
+  test_gpu:
+    uses: ./.github/workflows/test_gpu.yml
+    needs: build_wheel
+    with:
+      head_ref: ${{ github.head_ref || github.ref_name }}
+      wheel_artifact_name: manylinux_wheel_cp310
+      cpptests_artifact_name: manylinux_cpptests_cp310

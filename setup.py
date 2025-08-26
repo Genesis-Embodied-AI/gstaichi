@@ -95,7 +95,6 @@ class Clean(clean):
             "dist",
             "python/gstaichi/assets",
             "python/gstaichi/_lib/runtime",
-            "python/gstaichi/_lib/c_api",
             "gstaichi.egg-info",
             "python/gstaichi.egg-info",
             "build",
@@ -265,9 +264,6 @@ def sign_development_for_apple_m1():
             for path in glob.glob("python/gstaichi/_lib/core/*.so"):
                 print(f"signing {path}..")
                 subprocess.check_call(["codesign", "--force", "--deep", "--sign", "-", path])
-            for path in glob.glob("python/gstaichi/_lib/c_api/lib/*.so"):
-                print(f"signing {path}..")
-                subprocess.check_call(["codesign", "--force", "--deep", "--sign", "-", path])
         except:
             print("cannot sign python shared library for macos arm64 build")
 
@@ -297,6 +293,7 @@ setup(
         "numpy",
         "colorama",
         "dill",
+        "pydantic",
         "rich",
         "setuptools>=68.0.0",  # Required for Python 3.12+ compatibility
         "cffi>=1.16.0",

@@ -27,6 +27,11 @@ if(TI_WITH_LLVM)
   list(APPEND GSTAICHI_TESTS_SOURCE ${GSTAICHI_TESTS_LLVM_SOURCE})
 endif()
 
+if(TI_WITH_CUDA)
+  file(GLOB GSTAICHI_TESTS_CUDA_SOURCE "tests/cpp/runtime/cuda/*.cpp")
+  list(APPEND GSTAICHI_TESTS_SOURCE ${GSTAICHI_TESTS_CUDA_SOURCE})
+endif()
+
 add_executable(${TESTS_NAME} ${GSTAICHI_TESTS_SOURCE})
 if (WIN32)
     # Output the executable to build/ instead of build/Debug/...
@@ -84,5 +89,6 @@ PRIVATE
 if(LINUX)
     target_link_options(${TESTS_NAME} PUBLIC -Wl,--exclude-libs=ALL)
     target_link_options(${TESTS_NAME} PUBLIC -static-libgcc -static-libstdc++)
+    target_link_libraries(${TESTS_NAME} PUBLIC stdc++fs)
 endif()
 add_test(NAME ${TESTS_NAME} COMMAND ${TESTS_NAME})

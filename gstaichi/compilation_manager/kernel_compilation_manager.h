@@ -18,7 +18,7 @@ struct CacheData {
   };
   using Version = std::uint16_t[3];
 
-  struct KernelData {
+  struct Metadata {
     std::string kernel_key;
     std::size_t size{0};          // byte
     std::time_t created_at{0};    // sec
@@ -26,20 +26,22 @@ struct CacheData {
 
     // Dump the kernel to disk if `cache_mode` == `MemAndDiskCache`
     CacheMode cache_mode{MemCache};
-
-    std::unique_ptr<lang::CompiledKernelData> compiled_kernel_data;
-
     TI_IO_DEF(kernel_key, size, created_at, last_used_at);
   };
 
-  using KernelMetadata = KernelData;  // Required by CacheCleaner
+  struct DataWrapper {
+    Metadata metadata;
+    std::unique_ptr<lang::CompiledKernelData> compiled_kernel_data;
+
+    TI_IO_DEF(metadata);
+  };
 
   Version version{};
   std::size_t size{0};
-  std::unordered_map<std::string, KernelData> kernels;
+  std::unordered_map<std::string, DataWrapper> dataWrapperByCacheKey;
 
   // NOTE: The "version" must be the first field to be serialized
-  TI_IO_DEF(version, size, kernels);
+  TI_IO_DEF(version, size, dataWrapperByCacheKey);
 };
 
 class KernelCompilationManager final {
@@ -48,7 +50,7 @@ class KernelCompilationManager final {
   static constexpr char kCacheFilenameFormat[] = "{}.tic";
   static constexpr char kMetadataLockName[] = "ticache.lock";
 
-  using KernelCacheData = CacheData::KernelData;
+  using KernelCacheData = CacheData::DataWrapper;
   using CachingKernels = std::unordered_map<std::string, KernelCacheData>;
 
   struct Config {
@@ -71,6 +73,17 @@ class KernelCompilationManager final {
                            int max_bytes,
                            double cleaning_factor) const;
 
+  void store_fast_cache(const std::string &checksum,
+                        const Kernel &kernel,
+                        const CompileConfig &compile_config,
+                        const DeviceCapabilityConfig &caps,
+                        CompiledKernelData &ckd);
+
+  const CompiledKernelData *load_fast_cache(const std::string &checksum,
+                                            const std::string &kernel_name,
+                                            const CompileConfig &compile_config,
+                                            const DeviceCapabilityConfig &caps);
+
  private:
   std::string make_filename(const std::string &kernel_key) const;
 
@@ -84,7 +97,7 @@ class KernelCompilationManager final {
                               const Kernel &kernel_def) const;
 
   const CompiledKernelData *try_load_cached_kernel(
-      const Kernel &kernel_def,
+      const std::string &kernel_name,
       const std::string &kernel_key,
       Arch arch,
       CacheData::CacheMode cache_mode);
@@ -100,12 +113,13 @@ class KernelCompilationManager final {
 
   static CacheData::CacheMode get_cache_mode(
       const CompileConfig &compile_config,
-      const Kernel &kernel_def);
+      bool kernel_ir_is_ast);
 
   Config config_;
   CachingKernels caching_kernels_;
   CacheData cached_data_;
   std::vector<KernelCacheData *> updated_data_;
+  const std::string cache_dir_;
 };
 
 }  // namespace gstaichi::lang

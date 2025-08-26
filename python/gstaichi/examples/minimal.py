@@ -2,7 +2,7 @@ import gstaichi as ti
 
 
 @ti.kernel
-def lcg_ti(B: int, lcg_its: int, a: ti.types.ndarray(ti.i32, 1)) -> None:
+def lcg_ti(B: int, lcg_its: int, a: ti.types.NDArray[ti.i32, 1]) -> None:
     """
     Linear congruential generator https://en.wikipedia.org/wiki/Linear_congruential_generator
     """
