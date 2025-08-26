@@ -12,7 +12,7 @@ __version__ = ".".join([str(v) for v in ti.__version__])
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "GsTaichi"
-copyright = "2023 GsTaichi Graphics Inc; 2025 Genesis AI Inc"
+copyright = "2025 Genesis AI Inc"
 author = ""
 release = __version__
 version = __version__
@@ -53,7 +53,6 @@ templates_path = ["_templates"]
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "pydata_sphinx_theme"
-
 html_css_files = [
     "css/custom.css",
 ]

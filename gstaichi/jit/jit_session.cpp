@@ -6,6 +6,8 @@
 
 namespace gstaichi::lang {
 
+class ProgramImpl;
+
 #ifdef TI_WITH_LLVM
 std::unique_ptr<JITSession> create_llvm_jit_session_cpu(
     GsTaichiLLVMContext *tlctx,
@@ -15,7 +17,8 @@ std::unique_ptr<JITSession> create_llvm_jit_session_cpu(
 std::unique_ptr<JITSession> create_llvm_jit_session_cuda(
     GsTaichiLLVMContext *tlctx,
     const CompileConfig &config,
-    Arch arch);
+    Arch arch,
+    ProgramImpl *program_impl);
 
 std::unique_ptr<JITSession> create_llvm_jit_session_amdgpu(
     GsTaichiLLVMContext *tlctx,
@@ -29,13 +32,14 @@ JITSession::JITSession(GsTaichiLLVMContext *tlctx, const CompileConfig &config)
 
 std::unique_ptr<JITSession> JITSession::create(GsTaichiLLVMContext *tlctx,
                                                const CompileConfig &config,
-                                               Arch arch) {
+                                               Arch arch,
+                                               ProgramImpl *program_impl) {
 #ifdef TI_WITH_LLVM
   if (arch_is_cpu(arch)) {
     return create_llvm_jit_session_cpu(tlctx, config, arch);
   } else if (arch == Arch::cuda) {
 #if defined(TI_WITH_CUDA)
-    return create_llvm_jit_session_cuda(tlctx, config, arch);
+    return create_llvm_jit_session_cuda(tlctx, config, arch, program_impl);
 #else
     TI_NOT_IMPLEMENTED
 #endif
