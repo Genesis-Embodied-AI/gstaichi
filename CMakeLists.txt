@@ -81,7 +81,6 @@ endif()
 if(APPLE)
     add_definitions(-DOSX_DEPLOYMENT_TARGET=11.0)
     add_definitions(-DTARGET_OS_OSX)
-    add_definitions(-DWHEEL_ARCH=universal2)
 endif()
 
 if (USE_LLD)
