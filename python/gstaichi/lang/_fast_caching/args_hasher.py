@@ -54,7 +54,7 @@ def stringify_obj_type(path: tuple[str, ...], obj: object) -> str | None:
     if isinstance(obj, MatrixNdarray):
         return f"[ndm-{obj.m}-{obj.n}-{obj.dtype}-{len(obj.shape)}]"
     if "torch.Tensor" in str(arg_type):
-        return f"[pt-{obj.dtype}-{obj.ndim}]"
+        return f"[pt-{obj.dtype}-{obj.ndim}]"  # type: ignore
     if isinstance(obj, np.ndarray):
         return f"[np-{obj.dtype}-{obj.ndim}]"
     if isinstance(obj, MatrixField):
