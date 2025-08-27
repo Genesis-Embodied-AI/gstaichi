@@ -42,6 +42,29 @@ def test_src_ll_cache1(tmp_path: pathlib.Path) -> None:
 
 
 @test_utils.test()
+def test_src_ll_cache_repeat_after_load(tmp_path: pathlib.Path) -> None:
+    ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
+
+    @ti.pure
+    @ti.kernel
+    def has_pure(a: ti.types.NDArray[ti.i32, 1]) -> None:
+        a[0] += 1
+
+    ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
+    a = ti.ndarray(ti.i32, (10,))
+    a[0] = 5
+    for i in range(3):
+        has_pure(a)
+        assert a[0] == 6 + i
+
+    ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
+    a = ti.ndarray(ti.i32, (10,))
+    a[0] = 5
+    for i in range(3):
+        has_pure(a)
+        assert a[0] == 6 + i
+
+
 @pytest.mark.parametrize(
     "flag_value",
     [
@@ -50,6 +73,7 @@ def test_src_ll_cache1(tmp_path: pathlib.Path) -> None:
         True,
     ],
 )
+@test_utils.test()
 def test_src_ll_cache_flag(tmp_path: pathlib.Path, flag_value: bool) -> None:
     """
     Test ti.init(src_ll_cache) flag
