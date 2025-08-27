@@ -690,7 +690,6 @@ class Kernel:
         if key is None:
             key = (self.func, 0, self.autodiff_mode)
         self.runtime.materialize()
-        self.compiled_kernel_data = None
         self.fast_checksum = None
 
         if key in self.materialized_kernels:
