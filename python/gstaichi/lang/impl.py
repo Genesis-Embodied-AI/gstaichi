@@ -351,6 +351,7 @@ class PyGsTaichi:
         self.unfinalized_fields_builder = {}
         self.short_circuit_operators: bool = False
         self.unrolling_limit: int = 0
+        self.src_ll_cache: bool = True
 
     @property
     def compiling_callable(self) -> KernelCxx | Kernel | Function:
