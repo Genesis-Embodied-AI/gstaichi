@@ -1,5 +1,3 @@
-# type: ignore
-
 import atexit
 import os
 import shutil
@@ -198,8 +196,6 @@ def reset():
         # will raise error because a is unavailable after reset.
     """
     impl.reset()
-    global runtime
-    runtime = impl.get_runtime()
 
 
 class _EnvironmentConfigurator:
@@ -417,12 +413,13 @@ def init(
         raise KeyError(f'Unrecognized keyword argument(s) for ti.init: {", ".join(unexpected_keys)}')
 
     # dispatch configurations that are not in ti.cfg:
+    runtime = impl.get_runtime()
     if not _test_mode:
         _ti_core.set_core_trigger_gdb_when_crash(spec_cfg.gdb_trigger)
-        impl.get_runtime().short_circuit_operators = spec_cfg.short_circuit_operators
-        impl.get_runtime().print_full_traceback = spec_cfg.print_full_traceback
-        impl.get_runtime().unrolling_limit = spec_cfg.unrolling_limit
-        impl.get_runtime().src_ll_cache = src_ll_cache
+        runtime.short_circuit_operators = spec_cfg.short_circuit_operators
+        runtime.print_full_traceback = spec_cfg.print_full_traceback
+        runtime.unrolling_limit = spec_cfg.unrolling_limit
+        runtime.src_ll_cache = src_ll_cache
         _logging.set_logging_level(spec_cfg.log_level.lower())
 
     # select arch (backend):
@@ -456,9 +453,10 @@ def init(
 
 def no_activate(*args):
     """Deactivates a SNode pointer."""
-    assert isinstance(get_runtime().compiling_callable, _ti_core.KernelCxx)
+    compiling_callable = get_runtime().compiling_callable
+    assert isinstance(compiling_callable, _ti_core.KernelCxx)
     for v in args:
-        get_runtime().compiling_callable.no_activate(v._snode.ptr)
+        compiling_callable.no_activate(v._snode.ptr)
 
 
 def block_local(*args):
@@ -557,7 +555,7 @@ def loop_unique(val, covers=None):
         covers = []
     if not isinstance(covers, (list, tuple)):
         covers = [covers]
-    covers = [x.snode.ptr if isinstance(x, Expr) else x.ptr for x in covers]
+    covers = [x.snode.ptr if isinstance(x, Expr) else x.ptr for x in covers]  # type: ignore
     return _ti_core.expr_loop_unique(
         Expr(val).ptr, covers, _ti_core.DebugInfo(impl.get_runtime().get_current_src_info())
     )
