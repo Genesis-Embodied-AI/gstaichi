@@ -3,8 +3,6 @@ import sys
 
 import pytest
 
-import pytest
-
 import gstaichi as ti
 from gstaichi._test_tools import ti_init_same_arch
 
