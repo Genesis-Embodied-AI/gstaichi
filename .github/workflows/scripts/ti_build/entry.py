@@ -38,6 +38,7 @@ def build_wheel(python: Command, pip: Command) -> None:
     extra = []
 
     cmake_args.writeback()
+    assert misc.options is not None
     if misc.options.tag_local:
         wheel_tag = f"+{misc.options.tag_local}"
     elif misc.options.tag_config:
@@ -57,6 +58,8 @@ def build_wheel(python: Command, pip: Command) -> None:
             extra.extend(["-p", "manylinux2014_x86_64"])
         else:
             extra.extend(["-p", "manylinux_2_27_x86_64"])
+    if platform.system() == "Darwin":
+        extra.extend(["-p", "macosx-11.0-arm64"])
 
     python("setup.py", "clean")
     python("misc/make_changelog.py", "--ver", "origin/main", "--repo_dir", "./", "--save")
