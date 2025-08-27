@@ -36,7 +36,7 @@ def dataclass_to_repr(path: tuple[str, ...], arg: Any) -> str:
     return "[" + ",".join(repr_l) + "]"
 
 
-def stringify_obj_type(path: tuple[str, ...], obj: Any) -> str | None:
+def stringify_obj_type(path: tuple[str, ...], obj: object) -> str | None:
     """
     Convert an object into a string representation that only depends on its type.
 
