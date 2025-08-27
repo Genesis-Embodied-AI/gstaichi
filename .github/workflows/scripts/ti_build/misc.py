@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # -- stdlib --
+import argparse
 import inspect
 import os
 import platform
@@ -14,7 +15,7 @@ from .bootstrap import get_cache_home  # noqa, this is a re-export
 from .escapes import escape_codes
 
 # -- code --
-options = None
+options: argparse.Namespace | None = None
 
 
 def is_manylinux2014() -> bool:
