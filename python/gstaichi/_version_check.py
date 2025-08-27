@@ -28,12 +28,9 @@ def check_version(cur_uuid):
     elif system == "Windows":
         payload["platform"] = "win_amd64"
     elif system == "Darwin":
-        if platform.release() < "19.0.0":
-            payload["platform"] = "macosx_10_14_x86_64"
-        elif platform.machine() == "x86_64":
-            payload["platform"] = "macosx_10_15_x86_64"
-        else:
-            payload["platform"] = "macosx_11_0_arm64"
+        # we only support arm64
+        assert payload["platform"] == "arm64"
+        payload["platform"] = "macosx_11_0_arm64"
 
     python_version = platform.python_version().split(".")
     payload["python"] = "cp" + python_version[0] + python_version[1]

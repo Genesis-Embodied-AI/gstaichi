@@ -56,7 +56,7 @@ def get_version():
 
         version = scm_get_version()
         # Parse version string (e.g., "1.2.3" or "1.2.3.dev0+g1234567")
-        version_parts = version.split("+")[0].split(".dev")[0].split(".")
+        version_parts = version.split("+")[0].split(".dev")[0].split("rc")[0].split(".")
         major = version_parts[0] if len(version_parts) > 0 else "0"
         minor = version_parts[1] if len(version_parts) > 1 else "0"
         patch = version_parts[2] if len(version_parts) > 2 else "0"
@@ -223,10 +223,8 @@ def get_cmake_args():
         # /M uses multi-threaded build (similar to -j)
         os.environ["SKBUILD_BUILD_OPTIONS"] = f"/M"
     if sys.platform == "darwin":
-        if platform.machine() == "arm64":
-            cmake_args += ["-DCMAKE_OSX_ARCHITECTURES=arm64"]
-        else:
-            cmake_args += ["-DCMAKE_OSX_ARCHITECTURES=x86_64"]
+        # We're only going to support Silicon/arm64 for the foreseeable future
+        cmake_args += ["-DCMAKE_OSX_ARCHITECTURES=arm64"]
     return cmake_args
 
 

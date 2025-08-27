@@ -25,6 +25,7 @@ from gstaichi import _logging
 from gstaichi._lib import core as _ti_core
 from gstaichi._lib.core.gstaichi_python import (
     ASTBuilder,
+    CompiledKernelData,
     FunctionKey,
     KernelCxx,
     KernelLaunchContext,
@@ -607,6 +608,7 @@ class Kernel:
         self.gstaichi_callable: GsTaichiCallable | None = None
         self.visited_functions: set[FunctionSourceInfo] = set()
         self.kernel_function_info: FunctionSourceInfo | None = None
+        self.compiled_kernel_data_by_key: dict[CompiledKernelKeyType, CompiledKernelData] = {}
 
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
 
@@ -667,6 +669,9 @@ class Kernel:
                     ),
                 ):
                     pass
+                elif annotation is ndarray_type.NdarrayType:
+                    # convert from ti.types.NDArray into ti.types.NDArray()
+                    annotation = annotation()
                 elif id(annotation) in primitive_types.type_ids:
                     pass
                 elif isinstance(annotation, sparse_matrix_builder):
@@ -687,13 +692,12 @@ class Kernel:
         if key is None:
             key = (self.func, 0, self.autodiff_mode)
         self.runtime.materialize()
-        self.compiled_kernel_data = None
         self.fast_checksum = None
 
         if key in self.materialized_kernels:
             return
 
-        if self.gstaichi_callable and self.gstaichi_callable.is_pure:
+        if self.runtime.src_ll_cache and self.gstaichi_callable and self.gstaichi_callable.is_pure:
             kernel_source_info, _src = get_source_info_and_src(self.func)
             self.fast_checksum = src_hasher.create_cache_key(kernel_source_info, args)
             if self.fast_checksum:
@@ -701,13 +705,13 @@ class Kernel:
             if self.fast_checksum and src_hasher.validate_cache_key(self.fast_checksum):
                 self.src_ll_cache_observations.cache_validated = True
                 prog = impl.get_runtime().prog
-                self.compiled_kernel_data = prog.load_fast_cache(
+                self.compiled_kernel_data_by_key[key] = prog.load_fast_cache(
                     self.fast_checksum,
                     self.func.__name__,
                     prog.config(),
                     prog.get_device_caps(),
                 )
-                if self.compiled_kernel_data:
+                if self.compiled_kernel_data_by_key[key]:
                     self.src_ll_cache_observations.cache_loaded = True
 
         kernel_name = f"{self.func.__name__}_c{self.kernel_counter}_{key[1]}"
@@ -778,7 +782,7 @@ class Kernel:
                     )
                 struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
                 tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
-                ctx.only_parse_function_def = self.compiled_kernel_data is not None
+                ctx.only_parse_function_def = self.compiled_kernel_data_by_key.get(key) is not None
                 transform_tree(tree, ctx)
                 if not ctx.is_real_function:
                     if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
@@ -792,7 +796,7 @@ class Kernel:
         assert key not in self.materialized_kernels
         self.materialized_kernels[key] = gstaichi_kernel
 
-    def launch_kernel(self, t_kernel: KernelCxx, *args) -> Any:
+    def launch_kernel(self, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
         assert len(args) == len(self.arg_metas), f"{len(self.arg_metas)} arguments needed but {len(args)} provided"
 
         tmps = []
@@ -1038,8 +1042,8 @@ class Kernel:
 
         try:
             prog = impl.get_runtime().prog
-            if not self.compiled_kernel_data:
-                self.compiled_kernel_data = prog.compile_kernel(prog.config(), prog.get_device_caps(), t_kernel)
+            if not compiled_kernel_data:
+                compiled_kernel_data = prog.compile_kernel(prog.config(), prog.get_device_caps(), t_kernel)
                 if self.fast_checksum:
                     src_hasher.store(self.fast_checksum, self.visited_functions)
                     prog.store_fast_cache(
@@ -1047,10 +1051,10 @@ class Kernel:
                         self.kernel_cpp,
                         prog.config(),
                         prog.get_device_caps(),
-                        self.compiled_kernel_data,
+                        compiled_kernel_data,
                     )
                     self.src_ll_cache_observations.cache_stored = True
-            prog.launch_kernel(self.compiled_kernel_data, launch_ctx)
+            prog.launch_kernel(compiled_kernel_data, launch_ctx)
         except Exception as e:
             e = handle_exception_from_cpp(e)
             if impl.get_runtime().print_full_traceback:
@@ -1124,7 +1128,8 @@ class Kernel:
             impl.current_cfg().opt_level = 1
         key = self.ensure_compiled(*args)
         kernel_cpp = self.materialized_kernels[key]
-        return self.launch_kernel(kernel_cpp, *args)
+        compiled_kernel_data = self.compiled_kernel_data_by_key.get(key, None)
+        return self.launch_kernel(kernel_cpp, compiled_kernel_data, *args)
 
 
 # For a GsTaichi class definition like below:

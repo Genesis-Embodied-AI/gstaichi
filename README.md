@@ -44,8 +44,8 @@ pip install gstaichi
 
 # Documentation
 
-- [docs](docs/lang/articles)
-- [API reference](https://ideal-adventure-2n6lpyw.pages.github.io/gstaichi.html)
+- [docs](https://genesis-embodied-ai.github.io/gstaichi/user_guide/index.html)
+- [API reference](https://genesis-embodied-ai.github.io/gstaichi/autoapi/index.html)
 
 # Something is broken!
 
