@@ -132,10 +132,9 @@ class TI_DLL_EXPORT Program {
 
   Function *create_function(const FunctionKey &func_key);
 
-  const CompiledKernelData &compile_kernel(
-      const CompileConfig &compile_config,
-      const DeviceCapabilityConfig &device_caps,
-      const Kernel &kernel_def);
+  CompileResult compile_kernel(const CompileConfig &compile_config,
+                               const DeviceCapabilityConfig &device_caps,
+                               const Kernel &kernel_def);
 
   void launch_kernel(const CompiledKernelData &compiled_kernel_data,
                      LaunchContextBuilder &ctx);
