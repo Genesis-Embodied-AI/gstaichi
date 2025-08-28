@@ -6,6 +6,8 @@ from typing import Any, Sequence
 
 import numpy as np
 
+from gstaichi import _logging
+
 from .._ndarray import ScalarNdarray
 from ..field import ScalarField
 from ..matrix import MatrixField, MatrixNdarray, VectorNdarray
@@ -34,7 +36,7 @@ def dataclass_to_repr(path: tuple[str, ...], arg: Any) -> str:
     return "[" + ",".join(repr_l) + "]"
 
 
-def stringify_obj_type(path: tuple[str, ...], obj: Any) -> str | None:
+def stringify_obj_type(path: tuple[str, ...], obj: object) -> str | None:
     """
     Convert an object into a string representation that only depends on its type.
 
@@ -52,7 +54,7 @@ def stringify_obj_type(path: tuple[str, ...], obj: Any) -> str | None:
     if isinstance(obj, MatrixNdarray):
         return f"[ndm-{obj.m}-{obj.n}-{obj.dtype}-{len(obj.shape)}]"
     if "torch.Tensor" in str(arg_type):
-        return f"[pt-{obj.dtype}-{obj.ndim}]"
+        return f"[pt-{obj.dtype}-{obj.ndim}]"  # type: ignore
     if isinstance(obj, np.ndarray):
         return f"[np-{obj.dtype}-{obj.ndim}]"
     if isinstance(obj, MatrixField):
@@ -75,6 +77,12 @@ def stringify_obj_type(path: tuple[str, ...], obj: Any) -> str | None:
         return "np.bool_"
     if isinstance(obj, enum.Enum):
         return f"enum-{obj.name}-{obj.value}"
+    # The bit in caps should not be modified without updating corresponding test
+    # The rest of free text can be freely modified
+    # (will probably formalize this in more general doc / contributor guidelines at some point)
+    _logging.warn(
+        f"[FASTCACHE][PARAM_INVALID] Parameter with path {path} and type {arg_type} not allowed by fast cache."
+    )
     return None
 
 

@@ -80,10 +80,28 @@ jobs:
           mkdir -p dist
           mv *.whl dist/
           aws s3 sync dist/ s3://genesis-ai-compiler/ci/gstaichi/${GITHUB_SHA:0:7}/mac-${{ matrix.MAC_OS_VERSION }}-${{ matrix.PYTHON_CP_VERSION }}/
+  test_install_15_on_14:
+    needs: build_mac_14_15
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python check
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - uses: actions/download-artifact@v4
+        with:
+          name: mac_wheel_15_cp310
+      - name: 'Test wheel on 14'
+        run: |
+          pip install *.whl
+          python -c "import gstaichi as ti; print(ti.__version__); ti.init(arch=ti.metal)"
+          pip install -r requirements_test.txt
+          python tests/run_tests.py -v -k test_smoke.py --arch metal,vulkan,cpu
   publish_pypi:
     uses: ./.github/workflows/publish_pypi.yml
     if: github.event_name == 'release'
-    needs: build_mac_14_15
+    needs: test_install_15_on_14
     permissions:
       id-token: write
       contents: read
