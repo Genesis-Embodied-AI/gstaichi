@@ -41,9 +41,9 @@ void SNodeRwAccessorsBank::Accessors::write_float(const std::vector<int> &I,
   set_kernel_args(I, snode_->num_active_indices, &launch_ctx);
   launch_ctx.set_arg_float({snode_->num_active_indices}, val);
   prog_->synchronize();
-  auto tuple = prog_->compile_kernel(prog_->compile_config(),
-                                     prog_->get_device_caps(), *writer_);
-  auto &compiled_kernel_data = tuple.compiled_kernel_data;
+  CompileResult compile_result = prog_->compile_kernel(
+      prog_->compile_config(), prog_->get_device_caps(), *writer_);
+  auto &compiled_kernel_data = compile_result.compiled_kernel_data;
   prog_->launch_kernel(compiled_kernel_data, launch_ctx);
 }
 
@@ -51,9 +51,9 @@ float64 SNodeRwAccessorsBank::Accessors::read_float(const std::vector<int> &I) {
   prog_->synchronize();
   auto launch_ctx = reader_->make_launch_context();
   set_kernel_args(I, snode_->num_active_indices, &launch_ctx);
-  const auto tuple = prog_->compile_kernel(prog_->compile_config(),
-                                           prog_->get_device_caps(), *reader_);
-  auto &compiled_kernel_data = tuple.compiled_kernel_data;
+  const CompileResult compile_result = prog_->compile_kernel(
+      prog_->compile_config(), prog_->get_device_caps(), *reader_);
+  auto &compiled_kernel_data = compile_result.compiled_kernel_data;
   prog_->launch_kernel(compiled_kernel_data, launch_ctx);
   prog_->synchronize();
   return launch_ctx.get_struct_ret_float({0});
@@ -66,9 +66,9 @@ void SNodeRwAccessorsBank::Accessors::write_int(const std::vector<int> &I,
   set_kernel_args(I, snode_->num_active_indices, &launch_ctx);
   launch_ctx.set_arg_int({snode_->num_active_indices}, val);
   prog_->synchronize();
-  auto tuple = prog_->compile_kernel(prog_->compile_config(),
-                                     prog_->get_device_caps(), *writer_);
-  auto &compiled_kernel_data = tuple.compiled_kernel_data;
+  CompileResult compile_result = prog_->compile_kernel(
+      prog_->compile_config(), prog_->get_device_caps(), *writer_);
+  auto &compiled_kernel_data = compile_result.compiled_kernel_data;
   prog_->launch_kernel(compiled_kernel_data, launch_ctx);
 }
 
@@ -79,9 +79,9 @@ void SNodeRwAccessorsBank::Accessors::write_uint(const std::vector<int> &I,
   set_kernel_args(I, snode_->num_active_indices, &launch_ctx);
   launch_ctx.set_arg_uint({snode_->num_active_indices}, val);
   prog_->synchronize();
-  auto tuple = prog_->compile_kernel(prog_->compile_config(),
-                                     prog_->get_device_caps(), *writer_);
-  auto &compiled_kernel_data = tuple.compiled_kernel_data;
+  CompileResult compile_result = prog_->compile_kernel(
+      prog_->compile_config(), prog_->get_device_caps(), *writer_);
+  auto &compiled_kernel_data = compile_result.compiled_kernel_data;
   prog_->launch_kernel(compiled_kernel_data, launch_ctx);
 }
 
@@ -89,9 +89,9 @@ int64 SNodeRwAccessorsBank::Accessors::read_int(const std::vector<int> &I) {
   prog_->synchronize();
   auto launch_ctx = reader_->make_launch_context();
   set_kernel_args(I, snode_->num_active_indices, &launch_ctx);
-  auto tuple = prog_->compile_kernel(prog_->compile_config(),
-                                     prog_->get_device_caps(), *reader_);
-  auto &compiled_kernel_data = tuple.compiled_kernel_data;
+  CompileResult compile_result = prog_->compile_kernel(
+      prog_->compile_config(), prog_->get_device_caps(), *reader_);
+  auto &compiled_kernel_data = compile_result.compiled_kernel_data;
   prog_->launch_kernel(compiled_kernel_data, launch_ctx);
   prog_->synchronize();
   return launch_ctx.get_struct_ret_int({0});
@@ -101,9 +101,9 @@ uint64 SNodeRwAccessorsBank::Accessors::read_uint(const std::vector<int> &I) {
   prog_->synchronize();
   auto launch_ctx = reader_->make_launch_context();
   set_kernel_args(I, snode_->num_active_indices, &launch_ctx);
-  auto tuple = prog_->compile_kernel(prog_->compile_config(),
-                                     prog_->get_device_caps(), *reader_);
-  auto &compiled_kernel_data = tuple.compiled_kernel_data;
+  CompileResult compile_result = prog_->compile_kernel(
+      prog_->compile_config(), prog_->get_device_caps(), *reader_);
+  auto &compiled_kernel_data = compile_result.compiled_kernel_data;
   prog_->launch_kernel(compiled_kernel_data, launch_ctx);
   prog_->synchronize();
   return launch_ctx.get_struct_ret_uint({0});
