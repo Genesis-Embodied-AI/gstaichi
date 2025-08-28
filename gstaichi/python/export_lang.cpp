@@ -486,8 +486,6 @@ void export_lang(py::module &m) {
           [](const CompileResult &self) -> const CompiledKernelData & {
             return self.compiled_kernel_data;
           })
-      // .def_readonly("compiled_kernel_data",
-      // &CompileResult::compiled_kernel_data)
       .def_readonly("cache_hit", &CompileResult::cache_hit);
 
   py::class_<Axis>(m, "Axis").def(py::init<int>());
