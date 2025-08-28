@@ -186,7 +186,7 @@ Module Contents
        # will raise error because a is unavailable after reset.
 
 
-.. py:function:: init(arch=None, default_fp=None, default_ip=None, _test_mode=False, enable_fallback=True, require_version=None, print_non_pure: bool = False, **kwargs)
+.. py:function:: init(arch=None, default_fp=None, default_ip=None, _test_mode: bool = False, enable_fallback: bool = True, require_version: str | None = None, print_non_pure: bool = False, src_ll_cache: bool = True, **kwargs)
 
    Initializes the GsTaichi runtime.
 
@@ -199,7 +199,8 @@ Module Contents
    :param default_ip: Default integral type.
    :type default_ip: Optional[type]
    :param require_version: A version string.
-   :type require_version: Optional[string]
+   :param src_ll_cache: enable SRC-LL-CACHE, which will accelerate loading from cache, across all architectures,
+                        for pure kernels (i.e. kernels declared as @ti.pure)
    :param \*\*kwargs: GsTaichi provides highly customizable compilation through
                       ``kwargs``, which allows for fine grained control of GsTaichi compiler
                       behavior. Below we list some of the most frequently used ones. For a
