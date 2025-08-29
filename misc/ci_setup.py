@@ -188,7 +188,7 @@ class Installer:
                 "sourceinspect",
                 "pytest",
                 "pytest-xdist",
-                "pytest-rerunfailures",
+                "pytest-rerunfailures<16.0",
                 "pytest-cov",
                 "coverage",
                 "torch",
