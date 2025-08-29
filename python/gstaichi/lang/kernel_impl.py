@@ -714,9 +714,12 @@ class Kernel:
                 if self.compiled_kernel_data_by_key[key]:
                     self.src_ll_cache_observations.cache_loaded = True
         elif self.gstaichi_callable and not self.gstaichi_callable.is_pure and self.runtime.print_non_pure:
-            # bit in caps should not be modified without updating corresponding test
-            # freetext can be freely modified
-            print(f"[NOT_PURE] Not pure: {self.func.__name__}")
+            # The bit in caps should not be modified without updating corresponding test
+            # freetext can be freely modified.
+            # As for why we are using `print` rather than eg logger.info, it is because
+            # this is only printed when ti.init(print_non_pure=..) is True. And it is
+            # confusing to set that to True, and see nothing printed.
+            print(f"[NOT_PURE] Debug information: not pure: {self.func.__name__}")
 
         kernel_name = f"{self.func.__name__}_c{self.kernel_counter}_{key[1]}"
         _logging.trace(f"Materializing kernel {kernel_name} in {self.autodiff_mode}...")
