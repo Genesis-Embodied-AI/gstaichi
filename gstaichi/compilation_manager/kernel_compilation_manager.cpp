@@ -73,7 +73,7 @@ KernelCompilationManager::KernelCompilationManager(Config config)
   }
 }
 
-const CompiledKernelData &KernelCompilationManager::load_or_compile(
+CompileResult KernelCompilationManager::load_or_compile(
     const CompileConfig &compile_config,
     const DeviceCapabilityConfig &caps,
     const Kernel &kernel_def) {
@@ -81,9 +81,12 @@ const CompiledKernelData &KernelCompilationManager::load_or_compile(
   const auto kernel_key = make_kernel_key(compile_config, caps, kernel_def);
   auto cached_kernel = try_load_cached_kernel(kernel_def.get_name(), kernel_key,
                                               compile_config.arch, cache_mode);
-  return cached_kernel ? *cached_kernel
-                       : compile_and_cache_kernel(kernel_key, compile_config,
-                                                  caps, kernel_def);
+  bool cache_hit = (cached_kernel != nullptr);
+  return CompileResult{cached_kernel
+                           ? *cached_kernel
+                           : compile_and_cache_kernel(
+                                 kernel_key, compile_config, caps, kernel_def),
+                       cache_hit};
 }
 
 void KernelCompilationManager::dump() {

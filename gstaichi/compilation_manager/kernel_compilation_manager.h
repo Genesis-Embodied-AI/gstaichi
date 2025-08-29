@@ -44,6 +44,11 @@ struct CacheData {
   TI_IO_DEF(version, size, dataWrapperByCacheKey);
 };
 
+struct CompileResult {
+  const CompiledKernelData &compiled_kernel_data;
+  bool cache_hit;
+};
+
 class KernelCompilationManager final {
  public:
   static constexpr char kMetadataFilename[] = "ticache.tcb";
@@ -61,9 +66,9 @@ class KernelCompilationManager final {
   explicit KernelCompilationManager(Config init_params);
 
   // Load from memory || Load from disk || (Compile && Cache in memory)
-  const CompiledKernelData &load_or_compile(const CompileConfig &compile_config,
-                                            const DeviceCapabilityConfig &caps,
-                                            const Kernel &kernel_def);
+  CompileResult load_or_compile(const CompileConfig &compile_config,
+                                const DeviceCapabilityConfig &caps,
+                                const Kernel &kernel_def);
 
   // Dump the cached data in memory to disk
   void dump();

@@ -117,8 +117,9 @@ TEST(IRBuilder, ExternalPtr) {
   launch_ctx.set_arg_external_array_with_shape(
       /*arg_id=*/{0}, (uint64)array.get(), size, {size});
   auto *prog = test_prog.prog();
-  const auto &compiled_kernel_data = prog->compile_kernel(
-      prog->compile_config(), prog->get_device_caps(), *ker);
+  auto compile_result = prog->compile_kernel(prog->compile_config(),
+                                             prog->get_device_caps(), *ker);
+  auto &compiled_kernel_data = compile_result.compiled_kernel_data;
   prog->launch_kernel(compiled_kernel_data, launch_ctx);
   EXPECT_EQ(array[0], 2);
   EXPECT_EQ(array[1], 1);
@@ -145,8 +146,9 @@ TEST(IRBuilder, Ndarray) {
   auto ker1 = setup_kernel1(test_prog.prog());
   auto launch_ctx1 = ker1->make_launch_context();
   launch_ctx1.set_arg_ndarray(/*arg_id=*/{0}, array);
-  const auto &compiled_kernel_data = prog->compile_kernel(
-      prog->compile_config(), prog->get_device_caps(), *ker1);
+  auto compile_result = prog->compile_kernel(prog->compile_config(),
+                                             prog->get_device_caps(), *ker1);
+  auto &compiled_kernel_data = compile_result.compiled_kernel_data;
   prog->launch_kernel(compiled_kernel_data, launch_ctx1);
   EXPECT_EQ(array.read_int({0}), 2);
   EXPECT_EQ(array.read_int({1}), 1);
@@ -156,8 +158,9 @@ TEST(IRBuilder, Ndarray) {
   auto launch_ctx2 = ker2->make_launch_context();
   launch_ctx2.set_arg_ndarray(/*arg_id=*/{0}, array);
   launch_ctx2.set_arg_int(/*arg_id=*/{1}, 3);
-  const auto &compiled_kernel_data2 = prog->compile_kernel(
-      prog->compile_config(), prog->get_device_caps(), *ker2);
+  auto compile_result2 = prog->compile_kernel(prog->compile_config(),
+                                              prog->get_device_caps(), *ker2);
+  auto &compiled_kernel_data2 = compile_result2.compiled_kernel_data;
   prog->launch_kernel(compiled_kernel_data2, launch_ctx2);
   EXPECT_EQ(array.read_int({0}), 2);
   EXPECT_EQ(array.read_int({1}), 3);
@@ -187,8 +190,9 @@ TEST(IRBuilder, AtomicOp) {
   launch_ctx.set_arg_external_array_with_shape(
       /*arg_id=*/{0}, (uint64)array.get(), size, {size});
   auto *prog = test_prog.prog();
-  const auto &compiled_kernel_data = prog->compile_kernel(
-      prog->compile_config(), prog->get_device_caps(), *ker);
+  auto compile_result = prog->compile_kernel(prog->compile_config(),
+                                             prog->get_device_caps(), *ker);
+  auto &compiled_kernel_data = compile_result.compiled_kernel_data;
   prog->launch_kernel(compiled_kernel_data, launch_ctx);
   EXPECT_EQ(array[0], 3);
 }
