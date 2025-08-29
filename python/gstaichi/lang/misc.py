@@ -317,6 +317,8 @@ def init(
         default_fp (Optional[type]): Default floating-point type.
         default_ip (Optional[type]): Default integral type.
         require_version: A version string.
+        print_non_pure: Print the names of kernels, at the time they are executed, which are not annotated with
+                        @ti.pure
         src_ll_cache: enable SRC-LL-CACHE, which will accelerate loading from cache, across all architectures,
                       for pure kernels (i.e. kernels declared as @ti.pure)
         **kwargs: GsTaichi provides highly customizable compilation through
