@@ -188,6 +188,8 @@ class Installer:
                 "sourceinspect",
                 "pytest",
                 "pytest-xdist",
+                # 16.0 upgrade broke xfail, caused fatal errors, see
+                # https://github.com/Genesis-Embodied-AI/gstaichi/pull/162
                 "pytest-rerunfailures<16.0",
                 "pytest-cov",
                 "coverage",
