@@ -349,6 +349,7 @@ class PyGsTaichi:
         self.kernels: list[Kernel] = kernels or []
         self._signal_handler_registry = None
         self.unfinalized_fields_builder = {}
+        self.print_non_pure: bool = False
         self.short_circuit_operators: bool = False
         self.unrolling_limit: int = 0
         self.src_ll_cache: bool = True
