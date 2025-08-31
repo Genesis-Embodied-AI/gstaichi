@@ -1111,10 +1111,6 @@ class Kernel:
     # Thus this part needs to be fast. (i.e. < 3us on a 4 GHz x64 CPU)
     @_shell_pop_print
     def __call__(self, *args, **kwargs) -> Any:
-        # reset the observations
-        self.src_ll_cache_observations = SrcLlCacheObservations()
-        self.fe_ll_cache_observations = FeLlCacheObservations()
-
         args = _process_args(self, is_func=False, args=args, kwargs=kwargs)
 
         # Transform the primal kernel to forward mode grad kernel
