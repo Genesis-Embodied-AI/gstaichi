@@ -94,6 +94,7 @@ def hash_args(args: Sequence[Any]) -> str | None:
     for i_arg, arg in enumerate(args):
         start = time.time()
         _hash = stringify_obj_type((str(i_arg),), arg)
+        print("stringifyd arg", i_arg, type(arg), _hash)
         g_repr_time += time.time() - start
         if not _hash:
             g_num_ignored_calls += 1

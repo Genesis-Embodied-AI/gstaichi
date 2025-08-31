@@ -697,12 +697,14 @@ class Kernel:
         if key in self.materialized_kernels:
             return
 
+        # print("func", self.func.__name__)
         if self.runtime.src_ll_cache and self.gstaichi_callable and self.gstaichi_callable.is_pure:
             kernel_source_info, _src = get_source_info_and_src(self.func)
             self.fast_checksum = src_hasher.create_cache_key(kernel_source_info, args)
             if self.fast_checksum:
                 self.src_ll_cache_observations.cache_key_generated = True
             if self.fast_checksum and src_hasher.validate_cache_key(self.fast_checksum):
+                print("loading from checksum", self.func.__name__, self.fast_checksum)
                 self.src_ll_cache_observations.cache_validated = True
                 prog = impl.get_runtime().prog
                 self.compiled_kernel_data_by_key[key] = prog.load_fast_cache(
@@ -1054,12 +1056,15 @@ class Kernel:
                         compiled_kernel_data,
                     )
                     self.src_ll_cache_observations.cache_stored = True
+            print("func", self.func.__name__, 'cache hit', self.fe_ll_cache_observations.cache_hit)
             prog.launch_kernel(compiled_kernel_data, launch_ctx)
         except Exception as e:
+            print("exceptoin")
+            print("e", e)
             e = handle_exception_from_cpp(e)
-            if impl.get_runtime().print_full_traceback:
-                raise e
-            raise e from None
+            # if impl.get_runtime().print_full_traceback:
+            raise e
+            # raise e from None
 
         ret = None
         ret_dt = self.return_type
@@ -1203,9 +1208,10 @@ def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool 
             try:
                 return primal(*args, **kwargs)
             except (GsTaichiCompilationError, GsTaichiRuntimeError) as e:
-                if impl.get_runtime().print_full_traceback:
-                    raise e
-                raise type(e)("\n" + str(e)) from None
+            #     if impl.get_runtime().print_full_traceback:
+                print("primal.func", primal.func.__name__, "args", args, "kwargs", kwargs)
+                raise e
+                # raise type(e)("\n" + str(e)) from None
 
         wrapped = GsTaichiCallable(_func, wrapped_func)
         wrapped.grad = adjoint
