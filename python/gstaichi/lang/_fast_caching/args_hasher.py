@@ -50,7 +50,9 @@ def stringify_obj_type(path: tuple[str, ...], obj: object) -> str | None:
     if isinstance(obj, VectorNdarray):
         return f"[ndv-{obj.n}-{obj.dtype}-{len(obj.shape)}]"
     if isinstance(obj, ScalarField):
-        return f"[f-{obj.snode._id}-{obj.dtype}-{obj.shape}]"
+        # disabled for now, because we need to think about how to handle field offset
+        # etc
+        return None
     if isinstance(obj, MatrixNdarray):
         return f"[ndm-{obj.m}-{obj.n}-{obj.dtype}-{len(obj.shape)}]"
     if "torch.Tensor" in str(arg_type):
@@ -58,7 +60,9 @@ def stringify_obj_type(path: tuple[str, ...], obj: object) -> str | None:
     if isinstance(obj, np.ndarray):
         return f"[np-{obj.dtype}-{obj.ndim}]"
     if isinstance(obj, MatrixField):
-        return f"[fm-{obj.m}-{obj.n}-{obj.snode._id}-{obj.dtype}-{obj.shape}]"
+        # disabled for now, because we need to think about how to handle field offset
+        # etc
+        return None
     if dataclasses.is_dataclass(obj):
         return dataclass_to_repr(path, obj)
     if is_data_oriented(obj):
