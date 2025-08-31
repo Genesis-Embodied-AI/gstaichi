@@ -1432,10 +1432,6 @@
     <span class="c1"># Thus this part needs to be fast. (i.e. &lt; 3us on a 4 GHz x64 CPU)</span>
     <span class="nd">@_shell_pop_print</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="c1"># reset the observations</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">src_ll_cache_observations</span> <span class="o">=</span> <span class="n">SrcLlCacheObservations</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fe_ll_cache_observations</span> <span class="o">=</span> <span class="n">FeLlCacheObservations</span><span class="p">()</span>
-
         <span class="n">args</span> <span class="o">=</span> <span class="n">_process_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_func</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="c1"># Transform the primal kernel to forward mode grad kernel</span>
