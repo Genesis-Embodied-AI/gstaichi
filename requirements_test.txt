@@ -1,6 +1,8 @@
 Pillow
 pytest
 git+https://github.com/taichi-dev/pytest-xdist@a3b5ad3038#egg=pytest-xdist
+# 16.0 upgrade broke xfail, caused fatal errors, see
+# https://github.com/Genesis-Embodied-AI/gstaichi/pull/162
 pytest-rerunfailures<16.0
 pytest-cov
 pytest-retry

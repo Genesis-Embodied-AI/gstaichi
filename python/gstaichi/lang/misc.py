@@ -303,6 +303,7 @@ def init(
     _test_mode: bool = False,
     enable_fallback: bool = True,
     require_version: str | None = None,
+    print_non_pure: bool = False,
     src_ll_cache: bool = True,
     **kwargs,
 ):
@@ -316,6 +317,8 @@ def init(
         default_fp (Optional[type]): Default floating-point type.
         default_ip (Optional[type]): Default integral type.
         require_version: A version string.
+        print_non_pure: Print the names of kernels, at the time they are executed, which are not annotated with
+                        @ti.pure
         src_ll_cache: enable SRC-LL-CACHE, which will accelerate loading from cache, across all architectures,
                       for pure kernels (i.e. kernels declared as @ti.pure)
         **kwargs: GsTaichi provides highly customizable compilation through
@@ -420,6 +423,7 @@ def init(
         runtime.print_full_traceback = spec_cfg.print_full_traceback
         runtime.unrolling_limit = spec_cfg.unrolling_limit
         runtime.src_ll_cache = src_ll_cache
+        runtime.print_non_pure = print_non_pure
         _logging.set_logging_level(spec_cfg.log_level.lower())
 
     # select arch (backend):
