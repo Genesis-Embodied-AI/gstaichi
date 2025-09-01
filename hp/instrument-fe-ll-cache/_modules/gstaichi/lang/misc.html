@@ -695,6 +695,7 @@
     <span class="n">_test_mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">enable_fallback</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">require_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">print_non_pure</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">src_ll_cache</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">):</span>
@@ -708,6 +709,8 @@
 <span class="sd">        default_fp (Optional[type]): Default floating-point type.</span>
 <span class="sd">        default_ip (Optional[type]): Default integral type.</span>
 <span class="sd">        require_version: A version string.</span>
+<span class="sd">        print_non_pure: Print the names of kernels, at the time they are executed, which are not annotated with</span>
+<span class="sd">                        @ti.pure</span>
 <span class="sd">        src_ll_cache: enable SRC-LL-CACHE, which will accelerate loading from cache, across all architectures,</span>
 <span class="sd">                      for pure kernels (i.e. kernels declared as @ti.pure)</span>
 <span class="sd">        **kwargs: GsTaichi provides highly customizable compilation through</span>
@@ -812,6 +815,7 @@
         <span class="n">runtime</span><span class="o">.</span><span class="n">print_full_traceback</span> <span class="o">=</span> <span class="n">spec_cfg</span><span class="o">.</span><span class="n">print_full_traceback</span>
         <span class="n">runtime</span><span class="o">.</span><span class="n">unrolling_limit</span> <span class="o">=</span> <span class="n">spec_cfg</span><span class="o">.</span><span class="n">unrolling_limit</span>
         <span class="n">runtime</span><span class="o">.</span><span class="n">src_ll_cache</span> <span class="o">=</span> <span class="n">src_ll_cache</span>
+        <span class="n">runtime</span><span class="o">.</span><span class="n">print_non_pure</span> <span class="o">=</span> <span class="n">print_non_pure</span>
         <span class="n">_logging</span><span class="o">.</span><span class="n">set_logging_level</span><span class="p">(</span><span class="n">spec_cfg</span><span class="o">.</span><span class="n">log_level</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
 
     <span class="c1"># select arch (backend):</span>
