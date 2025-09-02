@@ -60,6 +60,8 @@ CompiledKernelData::Err CompiledKernelData::load_impl(
     return Err::kParseSrcCodeFailed;
   }
   data_.compiled_data.module = std::move(ret);
+  llvm::Module *mod = data_.compiled_data.module.get();
+  mod->setModuleIdentifier(mod->getFunctionList().begin()->getName().str() + "_module");
   return Err::kNoError;
 }
 
