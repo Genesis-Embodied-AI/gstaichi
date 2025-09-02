@@ -41,6 +41,15 @@ CompiledKernelData::Err CompiledKernelData::check() const {
   return Err::kNoError;
 }
 
+std::string CompiledKernelData::debug_dump_to_string() const {
+  auto &data = this->get_internal_data().compiled_data;
+  auto *module = data.module.get();
+  std::string result;
+  llvm::raw_string_ostream oss(result);
+  module->print(oss, /*AAW=*/nullptr);
+  return oss.str();
+}
+
 CompiledKernelData::Err CompiledKernelData::load_impl(
     const CompiledKernelDataFile &file) {
   arch_ = file.arch();
