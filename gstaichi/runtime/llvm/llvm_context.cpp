@@ -1020,7 +1020,7 @@ LLVMCompiledKernel GsTaichiLLVMContext::link_compiled_tasks(
   std::unordered_set<int> used_tree_ids;
   std::unordered_set<int> tls_sizes;
   std::unordered_set<std::string> offloaded_names;
-  auto mod = new_module(data_list[0]->tasks[0].name + "_module", linking_context_data->llvm_context);
+  auto mod = new_module("kernel", linking_context_data->llvm_context);
   llvm::Linker linker(*mod);
   for (auto &datum : data_list) {
     for (auto tree_id : datum->used_tree_ids) {
@@ -1033,6 +1033,7 @@ LLVMCompiledKernel GsTaichiLLVMContext::link_compiled_tasks(
       offloaded_names.insert(task.name);
       linked.tasks.push_back(std::move(task));
     }
+
     linker.linkInModule(clone_module_to_context(
         datum->module.get(), linking_context_data->llvm_context));
   }
