@@ -99,21 +99,14 @@ def test_src_ll_cache_repeat_after_load(tmp_path: pathlib.Path) -> None:
         assert a[0] == 6 + i
 
 
-@pytest.mark.parametrize(
-    "flag_value",
-    [
-        None,
-        False,
-        True,
-    ],
-)
+@pytest.mark.parametrize("src_ll_cache", [None, False, True])
 @test_utils.test()
-def test_src_ll_cache_flag(tmp_path: pathlib.Path, flag_value: bool) -> None:
+def test_src_ll_cache_flag(tmp_path: pathlib.Path, src_ll_cache: bool) -> None:
     """
     Test ti.init(src_ll_cache) flag
     """
-    if flag_value:
-        ti_init_same_arch(offline_cache_file_path=str(tmp_path), src_ll_cache=flag_value)
+    if src_ll_cache:
+        ti_init_same_arch(offline_cache_file_path=str(tmp_path), src_ll_cache=src_ll_cache)
     else:
         ti_init_same_arch()
 
@@ -124,7 +117,7 @@ def test_src_ll_cache_flag(tmp_path: pathlib.Path, flag_value: bool) -> None:
 
     k1()
     cache_used = k1._primal.src_ll_cache_observations.cache_key_generated
-    if flag_value:
-        assert cache_used == flag_value
+    if src_ll_cache:
+        assert cache_used == src_ll_cache
     else:
         assert cache_used  # default
