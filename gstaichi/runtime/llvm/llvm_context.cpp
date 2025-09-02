@@ -1033,7 +1033,6 @@ LLVMCompiledKernel GsTaichiLLVMContext::link_compiled_tasks(
       offloaded_names.insert(task.name);
       linked.tasks.push_back(std::move(task));
     }
-
     linker.linkInModule(clone_module_to_context(
         datum->module.get(), linking_context_data->llvm_context));
   }
