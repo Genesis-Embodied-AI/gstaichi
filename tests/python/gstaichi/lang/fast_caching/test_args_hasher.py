@@ -105,44 +105,16 @@ def _ti_init_same_arch() -> None:
 @test_utils.test()
 def test_args_hasher_field() -> None:
     """
-    This is trickier than the others, since we need to take into account snode id, and we need to reinitialize
-    taichi each attempt.
+    Check fields are correctly disabled.
 
-    Reminder: fields have an snode id, that is assigned at creation, and is assigned sequentially, from
-    the time of ti.init. If you recreate the same field, without calling ti.init in between you'll get
-    a new snode id. Two fields with a different snode id should be considered different, in the context of
-    deciding whether a kernel needs to be recompiled. A kernel is bound to the snode id of each kernel
-    used in that kernel. No matter whether the field was accessed as a global variable, or passed in as
-    a parameter. In addition the kernel is bound to the dtype and shape of the field, as well as pretty
-    much everything else about the field other than the actual values/data stored in it.
-
-    We need to check therefore that:
-    - if we reinitialize ti, and recreate the same field, that the hashes DO match
-    - if we do NOT reinitialize ti, and we recreate the same field, that the hashes do NOT match (because:
-      different snode id)
+    More context: https://github.com/Genesis-Embodied-AI/gstaichi/pull/163
     """
-    seen = set()
     for dtype in [ti.i32, ti.i64, ti.f32, ti.f64]:
         for shape in [(2,), (5,), (2, 5)]:
-            for _it in range(3):
-                if _it == 0:
-                    _ti_init_same_arch()
-                    arg = ti.field(dtype, shape)
-                    hash = args_hasher.hash_args([arg])
-                    assert hash is not None
-                    assert hash not in seen
-                    seen.add(hash)
-                elif _it == 1:
-                    _ti_init_same_arch()
-                    arg = ti.field(dtype, shape)
-                    hash = args_hasher.hash_args([arg])
-                    assert hash is not None
-                    assert hash in seen
-                else:
-                    arg = ti.field(dtype, shape)
-                    hash = args_hasher.hash_args([arg])
-                    assert hash not in seen
-                    seen.add(hash)
+            _ti_init_same_arch()
+            arg = ti.field(dtype, shape)
+            hash = args_hasher.hash_args([arg])
+            assert hash is None
 
 
 @test_utils.test()
@@ -151,25 +123,10 @@ def test_args_hasher_field_vector() -> None:
     for dtype in [ti.i32, ti.i64, ti.f32, ti.f64]:
         for n in [2, 3]:
             for shape in [(2,), (5,), (2, 5)]:
-                for _it in range(3):
-                    if _it == 0:
-                        _ti_init_same_arch()
-                        arg = ti.Vector.field(n, dtype, shape)
-                        hash = args_hasher.hash_args([arg])
-                        assert hash is not None
-                        assert hash not in seen
-                        seen.add(hash)
-                    elif _it == 1:
-                        _ti_init_same_arch()
-                        arg = ti.Vector.field(n, dtype, shape)
-                        hash = args_hasher.hash_args([arg])
-                        assert hash is not None
-                        assert hash in seen
-                    else:
-                        arg = ti.Vector.field(n, dtype, shape)
-                        hash = args_hasher.hash_args([arg])
-                        assert hash not in seen
-                        seen.add(hash)
+                _ti_init_same_arch()
+                arg = ti.Vector.field(n, dtype, shape)
+                hash = args_hasher.hash_args([arg])
+                assert hash is None
 
 
 @test_utils.test()
@@ -179,25 +136,10 @@ def test_args_hasher_field_matrix() -> None:
         for m in [2, 3]:
             for n in [2, 3]:
                 for shape in [(2,), (5,), (2, 5)]:
-                    for _it in range(3):
-                        if _it == 0:
-                            _ti_init_same_arch()
-                            arg = ti.Matrix.field(m, n, dtype, shape)
-                            hash = args_hasher.hash_args([arg])
-                            assert hash is not None
-                            assert hash not in seen
-                            seen.add(hash)
-                        elif _it == 1:
-                            _ti_init_same_arch()
-                            arg = ti.Matrix.field(m, n, dtype, shape)
-                            hash = args_hasher.hash_args([arg])
-                            assert hash is not None
-                            assert hash in seen
-                        else:
-                            arg = ti.Matrix.field(m, n, dtype, shape)
-                            hash = args_hasher.hash_args([arg])
-                            assert hash not in seen
-                            seen.add(hash)
+                    _ti_init_same_arch()
+                    arg = ti.Matrix.field(m, n, dtype, shape)
+                    hash = args_hasher.hash_args([arg])
+                    assert hash is None
 
 
 @test_utils.test()
@@ -207,7 +149,7 @@ def test_args_hasher_field_vs_ndarray() -> None:
     ndarray_hash = args_hasher.hash_args([a_ndarray])
     field_hash = args_hasher.hash_args([a_field])
     assert ndarray_hash is not None
-    assert field_hash is not None
+    assert field_hash is None
     assert ndarray_hash != field_hash
 
 
