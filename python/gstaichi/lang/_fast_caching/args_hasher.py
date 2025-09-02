@@ -9,7 +9,8 @@ import numpy as np
 from gstaichi import _logging
 
 from .._ndarray import ScalarNdarray
-from ..matrix import MatrixNdarray, VectorNdarray
+from ..field import ScalarField
+from ..matrix import MatrixField, MatrixNdarray, VectorNdarray
 from ..util import is_data_oriented
 from .hash_utils import hash_iterable_strings
 
@@ -42,18 +43,30 @@ def stringify_obj_type(path: tuple[str, ...], obj: object) -> str | None:
     String should somehow represent the type of obj. Doesnt have to be hashed, nor does it have
     to be the actual python type string, just a string that is representative of the type, and won't collide
     with different (allowed) types.
+
+    Note that fields are not included in fast cache.
     """
     arg_type = type(obj)
     if isinstance(obj, ScalarNdarray):
         return f"[nd-{obj.dtype}-{len(obj.shape)}]"
     if isinstance(obj, VectorNdarray):
         return f"[ndv-{obj.n}-{obj.dtype}-{len(obj.shape)}]"
+    if isinstance(obj, ScalarField):
+        # disabled for now, because we need to think about how to handle field offset
+        # etc
+        # TODO: think about whether there is a way to include fields
+        return None
     if isinstance(obj, MatrixNdarray):
         return f"[ndm-{obj.m}-{obj.n}-{obj.dtype}-{len(obj.shape)}]"
     if "torch.Tensor" in str(arg_type):
         return f"[pt-{obj.dtype}-{obj.ndim}]"  # type: ignore
     if isinstance(obj, np.ndarray):
         return f"[np-{obj.dtype}-{obj.ndim}]"
+    if isinstance(obj, MatrixField):
+        # disabled for now, because we need to think about how to handle field offset
+        # etc
+        # TODO: think about whether there is a way to include fields
+        return None
     if dataclasses.is_dataclass(obj):
         return dataclass_to_repr(path, obj)
     if is_data_oriented(obj):
