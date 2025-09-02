@@ -4,6 +4,7 @@
 #include <memory>
 #include <optional>
 #include <algorithm>
+#include <stdexcept>
 
 #include "gstaichi/rhi/arch.h"
 

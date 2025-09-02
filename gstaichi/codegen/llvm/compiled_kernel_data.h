@@ -58,7 +58,8 @@ class CompiledKernelData : public lang::CompiledKernelData {
     return data_;
   }
 
-  std::string debug_dump_to_string() const override;  // for debug/dev/testing only
+  std::string debug_dump_to_string()
+      const override;  // for debug/dev/testing only
 
  protected:
   Err load_impl(const CompiledKernelDataFile &file) override;
