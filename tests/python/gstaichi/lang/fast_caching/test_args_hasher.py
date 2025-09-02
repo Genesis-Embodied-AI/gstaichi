@@ -105,7 +105,9 @@ def _ti_init_same_arch() -> None:
 @test_utils.test()
 def test_args_hasher_field() -> None:
     """
-    Disabling fields for now. Check they are disabled.
+    Check fields are correctly disabled.
+
+    More context: https://github.com/Genesis-Embodied-AI/gstaichi/pull/163
     """
     for dtype in [ti.i32, ti.i64, ti.f32, ti.f64]:
         for shape in [(2,), (5,), (2, 5)]:
