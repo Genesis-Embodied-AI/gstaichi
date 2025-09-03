@@ -221,6 +221,7 @@ class ASTTransformerContext:
         return NonStaticControlFlowGuard(self.non_static_control_flow_status)
 
     def static_scope_guard(self) -> StaticScopeGuard:
+        print("static_scope_guard")
         return StaticScopeGuard(self.static_scope_status)
 
     def current_scope(self) -> dict[str, Any]:

@@ -10,6 +10,7 @@ from gstaichi._lib.core.gstaichi_python import (
     Function,
     KernelCxx,
     Program,
+    ASTBuilder,
 )
 from gstaichi._snode.fields_builder import FieldsBuilder
 from gstaichi.lang._ndarray import ScalarNdarray
@@ -190,10 +191,21 @@ def validate_subscript_index(value, index):
 
 
 @gstaichi_scope
-def subscript(ast_builder, value, *_indices, skip_reordered=False):
+def subscript(in_static_scope: bool, ast_builder: ASTBuilder, value, *_indices, skip_reordered=False):
     dbg_info = _ti_core.DebugInfo(get_runtime().get_current_src_info())
     ast_builder = get_runtime().compiling_callable.ast_builder()
+    # if isinstance(value, (tuple, list, dict)):
+    #     if len(_indices) == 1:
+    #         _indices = _indices[0]
+    #     return value.__getitem__(_indices)
+
+    # if in_static_scope:
+    #     if len(_indices) == 1:
+    #         _indices = _indices[0]
+    #     return value.__getitem__(_indices)
+
     # Directly evaluate in Python for non-GsTaichi types
+    # import ast
     if not isinstance(
         value,
         (
@@ -206,6 +218,16 @@ def subscript(ast_builder, value, *_indices, skip_reordered=False):
             SharedArray,
         ),
     ):
+        print("value", value, type(value))
+        import ast
+        # print("ast.dump value", ast.dump(value))
+        # print("value.tonumpy()", value.to_numpy())
+        # print("ast_builder", ast_builder, type(ast_builder))
+        # print("dir(value)", dir(value))
+        # print("dir(value.ptr)", dir(value.ptr))
+        print("is_in_static_scope", in_static_scope)
+        print("_indices", _indices, len(_indices))
+        # asdfads
         if len(_indices) == 1:
             _indices = _indices[0]
         return value.__getitem__(_indices)
@@ -252,7 +274,7 @@ def subscript(ast_builder, value, *_indices, skip_reordered=False):
                 )
             ]
         )
-        return subscript(ast_builder, value, *reordered_index, skip_reordered=True)
+        return subscript(in_static_scope, ast_builder, value, *reordered_index, skip_reordered=True)
     if isinstance(value, SparseMatrixProxy):
         return value.subscript(*indices)
     if isinstance(value, Field):
@@ -270,7 +292,7 @@ def subscript(ast_builder, value, *_indices, skip_reordered=False):
         if isinstance(value, MatrixField):
             return Expr(ast_builder.expr_subscript(value.ptr, indices_expr_group, dbg_info))
         if isinstance(value, StructField):
-            entries = {k: subscript(ast_builder, v, *indices) for k, v in value._items}
+            entries = {k: subscript(in_static_scope, ast_builder, v, *indices) for k, v in value._items}
             entries["__struct_methods"] = value.struct_methods
             return _IntermediateStruct(entries)
         return Expr(ast_builder.expr_subscript(_var, indices_expr_group, dbg_info))
@@ -1131,6 +1153,7 @@ def static(x, *xs) -> Any:
             >>>     print(1)
             >>>     print(2)
     """
+    print("static xs", xs, [type(x) for x in xs])
     if len(xs):  # for python-ish pointer assign: x, y = ti.static(y, x)
         return [static(x)] + [static(x) for x in xs]
 

@@ -241,7 +241,8 @@ class ASTTransformer(Builder):
         build_stmt(ctx, node.slice)
         if not ASTTransformer.is_tuple(node.slice):
             node.slice.ptr = [node.slice.ptr]
-        node.ptr = impl.subscript(ctx.ast_builder, node.value.ptr, *node.slice.ptr)
+        print("node.value", node.value, "node.value.ptr", node.value.ptr)
+        node.ptr = impl.subscript(ctx.is_in_static_scope(), ctx.ast_builder, node.value.ptr, *node.slice.ptr)
         return node.ptr
 
     @staticmethod
