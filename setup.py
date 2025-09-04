@@ -56,7 +56,7 @@ def get_version():
 
         version = scm_get_version()
         # Parse version string (e.g., "1.2.3" or "1.2.3.dev0+g1234567")
-        version_parts = version.split("+")[0].split(".dev")[0].split("rc")[0].split(".")
+        version_parts = version.split("+")[0].split(".dev")[0].split("rc")[0].split("b")[0].split(".")
         major = version_parts[0] if len(version_parts) > 0 else "0"
         minor = version_parts[1] if len(version_parts) > 1 else "0"
         patch = version_parts[2] if len(version_parts) > 2 else "0"
