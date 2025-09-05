@@ -263,6 +263,7 @@ class CallTransformer:
 
         args = []
         for arg in node.args:
+            print("arg", ast.dump(arg, indent=2))
             if isinstance(arg, ast.Starred):
                 arg_list = arg.ptr
                 if isinstance(arg_list, Expr) and arg_list.is_tensor():
@@ -274,6 +275,7 @@ class CallTransformer:
             else:
                 args.append(arg.ptr)
         keywords = dict(ChainMap(*[keyword.ptr for keyword in node.keywords]))
+        print("node.func", node.func, "node", ast.dump(node, indent=2))
         func = node.func.ptr
 
         if id(func) in [id(print), id(impl.ti_print)]:
