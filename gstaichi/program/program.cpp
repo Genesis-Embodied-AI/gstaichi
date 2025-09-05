@@ -158,17 +158,16 @@ Kernel &Program::create_kernel(const std::function<void(Kernel *)> &body,
   return *kernels.back();
 }
 
-const CompiledKernelData &Program::compile_kernel(
-    const CompileConfig &compile_config,
-    const DeviceCapabilityConfig &device_caps,
-    const Kernel &kernel_def) {
+CompileResult Program::compile_kernel(const CompileConfig &compile_config,
+                                      const DeviceCapabilityConfig &device_caps,
+                                      const Kernel &kernel_def) {
   auto start_t = Time::get_time();
   TI_AUTO_PROF;
   auto &mgr = program_impl_->get_kernel_compilation_manager();
-  const auto &compiled =
+  CompileResult compile_result =
       mgr.load_or_compile(compile_config, device_caps, kernel_def);
   total_compilation_time_ += Time::get_time() - start_t;
-  return compiled;
+  return compile_result;
 }
 
 void Program::launch_kernel(const CompiledKernelData &compiled_kernel_data,

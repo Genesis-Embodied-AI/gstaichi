@@ -26,6 +26,7 @@ from gstaichi._lib import core as _ti_core
 from gstaichi._lib.core.gstaichi_python import (
     ASTBuilder,
     CompiledKernelData,
+    CompileResult,
     FunctionKey,
     KernelCxx,
     KernelLaunchContext,
@@ -573,6 +574,11 @@ class SrcLlCacheObservations:
     cache_stored: bool = False
 
 
+@dataclasses.dataclass
+class FeLlCacheObservations:
+    cache_hit: bool = False
+
+
 class Kernel:
     counter = 0
 
@@ -611,6 +617,7 @@ class Kernel:
         self.compiled_kernel_data_by_key: dict[CompiledKernelKeyType, CompiledKernelData] = {}
 
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
+        self.fe_ll_cache_observations: FeLlCacheObservations = FeLlCacheObservations()
 
     def ast_builder(self) -> ASTBuilder:
         assert self.kernel_cpp is not None
@@ -1050,7 +1057,10 @@ class Kernel:
         try:
             prog = impl.get_runtime().prog
             if not compiled_kernel_data:
-                compiled_kernel_data = prog.compile_kernel(prog.config(), prog.get_device_caps(), t_kernel)
+                compile_result: CompileResult = prog.compile_kernel(prog.config(), prog.get_device_caps(), t_kernel)
+                compiled_kernel_data = compile_result.compiled_kernel_data
+                if compile_result.cache_hit:
+                    self.fe_ll_cache_observations.cache_hit = True
                 if self.fast_checksum:
                     src_hasher.store(self.fast_checksum, self.visited_functions)
                     prog.store_fast_cache(
