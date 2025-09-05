@@ -32,6 +32,7 @@ from gstaichi.lang.expr import Expr
 from gstaichi.lang.matrix import Matrix, Vector
 from gstaichi.lang.util import is_gstaichi_class
 from gstaichi.types import primitive_types
+from . import macro
 
 
 class CallTransformer:
@@ -277,6 +278,12 @@ class CallTransformer:
 
         if id(func) in [id(print), id(impl.ti_print)]:
             ctx.func.has_print = True
+        
+        if id(func) == id(macro.macro):
+            print("got MACRO")
+
+        if id(func) == id(macro.macro2):
+            print("got MACRO2")
 
         if isinstance(node.func, ast.Attribute) and isinstance(node.func.value.ptr, str) and node.func.attr == "format":
             raw_string = node.func.value.ptr
