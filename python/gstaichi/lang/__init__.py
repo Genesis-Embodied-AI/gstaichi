@@ -35,6 +35,7 @@ __all__ = [
         "inspect",
         "kernel_arguments",
         "kernel_impl",
+        "macro",
         "matrix",
         "mesh",
         "misc",
