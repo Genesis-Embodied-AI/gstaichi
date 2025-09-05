@@ -284,6 +284,14 @@ class CallTransformer:
 
         if id(func) == id(macro.macro2):
             print("got MACRO2")
+            new_ast = func(*args, **keywords)
+            print('new_ast", new_ast')
+            new_ast = new_ast.body[0]
+            # new_ast = ast.parse("print(456)").body[0]
+            print("returned ast", ast.dump(new_ast, indent=2))
+            # return new_ast
+            build_stmt(ctx, new_ast)
+            return
 
         if isinstance(node.func, ast.Attribute) and isinstance(node.func.value.ptr, str) and node.func.attr == "format":
             raw_string = node.func.value.ptr

@@ -15,3 +15,4 @@ class macro:
 def macro2(contents: str):
     print("macro2 contents", contents)
     contents_ast = ast.parse(contents)
+    return contents_ast
