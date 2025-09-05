@@ -355,6 +355,15 @@ def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], k
                 fused_args[i] = value
                 break
         else:
+            # print("kwargs.keys()", kwargs.keys())
+            print("kwargs:")
+            for k, v in kwargs.items():
+                print("  ", k, ": ", type(v))
+            # print("arg metas", [(m.name, m.annotation) for m in self.arg_metas])
+            print("arg metas:")
+            for m in self.arg_metas:
+                print("  ", m.name, ": ", m.annotation)
+            print(f"Unexpected argument '{key}'.")
             raise GsTaichiSyntaxError(f"Unexpected argument '{key}'.")
 
     missing_annotations = []
@@ -1245,7 +1254,7 @@ def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool 
             try:
                 return primal(*args, **kwargs)
             except (GsTaichiCompilationError, GsTaichiRuntimeError) as e:
-                if impl.get_runtime().print_full_traceback:
+                if impl.get_runtime().print_full_traceback or True:
                     raise e
                 raise type(e)("\n" + str(e)) from None
 

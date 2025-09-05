@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING
+import types
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 
@@ -35,6 +36,9 @@ class Expr(GsTaichiOperations):
             elif isinstance(args[0], (list, tuple)):
                 self.ptr = make_matrix(args[0]).ptr
             else:
+                if isinstance(args[0], types.UnionType):
+                    print("got union", args[0], dtype)
+                    # adfasd
                 # assume to be constant
                 arg = args[0]
                 if isinstance(arg, np.ndarray):
@@ -43,7 +47,13 @@ class Expr(GsTaichiOperations):
                             "Only 0-dimensional numpy array can be used to initialize a scalar expression"
                         )
                     arg = arg.dtype.type(arg)
-                self.ptr = make_constant_expr(arg, dtype).ptr
+                # try:
+                if True:
+                    self.ptr = make_constant_expr(arg, dtype).ptr
+                # except Exception as e:
+                #     print("error initializing Expr")
+                #     print("arg", arg, "args", args)
+                #     raise e
         else:
             assert False
         if self.dbg_info:
@@ -136,6 +146,7 @@ def make_constant_expr(val, dtype):
         else:
             raise GsTaichiTypeError(f"Integer literal {val} exceeded the range of specified dtype: {dtype}")
 
+    print("make_constant_expr got invalid constant scalar data type val=", val, "dtype=", dtype)
     raise GsTaichiTypeError(f"Invalid constant scalar data type: {type(val)}")
 
 

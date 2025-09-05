@@ -28,6 +28,7 @@ def is_gstaichi_expr(a):
 
 
 def wrap_if_not_expr(a):
+    # print("wrap_if_not_expr", a, type(a), "is_gstaichi_expr", is_gstaichi_expr(a))
     return (
         expr.Expr(a, dbg_info=_ti_core.DebugInfo(impl.get_runtime().get_current_src_info()))
         if not is_gstaichi_expr(a)
@@ -132,6 +133,7 @@ def _unary_operation(gstaichi_op, python_op, a):
 def _binary_operation(gstaichi_op, python_op, a, b):
     if isinstance(a, Field) or isinstance(b, Field):
         return NotImplemented
+    # print("_binary_operation gstaichi_op", gstaichi_op, "python op", python_op, "a", a, type(a), "b", b, type(b))
     if is_gstaichi_expr(a) or is_gstaichi_expr(b):
         a, b = wrap_if_not_expr(a), wrap_if_not_expr(b)
         return expr.Expr(gstaichi_op(a.ptr, b.ptr), dbg_info=_ti_core.DebugInfo(stack_info()))

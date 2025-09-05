@@ -674,10 +674,12 @@ class ASTTransformer(Builder):
             ast.BitAnd: lambda l, r: l & r,
             ast.MatMult: matmul,
         }.get(type(node.op))
-        try:
+        # try:
+        if True:
             node.ptr = op(node.left.ptr, node.right.ptr)
-        except TypeError as e:
-            raise GsTaichiTypeError(str(e)) from None
+        # except TypeError as e:
+        #     print("Error in build_BinOp", ast.dump(node, indent=2))
+        #     raise GsTaichiTypeError(str(e)) from None
         return node.ptr
 
     @staticmethod
