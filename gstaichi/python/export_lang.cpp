@@ -482,6 +482,14 @@ void export_lang(py::module &m) {
       .def("launch_kernel", &Program::launch_kernel)
       .def("get_device_caps", &Program::get_device_caps);
 
+  py::class_<CompileResult>(m, "CompileResult")
+      .def_property_readonly(
+          "compiled_kernel_data",
+          [](const CompileResult &self) -> const CompiledKernelData & {
+            return self.compiled_kernel_data;
+          })
+      .def_readonly("cache_hit", &CompileResult::cache_hit);
+
   py::class_<Axis>(m, "Axis").def(py::init<int>());
   py::class_<SNode>(m, "SNodeCxx")
       .def(py::init<>())
