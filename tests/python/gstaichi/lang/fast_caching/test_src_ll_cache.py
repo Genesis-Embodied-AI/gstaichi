@@ -43,15 +43,8 @@ def test_src_ll_cache1(tmp_path: pathlib.Path) -> None:
         # we only support _last_compiled_kernel_data on cpu and cuda
         # and it only changes anything on cuda anyway, because it affects the PTX
         # cache
-        print(
-            "has_pure._primal._last_compiled_kernel_data",
-            has_pure._primal._last_compiled_kernel_data,
-            type(has_pure._primal._last_compiled_kernel_data),
-        )
-        print(dir(has_pure._primal._last_compiled_kernel_data))
         last_compiled_kernel_data_str = has_pure._primal._last_compiled_kernel_data._debug_dump_to_string()
         assert last_compiled_kernel_data_str is not None and last_compiled_kernel_data_str != ""
-        print("last_compiled_kernel_data_str", last_compiled_kernel_data_str)
 
     ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
 
@@ -61,7 +54,6 @@ def test_src_ll_cache1(tmp_path: pathlib.Path) -> None:
     assert has_pure._primal.src_ll_cache_observations.cache_loaded
     if gstaichi.lang.impl.current_cfg().arch in [ti.cpu, ti.cuda]:
         assert has_pure._primal._last_compiled_kernel_data._debug_dump_to_string() == last_compiled_kernel_data_str
-        print("last_compiled_kernel_data_str", last_compiled_kernel_data_str)
 
 
 # Should be enough to run these on cpu I think, and anything involving
