@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gstaichi.lang.kernel_impl &#8212; GsTaichi 2.1.2 documentation</title>
+    <title>gstaichi.lang.kernel_impl &#8212; GsTaichi 2.2.1 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../_static/documentation_options.js?v=b3e23499"></script>
+    <script src="../../../_static/documentation_options.js?v=16656018"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -59,7 +59,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.1.2" />
+  <meta name="docsearch:version" content="2.2.1" />
   </head>
   
   
@@ -121,7 +121,7 @@
   
   
   
-    <p class="title logo__title">GsTaichi 2.1.2 documentation</p>
+    <p class="title logo__title">GsTaichi 2.2.1 documentation</p>
   
 </a></div>
     
@@ -338,6 +338,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi._lib.core.gstaichi_python</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ASTBuilder</span><span class="p">,</span>
     <span class="n">CompiledKernelData</span><span class="p">,</span>
+    <span class="n">CompileResult</span><span class="p">,</span>
     <span class="n">FunctionKey</span><span class="p">,</span>
     <span class="n">KernelCxx</span><span class="p">,</span>
     <span class="n">KernelLaunchContext</span><span class="p">,</span>
@@ -894,6 +895,11 @@
     <span class="n">cache_stored</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
 
+<span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FeLlCacheObservations</span><span class="p">:</span>
+    <span class="n">cache_hit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
+
 <span class="k">class</span><span class="w"> </span><span class="nc">Kernel</span><span class="p">:</span>
     <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
 
@@ -932,6 +938,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">compiled_kernel_data_by_key</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CompiledKernelKeyType</span><span class="p">,</span> <span class="n">CompiledKernelData</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">src_ll_cache_observations</span><span class="p">:</span> <span class="n">SrcLlCacheObservations</span> <span class="o">=</span> <span class="n">SrcLlCacheObservations</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fe_ll_cache_observations</span><span class="p">:</span> <span class="n">FeLlCacheObservations</span> <span class="o">=</span> <span class="n">FeLlCacheObservations</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">ast_builder</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ASTBuilder</span><span class="p">:</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel_cpp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -1371,7 +1378,10 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="n">prog</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">prog</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">compiled_kernel_data</span><span class="p">:</span>
-                <span class="n">compiled_kernel_data</span> <span class="o">=</span> <span class="n">prog</span><span class="o">.</span><span class="n">compile_kernel</span><span class="p">(</span><span class="n">prog</span><span class="o">.</span><span class="n">config</span><span class="p">(),</span> <span class="n">prog</span><span class="o">.</span><span class="n">get_device_caps</span><span class="p">(),</span> <span class="n">t_kernel</span><span class="p">)</span>
+                <span class="n">compile_result</span><span class="p">:</span> <span class="n">CompileResult</span> <span class="o">=</span> <span class="n">prog</span><span class="o">.</span><span class="n">compile_kernel</span><span class="p">(</span><span class="n">prog</span><span class="o">.</span><span class="n">config</span><span class="p">(),</span> <span class="n">prog</span><span class="o">.</span><span class="n">get_device_caps</span><span class="p">(),</span> <span class="n">t_kernel</span><span class="p">)</span>
+                <span class="n">compiled_kernel_data</span> <span class="o">=</span> <span class="n">compile_result</span><span class="o">.</span><span class="n">compiled_kernel_data</span>
+                <span class="k">if</span> <span class="n">compile_result</span><span class="o">.</span><span class="n">cache_hit</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">fe_ll_cache_observations</span><span class="o">.</span><span class="n">cache_hit</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">:</span>
                     <span class="n">src_hasher</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">visited_functions</span><span class="p">)</span>
                     <span class="n">prog</span><span class="o">.</span><span class="n">store_fast_cache</span><span class="p">(</span>
