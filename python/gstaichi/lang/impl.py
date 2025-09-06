@@ -547,8 +547,8 @@ def reset():
     old_kernels = pygstaichi.kernels
     pygstaichi.clear()
     pygstaichi = PyGsTaichi(old_kernels)
-    for ndarray in old_ndarrays:
-        ndarray._reset()
+    for nd in old_ndarrays:
+        nd._reset()
     for k in old_kernels:
         k.reset()
     _ti_core.reset_default_compile_config()
