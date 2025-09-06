@@ -1,4 +1,5 @@
 import numbers
+import weakref
 from types import FunctionType, MethodType
 from typing import TYPE_CHECKING, Any, Iterable, Sequence
 
@@ -350,7 +351,7 @@ class PyGsTaichi:
         self.fwd_mode_manager = None
         self.grad_replaced = False
         self.kernels: list[Kernel] = kernels or []
-        self.ndarrays: list[Ndarray] = []
+        self.ndarrays: weakref.WeakSet[Ndarray] = weakref.WeakSet()
         self._signal_handler_registry = None
         self.unfinalized_fields_builder = {}
         self.print_non_pure: bool = False
