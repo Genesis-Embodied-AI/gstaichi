@@ -1,6 +1,7 @@
 import numbers
+import weakref
 from types import FunctionType, MethodType
-from typing import Any, Iterable, Sequence
+from typing import TYPE_CHECKING, Any, Iterable, Sequence
 
 import numpy as np
 
@@ -67,6 +68,9 @@ from gstaichi.types.primitive_types import (
     u32,
     u64,
 )
+
+if TYPE_CHECKING:
+    from gstaichi.lang._ndarray import Ndarray
 
 
 @gstaichi_scope
@@ -347,6 +351,7 @@ class PyGsTaichi:
         self.fwd_mode_manager = None
         self.grad_replaced = False
         self.kernels: list[Kernel] = kernels or []
+        self.ndarrays: weakref.WeakSet[Ndarray] = weakref.WeakSet()
         self._signal_handler_registry = None
         self.unfinalized_fields_builder = {}
         self.print_non_pure: bool = False
@@ -539,9 +544,12 @@ def get_runtime() -> PyGsTaichi:
 
 def reset():
     global pygstaichi
+    old_ndarrays = pygstaichi.ndarrays
     old_kernels = pygstaichi.kernels
     pygstaichi.clear()
     pygstaichi = PyGsTaichi(old_kernels)
+    for nd in old_ndarrays:
+        nd._reset()
     for k in old_kernels:
         k.reset()
     _ti_core.reset_default_compile_config()
