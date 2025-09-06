@@ -1,10 +1,14 @@
+import pytest
 import gstaichi as ti
 from tests import test_utils
 import gc
+import sys
 
 
-@test_utils.test()
-def test_ndarray_simple_kernel_call() -> None:
+@test_utils.test(arch=[ti.cpu])
+def test_ndarray_reset() -> None:
+    if sys.platform != "darwin":
+        pytest.skip("Only need to check Mac CPU")
     arch = getattr(ti, ti.cfg.arch.name)
     for n in range(100):
         ti.init(arch=arch)
