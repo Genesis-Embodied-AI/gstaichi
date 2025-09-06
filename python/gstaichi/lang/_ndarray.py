@@ -35,6 +35,20 @@ class Ndarray:
         self.arr = None
         self.layout = Layout.AOS
         self.grad: "TensorNdarray | None" = None
+        # we register with runtime, in order to enable reset to work later
+        # impl.get_runtime().ndarrays.append(self)
+
+    def _reset(self):
+        """
+        Called by runtime, when we call ti.reset()
+        """
+        self.arr = None
+        self.grad = None
+        self.host_accessor = None
+        self.shape = None
+        self.element_type = None
+        self.dtype = None
+        self.layout = None
 
     def get_type(self):
         return NdarrayTypeMetadata(self.element_type, self.shape, self.grad is not None)

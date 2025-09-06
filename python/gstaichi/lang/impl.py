@@ -1,6 +1,6 @@
 import numbers
 from types import FunctionType, MethodType
-from typing import Any, Iterable, Sequence
+from typing import Any, Iterable, Sequence, TYPE_CHECKING
 
 import numpy as np
 
@@ -67,6 +67,9 @@ from gstaichi.types.primitive_types import (
     u32,
     u64,
 )
+
+if TYPE_CHECKING:
+    from gstaichi.lang._ndarray import Ndarray
 
 
 @gstaichi_scope
@@ -347,6 +350,7 @@ class PyGsTaichi:
         self.fwd_mode_manager = None
         self.grad_replaced = False
         self.kernels: list[Kernel] = kernels or []
+        self.ndarrays: list[Ndarray] = []
         self._signal_handler_registry = None
         self.unfinalized_fields_builder = {}
         self.print_non_pure: bool = False
@@ -539,9 +543,12 @@ def get_runtime() -> PyGsTaichi:
 
 def reset():
     global pygstaichi
+    old_ndarrays = pygstaichi.ndarrays
     old_kernels = pygstaichi.kernels
     pygstaichi.clear()
     pygstaichi = PyGsTaichi(old_kernels)
+    for ndarray in old_ndarrays:
+        ndarray._reset()
     for k in old_kernels:
         k.reset()
     _ti_core.reset_default_compile_config()
