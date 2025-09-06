@@ -36,7 +36,7 @@ class Ndarray:
         self.layout = Layout.AOS
         self.grad: "TensorNdarray | None" = None
         # we register with runtime, in order to enable reset to work later
-        # impl.get_runtime().ndarrays.append(self)
+        impl.get_runtime().ndarrays.append(self)
 
     def _reset(self):
         """
