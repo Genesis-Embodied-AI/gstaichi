@@ -1,6 +1,6 @@
 import numbers
 from types import FunctionType, MethodType
-from typing import Any, Iterable, Sequence, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Iterable, Sequence
 
 import numpy as np
 

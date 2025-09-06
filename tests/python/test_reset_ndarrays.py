@@ -1,8 +1,11 @@
-import pytest
-import gstaichi as ti
-from tests import test_utils
 import gc
 import sys
+
+import pytest
+
+import gstaichi as ti
+
+from tests import test_utils
 
 
 @test_utils.test(arch=[ti.cpu])
@@ -12,7 +15,7 @@ def test_ndarray_reset() -> None:
     arch = getattr(ti, ti.cfg.arch.name)
     for n in range(100):
         ti.init(arch=arch)
-        gc.collect() 
+        gc.collect()
         a = ti.ndarray(ti.i32, shape=(55,))
         gc.get_objects()
         b = ti.ndarray(ti.i32, shape=(57,))
