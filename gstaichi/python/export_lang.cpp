@@ -351,7 +351,9 @@ void export_lang(py::module &m) {
       py::class_<DeviceCapabilityConfig>(m, "DeviceCapabilityConfig");
 
   auto compiled_kernel_data =
-      py::class_<CompiledKernelData>(m, "CompiledKernelData");
+      py::class_<CompiledKernelData>(m, "CompiledKernelData")
+          .def("_debug_dump_to_string",
+               &CompiledKernelData::debug_dump_to_string);
 
   py::class_<Program>(m, "Program")
       .def(py::init<>())
