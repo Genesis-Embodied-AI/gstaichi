@@ -1096,14 +1096,14 @@ class ASTTransformer(Builder):
         elif isinstance(node.iter, ast.IfExp):
             print("got ifexp")
             # lets just hard-code this for now...
-            iter = node.iter
+            _iter = node.iter
             build_stmt(ctx, node.iter)
             is_static_if = get_decorator(ctx, node.iter.test) == "static"
             print("is static if", is_static_if)
             if not is_static_if:
                 raise GsTaichiSyntaxError("using non static if with for not currently supported")
-            print("if node.iter.test.ptr:", iter.test.ptr)
-            next_iter = iter.body if iter.test.ptr else iter.orelse
+            print("if node.iter.test.ptr:", _iter.test.ptr)
+            next_iter = _iter.body if _iter.test.ptr else _iter.orelse
             print("next", ast.dump(next_iter, indent=2))
             new_for = ast.For(
                 target=node.target,
