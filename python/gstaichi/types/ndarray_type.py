@@ -142,11 +142,11 @@ class NdarrayType:
 
     def __getitem__(self, i: Any) -> Any:
         # needed for pyright
-        raise NotImplemented
+        raise NotImplementedError()
 
     def __setitem__(self, i: Any, v: Any) -> None:
         # needed for pyright
-        raise NotImplemented
+        raise NotImplementedError()
 
 
 ndarray = NdarrayType

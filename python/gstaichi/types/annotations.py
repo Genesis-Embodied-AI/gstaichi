@@ -37,7 +37,7 @@ class Template(Generic[T]):
         self.ndim = ndim
 
     def __getitem__(self, i: Any) -> T:
-        raise NotImplemented
+        raise NotImplementedError()
 
 
 template = Template
