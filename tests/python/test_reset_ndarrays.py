@@ -64,6 +64,12 @@ def test_ndarray_reset() -> None:
     bar_param = ti.ndarray(ti.i32, shape=(227,))
     assert len(rt.ndarrays) == 5
 
+    tmp = ti.ndarray(ti.i32, shape=(42,))
+    assert len(rt.ndarrays) == 6
+    tmp = None
+    gc.collect()
+    assert len(rt.ndarrays) == 5
+
     @ti.kernel
     def k1(z_param2: ti.types.NDArray[ti.i32, 1]) -> None:
         z_param2[33] += 2
