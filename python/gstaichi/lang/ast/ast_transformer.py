@@ -1074,66 +1074,6 @@ class ASTTransformer(Builder):
         return None
 
     @staticmethod
-    def handle_for(ctx: ASTTransformerContext, node: ast.For, decorator: str) -> None:
-        if decorator == "ndrange":
-            print(".   ndrange")
-            if double_decorator != "":
-                raise GsTaichiSyntaxError("No decorator is allowed inside 'ti.ndrange")
-            return ASTTransformer.build_ndrange_for(ctx, node)
-        if decorator == "grouped":
-            print(".   grouped")
-            if double_decorator == "static":
-                raise GsTaichiSyntaxError("'ti.static' is not allowed inside 'ti.grouped'")
-            elif double_decorator == "ndrange":
-                return ASTTransformer.build_grouped_ndrange_for(ctx, node)
-            elif double_decorator == "grouped":
-                raise GsTaichiSyntaxError("'ti.grouped' cannot be nested")
-            else:
-                return ASTTransformer.build_struct_for(ctx, node, is_grouped=True)
-        elif isinstance(node.iter, ast.Call) and isinstance(node.iter.func, ast.Name) and node.iter.func.id == "range":
-            print(".   elif")
-            return ASTTransformer.build_range_for(ctx, node)
-        elif isinstance(node.iter, ast.IfExp):
-            print("got ifexp")
-            # lets just hard-code this for now...
-            _iter = node.iter
-            build_stmt(ctx, node.iter)
-            is_static_if = get_decorator(ctx, node.iter.test) == "static"
-            print("is static if", is_static_if)
-            if not is_static_if:
-                raise GsTaichiSyntaxError("using non static if with for not currently supported")
-            print("if node.iter.test.ptr:", _iter.test.ptr)
-            next_iter = _iter.body if _iter.test.ptr else _iter.orelse
-            print("next", ast.dump(next_iter, indent=2))
-            new_for = ast.For(
-                target=node.target,
-                iter=next_iter,
-                body=node.body,
-                orelse=None,
-                type_comment=getattr(node, "type_comment", None),
-                lineno=node.lineno,
-                end_lineno=node.end_lineno,
-                col_offset=node.col_offset,
-                end_col_offset=node.end_col_offset,
-            )
-            return ASTTransformer.handle_for(ctx, new_for, decorator)
-        else:
-            print(".   else")
-            print("ast.dump(node)", ast.dump(node, indent=2))
-            print("ast.dump(node.iter)", ast.dump(node.iter, indent=2))
-            build_stmt(ctx, node.iter)
-            if isinstance(node.iter.ptr, mesh.MeshElementField):
-                if not _ti_core.is_extension_supported(impl.default_cfg().arch, _ti_core.Extension.mesh):
-                    raise Exception(
-                        "Backend " + str(impl.default_cfg().arch) + " doesn't support MeshGsTaichi extension"
-                    )
-                return ASTTransformer.build_mesh_for(ctx, node)
-            if isinstance(node.iter.ptr, mesh.MeshRelationAccessProxy):
-                return ASTTransformer.build_nested_mesh_for(ctx, node)
-            # Struct for
-            return ASTTransformer.build_struct_for(ctx, node, is_grouped=False)
-
-    @staticmethod
     def build_For(ctx: ASTTransformerContext, node: ast.For) -> None:
         print("build for", ast.dump(node, indent=2))
         if node.orelse:
@@ -1158,7 +1098,67 @@ class ASTTransformer(Builder):
                 type(decorator),
                 decorator == "",
             )
-            return ASTTransformer.handle_for(ctx, node, decorator)
+            if decorator == "ndrange":
+                print(".   ndrange")
+                if double_decorator != "":
+                    raise GsTaichiSyntaxError("No decorator is allowed inside 'ti.ndrange")
+                return ASTTransformer.build_ndrange_for(ctx, node)
+            if decorator == "grouped":
+                print(".   grouped")
+                if double_decorator == "static":
+                    raise GsTaichiSyntaxError("'ti.static' is not allowed inside 'ti.grouped'")
+                elif double_decorator == "ndrange":
+                    return ASTTransformer.build_grouped_ndrange_for(ctx, node)
+                elif double_decorator == "grouped":
+                    raise GsTaichiSyntaxError("'ti.grouped' cannot be nested")
+                else:
+                    return ASTTransformer.build_struct_for(ctx, node, is_grouped=True)
+            elif (
+                isinstance(node.iter, ast.Call)
+                and isinstance(node.iter.func, ast.Name)
+                and node.iter.func.id == "range"
+            ):
+                print(".   elif")
+                return ASTTransformer.build_range_for(ctx, node)
+            elif isinstance(node.iter, ast.IfExp):
+                print("got ifexp")
+                # lets just hard-code this for now...
+                _iter = node.iter
+                build_stmt(ctx, node.iter)
+                is_static_if = get_decorator(ctx, node.iter.test) == "static"
+                print("is static if", is_static_if)
+                if not is_static_if:
+                    raise GsTaichiSyntaxError("using non static if with for not currently supported")
+                print("if node.iter.test.ptr:", _iter.test.ptr)
+                next_iter = _iter.body if _iter.test.ptr else _iter.orelse
+                print("next", ast.dump(next_iter, indent=2))
+                new_for = ast.For(
+                    target=node.target,
+                    iter=next_iter,
+                    body=node.body,
+                    orelse=None,
+                    type_comment=getattr(node, "type_comment", None),
+                    lineno=node.lineno,
+                    end_lineno=node.end_lineno,
+                    col_offset=node.col_offset,
+                    end_col_offset=node.end_col_offset,
+                )
+                return ASTTransformer.build_For(ctx, new_for)
+            else:
+                print(".   else")
+                print("ast.dump(node)", ast.dump(node, indent=2))
+                print("ast.dump(node.iter)", ast.dump(node.iter, indent=2))
+                build_stmt(ctx, node.iter)
+                if isinstance(node.iter.ptr, mesh.MeshElementField):
+                    if not _ti_core.is_extension_supported(impl.default_cfg().arch, _ti_core.Extension.mesh):
+                        raise Exception(
+                            "Backend " + str(impl.default_cfg().arch) + " doesn't support MeshGsTaichi extension"
+                        )
+                    return ASTTransformer.build_mesh_for(ctx, node)
+                if isinstance(node.iter.ptr, mesh.MeshRelationAccessProxy):
+                    return ASTTransformer.build_nested_mesh_for(ctx, node)
+                # Struct for
+                return ASTTransformer.build_struct_for(ctx, node, is_grouped=False)
 
     @staticmethod
     def build_While(ctx: ASTTransformerContext, node: ast.While) -> None:
