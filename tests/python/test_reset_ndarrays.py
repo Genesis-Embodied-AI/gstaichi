@@ -88,17 +88,3 @@ def test_ndarray_reset() -> None:
     assert bar_param.arr is None
 
     assert a.shape is None
-
-    gc.collect()
-    gc.collect()
-
-    rt = ti.lang.impl.get_runtime()
-    assert len(rt.ndarrays) == 0
-
-    assert a.arr is None
-    assert b.arr is None
-    assert c.arr is None
-    assert z_param.arr is None
-    assert bar_param.arr is None
-
-    assert a.shape is None
