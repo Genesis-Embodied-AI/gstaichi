@@ -615,6 +615,7 @@ class Kernel:
         self.visited_functions: set[FunctionSourceInfo] = set()
         self.kernel_function_info: FunctionSourceInfo | None = None
         self.compiled_kernel_data_by_key: dict[CompiledKernelKeyType, CompiledKernelData] = {}
+        self._last_compiled_kernel_data: CompiledKernelData | None = None  # for dev/debug
 
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
         self.fe_ll_cache_observations: FeLlCacheObservations = FeLlCacheObservations()
@@ -1071,6 +1072,7 @@ class Kernel:
                         compiled_kernel_data,
                     )
                     self.src_ll_cache_observations.cache_stored = True
+            self._last_compiled_kernel_data = compiled_kernel_data
             prog.launch_kernel(compiled_kernel_data, launch_ctx)
         except Exception as e:
             e = handle_exception_from_cpp(e)
