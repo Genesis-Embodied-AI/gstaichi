@@ -1,5 +1,7 @@
 import pathlib
 
+import pytest
+
 import gstaichi as ti
 from gstaichi._test_tools import ti_init_same_arch
 
@@ -29,3 +31,17 @@ def test_fe_ll_observations(tmp_path: pathlib.Path) -> None:
     k1._primal.fe_ll_cache_observations.cache_hit = False
     k1(a)
     assert k1._primal.fe_ll_cache_observations.cache_hit
+
+
+@test_utils.test()
+def test_ensure_compiled_reports_function():
+    @ti.kernel
+    def my_cool_test_function(a: ti.types.NDArray[ti.types.vector(2, ti.i32), 2]):
+        pass
+
+    x = ti.Matrix.ndarray(2, 3, ti.i32, shape=(4, 7))
+    with pytest.raises(
+        ValueError,
+        match=my_cool_test_function.__qualname__,
+    ):
+        my_cool_test_function(x)

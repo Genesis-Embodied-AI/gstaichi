@@ -335,8 +335,15 @@ def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], k
     if len_args > len(fused_args):
         arg_str = ", ".join(map(str, args))
         expected_str = ", ".join(f"{arg.name} : {arg.annotation}" for arg in self.arg_metas)
-        msg = f"Too many arguments. Expected ({expected_str}), got ({arg_str})."
-        raise GsTaichiSyntaxError(msg)
+        msg_l = []
+        msg_l.append(f"Too many arguments. Expected ({expected_str}), got ({arg_str}).")
+        for i in range(len_args):
+            if i < len(self.arg_metas):
+                msg_l.append(f" - {i} arg meta: {self.arg_metas[i].name} arg type: {type(args[i])}")
+            else:
+                msg_l.append(f" - {i} arg meta: <out of arg metas> arg type: {type(args[i])}")
+        msg_l.append(f"In function: {self.func}")
+        raise GsTaichiSyntaxError("\n".join(msg_l))
 
     for i, arg in enumerate(args):
         fused_args[i] = arg
@@ -351,14 +358,28 @@ def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], k
         else:
             raise GsTaichiSyntaxError(f"Unexpected argument '{key}'.")
 
+    missing_parameters = []
     for i, arg in enumerate(fused_args):
         if arg is inspect.Parameter.empty:
             if self.arg_metas[i].annotation is inspect._empty:
-                raise GsTaichiSyntaxError(f"Parameter `{self.arg_metas[i].name}` missing.")
+                missing_parameters.append(f"Parameter `{self.arg_metas[i].name}` missing.")
             else:
-                raise GsTaichiSyntaxError(
+                missing_parameters.append(
                     f"Parameter `{self.arg_metas[i].name} : {self.arg_metas[i].annotation}` missing."
                 )
+    if len(missing_parameters) > 0:
+        msg_l = []
+        msg_l.append("Error: missing parameters.")
+        msg_l.extend(missing_parameters)
+        msg_l.append("")
+        msg_l.append("Debug info follows.")
+        msg_l.append("fused args:")
+        for i, arg in enumerate(fused_args):
+            msg_l.append(f"  {i} {arg}")
+        msg_l.append("arg metas:")
+        for i, arg in enumerate(self.arg_metas):
+            msg_l.append(f"  {i} {arg}")
+        raise GsTaichiSyntaxError("\n".join(msg_l))
 
     return tuple(fused_args)
 
@@ -998,6 +1019,8 @@ class Kernel:
                 set_arg_sparse_matrix_builder(indices, v)
                 return 1
             if dataclasses.is_dataclass(needed_arg_type):
+                if provided_arg_type != needed_arg_type:
+                    raise GsTaichiRuntimeError("needed", needed_arg_type, "!= provided", provided_arg_type)
                 assert provided_arg_type == needed_arg_type
                 idx = 0
                 for j, field in enumerate(dataclasses.fields(needed_arg_type)):
@@ -1111,7 +1134,10 @@ class Kernel:
         raise GsTaichiRuntimeTypeError(f"Invalid return type on index={index}")
 
     def ensure_compiled(self, *args: tuple[Any, ...]) -> tuple[Callable, int, AutodiffMode]:
-        instance_id, arg_features = self.mapper.lookup(args)
+        try:
+            instance_id, arg_features = self.mapper.lookup(args)
+        except Exception as e:
+            raise type(e)(f"exception while trying to ensure compiled {self.func}:\n{e}") from e
         key = (self.func, instance_id, self.autodiff_mode)
         self.materialize(key=key, args=args, arg_features=arg_features)
         return key

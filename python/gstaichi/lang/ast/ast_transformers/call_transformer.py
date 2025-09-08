@@ -177,7 +177,10 @@ class CallTransformer:
             if dataclasses.is_dataclass(val):
                 dataclass_type = val
                 for field in dataclasses.fields(dataclass_type):
-                    child_name = create_flat_name(arg.id, field.name)
+                    try:
+                        child_name = create_flat_name(arg.id, field.name)
+                    except Exception as e:
+                        raise RuntimeError(f"Exception whilst processing {field.name} in {type(dataclass_type)}") from e
                     load_ctx = ast.Load()
                     arg_node = ast.Name(
                         id=child_name,
