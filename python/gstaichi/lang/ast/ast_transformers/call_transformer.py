@@ -180,7 +180,7 @@ class CallTransformer:
                     try:
                         child_name = create_flat_name(arg.id, field.name)
                     except Exception as e:
-                        raise RuntimeError("Exception whilst processing", field.name, "in", type(dataclass_type)) from e
+                        raise RuntimeError(f"Exception whilst processing {field.name} in {type(dataclass_type)}") from e
                     load_ctx = ast.Load()
                     arg_node = ast.Name(
                         id=child_name,
