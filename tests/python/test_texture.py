@@ -1,9 +1,4 @@
-from io import BytesIO
-
-import numpy as np
 import pytest
-import requests
-from PIL import Image
 
 import gstaichi as ti
 from gstaichi.lang import impl
