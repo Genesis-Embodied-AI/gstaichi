@@ -1137,7 +1137,7 @@ class Kernel:
         try:
             instance_id, arg_features = self.mapper.lookup(args)
         except Exception as e:
-            raise RuntimeError("exception while trying to ensure compiled", self.func) from e
+            raise type(e)(f"exception while trying to ensure compiled {self.func}:\n{e}") from e
         key = (self.func, instance_id, self.autodiff_mode)
         self.materialize(key=key, args=args, arg_features=arg_features)
         return key
