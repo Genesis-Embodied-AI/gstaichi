@@ -4,6 +4,7 @@
 #include <memory>
 #include <optional>
 #include <algorithm>
+#include <stdexcept>
 
 #include "gstaichi/rhi/arch.h"
 
@@ -125,6 +126,10 @@ class CompiledKernelData {
   }
 
   static std::unique_ptr<CompiledKernelData> load(std::istream &is, Err *p_err);
+
+  virtual std::string debug_dump_to_string() const {
+    throw std::runtime_error("debug_dump_to_string not implemented");
+  }
 
   static std::string get_err_msg(Err err);
 

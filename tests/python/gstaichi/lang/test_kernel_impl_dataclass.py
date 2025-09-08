@@ -132,8 +132,6 @@ def test_unpack_ast_struct_expressions(ast_in: str, struct_locals: set[str], exp
     ast_in_obj = eval(ast_in.strip())
     expected_ast_obj = eval(expected_ast.strip())
     new_ast_obj = _kernel_impl_dataclass.unpack_ast_struct_expressions(ast_in_obj, struct_locals)
-    print("new_ast_obj", ast.dump(new_ast_obj, indent=2))
-    print("expected_ast_obj", ast.dump(expected_ast_obj, indent=2))
     assert ast.dump(new_ast_obj) == ast.dump(expected_ast_obj)
 
 
@@ -172,13 +170,8 @@ def test_unpack_ast_struct_expressions(ast_in: str, struct_locals: set[str], exp
 @test_utils.test()
 def test_expand_func_arguments(in_meta: list[ArgMetadata], expected_meta: list[ArgMetadata]) -> None:
     out_meta = _kernel_impl_dataclass.expand_func_arguments(in_meta)
-    print("in_meta", "\n".join([str(m) for m in in_meta]))
-    print("out_meta", "\n".join([str(m) for m in out_meta]))
-    print("expected_meta", "\n".join([str(m) for m in expected_meta]))
     out_names = [m.name for m in out_meta]
     expected_names = [m.name for m in expected_meta]
-    print("out_names", out_names)
-    print("expected_names", expected_names)
     assert out_names == expected_names
 
     out_dtypes = [m.annotation.dtype for m in out_meta]
@@ -228,14 +221,10 @@ def test_populate_global_vars_from_dataclasses(
     param_name: str, param_type: Any, expected_global_args: dict[str, Any]
 ) -> None:
     py_arg = dataclass_test_tools.build_struct(param_type)
-    print("py_arg", py_arg)
     global_vars = {}
     _kernel_impl_dataclass.populate_global_vars_from_dataclass(param_name, param_type, py_arg, global_vars)
-    print("global vars names", list(global_vars.keys()))
     expected_names = set(expected_global_args.keys())
     actual_names = set(global_vars.keys())
-    print("expected", expected_names)
-    print("actual", actual_names)
     assert expected_names == actual_names
     for name in expected_names:
         expected_type = expected_global_args[name]
