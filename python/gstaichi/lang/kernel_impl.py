@@ -335,14 +335,15 @@ def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], k
     if len_args > len(fused_args):
         arg_str = ", ".join(map(str, args))
         expected_str = ", ".join(f"{arg.name} : {arg.annotation}" for arg in self.arg_metas)
-        msg = f"Too many arguments. Expected ({expected_str}), got ({arg_str})."
+        msg_l = []
+        msg_l.append(f"Too many arguments. Expected ({expected_str}), got ({arg_str}).")
         for i in range(len_args):
             if i < len(self.arg_metas):
-                print(i, self.arg_metas[i].name, type(args[i]))
+                msg_l.append(f" - {i} arg meta: {self.arg_metas[i].name} arg type: {type(args[i])}")
             else:
-                print(i, "<out of arg metas>", type(args[i]))
-        print("in function", self.func)
-        raise GsTaichiSyntaxError(msg)
+                msg_l.append(f" - {i} arg meta: <out of arg metas> arg type: {type(args[i])}")
+        msg_l.append(f"In function: {self.func}")
+        raise GsTaichiSyntaxError("\n".join(msg_l))
 
     for i, arg in enumerate(args):
         fused_args[i] = arg
@@ -367,13 +368,18 @@ def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], k
                     f"Parameter `{self.arg_metas[i].name} : {self.arg_metas[i].annotation}` missing."
                 )
     if len(missing_parameters) > 0:
-        print("fused args:")
+        msg_l = []
+        msg_l.append("Error: missing parameters.")
+        msg_l.extend(missing_parameters)
+        msg_l.append("")
+        msg_l.append("Debug info follows.")
+        msg_l.append("fused args:")
         for i, arg in enumerate(fused_args):
-            print("  ", i, arg)
-        print("arg metas:")
+            msg_l.append(f"  {i} {arg}")
+        msg_l.append("arg metas:")
         for i, arg in enumerate(self.arg_metas):
-            print("  ", i, arg)
-        raise GsTaichiSyntaxError("\n".join(missing_parameters))
+            msg_l.append(f"  {i} {arg}")
+        raise GsTaichiSyntaxError("\n".join(msg_l))
 
     return tuple(fused_args)
 
@@ -1129,8 +1135,7 @@ class Kernel:
         try:
             instance_id, arg_features = self.mapper.lookup(args)
         except Exception as e:
-            print("exception while trying to ensure compiled", self.func)
-            raise e
+            raise RuntimeError("exception while trying to ensure compiled", self.func) from e
         key = (self.func, instance_id, self.autodiff_mode)
         self.materialize(key=key, args=args, arg_features=arg_features)
         return key
