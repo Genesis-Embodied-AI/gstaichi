@@ -14,7 +14,7 @@ def test_for_static_if_iter_runs(use_field: bool, is_inner: bool, static_value: 
     # Note that we currently dont have a way to turn static range on/off using some kind of variable/parameter.
     # So, for now, we'll have one side as static range, and one side as non-static range.
     # Since the code itself treats either side identically (same code path except for choosing one or the other side),
-    # whilst the test isn't ideal, it should give identical coverage to something more rigorous
+    # whilst the test isn't ideal, it should give identical coverage to something more rigorous.
     # We can think about approaches to parametrizing the static range in the future (nop function, macro,
     # parametrizablle ti.static, parametrizable ti.range, etc...).
     B = 2
