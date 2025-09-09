@@ -1110,7 +1110,7 @@ class ASTTransformer(Builder):
             elif isinstance(node.iter, ast.IfExp):
                 # lets just "hard-code" this for now...
                 # here we are handling cases like
-                # for i in range(foo) if ti.static(some_flag) else range(ti.static(bar))
+                # for i in range(foo) if ti.static(some_flag) else ti.static(range(bar))
                 # this appears to generalize to:
                 # - being an inner loop
                 # - either side can be static or not, as long as the if expression itself is static
