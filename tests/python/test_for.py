@@ -27,20 +27,20 @@ def test_for_static_if_iter_runs(use_field: bool, is_inner: bool, static_value: 
     if is_inner:
 
         @ti.kernel
-        def k1(a: V_ANNOT) -> None:
+        def k1(a: V_ANNOT, n_left: ti.i32) -> None:
             for b in range(B):
-                for i in range(N_left) if ti.static(static_value) else ti.static(range(N_right)):
+                for i in range(n_left) if ti.static(static_value) else ti.static(range(N_right)):
                     a[b, i] = 1
 
     else:
 
         @ti.kernel
-        def k1(a: V_ANNOT) -> None:
-            for i in range(N_left) if ti.static(static_value) else ti.static(range(N_right)):
+        def k1(a: V_ANNOT, n_left: ti.i32) -> None:
+            for i in range(n_left) if ti.static(static_value) else ti.static(range(N_right)):
                 a[0, i] = 1
 
     a = V(ti.i32, (B, 6))
-    k1(a)
+    k1(a, N_left)
 
     def create_expected():
         a_expected = np.zeros(dtype=np.int32, shape=(B, 6))
@@ -66,15 +66,15 @@ def test_for_static_if_iter_static_ranges(is_static: bool) -> None:
     N_right = 5
 
     @ti.kernel
-    def k1(break_threshold: ti.i32) -> None:
+    def k1(break_threshold: ti.i32, n_right: ti.i32) -> None:
         for b in range(B):
-            for i in ti.static(range(N_left)) if ti.static(is_static) else range(N_right):
+            for i in ti.static(range(N_left)) if ti.static(is_static) else range(n_right):
                 if i >= break_threshold:
                     break
 
     if is_static:
         with pytest.raises(ti.GsTaichiCompilationError, match="You are trying to `break` a static `for` loop"):
-            k1(0)
+            k1(0, N_right)
     else:
         # Dynamic break is ok, since not static for range.
-        k1(0)
+        k1(0, N_right)

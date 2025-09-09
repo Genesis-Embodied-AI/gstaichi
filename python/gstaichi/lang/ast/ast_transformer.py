@@ -1116,12 +1116,12 @@ class ASTTransformer(Builder):
                 # - being an inner loop
                 # - either side can be static or not, as long as the if expression itself is static
                 _iter = node.iter
-                build_stmt(ctx, node.iter)
                 is_static_if = get_decorator(ctx, node.iter.test) == "static"
                 if not is_static_if:
                     raise GsTaichiSyntaxError(
                         "Using non static inlined if statement as for-loop iterable is not currently supported."
                     )
+                build_stmt(ctx, _iter.test)
                 next_iter = _iter.body if _iter.test.ptr else _iter.orelse
                 new_for = ast.For(
                     target=node.target,
