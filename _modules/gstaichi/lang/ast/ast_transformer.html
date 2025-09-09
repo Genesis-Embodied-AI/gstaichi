@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gstaichi.lang.ast.ast_transformer &#8212; GsTaichi 2.2.2 documentation</title>
+    <title>gstaichi.lang.ast.ast_transformer &#8212; GsTaichi 2.3.0 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../../_static/documentation_options.js?v=219dea72"></script>
+    <script src="../../../../_static/documentation_options.js?v=c3c8ae58"></script>
     <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -59,7 +59,7 @@
     <link rel="search" title="Search" href="../../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.2.2" />
+  <meta name="docsearch:version" content="2.3.0" />
   </head>
   
   
@@ -121,7 +121,7 @@
   
   
   
-    <p class="title logo__title">GsTaichi 2.2.2 documentation</p>
+    <p class="title logo__title">GsTaichi 2.3.0 documentation</p>
   
 </a></div>
     
@@ -1585,6 +1585,34 @@
                 <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">iter</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s2">&quot;range&quot;</span>
             <span class="p">):</span>
                 <span class="k">return</span> <span class="n">ASTTransformer</span><span class="o">.</span><span class="n">build_range_for</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">iter</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">IfExp</span><span class="p">):</span>
+                <span class="c1"># Handle inline if expression as the top level iterator expression, e.g.:</span>
+                <span class="c1">#</span>
+                <span class="c1">#   for i in range(foo) if ti.static(some_flag) else ti.static(range(bar))</span>
+                <span class="c1">#</span>
+                <span class="c1"># Empirically, this appears to generalize to:</span>
+                <span class="c1"># - being an inner loop</span>
+                <span class="c1"># - either side can be static or not, as long as the if expression itself is static</span>
+                <span class="n">_iter</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">iter</span>
+                <span class="n">is_static_if</span> <span class="o">=</span> <span class="n">get_decorator</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">iter</span><span class="o">.</span><span class="n">test</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;static&quot;</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">is_static_if</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span>
+                        <span class="s2">&quot;Using non static inlined if statement as for-loop iterable is not currently supported.&quot;</span>
+                    <span class="p">)</span>
+                <span class="n">build_stmt</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">_iter</span><span class="o">.</span><span class="n">test</span><span class="p">)</span>
+                <span class="n">next_iter</span> <span class="o">=</span> <span class="n">_iter</span><span class="o">.</span><span class="n">body</span> <span class="k">if</span> <span class="n">_iter</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">ptr</span> <span class="k">else</span> <span class="n">_iter</span><span class="o">.</span><span class="n">orelse</span>
+                <span class="n">new_for</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">For</span><span class="p">(</span>
+                    <span class="n">target</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">target</span><span class="p">,</span>
+                    <span class="nb">iter</span><span class="o">=</span><span class="n">next_iter</span><span class="p">,</span>
+                    <span class="n">body</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">,</span>
+                    <span class="n">orelse</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">type_comment</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;type_comment&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                    <span class="n">lineno</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">lineno</span><span class="p">,</span>
+                    <span class="n">end_lineno</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">end_lineno</span><span class="p">,</span>
+                    <span class="n">col_offset</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">col_offset</span><span class="p">,</span>
+                    <span class="n">end_col_offset</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">end_col_offset</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="n">ASTTransformer</span><span class="o">.</span><span class="n">build_For</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">new_for</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">build_stmt</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">iter</span><span class="p">)</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">iter</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="n">mesh</span><span class="o">.</span><span class="n">MeshElementField</span><span class="p">):</span>
