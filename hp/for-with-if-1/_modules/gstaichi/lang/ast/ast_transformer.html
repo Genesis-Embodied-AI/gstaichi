@@ -1586,17 +1586,20 @@
             <span class="p">):</span>
                 <span class="k">return</span> <span class="n">ASTTransformer</span><span class="o">.</span><span class="n">build_range_for</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">iter</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">IfExp</span><span class="p">):</span>
-                <span class="c1"># lets just &quot;hard-code&quot; this for now...</span>
-                <span class="c1"># here we are handling cases like</span>
-                <span class="c1"># for i in range(foo) if ti.static(some_flag) else range(ti.static(bar))</span>
-                <span class="c1"># this appears to generalize to:</span>
+                <span class="c1"># Handle inline if expression as the top level iterator expression, e.g.:</span>
+                <span class="c1">#</span>
+                <span class="c1">#   for i in range(foo) if ti.static(some_flag) else ti.static(range(bar))</span>
+                <span class="c1">#</span>
+                <span class="c1"># Empirically, this appears to generalize to:</span>
                 <span class="c1"># - being an inner loop</span>
                 <span class="c1"># - either side can be static or not, as long as the if expression itself is static</span>
                 <span class="n">_iter</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">iter</span>
                 <span class="n">build_stmt</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">iter</span><span class="p">)</span>
                 <span class="n">is_static_if</span> <span class="o">=</span> <span class="n">get_decorator</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">iter</span><span class="o">.</span><span class="n">test</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;static&quot;</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">is_static_if</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="s2">&quot;using non static if with for not currently supported&quot;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span>
+                        <span class="s2">&quot;Using non static inlined if statement as for-loop iterable is not currently supported.&quot;</span>
+                    <span class="p">)</span>
                 <span class="n">next_iter</span> <span class="o">=</span> <span class="n">_iter</span><span class="o">.</span><span class="n">body</span> <span class="k">if</span> <span class="n">_iter</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">ptr</span> <span class="k">else</span> <span class="n">_iter</span><span class="o">.</span><span class="n">orelse</span>
                 <span class="n">new_for</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">For</span><span class="p">(</span>
                     <span class="n">target</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">target</span><span class="p">,</span>
