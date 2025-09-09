@@ -1108,9 +1108,10 @@ class ASTTransformer(Builder):
             ):
                 return ASTTransformer.build_range_for(ctx, node)
             elif isinstance(node.iter, ast.IfExp):
-                # lets just "hard-code" this for now...
-                # here we are handling cases like
-                # for i in range(foo) if ti.static(some_flag) else ti.static(range(bar))
+                # handle inline if expression as the top level iterator expression, e.g.:
+                #
+                #   for i in range(foo) if ti.static(some_flag) else ti.static(range(bar))
+                #
                 # this appears to generalize to:
                 # - being an inner loop
                 # - either side can be static or not, as long as the if expression itself is static
@@ -1118,7 +1119,8 @@ class ASTTransformer(Builder):
                 build_stmt(ctx, node.iter)
                 is_static_if = get_decorator(ctx, node.iter.test) == "static"
                 if not is_static_if:
-                    raise GsTaichiSyntaxError("using non static if with for not currently supported")
+                    raise GsTaichiSyntaxError(
+                        "Using non static inlined if statement as for-loop iterable is not currently supported.")
                 next_iter = _iter.body if _iter.test.ptr else _iter.orelse
                 new_for = ast.For(
                     target=node.target,
