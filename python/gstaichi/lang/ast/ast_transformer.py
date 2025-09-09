@@ -1108,11 +1108,11 @@ class ASTTransformer(Builder):
             ):
                 return ASTTransformer.build_range_for(ctx, node)
             elif isinstance(node.iter, ast.IfExp):
-                # handle inline if expression as the top level iterator expression, e.g.:
+                # Handle inline if expression as the top level iterator expression, e.g.:
                 #
                 #   for i in range(foo) if ti.static(some_flag) else ti.static(range(bar))
                 #
-                # this appears to generalize to:
+                # Empirically, this appears to generalize to:
                 # - being an inner loop
                 # - either side can be static or not, as long as the if expression itself is static
                 _iter = node.iter
