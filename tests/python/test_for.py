@@ -1,7 +1,9 @@
-import gstaichi as ti
-from tests import test_utils
-import pytest
 import numpy as np
+import pytest
+
+import gstaichi as ti
+
+from tests import test_utils
 
 
 @pytest.mark.parametrize("static_value", [False, True])
@@ -13,7 +15,7 @@ def test_for_static_if_iter_runs(use_field: bool, is_inner: bool, static_value: 
     # So, for now, we'll have one side as static range, and one side as non-static range
     # Since the code itself treats either side identically (same code path except for choosing one or the other side),
     # whilst the test isn't ideal, it should give identical coverage to something more rigorous
-    # We can think about approaches to parametrizing the static range in the future (nop function, macro, 
+    # We can think about approaches to parametrizing the static range in the future (nop function, macro,
     # parametrizablle ti.static, parametrizable ti.range, etc...)
     B = 2
     N_left = 3
@@ -23,18 +25,22 @@ def test_for_static_if_iter_runs(use_field: bool, is_inner: bool, static_value: 
     V_ANNOT = ti.Template if use_field else ti.types.NDArray[ti.i32, 2]
 
     if is_inner:
+
         @ti.kernel
         def k1(a: V_ANNOT) -> None:
             for b in range(B):
                 for i in range(N_left) if ti.static(static_value) else ti.static(range(N_right)):
                     print(i)
                     a[b, i] = 1
+
     else:
+
         @ti.kernel
         def k1(a: V_ANNOT) -> None:
             for i in range(N_left) if ti.static(static_value) else ti.static(range(N_right)):
                 print(i)
                 a[0, i] = 1
+
     a = V(ti.i32, (B, 6))
     k1(a)
     print(a.to_numpy())
@@ -45,7 +51,7 @@ def test_for_static_if_iter_runs(use_field: bool, is_inner: bool, static_value: 
             for i in range(N_left) if static_value else range(N_right):
                 a_expected[b, i] = 1
         return a_expected
- 
+
     assert np.all(create_expected() == a.to_numpy())
 
 
@@ -58,7 +64,7 @@ def test_for_static_if_iter_static_ranges(use_field: bool, is_inner: bool, is_st
 
     # In this test, we verify that the static side is really static, and that the non-static side is
     # really non-static, by adding a conditional break to each, and seeing if that causes compilation to fail
-    
+
     # Note that break is only valid in inner loops, so we only test the inner loop case
     B = 2
     N_left = 3
@@ -73,8 +79,7 @@ def test_for_static_if_iter_static_ranges(use_field: bool, is_inner: bool, is_st
                     break
 
     if is_static:
-        with pytest.raises(ti.GsTaichiCompilationError,
-                      match="You are trying to `break` a static `for` loop"):
+        with pytest.raises(ti.GsTaichiCompilationError, match="You are trying to `break` a static `for` loop"):
             k1(0)
     else:
         # dynamic break is ok, since not static for range
