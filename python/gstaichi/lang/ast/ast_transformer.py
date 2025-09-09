@@ -1120,7 +1120,8 @@ class ASTTransformer(Builder):
                 is_static_if = get_decorator(ctx, node.iter.test) == "static"
                 if not is_static_if:
                     raise GsTaichiSyntaxError(
-                        "Using non static inlined if statement as for-loop iterable is not currently supported.")
+                        "Using non static inlined if statement as for-loop iterable is not currently supported."
+                    )
                 next_iter = _iter.body if _iter.test.ptr else _iter.orelse
                 new_for = ast.For(
                     target=node.target,
