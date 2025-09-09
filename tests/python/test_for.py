@@ -30,7 +30,6 @@ def test_for_static_if_iter_runs(use_field: bool, is_inner: bool, static_value: 
         def k1(a: V_ANNOT) -> None:
             for b in range(B):
                 for i in range(N_left) if ti.static(static_value) else ti.static(range(N_right)):
-                    print(i)
                     a[b, i] = 1
 
     else:
@@ -38,12 +37,10 @@ def test_for_static_if_iter_runs(use_field: bool, is_inner: bool, static_value: 
         @ti.kernel
         def k1(a: V_ANNOT) -> None:
             for i in range(N_left) if ti.static(static_value) else ti.static(range(N_right)):
-                print(i)
                 a[0, i] = 1
 
     a = V(ti.i32, (B, 6))
     k1(a)
-    print(a.to_numpy())
 
     def create_expected():
         a_expected = np.zeros(dtype=np.int32, shape=(B, 6))
@@ -56,10 +53,8 @@ def test_for_static_if_iter_runs(use_field: bool, is_inner: bool, static_value: 
 
 
 @pytest.mark.parametrize("is_static", [False, True])
-@pytest.mark.parametrize("is_inner", [False, True])
-@pytest.mark.parametrize("use_field", [False, True])
 @test_utils.test()
-def test_for_static_if_iter_static_ranges(use_field: bool, is_inner: bool, is_static: bool) -> None:
+def test_for_static_if_iter_static_ranges(is_static: bool) -> None:
     # see comments on test_for_static_if_iter_runs for discussion of testing static vs non static ranges
 
     # In this test, we verify that the static side is really static, and that the non-static side is
@@ -74,7 +69,6 @@ def test_for_static_if_iter_static_ranges(use_field: bool, is_inner: bool, is_st
     def k1(break_threshold: ti.i32) -> None:
         for b in range(B):
             for i in ti.static(range(N_left)) if ti.static(is_static) else range(N_right):
-                print(i)
                 if i >= break_threshold:
                     break
 
