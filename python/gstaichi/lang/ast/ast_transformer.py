@@ -1075,7 +1075,6 @@ class ASTTransformer(Builder):
 
     @staticmethod
     def build_For(ctx: ASTTransformerContext, node: ast.For) -> None:
-        print("build for", ast.dump(node, indent=2))
         if node.orelse:
             raise GsTaichiSyntaxError("'else' clause for 'for' not supported in GsTaichi kernels")
         decorator = get_decorator(ctx, node.iter)
@@ -1084,27 +1083,16 @@ class ASTTransformer(Builder):
             double_decorator = get_decorator(ctx, node.iter.args[0])
 
         if decorator == "static":
-            print("  for is static")
             if double_decorator == "static":
                 raise GsTaichiSyntaxError("'ti.static' cannot be nested")
             with ctx.loop_scope_guard(is_static=True):
                 return ASTTransformer.build_static_for(ctx, node, double_decorator == "grouped")
         with ctx.loop_scope_guard():
-            print(
-                "  set ctx loop scope guard decorator",
-                decorator,
-                "none?",
-                decorator is None,
-                type(decorator),
-                decorator == "",
-            )
             if decorator == "ndrange":
-                print(".   ndrange")
                 if double_decorator != "":
                     raise GsTaichiSyntaxError("No decorator is allowed inside 'ti.ndrange")
                 return ASTTransformer.build_ndrange_for(ctx, node)
             if decorator == "grouped":
-                print(".   grouped")
                 if double_decorator == "static":
                     raise GsTaichiSyntaxError("'ti.static' is not allowed inside 'ti.grouped'")
                 elif double_decorator == "ndrange":
@@ -1118,20 +1106,20 @@ class ASTTransformer(Builder):
                 and isinstance(node.iter.func, ast.Name)
                 and node.iter.func.id == "range"
             ):
-                print(".   elif")
                 return ASTTransformer.build_range_for(ctx, node)
             elif isinstance(node.iter, ast.IfExp):
-                print("got ifexp")
-                # lets just hard-code this for now...
+                # lets just "hard-code" this for now...
+                # here we are handling cases like
+                # for i in range(foo) if ti.static(some_flag) else range(ti.static(bar))
+                # this appears to generalize to:
+                # - being an inner loop
+                # - either side can be static or not, as long as the if expression itself is static
                 _iter = node.iter
                 build_stmt(ctx, node.iter)
                 is_static_if = get_decorator(ctx, node.iter.test) == "static"
-                print("is static if", is_static_if)
                 if not is_static_if:
                     raise GsTaichiSyntaxError("using non static if with for not currently supported")
-                print("if node.iter.test.ptr:", _iter.test.ptr)
                 next_iter = _iter.body if _iter.test.ptr else _iter.orelse
-                print("next", ast.dump(next_iter, indent=2))
                 new_for = ast.For(
                     target=node.target,
                     iter=next_iter,
@@ -1145,9 +1133,6 @@ class ASTTransformer(Builder):
                 )
                 return ASTTransformer.build_For(ctx, new_for)
             else:
-                print(".   else")
-                print("ast.dump(node)", ast.dump(node, indent=2))
-                print("ast.dump(node.iter)", ast.dump(node.iter, indent=2))
                 build_stmt(ctx, node.iter)
                 if isinstance(node.iter.ptr, mesh.MeshElementField):
                     if not _ti_core.is_extension_supported(impl.default_cfg().arch, _ti_core.Extension.mesh):
