@@ -76,5 +76,5 @@ def test_for_static_if_iter_static_ranges(is_static: bool) -> None:
         with pytest.raises(ti.GsTaichiCompilationError, match="You are trying to `break` a static `for` loop"):
             k1(0)
     else:
-        # dynamic break is ok, since not static for range
+        # Dynamic break is ok, since not static for range.
         k1(0)
