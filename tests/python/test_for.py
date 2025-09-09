@@ -87,7 +87,7 @@ def test_for_static_if_iter_static_ranges(is_static: bool) -> None:
 @test_utils.test()
 def test_for_static_if_forwards_backwards(use_field: bool) -> None:
     """
-    Test a forwards/backwards requirement for rigid body differentiation
+    Test a forwards/backwards requirement for rigid body differentiation.
     """
     MAX_LINKs = 3
     BATCH_SIZE = 1
