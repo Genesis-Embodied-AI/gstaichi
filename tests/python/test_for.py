@@ -17,8 +17,8 @@ def test_for_static_if_iter_runs(use_field: bool, is_inner: bool, static_value: 
     # whilst the test isn't ideal, it should give identical coverage to something more rigorous.
     # We can think about approaches to parametrizing the static range in the future (nop function, macro,
     # parametrizablle ti.static, parametrizable ti.range, etc...).
+
     B = 2
-    N_left = 3
     N_right = 5
 
     V = ti.field if use_field else ti.ndarray
@@ -39,17 +39,20 @@ def test_for_static_if_iter_runs(use_field: bool, is_inner: bool, static_value: 
             for i in range(n_left) if ti.static(static_value) else ti.static(range(N_right)):
                 a[0, i] = 1
 
-    a = V(ti.i32, (B, 6))
-    k1(a, N_left)
-
-    def create_expected():
+    def create_expected(n_left: int):
         a_expected = np.zeros(dtype=np.int32, shape=(B, 6))
         for b in range(B) if is_inner else range(1):
-            for i in range(N_left) if static_value else range(N_right):
+            for i in range(n_left) if static_value else range(N_right):
                 a_expected[b, i] = 1
         return a_expected
 
-    assert np.all(create_expected() == a.to_numpy())
+    a = V(ti.i32, (B, 6))
+    k1(a, n_left=2)
+    assert np.all(create_expected(n_left=2) == a.to_numpy())
+
+    a = V(ti.i32, (B, 6))
+    k1(a, n_left=3)
+    assert np.all(create_expected(n_left=3) == a.to_numpy())
 
 
 @pytest.mark.parametrize("is_static", [False, True])
@@ -78,3 +81,32 @@ def test_for_static_if_iter_static_ranges(is_static: bool) -> None:
     else:
         # Dynamic break is ok, since not static for range.
         k1(0, N_right)
+
+
+@pytest.mark.parametrize("use_field", [False, True])
+@test_utils.test()
+def test_for_static_if_forwards_backwards(use_field: bool) -> None:
+    """
+    Test a forwards/backwards requirement for rigid body differentiation
+    """
+    MAX_LINKs = 3
+    BATCH_SIZE = 1
+
+    V = ti.field if use_field else ti.ndarray
+    V_ANNOT = ti.Template if use_field else ti.types.NDArray[ti.i32, 1]
+    V_ANNOT2 = ti.Template if use_field else ti.types.NDArray[ti.i32, 2]
+
+    field_a = V(ti.i32, shape=(BATCH_SIZE))
+    field_a.from_numpy(np.array([1]))
+
+    field_target = V(ti.i32, (BATCH_SIZE, MAX_LINKs))
+
+    @ti.kernel
+    def k1(is_backward: ti.template(), field_a: V_ANNOT, field_target: V_ANNOT2):
+        for i_b in range(BATCH_SIZE):
+            for j in ti.static(range(MAX_LINKs)) if ti.static(is_backward) else range(field_a[i_b]):
+                print("is_backward", is_backward, j)
+                field_target[i_b, j] = 1
+
+    k1(is_backward=False, field_a=field_a, field_target=field_target)
+    k1(is_backward=True, field_a=field_a, field_target=field_target)
