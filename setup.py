@@ -267,7 +267,6 @@ setup(
         "write_to": "python/gstaichi/_version.py",
         "write_to_template": "__version__ = '{version}'\n",
     },
-
     data_files=[
         (os.path.join("_lib", "runtime"), data_files),
     ],
