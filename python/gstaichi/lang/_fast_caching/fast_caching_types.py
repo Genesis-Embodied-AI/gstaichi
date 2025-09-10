@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from .._wrap_inspect import FunctionSourceInfo
+from .._wrap_inspect import HashableFuncSourceInfo
 
 
 class HashedFunctionSourceInfo(BaseModel):
@@ -17,5 +17,5 @@ class HashedFunctionSourceInfo(BaseModel):
     does not have a hash string.
     """
 
-    function_source_info: FunctionSourceInfo
+    function_source_info: HashableFuncSourceInfo
     hash: str
