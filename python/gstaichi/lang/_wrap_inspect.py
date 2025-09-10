@@ -199,14 +199,14 @@ class HashableFuncSourceInfo(BaseModel):
         frozen = True
 
 
-@dataclasses.dataclass
-class FuncCacheInfo:
-    hashable_func_source_info: HashableFuncSourceInfo  # hashable
-    src: list[str]
-    param_type_by_name: dict[str, object]  # not hashable
+# @dataclasses.dataclass
+# class FuncCacheInfo:
+#     hashable_func_source_info: HashableFuncSourceInfo  # hashable
+#     src: list[str]
+#     param_type_by_name: dict[str, object]  # not hashable
 
 
-def get_source_info_and_src(func: Callable) -> FuncCacheInfo:
+def get_source_info_and_src(func: Callable) -> tuple[HashableFuncSourceInfo, list[str]]:
     param_type_by_name = {k: v.annotation for k, v in inspect.signature(func).parameters.items()}
     file = getsourcefile(func)
     name = func.__name__
@@ -219,12 +219,12 @@ def get_source_info_and_src(func: Callable) -> FuncCacheInfo:
         start_lineno=start_lineno,
         end_lineno=end_lineno,
     )
-    func_cache_info = FuncCacheInfo(
-        hashable_func_source_info=hashable_func_source_info,
-        src=src,
-        param_type_by_name=param_type_by_name
-    )
-    return func_cache_info
+    # func_cache_info = FuncCacheInfo(
+    #     hashable_func_source_info=hashable_func_source_info,
+    #     src=src,
+    #     param_type_by_name=param_type_by_name
+    # )
+    return hashable_func_source_info, src
 
 
 __all__ = ["getsourcelines", "getsourcefile", "get_source_info_and_src"]

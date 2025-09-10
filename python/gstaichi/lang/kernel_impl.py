@@ -34,7 +34,7 @@ from gstaichi._lib.core.gstaichi_python import (
 from gstaichi.lang import _kernel_impl_dataclass, impl, ops, runtime_ops
 from gstaichi.lang._fast_caching import src_hasher
 from gstaichi.lang._template_mapper import TemplateMapper
-from gstaichi.lang._wrap_inspect import FuncCacheInfo, get_source_info_and_src, HashableFuncSourceInfo
+from gstaichi.lang._wrap_inspect import get_source_info_and_src, HashableFuncSourceInfo
 from gstaichi.lang.any_array import AnyArray
 from gstaichi.lang.ast import (
     ASTTransformerContext,
@@ -284,8 +284,8 @@ def _get_tree_and_ctx(
     is_real_function: bool = False,
     current_kernel: "Kernel | None" = None,
 ) -> tuple[ast.Module, ASTTransformerContext]:
-    function_source_info = get_source_info_and_src(self.func)
-    src = [textwrap.fill(line, tabsize=4, width=9999) for line in function_source_info.src]
+    function_source_info, src = get_source_info_and_src(self.func)
+    src = [textwrap.fill(line, tabsize=4, width=9999) for line in src]
     tree = ast.parse(textwrap.dedent("\n".join(src)))
 
     func_body = tree.body[0]
@@ -307,7 +307,7 @@ def _get_tree_and_ctx(
     if current_kernel is None:
         current_kernel = impl.get_runtime()._current_kernel
     assert current_kernel is not None
-    current_kernel.visited_functions[function_source_info.hashable_func_source_info] = function_source_info
+    current_kernel.visited_functions.add(function_source_info)
 
     return tree, ASTTransformerContext(
         excluded_parameters=excluded_parameters,
@@ -317,9 +317,9 @@ def _get_tree_and_ctx(
         global_vars=global_vars,
         argument_data=args,
         src=src,
-        start_lineno=function_source_info.hashable_func_source_info.start_lineno,
-        end_lineno=function_source_info.hashable_func_source_info.end_lineno,
-        file=function_source_info.hashable_func_source_info.filepath,
+        start_lineno=function_source_info.start_lineno,
+        end_lineno=function_source_info.end_lineno,
+        file=function_source_info.filepath,
         ast_builder=ast_builder,
         is_real_function=is_real_function,
     )
@@ -633,8 +633,8 @@ class Kernel:
         self.materialized_kernels: dict[CompiledKernelKeyType, KernelCxx] = {}
         self.has_print = False
         self.gstaichi_callable: GsTaichiCallable | None = None
-        self.visited_functions: dict[HashableFuncSourceInfo, FuncCacheInfo] = {}
-        self.kernel_function_info: FuncCacheInfo | None = None
+        self.visited_functions: set[HashableFuncSourceInfo] = set()
+        self.kernel_function_info: HashableFuncSourceInfo | None = None
         self.compiled_kernel_data_by_key: dict[CompiledKernelKeyType, CompiledKernelData] = {}
         self._last_compiled_kernel_data: CompiledKernelData | None = None  # for dev/debug
 
@@ -727,8 +727,9 @@ class Kernel:
             return
 
         if self.runtime.src_ll_cache and self.gstaichi_callable and self.gstaichi_callable.is_pure:
-            kernel_source_info = get_source_info_and_src(self.func)
-            self.fast_checksum = src_hasher.create_cache_key(kernel_source_info, args)
+            kernel_source_info, _src = get_source_info_and_src(self.func)
+            print("self.arg_metas", self.arg_metas)
+            self.fast_checksum = src_hasher.create_cache_key(kernel_source_info, args, self.arg_metas)
             if self.fast_checksum:
                 self.src_ll_cache_observations.cache_key_generated = True
             if self.fast_checksum and src_hasher.validate_cache_key(self.fast_checksum):
@@ -1086,7 +1087,7 @@ class Kernel:
                 if compile_result.cache_hit:
                     self.fe_ll_cache_observations.cache_hit = True
                 if self.fast_checksum:
-                    src_hasher.store(self.fast_checksum, self.visited_functions.values())
+                    src_hasher.store(self.fast_checksum, self.visited_functions)
                     prog.store_fast_cache(
                         self.fast_checksum,
                         self.kernel_cpp,

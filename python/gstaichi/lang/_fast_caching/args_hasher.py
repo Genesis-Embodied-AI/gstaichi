@@ -4,6 +4,7 @@ import numbers
 import time
 from typing import Any, Sequence
 
+from gstaichi.types.annotations import Template
 import numpy as np
 
 from gstaichi import _logging
@@ -13,6 +14,8 @@ from ..field import ScalarField
 from ..matrix import MatrixField, MatrixNdarray, VectorNdarray
 from ..util import is_data_oriented
 from .hash_utils import hash_iterable_strings
+from ..kernel_arguments import ArgMetadata
+
 
 g_num_calls = 0
 g_num_args = 0
@@ -36,7 +39,14 @@ def dataclass_to_repr(path: tuple[str, ...], arg: Any) -> str:
     return "[" + ",".join(repr_l) + "]"
 
 
-def stringify_obj_type(path: tuple[str, ...], obj: object) -> str | None:
+def _is_template(arg_meta: ArgMetadata | None) -> bool:
+    if arg_meta is None:
+        return False
+    annot = arg_meta.annotation
+    return annot is Template or isinstance(annot, Template)
+
+
+def stringify_obj_type(path: tuple[str, ...], obj: object, arg_meta: ArgMetadata | None) -> str | None:
     """
     Convert an object into a string representation that only depends on its type.
 
@@ -45,6 +55,9 @@ def stringify_obj_type(path: tuple[str, ...], obj: object) -> str | None:
     with different (allowed) types.
 
     Note that fields are not included in fast cache.
+
+    arg_meta should only be non-None for the top level arguments. e.g. counter-examples:
+    children of data_oriented, and children of dataclasses should have arg_meta set to None.
     """
     arg_type = type(obj)
     if isinstance(obj, ScalarNdarray):
@@ -72,16 +85,22 @@ def stringify_obj_type(path: tuple[str, ...], obj: object) -> str | None:
     if is_data_oriented(obj):
         child_repr_l = []
         for k, v in obj.__dict__.items():
-            _child_repr = stringify_obj_type((*path, k), v)
+            _child_repr = stringify_obj_type((*path, k), v, None)
             if _child_repr is None:
                 print("not representable child", k, type(v), "path", path)
                 return None
             child_repr_l.append(f"{k}: {_child_repr}")
         return ", ".join(child_repr_l)
     if issubclass(arg_type, (numbers.Number, np.number)):
+        if _is_template(arg_meta):
+            # cache value too
+            return f"{arg_type}={obj}"
         return str(arg_type)
     if arg_type is np.bool_:
         # np is deprecating bool. Treat specially/carefully
+        if _is_template(arg_meta):
+            # cache value too
+            return f"np.bool_={obj}"
         return "np.bool_"
     if isinstance(obj, enum.Enum):
         return f"enum-{obj.name}-{obj.value}"
@@ -94,14 +113,17 @@ def stringify_obj_type(path: tuple[str, ...], obj: object) -> str | None:
     return None
 
 
-def hash_args(args: Sequence[Any]) -> str | None:
+def hash_args(args: Sequence[Any], arg_metas: Sequence[ArgMetadata]) -> str | None:
     global g_num_calls, g_num_args, g_hashing_time, g_repr_time, g_num_ignored_calls
     g_num_calls += 1
     g_num_args += len(args)
     hash_l = []
+    if len(args) != len(arg_metas):
+        raise RuntimeError(f"Number of args passed in {len(args)} doesnt match number of declared args {len(arg_metas)}")
     for i_arg, arg in enumerate(args):
         start = time.time()
-        _hash = stringify_obj_type((str(i_arg),), arg)
+        arg_meta = arg_metas[i_arg]
+        _hash = stringify_obj_type((str(i_arg),), arg, arg_meta)
         g_repr_time += time.time() - start
         if not _hash:
             g_num_ignored_calls += 1

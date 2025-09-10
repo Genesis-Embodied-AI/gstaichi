@@ -4,14 +4,15 @@ from pydantic import BaseModel
 
 from gstaichi import _logging
 
-from .._wrap_inspect import FuncCacheInfo
+from .._wrap_inspect import HashableFuncSourceInfo
 from . import args_hasher, config_hasher, function_hasher
 from .fast_caching_types import HashedFunctionSourceInfo
 from .hash_utils import hash_iterable_strings
 from .python_side_cache import PythonSideCache
+from ..kernel_arguments import ArgMetadata
 
 
-def create_cache_key(kernel_source_info: FuncCacheInfo, args: Sequence[Any]) -> str | None:
+def create_cache_key(kernel_source_info: HashableFuncSourceInfo, args: Sequence[Any], arg_metas: list[ArgMetadata]) -> str | None:
     """
     cache key takes into account:
     - arg types
@@ -19,16 +20,16 @@ def create_cache_key(kernel_source_info: FuncCacheInfo, args: Sequence[Any]) -> 
     - kernel function (but not sub functions)
     - compilation config (which includes arch, and debug)
     """
-    args_hash = args_hasher.hash_args(args)
+    args_hash = args_hasher.hash_args(args, arg_metas)
     if args_hash is None:
         # the bit in caps at start should not be modified without modifying corresponding text
         # freetext bit can be freely modified
         _logging.warn(
-            f"[FASTCACHE][INVALID_FUNC] The pure function {kernel_source_info.hashable_func_source_info.function_name} could not be "
+            f"[FASTCACHE][INVALID_FUNC] The pure function {kernel_source_info.function_name} could not be "
             "fast cached, because one or more parameter types were invalid"
         )
         return None
-    kernel_hash = function_hasher.hash_kernel(kernel_source_info.hashable_func_source_info)
+    kernel_hash = function_hasher.hash_kernel(kernel_source_info)
     config_hash = config_hasher.hash_compile_config()
     cache_key = hash_iterable_strings((kernel_hash, args_hash, config_hash))
     return cache_key
@@ -38,7 +39,7 @@ class CacheValue(BaseModel):
     hashed_function_source_infos: list[HashedFunctionSourceInfo]
 
 
-def store(cache_key: str, function_source_infos: Iterable[FuncCacheInfo]) -> None:
+def store(cache_key: str, function_source_infos: Iterable[HashableFuncSourceInfo]) -> None:
     """
     Note that unlike other caches, this cache is not going to store the actual value we want.
     This cache is only used for verification that our cache key is valid. Big picture:
@@ -52,8 +53,7 @@ def store(cache_key: str, function_source_infos: Iterable[FuncCacheInfo]) -> Non
     if not cache_key:
         return
     cache = PythonSideCache()
-    hashed_function_source_infos = function_hasher.hash_functions([
-        i.hashable_func_source_info for i in function_source_infos])
+    hashed_function_source_infos = function_hasher.hash_functions(function_source_infos)
     cache_value_obj = CacheValue(hashed_function_source_infos=list(hashed_function_source_infos))
     cache.store(cache_key, cache_value_obj.json())
 
