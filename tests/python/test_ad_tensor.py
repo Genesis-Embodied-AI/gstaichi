@@ -7,8 +7,8 @@ from tests import test_utils
 has_autograd = False
 
 try:
-    import autograd.numpy as np  # noqa
-    from autograd import grad  # noqa
+    import autograd.numpy as np  # noqa: F401
+    from autograd import grad  # noqa: F401
 
     has_autograd = True
 except:
