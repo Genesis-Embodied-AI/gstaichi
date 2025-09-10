@@ -204,7 +204,6 @@ def get_source_info_and_src(func: Callable) -> tuple[FunctionSourceInfo, list[st
     src, start_lineno = getsourcelines(func)
     end_lineno = start_lineno + len(src) - 1
     func_info = FunctionSourceInfo(
-        param_type_by_name=param_type_by_name,
         function_name=name,
         filepath=file,
         start_lineno=start_lineno,
