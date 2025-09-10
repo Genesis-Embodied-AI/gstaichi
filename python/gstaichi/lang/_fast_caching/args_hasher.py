@@ -30,7 +30,7 @@ def dataclass_to_repr(path: tuple[str, ...], arg: Any) -> str:
     repr_l = []
     for field in dataclasses.fields(arg):
         child_value = getattr(arg, field.name)
-        _repr = stringify_obj_type(path + (field.name,), child_value)
+        _repr = stringify_obj_type(path + (field.name,), child_value, None)
         full_repr = f"{field.name}: ({_repr})"
         if field.metadata.get(FIELD_METADATA_CACHE_VALUE, False):
             full_repr += f" = {child_value}"
@@ -112,7 +112,7 @@ def stringify_obj_type(path: tuple[str, ...], obj: object, arg_meta: ArgMetadata
     return None
 
 
-def hash_args(args: Sequence[Any], arg_metas: Sequence[ArgMetadata]) -> str | None:
+def hash_args(args: Sequence[Any], arg_metas: Sequence[ArgMetadata | None]) -> str | None:
     global g_num_calls, g_num_args, g_hashing_time, g_repr_time, g_num_ignored_calls
     g_num_calls += 1
     g_num_args += len(args)
