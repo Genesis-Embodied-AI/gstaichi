@@ -1,10 +1,10 @@
 # type: ignore
 
-from gstaichi.lang import impl, simt
-from gstaichi.lang._fast_caching.function_hasher import pure
+from gstaichi.lang import impl, simt  # noqa
+from gstaichi.lang._fast_caching.function_hasher import pure  # noqa
 from gstaichi.lang._ndarray import *
-from gstaichi.lang._ndrange import ndrange
-from gstaichi.lang._texture import Texture
+from gstaichi.lang._ndrange import ndrange  # noqa
+from gstaichi.lang._texture import Texture  # noqa
 from gstaichi.lang.exception import *
 from gstaichi.lang.field import *
 from gstaichi.lang.impl import *
@@ -17,7 +17,7 @@ from gstaichi.lang.runtime_ops import *
 from gstaichi.lang.snode import *
 from gstaichi.lang.source_builder import *
 from gstaichi.lang.struct import *
-from gstaichi.types.enums import DeviceCapability, Format, Layout
+from gstaichi.types.enums import DeviceCapability, Format, Layout  # noqa
 
 __all__ = [
     s

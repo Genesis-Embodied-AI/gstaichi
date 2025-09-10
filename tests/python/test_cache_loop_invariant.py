@@ -1,7 +1,5 @@
-import pytest
 
 import gstaichi as ti
-from gstaichi.lang import impl
 
 from tests import test_utils
 

@@ -9,9 +9,10 @@ import sys
 from pathlib import Path
 from typing import Any, Callable
 
+from .bootstrap import get_cache_home  # noqa This is a re-export
+
 # -- third party --
 # -- own --
-from .bootstrap import get_cache_home  # noqa, this is a re-export
 from .escapes import escape_codes
 
 # -- code --

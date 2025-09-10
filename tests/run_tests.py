@@ -4,8 +4,6 @@ import os
 import shutil
 import tempfile
 
-import gstaichi as ti
-
 
 def _test_python(args, default_dir="python"):
     print("\nRunning Python tests...\n")

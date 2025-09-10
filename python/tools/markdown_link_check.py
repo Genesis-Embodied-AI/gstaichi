@@ -2,7 +2,6 @@
 
 import argparse
 import os
-import pathlib
 import re
 from urllib.parse import urlparse
 

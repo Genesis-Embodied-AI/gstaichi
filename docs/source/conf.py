@@ -1,4 +1,3 @@
-import os
 
 import gstaichi as ti
 

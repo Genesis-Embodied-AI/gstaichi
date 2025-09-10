@@ -1,7 +1,4 @@
-import operator as ops
 
-import numpy as np
-import pytest
 
 import gstaichi as ti
 

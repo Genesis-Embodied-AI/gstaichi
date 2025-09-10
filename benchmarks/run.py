@@ -1,5 +1,4 @@
 import os
-import warnings
 
 from suite_microbenchmarks import MicroBenchmark
 from utils import datatime_with_format, dump2json

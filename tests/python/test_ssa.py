@@ -6,8 +6,6 @@ SSA violation edge-case regression test.
 
 import math
 
-import numpy as np
-
 import gstaichi as ti
 
 from tests import test_utils
