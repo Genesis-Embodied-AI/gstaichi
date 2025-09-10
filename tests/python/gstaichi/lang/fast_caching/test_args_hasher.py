@@ -1,11 +1,11 @@
 import dataclasses
 
-from gstaichi.lang.kernel_arguments import ArgMetadata
 import numpy as np
+import pytest
 
 import gstaichi as ti
 from gstaichi.lang._fast_caching import FIELD_METADATA_CACHE_VALUE, args_hasher
-import pytest
+from gstaichi.lang.kernel_arguments import ArgMetadata
 
 from tests import test_utils
 
@@ -25,17 +25,16 @@ def test_args_hasher_numeric() -> None:
 
 
 @pytest.mark.parametrize(
-    "annotation,cache_value", [
+    "annotation,cache_value",
+    [
         (None, False),
         (ti.i32, False),
         (ti.template(), True),
         (ti.Template, True),
-    ]
+    ],
 )
 @test_utils.test()
 def test_args_hasher_numeric_maybe_template(annotation: object, cache_value: bool) -> None:
-    seen = set()
-
     for arg in (3, 5.3, np.int32(3), np.int64(5), np.float32(2), np.float64(2)):
         orig_type = type(arg)
         arg_meta = ArgMetadata(name="", annotation=annotation)
@@ -66,6 +65,31 @@ def test_args_hasher_bool() -> None:
                 seen.add(hash)
             else:
                 assert hash in seen
+
+
+@pytest.mark.parametrize(
+    "annotation,cache_value",
+    [
+        (None, False),
+        (ti.i32, False),
+        (ti.template(), True),
+        (ti.Template, True),
+    ],
+)
+@test_utils.test()
+def test_args_hasher_bool_maybe_template(annotation: object, cache_value: bool) -> None:
+    for arg1, arg2 in [(False, True), (np.bool_(False), np.bool_(True))]:
+        arg_meta = ArgMetadata(name="", annotation=annotation)
+        hash1 = args_hasher.hash_args([arg1], [arg_meta])
+        assert hash1 is not None
+
+        arg_meta = ArgMetadata(name="", annotation=annotation)
+        hash2 = args_hasher.hash_args([arg2], [arg_meta])
+        assert hash2 is not None
+        if cache_value:
+            assert hash1 != hash2
+        else:
+            assert hash1 == hash2
 
 
 @test_utils.test()
