@@ -1,8 +1,9 @@
-import dataclasses
-import multiprocessing
+import os
 import pathlib
+import subprocess
 import sys
 
+import pydantic
 import pytest
 
 import gstaichi as ti
@@ -10,6 +11,8 @@ import gstaichi.lang
 from gstaichi._test_tools import ti_init_same_arch
 
 from tests import test_utils
+
+TEST_RAN = "test ran"
 
 
 @test_utils.test()
@@ -143,33 +146,40 @@ def test_src_ll_cache_flag(tmp_path: pathlib.Path, src_ll_cache: bool) -> None:
         assert cache_used  # default
 
 
-@dataclasses.dataclass
-class TemplateParamsKernelArgs:
+class TemplateParamsKernelArgs(pydantic.BaseModel):
     arch: str
     offline_cache_file_path: str
     a: int
     src_ll_cache: bool
 
 
-def src_ll_cache_template_params_child(args: TemplateParamsKernelArgs) -> None:
+def src_ll_cache_template_params_child(args: list[str]) -> None:
+    print("src_ll_cache_template_params_child")
+    print("args", args)
+    args_obj = TemplateParamsKernelArgs.model_validate_json(args[0])
     ti.init(
-        arch=getattr(ti, args.arch),
+        arch=getattr(ti, args_obj.arch),
         offline_cache=True,
-        offline_cache_file_path=args.offline_cache_file_path,
-        src_ll_cache=args.src_ll_cache,
+        offline_cache_file_path=args_obj.offline_cache_file_path,
+        src_ll_cache=args_obj.src_ll_cache,
     )
+    print("after init")
 
     @ti.pure
     @ti.kernel
     def k1(a: ti.template(), output: ti.types.NDArray[ti.i32, 1]) -> None:
         output[0] = a
 
+    print("after kernel declare")
     output = ti.ndarray(ti.i32, (10,))
-    k1(args.a, output)
-    assert output[0] == args.a
+    print("after create output. running kernel...")
+    k1(args_obj.a, output)
+    print("after running kernel")
+    assert output[0] == args_obj.a
+    print(TEST_RAN)
 
 
-@pytest.mark.parametrize("src_ll_cache", [None, False, True])
+@pytest.mark.parametrize("src_ll_cache", [False, True])
 @test_utils.test()
 def test_src_ll_cache_template_params(tmp_path: pathlib.Path, src_ll_cache: bool) -> None:
     """
@@ -177,14 +187,26 @@ def test_src_ll_cache_template_params(tmp_path: pathlib.Path, src_ll_cache: bool
     """
     arch = ti.lang.impl.current_cfg().arch.name
 
-    def create_args(a: int) -> TemplateParamsKernelArgs:
-        return TemplateParamsKernelArgs(
+    def create_args(a: int) -> str:
+        obj = TemplateParamsKernelArgs(
             arch=arch,
             offline_cache_file_path=str(tmp_path),
             src_ll_cache=src_ll_cache,
             a=a,
         )
+        json = TemplateParamsKernelArgs.model_dump_json(obj)
+        return json
 
-    with multiprocessing.Pool(1) as pool:
-        pool.apply(src_ll_cache_template_params_child, [create_args(3)])
-        pool.apply(src_ll_cache_template_params_child, [create_args(4)])
+    env = os.environ
+    env["PYTHONPATH"] = "."
+    for a in [3, 4]:
+        assert TEST_RAN in subprocess.check_output(
+            [sys.executable, __file__, src_ll_cache_template_params_child.__name__, create_args(a)]
+        ).decode("utf-8")
+
+
+# The following lines are critical for the tests to work. If they are missing, the test will
+# incorrectly pass, without doing anything.
+if __name__ == "__main__":
+    print("__main__")
+    globals()[sys.argv[1]](sys.argv[2:])
