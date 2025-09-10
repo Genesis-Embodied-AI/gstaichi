@@ -160,7 +160,7 @@ class Installer:
 
         check_command_existence("wget")
         try:
-            import pip  # noqa
+            import pip  # noqa: F401
 
             print("pip3 installation detected")
         except Exception as e:
