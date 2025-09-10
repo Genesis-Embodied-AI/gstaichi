@@ -1,3 +1,54 @@
+[project]
+name = "gstaichi"
+description = "The GsTaichi Programming Language"
+maintainers = [{name = "GsTaichi developers"}]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Topic :: Software Development :: Compilers",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Games/Entertainment :: Simulation",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+license = { text = "Apache Software License (http://www.apache.org/licenses/LICENSE-2.0)" }
+keywords = ["graphics", "simulation"]
+version = "0.0.0"
+readme = "README.md"
+requires-python = ">=3.10,<4.0"
+dependencies = [
+    "numpy",
+    "colorama",
+    "dill",
+    "pydantic",
+    "rich",
+    "setuptools>=68.0.0",  # Required for Python 3.12+ compatibility
+    "cffi>=1.16.0",
+]
+
+[project.optional-dependencies]
+docs = [
+    "sphinx",
+    "sphinx-copybutton",
+    "myst_parser",
+    "sphinx-subfigure",
+    "sphinxcontrib-video",
+    "sphinx-togglebutton",
+    "sphinx-design",
+    "pydata-sphinx-theme",
+    "sphinx-autoapi",
+]
+
+[project.urls]
+Homepage = "https://github.com/Genesis-Embedded-AI/gstaichi"
+
+[tool.setuptools]
+license-files = ["LICENSE"]
+
 [build-system]
 requires = [
     "setuptools>=68.0.0",
@@ -9,7 +60,6 @@ requires = [
     "scikit-build",
     "ninja; platform_system != 'Windows'",
     "psutil",
-    "setuptools>=68.0.0",
     "cffi>=1.16.0",
 ]
 build-backend = "setuptools.build_meta"
