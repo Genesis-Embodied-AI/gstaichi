@@ -2,8 +2,6 @@ import os
 
 import yaml
 
-from gstaichi.core import settings
-
 
 def extract_doc(doc_filename=None):
     statements_fn = os.path.join(os.path.dirname(__file__), "../gstaichi/ir/statements.h")

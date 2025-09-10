@@ -1,5 +1,3 @@
-import errno
-
 import pytest
 
 import gstaichi as ti

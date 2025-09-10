@@ -1,7 +1,6 @@
 from time import perf_counter
 
 import gstaichi as ti
-from gstaichi._lib import core as ti_python_core
 
 
 class End2EndTimer:

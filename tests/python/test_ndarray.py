@@ -19,7 +19,7 @@ from gstaichi.math import ivec3, vec3
 from tests import test_utils
 
 if has_pytorch():
-    import torch
+    import torch  # noqa: F401
 
 # properties
 

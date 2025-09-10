@@ -38,3 +38,14 @@ del _ti_core
 
 warn_restricted_version()
 del warn_restricted_version
+
+__all__ = [
+    "ad",
+    "algorithms",
+    "experimental",
+    "linalg",
+    "math",
+    "sparse",
+    "tools",
+    "types",
+]
