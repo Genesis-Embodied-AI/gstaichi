@@ -13,6 +13,7 @@ from gstaichi._test_tools import ti_init_same_arch
 from tests import test_utils
 
 TEST_RAN = "test ran"
+RET_SUCCESS = 42
 
 
 @test_utils.test()
@@ -154,8 +155,6 @@ class TemplateParamsKernelArgs(pydantic.BaseModel):
 
 
 def src_ll_cache_template_params_child(args: list[str]) -> None:
-    print("src_ll_cache_template_params_child")
-    print("args", args)
     args_obj = TemplateParamsKernelArgs.model_validate_json(args[0])
     ti.init(
         arch=getattr(ti, args_obj.arch),
@@ -163,20 +162,17 @@ def src_ll_cache_template_params_child(args: list[str]) -> None:
         offline_cache_file_path=args_obj.offline_cache_file_path,
         src_ll_cache=args_obj.src_ll_cache,
     )
-    print("after init")
 
     @ti.pure
     @ti.kernel
     def k1(a: ti.template(), output: ti.types.NDArray[ti.i32, 1]) -> None:
         output[0] = a
 
-    print("after kernel declare")
     output = ti.ndarray(ti.i32, (10,))
-    print("after create output. running kernel...")
     k1(args_obj.a, output)
-    print("after running kernel")
     assert output[0] == args_obj.a
     print(TEST_RAN)
+    sys.exit(RET_SUCCESS)
 
 
 @pytest.mark.parametrize("src_ll_cache", [False, True])
@@ -200,9 +196,18 @@ def test_src_ll_cache_template_params(tmp_path: pathlib.Path, src_ll_cache: bool
     env = os.environ
     env["PYTHONPATH"] = "."
     for a in [3, 4]:
-        assert TEST_RAN in subprocess.check_output(
-            [sys.executable, __file__, src_ll_cache_template_params_child.__name__, create_args(a)]
-        ).decode("utf-8")
+        proc = subprocess.run(
+            [sys.executable, __file__, src_ll_cache_template_params_child.__name__, create_args(a)],
+            capture_output=True,
+            text=True,
+            env=env,
+        )
+        if proc.returncode != RET_SUCCESS:
+            print(proc.stdout)  # needs to do this to see error messages
+            print("-" * 100)
+            print(proc.stderr)
+        assert TEST_RAN in proc.stdout
+        assert proc.returncode == RET_SUCCESS
 
 
 # The following lines are critical for the tests to work. If they are missing, the test will
