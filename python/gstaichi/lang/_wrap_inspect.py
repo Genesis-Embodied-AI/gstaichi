@@ -18,7 +18,6 @@
 import atexit
 import inspect
 import os
-import dataclasses
 import tempfile
 from typing import Callable
 
@@ -200,19 +199,18 @@ class FunctionSourceInfo(BaseModel):
 
 
 def get_source_info_and_src(func: Callable) -> tuple[FunctionSourceInfo, list[str]]:
-    param_type_by_name = {k: v.annotation for k, v in inspect.signature(func).parameters.items()}
     file = getsourcefile(func)
     name = func.__name__
     src, start_lineno = getsourcelines(func)
     end_lineno = start_lineno + len(src) - 1
-    hashable_func_source_info = FunctionSourceInfo(
+    func_info = FunctionSourceInfo(
         param_type_by_name=param_type_by_name,
         function_name=name,
         filepath=file,
         start_lineno=start_lineno,
         end_lineno=end_lineno,
     )
-    return hashable_func_source_info, src
+    return func_info, src
 
 
 __all__ = ["getsourcelines", "getsourcefile", "get_source_info_and_src"]

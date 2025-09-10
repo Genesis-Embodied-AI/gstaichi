@@ -171,7 +171,6 @@ def src_ll_cache_template_params_child(args: TemplateParamsKernelArgs) -> None:
 
 
 @pytest.mark.parametrize("src_ll_cache", [None, False, True])
-# @pytest.mark.parametrize("src_ll_cache", [True])
 @test_utils.test()
 def test_src_ll_cache_template_params(tmp_path: pathlib.Path, src_ll_cache: bool) -> None:
     """

@@ -4,18 +4,17 @@ import numbers
 import time
 from typing import Any, Sequence
 
-from gstaichi.types.annotations import Template
 import numpy as np
 
 from gstaichi import _logging
+from gstaichi.types.annotations import Template
 
 from .._ndarray import ScalarNdarray
 from ..field import ScalarField
+from ..kernel_arguments import ArgMetadata
 from ..matrix import MatrixField, MatrixNdarray, VectorNdarray
 from ..util import is_data_oriented
 from .hash_utils import hash_iterable_strings
-from ..kernel_arguments import ArgMetadata
-
 
 g_num_calls = 0
 g_num_args = 0
@@ -119,7 +118,9 @@ def hash_args(args: Sequence[Any], arg_metas: Sequence[ArgMetadata]) -> str | No
     g_num_args += len(args)
     hash_l = []
     if len(args) != len(arg_metas):
-        raise RuntimeError(f"Number of args passed in {len(args)} doesnt match number of declared args {len(arg_metas)}")
+        raise RuntimeError(
+            f"Number of args passed in {len(args)} doesnt match number of declared args {len(arg_metas)}"
+        )
     for i_arg, arg in enumerate(args):
         start = time.time()
         arg_meta = arg_metas[i_arg]

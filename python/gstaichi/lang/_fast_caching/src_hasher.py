@@ -5,14 +5,16 @@ from pydantic import BaseModel
 from gstaichi import _logging
 
 from .._wrap_inspect import FunctionSourceInfo
+from ..kernel_arguments import ArgMetadata
 from . import args_hasher, config_hasher, function_hasher
 from .fast_caching_types import HashedFunctionSourceInfo
 from .hash_utils import hash_iterable_strings
 from .python_side_cache import PythonSideCache
-from ..kernel_arguments import ArgMetadata
 
 
-def create_cache_key(kernel_source_info: FunctionSourceInfo, args: Sequence[Any], arg_metas: list[ArgMetadata]) -> str | None:
+def create_cache_key(
+    kernel_source_info: FunctionSourceInfo, args: Sequence[Any], arg_metas: list[ArgMetadata]
+) -> str | None:
     """
     cache key takes into account:
     - arg types
