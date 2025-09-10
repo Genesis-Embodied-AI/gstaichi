@@ -38,34 +38,21 @@ def build_wheel(python: Command, pip: Command) -> None:
     extra = []
 
     cmake_args.writeback()
-    assert misc.options is not None
-    if misc.options.tag_local:
-        wheel_tag = f"+{misc.options.tag_local}"
-    elif misc.options.tag_config:
-        wheel_tag = f"+{cmake_args.render_wheel_tag()}"
-    else:
-        wheel_tag = ""
 
-    if misc.options.nightly:
-        os.environ["PROJECT_NAME"] = "gstaichi-nightly"
-        now = datetime.datetime.now().strftime("%Y%m%d")
-        proj_tags.extend(["egg_info", f"--tag-build=.post{now}{wheel_tag}"])
-    elif wheel_tag:
-        proj_tags.extend(["egg_info", f"--tag-build={wheel_tag}"])
-
+    platform_tag = None
     if platform.system() == "Linux":
-        if is_manylinux2014():
-            extra.extend(["-p", "manylinux2014_x86_64"])
-        else:
-            extra.extend(["-p", "manylinux_2_27_x86_64"])
+        platform_tag = "manylinux_2_27_x86_64"
     if platform.system() == "Darwin":
-        extra.extend(["-p", "macosx-11.0-arm64"])
+        platform_tag = "macosx-11.0-arm64"
 
     python("setup.py", "clean")
     python("misc/make_changelog.py", "--ver", "origin/main", "--repo_dir", "./", "--save")
 
+    if platform_tag:
+        os.environ["GSTAICHI_FORCE_PLAT_NAME"] = platform_tag
+
     with nice():
-        python("setup.py", *proj_tags, "bdist_wheel", *extra)
+        python("-m", "build", "--wheel")
 
 
 @banner("Install Build Wheel Dependencies")

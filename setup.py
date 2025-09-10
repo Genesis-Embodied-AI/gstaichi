@@ -210,6 +210,9 @@ def get_cmake_args():
     if sys.platform == "darwin":
         # We're only going to support Silicon/arm64 for the foreseeable future
         cmake_args += ["-DCMAKE_OSX_ARCHITECTURES=arm64"]
+    cmake_args += [
+        "-DCMAKE_POLICY_VERSION_MINIMUM=3.11"  # otherwise get an error with SPIRV-Tools
+    ]
     return cmake_args
 
 
