@@ -13,7 +13,7 @@ from .python_side_cache import PythonSideCache
 
 
 def create_cache_key(
-    kernel_source_info: FunctionSourceInfo, args: Sequence[Any], arg_metas: list[ArgMetadata]
+    kernel_source_info: FunctionSourceInfo, args: Sequence[Any], arg_metas: Sequence[ArgMetadata]
 ) -> str | None:
     """
     cache key takes into account:
