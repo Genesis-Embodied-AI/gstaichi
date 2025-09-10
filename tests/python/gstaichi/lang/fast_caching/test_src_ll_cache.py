@@ -166,7 +166,6 @@ def src_ll_cache_template_params_child(args: TemplateParamsKernelArgs) -> None:
 
     output = ti.ndarray(ti.i32, (10,))
     k1(args.a, output)
-    print("output", output.to_numpy())
     assert output[0] == args.a
 
 
@@ -187,8 +186,5 @@ def test_src_ll_cache_template_params(tmp_path: pathlib.Path, src_ll_cache: bool
         )
 
     with multiprocessing.Pool(1) as pool:
-        result = pool.apply(src_ll_cache_template_params_child, [create_args(3)])
-        print("result", result)
-
-        result = pool.apply(src_ll_cache_template_params_child, [create_args(4)])
-        print("result", result)
+        pool.apply(src_ll_cache_template_params_child, [create_args(3)])
+        pool.apply(src_ll_cache_template_params_child, [create_args(4)])
