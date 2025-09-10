@@ -1,3 +1,5 @@
+import dataclasses
+import multiprocessing
 import pathlib
 import sys
 
@@ -139,3 +141,55 @@ def test_src_ll_cache_flag(tmp_path: pathlib.Path, src_ll_cache: bool) -> None:
         assert cache_used == src_ll_cache
     else:
         assert cache_used  # default
+
+
+@dataclasses.dataclass
+class TemplateParamsKernelArgs:
+    arch: str
+    offline_cache_file_path: str
+    a: int
+    src_ll_cache: bool
+
+
+def src_ll_cache_template_params_child(args: TemplateParamsKernelArgs) -> None:
+    ti.init(
+        arch=getattr(ti, args.arch),
+        offline_cache=True,
+        offline_cache_file_path=args.offline_cache_file_path,
+        src_ll_cache=args.src_ll_cache,
+    )
+
+    @ti.pure
+    @ti.kernel
+    def k1(a: ti.template(), output: ti.types.NDArray[ti.i32, 1]) -> None:
+        output[0] = a
+
+    output = ti.ndarray(ti.i32, (10,))
+    k1(args.a, output)
+    print("output", output.to_numpy())
+    assert output[0] == args.a
+
+
+@pytest.mark.parametrize("src_ll_cache", [None, False, True])
+# @pytest.mark.parametrize("src_ll_cache", [True])
+@test_utils.test()
+def test_src_ll_cache_template_params(tmp_path: pathlib.Path, src_ll_cache: bool) -> None:
+    """
+    template primitive kernel params should be in the cache key
+    """
+    arch = ti.lang.impl.current_cfg().arch.name
+
+    def create_args(a: int) -> TemplateParamsKernelArgs:
+        return TemplateParamsKernelArgs(
+            arch=arch,
+            offline_cache_file_path=str(tmp_path),
+            src_ll_cache=src_ll_cache,
+            a=a,
+        )
+
+    with multiprocessing.Pool(1) as pool:
+        result = pool.apply(src_ll_cache_template_params_child, [create_args(3)])
+        print("result", result)
+
+        result = pool.apply(src_ll_cache_template_params_child, [create_args(4)])
+        print("result", result)
