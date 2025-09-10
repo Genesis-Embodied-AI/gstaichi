@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from gstaichi import _logging
 
-from .._wrap_inspect import HashableFuncSourceInfo
+from .._wrap_inspect import FunctionSourceInfo
 from . import args_hasher, config_hasher, function_hasher
 from .fast_caching_types import HashedFunctionSourceInfo
 from .hash_utils import hash_iterable_strings
@@ -12,7 +12,7 @@ from .python_side_cache import PythonSideCache
 from ..kernel_arguments import ArgMetadata
 
 
-def create_cache_key(kernel_source_info: HashableFuncSourceInfo, args: Sequence[Any], arg_metas: list[ArgMetadata]) -> str | None:
+def create_cache_key(kernel_source_info: FunctionSourceInfo, args: Sequence[Any], arg_metas: list[ArgMetadata]) -> str | None:
     """
     cache key takes into account:
     - arg types
@@ -39,7 +39,7 @@ class CacheValue(BaseModel):
     hashed_function_source_infos: list[HashedFunctionSourceInfo]
 
 
-def store(cache_key: str, function_source_infos: Iterable[HashableFuncSourceInfo]) -> None:
+def store(cache_key: str, function_source_infos: Iterable[FunctionSourceInfo]) -> None:
     """
     Note that unlike other caches, this cache is not going to store the actual value we want.
     This cache is only used for verification that our cache key is valid. Big picture:

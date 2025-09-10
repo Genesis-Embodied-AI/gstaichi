@@ -2,7 +2,7 @@ import os
 from itertools import islice
 from typing import TYPE_CHECKING, Iterable
 
-from .._wrap_inspect import HashableFuncSourceInfo
+from .._wrap_inspect import FunctionSourceInfo
 from .fast_caching_types import HashedFunctionSourceInfo
 from .hash_utils import hash_iterable_strings
 
@@ -15,16 +15,16 @@ def pure(fn: "GsTaichiCallable") -> "GsTaichiCallable":
     return fn
 
 
-def _read_file(function_info: HashableFuncSourceInfo) -> list[str]:
+def _read_file(function_info: FunctionSourceInfo) -> list[str]:
     with open(function_info.filepath) as f:
         return list(islice(f, function_info.start_lineno, function_info.end_lineno + 1))
 
 
-def _hash_function(function_info: HashableFuncSourceInfo) -> str:
+def _hash_function(function_info: FunctionSourceInfo) -> str:
     return hash_iterable_strings(_read_file(function_info))
 
 
-def hash_functions(function_infos: Iterable[HashableFuncSourceInfo]) -> list[HashedFunctionSourceInfo]:
+def hash_functions(function_infos: Iterable[FunctionSourceInfo]) -> list[HashedFunctionSourceInfo]:
     results = []
     for f_info in function_infos:
         hash_ = _hash_function(f_info)
@@ -32,7 +32,7 @@ def hash_functions(function_infos: Iterable[HashableFuncSourceInfo]) -> list[Has
     return results
 
 
-def hash_kernel(kernel_info: HashableFuncSourceInfo) -> str:
+def hash_kernel(kernel_info: FunctionSourceInfo) -> str:
     return _hash_function(kernel_info)
 
 

@@ -34,7 +34,7 @@ from gstaichi._lib.core.gstaichi_python import (
 from gstaichi.lang import _kernel_impl_dataclass, impl, ops, runtime_ops
 from gstaichi.lang._fast_caching import src_hasher
 from gstaichi.lang._template_mapper import TemplateMapper
-from gstaichi.lang._wrap_inspect import get_source_info_and_src, HashableFuncSourceInfo
+from gstaichi.lang._wrap_inspect import get_source_info_and_src, FunctionSourceInfo
 from gstaichi.lang.any_array import AnyArray
 from gstaichi.lang.ast import (
     ASTTransformerContext,
@@ -633,8 +633,8 @@ class Kernel:
         self.materialized_kernels: dict[CompiledKernelKeyType, KernelCxx] = {}
         self.has_print = False
         self.gstaichi_callable: GsTaichiCallable | None = None
-        self.visited_functions: set[HashableFuncSourceInfo] = set()
-        self.kernel_function_info: HashableFuncSourceInfo | None = None
+        self.visited_functions: set[FunctionSourceInfo] = set()
+        self.kernel_function_info: FunctionSourceInfo | None = None
         self.compiled_kernel_data_by_key: dict[CompiledKernelKeyType, CompiledKernelData] = {}
         self._last_compiled_kernel_data: CompiledKernelData | None = None  # for dev/debug
 
