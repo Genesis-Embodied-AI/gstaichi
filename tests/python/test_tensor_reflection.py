@@ -1,4 +1,3 @@
-
 import gstaichi as ti
 from gstaichi.lang import impl
 

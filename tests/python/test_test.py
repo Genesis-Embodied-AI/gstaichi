@@ -4,7 +4,6 @@ This file tests if GsTaichi's testing utilities are functional.
 TODO: Skips these tests after all tests are using @ti.test
 """
 
-
 import pytest
 
 import gstaichi as ti

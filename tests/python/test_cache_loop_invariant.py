@@ -1,4 +1,3 @@
-
 import gstaichi as ti
 
 from tests import test_utils

@@ -39,6 +39,7 @@ def has_pytorch():
     if not _env_torch or int(_env_torch):
         try:
             import torch  # noqa pylint: disable=C0415
+
             _has_pytorch = True
         except:
             pass

@@ -9,6 +9,7 @@ has_autograd = False
 try:
     import autograd.numpy as np  # noqa
     from autograd import grad  # noqa
+
     has_autograd = True
 except:
     pass
