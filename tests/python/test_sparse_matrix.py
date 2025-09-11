@@ -457,7 +457,7 @@ def test_gpu_sparse_matrix_ops(N):
     import numpy as np
     from numpy.random import default_rng
     from scipy import stats
-    from scipy.sparse import coo_matrix, random
+    from scipy.sparse import random
 
     @ti.kernel
     def fill(

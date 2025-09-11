@@ -1,5 +1,3 @@
-import sys
-
 import pytest
 
 import gstaichi as ti

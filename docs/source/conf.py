@@ -1,5 +1,3 @@
-import os
-
 import gstaichi as ti
 
 __version__ = ".".join([str(v) for v in ti.__version__])

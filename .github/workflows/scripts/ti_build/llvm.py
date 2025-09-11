@@ -9,7 +9,7 @@ import platform
 from .bootstrap import get_cache_home
 from .cmake import cmake_args
 from .dep import download_dep
-from .misc import banner, get_cache_home, is_manylinux2014
+from .misc import banner, get_cache_home
 
 
 # -- code --

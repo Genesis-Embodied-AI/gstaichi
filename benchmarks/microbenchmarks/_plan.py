@@ -3,7 +3,7 @@ import itertools
 import gstaichi as ti
 from microbenchmarks._items import AtomicOps, DataType
 from microbenchmarks._metric import MetricType
-from microbenchmarks._utils import get_ti_arch, tags2name
+from microbenchmarks._utils import tags2name
 
 
 class Funcs:

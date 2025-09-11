@@ -38,7 +38,7 @@ def has_pytorch():
     _env_torch = os.environ.get("TI_ENABLE_TORCH", "1")
     if not _env_torch or int(_env_torch):
         try:
-            import torch  # pylint: disable=C0415
+            import torch  # noqa: F401 pylint: disable=C0415
 
             _has_pytorch = True
         except:
