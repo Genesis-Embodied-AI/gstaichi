@@ -5,7 +5,7 @@ import tempfile
 import warnings
 from copy import deepcopy as _deepcopy
 
-from gstaichi import _logging, _snode, _version_check
+from gstaichi import _logging, _snode
 from gstaichi._lib import core as _ti_core
 from gstaichi.lang import impl
 from gstaichi.lang.expr import Expr
