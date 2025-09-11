@@ -83,31 +83,40 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("req_arch,req_options", [(None, None)], ids=["none"])
 
 
-# @pytest.hookimpl(trylast=True)
-# def pytest_runtest_logreport(report):
-#     """
-#     Intentionally crash test workers when a test fails.
-#     This is to avoid the failing test leaving a corrupted GPU state for the
-#     following tests.
-#     """
+@pytest.hookimpl(trylast=True)
+def pytest_configure(config):
+    if getattr(config, "workerinput") is not None:
+        interactor = next(
+            iter(plugin for plugin in config.pluginmanager.get_plugins() if type(plugin).__name__ == "WorkerInteractor")
+        )
+        sys.xdist_interactor = interactor
 
-#     interactor = getattr(sys, "xdist_interactor", None)
-#     if not interactor:
-#         # not running under xdist, or xdist is not active,
-#         # or using stock xdist (we need a customized version)
-#         return
 
-#     if report.outcome not in ("rerun", "error", "failed"):
-#         return
+@pytest.hookimpl(trylast=True)
+def pytest_runtest_logreport(report):
+    """
+    Intentionally crash test workers when a test fails.
+    This is to avoid the failing test leaving a corrupted GPU state for the
+    following tests.
+    """
 
-#     layoff = False
+    interactor = getattr(sys, "xdist_interactor", None)
+    if not interactor:
+        # not running under xdist, or xdist is not active,
+        # or using stock xdist (we need a customized version)
+        return
 
-#     for _, loc, _ in report.longrepr.chain:
-#         if "CUDA_ERROR_OUT_OF_MEMORY" in loc.message:
-#             layoff = True
-#             break
+    if report.outcome not in ("rerun", "error", "failed"):
+        return
 
-#     interactor.retire(layoff=layoff)
+    layoff = False
+
+    for _, loc, _ in report.longrepr.chain:
+        if "CUDA_ERROR_OUT_OF_MEMORY" in loc.message:
+            layoff = True
+            break
+
+    interactor.retire(layoff=layoff)
 
 
 import importlib
