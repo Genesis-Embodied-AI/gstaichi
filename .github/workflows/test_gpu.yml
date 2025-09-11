@@ -52,7 +52,7 @@ jobs:
       - name: install torch and requirements_test.txt
         run: |
           pip install torch
-          pip install -r requirements_test.txt
+          pip install --group test
       - name: run tests
         run: |
           ls -lh

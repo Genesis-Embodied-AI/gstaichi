@@ -2,5 +2,5 @@
 
 set -ex
 
-pip install -r requirements_test.txt
+pip install --group test
 python tests/run_tests.py -v -r 3
