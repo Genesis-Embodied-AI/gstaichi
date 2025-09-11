@@ -1,3 +1,5 @@
+# type: ignore
+
 from gstaichi._funcs import field_fill_gstaichi_scope
 from gstaichi._lib.utils import get_os_name
 from gstaichi.lang import ops
