@@ -28,6 +28,7 @@ Functions
    gstaichi.lang.impl.static
    gstaichi.lang.impl.grouped
    gstaichi.lang.impl.stop_grad
+   gstaichi.lang.impl.wipe_offline_cache
 
 
 Module Contents
@@ -268,4 +269,6 @@ Module Contents
    :param x: A field.
    :type x: :class:`~gstaichi.Field`
 
+
+.. py:function:: wipe_offline_cache() -> None
 
