@@ -33,7 +33,7 @@ dependencies = [
 write_to = "python/gstaichi/_version.py"
 write_to_template = "__version__ = '{version}'\n"
 
-[project.optional-dependencies]
+[dependency-groups]
 docs = [
     "sphinx",
     "sphinx-copybutton",
@@ -44,6 +44,55 @@ docs = [
     "sphinx-design",
     "pydata-sphinx-theme",
     "sphinx-autoapi",
+]
+dev = [
+    "cmake<4.0.0",
+    "colorama",
+    "coverage",
+    "Pillow",
+    "pybind11",
+    "pybind11-stubgen",
+    "pydantic",
+    "GitPython",
+    "yapf",
+    "distro",
+    "isort",
+    "pylint",
+    "pyright",
+    "requests",
+    "twine",
+    "wheel",
+    "astunparse",
+    "pre-commit",
+    "scikit-build",
+    "setuptools_scm>=6.0",
+    "numpy",
+    "ninja; platform_system != 'Windows'",
+    "ruamel.yaml",
+]
+test = [
+    # You also need to:
+    # pip install -r requirements_test_xdist.txt
+    "Pillow",
+    "pytest",
+    # "git+https://github.com/taichi-dev/pytest-xdist@a3b5ad3038#egg=pytest-xdist",
+    # 16.0 upgrade broke xfail, caused fatal errors, see
+    # https://github.com/Genesis-Embodied-AI/gstaichi/pull/162
+    "pytest-rerunfailures<16.0",
+    "pytest-cov",
+    "pytest-retry",
+    "numpy>=2.0.0",  # otherwise, on windows, tries to install 1.26.4, which has no wheel for python 3.13
+    "psutil",
+    "autograd",
+    "requests",
+    "cffi",
+    "scipy",
+    "setproctitle",
+    "nbmake",
+    "marko",
+    "PyYAML",
+    "pyevtk",
+    "pyright",
 ]
 
 [project.urls]
