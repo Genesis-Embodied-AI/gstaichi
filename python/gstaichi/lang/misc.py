@@ -333,9 +333,6 @@ def init(
             *``offline_cache`` (bool): Enables offline cache of the compiled kernels. Default to True. When this is enabled GsTaichi will cache compiled kernel on your local disk to accelerate future calls.
             *``random_seed`` (int): Sets the seed of the random generator. The default is 0.
     """
-    # Check version for users every 7 days if not disabled by users.
-    _version_check.start_version_check_thread()
-
     # FIXME(https://github.com/taichi-dev/gstaichi/issues/4811): save the current working directory since it may be
     # changed by the Vulkan backend initialization on OS X.
     current_dir = os.getcwd()
