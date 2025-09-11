@@ -84,15 +84,6 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.hookimpl(trylast=True)
-def pytest_configure(config):
-    if getattr(config, "workerinput", None) is not None:
-        interactor = next(
-            iter(plugin for plugin in config.pluginmanager.get_plugins() if type(plugin).__name__ == "WorkerInteractor")
-        )
-        sys.xdist_interactor = interactor
-
-
-@pytest.hookimpl(trylast=True)
 def pytest_runtest_logreport(report):
     """
     Intentionally crash test workers when a test fails.

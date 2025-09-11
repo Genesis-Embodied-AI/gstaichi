@@ -72,9 +72,10 @@ dev = [
     "ruamel.yaml",
 ]
 test = [
+    # You also need to:
+    # pip install -r requirements_test_xdist.txt
     "Pillow",
     "pytest",
-    "pytest-xdist",  # let's see if this works...
     # "git+https://github.com/taichi-dev/pytest-xdist@a3b5ad3038#egg=pytest-xdist",
     # 16.0 upgrade broke xfail, caused fatal errors, see
     # https://github.com/Genesis-Embodied-AI/gstaichi/pull/162
