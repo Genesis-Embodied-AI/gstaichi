@@ -1,5 +1,3 @@
-# type: ignore
-
 from gstaichi._funcs import field_fill_gstaichi_scope
 from gstaichi._lib.utils import get_os_name
 from gstaichi.lang import ops
@@ -86,7 +84,7 @@ def vector_to_fast_image(img: template(), out: ndarray_type.ndarray()):
         r, g, b = 0, 0, 0
         color = img[i + i_offset, (img.shape[1] + j_offset) - 1 - j]
         if static(img.dtype in [f16, f32, f64]):
-            r, g, b = ops.min(255, ops.max(0, int(color * 255)))[:3]
+            r, g, b = ops.min(255, ops.max(0, int(color * 255)))[:3]  # type: ignore
         else:
             static_assert(img.dtype == u8)
             r, g, b = color[:3]
@@ -330,7 +328,7 @@ def sort_stage(
 def warp_shfl_up_i32(val: template()):
     global_tid = block.global_thread_idx()
     WARP_SZ = 32
-    lane_id = global_tid % WARP_SZ
+    lane_id = global_tid % WARP_SZ  # type: ignore
     # Intra-warp scan, manually unrolled
     offset_j = 1
     n = warp.shfl_up_i32(warp.active_mask(), val, offset_j)
@@ -382,19 +380,19 @@ def scan_add_inclusive(
         # Put warp scan results to smem
         # TODO replace smem with real smem when available
         if thread_id % WARP_SZ == WARP_SZ - 1:
-            pad_shared[warp_id] = val
+            pad_shared[warp_id] = val  # type: ignore
         block.sync()
 
         # Inter-warp scan, use the first thread in the first warp
         if warp_id == 0 and lane_id == 0:
-            for k in range(1, BLOCK_SZ / WARP_SZ):
-                pad_shared[k] += pad_shared[k - 1]
+            for k in range(1, BLOCK_SZ / WARP_SZ):  # type: ignore
+                pad_shared[k] += pad_shared[k - 1]  # type: ignore
         block.sync()
 
         # Update data with warp sums
         warp_sum = 0
         if warp_id > 0:
-            warp_sum = pad_shared[warp_id - 1]
+            warp_sum = pad_shared[warp_id - 1]  # type: ignore
         val += warp_sum
         arr_in[i] = val
 

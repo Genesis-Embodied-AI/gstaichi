@@ -1,5 +1,3 @@
-# type: ignore
-
 import math
 
 from gstaichi.lang import impl, ops
@@ -227,8 +225,8 @@ def _eig2x2(A, dt):
     if gap > 0:
         lambda1 = Vector([tr + ops.sqrt(gap), 0.0], dt=dt) * 0.5
         lambda2 = Vector([tr - ops.sqrt(gap), 0.0], dt=dt) * 0.5
-        A1 = A - lambda1[0] * Matrix.identity(dt, 2)
-        A2 = A - lambda2[0] * Matrix.identity(dt, 2)
+        A1 = A - lambda1[0] * Matrix.identity(dt, 2)  # type: ignore
+        A2 = A - lambda2[0] * Matrix.identity(dt, 2)  # type: ignore
         if all(A1 == Matrix.zero(dt, 2, 2)) and all(A1 == Matrix.zero(dt, 2, 2)):
             v1 = Vector([0.0, 0.0, 1.0, 0.0]).cast(dt)
             v2 = Vector([1.0, 0.0, 0.0, 0.0]).cast(dt)
@@ -238,10 +236,10 @@ def _eig2x2(A, dt):
     else:
         lambda1 = Vector([tr, ops.sqrt(-gap)], dt=dt) * 0.5
         lambda2 = Vector([tr, -ops.sqrt(-gap)], dt=dt) * 0.5
-        A1r = A - lambda1[0] * Matrix.identity(dt, 2)
-        A1i = -lambda1[1] * Matrix.identity(dt, 2)
-        A2r = A - lambda2[0] * Matrix.identity(dt, 2)
-        A2i = -lambda2[1] * Matrix.identity(dt, 2)
+        A1r = A - lambda1[0] * Matrix.identity(dt, 2)  # type: ignore
+        A1i = -lambda1[1] * Matrix.identity(dt, 2)  # type: ignore
+        A2r = A - lambda2[0] * Matrix.identity(dt, 2)  # type: ignore
+        A2i = -lambda2[1] * Matrix.identity(dt, 2)  # type: ignore
         v1 = Vector([A2r[0, 0], A2i[0, 0], A2r[1, 0], A2i[1, 0]], dt=dt).normalized()
         v2 = Vector([A1r[0, 0], A1i[0, 0], A1r[1, 0], A1i[1, 0]], dt=dt).normalized()
     eigenvalues = Matrix.rows([lambda1, lambda2])
