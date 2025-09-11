@@ -22,7 +22,7 @@ from gstaichi.types.primitive_types import *  # type: ignore
 
 def __getattr__(attr):
     if attr == "cfg":
-        return None if lang.impl.get_runtime()._prog is None else lang.impl.current_cfg()
+        return None if lang.impl.get_runtime()._prog is None else lang.impl.current_cfg()  # type: ignore
     raise AttributeError(f"module '{__name__}' has no attribute '{attr}'")
 
 
