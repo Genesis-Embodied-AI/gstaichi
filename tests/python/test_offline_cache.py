@@ -599,3 +599,21 @@ def test_offline_cache_for_kernels_calling_real_func(curr_arch):
 
     ti.reset()
     assert added_files() == expected_num_cache_files(2)
+
+
+@test_utils.test()
+def test_wipe_cache():
+    arch = getattr(ti, ti.lang.impl.current_cfg().arch.name)
+    kernel, args, _get_res = simple_kernels_to_test[0]
+    ti.init(arch=arch, enable_fallback=False, **current_thread_ext_options())
+    kernel(*args)
+
+    ti.init(arch=arch, enable_fallback=False, **current_thread_ext_options())
+    assert cache_files_cnt() > 0
+
+    ti.init(arch=arch, enable_fallback=False, **current_thread_ext_options())
+    assert cache_files_cnt() > 0
+
+    runtime = ti.lang.impl.get_runtime()
+    runtime.wipe_cache()
+    assert cache_files_cnt() == 0

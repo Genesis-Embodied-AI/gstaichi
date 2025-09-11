@@ -1,4 +1,6 @@
 import numbers
+import os
+import shutil
 import weakref
 from types import FunctionType, MethodType
 from typing import TYPE_CHECKING, Any, Iterable, Sequence
@@ -363,6 +365,17 @@ class PyGsTaichi:
         self.short_circuit_operators: bool = False
         self.unrolling_limit: int = 0
         self.src_ll_cache: bool = True
+
+    def wipe_cache(self) -> None:
+        """
+        Wipes all offline cache
+        """
+        offline_cache_file_path = self.prog.config().offline_cache_file_path
+        if offline_cache_file_path is None or offline_cache_file_path == "":
+            return
+        if not os.path.isdir(offline_cache_file_path):
+            return
+        shutil.rmtree(offline_cache_file_path)
 
     @property
     def compiling_callable(self) -> KernelCxx | Kernel | Function:
