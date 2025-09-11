@@ -85,7 +85,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.hookimpl(trylast=True)
 def pytest_configure(config):
-    if getattr(config, "workerinput") is not None:
+    if getattr(config, "workerinput", None) is not None:
         interactor = next(
             iter(plugin for plugin in config.pluginmanager.get_plugins() if type(plugin).__name__ == "WorkerInteractor")
         )
@@ -100,7 +100,7 @@ def pytest_runtest_logreport(report):
     following tests.
     """
 
-    interactor = getattr(sys, "xdist_interactor")
+    interactor = getattr(sys, "xdist_interactor", None)
     if not interactor:
         # not running under xdist, or xdist is not active,
         # or using stock xdist (we need a customized version)
