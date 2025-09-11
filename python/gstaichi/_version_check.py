@@ -1,5 +1,3 @@
-# type: ignore
-
 import datetime
 import json
 import os
@@ -17,7 +15,7 @@ def check_version(cur_uuid):
     minor = _ti_core.get_version_minor()
     patch = _ti_core.get_version_patch()
     version = f"{major}.{minor}.{patch}"
-    payload = {"version": "0.1.0", "platform": "", "python": ""}
+    payload = {"version": version, "platform": "", "python": ""}
 
     system = platform.system()
     u = platform.uname()
@@ -29,8 +27,7 @@ def check_version(cur_uuid):
         payload["platform"] = "win_amd64"
     elif system == "Darwin":
         # we only support arm64
-        # payload["platform"] = "arm64"
-        # assert payload["platform"] == "arm64"
+        assert payload["platform"] == "arm64"
         payload["platform"] = "macosx_11_0_arm64"
 
     python_version = platform.python_version().split(".")
@@ -40,17 +37,16 @@ def check_version(cur_uuid):
     if os.getenv("TI_CI") == "1":
         payload["type"] = "CI"
     # We do not want request exceptions break users' usage of GsTaichi.
-    # try:
-    if True:
+    try:
         payload = json.dumps(payload)
         payload = payload.encode()
-        req = request.Request("https://metadata.taichi.graphics/check_version", method="POST")
+        req = request.Request("https://metadata.gstaichi.graphics/check_version", method="POST")
         req.add_header("Content-Type", "application/json")
         with request.urlopen(req, data=payload, timeout=5) as response:
             response = json.loads(response.read().decode("utf-8"))
             return response
-    # except:
-    #     return None
+    except:
+        return None
 
 
 def write_version_info(response, cur_uuid, version_info_path, cur_date):
