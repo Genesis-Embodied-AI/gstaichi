@@ -17,7 +17,7 @@ classifiers = [
 ]
 license = { text = "Apache Software License (http://www.apache.org/licenses/LICENSE-2.0)" }
 keywords = ["graphics", "simulation"]
-version = "0.0.0"
+dynamic = ["version"]
 readme = "README.md"
 requires-python = ">=3.10,<4.0"
 dependencies = [
@@ -29,6 +29,10 @@ dependencies = [
     "setuptools>=68.0.0",  # Required for Python 3.12+ compatibility
     "cffi>=1.16.0",
 ]
+
+[tool.setuptools_scm]
+write_to = "python/gstaichi/_version.py"
+write_to_template = "__version__ = '{version}'\n"
 
 [project.optional-dependencies]
 docs = [
@@ -61,6 +65,7 @@ requires = [
     "ninja; platform_system != 'Windows'",
     "psutil",
     "cffi>=1.16.0",
+    "setuptools_scm>=6.0",
 ]
 build-backend = "setuptools.build_meta"
 

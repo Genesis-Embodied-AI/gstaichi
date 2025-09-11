@@ -263,10 +263,6 @@ setup(
     packages=packages,
     package_dir={"": package_dir},
     setup_requires=["setuptools_scm>=6.0"],
-    use_scm_version={
-        "write_to": "python/gstaichi/_version.py",
-        "write_to_template": "__version__ = '{version}'\n",
-    },
     data_files=[
         (os.path.join("_lib", "runtime"), data_files),
     ],
