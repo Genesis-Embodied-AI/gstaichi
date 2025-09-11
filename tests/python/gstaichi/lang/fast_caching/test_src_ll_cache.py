@@ -213,5 +213,4 @@ def test_src_ll_cache_template_params(tmp_path: pathlib.Path, src_ll_cache: bool
 # The following lines are critical for the tests to work. If they are missing, the test will
 # incorrectly pass, without doing anything.
 if __name__ == "__main__":
-    print("__main__")
     globals()[sys.argv[1]](sys.argv[2:])
