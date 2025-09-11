@@ -17,3 +17,5 @@ from gstaichi.types.ndarray_type import *
 from gstaichi.types.primitive_types import *
 from gstaichi.types.texture_type import *
 from gstaichi.types.utils import *
+
+__all__ = ["quant"]

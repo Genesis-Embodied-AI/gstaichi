@@ -1,8 +1,6 @@
-import copy
 import os
 import pathlib
 import platform
-import sys
 from contextlib import contextmanager
 
 import pytest

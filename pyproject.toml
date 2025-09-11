@@ -32,8 +32,8 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-select = ["I"]  # Enable import ordering checks
+select = ["I", "F401"]  # Enable import ordering checks, and unused import checks
 
 [tool.ruff.lint.isort]
-known-local-folder = ["taichi", "tests"]
+known-local-folder = ["taichi", "tests", ".github"]
 known-third-party = ["pytest"]

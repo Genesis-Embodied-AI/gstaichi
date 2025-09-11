@@ -14,7 +14,6 @@ from . import misc
 from .cmake import cmake_args
 from .compiler import get_cache_home
 from .misc import banner
-from .python import get_desired_python_version
 from .tinysh import Command
 
 

@@ -42,8 +42,6 @@ def test_print_docs_scalar_self_documenting_exp(capfd):
     func()
     ti.sync()
 
-    import os
-
     out, err = capfd.readouterr()
     out = filter_lines(out, "TEST_PRINT:")
     expected_out = """TEST_PRINT: a[0] = 1.0"""
