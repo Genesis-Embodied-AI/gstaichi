@@ -228,6 +228,7 @@ user_api[ti] = [
     "uint64",
     "uint8",
     "vulkan",
+    "wipe_offline_cache",
     "x64",
     "x86_64",
     "zero",

@@ -614,6 +614,5 @@ def test_wipe_cache():
     ti.init(arch=arch, enable_fallback=False, **current_thread_ext_options())
     assert cache_files_cnt() > 0
 
-    runtime = ti.lang.impl.get_runtime()
-    runtime.wipe_cache()
+    ti.wipe_offline_cache()
     assert cache_files_cnt() == 0

@@ -42,7 +42,6 @@ __all__ = [
     "ad",
     "algorithms",
     "experimental",
-    "lang",
     "linalg",
     "math",
     "sparse",

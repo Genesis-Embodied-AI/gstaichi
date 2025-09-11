@@ -366,7 +366,7 @@ class PyGsTaichi:
         self.unrolling_limit: int = 0
         self.src_ll_cache: bool = True
 
-    def wipe_cache(self) -> None:
+    def wipe_offline_cache(self) -> None:
         """
         Wipes all offline cache
         """
@@ -1256,6 +1256,10 @@ def mesh_relation_access(mesh, from_index, to_element_type):
     raise RuntimeError("Relation access should be with a mesh instance!")
 
 
+def wipe_offline_cache() -> None:
+    get_runtime().wipe_offline_cache()
+
+
 __all__ = [
     "axes",
     "deactivate_all_snodes",
@@ -1268,5 +1272,6 @@ __all__ = [
     "static_assert",
     "static_print",
     "stop_grad",
+    "wipe_offline_cache",
     "zero",
 ]
