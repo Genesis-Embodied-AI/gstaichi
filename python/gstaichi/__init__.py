@@ -2,7 +2,6 @@ from gstaichi import (
     ad,
     algorithms,
     experimental,
-    lang,
     linalg,
     math,
     sparse,
