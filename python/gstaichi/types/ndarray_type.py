@@ -3,13 +3,7 @@ from typing import Any
 from gstaichi.types.compound_types import CompoundType, matrix, vector
 from gstaichi.types.enums import Layout, to_boundary_enum
 
-
-class NdarrayTypeMetadata:
-    def __init__(self, element_type, shape=None, needs_grad=False):
-        self.element_type = element_type
-        self.shape = shape
-        self.layout = Layout.AOS
-        self.needs_grad = needs_grad
+from .ndarray_type_metadata import NdarrayTypeMetadata
 
 
 # TODO(Haidong): This is a helper function that creates a MatrixType
