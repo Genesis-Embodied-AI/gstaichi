@@ -24,21 +24,6 @@ from wheel.bdist_wheel import bdist_wheel
 
 root_dir = os.path.dirname(os.path.abspath(__file__))
 
-classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Topic :: Software Development :: Compilers",
-    "Topic :: Multimedia :: Graphics",
-    "Topic :: Games/Entertainment :: Simulation",
-    "Intended Audience :: Science/Research",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: Apache Software License",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-]
-
-
 project_name = os.getenv("PROJECT_NAME", "gstaichi")
 
 data_files = glob.glob("python/_lib/runtime/*")
@@ -275,51 +260,16 @@ if force_plat_name:
     set_skbuild_plat_name(force_plat_name)
 
 setup(
-    name=project_name,
     packages=packages,
     package_dir={"": package_dir},
-    description="The GsTaichi Programming Language",
-    author="GsTaichi developers",
-    url="https://github.com/Genesis-Embedded-AI/gstaichi",
-    python_requires=">=3.10,<4.0",
     setup_requires=["setuptools_scm>=6.0"],
-    use_scm_version={
-        "write_to": "python/gstaichi/_version.py",
-        "write_to_template": "__version__ = '{version}'\n",
-    },
-    install_requires=[
-        "numpy",
-        "colorama",
-        "dill",
-        "pydantic",
-        "rich",
-        "setuptools>=68.0.0",  # Required for Python 3.12+ compatibility
-        "cffi>=1.16.0",
-    ],
-    extras_require={
-        "docs": [
-            "sphinx",
-            "sphinx-copybutton",
-            "myst_parser",
-            "sphinx-subfigure",
-            "sphinxcontrib-video",
-            "sphinx-togglebutton",
-            "sphinx-design",
-            "pydata-sphinx-theme",
-            "sphinx-autoapi",
-        ],
-    },
     data_files=[
         (os.path.join("_lib", "runtime"), data_files),
     ],
     package_data={
         "gstaichi._lib.core": ["gstaichi_python.pyi", "py.typed"],
     },
-    keywords=["graphics", "simulation"],
-    license="Apache Software License (http://www.apache.org/licenses/LICENSE-2.0)",
-    license_files=("LICENSE",),
     include_package_data=True,
-    classifiers=classifiers,
     cmake_args=get_cmake_args(),
     cmake_process_manifest_hook=cmake_install_manifest_filter,
     cmdclass={

@@ -1,9 +1,0 @@
-# How to update the env:
-#
-# conda activate gstaichi-dev
-# conda env update --file conda_env.yaml --prune
-# https://stackoverflow.com/a/43873901/12003165
-
-name: gstaichi-dev
-dependencies:
-  - python=3.10  # Replace this with your favorite Python version
