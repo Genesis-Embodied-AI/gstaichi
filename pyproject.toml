@@ -18,7 +18,7 @@ license = "Apache-2.0"
 keywords = ["graphics", "simulation"]
 dynamic = ["version"]
 readme = "README.md"
-requires-python = ">=3.10,<=3.13"
+requires-python = ">=3.10,<3.14"
 dependencies = [
     "numpy>=1.26.0",
     "colorama",
