@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>gstaichi.lang.kernel_impl &#8212; GsTaichi 2.3.1 documentation</title>
+    <title>gstaichi.lang.kernel_impl &#8212; GsTaichi 2.3.2 documentation</title>
   
   
   
@@ -43,7 +43,7 @@
   <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../../_static/documentation_options.js?v=67b02a41"></script>
+    <script src="../../../../_static/documentation_options.js?v=5048a02b"></script>
     <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -62,7 +62,7 @@
     <link rel="prev" title="gstaichi.lang.kernel_arguments" href="../kernel_arguments/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.3.1" />
+  <meta name="docsearch:version" content="2.3.2" />
   </head>
   
   
@@ -124,7 +124,7 @@
   
   
   
-    <p class="title logo__title">GsTaichi 2.3.1 documentation</p>
+    <p class="title logo__title">GsTaichi 2.3.2 documentation</p>
   
 </a></div>
     
@@ -338,6 +338,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../types/compound_types/index.html">gstaichi.types.compound_types</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../types/enums/index.html">gstaichi.types.enums</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../types/ndarray_type/index.html">gstaichi.types.ndarray_type</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../types/ndarray_type_metadata/index.html">gstaichi.types.ndarray_type_metadata</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../types/primitive_types/index.html">gstaichi.types.primitive_types</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../types/quant/index.html">gstaichi.types.quant</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../types/texture_type/index.html">gstaichi.types.texture_type</a></li>
@@ -427,8 +428,8 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.kernel_impl.pyfunc" title="gstaichi.lang.kernel_impl.pyfunc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pyfunc</span></code></a>(→ GsTaichiCallable)</p></td>
 <td><p>Marks a function as callable in both GsTaichi and Python scopes.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#gstaichi.lang.kernel_impl.kernel" title="gstaichi.lang.kernel_impl.kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kernel</span></code></a>([_fn, pure])</p></td>
-<td><p>Marks a function as a GsTaichi kernel.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#gstaichi.lang.kernel_impl.kernel" title="gstaichi.lang.kernel_impl.kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kernel</span></code></a>(…)</p></td>
+<td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.kernel_impl.data_oriented" title="gstaichi.lang.kernel_impl.data_oriented"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data_oriented</span></code></a>(cls)</p></td>
 <td><p>Marks a class as GsTaichi compatible.</p></td>
@@ -499,36 +500,10 @@ Python function.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="gstaichi.lang.kernel_impl.kernel">
-<span class="sig-prename descclassname"><span class="pre">gstaichi.lang.kernel_impl.</span></span><span class="sig-name descname"><span class="pre">kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pure</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel_impl.html#kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel_impl.kernel" title="Link to this definition">#</a></dt>
-<dd><p>Marks a function as a GsTaichi kernel.</p>
-<p>A GsTaichi kernel is a function written in Python, and gets JIT compiled by
-GsTaichi into native CPU/GPU instructions (e.g. a series of CUDA kernels).
-The top-level <code class="docutils literal notranslate"><span class="pre">for</span></code> loops are automatically parallelized, and distributed
-to either a CPU thread pool or massively parallel GPUs.</p>
-<p>Kernel’s gradient kernel would be generated automatically by the AutoDiff system.</p>
-<p>See also <a class="reference external" href="https://docs.taichi-lang.org/docs/syntax#kernel">https://docs.taichi-lang.org/docs/syntax#kernel</a>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>fn</strong> (<em>Callable</em>) – the Python function to be decorated</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The decorated function</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Callable</p>
-</dd>
-</dl>
-<p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">ti</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">ti</span><span class="o">.</span><span class="n">i32</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
-<span class="gp">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nd">@ti</span><span class="o">.</span><span class="n">kernel</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">():</span>
-<span class="gp">&gt;&gt;&gt; </span>    <span class="c1"># Assigns all the elements of `x` in parallel.</span>
-<span class="gp">&gt;&gt;&gt; </span>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">x</span><span class="p">:</span>
-<span class="gp">&gt;&gt;&gt; </span>        <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
-</pre></div>
-</div>
-</dd></dl>
+<span class="sig-prename descclassname"><span class="pre">gstaichi.lang.kernel_impl.</span></span><span class="sig-name descname"><span class="pre">kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pure</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">F</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">F</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel_impl.html#kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel_impl.kernel" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">gstaichi.lang.kernel_impl.</span></span><span class="sig-name descname"><span class="pre">kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">F</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pure</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">F</span></span></span></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="gstaichi.lang.kernel_impl.data_oriented">

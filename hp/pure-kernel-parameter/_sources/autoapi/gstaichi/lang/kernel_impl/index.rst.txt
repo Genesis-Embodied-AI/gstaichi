@@ -64,35 +64,8 @@ Module Contents
    :rtype: Callable
 
 
-.. py:function:: kernel(_fn: Callable | None = None, *, pure: bool = False)
-
-   Marks a function as a GsTaichi kernel.
-
-   A GsTaichi kernel is a function written in Python, and gets JIT compiled by
-   GsTaichi into native CPU/GPU instructions (e.g. a series of CUDA kernels).
-   The top-level ``for`` loops are automatically parallelized, and distributed
-   to either a CPU thread pool or massively parallel GPUs.
-
-   Kernel's gradient kernel would be generated automatically by the AutoDiff system.
-
-   See also https://docs.taichi-lang.org/docs/syntax#kernel.
-
-   :param fn: the Python function to be decorated
-   :type fn: Callable
-
-   :returns: The decorated function
-   :rtype: Callable
-
-   Example::
-
-       >>> x = ti.field(ti.i32, shape=(4, 8))
-       >>>
-       >>> @ti.kernel
-       >>> def run():
-       >>>     # Assigns all the elements of `x` in parallel.
-       >>>     for i in x:
-       >>>         x[i] = i
-
+.. py:function:: kernel(_fn: None = None, *, pure: bool = False) -> Callable[[F], F]
+                 kernel(_fn: F, *, pure: bool = False) -> F
 
 .. py:function:: data_oriented(cls)
 

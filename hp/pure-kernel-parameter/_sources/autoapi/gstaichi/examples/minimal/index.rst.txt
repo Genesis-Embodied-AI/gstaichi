@@ -16,7 +16,7 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: lcg_ti(B: int, lcg_its: int, a: gstaichi.types.NDArray[gstaichi.i32, 1]) -> None
+.. py:function:: lcg_ti(B: int, lcg_its: int, a: gstaichi.types.NDArray[gstaichi.i32, Literal[1]]) -> None
 
    Linear congruential generator https://en.wikipedia.org/wiki/Linear_congruential_generator
 

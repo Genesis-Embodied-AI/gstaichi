@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gstaichi.types.annotations &#8212; GsTaichi 2.3.2 documentation</title>
+    <title>gstaichi.types.ndarray_type_metadata &#8212; GsTaichi 2.3.2 documentation</title>
   
   
   
@@ -54,7 +54,7 @@
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/gstaichi/types/annotations';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/gstaichi/types/ndarray_type_metadata';</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -292,7 +292,7 @@
     
     <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">gstaichi.types.annotations</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">gstaichi.types.ndarray_type_metadata</span></li>
   </ul>
 </nav>
 </div>
@@ -309,74 +309,31 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <h1>Source code for gstaichi.types.annotations</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">TypeVar</span>
-
-<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
+  <h1>Source code for gstaichi.types.ndarray_type_metadata</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">Layout</span>
 
 
-<div class="viewcode-block" id="Template">
-<a class="viewcode-back" href="../../../autoapi/gstaichi/types/annotations/index.html#gstaichi.types.annotations.Template">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">Template</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Type annotation for template kernel parameter.</span>
-<span class="sd">    Useful for passing parameters to kernels by reference.</span>
-
-<span class="sd">    See also https://docs.taichi-lang.org/docs/meta.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        tensor (Any): unused</span>
-<span class="sd">        dim (Any): unused</span>
-
-<span class="sd">    Example::</span>
-
-<span class="sd">        &gt;&gt;&gt; a = 1</span>
-<span class="sd">        &gt;&gt;&gt;</span>
-<span class="sd">        &gt;&gt;&gt; @ti.kernel</span>
-<span class="sd">        &gt;&gt;&gt; def test():</span>
-<span class="sd">        &gt;&gt;&gt;     print(a)</span>
-<span class="sd">        &gt;&gt;&gt;</span>
-<span class="sd">        &gt;&gt;&gt; @ti.kernel</span>
-<span class="sd">        &gt;&gt;&gt; def test_template(a: ti.template()):</span>
-<span class="sd">        &gt;&gt;&gt;     print(a)</span>
-<span class="sd">        &gt;&gt;&gt;</span>
-<span class="sd">        &gt;&gt;&gt; test(a)  # will print 1</span>
-<span class="sd">        &gt;&gt;&gt; test_template(a)  # will also print 1</span>
-<span class="sd">        &gt;&gt;&gt; a = 2</span>
-<span class="sd">        &gt;&gt;&gt; test(a)  # will still print 1</span>
-<span class="sd">        &gt;&gt;&gt; test_template(a)  # will print 2</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">=</span> <span class="nb">object</span><span class="p">,</span> <span class="n">ndim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<div class="viewcode-block" id="Template.element_type">
-<a class="viewcode-back" href="../../../autoapi/gstaichi/types/annotations/index.html#gstaichi.types.annotations.Template.element_type">[docs]</a>
+<div class="viewcode-block" id="NdarrayTypeMetadata">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/types/ndarray_type_metadata/index.html#gstaichi.types.ndarray_type_metadata.NdarrayTypeMetadata">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NdarrayTypeMetadata</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element_type</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">needs_grad</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="NdarrayTypeMetadata.element_type">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/types/ndarray_type_metadata/index.html#gstaichi.types.ndarray_type_metadata.NdarrayTypeMetadata.element_type">[docs]</a>
         <span class="bp">self</span><span class="o">.</span><span class="n">element_type</span> <span class="o">=</span> <span class="n">element_type</span></div>
 
-<div class="viewcode-block" id="Template.ndim">
-<a class="viewcode-back" href="../../../autoapi/gstaichi/types/annotations/index.html#gstaichi.types.annotations.Template.ndim">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span> <span class="o">=</span> <span class="n">ndim</span></div>
+<div class="viewcode-block" id="NdarrayTypeMetadata.shape">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/types/ndarray_type_metadata/index.html#gstaichi.types.ndarray_type_metadata.NdarrayTypeMetadata.shape">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="n">shape</span></div>
 
+<div class="viewcode-block" id="NdarrayTypeMetadata.layout">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/types/ndarray_type_metadata/index.html#gstaichi.types.ndarray_type_metadata.NdarrayTypeMetadata.layout">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">AOS</span></div>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+<div class="viewcode-block" id="NdarrayTypeMetadata.needs_grad">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/types/ndarray_type_metadata/index.html#gstaichi.types.ndarray_type_metadata.NdarrayTypeMetadata.needs_grad">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">needs_grad</span> <span class="o">=</span> <span class="n">needs_grad</span></div>
+</div>
 
-
-
-<div class="viewcode-block" id="template">
-<a class="viewcode-back" href="../../../autoapi/gstaichi/types/annotations/index.html#gstaichi.types.annotations.template">[docs]</a>
-<span class="n">template</span> <span class="o">=</span> <span class="n">Template</span></div>
-
-<span class="sd">&quot;&quot;&quot;Alias for :class:`~gstaichi.types.annotations.Template`.</span>
-<span class="sd">&quot;&quot;&quot;</span>
-
-
-<div class="viewcode-block" id="sparse_matrix_builder">
-<a class="viewcode-back" href="../../../autoapi/gstaichi/types/annotations/index.html#gstaichi.types.annotations.sparse_matrix_builder">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">sparse_matrix_builder</span><span class="p">:</span>
-    <span class="k">pass</span></div>
-
-
-
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;template&quot;</span><span class="p">,</span> <span class="s2">&quot;sparse_matrix_builder&quot;</span><span class="p">,</span> <span class="s2">&quot;Template&quot;</span><span class="p">]</span>
 </pre></div>
 
                 </article>

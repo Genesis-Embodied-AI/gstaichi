@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gstaichi.types.ndarray_type &#8212; GsTaichi 2.3.1 documentation</title>
+    <title>gstaichi.types.ndarray_type &#8212; GsTaichi 2.3.2 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../_static/documentation_options.js?v=67b02a41"></script>
+    <script src="../../../_static/documentation_options.js?v=5048a02b"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -59,7 +59,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.3.1" />
+  <meta name="docsearch:version" content="2.3.2" />
   </head>
   
   
@@ -121,7 +121,7 @@
   
   
   
-    <p class="title logo__title">GsTaichi 2.3.1 documentation</p>
+    <p class="title logo__title">GsTaichi 2.3.2 documentation</p>
   
 </a></div>
     
@@ -310,18 +310,10 @@
                 <article class="bd-article">
                   
   <h1>Source code for gstaichi.types.ndarray_type</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.types.compound_types</span><span class="w"> </span><span class="kn">import</span> <span class="n">CompoundType</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">vector</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.types.compound_types</span><span class="w"> </span><span class="kn">import</span> <span class="n">CompoundType</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">vector</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.types.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">to_boundary_enum</span>
 
-
-<span class="k">class</span><span class="w"> </span><span class="nc">NdarrayTypeMetadata</span><span class="p">:</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element_type</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">needs_grad</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">element_type</span> <span class="o">=</span> <span class="n">element_type</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="n">shape</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">AOS</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">needs_grad</span> <span class="o">=</span> <span class="n">needs_grad</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.ndarray_type_metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">NdarrayTypeMetadata</span>
 
 
 <span class="c1"># TODO(Haidong): This is a helper function that creates a MatrixType</span>
@@ -359,7 +351,13 @@
     <span class="k">return</span> <span class="n">mat_dtype</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">NdarrayType</span><span class="p">:</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">TypeVar</span>
+
+<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
+<span class="n">N</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;N&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">NdarrayType</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">N</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Type annotation for arbitrary arrays, including external arrays (numpy ndarrays and torch tensors) and GsTaichi ndarrays.</span>
 
 <span class="sd">    For external arrays, we treat it as a GsTaichi data container with Scalar, Vector or Matrix elements.</span>
@@ -452,22 +450,12 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__repr__</span><span class="p">()</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="c1"># needed for pyright</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># needed for pyright</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
-
 
 <div class="viewcode-block" id="ndarray">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/types/ndarray_type/index.html#gstaichi.types.ndarray_type.ndarray">[docs]</a>
 <span class="n">ndarray</span> <span class="o">=</span> <span class="n">NdarrayType</span></div>
 
-<div class="viewcode-block" id="NDArray">
-<a class="viewcode-back" href="../../../autoapi/gstaichi/types/ndarray_type/index.html#gstaichi.types.ndarray_type.NDArray">[docs]</a>
-<span class="n">NDArray</span> <span class="o">=</span> <span class="n">NdarrayType</span></div>
+
 
 <span class="sd">&quot;&quot;&quot;Alias for :class:`~gstaichi.types.ndarray_type.NdarrayType`.</span>
 
@@ -484,7 +472,7 @@
 <span class="sd">    &gt;&gt;&gt; to_numpy(x, y)  # `x` will be filled with `y`&#39;s data.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;ndarray&quot;</span><span class="p">,</span> <span class="s2">&quot;NDArray&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;ndarray&quot;</span><span class="p">]</span>
 </pre></div>
 
                 </article>

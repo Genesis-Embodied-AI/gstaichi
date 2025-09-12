@@ -10,15 +10,12 @@ Attributes
 .. autoapisummary::
 
    gstaichi.types.ndarray_type.ndarray
-   gstaichi.types.ndarray_type.NDArray
 
 
 Module Contents
 ---------------
 
 .. py:data:: ndarray
-
-.. py:data:: NDArray
 
    Alias for :class:`~gstaichi.types.ndarray_type.NdarrayType`.
 

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>gstaichi.types.ndarray_type &#8212; GsTaichi 2.3.1 documentation</title>
+    <title>gstaichi.types.ndarray_type &#8212; GsTaichi 2.3.2 documentation</title>
   
   
   
@@ -43,7 +43,7 @@
   <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../../_static/documentation_options.js?v=67b02a41"></script>
+    <script src="../../../../_static/documentation_options.js?v=5048a02b"></script>
     <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -58,11 +58,11 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/gstaichi/types/ndarray_type/index';</script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
-    <link rel="next" title="gstaichi.types.primitive_types" href="../primitive_types/index.html" />
+    <link rel="next" title="gstaichi.types.ndarray_type_metadata" href="../ndarray_type_metadata/index.html" />
     <link rel="prev" title="gstaichi.types.enums" href="../enums/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.3.1" />
+  <meta name="docsearch:version" content="2.3.2" />
   </head>
   
   
@@ -124,7 +124,7 @@
   
   
   
-    <p class="title logo__title">GsTaichi 2.3.1 documentation</p>
+    <p class="title logo__title">GsTaichi 2.3.2 documentation</p>
   
 </a></div>
     
@@ -338,6 +338,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../compound_types/index.html">gstaichi.types.compound_types</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../enums/index.html">gstaichi.types.enums</a></li>
 <li class="toctree-l3 current active"><a class="current reference internal" href="#">gstaichi.types.ndarray_type</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../ndarray_type_metadata/index.html">gstaichi.types.ndarray_type_metadata</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../primitive_types/index.html">gstaichi.types.primitive_types</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../quant/index.html">gstaichi.types.quant</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../texture_type/index.html">gstaichi.types.texture_type</a></li>
@@ -419,9 +420,6 @@
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.types.ndarray_type.ndarray" title="gstaichi.types.ndarray_type.ndarray"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ndarray</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#gstaichi.types.ndarray_type.NDArray" title="gstaichi.types.ndarray_type.NDArray"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NDArray</span></code></a></p></td>
 <td><p>Alias for <code class="xref py py-class docutils literal notranslate"><span class="pre">NdarrayType</span></code>.</p></td>
 </tr>
 </tbody>
@@ -433,11 +431,6 @@
 <dl class="py data">
 <dt class="sig sig-object py" id="gstaichi.types.ndarray_type.ndarray">
 <span class="sig-prename descclassname"><span class="pre">gstaichi.types.ndarray_type.</span></span><span class="sig-name descname"><span class="pre">ndarray</span></span><a class="reference internal" href="../../../../_modules/gstaichi/types/ndarray_type.html#ndarray"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.types.ndarray_type.ndarray" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py data">
-<dt class="sig sig-object py" id="gstaichi.types.ndarray_type.NDArray">
-<span class="sig-prename descclassname"><span class="pre">gstaichi.types.ndarray_type.</span></span><span class="sig-name descname"><span class="pre">NDArray</span></span><a class="reference internal" href="../../../../_modules/gstaichi/types/ndarray_type.html#NDArray"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.types.ndarray_type.NDArray" title="Link to this definition">#</a></dt>
 <dd><p>Alias for <code class="xref py py-class docutils literal notranslate"><span class="pre">NdarrayType</span></code>.</p>
 <p>Example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@ti</span><span class="o">.</span><span class="n">kernel</span>
@@ -476,11 +469,11 @@
       </div>
     </a>
     <a class="right-next"
-       href="../primitive_types/index.html"
+       href="../ndarray_type_metadata/index.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">gstaichi.types.primitive_types</p>
+        <p class="prev-next-title">gstaichi.types.ndarray_type_metadata</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -506,7 +499,6 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#attributes">Attributes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.types.ndarray_type.ndarray"><code class="docutils literal notranslate"><span class="pre">ndarray</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.types.ndarray_type.NDArray"><code class="docutils literal notranslate"><span class="pre">NDArray</span></code></a></li>
 </ul>
 </li>
 </ul>
