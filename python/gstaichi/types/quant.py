@@ -1,5 +1,3 @@
-# type: ignore
-
 """
 This module defines generators of quantized types.
 For more details, read https://yuanming.gstaichi.graphics/publication/2021-quangstaichi/quangstaichi.pdf.
