@@ -242,7 +242,9 @@ def src_ll_cache_has_return_child(args: list[str]) -> None:
         # Even though we only check when not loading from the cache
         # we won't ever be able to load from the cache, since it will have failed
         # to cache the first time. By induction, it will always raise.
-        with pytest.raises(ti.GsTaichiSyntaxError):
+        with pytest.raises(
+            ti.GsTaichiSyntaxError, match="Kernel has a return type but does not have a return statement"
+        ):
             k1(3, output)
     print(TEST_RAN)
     sys.exit(RET_SUCCESS)
