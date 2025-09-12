@@ -57,7 +57,8 @@ from gstaichi.lang.util import (
     warning,
 )
 from gstaichi.types.enums import SNodeGradType
-from gstaichi.types.ndarray_type import NdarrayType
+
+# from gstaichi.types.ndarray_type import NdarrayType
 from gstaichi.types.primitive_types import (
     all_types,
     f16,
@@ -211,7 +212,7 @@ def subscript(ast_builder, value, *_indices, skip_reordered=False):
             SharedArray,
         ),
     ):
-        if isinstance(value, NdarrayType):
+        if isinstance(value, Ndarray):
             raise Exception(
                 "Cannot subscript NdarrayType. Did you access a global py dataclass inadvertently?", value, type(value)
             )

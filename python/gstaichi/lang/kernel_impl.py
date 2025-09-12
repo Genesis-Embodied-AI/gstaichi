@@ -67,6 +67,8 @@ from gstaichi.types.compound_types import CompoundType
 from gstaichi.types.enums import AutodiffMode, Layout
 from gstaichi.types.utils import is_signed
 
+from ._ndarray import Ndarray
+
 CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
 
 
@@ -453,7 +455,7 @@ class Func:
                     non_template_args.append(ops.cast(args[i], anno))
                 elif isinstance(anno, primitive_types.RefType):
                     non_template_args.append(_ti_core.make_reference(args[i].ptr, dbg_info))
-                elif isinstance(anno, ndarray_type.NdarrayType):
+                elif isinstance(anno, Ndarray):
                     if not isinstance(args[i], AnyArray):
                         raise GsTaichiTypeError(
                             f"Expected ndarray in the kernel argument for argument {kernel_arg.name}, got {args[i]}"
@@ -511,7 +513,7 @@ class Func:
         if sig.return_annotation not in (inspect.Signature.empty, None):
             self.return_type = sig.return_annotation
             if (
-                isinstance(self.return_type, (types.GenericAlias, typing._GenericAlias))  # type: ignore
+                isinstance(self.return_type, (types.GenericAlias, _GenericAlias))  # type: ignore
                 and self.return_type.__origin__ is tuple  # type: ignore
             ):
                 self.return_type = self.return_type.__args__  # type: ignore
@@ -549,7 +551,7 @@ class Func:
                         f"GsTaichi function `{self.func.__name__}` parameter `{arg_name}` must be type annotated"
                     )
             else:
-                if isinstance(annotation, ndarray_type.NdarrayType):
+                if isinstance(annotation, Ndarray):
                     pass
                 elif isinstance(annotation, MatrixType):
                     pass
@@ -688,19 +690,29 @@ class Kernel:
                 else:
                     raise GsTaichiSyntaxError("GsTaichi kernels parameters must be type annotated")
             else:
+                # print("check annotatoin", i, annotation)
                 if isinstance(
                     annotation,
                     (
                         template,
-                        ndarray_type.NdarrayType,
+                        Ndarray,
+                        ndarray_type.ndarray,
                         texture_type.TextureType,
                         texture_type.RWTextureType,
                     ),
                 ):
                     pass
-                elif annotation is ndarray_type.NdarrayType:
+                elif (
+                    isinstance(annotation, (types.GenericAlias, typing._GenericAlias))  # type: ignore
+                    and annotation.__origin__ is Ndarray
+                ):
+                    print(" got generic alias", annotation.__origin__)
+                    _annot_as_ndarray = annotation.__origin__
+                    annotation = ndarray_type.ndarray(dtype=annotation.__args__[0], ndim=annotation.__args__[1])
+                elif annotation is Ndarray:
+                    print("annotation is Ndarray")
                     # convert from ti.types.NDArray into ti.types.NDArray()
-                    annotation = annotation()
+                    annotation = ndarray_type.ndarray()
                 elif id(annotation) in primitive_types.type_ids:
                     pass
                 elif isinstance(annotation, sparse_matrix_builder):
@@ -714,6 +726,8 @@ class Kernel:
                 elif isinstance(annotation, type) and dataclasses.is_dataclass(annotation):
                     pass
                 else:
+                    print("annotation", annotation, type(annotation))
+                    print(isinstance(annotation, Ndarray))
                     raise GsTaichiSyntaxError(f"Invalid type annotation (argument {i}) of Taichi kernel: {annotation}")
             self.arg_metas.append(ArgMetadata(annotation, param.name, param.default))
 
@@ -858,6 +872,7 @@ class Kernel:
             launch_ctx.set_arg_rw_texture(indices, v.tex)
 
         def set_arg_ext_array(indices: tuple[int, ...], v: Any, needed: ndarray_type.NdarrayType) -> None:
+            # def set_arg_ext_array(indices: tuple[int, ...], v: Any, needed: Ndarray) -> None:
             # v is things like torch Tensor and numpy array
             # Not adding type for this, since adds additional dependencies
             #
@@ -1029,6 +1044,7 @@ class Kernel:
                     idx += recursive_set_args(field.type, field.type, field_value, (indices[0] + idx,))
                 return idx
             if isinstance(needed_arg_type, ndarray_type.NdarrayType) and isinstance(v, gstaichi.lang._ndarray.Ndarray):
+                # if isinstance(needed_arg_type, Ndarray) and isinstance(v, gstaichi.lang._ndarray.Ndarray):
                 set_arg_ndarray(indices, v)
                 return 1
             if isinstance(needed_arg_type, texture_type.TextureType) and isinstance(v, gstaichi.lang._texture.Texture):
@@ -1040,6 +1056,7 @@ class Kernel:
                 set_arg_rw_texture(indices, v)
                 return 1
             if isinstance(needed_arg_type, ndarray_type.NdarrayType):
+                # if isinstance(needed_arg_type, Ndarray):
                 set_arg_ext_array(indices, v, needed_arg_type)
                 return 1
             if isinstance(needed_arg_type, MatrixType):
@@ -1263,48 +1280,71 @@ def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool 
     return wrapped
 
 
-def kernel(_fn: Callable | None = None, *, pure: bool = False):
-    """Marks a function as a GsTaichi kernel.
+from typing import Callable, TypeVar, overload
 
-    A GsTaichi kernel is a function written in Python, and gets JIT compiled by
-    GsTaichi into native CPU/GPU instructions (e.g. a series of CUDA kernels).
-    The top-level ``for`` loops are automatically parallelized, and distributed
-    to either a CPU thread pool or massively parallel GPUs.
+F = TypeVar("F", bound=Callable[..., typing.Any])
 
-    Kernel's gradient kernel would be generated automatically by the AutoDiff system.
 
-    See also https://docs.taichi-lang.org/docs/syntax#kernel.
+@overload
+def kernel(_fn: None = None, *, pure: bool = False) -> Callable[[F], F]: ...
+@overload
+def kernel(_fn: F, *, pure: bool = False) -> F: ...
 
-    Args:
-        fn (Callable): the Python function to be decorated
 
-    Returns:
-        Callable: The decorated function
+from typing import cast
 
-    Example::
+# def kernel(_fn: Callable | None = None, *, pure: bool = False):
+#     """Marks a function as a GsTaichi kernel.
 
-        >>> x = ti.field(ti.i32, shape=(4, 8))
-        >>>
-        >>> @ti.kernel
-        >>> def run():
-        >>>     # Assigns all the elements of `x` in parallel.
-        >>>     for i in x:
-        >>>         x[i] = i
-    """
+#     A GsTaichi kernel is a function written in Python, and gets JIT compiled by
+#     GsTaichi into native CPU/GPU instructions (e.g. a series of CUDA kernels).
+#     The top-level ``for`` loops are automatically parallelized, and distributed
+#     to either a CPU thread pool or massively parallel GPUs.
 
-    def decorator(fn: Callable):
+#     Kernel's gradient kernel would be generated automatically by the AutoDiff system.
+
+#     See also https://docs.taichi-lang.org/docs/syntax#kernel.
+
+#     Args:
+#         fn (Callable): the Python function to be decorated
+
+#     Returns:
+#         Callable: The decorated function
+
+#     Example::
+
+#         >>> x = ti.field(ti.i32, shape=(4, 8))
+#         >>>
+#         >>> @ti.kernel
+#         >>> def run():
+#         >>>     # Assigns all the elements of `x` in parallel.
+#         >>>     for i in x:
+#         >>>         x[i] = i
+#     """
+
+
+def kernel(_fn: Callable[..., typing.Any] | None = None, *, pure: bool = False):
+    def decorator(fn: F) -> F:
         wrapped = _kernel_impl(fn, level_of_class_stackframe=3)
         wrapped.is_pure = pure
-        return wrapped
+
+        # Use functools.wraps to preserve metadata
+        @functools.wraps(fn)
+        def wrapper(*args, **kwargs):
+            return wrapped(*args, **kwargs)
+
+        # Do NOT attach new attributes to wrapper, or Pyright will complain
+        return cast(F, wrapper)
 
     if _fn is None:
         # Called with @kernel() or @kernel(foo="bar")
         return decorator
 
-    # Called with @kernel (without parentheses)
-    wrapped = _kernel_impl(_fn, level_of_class_stackframe=3)
-    wrapped.is_pure = pure
-    return wrapped
+    return decorator(_fn)
+    # # Called with @kernel (without parentheses)
+    # wrapped = _kernel_impl(_fn, level_of_class_stackframe=3)
+    # wrapped.is_pure = pure
+    # return wrapped
 
 
 class _BoundedDifferentiableMethod:

@@ -10,12 +10,15 @@ This module defines data types in GsTaichi:
 - quant: for quantized types, see "https://yuanming.gstaichi.graphics/publication/2021-quangstaichi/quangstaichi.pdf"
 """
 
+from gstaichi.lang._ndarray import Ndarray
 from gstaichi.types import quant
 from gstaichi.types.annotations import *
 from gstaichi.types.compound_types import *
-from gstaichi.types.ndarray_type import *
+from gstaichi.types.ndarray_type import NdarrayType, ndarray
 from gstaichi.types.primitive_types import *
 from gstaichi.types.texture_type import *
 from gstaichi.types.utils import *
 
-__all__ = ["quant"]
+NDArray = Ndarray
+
+__all__ = ["quant", "NdarrayType", "ndarray"]

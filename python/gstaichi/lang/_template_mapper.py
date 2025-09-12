@@ -31,7 +31,7 @@ AnnotationType = Union[
     template,
     "texture_type.TextureType",
     "texture_type.RWTextureType",
-    ndarray_type.NdarrayType,
+    # ndarray_type.NdarrayType,
     sparse_matrix_builder,
     Any,
 ]
@@ -114,7 +114,7 @@ class TemplateMapper:
             # (penguinliong) '0' is the assumed LOD level. We currently don't
             # support mip-mapping.
             return arg.num_dims, arg.fmt, 0
-        if isinstance(annotation, ndarray_type.NdarrayType):
+        if isinstance(annotation, ndarray_type.ndarray):
             if isinstance(arg, gstaichi.lang._ndarray.Ndarray):
                 annotation.check_matched(arg.get_type(), arg_name)
                 needs_grad = (arg.grad is not None) if annotation.needs_grad is None else annotation.needs_grad

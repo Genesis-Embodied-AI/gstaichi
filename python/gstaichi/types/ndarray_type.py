@@ -1,15 +1,9 @@
-from typing import Any
-
 from gstaichi.types.compound_types import CompoundType, matrix, vector
 from gstaichi.types.enums import Layout, to_boundary_enum
 
+from .ndarray_type_metadata import NdarrayTypeMetadata
 
-class NdarrayTypeMetadata:
-    def __init__(self, element_type, shape=None, needs_grad=False):
-        self.element_type = element_type
-        self.shape = shape
-        self.layout = Layout.AOS
-        self.needs_grad = needs_grad
+# from gstaichi.lang._ndarray import Ndarray
 
 
 # TODO(Haidong): This is a helper function that creates a MatrixType
@@ -47,7 +41,13 @@ def _make_matrix_dtype_from_element_shape(element_dim, element_shape, primitive_
     return mat_dtype
 
 
-class NdarrayType:
+from typing import Generic, TypeVar
+
+T = TypeVar("T")
+N = TypeVar("N", bound=int)
+
+
+class NdarrayType(Generic[T, N]):
     """Type annotation for arbitrary arrays, including external arrays (numpy ndarrays and torch tensors) and GsTaichi ndarrays.
 
     For external arrays, we treat it as a GsTaichi data container with Scalar, Vector or Matrix elements.
@@ -140,17 +140,22 @@ class NdarrayType:
     def __str__(self):
         return self.__repr__()
 
-    def __getitem__(self, i: Any) -> Any:
-        # needed for pyright
-        raise NotImplementedError()
+    # def __getitem__(self, i: Any) -> Any:
+    #     # needed for pyright
+    #     raise NotImplementedError()
 
-    def __setitem__(self, i: Any, v: Any) -> None:
-        # needed for pyright
-        raise NotImplementedError()
+    # def __setitem__(self, i: Any, v: Any) -> None:
+    #     # needed for pyright
+    #     raise NotImplementedError()
+
+
+# class NDArrayTypeProt(Ndarray):
+#     ...
 
 
 ndarray = NdarrayType
-NDArray = NdarrayType
+# NDArray = NDArrayTypeProt
+# NDArray = Ndarray
 """Alias for :class:`~gstaichi.types.ndarray_type.NdarrayType`.
 
 Example::
@@ -166,4 +171,4 @@ Example::
     >>> to_numpy(x, y)  # `x` will be filled with `y`'s data.
 """
 
-__all__ = ["ndarray", "NDArray"]
+__all__ = ["ndarray"]

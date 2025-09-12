@@ -9,9 +9,10 @@ from gstaichi.lang import impl
 from gstaichi.lang.exception import GsTaichiIndexError
 from gstaichi.lang.util import cook_dtype, get_traceback, python_scope, to_numpy_type
 from gstaichi.types import primitive_types
-from gstaichi.types.enums import Layout
-from gstaichi.types.ndarray_type import NdarrayTypeMetadata
 from gstaichi.types.utils import is_real, is_signed
+
+from ..types.enums import Layout
+from ..types.ndarray_type_metadata import NdarrayTypeMetadata
 
 if TYPE_CHECKING:
     from gstaichi.lang.matrix import MatrixNdarray, VectorNdarray
@@ -19,7 +20,13 @@ if TYPE_CHECKING:
     TensorNdarray = Union["ScalarNdarray", VectorNdarray, MatrixNdarray]
 
 
-class Ndarray:
+from typing import Generic, TypeVar
+
+T = TypeVar("T")
+N = TypeVar("N", bound=int)
+
+
+class Ndarray(Generic[T, N]):
     """GsTaichi ndarray class.
 
     Args:
