@@ -1263,7 +1263,7 @@ def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool 
     return wrapped
 
 
-def kernel(fn: Callable):
+def kernel(_fn: Callable | None = None, *, pure: bool = False):
     """Marks a function as a GsTaichi kernel.
 
     A GsTaichi kernel is a function written in Python, and gets JIT compiled by
@@ -1291,7 +1291,20 @@ def kernel(fn: Callable):
         >>>     for i in x:
         >>>         x[i] = i
     """
-    return _kernel_impl(fn, level_of_class_stackframe=3)
+
+    def decorator(fn: Callable):
+        wrapped = _kernel_impl(fn, level_of_class_stackframe=3)
+        wrapped.is_pure = pure
+        return wrapped
+
+    if _fn is None:
+        # Called with @kernel() or @kernel(foo="bar")
+        return decorator
+    else:
+        # Called with @kernel (without parentheses)
+        wrapped = _kernel_impl(_fn, level_of_class_stackframe=3)
+        wrapped.is_pure = pure
+        return wrapped
 
 
 class _BoundedDifferentiableMethod:
