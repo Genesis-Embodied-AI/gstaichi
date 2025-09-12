@@ -214,6 +214,7 @@ class HasReturnKernelArgs(pydantic.BaseModel):
     arch: str
     offline_cache_file_path: str
     src_ll_cache: bool
+    return_something: bool
 
 
 def src_ll_cache_has_return_child(args: list[str]) -> None:
@@ -229,25 +230,35 @@ def src_ll_cache_has_return_child(args: list[str]) -> None:
     @ti.kernel
     def k1(a: ti.i32, output: ti.types.NDArray[ti.i32, 1]) -> bool:
         output[0] = a
-        return True
+        if ti.static(args_obj.return_something):
+            return True
 
     output = ti.ndarray(ti.i32, (10,))
-    assert k1(3, output)
-    # sanity check that the kernel actually ran, and did something
-    assert output[0] == 3
+    if args_obj.return_something:
+        assert k1(3, output)
+        # Sanity check that the kernel actually ran, and did something.
+        assert output[0] == 3
+    else:
+        # Even though we only check when not loading from the cache
+        # we won't ever be able to load from the cache, since it will have failed
+        # to cache the first time. By induction, it will always raise.
+        with pytest.raises(ti.GsTaichiSyntaxError):
+            k1(3, output)
     print(TEST_RAN)
     sys.exit(RET_SUCCESS)
 
 
 @pytest.mark.parametrize("src_ll_cache", [False, True])
+@pytest.mark.parametrize("return_something", [False, True])
 @test_utils.test()
-def test_src_ll_cache_has_return(tmp_path: pathlib.Path, src_ll_cache: bool) -> None:
+def test_src_ll_cache_has_return(tmp_path: pathlib.Path, src_ll_cache: bool, return_something: bool) -> None:
     arch = ti.lang.impl.current_cfg().arch.name
 
     args_obj = HasReturnKernelArgs(
         arch=arch,
         offline_cache_file_path=str(tmp_path),
         src_ll_cache=src_ll_cache,
+        return_something=return_something,
     )
     args_json = HasReturnKernelArgs.model_dump_json(args_obj)
 
