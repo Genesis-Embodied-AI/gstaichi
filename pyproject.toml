@@ -18,11 +18,11 @@ license = "Apache-2.0"
 keywords = ["graphics", "simulation"]
 dynamic = ["version"]
 readme = "README.md"
-requires-python = ">=3.10,<4.0"
+requires-python = ">=3.10,<=3.13"
 dependencies = [
     "numpy>=1.26.0",
-    "colorama>=0.4.3",  # 2019
-    "dill>=0.3.1.1",  # 2019
+    "colorama",
+    "dill",
     "pydantic>=2.0.0",  # rewrite of 1.10 from scratch
     "rich>=1.0.0",  # first non-beta version; 2020
     "setuptools>=68.0.0",  # Required for Python 3.12+ compatibility
