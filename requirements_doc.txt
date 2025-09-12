@@ -1,9 +1,0 @@
-  sphinx
-  sphinx-copybutton
-  myst_parser
-  sphinx-subfigure
-  sphinxcontrib-video
-  sphinx-togglebutton
-  sphinx-design
-  pydata-sphinx-theme
-  sphinx-autoapi

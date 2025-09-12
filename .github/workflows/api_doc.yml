@@ -35,7 +35,8 @@ jobs:
           mkdir -p dist
           mv *.whl dist/
           ls -lh dist/
-          pip install "$(ls dist/*.whl)[docs]"
+          pip install dist/*.whl
+          pip install --group docs
           python -c 'import gstaichi as ti; ti.init(arch=ti.cpu); print(ti.__version__)'
           pip freeze | grep sphinx
       - name: Build docs

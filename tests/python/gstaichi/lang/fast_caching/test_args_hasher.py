@@ -1,9 +1,11 @@
 import dataclasses
 
 import numpy as np
+import pytest
 
 import gstaichi as ti
 from gstaichi.lang._fast_caching import FIELD_METADATA_CACHE_VALUE, args_hasher
+from gstaichi.lang.kernel_arguments import ArgMetadata
 
 from tests import test_utils
 
@@ -13,13 +15,41 @@ def test_args_hasher_numeric() -> None:
     seen = set()
     for arg in (3, 5.3, np.int32(3), np.int64(5), np.float32(2), np.float64(2)):
         for it in (0, 1):
-            hash = args_hasher.hash_args([arg])
+            hash = args_hasher.hash_args([arg], [None])
             assert hash is not None
             if it == 0:
                 assert hash not in seen
                 seen.add(hash)
             else:
                 assert hash in seen
+
+
+@pytest.mark.parametrize(
+    "annotation,cache_value",
+    [
+        (None, False),
+        (ti.i32, False),
+        (ti.template(), True),
+        (ti.Template, True),
+    ],
+)
+@test_utils.test()
+def test_args_hasher_numeric_maybe_template(annotation: object, cache_value: bool) -> None:
+    for arg in (3, 5.3, np.int32(3), np.int64(5), np.float32(2), np.float64(2)):
+        orig_type = type(arg)
+        arg_meta = ArgMetadata(name="", annotation=annotation)
+        hash1 = args_hasher.hash_args([arg], [arg_meta])
+        assert hash1 is not None
+
+        arg += 1
+        assert type(arg) == orig_type
+        arg_meta = ArgMetadata(name="", annotation=annotation)
+        hash2 = args_hasher.hash_args([arg], [arg_meta])
+        assert hash2 is not None
+        if cache_value:
+            assert hash1 != hash2
+        else:
+            assert hash1 == hash2
 
 
 @test_utils.test()
@@ -28,7 +58,7 @@ def test_args_hasher_bool() -> None:
     for arg in (False, np.bool(False)):
         print("arg", arg, type(arg))
         for it in (0, 1):
-            hash = args_hasher.hash_args([arg])
+            hash = args_hasher.hash_args([arg], [None])
             assert hash is not None
             if it == 0:
                 assert hash not in seen
@@ -37,13 +67,38 @@ def test_args_hasher_bool() -> None:
                 assert hash in seen
 
 
+@pytest.mark.parametrize(
+    "annotation,cache_value",
+    [
+        (None, False),
+        (ti.i32, False),
+        (ti.template(), True),
+        (ti.Template, True),
+    ],
+)
+@test_utils.test()
+def test_args_hasher_bool_maybe_template(annotation: object, cache_value: bool) -> None:
+    for arg1, arg2 in [(False, True), (np.bool_(False), np.bool_(True))]:
+        arg_meta = ArgMetadata(name="", annotation=annotation)
+        hash1 = args_hasher.hash_args([arg1], [arg_meta])
+        assert hash1 is not None
+
+        arg_meta = ArgMetadata(name="", annotation=annotation)
+        hash2 = args_hasher.hash_args([arg2], [arg_meta])
+        assert hash2 is not None
+        if cache_value:
+            assert hash1 != hash2
+        else:
+            assert hash1 == hash2
+
+
 @test_utils.test()
 def test_args_hasher_unsupported_data_oriented() -> None:
     @ti.data_oriented
     class Foo: ...
 
     foo = Foo()
-    assert args_hasher.hash_args([foo]) is None
+    assert args_hasher.hash_args([foo], [None]) is None
 
 
 @test_utils.test()
@@ -53,7 +108,7 @@ def test_args_hasher_ndarray() -> None:
         for ndim in [0, 1, 2]:
             arg = ti.ndarray(dtype, [1] * ndim)
             for it in [0, 1]:
-                hash = args_hasher.hash_args([arg])
+                hash = args_hasher.hash_args([arg], [None])
                 assert hash is not None
                 if it == 0:
                     assert hash not in seen
@@ -70,7 +125,7 @@ def test_args_hasher_ndarray_vector() -> None:
             for ndim in [0, 1, 2]:
                 arg = ti.Vector.ndarray(vector_size, dtype, [1] * ndim)
                 for it in [0, 1]:
-                    hash = args_hasher.hash_args([arg])
+                    hash = args_hasher.hash_args([arg], [None])
                     assert hash is not None
                     if it == 0:
                         assert hash not in seen
@@ -88,7 +143,7 @@ def test_args_hasher_ndarray_matrix() -> None:
                 for ndim in [0, 1, 2]:
                     arg = ti.Matrix.ndarray(m, n, dtype, [1] * ndim)
                     for it in [0, 1]:
-                        hash = args_hasher.hash_args([arg])
+                        hash = args_hasher.hash_args([arg], [None])
                         assert hash is not None
                         if it == 0:
                             assert hash not in seen
@@ -113,7 +168,7 @@ def test_args_hasher_field() -> None:
         for shape in [(2,), (5,), (2, 5)]:
             _ti_init_same_arch()
             arg = ti.field(dtype, shape)
-            hash = args_hasher.hash_args([arg])
+            hash = args_hasher.hash_args([arg], [None])
             assert hash is None
 
 
@@ -125,7 +180,7 @@ def test_args_hasher_field_vector() -> None:
             for shape in [(2,), (5,), (2, 5)]:
                 _ti_init_same_arch()
                 arg = ti.Vector.field(n, dtype, shape)
-                hash = args_hasher.hash_args([arg])
+                hash = args_hasher.hash_args([arg], [None])
                 assert hash is None
 
 
@@ -138,7 +193,7 @@ def test_args_hasher_field_matrix() -> None:
                 for shape in [(2,), (5,), (2, 5)]:
                     _ti_init_same_arch()
                     arg = ti.Matrix.field(m, n, dtype, shape)
-                    hash = args_hasher.hash_args([arg])
+                    hash = args_hasher.hash_args([arg], [None])
                     assert hash is None
 
 
@@ -146,8 +201,8 @@ def test_args_hasher_field_matrix() -> None:
 def test_args_hasher_field_vs_ndarray() -> None:
     a_ndarray = ti.ndarray(ti.i32, 1)
     a_field = ti.field(ti.i32, 1)
-    ndarray_hash = args_hasher.hash_args([a_ndarray])
-    field_hash = args_hasher.hash_args([a_field])
+    ndarray_hash = args_hasher.hash_args([a_ndarray], [None])
+    field_hash = args_hasher.hash_args([a_field], [None])
     assert ndarray_hash is not None
     assert field_hash is None
     assert ndarray_hash != field_hash
@@ -177,10 +232,10 @@ def test_cache_values_unchecked() -> None:
     diff = MyConfigNoCheckedDiff(some_int_new=3)
 
     h = args_hasher.hash_args
-    h_base = h([base])
+    h_base = h([base], [None])
     assert h_base is not None
-    assert h_base == h([same])
-    assert h_base != h([diff])
+    assert h_base == h([same], [None])
+    assert h_base != h([diff], [None])
 
 
 @test_utils.test()
@@ -194,7 +249,7 @@ def test_cache_values_checked() -> None:
     diff = MyConfigChecked(some_int_checked=7)
 
     h = args_hasher.hash_args
-    h_base = h([base])
+    h_base = h([base], [None])
     assert h_base is not None
-    assert h_base == h([same])
-    assert h_base != h([diff])
+    assert h_base == h([same], [None])
+    assert h_base != h([diff], [None])
