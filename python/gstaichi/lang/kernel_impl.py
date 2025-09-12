@@ -834,7 +834,7 @@ class Kernel:
                 tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
                 ctx.only_parse_function_def = self.compiled_kernel_data_by_key.get(key) is not None
                 transform_tree(tree, ctx)
-                if not ctx.is_real_function:
+                if not ctx.is_real_function and not ctx.only_parse_function_def:
                     if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
                         raise GsTaichiSyntaxError("Kernel has a return type but does not have a return statement")
             finally:
