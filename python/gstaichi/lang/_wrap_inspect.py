@@ -209,7 +209,7 @@ def get_source_info_and_src(func: Callable) -> tuple[FunctionSourceInfo, list[st
         start_lineno=start_lineno,
         end_lineno=end_lineno,
     )
-    return (func_info, src)
+    return func_info, src
 
 
 __all__ = ["getsourcelines", "getsourcefile", "get_source_info_and_src"]
