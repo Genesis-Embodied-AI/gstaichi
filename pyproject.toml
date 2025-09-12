@@ -35,6 +35,7 @@ where = ["python"]
 [tool.setuptools]
 package-dir = {"" = "python"}
 include-package-data = true
+license-files = ["LICENSE"]
 
 [tool.setuptools.package-data]
 "gstaichi._lib.core" = ["gstaichi_python.pyi", "py.typed"]
@@ -106,9 +107,6 @@ test = [
 
 [project.urls]
 Homepage = "https://github.com/Genesis-Embedded-AI/gstaichi"
-
-[tool.setuptools]
-license-files = ["LICENSE"]
 
 [build-system]
 requires = [
