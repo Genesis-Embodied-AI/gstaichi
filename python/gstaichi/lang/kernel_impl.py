@@ -690,7 +690,6 @@ class Kernel:
                 else:
                     raise GsTaichiSyntaxError("GsTaichi kernels parameters must be type annotated")
             else:
-                # print("check annotatoin", i, annotation)
                 if isinstance(
                     annotation,
                     (
@@ -706,12 +705,8 @@ class Kernel:
                     isinstance(annotation, (types.GenericAlias, typing._GenericAlias))  # type: ignore
                     and annotation.__origin__ is Ndarray
                 ):
-                    print(" got generic alias", annotation.__origin__)
-                    _annot_as_ndarray = annotation.__origin__
                     annotation = ndarray_type.ndarray(dtype=annotation.__args__[0], ndim=annotation.__args__[1])
                 elif annotation is Ndarray:
-                    print("annotation is Ndarray")
-                    # convert from ti.types.NDArray into ti.types.NDArray()
                     annotation = ndarray_type.ndarray()
                 elif id(annotation) in primitive_types.type_ids:
                     pass
@@ -726,8 +721,6 @@ class Kernel:
                 elif isinstance(annotation, type) and dataclasses.is_dataclass(annotation):
                     pass
                 else:
-                    print("annotation", annotation, type(annotation))
-                    print(isinstance(annotation, Ndarray))
                     raise GsTaichiSyntaxError(f"Invalid type annotation (argument {i}) of Taichi kernel: {annotation}")
             self.arg_metas.append(ArgMetadata(annotation, param.name, param.default))
 
@@ -872,7 +865,6 @@ class Kernel:
             launch_ctx.set_arg_rw_texture(indices, v.tex)
 
         def set_arg_ext_array(indices: tuple[int, ...], v: Any, needed: ndarray_type.NdarrayType) -> None:
-            # def set_arg_ext_array(indices: tuple[int, ...], v: Any, needed: Ndarray) -> None:
             # v is things like torch Tensor and numpy array
             # Not adding type for this, since adds additional dependencies
             #
@@ -1044,7 +1036,6 @@ class Kernel:
                     idx += recursive_set_args(field.type, field.type, field_value, (indices[0] + idx,))
                 return idx
             if isinstance(needed_arg_type, ndarray_type.NdarrayType) and isinstance(v, gstaichi.lang._ndarray.Ndarray):
-                # if isinstance(needed_arg_type, Ndarray) and isinstance(v, gstaichi.lang._ndarray.Ndarray):
                 set_arg_ndarray(indices, v)
                 return 1
             if isinstance(needed_arg_type, texture_type.TextureType) and isinstance(v, gstaichi.lang._texture.Texture):
@@ -1056,7 +1047,6 @@ class Kernel:
                 set_arg_rw_texture(indices, v)
                 return 1
             if isinstance(needed_arg_type, ndarray_type.NdarrayType):
-                # if isinstance(needed_arg_type, Ndarray):
                 set_arg_ext_array(indices, v, needed_arg_type)
                 return 1
             if isinstance(needed_arg_type, MatrixType):
@@ -1307,10 +1297,6 @@ def kernel(_fn: Callable[..., typing.Any] | None = None, *, pure: bool = False):
         return decorator
 
     return decorator(_fn)
-    # # Called with @kernel (without parentheses)
-    # wrapped = _kernel_impl(_fn, level_of_class_stackframe=3)
-    # wrapped.is_pure = pure
-    # return wrapped
 
 
 class _BoundedDifferentiableMethod:

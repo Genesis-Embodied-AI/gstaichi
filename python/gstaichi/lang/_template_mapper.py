@@ -31,7 +31,6 @@ AnnotationType = Union[
     template,
     "texture_type.TextureType",
     "texture_type.RWTextureType",
-    # ndarray_type.NdarrayType,
     sparse_matrix_builder,
     Any,
 ]

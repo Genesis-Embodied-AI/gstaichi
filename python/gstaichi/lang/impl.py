@@ -58,7 +58,6 @@ from gstaichi.lang.util import (
 )
 from gstaichi.types.enums import SNodeGradType
 
-# from gstaichi.types.ndarray_type import NdarrayType
 from gstaichi.types.primitive_types import (
     all_types,
     f16,
