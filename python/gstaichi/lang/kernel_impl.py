@@ -513,7 +513,7 @@ class Func:
         if sig.return_annotation not in (inspect.Signature.empty, None):
             self.return_type = sig.return_annotation
             if (
-                isinstance(self.return_type, (types.GenericAlias, _GenericAlias))  # type: ignore
+                isinstance(self.return_type, (types.GenericAlias, typing._GenericAlias))  # type: ignore
                 and self.return_type.__origin__ is tuple  # type: ignore
             ):
                 self.return_type = self.return_type.__args__  # type: ignore
@@ -526,8 +526,10 @@ class Func:
                     raise GsTaichiSyntaxError("Ellipsis is not supported in return type annotations")
         params = sig.parameters
         arg_names = params.keys()
+        print("extract argment ", self.func)
         for i, arg_name in enumerate(arg_names):
             param = params[arg_name]
+            print("arg", i, arg_name, param)
             if param.kind == inspect.Parameter.VAR_KEYWORD:
                 raise GsTaichiSyntaxError(
                     "GsTaichi functions do not support variable keyword parameters (i.e., **kwargs)"
@@ -559,6 +561,8 @@ class Func:
                     pass
                 elif id(annotation) in primitive_types.type_ids:
                     pass
+                elif isinstance(annotation, (types.GenericAlias, typing._GenericAlias)):
+                    annotation = ndarray_type.ndarray(dtype=annotation.__args__[0], ndim=annotation.__args__[1])
                 elif type(annotation) == gstaichi.types.annotations.Template:
                     pass
                 elif isinstance(annotation, template) or annotation == gstaichi.types.annotations.Template:
@@ -668,7 +672,9 @@ class Kernel:
         params = dict(sig.parameters)
         arg_names = params.keys()
         for i, arg_name in enumerate(arg_names):
+            print("i", i, "arg_name", arg_name)
             param = params[arg_name]
+            print("param", param)
             if param.kind == inspect.Parameter.VAR_KEYWORD:
                 raise GsTaichiSyntaxError(
                     "GsTaichi kernels do not support variable keyword parameters (i.e., **kwargs)"
@@ -684,6 +690,7 @@ class Kernel:
             if param.kind != inspect.Parameter.POSITIONAL_OR_KEYWORD:
                 raise GsTaichiSyntaxError('GsTaichi kernels only support "positional or keyword" parameters')
             annotation = param.annotation
+            print("annotation", annotation)
             if param.annotation is inspect.Parameter.empty:
                 if i == 0 and self.classkernel:  # The |self| parameter
                     annotation = template()
@@ -706,8 +713,10 @@ class Kernel:
                     and annotation.__origin__ is Ndarray
                 ):
                     annotation = ndarray_type.ndarray(dtype=annotation.__args__[0], ndim=annotation.__args__[1])
+                    print("converted annotation to ", annotation)
                 elif annotation is Ndarray:
                     annotation = ndarray_type.ndarray()
+                    print("converted annotation to ", annotation)
                 elif id(annotation) in primitive_types.type_ids:
                     pass
                 elif isinstance(annotation, sparse_matrix_builder):
@@ -1280,6 +1289,14 @@ def kernel(_fn: F, *, pure: bool = False) -> F: ...
 
 
 def kernel(_fn: Callable[..., typing.Any] | None = None, *, pure: bool = False):
+    """
+    A GsTaichi kernel is a function written in Python, and gets JIT compiled by
+    GsTaichi into native CPU/GPU instructions (e.g. a series of CUDA kernels).
+    The top-level ``for`` loops are automatically parallelized, and distributed
+    to either a CPU thread pool or massively parallel GPUs.
+
+    Kernel's gradient kernel would be generated automatically by the AutoDiff system.
+    """
     def decorator(fn: F) -> F:
         wrapped = _kernel_impl(fn, level_of_class_stackframe=3)
         wrapped.is_pure = pure
@@ -1328,6 +1345,7 @@ class _BoundedDifferentiableMethod:
 
 
 def data_oriented(cls):
+    print("data_oriented", cls)
     """Marks a class as GsTaichi compatible.
 
     To allow for modularized code, GsTaichi provides this decorator so that
@@ -1358,6 +1376,7 @@ def data_oriented(cls):
     """
 
     def _getattr(self, item):
+        print("data_oriented._getattr item", item)
         method = cls.__dict__.get(item, None)
         is_property = method.__class__ == property
         is_staticmethod = method.__class__ == staticmethod

@@ -1,6 +1,6 @@
 import gc
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 
 import pytest
 
@@ -49,7 +49,7 @@ def test_ndarray_struct_kwargs():
         c: ti.types.NDArray[ti.i32, 1]
 
     @ti.func
-    def s4(a: ti.types.NDArray[ti.i32, 1], b: ti.types.NDArray[ti.i32, 1]) -> None:
+    def s4(a: ti.types.NDArray[ti.i32, Literal[1]], b: ti.types.NDArray[ti.i32, Literal[1]]) -> None:
         a[1] += 888
         b[2] += 999
 
