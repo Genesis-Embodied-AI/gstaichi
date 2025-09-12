@@ -501,7 +501,7 @@ def test_offline_cache_cleaning(curr_arch, factor, policy):
             offline_cache_cleaning_policy=policy,
             offline_cache_max_size_of_files=max_size,  # bytes
             offline_cache_cleaning_factor=factor,
-            **current_thread_ext_options()
+            **current_thread_ext_options(),
         )
 
     def run_simple_kernels(max_size):
