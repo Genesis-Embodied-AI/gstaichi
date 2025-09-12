@@ -210,6 +210,67 @@ def test_src_ll_cache_template_params(tmp_path: pathlib.Path, src_ll_cache: bool
         assert proc.returncode == RET_SUCCESS
 
 
+class HasReturnKernelArgs(pydantic.BaseModel):
+    arch: str
+    offline_cache_file_path: str
+    src_ll_cache: bool
+
+
+def src_ll_cache_has_return_child(args: list[str]) -> None:
+    args_obj = HasReturnKernelArgs.model_validate_json(args[0])
+    ti.init(
+        arch=getattr(ti, args_obj.arch),
+        offline_cache=True,
+        offline_cache_file_path=args_obj.offline_cache_file_path,
+        src_ll_cache=args_obj.src_ll_cache,
+    )
+
+    @ti.pure
+    @ti.kernel
+    def k1(a: ti.i32, output: ti.types.NDArray[ti.i32, 1]) -> bool:
+        output[0] = a
+        return True
+
+    output = ti.ndarray(ti.i32, (10,))
+    assert k1(3, output)
+    # sanity check that the kernel actually ran, and did something
+    assert output[0] == 3
+    print(TEST_RAN)
+    sys.exit(RET_SUCCESS)
+
+
+@pytest.mark.parametrize("src_ll_cache", [False, True])
+@test_utils.test()
+def test_src_ll_cache_has_return(tmp_path: pathlib.Path, src_ll_cache: bool) -> None:
+    arch = ti.lang.impl.current_cfg().arch.name
+
+    args_obj = HasReturnKernelArgs(
+        arch=arch,
+        offline_cache_file_path=str(tmp_path),
+        src_ll_cache=src_ll_cache,
+    )
+    args_json = HasReturnKernelArgs.model_dump_json(args_obj)
+
+    env = os.environ
+    env["PYTHONPATH"] = "."
+    # need to test what happens when loading from fast cache, so run several runs
+    # - first iteration stores to cache
+    # - second and third will load from cache
+    for _ in range(3):
+        proc = subprocess.run(
+            [sys.executable, __file__, src_ll_cache_has_return_child.__name__, args_json],
+            capture_output=True,
+            text=True,
+            env=env,
+        )
+        if proc.returncode != RET_SUCCESS:
+            print(proc.stdout)  # needs to do this to see error messages
+            print("-" * 100)
+            print(proc.stderr)
+        assert TEST_RAN in proc.stdout
+        assert proc.returncode == RET_SUCCESS
+
+
 # The following lines are critical for the tests to work. If they are missing, the test will
 # incorrectly pass, without doing anything.
 if __name__ == "__main__":
