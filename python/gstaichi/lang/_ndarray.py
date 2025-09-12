@@ -19,7 +19,13 @@ if TYPE_CHECKING:
     TensorNdarray = Union["ScalarNdarray", VectorNdarray, MatrixNdarray]
 
 
-class Ndarray:
+from typing import Generic, TypeVar
+
+T = TypeVar("T")
+N = TypeVar("N", bound=int)
+
+
+class Ndarray(Generic[T, N]):
     """GsTaichi ndarray class.
 
     Args:
