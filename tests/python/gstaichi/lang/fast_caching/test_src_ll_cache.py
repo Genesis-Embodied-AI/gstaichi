@@ -215,6 +215,8 @@ class HasReturnKernelArgs(pydantic.BaseModel):
     offline_cache_file_path: str
     src_ll_cache: bool
     return_something: bool
+    expect_used_src_ll_cache: bool
+    expect_src_ll_cache_hit: bool
 
 
 def src_ll_cache_has_return_child(args: list[str]) -> None:
@@ -238,6 +240,9 @@ def src_ll_cache_has_return_child(args: list[str]) -> None:
         assert k1(3, output)
         # Sanity check that the kernel actually ran, and did something.
         assert output[0] == 3
+        assert k1._primal.src_ll_cache_observations.cache_key_generated == args_obj.expect_used_src_ll_cache
+        assert k1._primal.src_ll_cache_observations.cache_loaded == args_obj.expect_src_ll_cache_hit
+        assert k1._primal.src_ll_cache_observations.cache_validated == args_obj.expect_src_ll_cache_hit
     else:
         # Even though we only check when not loading from the cache
         # we won't ever be able to load from the cache, since it will have failed
@@ -250,33 +255,35 @@ def src_ll_cache_has_return_child(args: list[str]) -> None:
     sys.exit(RET_SUCCESS)
 
 
-@pytest.mark.parametrize("src_ll_cache", [False, True])
 @pytest.mark.parametrize("return_something", [False, True])
+@pytest.mark.parametrize("src_ll_cache", [False, True])
 @test_utils.test()
 def test_src_ll_cache_has_return(tmp_path: pathlib.Path, src_ll_cache: bool, return_something: bool) -> None:
     arch = ti.lang.impl.current_cfg().arch.name
-
-    args_obj = HasReturnKernelArgs(
-        arch=arch,
-        offline_cache_file_path=str(tmp_path),
-        src_ll_cache=src_ll_cache,
-        return_something=return_something,
-    )
-    args_json = HasReturnKernelArgs.model_dump_json(args_obj)
-
     env = os.environ
     env["PYTHONPATH"] = "."
     # need to test what happens when loading from fast cache, so run several runs
     # - first iteration stores to cache
     # - second and third will load from cache
-    for _ in range(3):
+    for it in range(3):
+        args_obj = HasReturnKernelArgs(
+            arch=arch,
+            offline_cache_file_path=str(tmp_path),
+            src_ll_cache=src_ll_cache,
+            return_something=return_something,
+            expect_used_src_ll_cache=src_ll_cache,
+            expect_src_ll_cache_hit=src_ll_cache and it > 0,
+        )
+        args_json = HasReturnKernelArgs.model_dump_json(args_obj)
+        cmd_line = [sys.executable, __file__, src_ll_cache_has_return_child.__name__, args_json]
         proc = subprocess.run(
-            [sys.executable, __file__, src_ll_cache_has_return_child.__name__, args_json],
+            cmd_line,
             capture_output=True,
             text=True,
             env=env,
         )
         if proc.returncode != RET_SUCCESS:
+            print(" ".join(cmd_line))
             print(proc.stdout)  # needs to do this to see error messages
             print("-" * 100)
             print(proc.stderr)
