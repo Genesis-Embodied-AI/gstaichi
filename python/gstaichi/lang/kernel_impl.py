@@ -1300,11 +1300,11 @@ def kernel(_fn: Callable | None = None, *, pure: bool = False):
     if _fn is None:
         # Called with @kernel() or @kernel(foo="bar")
         return decorator
-    else:
-        # Called with @kernel (without parentheses)
-        wrapped = _kernel_impl(_fn, level_of_class_stackframe=3)
-        wrapped.is_pure = pure
-        return wrapped
+
+    # Called with @kernel (without parentheses)
+    wrapped = _kernel_impl(_fn, level_of_class_stackframe=3)
+    wrapped.is_pure = pure
+    return wrapped
 
 
 class _BoundedDifferentiableMethod:
