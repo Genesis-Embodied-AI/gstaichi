@@ -57,7 +57,6 @@ from gstaichi.lang.util import (
     warning,
 )
 from gstaichi.types.enums import SNodeGradType
-
 from gstaichi.types.primitive_types import (
     all_types,
     f16,
