@@ -66,7 +66,7 @@ dev = [
     "pre-commit",
     "scikit-build",
     "setuptools_scm>=6.0",
-    "numpy",
+    "numpy>=2.0.0",
     "ninja; platform_system != 'Windows'",
     "ruamel.yaml",
 ]
