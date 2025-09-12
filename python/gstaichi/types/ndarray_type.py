@@ -3,8 +3,6 @@ from gstaichi.types.enums import Layout, to_boundary_enum
 
 from .ndarray_type_metadata import NdarrayTypeMetadata
 
-# from gstaichi.lang._ndarray import Ndarray
-
 
 # TODO(Haidong): This is a helper function that creates a MatrixType
 #                with respect to element_dim and element_shape.
@@ -140,22 +138,10 @@ class NdarrayType(Generic[T, N]):
     def __str__(self):
         return self.__repr__()
 
-    # def __getitem__(self, i: Any) -> Any:
-    #     # needed for pyright
-    #     raise NotImplementedError()
-
-    # def __setitem__(self, i: Any, v: Any) -> None:
-    #     # needed for pyright
-    #     raise NotImplementedError()
-
-
-# class NDArrayTypeProt(Ndarray):
-#     ...
-
 
 ndarray = NdarrayType
-# NDArray = NDArrayTypeProt
-# NDArray = Ndarray
+
+
 """Alias for :class:`~gstaichi.types.ndarray_type.NdarrayType`.
 
 Example::

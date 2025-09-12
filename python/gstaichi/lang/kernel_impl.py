@@ -13,7 +13,7 @@ import time
 import types
 import typing
 import warnings
-from typing import Any, Callable, Type
+from typing import Any, Callable, Type, TypeVar, cast, overload
 
 import numpy as np
 
@@ -1280,8 +1280,6 @@ def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool 
     return wrapped
 
 
-from typing import Callable, TypeVar, overload
-
 F = TypeVar("F", bound=Callable[..., typing.Any])
 
 
@@ -1289,38 +1287,6 @@ F = TypeVar("F", bound=Callable[..., typing.Any])
 def kernel(_fn: None = None, *, pure: bool = False) -> Callable[[F], F]: ...
 @overload
 def kernel(_fn: F, *, pure: bool = False) -> F: ...
-
-
-from typing import cast
-
-# def kernel(_fn: Callable | None = None, *, pure: bool = False):
-#     """Marks a function as a GsTaichi kernel.
-
-#     A GsTaichi kernel is a function written in Python, and gets JIT compiled by
-#     GsTaichi into native CPU/GPU instructions (e.g. a series of CUDA kernels).
-#     The top-level ``for`` loops are automatically parallelized, and distributed
-#     to either a CPU thread pool or massively parallel GPUs.
-
-#     Kernel's gradient kernel would be generated automatically by the AutoDiff system.
-
-#     See also https://docs.taichi-lang.org/docs/syntax#kernel.
-
-#     Args:
-#         fn (Callable): the Python function to be decorated
-
-#     Returns:
-#         Callable: The decorated function
-
-#     Example::
-
-#         >>> x = ti.field(ti.i32, shape=(4, 8))
-#         >>>
-#         >>> @ti.kernel
-#         >>> def run():
-#         >>>     # Assigns all the elements of `x` in parallel.
-#         >>>     for i in x:
-#         >>>         x[i] = i
-#     """
 
 
 def kernel(_fn: Callable[..., typing.Any] | None = None, *, pure: bool = False):

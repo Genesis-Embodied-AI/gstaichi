@@ -8,9 +8,9 @@ from tests import test_utils
 
 ti.init(arch=ti.cpu)
 
+
 @ti.kernel
-def k1(a: ti.types.ndarray(), b: ti.types.NDArray, c: ti.types.NDArray[ti.i32, Literal[1]]) -> None:
-    ...
+def k1(a: ti.types.ndarray(), b: ti.types.NDArray, c: ti.types.NDArray[ti.i32, Literal[1]]) -> None: ...
 
 
 @test_utils.test()
