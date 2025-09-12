@@ -1,5 +1,3 @@
-# type: ignore
-
 import inspect
 import os
 
@@ -22,8 +20,8 @@ def _get_logging(name):
         if ti_python_core.logging_effective(name):
             msg_formatted = msg.format(*args, **kwargs)
             func = getattr(ti_python_core, name)
-            frame = inspect.currentframe().f_back
-            file_name, lineno, func_name, _, _ = inspect.getframeinfo(frame)
+            frame = inspect.currentframe().f_back  # type: ignore
+            file_name, lineno, func_name, _, _ = inspect.getframeinfo(frame)  # type: ignore
             file_name = os.path.basename(file_name)
             msg = f"[{file_name}:{func_name}@{lineno}] {msg_formatted}"
             func(msg)
