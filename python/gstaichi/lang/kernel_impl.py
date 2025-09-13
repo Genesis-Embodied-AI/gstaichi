@@ -1281,6 +1281,26 @@ def kernel(_fn: Any, *, pure: bool = False) -> Any: ...
 
 
 def kernel(_fn: Callable[..., typing.Any] | None = None, *, pure: bool = False):
+    """
+    Marks a function as a GsTaichi kernel.
+
+    A GsTaichi kernel is a function written in Python, and gets JIT compiled by
+    GsTaichi into native CPU/GPU instructions (e.g. a series of CUDA kernels).
+    The top-level ``for`` loops are automatically parallelized, and distributed
+    to either a CPU thread pool or massively parallel GPUs.
+
+    Kernel's gradient kernel would be generated automatically by the AutoDiff system.
+
+    Example::
+        >>> x = ti.field(ti.i32, shape=(4, 8))
+        >>>
+        >>> @ti.kernel
+        >>> def run():
+        >>>     # Assigns all the elements of `x` in parallel.
+        >>>     for i in x:
+        >>>         x[i] = i
+    """
+
     def decorator(fn: F) -> F:
         # Adjust stack frame: +1 if called via decorator factory (@kernel()), else as-is (@kernel)
         stack = inspect.stack()
