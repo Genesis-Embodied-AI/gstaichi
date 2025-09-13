@@ -65,6 +65,9 @@ def test_pure_kernel_parameter() -> None:
     @ti.kernel(pure=False)
     def k4() -> None: ...
 
+    @ti.kernel()
+    def k5() -> None: ...
+
     @ti.data_oriented
     class SomeClass:
         def __init__(self) -> None: ...
@@ -82,6 +85,9 @@ def test_pure_kernel_parameter() -> None:
         @ti.kernel(pure=False)
         def da4(self) -> None: ...
 
+        @ti.kernel()
+        def da5(self) -> None: ...
+
     k1()
     assert k1._primal.src_ll_cache_observations.cache_key_generated
     k2()
@@ -90,14 +96,18 @@ def test_pure_kernel_parameter() -> None:
     assert not k3._primal.src_ll_cache_observations.cache_key_generated
     k4()
     assert not k4._primal.src_ll_cache_observations.cache_key_generated
+    k5()
+    assert not k4._primal.src_ll_cache_observations.cache_key_generated
 
     some_class = SomeClass()
     some_class.da1()
     some_class.da2()
     some_class.da3()
     some_class.da4()
+    some_class.da5()
 
     assert not some_class.da1._primal.src_ll_cache_observations.cache_key_generated
     assert some_class.da2._primal.src_ll_cache_observations.cache_key_generated
     assert some_class.da3._primal.src_ll_cache_observations.cache_key_generated
     assert not some_class.da4._primal.src_ll_cache_observations.cache_key_generated
+    assert not some_class.da5._primal.src_ll_cache_observations.cache_key_generated
