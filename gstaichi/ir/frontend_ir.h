@@ -1024,11 +1024,7 @@ class ASTBuilder {
   int id_counter_{0};
 
  public:
-  ASTBuilder(Block *initial, Arch arch, bool is_kernel)
-      : is_kernel_(is_kernel), arch_(arch) {
-    stack_.push_back(initial);
-    loop_state_stack_.push_back(None);
-  }
+  ASTBuilder(Block *initial, Arch arch, bool is_kernel);
 
   void insert(std::unique_ptr<Stmt> &&stmt, int location = -1);
 
