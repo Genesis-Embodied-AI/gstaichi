@@ -1626,14 +1626,10 @@
 <span class="sd">        &gt;&gt;&gt;         x[i] = i</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">F</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">F</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">F</span><span class="p">,</span> <span class="n">has_kernel_params</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">F</span><span class="p">:</span>
         <span class="c1"># Adjust stack frame: +1 if called via decorator factory (@kernel()), else as-is (@kernel)</span>
-        <span class="n">stack</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">stack</span><span class="p">()</span>
-        <span class="c1"># If decorator is called via @kernel(), stack will be deeper</span>
-        <span class="c1"># Heuristic: if the immediate caller is &#39;decorator&#39;, bump the stack frame</span>
-        <span class="n">caller_name</span> <span class="o">=</span> <span class="n">stack</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">function</span>
-        <span class="k">if</span> <span class="n">caller_name</span> <span class="o">==</span> <span class="s2">&quot;decorator&quot;</span><span class="p">:</span>
-            <span class="n">level</span> <span class="o">=</span> <span class="mi">5</span>
+        <span class="k">if</span> <span class="n">has_kernel_params</span><span class="p">:</span>
+            <span class="n">level</span> <span class="o">=</span> <span class="mi">3</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">level</span> <span class="o">=</span> <span class="mi">4</span>
 
@@ -1647,7 +1643,7 @@
         <span class="c1"># Called with @kernel() or @kernel(foo=&quot;bar&quot;)</span>
         <span class="k">return</span> <span class="n">decorator</span>
 
-    <span class="k">return</span> <span class="n">decorator</span><span class="p">(</span><span class="n">_fn</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">decorator</span><span class="p">(</span><span class="n">_fn</span><span class="p">,</span> <span class="n">has_kernel_params</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_BoundedDifferentiableMethod</span><span class="p">:</span>
