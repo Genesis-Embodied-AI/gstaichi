@@ -155,6 +155,7 @@ class GsTaichiCallable:
         self.grad: Kernel | None = None
         self._is_staticmethod: bool = False
         self.is_pure = False
+        self.is_iterator = False
         functools.update_wrapper(self, fn)
 
     def __call__(self, *args, **kwargs):
@@ -187,7 +188,7 @@ class BoundGsTaichiCallable:
             setattr(self.gstaichi_callable, k, v)
 
 
-def func(fn: Callable, is_real_function: bool = False) -> GsTaichiCallable:
+def func(fn: Callable, is_real_function: bool = False, is_iterator=False) -> GsTaichiCallable:
     """Marks a function as callable in GsTaichi-scope.
 
     This decorator transforms a Python function into a GsTaichi one. GsTaichi
@@ -216,11 +217,16 @@ def func(fn: Callable, is_real_function: bool = False) -> GsTaichiCallable:
     gstaichi_callable = GsTaichiCallable(fn, fun)
     gstaichi_callable._is_gstaichi_function = True
     gstaichi_callable._is_real_function = is_real_function
+    gstaichi_callable.is_iterator = is_iterator
     return gstaichi_callable
 
 
 def real_func(fn: Callable) -> GsTaichiCallable:
     return func(fn, is_real_function=True)
+
+
+def iterator(fn: Callable) -> GsTaichiCallable:
+    return func(fn, is_iterator=True)
 
 
 def pyfunc(fn: Callable) -> GsTaichiCallable:
@@ -282,6 +288,7 @@ def _get_tree_and_ctx(
     arg_features=None,
     ast_builder: "ASTBuilder | None" = None,
     is_real_function: bool = False,
+    is_iterator: bool = False,
     current_kernel: "Kernel | None" = None,
 ) -> tuple[ast.Module, ASTTransformerContext]:
     function_source_info, src = get_source_info_and_src(self.func)
@@ -322,6 +329,7 @@ def _get_tree_and_ctx(
         file=function_source_info.filepath,
         ast_builder=ast_builder,
         is_real_function=is_real_function,
+        is_iterator=is_iterator,
     )
 
 
@@ -407,6 +415,12 @@ class Func:
         self.gstaichi_functions = {}  # The |Function| class in C++
         self.has_print = False
 
+    def get_ast(self) -> ast.Module:
+        _function_source_info, src = get_source_info_and_src(self.func)
+        src = [textwrap.fill(line, tabsize=4, width=9999) for line in src]
+        tree = ast.parse(textwrap.dedent("\n".join(src)))
+        return tree
+
     def __call__(self: "Func", *args, **kwargs) -> Any:
         args = _process_args(self, is_func=True, args=args, kwargs=kwargs)
 
@@ -491,7 +505,8 @@ class Func:
 
     def do_compile(self, key: FunctionKey, args: tuple[Any, ...], arg_features: tuple[Any, ...]) -> None:
         tree, ctx = _get_tree_and_ctx(
-            self, is_kernel=False, args=args, arg_features=arg_features, is_real_function=self.is_real_function
+            self, is_kernel=False, args=args, arg_features=arg_features, is_real_function=self.is_real_function,
+            is_iterator=self.func.is_iterator
         )
         fn = impl.get_runtime().prog.create_function(key)
 
@@ -1413,4 +1428,4 @@ def data_oriented(cls):
     return cls
 
 
-__all__ = ["data_oriented", "func", "kernel", "pyfunc", "real_func"]
+__all__ = ["data_oriented", "func", "kernel", "pyfunc", "real_func", "iterator"]

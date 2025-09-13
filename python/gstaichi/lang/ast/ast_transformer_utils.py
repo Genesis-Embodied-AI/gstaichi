@@ -168,6 +168,7 @@ class ASTTransformerContext:
         start_lineno: int,
         ast_builder: ASTBuilder | None,
         is_real_function: bool,
+        is_iterator: bool,
     ):
         self.func = func
         self.local_scopes: list[dict[str, Any]] = []
@@ -199,6 +200,7 @@ class ASTTransformerContext:
         self.is_real_function = is_real_function
         self.kernel_args: list = []
         self.only_parse_function_def: bool = False
+        self.is_iterator: bool = is_iterator
 
     # e.g.: FunctionDef, Module, Global
     def variable_scope_guard(self):

@@ -1136,6 +1136,36 @@ class ASTTransformer(Builder):
                 )
                 return ASTTransformer.build_For(ctx, new_for)
             else:
+                if isinstance(node.iter, ast.Call):
+                    print("before building node.iter")
+                    build_stmt(ctx, node.iter.func)
+                    print("node.iter.func.ptr", node.iter.func.ptr)
+                    # print(dir(node.iter.func.ptr))
+                    print("is_iterator", node.iter.func.ptr.is_iterator)
+                    # iter_func = node.iter.func
+                    iter_ast: ast.Module = node.iter.func.ptr.wrapper.get_ast()
+                    print("iter_ast", ast.dump(iter_ast, indent=2))
+                    for_iter = iter_ast.body[0].body[0].iter
+                    print('for_iter', ast.dump(for_iter, indent=2))
+                    new_iter = for_iter
+                    # print('new_iter', ast.dump(new_iter))
+                    # build_stmt(ctx, new_iter)
+                    # print('new_iter', ast.dump(new_iter))
+                    # print("new_iter.ptr", new_iter.ptr)
+                    # asdfasdf
+                    if node.iter.func.ptr.is_iterator:
+                        new_for = ast.For(
+                            target=node.target,
+                            iter=new_iter,
+                            body=node.body,
+                            orelse=None,
+                            type_comment=getattr(node, "type_comment", None),
+                            lineno=node.lineno,
+                            end_lineno=node.end_lineno,
+                            col_offset=node.col_offset,
+                            end_col_offset=node.end_col_offset,
+                        )
+                        return ASTTransformer.build_For(ctx, new_for)
                 build_stmt(ctx, node.iter)
                 if isinstance(node.iter.ptr, mesh.MeshElementField):
                     if not _ti_core.is_extension_supported(impl.default_cfg().arch, _ti_core.Extension.mesh):
@@ -1333,6 +1363,15 @@ class ASTTransformer(Builder):
 
     @staticmethod
     def build_Pass(ctx: ASTTransformerContext, node: ast.Pass) -> None:
+        return None
+
+    @staticmethod
+    def build_Yield(ctx: ASTTransformerContext, node: ast.Yield) -> None:
+        print("yield", ast.dump(node, indent=2))
+        build_stmt(ctx, node.value)
+        print("node.value.ptr", node.value.ptr)
+        # ctx.return_data = node.value.ptr
+        ctx.returned = ReturnStatus.ReturnedValue
         return None
 
 
