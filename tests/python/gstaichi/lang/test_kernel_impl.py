@@ -67,8 +67,7 @@ def test_pure_kernel_parameter() -> None:
 
     @ti.data_oriented
     class SomeClass:
-        def __init__(self) -> None:
-            ...
+        def __init__(self) -> None: ...
 
         @ti.kernel
         def da1(self) -> None: ...
@@ -97,3 +96,8 @@ def test_pure_kernel_parameter() -> None:
     some_class.da2()
     some_class.da3()
     some_class.da4()
+
+    assert not some_class.da1._primal.src_ll_cache_observations.cache_key_generated
+    assert some_class.da2._primal.src_ll_cache_observations.cache_key_generated
+    assert some_class.da3._primal.src_ll_cache_observations.cache_key_generated
+    assert not some_class.da4._primal.src_ll_cache_observations.cache_key_generated

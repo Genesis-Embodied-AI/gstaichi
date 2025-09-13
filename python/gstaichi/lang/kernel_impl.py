@@ -1302,14 +1302,10 @@ def kernel(_fn: Callable[..., typing.Any] | None = None, *, pure: bool = False):
         >>>         x[i] = i
     """
 
-    def decorator(fn: F) -> F:
+    def decorator(fn: F, has_kernel_params: bool = True) -> F:
         # Adjust stack frame: +1 if called via decorator factory (@kernel()), else as-is (@kernel)
-        stack = inspect.stack()
-        # If decorator is called via @kernel(), stack will be deeper
-        # Heuristic: if the immediate caller is 'decorator', bump the stack frame
-        caller_name = stack[1].function
-        if caller_name == "decorator":
-            level = 5
+        if has_kernel_params:
+            level = 3
         else:
             level = 4
 
@@ -1323,7 +1319,7 @@ def kernel(_fn: Callable[..., typing.Any] | None = None, *, pure: bool = False):
         # Called with @kernel() or @kernel(foo="bar")
         return decorator
 
-    return decorator(_fn)
+    return decorator(_fn, has_kernel_params=False)
 
 
 class _BoundedDifferentiableMethod:
