@@ -45,3 +45,55 @@ def test_ensure_compiled_reports_function():
         match=my_cool_test_function.__qualname__,
     ):
         my_cool_test_function(x)
+
+
+@test_utils.test()
+def test_pure_kernel_parameter() -> None:
+    arch = ti.lang.impl.current_cfg().arch
+    ti.init(arch=arch, offline_cache=False, src_ll_cache=True)
+
+    @ti.pure
+    @ti.kernel
+    def k1() -> None: ...
+
+    @ti.kernel(pure=True)
+    def k2() -> None: ...
+
+    @ti.kernel
+    def k3() -> None: ...
+
+    @ti.kernel(pure=False)
+    def k4() -> None: ...
+
+    @ti.data_oriented
+    class SomeClass:
+        def __init__(self) -> None:
+            ...
+
+        @ti.kernel
+        def da1(self) -> None: ...
+
+        @ti.pure
+        @ti.kernel
+        def da2(self) -> None: ...
+
+        @ti.kernel(pure=True)
+        def da3(self) -> None: ...
+
+        @ti.kernel(pure=False)
+        def da4(self) -> None: ...
+
+    k1()
+    assert k1._primal.src_ll_cache_observations.cache_key_generated
+    k2()
+    assert k2._primal.src_ll_cache_observations.cache_key_generated
+    k3()
+    assert not k3._primal.src_ll_cache_observations.cache_key_generated
+    k4()
+    assert not k4._primal.src_ll_cache_observations.cache_key_generated
+
+    some_class = SomeClass()
+    some_class.da1()
+    some_class.da2()
+    some_class.da3()
+    some_class.da4()
