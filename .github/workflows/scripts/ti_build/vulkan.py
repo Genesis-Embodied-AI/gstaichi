@@ -10,30 +10,34 @@ from .dep import download_dep
 from .misc import banner, get_cache_home, path_prepend
 from .python import path_prepend
 
-VULKAN_VERSION = "1.4.304.1"
-
 
 # -- code --
-@banner(f"Setup Vulkan {VULKAN_VERSION}")
+@banner("Setup Vulkan 1.4.313.0")
 def setup_vulkan():
     u = platform.uname()
-    if u.system == "Linux":
-        url = (
-            f"https://sdk.lunarg.com/sdk/download/{VULKAN_VERSION}/linux/vulkansdk-linux-x86_64-{VULKAN_VERSION}.tar.xz"
-        )
-        prefix = get_cache_home() / f"vulkan-{VULKAN_VERSION}"
-
+    if (u.system, u.machine) == ("Linux", "x86_64"):
+        url = "https://sdk.lunarg.com/sdk/download/1.4.313.0/linux/vulkansdk-linux-x86_64-1.4.313.0.tar.xz"
+        prefix = get_cache_home() / "vulkan-1.4.313.0"
         download_dep(url, prefix, strip=1)
         sdk = prefix / "x86_64"
         os.environ["VULKAN_SDK"] = str(sdk)
         path_prepend("PATH", sdk / "bin")
         path_prepend("LD_LIBRARY_PATH", sdk / "lib")
-        os.environ["VK_LAYER_PATH"] = str(sdk / "share" / "vulkan" / "explicit_layer.d")
+        os.environ["VK_LAYER_PATH"] = str(sdk / "etc" / "vulkan" / "explicit_layer.d")
+    elif (u.system, u.machine) in (("Linux", "arm64"), ("Linux", "aarch64")):
+        url = "https://github.com/Genesis-Embodied-AI/vulkan-sdk-builds/releases/download/1.4.313.0/vulkansdk-linux-arm64-ubuntu-24.04-arm-1.4.313.0.zip"
+        prefix = get_cache_home() / "vulkan-1.4.313.0"
+        download_dep(url, prefix, strip=1)
+        sdk = prefix / "arm64"
+        os.environ["VULKAN_SDK"] = str(sdk)
+        path_prepend("PATH", sdk / "bin")
+        path_prepend("LD_LIBRARY_PATH", sdk / "lib")
+        os.environ["VK_LAYER_PATH"] = str(sdk / "etc" / "vulkan" / "explicit_layer.d")
     # elif (u.system, u.machine) == ("Darwin", "arm64"):
     # elif (u.system, u.machine) == ("Darwin", "x86_64"):
     elif (u.system, u.machine) == ("Windows", "AMD64"):
-        url = "https://sdk.lunarg.com/sdk/download/1.3.296.0/windows/VulkanSDK-1.3.296.0-Installer.exe"
-        prefix = get_cache_home() / "vulkan-1.3.296.0"
+        url = "https://sdk.lunarg.com/sdk/download/1.4.313.0/windows/VulkanSDK-1.4.313.0-Installer.exe"
+        prefix = get_cache_home() / "vulkan-1.4.313.0"
         download_dep(
             url,
             prefix,
