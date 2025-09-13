@@ -4,9 +4,7 @@
 import argparse
 import inspect
 import os
-import platform
 import sys
-from pathlib import Path
 from typing import Any, Callable
 
 from .bootstrap import get_cache_home  # noqa: F401 This is a re-export

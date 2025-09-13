@@ -13,7 +13,6 @@ import psutil
 from . import misc
 from .cmake import cmake_args
 from .compiler import get_cache_home
-from .misc import banner
 from .tinysh import Command
 
 
