@@ -1268,6 +1268,8 @@ F = TypeVar("F", bound=Callable[..., typing.Any])
 
 @overload
 def kernel(_fn: None = None, *, pure: bool = False) -> Callable[[F], F]: ...
+
+
 # TODO: This next overloadshould return F, but currently that will cause issues
 # with ndarray type. We need to migrate ndarray type to be basically
 # the actual Ndarray, with Generic types, rather than some other
@@ -1282,6 +1284,7 @@ def kernel(_fn: Callable[..., typing.Any] | None = None, *, pure: bool = False):
     def decorator(fn: F) -> F:
         # Adjust stack frame: +1 if called via decorator factory (@kernel()), else as-is (@kernel)
         import inspect
+
         stack = inspect.stack()
         # If decorator is called via @kernel(), stack will be deeper
         # Heuristic: if the immediate caller is 'decorator', bump the stack frame
