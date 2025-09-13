@@ -15,8 +15,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "fp16.h"
-
 #define TI_RUNTIME_HOST
 #include "gstaichi/program/context.h"
 #undef TI_RUNTIME_HOST
