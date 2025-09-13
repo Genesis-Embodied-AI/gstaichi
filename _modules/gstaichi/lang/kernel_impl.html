@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gstaichi.lang.kernel_impl &#8212; GsTaichi 2.3.1 documentation</title>
+    <title>gstaichi.lang.kernel_impl &#8212; GsTaichi 2.4.0 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../_static/documentation_options.js?v=67b02a41"></script>
+    <script src="../../../_static/documentation_options.js?v=4d935f96"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -59,7 +59,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.3.1" />
+  <meta name="docsearch:version" content="2.4.0" />
   </head>
   
   
@@ -121,7 +121,7 @@
   
   
   
-    <p class="title logo__title">GsTaichi 2.3.1 documentation</p>
+    <p class="title logo__title">GsTaichi 2.4.0 documentation</p>
   
 </a></div>
     
@@ -325,7 +325,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">types</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">typing</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Type</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">overload</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
@@ -1584,10 +1584,31 @@
     <span class="k">return</span> <span class="n">wrapped</span>
 
 
+<span class="n">F</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span><span class="p">])</span>
+
+
+<span class="nd">@overload</span>
 <div class="viewcode-block" id="kernel">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel_impl/index.html#gstaichi.lang.kernel_impl.kernel">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Marks a function as a GsTaichi kernel.</span>
+<span class="c1"># TODO: This callable should be Callable[[F], F].</span>
+<span class="c1"># See comments below.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span><span class="n">_fn</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">pure</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">]:</span> <span class="o">...</span></div>
+
+
+
+<span class="c1"># TODO: This next overload should return F, but currently that will cause issues</span>
+<span class="c1"># with ndarray type. We need to migrate ndarray type to be basically</span>
+<span class="c1"># the actual Ndarray, with Generic types, rather than some other</span>
+<span class="c1"># NdarrayType class. The _fn should also be F by the way.</span>
+<span class="c1"># However, by making it return Any, we can make the pure parameter</span>
+<span class="c1"># change now, without breaking pyright.</span>
+<span class="nd">@overload</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span><span class="n">_fn</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">pure</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span> <span class="o">...</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span><span class="n">_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">pure</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Marks a function as a GsTaichi kernel.</span>
 
 <span class="sd">    A GsTaichi kernel is a function written in Python, and gets JIT compiled by</span>
 <span class="sd">    GsTaichi into native CPU/GPU instructions (e.g. a series of CUDA kernels).</span>
@@ -1595,14 +1616,6 @@
 <span class="sd">    to either a CPU thread pool or massively parallel GPUs.</span>
 
 <span class="sd">    Kernel&#39;s gradient kernel would be generated automatically by the AutoDiff system.</span>
-
-<span class="sd">    See also https://docs.taichi-lang.org/docs/syntax#kernel.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        fn (Callable): the Python function to be decorated</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        Callable: The decorated function</span>
 
 <span class="sd">    Example::</span>
 
@@ -1614,8 +1627,25 @@
 <span class="sd">        &gt;&gt;&gt;     for i in x:</span>
 <span class="sd">        &gt;&gt;&gt;         x[i] = i</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">_kernel_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">level_of_class_stackframe</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span></div>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">F</span><span class="p">,</span> <span class="n">has_kernel_params</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">F</span><span class="p">:</span>
+        <span class="c1"># Adjust stack frame: +1 if called via decorator factory (@kernel()), else as-is (@kernel)</span>
+        <span class="k">if</span> <span class="n">has_kernel_params</span><span class="p">:</span>
+            <span class="n">level</span> <span class="o">=</span> <span class="mi">3</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">level</span> <span class="o">=</span> <span class="mi">4</span>
+
+        <span class="n">wrapped</span> <span class="o">=</span> <span class="n">_kernel_impl</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">level_of_class_stackframe</span><span class="o">=</span><span class="n">level</span><span class="p">)</span>
+        <span class="n">wrapped</span><span class="o">.</span><span class="n">is_pure</span> <span class="o">=</span> <span class="n">pure</span>
+
+        <span class="n">functools</span><span class="o">.</span><span class="n">update_wrapper</span><span class="p">(</span><span class="n">wrapped</span><span class="p">,</span> <span class="n">fn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">F</span><span class="p">,</span> <span class="n">wrapped</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Called with @kernel() or @kernel(foo=&quot;bar&quot;)</span>
+        <span class="k">return</span> <span class="n">decorator</span>
+
+    <span class="k">return</span> <span class="n">decorator</span><span class="p">(</span><span class="n">_fn</span><span class="p">,</span> <span class="n">has_kernel_params</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_BoundedDifferentiableMethod</span><span class="p">:</span>
