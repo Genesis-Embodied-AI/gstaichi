@@ -1283,8 +1283,6 @@ def kernel(_fn: Any, *, pure: bool = False) -> Any: ...
 def kernel(_fn: Callable[..., typing.Any] | None = None, *, pure: bool = False):
     def decorator(fn: F) -> F:
         # Adjust stack frame: +1 if called via decorator factory (@kernel()), else as-is (@kernel)
-        import inspect
-
         stack = inspect.stack()
         # If decorator is called via @kernel(), stack will be deeper
         # Heuristic: if the immediate caller is 'decorator', bump the stack frame
