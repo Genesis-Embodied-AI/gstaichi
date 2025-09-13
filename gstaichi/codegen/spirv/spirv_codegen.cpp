@@ -19,7 +19,6 @@
 
 #include <spirv-tools/libspirv.hpp>
 #include <spirv-tools/optimizer.hpp>
-#include "fp16.h"
 
 namespace gstaichi::lang {
 namespace spirv {
