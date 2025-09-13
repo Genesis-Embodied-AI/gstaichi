@@ -9,6 +9,10 @@ sudo apt-get install -y clang-tidy-14
 git submodule update --init --recursive
 
 sudo apt install -y \
+    libxcursor-dev \
+    libxi-dev \
+    libxinerama-dev \
+    libxrandr-dev \
     pybind11-dev \
     libc++-15-dev \
     libc++abi-15-dev \

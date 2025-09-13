@@ -21,6 +21,10 @@ UBUNTU_PACKAGES = {
     "libssl-dev",
     "libncurses-dev",
     "libzstd-dev",
+    "libxcursor-dev",
+    "libxi-dev",
+    "libxinerama-dev",
+    "libxrandr-dev",
 }
 
 

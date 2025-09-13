@@ -14,6 +14,10 @@ git submodule
 git submodule update --init --recursive
 sudo apt update
 sudo apt install -y \
+    libxcursor-dev \
+    libxi-dev \
+    libxinerama-dev \
+    libxrandr-dev \
     pybind11-dev \
     libc++-15-dev \
     libc++abi-15-dev \
