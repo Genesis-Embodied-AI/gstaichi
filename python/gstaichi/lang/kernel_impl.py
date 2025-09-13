@@ -13,7 +13,7 @@ import time
 import types
 import typing
 import warnings
-from typing import Any, Callable, Type
+from typing import Any, Callable, Type, TypeVar, cast, overload
 
 import numpy as np
 
@@ -1263,35 +1263,45 @@ def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool 
     return wrapped
 
 
-def kernel(fn: Callable):
-    """Marks a function as a GsTaichi kernel.
+F = TypeVar("F", bound=Callable[..., typing.Any])
 
-    A GsTaichi kernel is a function written in Python, and gets JIT compiled by
-    GsTaichi into native CPU/GPU instructions (e.g. a series of CUDA kernels).
-    The top-level ``for`` loops are automatically parallelized, and distributed
-    to either a CPU thread pool or massively parallel GPUs.
 
-    Kernel's gradient kernel would be generated automatically by the AutoDiff system.
+@overload
+def kernel(_fn: None = None, *, pure: bool = False) -> Callable[[F], F]: ...
+# TODO: This next overloadshould return F, but currently that will cause issues
+# with ndarray type. We need to migrate ndarray type to be basically
+# the actual Ndarray, with Generic types, rather than some other
+# NdarrayType class. The _fn should also be F by the way.
+# However, by making it return Any, we can make the pure parameter
+# change now, without breaking pyright.
+@overload
+def kernel(_fn: Any, *, pure: bool = False) -> Any: ...
 
-    See also https://docs.taichi-lang.org/docs/syntax#kernel.
 
-    Args:
-        fn (Callable): the Python function to be decorated
+def kernel(_fn: Callable[..., typing.Any] | None = None, *, pure: bool = False):
+    def decorator(fn: F) -> F:
+        # Adjust stack frame: +1 if called via decorator factory (@kernel()), else as-is (@kernel)
+        import inspect
+        stack = inspect.stack()
+        # If decorator is called via @kernel(), stack will be deeper
+        # Heuristic: if the immediate caller is 'decorator', bump the stack frame
+        caller_name = stack[1].function
+        if caller_name == "decorator":
+            level = 5
+        else:
+            level = 4
 
-    Returns:
-        Callable: The decorated function
+        wrapped = _kernel_impl(fn, level_of_class_stackframe=level)
+        wrapped.is_pure = pure
 
-    Example::
+        functools.update_wrapper(wrapped, fn)
+        return cast(F, wrapped)
 
-        >>> x = ti.field(ti.i32, shape=(4, 8))
-        >>>
-        >>> @ti.kernel
-        >>> def run():
-        >>>     # Assigns all the elements of `x` in parallel.
-        >>>     for i in x:
-        >>>         x[i] = i
-    """
-    return _kernel_impl(fn, level_of_class_stackframe=3)
+    if _fn is None:
+        # Called with @kernel() or @kernel(foo="bar")
+        return decorator
+
+    return decorator(_fn)
 
 
 class _BoundedDifferentiableMethod:
