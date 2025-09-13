@@ -1292,6 +1292,7 @@ def kernel(_fn: Callable[..., typing.Any] | None = None, *, pure: bool = False):
     Kernel's gradient kernel would be generated automatically by the AutoDiff system.
 
     Example::
+
         >>> x = ti.field(ti.i32, shape=(4, 8))
         >>>
         >>> @ti.kernel
