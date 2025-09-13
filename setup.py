@@ -16,6 +16,7 @@ import sys
 from distutils.command.clean import clean
 from distutils.dir_util import remove_tree
 
+from setuptools import find_packages
 from setuptools.command.develop import develop
 from skbuild import setup
 from skbuild.command.egg_info import egg_info
@@ -25,6 +26,8 @@ root_dir = os.path.dirname(os.path.abspath(__file__))
 
 data_files = glob.glob("python/_lib/runtime/*")
 print(data_files)
+packages = find_packages("python")
+print(packages)
 
 # Our python package root dir is python/
 package_dir = "python"
@@ -255,9 +258,15 @@ if force_plat_name:
     set_skbuild_plat_name(force_plat_name)
 
 setup(
+    packages=packages,
+    package_dir={"": package_dir},
     data_files=[
         (os.path.join("_lib", "runtime"), data_files),
     ],
+    package_data={
+        "gstaichi._lib.core": ["gstaichi_python.pyi", "py.typed"],
+    },
+    include_package_data=True,
     cmake_args=get_cmake_args(),
     cmake_process_manifest_hook=cmake_install_manifest_filter,
     cmdclass={
