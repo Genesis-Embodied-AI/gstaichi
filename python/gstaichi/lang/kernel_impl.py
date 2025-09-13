@@ -67,6 +67,8 @@ from gstaichi.types.compound_types import CompoundType
 from gstaichi.types.enums import AutodiffMode, Layout
 from gstaichi.types.utils import is_signed
 
+from ._ndarray import Ndarray
+
 CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
 
 
@@ -551,6 +553,13 @@ class Func:
             else:
                 if isinstance(annotation, ndarray_type.NdarrayType):
                     pass
+                if annotation is Ndarray:
+                    annotation = ndarray_type.NdarrayType()
+                elif (
+                    isinstance(annotation, (types.GenericAlias, typing._GenericAlias))  # type: ignore
+                    and annotation.__origin__ is Ndarray
+                ):
+                    annotation = ndarray_type.NdarrayType()
                 elif isinstance(annotation, MatrixType):
                     pass
                 elif isinstance(annotation, StructType):
@@ -698,9 +707,13 @@ class Kernel:
                     ),
                 ):
                     pass
-                elif annotation is ndarray_type.NdarrayType:
-                    # convert from ti.types.NDArray into ti.types.NDArray()
-                    annotation = annotation()
+                elif (
+                    isinstance(annotation, (types.GenericAlias, typing._GenericAlias))  # type: ignore
+                    and annotation.__origin__ is Ndarray
+                ):
+                    annotation = ndarray_type.ndarray(dtype=annotation.__args__[0], ndim=annotation.__args__[1])
+                elif annotation is Ndarray:
+                    annotation = ndarray_type.ndarray()
                 elif id(annotation) in primitive_types.type_ids:
                     pass
                 elif isinstance(annotation, sparse_matrix_builder):

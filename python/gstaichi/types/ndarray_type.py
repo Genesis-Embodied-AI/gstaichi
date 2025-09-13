@@ -144,7 +144,8 @@ class NdarrayType:
 
 
 ndarray = NdarrayType
-NDArray = NdarrayType
+
+
 """Alias for :class:`~gstaichi.types.ndarray_type.NdarrayType`.
 
 Example::
@@ -160,4 +161,4 @@ Example::
     >>> to_numpy(x, y)  # `x` will be filled with `y`'s data.
 """
 
-__all__ = ["ndarray", "NDArray"]
+__all__ = ["ndarray"]

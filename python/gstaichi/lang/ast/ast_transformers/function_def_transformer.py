@@ -2,6 +2,8 @@
 
 import ast
 import dataclasses
+import types
+import typing
 from typing import Any, Callable
 
 from gstaichi._lib.core.gstaichi_python import (
@@ -40,6 +42,7 @@ class FunctionDefTransformer:
         prefix_name: str,
     ) -> tuple[bool, Any]:
         full_name = prefix_name + "_" + name
+        print("_decl_and_create_variable name", name, "annotation", annotation, "features", this_arg_features)
         if not isinstance(annotation, primitive_types.RefType):
             ctx.kernel_args.append(name)
         if annotation == annotations.template or isinstance(annotation, annotations.template):
@@ -53,6 +56,13 @@ class FunctionDefTransformer:
                     full_name,
                 ),
             )
+        if annotation is _ndarray.Ndarray:
+            annotation = ndarray_type.NdarrayType()
+        if (
+            isinstance(annotation, (types.GenericAlias, typing._GenericAlias))  # type: ignore
+            and annotation.__origin__ is _ndarray.Ndarray
+        ):
+            annotation = ndarray_type.NdarrayType()
         if isinstance(annotation, ndarray_type.NdarrayType):
             assert this_arg_features is not None
             raw_element_type: DataTypeCxx
@@ -83,6 +93,7 @@ class FunctionDefTransformer:
             return True, kernel_arguments.decl_matrix_arg(annotation, name)
         if isinstance(annotation, StructType):
             return True, kernel_arguments.decl_struct_arg(annotation, name)
+        print("unrecognized kernel argument", name, annotation)
         return True, kernel_arguments.decl_scalar_arg(annotation, name)
 
     @staticmethod
@@ -92,6 +103,7 @@ class FunctionDefTransformer:
         argument_type: Any,
         this_arg_features: tuple[Any, ...],
     ) -> None:
+        print("trnsformer kernel arg name", argument_name, "type", argument_type, "features", this_arg_features)
         if dataclasses.is_dataclass(argument_type):
             ctx.create_variable(argument_name, argument_type)
             for field_idx, field in enumerate(dataclasses.fields(argument_type)):

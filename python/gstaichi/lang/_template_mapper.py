@@ -2,6 +2,8 @@ import dataclasses
 import weakref
 from typing import Any, Callable, Union
 
+import types
+import typing
 import gstaichi.lang
 import gstaichi.lang._ndarray
 import gstaichi.lang._texture
@@ -22,6 +24,7 @@ from gstaichi.types import (
     template,
     texture_type,
 )
+from ._ndarray import Ndarray
 from gstaichi.types.enums import AutodiffMode
 
 CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
@@ -89,6 +92,7 @@ class TemplateMapper:
             for field in dataclasses.fields(annotation):
                 field_value = getattr(arg, field.name)
                 child_name = _dataclass_util.create_flat_name(arg_name, field.name)
+                print("tempaltemapper datclass field", child_name, field_value, field.type)
                 field_extracted = TemplateMapper.extract_arg(field_value, field.type, child_name)
                 _res_l.append(field_extracted)
             return tuple(_res_l)
@@ -114,15 +118,25 @@ class TemplateMapper:
             # (penguinliong) '0' is the assumed LOD level. We currently don't
             # support mip-mapping.
             return arg.num_dims, arg.fmt, 0
+        if annotation is Ndarray:
+            annotation = ndarray_type.NdarrayType()
+        if (
+                    isinstance(annotation, (types.GenericAlias, typing._GenericAlias))  # type: ignore
+                    and annotation.__origin__ is Ndarray
+            ):
+            annotation = ndarray_type.NdarrayType()
         if isinstance(annotation, ndarray_type.NdarrayType):
+            print("annotation is ndarraytype")
             if isinstance(arg, gstaichi.lang._ndarray.Ndarray):
                 annotation.check_matched(arg.get_type(), arg_name)
                 needs_grad = (arg.grad is not None) if annotation.needs_grad is None else annotation.needs_grad
                 assert arg.shape is not None
+                print("retuning features about ndarray")
                 return arg.element_type, len(arg.shape), needs_grad, annotation.boundary
             if isinstance(arg, AnyArray):
                 ty = arg.get_type()
                 annotation.check_matched(arg.get_type(), arg_name)
+                print("retuning features about any array")
                 return ty.element_type, len(arg.shape), ty.needs_grad, annotation.boundary
             # external arrays
             shape = getattr(arg, "shape", None)
@@ -175,6 +189,7 @@ class TemplateMapper:
             return element_type, len(shape) - len(element_shape), needs_grad, annotation.boundary
         if isinstance(annotation, sparse_matrix_builder):
             return arg.dtype
+        print("unrecognized arg type in mapper", annotation)
         # Use '#' as a placeholder because other kinds of arguments are not involved in template instantiation
         return "#"
 

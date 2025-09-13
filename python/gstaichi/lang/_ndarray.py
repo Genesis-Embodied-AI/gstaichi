@@ -21,18 +21,11 @@ if TYPE_CHECKING:
 
 from typing import Generic, TypeVar
 
-T = TypeVar("T")
-N = TypeVar("N", bound=int)
+T = TypeVar("dtype")
+N = TypeVar("ndim", bound=int)
 
 
 class Ndarray(Generic[T, N]):
-    """GsTaichi ndarray class.
-
-    Args:
-        dtype (DataType): Data type of each value.
-        shape (Tuple[int]): Shape of the Ndarray.
-    """
-
     def __init__(self):
         self.host_accessor = None
         self.shape = None
