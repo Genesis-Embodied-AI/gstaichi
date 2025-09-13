@@ -24,8 +24,6 @@ from wheel.bdist_wheel import bdist_wheel
 
 root_dir = os.path.dirname(os.path.abspath(__file__))
 
-project_name = os.getenv("PROJECT_NAME", "gstaichi")
-
 data_files = glob.glob("python/_lib/runtime/*")
 print(data_files)
 packages = find_packages("python")
@@ -262,7 +260,6 @@ if force_plat_name:
 setup(
     packages=packages,
     package_dir={"": package_dir},
-    setup_requires=["setuptools_scm>=6.0"],
     data_files=[
         (os.path.join("_lib", "runtime"), data_files),
     ],

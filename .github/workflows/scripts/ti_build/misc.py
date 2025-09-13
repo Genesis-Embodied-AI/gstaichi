@@ -4,9 +4,7 @@
 import argparse
 import inspect
 import os
-import platform
 import sys
-from pathlib import Path
 from typing import Any, Callable
 
 from .bootstrap import get_cache_home  # noqa: F401 This is a re-export
@@ -17,14 +15,6 @@ from .escapes import escape_codes
 
 # -- code --
 options: argparse.Namespace | None = None
-
-
-def is_manylinux2014() -> bool:
-    """
-    Are we in a manylinux2014 environment?
-    This means a particular CentOS docker image.
-    """
-    return platform.system() == "Linux" and Path("/etc/centos-release").exists()
 
 
 def info(msg: str) -> None:
