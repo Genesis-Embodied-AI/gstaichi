@@ -17,12 +17,6 @@ from .misc import banner
 from .tinysh import Command
 
 
-# -- code --
-@banner("Add AOT Related Environment Variables")
-def add_aot_env():
-    os.environ["GSTAICHI_REPO_DIR"] = os.getcwd()
-
-
 def _write_ti_bashrc():
     path = get_cache_home() / "ti.bashrc"
     envs = get_cache_home() / "ti-env.sh"
@@ -162,7 +156,6 @@ def _write_env(path):
 
 def handle_alternate_actions():
     if misc.options.shell:
-        add_aot_env()
         enter_shell()
     else:
         return

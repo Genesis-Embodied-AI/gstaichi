@@ -19,14 +19,6 @@ from .escapes import escape_codes
 options: argparse.Namespace | None = None
 
 
-def is_manylinux2014() -> bool:
-    """
-    Are we in a manylinux2014 environment?
-    This means a particular CentOS docker image.
-    """
-    return platform.system() == "Linux" and Path("/etc/centos-release").exists()
-
-
 def info(msg: str) -> None:
     B = escape_codes["bold_blue"]
     N = escape_codes["reset"]
