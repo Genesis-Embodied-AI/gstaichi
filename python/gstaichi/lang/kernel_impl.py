@@ -1272,7 +1272,7 @@ F = TypeVar("F", bound=Callable[..., typing.Any])
 def kernel(_fn: None = None, *, pure: bool = False) -> Callable[[Any], Any]: ...
 
 
-# TODO: This next overloadshould return F, but currently that will cause issues
+# TODO: This next overload should return F, but currently that will cause issues
 # with ndarray type. We need to migrate ndarray type to be basically
 # the actual Ndarray, with Generic types, rather than some other
 # NdarrayType class. The _fn should also be F by the way.
