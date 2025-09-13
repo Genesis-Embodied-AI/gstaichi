@@ -112,7 +112,9 @@ requires = [
     "cffi>=1.16.0",
     "setuptools_scm>=6.0",
 ]
-build-backend = "skbuild.build_meta"
+# This will be used when doing `pip install -e .`, for fast installation of python
+# things, without doing full c++ build
+build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
 filterwarnings = [
