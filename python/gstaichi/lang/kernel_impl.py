@@ -1267,7 +1267,9 @@ F = TypeVar("F", bound=Callable[..., typing.Any])
 
 
 @overload
-def kernel(_fn: None = None, *, pure: bool = False) -> Callable[[F], F]: ...
+# TODO: This callable should be Callable[[F], F].
+# See comments below.
+def kernel(_fn: None = None, *, pure: bool = False) -> Callable[[Any], Any]: ...
 
 
 # TODO: This next overloadshould return F, but currently that will cause issues
