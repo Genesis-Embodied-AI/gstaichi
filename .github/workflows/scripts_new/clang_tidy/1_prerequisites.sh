@@ -9,20 +9,6 @@ sudo apt-get install -y clang-tidy-14
 git submodule update --init --recursive
 
 sudo apt install -y \
-    freeglut3-dev \
-    libglfw3-dev \
-    libglm-dev \
-    libglu1-mesa-dev \
-    libwayland-dev \
-    libx11-xcb-dev \
-    libxcb-dri3-dev \
-    libxcb-ewmh-dev \
-    libxcb-keysyms1-dev \
-    libxcb-randr0-dev \
-    libxcursor-dev \
-    libxi-dev \
-    libxinerama-dev \
-    libxrandr-dev \
     pybind11-dev \
     libc++-15-dev \
     libc++abi-15-dev \
