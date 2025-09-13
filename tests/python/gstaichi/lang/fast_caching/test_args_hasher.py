@@ -93,12 +93,12 @@ def test_args_hasher_bool_maybe_template(annotation: object, cache_value: bool) 
 
 
 @test_utils.test()
-def test_args_hasher_unsupported_data_oriented() -> None:
+def test_args_hasher_data_oriented() -> None:
     @ti.data_oriented
     class Foo: ...
 
     foo = Foo()
-    assert args_hasher.hash_args([foo], [None]) is None
+    assert args_hasher.hash_args([foo], [None]) is not None
 
 
 @test_utils.test()
