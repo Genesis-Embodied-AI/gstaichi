@@ -79,10 +79,6 @@ std::string get_commit_hash() {
   return TI_COMMIT_HASH;
 }
 
-std::string get_cuda_version_string() {
-  return CUDA_VERSION;
-}
-
 int PID::get_pid() {
 #if defined(TI_PLATFORM_WINDOWS)
   return (int)GetCurrentProcessId();
