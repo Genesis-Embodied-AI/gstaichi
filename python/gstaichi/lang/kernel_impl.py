@@ -13,7 +13,7 @@ import time
 import types
 import typing
 import warnings
-from typing import Any, Callable, Type, TypeVar, cast, overload
+from typing import Any, Callable, Generator, Type, TypeVar, cast, overload
 
 import numpy as np
 
@@ -225,7 +225,7 @@ def real_func(fn: Callable) -> GsTaichiCallable:
     return func(fn, is_real_function=True)
 
 
-def iterator(fn: Callable) -> GsTaichiCallable:
+def iterator(fn: Callable) -> Callable[Any, Generator[Any, tuple[int, ...], None]]:
     return func(fn, is_iterator=True)
 
 

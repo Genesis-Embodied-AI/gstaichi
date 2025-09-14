@@ -1144,28 +1144,69 @@ class ASTTransformer(Builder):
                     print("is_iterator", node.iter.func.ptr.is_iterator)
                     # iter_func = node.iter.func
                     iter_ast: ast.Module = node.iter.func.ptr.wrapper.get_ast()
-                    print("iter_ast", ast.dump(iter_ast, indent=2))
-                    for_iter = iter_ast.body[0].body[0].iter
-                    print('for_iter', ast.dump(for_iter, indent=2))
-                    new_iter = for_iter
-                    # print('new_iter', ast.dump(new_iter))
-                    # build_stmt(ctx, new_iter)
-                    # print('new_iter', ast.dump(new_iter))
-                    # print("new_iter.ptr", new_iter.ptr)
+                    stmts = iter_ast.body[0].body
+                    def replace_innermost_body(for_stmts, new_body):
+                        """Recursively replace the innermost for-loop's body with new_body."""
+                        if not for_stmts:
+                            return new_body
+                        stmt = for_stmts[0]
+                        print('replace_innermost_body stmt', ast.dump(stmt))
+                        if isinstance(stmt, ast.For):
+                            # Recursively replace the innermost body
+                            new_for = ast.For(
+                                target=stmt.target,
+                                iter=stmt.iter,
+                                body=replace_innermost_body(stmt.body, new_body),
+                                orelse=None,
+                                type_comment=getattr(stmt, "type_comment", None),
+                                lineno=stmt.lineno,
+                                end_lineno=getattr(stmt, "end_lineno", None),
+                                col_offset=stmt.col_offset,
+                                end_col_offset=getattr(stmt, "end_col_offset", None),
+                            )
+                            return [new_for]
+                        elif isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Yield):
+                            # Remove yield, replace with new_body
+                            return list(new_body)
+                        else:
+                            raise Exception("Unhandled node type " + ast.dump(stmt))
+                            # Non-for statements are just prepended
+                            # return [stmt] + replace_innermost_body(for_stmts[1:], new_body)
+
+                    new_for_stmts = replace_innermost_body(stmts, node.body)
+                    for stmt in new_for_stmts:
+                        print("new stmt", ast.dump(stmt, indent=2))
+                        ASTTransformer.build_For(ctx, stmt) if isinstance(stmt, ast.For) else build_stmt(ctx, stmt)
+                    return None
+
+                    # stmts = iter_ast.body[0].body
+                    # new_for_stmts = nest_for_loops(stmts, node.body, node.target)(stmts[-1])  # Pass the last stmt (should be yield)
+                    # for stmt in new_for_stmts:
+                    #     ASTTransformer.build_For(ctx, stmt) if isinstance(stmt, ast.For) else build_stmt(ctx, stmt)
+                    # return None
+                    # print("iter_ast", ast.dump(iter_ast, indent=2))
+                    # for_iter = iter_ast.body[0].body[0].iter
+                    # print('for_iter', ast.dump(for_iter, indent=2))
+                    # new_iter = for_iter
+                    # # print('new_iter', ast.dump(new_iter))
+                    # # build_stmt(ctx, new_iter)
+                    # # print('new_iter', ast.dump(new_iter))
+                    # # print("new_iter.ptr", new_iter.ptr)
+                    # # asdfasdf
+                    # if node.iter.func.ptr.is_iterator:
+                    #     new_for = ast.For(
+                    #         target=node.target,
+                    #         iter=new_iter,
+                    #         body=node.body,
+                    #         orelse=None,
+                    #         type_comment=getattr(node, "type_comment", None),
+                    #         lineno=node.lineno,
+                    #         end_lineno=node.end_lineno,
+                    #         col_offset=node.col_offset,
+                    #         end_col_offset=node.end_col_offset,
+                    #     )
+                    #     return ASTTransformer.build_For(ctx, new_for)
                     # asdfasdf
-                    if node.iter.func.ptr.is_iterator:
-                        new_for = ast.For(
-                            target=node.target,
-                            iter=new_iter,
-                            body=node.body,
-                            orelse=None,
-                            type_comment=getattr(node, "type_comment", None),
-                            lineno=node.lineno,
-                            end_lineno=node.end_lineno,
-                            col_offset=node.col_offset,
-                            end_col_offset=node.end_col_offset,
-                        )
-                        return ASTTransformer.build_For(ctx, new_for)
                 build_stmt(ctx, node.iter)
                 if isinstance(node.iter.ptr, mesh.MeshElementField):
                     if not _ti_core.is_extension_supported(impl.default_cfg().arch, _ti_core.Extension.mesh):
