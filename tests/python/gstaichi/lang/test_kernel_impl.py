@@ -54,60 +54,85 @@ def test_pure_kernel_parameter() -> None:
 
     @ti.pure
     @ti.kernel
-    def k1() -> None: ...
+    def k1(a: ti.types.NDArray) -> None:
+        a[0] = 1
 
     @ti.kernel(pure=True)
-    def k2() -> None: ...
+    def k2(a: ti.types.NDArray) -> None:
+        a[0] = 2
 
     @ti.kernel
-    def k3() -> None: ...
+    def k3(a: ti.types.NDArray) -> None:
+        a[0] = 3
 
     @ti.kernel(pure=False)
-    def k4() -> None: ...
+    def k4(a: ti.types.NDArray) -> None:
+        a[0] = 4
 
     @ti.kernel()
-    def k5() -> None: ...
+    def k5(a: ti.types.NDArray) -> None:
+        a[0] = 5
 
     @ti.data_oriented
     class SomeClass:
         def __init__(self) -> None: ...
 
         @ti.kernel
-        def da1(self) -> None: ...
+        def da1(self, a: ti.types.NDArray) -> None:
+            a[0] = 11
 
         @ti.pure
         @ti.kernel
-        def da2(self) -> None: ...
+        def da2(self, a: ti.types.NDArray) -> None:
+            a[0] = 12
 
         @ti.kernel(pure=True)
-        def da3(self) -> None: ...
+        def da3(self, a: ti.types.NDArray) -> None:
+            a[0] = 13
 
         @ti.kernel(pure=False)
-        def da4(self) -> None: ...
+        def da4(self, a: ti.types.NDArray) -> None:
+            a[0] = 14
 
         @ti.kernel()
-        def da5(self) -> None: ...
+        def da5(self, a: ti.types.NDArray) -> None:
+            a[0] = 15
 
-    k1()
+    a = ti.ndarray(ti.i32, (10,))
+    k1(a)
     assert k1._primal.src_ll_cache_observations.cache_key_generated
-    k2()
+    assert a[0] == 1
+    k2(a)
     assert k2._primal.src_ll_cache_observations.cache_key_generated
-    k3()
+    assert a[0] == 2
+    k3(a)
     assert not k3._primal.src_ll_cache_observations.cache_key_generated
-    k4()
+    assert a[0] == 3
+    k4(a)
     assert not k4._primal.src_ll_cache_observations.cache_key_generated
-    k5()
+    assert a[0] == 4
+    k5(a)
     assert not k4._primal.src_ll_cache_observations.cache_key_generated
+    assert a[0] == 5
 
     some_class = SomeClass()
-    some_class.da1()
-    some_class.da2()
-    some_class.da3()
-    some_class.da4()
-    some_class.da5()
 
+    some_class.da1(a)
     assert not some_class.da1._primal.src_ll_cache_observations.cache_key_generated
+    assert a[0] == 11
+
+    some_class.da2(a)
     assert some_class.da2._primal.src_ll_cache_observations.cache_key_generated
+    assert a[0] == 12
+
+    some_class.da3(a)
     assert some_class.da3._primal.src_ll_cache_observations.cache_key_generated
+    assert a[0] == 13
+
+    some_class.da4(a)
     assert not some_class.da4._primal.src_ll_cache_observations.cache_key_generated
+    assert a[0] == 14
+
+    some_class.da5(a)
     assert not some_class.da5._primal.src_ll_cache_observations.cache_key_generated
+    assert a[0] == 15
