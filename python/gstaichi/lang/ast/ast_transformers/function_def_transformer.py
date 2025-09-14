@@ -272,6 +272,8 @@ class FunctionDefTransformer:
         node: ast.FunctionDef,
         build_stmts: Callable[[ASTTransformerContext, list[ast.stmt]], None],
     ) -> None:
+        print("build_FunctionDef", ast.dump(node, indent=2))
+        # print("node.func", node.)
         if ctx.visited_funcdef:
             raise GsTaichiSyntaxError(
                 f"Function definition is not allowed in 'ti.{'kernel' if ctx.is_kernel else 'func'}'."
@@ -298,7 +300,9 @@ class FunctionDefTransformer:
             else:
                 FunctionDefTransformer._transform_as_func(ctx, node, args)
 
+        print("function def about to build stmts")
         with ctx.variable_scope_guard():
             build_stmts(ctx, node.body)
+        print("function def after build stmts")
 
         return None

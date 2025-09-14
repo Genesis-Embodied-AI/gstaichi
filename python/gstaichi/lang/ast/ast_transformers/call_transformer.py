@@ -246,6 +246,7 @@ class CallTransformer:
         example ast:
         Call(func=Name(id='f2', ctx=Load()), args=[Name(id='my_struct_ab', ctx=Load())], keywords=[])
         """
+        print("1")
         if get_decorator(ctx, node) in ["static", "static_assert"]:
             with ctx.static_scope_guard():
                 build_stmt(ctx, node.func)
@@ -262,6 +263,7 @@ class CallTransformer:
             # create variables for the now-expanded dataclass members
             build_stmts(ctx, node.args)
             build_stmts(ctx, node.keywords)
+        print("2")
 
         args = []
         for arg in node.args:
@@ -280,8 +282,10 @@ class CallTransformer:
 
         if id(func) in [id(print), id(impl.ti_print)]:
             ctx.func.has_print = True
+        print("3")
 
         if isinstance(node.func, ast.Attribute) and isinstance(node.func.value.ptr, str) and node.func.attr == "format":
+            print("is format")
             raw_string = node.func.value.ptr
             args = CallTransformer._canonicalize_formatted_string(raw_string, *args, **keywords)
             node.ptr = impl.ti_format(*args)
@@ -292,18 +296,23 @@ class CallTransformer:
             return node.ptr
 
         if CallTransformer._build_call_if_is_builtin(ctx, node, args, keywords):
+            print("is builtin", ast.dump(node))
             return node.ptr
 
         if CallTransformer._build_call_if_is_type(ctx, node, args, keywords):
+            print("is type")
             return node.ptr
 
         if hasattr(node.func, "caller"):
+            print("has caller")
             node.ptr = func(node.func.caller, *args, **keywords)
             return node.ptr
 
         CallTransformer._warn_if_is_external_func(ctx, node)
         try:
+            # print("calling func", func, func.fn, "args", args, "keywords", keywords)
             node.ptr = func(*args, **keywords)
+            # print("after calling func", func.fn, "node.ptr", node.ptr)
         except TypeError as e:
             module = inspect.getmodule(func)
             error_msg = re.sub(r"\bExpr\b", "GsTaichi Expression", str(e))
@@ -322,6 +331,8 @@ class CallTransformer:
             raise GsTaichiTypeError(msg)
 
         if getattr(func, "_is_gstaichi_function", False):
+            print(" not gstiachi function")
             ctx.func.has_print |= func.wrapper.has_print
 
+        print("end node.ptr", node.ptr, ast.dump(node.func, indent=2))
         return node.ptr

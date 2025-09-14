@@ -29,13 +29,17 @@ class Builder:
     def __call__(self, ctx: "ASTTransformerContext", node: ast.AST):
         method_name = "build_" + node.__class__.__name__
         method = getattr(self, method_name, None)
+        indent = len(impl.get_runtime().src_info_stack)
+        print(" " * indent, ">", method_name)
         try:
             if method is None:
                 error_msg = f'Unsupported node "{node.__class__.__name__}"'
                 raise GsTaichiSyntaxError(error_msg)
             info = ctx.get_pos_info(node) if isinstance(node, (ast.stmt, ast.expr)) else ""
             with impl.get_runtime().src_info_guard(info):
-                return method(ctx, node)
+                res = method(ctx, node)
+                print(" " * indent, "<", method_name)
+                return res
         except Exception as e:
             if impl.get_runtime().print_full_traceback:
                 raise e

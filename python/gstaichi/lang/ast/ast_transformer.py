@@ -874,6 +874,7 @@ class ASTTransformer(Builder):
 
     @staticmethod
     def build_range_for(ctx: ASTTransformerContext, node: ast.For) -> None:
+        print("build range for", ast.dump(node))
         with ctx.variable_scope_guard():
             loop_name = node.target.id
             ctx.check_loop_var(loop_name)
@@ -894,17 +895,24 @@ class ASTTransformer(Builder):
 
             else:
                 end_expr = expr.Expr(build_stmt(ctx, node.iter.args[0]))
+                print("end_expr", end_expr)
 
                 # Warning for implicit dtype conversion
                 boundary_type_cast_warning(end_expr)
 
                 begin = ti_ops.cast(expr.Expr(0), primitive_types.i32)
                 end = ti_ops.cast(end_expr, primitive_types.i32)
+                print('begin', begin, 'end', end)
 
             for_di = _ti_core.DebugInfo(ctx.get_pos_info(node))
+            print("beginning frront end range for")
             ctx.ast_builder.begin_frontend_range_for(loop_var.ptr, begin.ptr, end.ptr, for_di)
+            print("build body statements")
             build_stmts(ctx, node.body)
+            print('after build statements')
             ctx.ast_builder.end_frontend_range_for()
+            print('after end frontend range for')
+        print("afer variable scope guard")
         return None
 
     @staticmethod
@@ -1075,6 +1083,7 @@ class ASTTransformer(Builder):
 
     @staticmethod
     def build_For(ctx: ASTTransformerContext, node: ast.For) -> None:
+        print("build for")
         if node.orelse:
             raise GsTaichiSyntaxError("'else' clause for 'for' not supported in GsTaichi kernels")
         decorator = get_decorator(ctx, node.iter)
@@ -1082,12 +1091,19 @@ class ASTTransformer(Builder):
         if decorator != "" and len(node.iter.args) == 1:
             double_decorator = get_decorator(ctx, node.iter.args[0])
 
+        print("build decorator", decorator, "double decorator", double_decorator)
         if decorator == "static":
             if double_decorator == "static":
                 raise GsTaichiSyntaxError("'ti.static' cannot be nested")
             with ctx.loop_scope_guard(is_static=True):
                 return ASTTransformer.build_static_for(ctx, node, double_decorator == "grouped")
         with ctx.loop_scope_guard():
+            # print("isinstance(node.iter, ast.Call)", isinstance(node.iter, ast.Call))
+            # print("isinstance(node.iter.func, ast.Name)", isinstance(node.iter.func, ast.Name))
+            # print("node.iter.func.id == 'range'", node.iter.func.id == "range")
+
+            # print("")
+
             if decorator == "ndrange":
                 if double_decorator != "":
                     raise GsTaichiSyntaxError("No decorator is allowed inside 'ti.ndrange")
@@ -1106,6 +1122,7 @@ class ASTTransformer(Builder):
                 and isinstance(node.iter.func, ast.Name)
                 and node.iter.func.id == "range"
             ):
+                print("call build range for")
                 return ASTTransformer.build_range_for(ctx, node)
             elif isinstance(node.iter, ast.IfExp):
                 # Handle inline if expression as the top level iterator expression, e.g.:
@@ -1208,6 +1225,7 @@ class ASTTransformer(Builder):
                     #     return ASTTransformer.build_For(ctx, new_for)
                     # asdfasdf
                 build_stmt(ctx, node.iter)
+                print("node.iter.ptr", node.iter.ptr)
                 if isinstance(node.iter.ptr, mesh.MeshElementField):
                     if not _ti_core.is_extension_supported(impl.default_cfg().arch, _ti_core.Extension.mesh):
                         raise Exception(
@@ -1217,6 +1235,7 @@ class ASTTransformer(Builder):
                 if isinstance(node.iter.ptr, mesh.MeshRelationAccessProxy):
                     return ASTTransformer.build_nested_mesh_for(ctx, node)
                 # Struct for
+                print("call build struct for", ast.dump(node.iter))
                 return ASTTransformer.build_struct_for(ctx, node, is_grouped=False)
 
     @staticmethod
