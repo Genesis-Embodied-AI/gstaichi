@@ -13,7 +13,7 @@ import time
 import types
 import typing
 import warnings
-from typing import Any, Callable, Type
+from typing import Any, Callable, Type, TypeVar, cast, overload
 
 import numpy as np
 
@@ -728,7 +728,7 @@ class Kernel:
 
         if self.runtime.src_ll_cache and self.gstaichi_callable and self.gstaichi_callable.is_pure:
             kernel_source_info, _src = get_source_info_and_src(self.func)
-            self.fast_checksum = src_hasher.create_cache_key(kernel_source_info, args)
+            self.fast_checksum = src_hasher.create_cache_key(kernel_source_info, args, self.arg_metas)
             if self.fast_checksum:
                 self.src_ll_cache_observations.cache_key_generated = True
             if self.fast_checksum and src_hasher.validate_cache_key(self.fast_checksum):
@@ -820,7 +820,7 @@ class Kernel:
                 tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
                 ctx.only_parse_function_def = self.compiled_kernel_data_by_key.get(key) is not None
                 transform_tree(tree, ctx)
-                if not ctx.is_real_function:
+                if not ctx.is_real_function and not ctx.only_parse_function_def:
                     if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
                         raise GsTaichiSyntaxError("Kernel has a return type but does not have a return statement")
             finally:
@@ -1263,8 +1263,28 @@ def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool 
     return wrapped
 
 
-def kernel(fn: Callable):
-    """Marks a function as a GsTaichi kernel.
+F = TypeVar("F", bound=Callable[..., typing.Any])
+
+
+@overload
+# TODO: This callable should be Callable[[F], F].
+# See comments below.
+def kernel(_fn: None = None, *, pure: bool = False) -> Callable[[Any], Any]: ...
+
+
+# TODO: This next overload should return F, but currently that will cause issues
+# with ndarray type. We need to migrate ndarray type to be basically
+# the actual Ndarray, with Generic types, rather than some other
+# NdarrayType class. The _fn should also be F by the way.
+# However, by making it return Any, we can make the pure parameter
+# change now, without breaking pyright.
+@overload
+def kernel(_fn: Any, *, pure: bool = False) -> Any: ...
+
+
+def kernel(_fn: Callable[..., typing.Any] | None = None, *, pure: bool = False):
+    """
+    Marks a function as a GsTaichi kernel.
 
     A GsTaichi kernel is a function written in Python, and gets JIT compiled by
     GsTaichi into native CPU/GPU instructions (e.g. a series of CUDA kernels).
@@ -1272,14 +1292,6 @@ def kernel(fn: Callable):
     to either a CPU thread pool or massively parallel GPUs.
 
     Kernel's gradient kernel would be generated automatically by the AutoDiff system.
-
-    See also https://docs.taichi-lang.org/docs/syntax#kernel.
-
-    Args:
-        fn (Callable): the Python function to be decorated
-
-    Returns:
-        Callable: The decorated function
 
     Example::
 
@@ -1291,7 +1303,25 @@ def kernel(fn: Callable):
         >>>     for i in x:
         >>>         x[i] = i
     """
-    return _kernel_impl(fn, level_of_class_stackframe=3)
+
+    def decorator(fn: F, has_kernel_params: bool = True) -> F:
+        # Adjust stack frame: +1 if called via decorator factory (@kernel()), else as-is (@kernel)
+        if has_kernel_params:
+            level = 3
+        else:
+            level = 4
+
+        wrapped = _kernel_impl(fn, level_of_class_stackframe=level)
+        wrapped.is_pure = pure
+
+        functools.update_wrapper(wrapped, fn)
+        return cast(F, wrapped)
+
+    if _fn is None:
+        # Called with @kernel() or @kernel(foo="bar")
+        return decorator
+
+    return decorator(_fn, has_kernel_params=False)
 
 
 class _BoundedDifferentiableMethod:

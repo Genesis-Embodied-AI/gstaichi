@@ -5,13 +5,16 @@ from pydantic import BaseModel
 from gstaichi import _logging
 
 from .._wrap_inspect import FunctionSourceInfo
+from ..kernel_arguments import ArgMetadata
 from . import args_hasher, config_hasher, function_hasher
 from .fast_caching_types import HashedFunctionSourceInfo
 from .hash_utils import hash_iterable_strings
 from .python_side_cache import PythonSideCache
 
 
-def create_cache_key(kernel_source_info: FunctionSourceInfo, args: Sequence[Any]) -> str | None:
+def create_cache_key(
+    kernel_source_info: FunctionSourceInfo, args: Sequence[Any], arg_metas: Sequence[ArgMetadata]
+) -> str | None:
     """
     cache key takes into account:
     - arg types
@@ -19,7 +22,7 @@ def create_cache_key(kernel_source_info: FunctionSourceInfo, args: Sequence[Any]
     - kernel function (but not sub functions)
     - compilation config (which includes arch, and debug)
     """
-    args_hash = args_hasher.hash_args(args)
+    args_hash = args_hasher.hash_args(args, arg_metas)
     if args_hash is None:
         # the bit in caps at start should not be modified without modifying corresponding text
         # freetext bit can be freely modified
