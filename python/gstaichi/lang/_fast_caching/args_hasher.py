@@ -125,7 +125,7 @@ def hash_args(args: Sequence[Any], arg_metas: Sequence[ArgMetadata | None]) -> s
         start = time.time()
         _hash = stringify_obj_type((str(i_arg),), arg, arg_metas[i_arg])
         g_repr_time += time.time() - start
-        if _hash is None:
+        if _hash:
             g_num_ignored_calls += 1
             return None
         hash_l.append(_hash)
