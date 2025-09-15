@@ -3,7 +3,7 @@
 // on-device rather than any platform specific capability provided by some
 // graphics APIs like Vulkan or CUDA. For example, DirectX shader model, CUDA
 // compute capability and Vulkan physical device features can be listed here as
-// device capabilities, yet things like Vulkan API version and GLFW version
+// device capabilities, yet things like Vulkan API version
 // should not.
 #ifdef PER_DEVICE_CAPABILITY
 // SPIR-V Caps
