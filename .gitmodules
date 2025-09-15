@@ -6,10 +6,6 @@
 	path = external/spdlog
 	url = https://github.com/gabime/spdlog
 	shallow = true
-[submodule "external/glfw"]
-	path = external/glfw
-	url = https://github.com/taichi-dev/glfw
-	shallow = true
 [submodule "external/glad"]
 	path = external/glad
 	url = https://github.com/taichi-dev/taichi_glad_ready
