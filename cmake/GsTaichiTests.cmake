@@ -81,11 +81,6 @@ target_include_directories(${TESTS_NAME} SYSTEM
     ${PROJECT_SOURCE_DIR}/external/VulkanMemoryAllocator/include
   )
 
-target_include_directories(${TESTS_NAME}
-PRIVATE
-  external/glfw/include
-)
-
 if(LINUX)
     target_link_options(${TESTS_NAME} PUBLIC -Wl,--exclude-libs=ALL)
     target_link_options(${TESTS_NAME} PUBLIC -static-libgcc -static-libstdc++)

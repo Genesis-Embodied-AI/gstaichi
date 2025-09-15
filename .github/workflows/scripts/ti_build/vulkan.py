@@ -10,7 +10,7 @@ from .dep import download_dep
 from .misc import banner, get_cache_home, path_prepend
 from .python import path_prepend
 
-VULKAN_VERSION = "1.4.304.1"
+VULKAN_VERSION = "1.4.321.1"
 
 
 # -- code --
@@ -32,8 +32,8 @@ def setup_vulkan():
     # elif (u.system, u.machine) == ("Darwin", "arm64"):
     # elif (u.system, u.machine) == ("Darwin", "x86_64"):
     elif (u.system, u.machine) == ("Windows", "AMD64"):
-        url = "https://sdk.lunarg.com/sdk/download/1.3.296.0/windows/VulkanSDK-1.3.296.0-Installer.exe"
-        prefix = get_cache_home() / "vulkan-1.3.296.0"
+        url = f"https://sdk.lunarg.com/sdk/download/{VULKAN_VERSION}/windows/VulkanSDK-{VULKAN_VERSION}-Installer.exe"
+        prefix = get_cache_home() / "vulkan-{VULKAN_VERSION}"
         download_dep(
             url,
             prefix,

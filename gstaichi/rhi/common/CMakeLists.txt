@@ -6,22 +6,12 @@ target_sources(${COMMON_RHI}
   PRIVATE
     host_memory_pool.cpp
     unified_allocator.cpp
-    window_system.cpp
   )
 
 target_include_directories(${COMMON_RHI}
   PRIVATE
     ${PROJECT_SOURCE_DIR}
   )
-
-if (TI_WITH_VULKAN)
-  target_compile_definitions(${COMMON_RHI} PUBLIC TI_WITH_GLFW)
-
-  target_include_directories(${COMMON_RHI}
-    PRIVATE
-      ${PROJECT_SOURCE_DIR}/external/glfw/include
-    )
-endif()
 
 if(TI_WITH_VULKAN)
     target_link_libraries(${COMMON_RHI} PUBLIC vulkan_rhi)

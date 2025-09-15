@@ -15,25 +15,11 @@ from .tinysh import apt
 # -- code --
 UBUNTU_PACKAGES = {
     "git",
-    "freeglut3-dev",
-    "libglfw3-dev",
-    "libglm-dev",
-    "libglu1-mesa-dev",
     "libjpeg-dev",
     "liblz4-dev",
     "libpng-dev",
     "libssl-dev",
     "libncurses-dev",
-    "libwayland-dev",
-    "libx11-xcb-dev",
-    "libxcb-dri3-dev",
-    "libxcb-ewmh-dev",
-    "libxcb-keysyms1-dev",
-    "libxcb-randr0-dev",
-    "libxcursor-dev",
-    "libxi-dev",
-    "libxinerama-dev",
-    "libxrandr-dev",
     "libzstd-dev",
 }
 
