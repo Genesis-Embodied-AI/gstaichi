@@ -1,5 +1,3 @@
-# type: ignore
-
 from gstaichi._lib import core as _ti_core
 
 Layout = _ti_core.Layout

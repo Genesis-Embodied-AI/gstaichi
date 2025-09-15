@@ -1,5 +1,3 @@
-# type: ignore
-
 """
 This module defines data types in GsTaichi:
 
@@ -11,11 +9,11 @@ This module defines data types in GsTaichi:
 """
 
 from gstaichi.types import quant
-from gstaichi.types.annotations import *
-from gstaichi.types.compound_types import *
-from gstaichi.types.ndarray_type import *
-from gstaichi.types.primitive_types import *
-from gstaichi.types.texture_type import *
-from gstaichi.types.utils import *
+from gstaichi.types.annotations import *  # type: ignore
+from gstaichi.types.compound_types import *  # type: ignore
+from gstaichi.types.ndarray_type import *  # type: ignore
+from gstaichi.types.primitive_types import *  # type: ignore
+from gstaichi.types.texture_type import *  # type: ignore
+from gstaichi.types.utils import *  # type: ignore
 
 __all__ = ["quant"]
