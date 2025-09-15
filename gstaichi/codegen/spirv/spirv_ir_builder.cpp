@@ -8,6 +8,7 @@ namespace spirv {
 using cap = DeviceCapability;
 
 void IRBuilder::init_header() {
+  std::cout << "IRBuilder::init_header" << std::endl;
   TI_ASSERT(header_.size() == 0U);
   header_.push_back(spv::MagicNumber);
 
@@ -1308,6 +1309,10 @@ void IRBuilder::register_value(std::string name, Value value) {
 }
 
 Value IRBuilder::query_value(std::string name) const {
+  // std::cout << "looking for name " << name << std::endl;
+  // for(auto &kv : value_name_tbl_){
+  //   std::cout << "  has " << kv.first << std::endl;
+  // }
   auto it = value_name_tbl_.find(name);
   if (it != value_name_tbl_.end()) {
     return it->second;

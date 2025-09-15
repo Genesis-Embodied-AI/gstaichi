@@ -2586,15 +2586,32 @@ KernelCodegen::KernelCodegen(const Params &params)
 
 void KernelCodegen::run(GsTaichiKernelAttributes &kernel_attribs,
                         std::vector<std::vector<uint32_t>> &generated_spirv) {
+  std::cout << "KernelCodegen::run() " << params_.ti_kernel_name << std::endl;
   auto *root = params_.ir_root->as<Block>();
+  std::cout << "got root as block" << std::endl;
 
   {
+    const char *load_ir_before_final_spirv = std::getenv("TI_LOAD_BEFORE_FINAL_SPIRV_LL");
     const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
+    // if (load_ir_before_final_spirv != nullptr && std::string(load_ir_before_final_spirv) == "1") {
+    //   std::filesystem::path filename =
+    //       IR_DUMP_DIR / (params_.ti_kernel_name + "_before_final_spirv.ll");
+    //   std::cout << "loading from " << filename << std::endl;
+    //   if (std::ifstream in_file(filename); in_file) {
+    //     std::string ir_string((std::istreambuf_iterator<char>(in_file)),
+    //                           std::istreambuf_iterator<char>());
+    //     params_.ir_root = irpass::load_from_string(ir_string);
+    //     root = params_.ir_root->as<Block>();
+    //   } else {
+    //     TI_ERROR("failed to load from {}", filename);
+    //   }
+    // } else
     if (dump_ir_env != nullptr && std::string(dump_ir_env) == "1") {
       std::filesystem::create_directories(IR_DUMP_DIR);
 
       std::filesystem::path filename =
           IR_DUMP_DIR / (params_.ti_kernel_name + "_before_final_spirv.ll");
+      std::cout << "outputting to " << filename << std::endl;
       if (std::ofstream out_file(filename); out_file) {
         std::string outString;
         irpass::print(const_cast<IRNode *>(params_.ir_root), &outString);
@@ -2604,6 +2621,7 @@ void KernelCodegen::run(GsTaichiKernelAttributes &kernel_attribs,
   }
 
   auto &tasks = root->statements;
+  std::cout << params_.ti_kernel_name << " num tasks " << tasks.size() << std::endl;
   for (int i = 0; i < tasks.size(); ++i) {
     TaskCodegen::Params tp;
     tp.task_ir = tasks[i]->as<OffloadedStmt>();
@@ -2611,11 +2629,14 @@ void KernelCodegen::run(GsTaichiKernelAttributes &kernel_attribs,
     tp.compiled_structs = params_.compiled_structs;
     tp.ctx_attribs = &ctx_attribs_;
     tp.ti_kernel_name = fmt::format("{}_{}", params_.ti_kernel_name, i);
+    std::cout << "task " << i << " ti_kernel_name: " << tp.ti_kernel_name << std::endl;
     tp.arch = params_.arch;
     tp.caps = &params_.caps;
 
     TaskCodegen cgen(tp);
+    std::cout << "start cgen.run()" << std::endl;
     auto task_res = cgen.run();
+    std::cout << "end cgen.run()" << std::endl;
 
     for (auto &[id, access] : task_res.arr_access) {
       for (auto &arr_access_element : ctx_attribs_.arr_access) {
@@ -2630,6 +2651,7 @@ void KernelCodegen::run(GsTaichiKernelAttributes &kernel_attribs,
     bool success = true;
     {
       bool result = false;
+      std::cout << "SPIRV-Tools-opt: optimizing..." << std::endl;
       TI_WARN_IF(
           (result = !spirv_opt_->Run(optimized_spv.data(), optimized_spv.size(),
                                      &optimized_spv, spirv_opt_options_)),
@@ -2649,7 +2671,7 @@ void KernelCodegen::run(GsTaichiKernelAttributes &kernel_attribs,
         std::string spirv_asm;
         spirv_tools_->Disassemble(optimized_spv, &spirv_asm);
         auto kernel_name = tp.ti_kernel_name;
-        std::filesystem::path filename = IR_DUMP_DIR / (kernel_name + ".spirv");
+        std::filesystem::path filename = IR_DUMP_DIR / (kernel_name + "_" + std::to_string(i) + ".spirv");
         if (std::ofstream out_file(filename); out_file) {
           out_file.write(spirv_asm.c_str(), spirv_asm.size());
         }
@@ -2657,7 +2679,7 @@ void KernelCodegen::run(GsTaichiKernelAttributes &kernel_attribs,
     }
 
     // Enable to dump SPIR-V assembly of kernels
-    if constexpr (false) {
+    if constexpr (true) {
       std::vector<uint32_t> &spirv =
           success ? optimized_spv : task_res.spirv_code;
 
