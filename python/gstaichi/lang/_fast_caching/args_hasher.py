@@ -51,7 +51,7 @@ def stringify_obj_type(path: tuple[str, ...], obj: object, arg_meta: ArgMetadata
 
     String should somehow represent the type of obj. Doesnt have to be hashed, nor does it have
     to be the actual python type string, just a string that is representative of the type, and won't collide
-    with different (allowed) types.
+    with different (allowed) types. String should be non-empty.
 
     Note that fields are not included in fast cache.
 
