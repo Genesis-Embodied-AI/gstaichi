@@ -54,6 +54,35 @@ __asm__(".symver powf,powf@GLIBC_2.2.5");
 __asm__(".symver expf,expf@GLIBC_2.2.5");
 #endif
 
+#if (defined(__aarch64__) || defined(__arm64__)) && defined(__clang__)
+// JIT session error: Symbols not found: [ __aarch64_ldadd4_acq_rel, ... ]
+// This is an issue with newer clang versions (>13) on aarch64, where
+// atomics are outlined by default. The JIT environment does not
+// automatically link libatomic/libgcc. We provide the implementations here
+// using inline assembly to fix this.
+// See: https://github.com/taichi-dev/taichi/issues/4952
+__asm__(
+    ".globl __aarch64_swp4_acq_rel\n"
+    "__aarch64_swp4_acq_rel:\n"
+    "  swpal w1, w0, [x0]\n"
+    "  ret\n"
+
+    ".globl __aarch64_swp8_acq_rel\n"
+    "__aarch64_swp8_acq_rel:\n"
+    "  swpal x1, x0, [x0]\n"
+    "  ret\n"
+
+    ".globl __aarch64_ldadd4_acq_rel\n"
+    "__aarch64_ldadd4_acq_rel:\n"
+    "  ldaddal w1, w0, [x0]\n"
+    "  ret\n"
+
+    ".globl __aarch64_ldadd8_acq_rel\n"
+    "__aarch64_ldadd8_acq_rel:\n"
+    "  ldaddal x1, x0, [x0]\n"
+    "  ret\n");
+#endif
+
 // For accessing struct fields
 #define STRUCT_FIELD(S, F)                              \
   extern "C" decltype(S::F) S##_get_##F(S *s) {         \
@@ -1145,9 +1174,17 @@ uint32 cuda_match_any_sync_i32(u32 mask, i32 value) {
 u32 cuda_match_all_sync_i32(u32 mask, i32 value) {
 #if ARCH_cuda
   u32 ret;
+#if defined(__aarch64__) || defined(__arm64__)
+  asm volatile("match.all.sync.b32  %0, %1, %2;"
+               : "=w"(ret)
+               : "w"(value), "w"(mask));
+#elif defined(__x86_64__)
   asm volatile("match.all.sync.b32  %0, %1, %2;"
                : "=r"(ret)
                : "r"(value), "r"(mask));
+#else
+#error "Unsupported architecture: this code requires ARM64 or x86_64"
+#endif
   return ret;
 #else
   return 0;
@@ -1157,9 +1194,17 @@ u32 cuda_match_all_sync_i32(u32 mask, i32 value) {
 uint32 cuda_match_any_sync_i64(u32 mask, i64 value) {
 #if ARCH_cuda
   u32 ret;
+#if defined(__aarch64__) || defined(__arm64__)
+  asm volatile("match.any.sync.b64  %0, %1, %2;"
+               : "=w"(ret)
+               : "r"(value), "w"(mask));
+#elif defined(__x86_64__)
   asm volatile("match.any.sync.b64  %0, %1, %2;"
                : "=r"(ret)
                : "l"(value), "r"(mask));
+#else
+#error "Unsupported architecture: this code requires ARM64 or x86_64"
+#endif
   return ret;
 #else
   return 0;
@@ -1169,7 +1214,13 @@ uint32 cuda_match_any_sync_i64(u32 mask, i64 value) {
 #if ARCH_cuda
 uint32 cuda_active_mask() {
   unsigned int mask;
+#if defined(__aarch64__) || defined(__arm64__)
+  asm volatile("activemask.b32 %0;" : "=w"(mask));
+#elif defined(__x86_64__)
   asm volatile("activemask.b32 %0;" : "=r"(mask));
+#else
+#error "Unsupported architecture: this code requires ARM64 or x86_64"
+#endif
   return mask;
 }
 #else
