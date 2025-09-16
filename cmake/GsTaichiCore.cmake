@@ -79,11 +79,6 @@ if(TI_WITH_LLVM)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTI_WITH_LLVM")
 endif()
 
-## This version var is only used to locate slim_libdevice.10.bc
-if(NOT CUDA_VERSION)
-    set(CUDA_VERSION 10.0)
-endif()
-
 if (TI_WITH_CUDA)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTI_WITH_CUDA")
   file(GLOB GSTAICHI_CUDA_RUNTIME_SOURCE "gstaichi/runtime/cuda/runtime.cpp")
@@ -347,6 +342,8 @@ if(TI_WITH_PYTHON)
 endif()
 
 if (NOT APPLE)
+    # For more background on what is slim_libdevice.10.bc, and why version 10, not 12.8
+    # See https://github.com/Genesis-Embodied-AI/gstaichi/issues/166#issuecomment-3289552564
     install(FILES ${CMAKE_SOURCE_DIR}/external/cuda_libdevice/slim_libdevice.10.bc
             DESTINATION ${INSTALL_LIB_DIR}/runtime)
 endif()
