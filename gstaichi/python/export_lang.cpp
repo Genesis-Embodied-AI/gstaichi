@@ -488,7 +488,8 @@ void export_lang(py::module &m) {
           [](const CompileResult &self) -> const CompiledKernelData & {
             return self.compiled_kernel_data;
           })
-      .def_readonly("cache_hit", &CompileResult::cache_hit);
+      .def_readonly("cache_hit", &CompileResult::cache_hit)
+      .def_readonly("cache_key", &CompileResult::cache_key);
 
   py::class_<Axis>(m, "Axis").def(py::init<int>());
   py::class_<SNode>(m, "SNodeCxx")
@@ -610,6 +611,7 @@ void export_lang(py::module &m) {
              // TODO(#2193): Also apply to @ti.func?
              self->no_activate.push_back(snode);
            })
+      .def("to_string", &Kernel::to_string)
       .def("insert_scalar_param", &Kernel::insert_scalar_param)
       .def("insert_arr_param", &Kernel::insert_arr_param)
       .def("insert_ndarray_param", &Kernel::insert_ndarray_param)
