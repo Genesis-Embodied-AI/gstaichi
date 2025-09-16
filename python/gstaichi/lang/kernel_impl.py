@@ -1095,6 +1095,13 @@ class Kernel:
                             dict_writer.writeheader()
                         dict_writer.writerow({"kernel": self.func.__name__, "fe": compile_result.cache_key, "src": self.fast_checksum})
                         f.flush()
+                    if not os.path.isdir("/tmp/kernels"):
+                        os.makedirs("/tmp/kernels")
+                    chi_ir_path = os.path.join("/tmp/kernels", f"{compile_result.cache_key}.ll")
+                    if not os.path.exists(chi_ir_path):
+                        with open(chi_ir_path, "w") as f:
+                            f.write(self.kernel_cpp.to_string())
+                    # print(self.kernel_cpp.to_string())
                 compiled_kernel_data = compile_result.compiled_kernel_data
                 if compile_result.cache_hit:
                     self.fe_ll_cache_observations.cache_hit = True
