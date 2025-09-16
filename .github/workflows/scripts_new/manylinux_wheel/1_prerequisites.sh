@@ -3,7 +3,7 @@
 set -ex
 
 # yum update
-yum install -y git wget libXrandr-devel libXinerama-devel libXcursor-devel libXi-devel
+yum install -y git wget
 # Note: following depends on the name of the repo:
 git config --global --add safe.directory /__w/gstaichi/gstaichi
 git submodule update --init --jobs 2

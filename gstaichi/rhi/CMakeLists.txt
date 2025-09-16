@@ -14,26 +14,6 @@ target_include_directories(${GSTAICHI_DEVICE_API}
     ${PROJECT_SOURCE_DIR}
   )
 
-if (TI_WITH_VULKAN)
-  set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-  set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-  set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-
-  if (APPLE)
-    set(GLFW_VULKAN_STATIC ON CACHE BOOL "" FORCE)
-  endif()
-
-  message("Building with GLFW")
-  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTI_WITH_GLFW")
-  target_compile_definitions(${GSTAICHI_DEVICE_API} PUBLIC TI_WITH_GLFW)
-  add_subdirectory(${PROJECT_SOURCE_DIR}/external/glfw ${PROJECT_BINARY_DIR}/external/glfw)
-  target_link_libraries(${GSTAICHI_DEVICE_API} PRIVATE glfw)
-  target_include_directories(${GSTAICHI_DEVICE_API} SYSTEM
-    PUBLIC
-      ${PROJECT_SOURCE_DIR}/external/glfw/include
-    )
-endif()
-
 target_include_directories(${GSTAICHI_DEVICE_API} SYSTEM
     PRIVATE
       ${PROJECT_SOURCE_DIR}/external/spdlog/include

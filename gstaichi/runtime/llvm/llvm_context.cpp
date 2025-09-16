@@ -65,6 +65,8 @@
 #include "gstaichi/rhi/amdgpu/amdgpu_context.h"
 #endif
 
+#define LIBDEVICE_VERSION 10
+
 namespace gstaichi::lang {
 
 using namespace llvm;
@@ -194,9 +196,7 @@ std::string get_runtime_fn(Arch arch) {
 std::string libdevice_path() {
   std::string folder;
   folder = runtime_lib_dir();
-  auto cuda_version_string = get_cuda_version_string();
-  auto cuda_version_major = int(std::atof(cuda_version_string.c_str()));
-  return fmt::format("{}/slim_libdevice.{}.bc", folder, cuda_version_major);
+  return fmt::format("{}/slim_libdevice.{}.bc", folder, LIBDEVICE_VERSION);
 }
 
 std::unique_ptr<llvm::Module> GsTaichiLLVMContext::clone_module_to_context(
