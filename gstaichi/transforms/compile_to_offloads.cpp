@@ -29,10 +29,7 @@ void compile_to_offloads(IRNode *ir,
 
   if (!verbose && config.print_preprocessed_ir && start_from_ast) {
     TI_INFO("[{}] {}:", kernel->get_name(), "Preprocessed IR");
-    std::cout << std::flush;
     irpass::re_id(ir);
-    irpass::print(ir);
-    std::cout << std::flush;
   }
 
   if (autodiff_mode == AutodiffMode::kReverse) {
