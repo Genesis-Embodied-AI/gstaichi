@@ -64,8 +64,7 @@ Module Contents
    :rtype: Callable
 
 
-.. py:function:: kernel(_fn: None = None, *, pure: bool = False) -> Callable[[Any], Any]
-                 kernel(_fn: Any, *, pure: bool = False) -> Any
+.. py:function:: kernel(fn: Callable)
 
    Marks a function as a GsTaichi kernel.
 
@@ -75,6 +74,14 @@ Module Contents
    to either a CPU thread pool or massively parallel GPUs.
 
    Kernel's gradient kernel would be generated automatically by the AutoDiff system.
+
+   See also https://docs.taichi-lang.org/docs/syntax#kernel.
+
+   :param fn: the Python function to be decorated
+   :type fn: Callable
+
+   :returns: The decorated function
+   :rtype: Callable
 
    Example::
 
