@@ -1092,7 +1092,13 @@ class Kernel:
                             dict_writer = csv.DictWriter(f, fieldnames=["kernel", "fe", "src"])
                             if not file_exists:
                                 dict_writer.writeheader()
-                            dict_writer.writerow({"kernel": self.func.__name__, "fe": compile_result.cache_key, "src": self.fast_checksum})
+                            dict_writer.writerow(
+                                {
+                                    "kernel": self.func.__name__,
+                                    "fe": compile_result.cache_key,
+                                    "src": self.fast_checksum,
+                                }
+                            )
                             f.flush()
                         kernels_dump_dir.mkdir(exist_ok=True)
                         ch_ir_path = kernels_dump_dir / f"{compile_result.cache_key}.ll"

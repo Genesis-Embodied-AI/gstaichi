@@ -86,8 +86,7 @@ CompileResult KernelCompilationManager::load_or_compile(
                            ? *cached_kernel
                            : compile_and_cache_kernel(
                                  kernel_key, compile_config, caps, kernel_def),
-                       cache_hit,
-                       kernel_key};
+                       cache_hit, kernel_key};
 }
 
 void KernelCompilationManager::dump() {
