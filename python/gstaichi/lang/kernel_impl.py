@@ -1082,6 +1082,19 @@ class Kernel:
             prog = impl.get_runtime().prog
             if not compiled_kernel_data:
                 compile_result: CompileResult = prog.compile_kernel(prog.config(), prog.get_device_caps(), t_kernel)
+                # print("fe-src cache key", compile_result.cache_key)
+                # print('fast cache key', self.fast_checksum)
+                import os
+                checksums_file_path = "/tmp/checksums.csv"
+                file_exists = os.path.exists(checksums_file_path)
+                if self.fast_checksum:
+                    with open(checksums_file_path, "a") as f:
+                        import csv
+                        dict_writer = csv.DictWriter(f, fieldnames=["kernel", "fe", "src"])
+                        if not file_exists:
+                            dict_writer.writeheader()
+                        dict_writer.writerow({"kernel": self.func.__name__, "fe": compile_result.cache_key, "src": self.fast_checksum})
+                        f.flush()
                 compiled_kernel_data = compile_result.compiled_kernel_data
                 if compile_result.cache_hit:
                     self.fe_ll_cache_observations.cache_hit = True
