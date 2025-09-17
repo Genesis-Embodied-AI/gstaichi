@@ -126,9 +126,11 @@ void IRBuilder::init_header() {
   }
 
   this->init_pre_defs();
+  std::cout << "spirv_ir_builder init done" << std::endl;
 }
 
 std::vector<uint32_t> IRBuilder::finalize() {
+  std::cout << "irbuild finalize" << std::endl;
   std::vector<uint32_t> data;
   // set bound
   const int bound_loc = 3;
@@ -230,6 +232,7 @@ Value IRBuilder::debug_string(std::string s) {
 }
 
 PhiValue IRBuilder::make_phi(const SType &out_type, uint32_t num_incoming) {
+  std::cout << "make_phi with num_incoming = " << num_incoming << std::endl;
   Value val = new_value(out_type, ValueKind::kNormal);
   ib_.begin(spv::OpPhi).add_seq(out_type, val);
   for (uint32_t i = 0; i < 2 * num_incoming; ++i) {
@@ -247,6 +250,7 @@ PhiValue IRBuilder::make_phi(const SType &out_type, uint32_t num_incoming) {
 Value IRBuilder::int_immediate_number(const SType &dtype,
                                       int64_t value,
                                       bool cache) {
+  std::cout << "int_immediate_number: " << value << std::endl;
   TI_ASSERT(is_integral(dtype.dt));
   return get_const(dtype, reinterpret_cast<uint64_t *>(&value), cache);
 }
@@ -254,6 +258,7 @@ Value IRBuilder::int_immediate_number(const SType &dtype,
 Value IRBuilder::uint_immediate_number(const SType &dtype,
                                        uint64_t value,
                                        bool cache) {
+  std::cout << "uint_immediate_number: " << value << std::endl;
   TI_ASSERT(is_integral(dtype.dt));
   return get_const(dtype, &value, cache);
 }
@@ -261,6 +266,7 @@ Value IRBuilder::uint_immediate_number(const SType &dtype,
 Value IRBuilder::float_immediate_number(const SType &dtype,
                                         double value,
                                         bool cache) {
+  std::cout << "float_immediate_number: " << value << std::endl;
   TI_ASSERT(is_real(dtype.dt));
   if (data_type_bits(dtype.dt) == 64) {
     return get_const(dtype, reinterpret_cast<uint64_t *>(&value), cache);
@@ -279,12 +285,14 @@ Value IRBuilder::float_immediate_number(const SType &dtype,
 }
 
 SType IRBuilder::get_null_type() {
+  std::cout << "get_null_type called" << std::endl;
   SType res;
   res.id = id_counter_++;
   return res;
 }
 
 SType IRBuilder::get_primitive_type(const DataType &dt) const {
+  std::cout << "get_primitive_type: " << dt.to_string() << std::endl;
   if (dt->is_primitive(PrimitiveTypeID::u1)) {
     return t_bool_;
   } else if (dt->is_primitive(PrimitiveTypeID::f16)) {
@@ -331,6 +339,7 @@ SType IRBuilder::get_primitive_type(const DataType &dt) const {
 }
 
 SType IRBuilder::from_gstaichi_type(const DataType &dt, bool has_buffer_ptr) {
+  std::cout << "from_gstaichi_type: " << dt->to_string() << std::endl;
   if (dt->is<PrimitiveType>()) {
     return get_primitive_type(dt);
   } else if (dt->is<PointerType>()) {
@@ -352,6 +361,7 @@ SType IRBuilder::from_gstaichi_type(const DataType &dt, bool has_buffer_ptr) {
 }
 
 size_t IRBuilder::get_primitive_type_size(const DataType &dt) const {
+  std::cout << "get_primitive_type_size: " << dt->to_string() << std::endl;
   if (!dt->is<PrimitiveType>()) {
     TI_ERROR("Type {} not supported.", dt->to_string());
   }
@@ -370,6 +380,7 @@ size_t IRBuilder::get_primitive_type_size(const DataType &dt) const {
 }
 
 SType IRBuilder::get_primitive_uint_type(const DataType &dt) const {
+  std::cout << "get_primitive_uint_type: " << dt->to_string() << std::endl;
   if (dt == PrimitiveType::i64 || dt == PrimitiveType::u64 ||
       dt == PrimitiveType::f64) {
     return t_uint64_;
@@ -387,6 +398,7 @@ SType IRBuilder::get_primitive_uint_type(const DataType &dt) const {
 }
 
 DataType IRBuilder::get_gstaichi_uint_type(const DataType &dt) const {
+  std::cout << "get_gstaichi_uint_type: " << dt->to_string() << std::endl;
   if (dt == PrimitiveType::i64 || dt == PrimitiveType::u64 ||
       dt == PrimitiveType::f64) {
     return PrimitiveType::u64;
@@ -405,6 +417,8 @@ DataType IRBuilder::get_gstaichi_uint_type(const DataType &dt) const {
 
 SType IRBuilder::get_pointer_type(const SType &value_type,
                                   spv::StorageClass storage_class) {
+  std::cout << "get_pointer_type: " << value_type.id << ", " << storage_class
+            << std::endl;
   auto key = std::make_pair(value_type.id, storage_class);
   auto it = pointer_type_tbl_.find(key);
   if (it != pointer_type_tbl_.end()) {
@@ -424,6 +438,8 @@ SType IRBuilder::get_pointer_type(const SType &value_type,
 
 SType IRBuilder::get_underlying_image_type(const SType &primitive_type,
                                            int num_dimensions) {
+  std::cout << "get_underlying_image_type: " << primitive_type.id << ", "
+            << num_dimensions << std::endl;
   auto key = std::make_pair(primitive_type.id, num_dimensions);
 
   auto it = sampled_image_underlying_image_type_.find(key);
@@ -551,6 +567,7 @@ SType IRBuilder::get_storage_image_type(BufferFormat format,
 }
 
 SType IRBuilder::get_storage_pointer_type(const SType &value_type) {
+  std::cout << "get_storage_pointer_type: " << value_type.id << std::endl;
   spv::StorageClass storage_class;
   if (caps_->get(cap::spirv_version) < 0x10300) {
     storage_class = spv::StorageClassUniform;
@@ -562,6 +579,8 @@ SType IRBuilder::get_storage_pointer_type(const SType &value_type) {
 }
 
 SType IRBuilder::get_array_type(const SType &_value_type, uint32_t num_elems) {
+  std::cout << "get_array_type: " << _value_type.id << ", " << num_elems
+            << std::endl;
   auto value_type = _value_type;
   if (value_type.dt->is_primitive(PrimitiveTypeID::u1)) {
     value_type = i32_type();
@@ -608,6 +627,8 @@ SType IRBuilder::get_array_type(const SType &_value_type, uint32_t num_elems) {
 
 SType IRBuilder::get_struct_array_type(const SType &value_type,
                                        uint32_t num_elems) {
+  std::cout << "get_struct_array_type: " << value_type.id << ", " << num_elems
+            << std::endl;
   SType arr_type = get_array_type(value_type, num_elems);
 
   // declare struct of array
@@ -637,6 +658,7 @@ SType IRBuilder::get_struct_array_type(const SType &value_type,
 
 SType IRBuilder::create_struct_type(
     std::vector<std::tuple<SType, std::string, size_t>> &components) {
+  std::cout << "create_struct_type called" << std::endl;
   SType struct_type;
   struct_type.id = id_counter_++;
   struct_type.flag = TypeKind::kStruct;
@@ -664,6 +686,7 @@ Value IRBuilder::buffer_struct_argument(const SType &struct_type,
                                         uint32_t descriptor_set,
                                         uint32_t binding,
                                         const std::string &name) {
+  std::cout << "buffer_struct_argument called" << std::endl;
   // NOTE: BufferBlock was deprecated in SPIRV 1.3
   // use StorageClassStorageBuffer instead.
   spv::StorageClass storage_class;
@@ -705,6 +728,7 @@ Value IRBuilder::uniform_struct_argument(const SType &struct_type,
                                          uint32_t descriptor_set,
                                          uint32_t binding,
                                          const std::string &name) {
+  std::cout << "uniform_struct_argument called" << std::endl;
   // NOTE: BufferBlock was deprecated in SPIRV 1.3
   // use StorageClassStorageBuffer instead.
   spv::StorageClass storage_class = spv::StorageClassUniform;
@@ -734,6 +758,7 @@ Value IRBuilder::buffer_argument(const SType &value_type,
                                  uint32_t descriptor_set,
                                  uint32_t binding,
                                  const std::string &name) {
+  std::cout << "buffer_argument called" << std::endl;
   // NOTE: BufferBlock was deprecated in SPIRV 1.3
   // use StorageClassStorageBuffer instead.
   spv::StorageClass storage_class;
@@ -769,6 +794,7 @@ Value IRBuilder::buffer_argument(const SType &value_type,
 Value IRBuilder::struct_array_access(const SType &res_type,
                                      Value buffer,
                                      Value index) {
+  std::cout << "struct_array_access called" << std::endl;
   TI_ASSERT(buffer.flag == ValueKind::kStructArrayPtr);
   TI_ASSERT(res_type.flag == TypeKind::kPrimitive);
 
@@ -1030,32 +1056,35 @@ Value IRBuilder::get_subgroup_size() {
 }
 
 Value IRBuilder::popcnt(Value x) {
+  std::cout << "popcnt called" << std::endl;
   TI_ASSERT(is_integral(x.stype.dt));
   return make_value(spv::OpBitCount, x.stype, x);
 }
 
-#define DEFINE_BUILDER_BINARY_USIGN_OP(_OpName, _Op)   \
-  Value IRBuilder::_OpName(Value a, Value b) {         \
-    TI_ASSERT(a.stype.id == b.stype.id);               \
-    if (is_integral(a.stype.dt)) {                     \
-      return make_value(spv::OpI##_Op, a.stype, a, b); \
-    } else {                                           \
-      TI_ASSERT(is_real(a.stype.dt));                  \
-      return make_value(spv::OpF##_Op, a.stype, a, b); \
-    }                                                  \
+#define DEFINE_BUILDER_BINARY_USIGN_OP(_OpName, _Op)              \
+  Value IRBuilder::_OpName(Value a, Value b) {                    \
+    std::cout << "binary unsigned op: " << #_OpName << std::endl; \
+    TI_ASSERT(a.stype.id == b.stype.id);                          \
+    if (is_integral(a.stype.dt)) {                                \
+      return make_value(spv::OpI##_Op, a.stype, a, b);            \
+    } else {                                                      \
+      TI_ASSERT(is_real(a.stype.dt));                             \
+      return make_value(spv::OpF##_Op, a.stype, a, b);            \
+    }                                                             \
   }
 
-#define DEFINE_BUILDER_BINARY_SIGN_OP(_OpName, _Op)         \
-  Value IRBuilder::_OpName(Value a, Value b) {              \
-    TI_ASSERT(a.stype.id == b.stype.id);                    \
-    if (is_integral(a.stype.dt) && is_signed(a.stype.dt)) { \
-      return make_value(spv::OpS##_Op, a.stype, a, b);      \
-    } else if (is_integral(a.stype.dt)) {                   \
-      return make_value(spv::OpU##_Op, a.stype, a, b);      \
-    } else {                                                \
-      TI_ASSERT(is_real(a.stype.dt));                       \
-      return make_value(spv::OpF##_Op, a.stype, a, b);      \
-    }                                                       \
+#define DEFINE_BUILDER_BINARY_SIGN_OP(_OpName, _Op)             \
+  Value IRBuilder::_OpName(Value a, Value b) {                  \
+    std::cout << "binary signed op: " << #_OpName << std::endl; \
+    TI_ASSERT(a.stype.id == b.stype.id);                        \
+    if (is_integral(a.stype.dt) && is_signed(a.stype.dt)) {     \
+      return make_value(spv::OpS##_Op, a.stype, a, b);          \
+    } else if (is_integral(a.stype.dt)) {                       \
+      return make_value(spv::OpU##_Op, a.stype, a, b);          \
+    } else {                                                    \
+      TI_ASSERT(is_real(a.stype.dt));                           \
+      return make_value(spv::OpF##_Op, a.stype, a, b);          \
+    }                                                           \
   }
 
 DEFINE_BUILDER_BINARY_USIGN_OP(add, Add);
@@ -1064,6 +1093,7 @@ DEFINE_BUILDER_BINARY_USIGN_OP(mul, Mul);
 DEFINE_BUILDER_BINARY_SIGN_OP(div, Div);
 
 Value IRBuilder::mod(Value a, Value b) {
+  std::cout << "mod called" << std::endl;
   TI_ASSERT(a.stype.id == b.stype.id);
   if (is_integral(a.stype.dt) && is_signed(a.stype.dt)) {
     // FIXME: figure out why OpSRem does not work
@@ -1078,6 +1108,7 @@ Value IRBuilder::mod(Value a, Value b) {
 
 #define DEFINE_BUILDER_CMP_OP(_OpName, _Op)                                \
   Value IRBuilder::_OpName(Value a, Value b) {                             \
+    std::cout << "cmp op: " << #_OpName << std::endl;                      \
     TI_ASSERT(a.stype.id == b.stype.id);                                   \
     const auto &bool_type = t_bool_; /* TODO: Only scalar supported now */ \
     if (is_integral(a.stype.dt) && is_signed(a.stype.dt)) {                \
@@ -1097,6 +1128,7 @@ DEFINE_BUILDER_CMP_OP(ge, GreaterThanEqual);
 
 #define DEFINE_BUILDER_CMP_UOP(_OpName, _Op)                               \
   Value IRBuilder::_OpName(Value a, Value b) {                             \
+    std::cout << "cmp uop: " << #_OpName << std::endl;                     \
     TI_ASSERT(a.stype.id == b.stype.id);                                   \
     const auto &bool_type = t_bool_; /* TODO: Only scalar supported now */ \
     if (a.stype.id == bool_type.id) {                                      \
@@ -1114,6 +1146,7 @@ DEFINE_BUILDER_CMP_UOP(ne, NotEqual);
 
 #define DEFINE_BUILDER_LOGICAL_OP(_OpName, _Op)                               \
   Value IRBuilder::_OpName(Value a, Value b) {                                \
+    std::cout << "logical op: " << #_OpName << std::endl;                     \
     TI_ASSERT(a.stype.id == b.stype.id);                                      \
     if (a.stype.id == t_bool_.id) {                                           \
       return make_value(spv::OpLogical##_Op, t_bool_, a, b);                  \
@@ -1134,6 +1167,7 @@ DEFINE_BUILDER_LOGICAL_OP(logical_and, And);
 DEFINE_BUILDER_LOGICAL_OP(logical_or, Or);
 
 Value IRBuilder::bit_field_extract(Value base, Value offset, Value count) {
+  std::cout << "bit_field_extract called" << std::endl;
   TI_ASSERT(is_integral(base.stype.dt));
   TI_ASSERT(is_integral(offset.stype.dt));
   TI_ASSERT(is_integral(count.stype.dt));
@@ -1141,12 +1175,14 @@ Value IRBuilder::bit_field_extract(Value base, Value offset, Value count) {
 }
 
 Value IRBuilder::select(Value cond, Value a, Value b) {
+  std::cout << "select called" << std::endl;
   TI_ASSERT(a.stype.id == b.stype.id);
   TI_ASSERT(cond.stype.id == t_bool_.id);
   return make_value(spv::OpSelect, a.stype, cond, a, b);
 }
 
 Value IRBuilder::cast(const SType &dst_type, Value value) {
+  std::cout << "cast called" << std::endl;
   TI_ASSERT(value.stype.id > 0U);
   if (value.stype.id == dst_type.id)
     return value;
@@ -1249,6 +1285,7 @@ Value IRBuilder::cast(const SType &dst_type, Value value) {
 }
 
 Value IRBuilder::alloca_variable(const SType &type) {
+  std::cout << "alloca_variable called" << std::endl;
   SType ptr_type = get_pointer_type(type, spv::StorageClassFunction);
   Value ret = new_value(ptr_type, ValueKind::kVariablePtr);
   ib_.begin(spv::OpVariable)
@@ -1258,6 +1295,7 @@ Value IRBuilder::alloca_variable(const SType &type) {
 }
 
 Value IRBuilder::alloca_workgroup_array(const SType &arr_type) {
+  std::cout << "alloca_workgroup_array called" << std::endl;
   SType ptr_type = get_pointer_type(arr_type, spv::StorageClassWorkgroup);
   Value ret = new_value(ptr_type, ValueKind::kVariablePtr);
   ib_.begin(spv::OpVariable)
@@ -1267,6 +1305,7 @@ Value IRBuilder::alloca_workgroup_array(const SType &arr_type) {
 }
 
 Value IRBuilder::load_variable(Value pointer, const SType &res_type) {
+  std::cout << "load_variable called" << std::endl;
   TI_ASSERT(pointer.flag == ValueKind::kVariablePtr ||
             pointer.flag == ValueKind::kStructArrayPtr ||
             pointer.flag == ValueKind::kPhysicalPtr);
@@ -1283,6 +1322,7 @@ Value IRBuilder::load_variable(Value pointer, const SType &res_type) {
   return ret;
 }
 void IRBuilder::store_variable(Value pointer, Value value) {
+  std::cout << "store_variable called" << std::endl;
   TI_ASSERT(pointer.flag == ValueKind::kVariablePtr ||
             pointer.flag == ValueKind::kPhysicalPtr);
   TI_ASSERT(value.stype.id == pointer.stype.element_type_id);
@@ -1297,6 +1337,8 @@ void IRBuilder::store_variable(Value pointer, Value value) {
 }
 
 void IRBuilder::register_value(std::string name, Value value) {
+  std::cout << "*** register_value called " << name << " = valid id "
+            << value.id << std::endl;
   auto it = value_name_tbl_.find(name);
   if (it != value_name_tbl_.end() && it->second.flag != ValueKind::kConstant) {
     TI_ERROR("{} already exists.", name);
@@ -1316,6 +1358,7 @@ Value IRBuilder::query_value(std::string name) const {
 }
 
 bool IRBuilder::check_value_existence(const std::string &name) const {
+  std::cout << "check_value_existence called" << std::endl;
   return value_name_tbl_.find(name) != value_name_tbl_.end();
 }
 
@@ -1323,6 +1366,7 @@ Value IRBuilder::float_atomic(AtomicOpType op_type,
                               Value addr_ptr,
                               Value data,
                               const DataType &dt) {
+  std::cout << "float_atomic called" << std::endl;
   if (op_type == AtomicOpType::add) {
     return atomic_operation(
         addr_ptr, data, [&](Value lhs, Value rhs) { return add(lhs, rhs); },
@@ -1358,6 +1402,7 @@ Value IRBuilder::integer_atomic(AtomicOpType op_type,
                                 Value addr_ptr,
                                 Value data,
                                 const DataType &dt) {
+  std::cout << "integer_atomic called" << std::endl;
   if (op_type == AtomicOpType::mul) {
     return atomic_operation(
         addr_ptr, data, [&](Value lhs, Value rhs) { return mul(lhs, rhs); },
@@ -1371,6 +1416,7 @@ Value IRBuilder::atomic_operation(Value addr_ptr,
                                   Value data,
                                   std::function<Value(Value, Value)> op,
                                   const DataType &dt) {
+  std::cout << "atomic_operation called" << std::endl;
   SType out_type = get_primitive_type(dt);
   SType res_type = get_primitive_uint_type(dt);
   Value ret_val_int = alloca_variable(res_type);
@@ -1435,6 +1481,7 @@ Value IRBuilder::atomic_operation(Value addr_ptr,
 }
 
 Value IRBuilder::rand_u32(Value global_tmp_) {
+  std::cout << "rand_u32 called" << std::endl;
   if (!init_rand_) {
     init_random_function(global_tmp_);
   }
@@ -1462,6 +1509,7 @@ Value IRBuilder::rand_u32(Value global_tmp_) {
 }
 
 Value IRBuilder::rand_f32(Value global_tmp_) {
+  std::cout << "rand_f32 called" << std::endl;
   if (!init_rand_) {
     init_random_function(global_tmp_);
   }
@@ -1475,6 +1523,7 @@ Value IRBuilder::rand_f32(Value global_tmp_) {
 }
 
 Value IRBuilder::rand_i32(Value global_tmp_) {
+  std::cout << "rand_i32 called" << std::endl;
   if (!init_rand_) {
     init_random_function(global_tmp_);
   }
@@ -1487,6 +1536,7 @@ Value IRBuilder::rand_i32(Value global_tmp_) {
 Value IRBuilder::get_const(const SType &dtype,
                            const uint64_t *pvalue,
                            bool cache) {
+  std::cout << "get_const called" << std::endl;
   auto key = std::make_pair(dtype.id, pvalue[0]);
   if (cache) {
     auto it = const_tbl_.find(key);
@@ -1530,6 +1580,7 @@ Value IRBuilder::get_const(const SType &dtype,
 }
 
 SType IRBuilder::declare_primitive_type(DataType dt) {
+  std::cout << "declare_primitive_type called" << std::endl;
   SType t;
   t.id = id_counter_++;
   t.dt = dt;
@@ -1552,6 +1603,7 @@ SType IRBuilder::declare_primitive_type(DataType dt) {
 }
 
 void IRBuilder::init_random_function(Value global_tmp_) {
+  std::cout << "init_random_function called" << std::endl;
   // variables declare
   SType local_type = get_pointer_type(t_uint32_, spv::StorageClassPrivate);
   rand_x_ = new_value(local_type, ValueKind::kVariablePtr);
@@ -1688,6 +1740,7 @@ void IRBuilder::init_random_function(Value global_tmp_) {
 Value IRBuilder::make_access_chain(const SType &out_type,
                                    Value base,
                                    const std::vector<int> &indices) {
+  std::cout << "make_access_chain called" << std::endl;
   Value ret = new_value(out_type, ValueKind::kVariablePtr);
   std::vector<Value> index_values;
   for (auto &ind : indices) {

@@ -107,6 +107,7 @@ struct Result {
 };
 
 TaskCodegen::Result TaskCodegen::run() {
+  std::cout << "TaskCodegen::run() called for task " << task_name_ << std::endl;
   ir_->init_header();
   kernel_function_ = ir_->new_function();  // void main();
   ir_->debug_name(spv::OpName, kernel_function_, "main");
@@ -139,9 +140,14 @@ void TaskCodegen::visit(OffloadedStmt *) {
 }
 
 void TaskCodegen::visit(Block *stmt) {
+  std::cout << "Block visited" << std::endl;
+  int i = 0;
   for (auto &s : stmt->statements) {
     if (offload_loop_motion_.find(s.get()) == offload_loop_motion_.end()) {
+      std::cout << ">>> Block; start stmt " << i << " of type " << s->type()
+                << std::endl;
       s->accept(this);
+      i++;
     }
   }
 }
@@ -206,6 +212,7 @@ void TaskCodegen::visit(PrintStmt *stmt) {
 }
 
 void TaskCodegen::visit(ConstStmt *const_stmt) {
+  std::cout << "ConstStmt visited" << std::endl;
   auto get_const = [&](const TypedConstant &const_val) {
     auto dt = const_val.dt.ptr_removed();
     spirv::SType stype = ir_->get_primitive_type(dt);
@@ -261,6 +268,7 @@ void TaskCodegen::visit(ConstStmt *const_stmt) {
 }
 
 void TaskCodegen::visit(AllocaStmt *alloca) {
+  std::cout << "AllocaStmt visited" << std::endl;
   spirv::Value ptr_val;
   auto alloca_type = alloca->ret_type.ptr_removed();
   if (auto tensor_type = alloca_type->cast<TensorType>()) {
@@ -284,6 +292,7 @@ void TaskCodegen::visit(AllocaStmt *alloca) {
 }
 
 void TaskCodegen::visit(MatrixPtrStmt *stmt) {
+  std::cout << "start MatrixPtrStmt visited" << std::endl;
   spirv::Value ptr_val;
   spirv::Value origin_val = ir_->query_value(stmt->origin->raw_name());
   spirv::Value offset_val = ir_->query_value(stmt->offset->raw_name());
@@ -311,6 +320,7 @@ void TaskCodegen::visit(MatrixPtrStmt *stmt) {
     ptr_to_buffers_[stmt] = ptr_to_buffers_[stmt->origin];
   }
   ir_->register_value(stmt->raw_name(), ptr_val);
+  std::cout << ">>> MatrixPtrStmt; end " << std::endl;
 }
 
 void TaskCodegen::visit(LocalLoadStmt *stmt) {
@@ -328,6 +338,7 @@ void TaskCodegen::visit(LocalStoreStmt *stmt) {
 }
 
 void TaskCodegen::visit(GetRootStmt *stmt) {
+  std::cout << "GetRootStmt visited" << std::endl;
   const int root_id = snode_to_root_.at(stmt->root()->id);
   root_stmts_[root_id] = stmt;
   // get_buffer_value({BufferType::Root, root_id}, PrimitiveType::u32);
@@ -1925,6 +1936,7 @@ void TaskCodegen::gen_array_range(Stmt *stmt) {
 }
 
 void TaskCodegen::generate_range_for_kernel(OffloadedStmt *stmt) {
+  std::cout << ">>> Generating range_for kernel: " << task_name_ << std::endl;
   task_attribs_.name = task_name_;
   task_attribs_.task_type = OffloadedTaskType::range_for;
 
@@ -2035,6 +2047,7 @@ void TaskCodegen::generate_range_for_kernel(OffloadedStmt *stmt) {
   ir_->make_inst(spv::OpBranch, head_label);
 
   // loop head
+  std::cout << ">>> range for; start loop head " << std::endl;
   ir_->start_label(head_label);
   spirv::PhiValue loop_var = ir_->make_phi(begin_.stype, 2);
   ir_->register_value("ii", loop_var);
@@ -2045,21 +2058,25 @@ void TaskCodegen::generate_range_for_kernel(OffloadedStmt *stmt) {
   ir_->make_inst(spv::OpBranchConditional, loop_cond, body_label, merge_label);
 
   // loop body
+  std::cout << ">>> range for; start loop body " << std::endl;
   ir_->start_label(body_label);
   push_loop_control_labels(continue_label, merge_label);
 
   // loop kernel
+  std::cout << ">>> range for; start loop kernel " << std::endl;
   stmt->body->accept(this);
   pop_loop_control_labels();
   ir_->make_inst(spv::OpBranch, continue_label);
 
   // loop continue
+  std::cout << ">>> range for; start loop continue " << std::endl;
   ir_->start_label(continue_label);
   spirv::Value next_value = ir_->add(loop_var, total_invocs);
   loop_var.set_incoming(1, next_value, ir_->current_label());
   ir_->make_inst(spv::OpBranch, head_label);
 
   // loop merge
+  std::cout << ">>> range for; start loop merge " << std::endl;
   ir_->start_label(merge_label);
 
   ir_->make_inst(spv::OpReturn);
@@ -2070,6 +2087,7 @@ void TaskCodegen::generate_range_for_kernel(OffloadedStmt *stmt) {
 }
 
 void TaskCodegen::generate_struct_for_kernel(OffloadedStmt *stmt) {
+  std::cout << ">>> Generating struct_for kernel: " << task_name_ << std::endl;
   task_attribs_.name = task_name_;
   task_attribs_.task_type = OffloadedTaskType::struct_for;
   task_attribs_.advisory_total_num_threads = 65536;
@@ -2112,8 +2130,10 @@ void TaskCodegen::generate_struct_for_kernel(OffloadedStmt *stmt) {
     auto listgen_index = ir_->load_variable(listgen_index_ptr, ir_->u32_type());
 
     // kernel
+    std::cout << "struct for; start kernel " << std::endl;
     ir_->register_value("ii", listgen_index);
     stmt->body->accept(this);
+    std::cout << "struct for; finish kernel " << std::endl;
 
     // continue
     spirv::Value total_invocs = ir_->cast(
