@@ -65,21 +65,7 @@ std::string buffer_instance_name(BufferInfo b) {
   return {};
 }
 
-class TaskCodegen : public IRVisitor {
- public:
-  struct Params {
-    OffloadedStmt *task_ir;
-    Arch arch;
-    DeviceCapabilityConfig *caps;
-    std::vector<CompiledSNodeStructs> compiled_structs;
-    const KernelContextAttributes *ctx_attribs;
-    std::string ti_kernel_name;
-    int task_id_in_kernel;
-  };
-
-  const bool use_64bit_pointers = false;
-
-  explicit TaskCodegen(const Params &params)
+  explicit TaskCodegen::TaskCodegen(const Params &params)
       : arch_(params.arch),
         caps_(params.caps),
         task_ir_(params.task_ir),
@@ -95,7 +81,7 @@ class TaskCodegen : public IRVisitor {
     ir_ = std::make_shared<spirv::IRBuilder>(arch_, caps_);
   }
 
-  void fill_snode_to_root() {
+  void TaskCodegen::fill_snode_to_root() {
     for (int root = 0; root < compiled_structs_.size(); ++root) {
       for (auto &[node_id, node] : compiled_structs_[root].snode_descriptors) {
         snode_to_root_[node_id] = root;
@@ -104,7 +90,7 @@ class TaskCodegen : public IRVisitor {
   }
 
   // Replace the wild '%' in the format string with "%%".
-  std::string sanitize_format_string(std::string const &str) {
+  std::string TaskCodegen::sanitize_format_string(std::string const &str) {
     std::string sanitized_str;
     for (char c : str) {
       if (c == '%') {
@@ -125,7 +111,7 @@ class TaskCodegen : public IRVisitor {
         arr_access;
   };
 
-  Result run() {
+  TaskCodegen::Result TaskCodegen::run() {
     ir_->init_header();
     kernel_function_ = ir_->new_function();  // void main();
     ir_->debug_name(spv::OpName, kernel_function_, "main");
@@ -153,11 +139,11 @@ class TaskCodegen : public IRVisitor {
     return res;
   }
 
-  void visit(OffloadedStmt *) override {
+  void TaskCodegen::visit(OffloadedStmt *) {
     TI_ERROR("This codegen is supposed to deal with one offloaded task");
   }
 
-  void visit(Block *stmt) override {
+  void TaskCodegen::visit(Block *stmt) {
     for (auto &s : stmt->statements) {
       if (offload_loop_motion_.find(s.get()) == offload_loop_motion_.end()) {
         s->accept(this);
@@ -165,7 +151,7 @@ class TaskCodegen : public IRVisitor {
     }
   }
 
-  void visit(PrintStmt *stmt) override {
+  void TaskCodegen::visit(PrintStmt *stmt) {
     if (!caps_->get(DeviceCapability::spirv_has_non_semantic_info)) {
       return;
     }
@@ -224,7 +210,7 @@ class TaskCodegen : public IRVisitor {
     ir_->call_debugprintf(formats, vals);
   }
 
-  void visit(ConstStmt *const_stmt) override {
+  void TaskCodegen::visit(ConstStmt *const_stmt) {
     auto get_const = [&](const TypedConstant &const_val) {
       auto dt = const_val.dt.ptr_removed();
       spirv::SType stype = ir_->get_primitive_type(dt);
@@ -279,7 +265,7 @@ class TaskCodegen : public IRVisitor {
     ir_->register_value(const_stmt->raw_name(), val);
   }
 
-  void visit(AllocaStmt *alloca) override {
+  void TaskCodegen::visit(AllocaStmt *alloca) {
     spirv::Value ptr_val;
     auto alloca_type = alloca->ret_type.ptr_removed();
     if (auto tensor_type = alloca_type->cast<TensorType>()) {
@@ -302,7 +288,7 @@ class TaskCodegen : public IRVisitor {
     ir_->register_value(alloca->raw_name(), ptr_val);
   }
 
-  void visit(MatrixPtrStmt *stmt) override {
+  void TaskCodegen::visit(MatrixPtrStmt *stmt) {
     spirv::Value ptr_val;
     spirv::Value origin_val = ir_->query_value(stmt->origin->raw_name());
     spirv::Value offset_val = ir_->query_value(stmt->offset->raw_name());
@@ -332,7 +318,7 @@ class TaskCodegen : public IRVisitor {
     ir_->register_value(stmt->raw_name(), ptr_val);
   }
 
-  void visit(LocalLoadStmt *stmt) override {
+  void TaskCodegen::visit(LocalLoadStmt *stmt) {
     auto ptr = stmt->src;
     spirv::Value ptr_val = ir_->query_value(ptr->raw_name());
     spirv::Value val = ir_->load_variable(
@@ -340,13 +326,13 @@ class TaskCodegen : public IRVisitor {
     ir_->register_value(stmt->raw_name(), val);
   }
 
-  void visit(LocalStoreStmt *stmt) override {
+  void TaskCodegen::visit(LocalStoreStmt *stmt) {
     spirv::Value ptr_val = ir_->query_value(stmt->dest->raw_name());
     spirv::Value val = ir_->query_value(stmt->val->raw_name());
     ir_->store_variable(ptr_val, val);
   }
 
-  void visit(GetRootStmt *stmt) override {
+  void TaskCodegen::visit(GetRootStmt *stmt) {
     const int root_id = snode_to_root_.at(stmt->root()->id);
     root_stmts_[root_id] = stmt;
     // get_buffer_value({BufferType::Root, root_id}, PrimitiveType::u32);
@@ -354,7 +340,7 @@ class TaskCodegen : public IRVisitor {
     ir_->register_value(stmt->raw_name(), root_val);
   }
 
-  void visit(GetChStmt *stmt) override {
+  void TaskCodegen::visit(GetChStmt *stmt) {
     // TODO: GetChStmt -> GetComponentStmt ?
     const int root = snode_to_root_.at(stmt->input_snode->id);
 
@@ -378,7 +364,7 @@ class TaskCodegen : public IRVisitor {
 
   enum class ActivationOp { activate, deactivate, query };
 
-  spirv::Value bitmasked_activation(ActivationOp op,
+  spirv::Value TaskCodegen::bitmasked_activation(ActivationOp op,
                                     spirv::Value parent_ptr,
                                     int root_id,
                                     const SNode *sn,
@@ -432,7 +418,7 @@ class TaskCodegen : public IRVisitor {
     }
   }
 
-  void visit(SNodeOpStmt *stmt) override {
+  void TaskCodegen::visit(SNodeOpStmt *stmt) {
     const int root_id = snode_to_root_.at(stmt->snode->id);
     std::string parent = stmt->ptr->raw_name();
     spirv::Value parent_val = ir_->query_value(parent);
@@ -463,7 +449,7 @@ class TaskCodegen : public IRVisitor {
     }
   }
 
-  void visit(SNodeLookupStmt *stmt) override {
+  void TaskCodegen::visit(SNodeLookupStmt *stmt) {
     // TODO: SNodeLookupStmt -> GetSNodeCellStmt ?
     bool is_root{false};  // Eliminate first root snode access
     const int root_id = snode_to_root_.at(stmt->snode->id);
@@ -508,7 +494,7 @@ class TaskCodegen : public IRVisitor {
     ir_->register_value(stmt->raw_name(), val);
   }
 
-  void visit(RandStmt *stmt) override {
+  void TaskCodegen::visit(RandStmt *stmt) {
     spirv::Value val;
     spirv::Value global_tmp =
         get_buffer_value(BufferType::GlobalTmps, PrimitiveType::u32);
@@ -527,7 +513,7 @@ class TaskCodegen : public IRVisitor {
     ir_->register_value(stmt->raw_name(), val);
   }
 
-  void visit(LinearizeStmt *stmt) override {
+  void TaskCodegen::visit(LinearizeStmt *stmt) {
     spirv::Value val = ir_->const_i32_zero_;
     for (size_t i = 0; i < stmt->inputs.size(); ++i) {
       spirv::Value strides_val =
@@ -538,7 +524,7 @@ class TaskCodegen : public IRVisitor {
     ir_->register_value(stmt->raw_name(), val);
   }
 
-  void visit(LoopIndexStmt *stmt) override {
+  void TaskCodegen::visit(LoopIndexStmt *stmt) {
     const auto stmt_name = stmt->raw_name();
     if (stmt->loop->is<OffloadedStmt>()) {
       const auto type = stmt->loop->as<OffloadedStmt>()->task_type;
@@ -560,13 +546,13 @@ class TaskCodegen : public IRVisitor {
     }
   }
 
-  void visit(GlobalStoreStmt *stmt) override {
+  void TaskCodegen::visit(GlobalStoreStmt *stmt) {
     spirv::Value val = ir_->query_value(stmt->val->raw_name());
 
     store_buffer(stmt->dest, val);
   }
 
-  void visit(GlobalLoadStmt *stmt) override {
+  void TaskCodegen::visit(GlobalLoadStmt *stmt) {
     auto dt = stmt->element_type();
 
     auto val = load_buffer(stmt->src, dt);
@@ -574,7 +560,7 @@ class TaskCodegen : public IRVisitor {
     ir_->register_value(stmt->raw_name(), val);
   }
 
-  void visit(ArgLoadStmt *stmt) override {
+  void TaskCodegen::visit(ArgLoadStmt *stmt) {
     const auto arg_id = stmt->arg_id;
     const std::vector<int> indices_l(stmt->arg_id.begin(),
                                      stmt->arg_id.begin());
@@ -616,7 +602,7 @@ class TaskCodegen : public IRVisitor {
     }
   }
 
-  void visit(GetElementStmt *stmt) override {
+  void TaskCodegen::visit(GetElementStmt *stmt) {
     spirv::Value val = ir_->query_value(stmt->src->raw_name());
     const auto val_type = ir_->get_primitive_type(stmt->element_type());
     const auto val_type_ptr =
@@ -626,7 +612,7 @@ class TaskCodegen : public IRVisitor {
     ir_->register_value(stmt->raw_name(), val);
   }
 
-  void visit(ReturnStmt *stmt) override {
+  void TaskCodegen::visit(ReturnStmt *stmt) {
     TI_ASSERT(ctx_attribs_->has_rets());
     // The `PrimitiveType::i32` in this function call is a placeholder.
     auto buffer_value = get_buffer_value(BufferType::Rets, PrimitiveType::i32);
@@ -685,14 +671,14 @@ class TaskCodegen : public IRVisitor {
     }
   }
 
-  void visit(GlobalTemporaryStmt *stmt) override {
+  void TaskCodegen::visit(GlobalTemporaryStmt *stmt) {
     spirv::Value val = ir_->int_immediate_number(ir_->i32_type(), stmt->offset,
                                                  false);  // Named Constant
     ir_->register_value(stmt->raw_name(), val);
     ptr_to_buffers_[stmt] = BufferType::GlobalTmps;
   }
 
-  void visit(ExternalTensorShapeAlongAxisStmt *stmt) override {
+  void TaskCodegen::visit(ExternalTensorShapeAlongAxisStmt *stmt) {
     const auto name = stmt->raw_name();
     const auto arg_id = stmt->arg_id;
     const auto axis = stmt->axis;
@@ -712,7 +698,7 @@ class TaskCodegen : public IRVisitor {
     ir_->register_value(name, var);
   }
 
-  void visit(ExternalPtrStmt *stmt) override {
+  void TaskCodegen::visit(ExternalPtrStmt *stmt) {
     // Used mostly for transferring data between host (e.g. numpy array) and
     // device.
     spirv::Value linear_offset = ir_->int_immediate_number(ir_->i32_type(), 0);
@@ -782,10 +768,10 @@ class TaskCodegen : public IRVisitor {
     }
   }
 
-  void visit(DecorationStmt *stmt) override {
+  void TaskCodegen::visit(DecorationStmt *stmt) {
   }
 
-  void visit(UnaryOpStmt *stmt) override {
+  void TaskCodegen::visit(UnaryOpStmt *stmt) {
     const auto operand_name = stmt->operand->raw_name();
 
     const auto src_dt = stmt->operand->element_type();
@@ -940,7 +926,7 @@ class TaskCodegen : public IRVisitor {
     else {TI_NOT_IMPLEMENTED} ir_->register_value(stmt->raw_name(), val);
   }
 
-  void generate_overflow_branch(const spirv::Value &cond_v,
+  void TaskCodegen::generate_overflow_branch(const spirv::Value &cond_v,
                                 const std::string &op,
                                 const std::string &tb) {
     spirv::Value cond =
@@ -958,7 +944,7 @@ class TaskCodegen : public IRVisitor {
     ir_->start_label(merge_label);
   }
 
-  spirv::Value generate_uadd_overflow(const spirv::Value &a,
+  spirv::Value TaskCodegen::generate_uadd_overflow(const spirv::Value &a,
                                       const spirv::Value &b,
                                       const std::string &tb) {
     std::vector<std::tuple<spirv::SType, std::string, size_t>>
@@ -976,7 +962,7 @@ class TaskCodegen : public IRVisitor {
     return result;
   }
 
-  spirv::Value generate_usub_overflow(const spirv::Value &a,
+  spirv::Value TaskCodegen::generate_usub_overflow(const spirv::Value &a,
                                       const spirv::Value &b,
                                       const std::string &tb) {
     std::vector<std::tuple<spirv::SType, std::string, size_t>>
@@ -994,7 +980,7 @@ class TaskCodegen : public IRVisitor {
     return result;
   }
 
-  spirv::Value generate_sadd_overflow(const spirv::Value &a,
+  spirv::Value TaskCodegen::generate_sadd_overflow(const spirv::Value &a,
                                       const spirv::Value &b,
                                       const std::string &tb) {
     // overflow iff (sign(a) == sign(b)) && (sign(a) != sign(result))
@@ -1014,7 +1000,7 @@ class TaskCodegen : public IRVisitor {
     return result;
   }
 
-  spirv::Value generate_ssub_overflow(const spirv::Value &a,
+  spirv::Value TaskCodegen::generate_ssub_overflow(const spirv::Value &a,
                                       const spirv::Value &b,
                                       const std::string &tb) {
     // overflow iff (sign(a) != sign(b)) && (sign(a) != sign(result))
@@ -1034,7 +1020,7 @@ class TaskCodegen : public IRVisitor {
     return result;
   }
 
-  spirv::Value generate_umul_overflow(const spirv::Value &a,
+  spirv::Value TaskCodegen::generate_umul_overflow(const spirv::Value &a,
                                       const spirv::Value &b,
                                       const std::string &tb) {
     // overflow iff high bits != 0
@@ -1051,7 +1037,7 @@ class TaskCodegen : public IRVisitor {
     return low;
   }
 
-  spirv::Value generate_smul_overflow(const spirv::Value &a,
+  spirv::Value TaskCodegen::generate_smul_overflow(const spirv::Value &a,
                                       const spirv::Value &b,
                                       const std::string &tb) {
     // overflow if high bits are not all sign bit (0 if positive, -1 if
@@ -1088,7 +1074,7 @@ class TaskCodegen : public IRVisitor {
     return low;
   }
 
-  spirv::Value generate_ushl_overflow(const spirv::Value &a,
+  spirv::Value TaskCodegen::generate_ushl_overflow(const spirv::Value &a,
                                       const spirv::Value &b,
                                       const std::string &tb) {
     // overflow iff a << b >> b != a
@@ -1100,7 +1086,7 @@ class TaskCodegen : public IRVisitor {
     return result;
   }
 
-  spirv::Value generate_sshl_overflow(const spirv::Value &a,
+  spirv::Value TaskCodegen::generate_sshl_overflow(const spirv::Value &a,
                                       const spirv::Value &b,
                                       const std::string &tb) {
     // overflow iff a << b >> b != a
@@ -1112,7 +1098,7 @@ class TaskCodegen : public IRVisitor {
     return result;
   }
 
-  void visit(BinaryOpStmt *bin) override {
+  void TaskCodegen::visit(BinaryOpStmt *bin) {
     const auto lhs_name = bin->lhs->raw_name();
     const auto rhs_name = bin->rhs->raw_name();
     const auto bin_name = bin->raw_name();
@@ -1261,7 +1247,7 @@ class TaskCodegen : public IRVisitor {
     else {TI_NOT_IMPLEMENTED} ir_->register_value(bin_name, bin_value);
   }
 
-  void visit(TernaryOpStmt *tri) override {
+  void TaskCodegen::visit(TernaryOpStmt *tri) {
     TI_ASSERT(tri->op_type == TernaryOpType::select);
     spirv::Value op1 = ir_->query_value(tri->op1->raw_name());
     spirv::Value op2 = ir_->query_value(tri->op2->raw_name());
@@ -1278,7 +1264,7 @@ class TaskCodegen : public IRVisitor {
     return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
   }
 
-  void visit(TexturePtrStmt *stmt) override {
+  void TaskCodegen::visit(TexturePtrStmt *stmt) {
     spirv::Value val;
 
     auto arg_id = stmt->arg_load_stmt->as<ArgLoadStmt>()->arg_id;
@@ -1313,7 +1299,7 @@ class TaskCodegen : public IRVisitor {
     ir_->register_value(stmt->raw_name(), val);
   }
 
-  void visit(TextureOpStmt *stmt) override {
+  void TaskCodegen::visit(TextureOpStmt *stmt) {
     spirv::Value tex = ir_->query_value(stmt->texture_ptr->raw_name());
     spirv::Value val;
     if (stmt->op == TextureOpType::kSampleLod ||
@@ -1352,7 +1338,7 @@ class TaskCodegen : public IRVisitor {
     }
   }
 
-  void visit(InternalFuncStmt *stmt) override {
+  void TaskCodegen::visit(InternalFuncStmt *stmt) {
     spirv::Value val;
 
     if (stmt->func_name == "composite_extract_0") {
@@ -1517,7 +1503,7 @@ class TaskCodegen : public IRVisitor {
     ir_->register_value(stmt->raw_name(), val);
   }
 
-  void visit(AtomicOpStmt *stmt) override {
+  void TaskCodegen::visit(AtomicOpStmt *stmt) {
     const auto dt = stmt->dest->element_type().ptr_removed();
 
     spirv::Value data = ir_->query_value(stmt->val->raw_name());
@@ -1713,7 +1699,7 @@ class TaskCodegen : public IRVisitor {
     ir_->register_value(stmt->raw_name(), val);
   }
 
-  void visit(IfStmt *if_stmt) override {
+  void TaskCodegen::visit(IfStmt *if_stmt) {
     spirv::Value cond_v = ir_->cast(
         ir_->bool_type(), ir_->query_value(if_stmt->cond->raw_name()));
     spirv::Value cond =
@@ -1750,7 +1736,7 @@ class TaskCodegen : public IRVisitor {
     ir_->start_label(merge_label);
   }
 
-  void visit(RangeForStmt *for_stmt) override {
+  void TaskCodegen::visit(RangeForStmt *for_stmt) {
     auto loop_var_name = for_stmt->raw_name();
     // Must get init label after making value(to make sure they are correct)
     spirv::Label init_label = ir_->current_label();
@@ -1810,7 +1796,7 @@ class TaskCodegen : public IRVisitor {
     ir_->start_label(merge_label);
   }
 
-  void visit(WhileStmt *stmt) override {
+  void TaskCodegen::visit(WhileStmt *stmt) {
     spirv::Label head_label = ir_->new_label();
     spirv::Label body_label = ir_->new_label();
     spirv::Label continue_label = ir_->new_label();
@@ -1838,7 +1824,7 @@ class TaskCodegen : public IRVisitor {
     ir_->start_label(merge_label);
   }
 
-  void visit(WhileControlStmt *stmt) override {
+  void TaskCodegen::visit(WhileControlStmt *stmt) {
     spirv::Value cond_v =
         ir_->cast(ir_->bool_type(), ir_->query_value(stmt->cond->raw_name()));
     spirv::Value cond =
@@ -1854,7 +1840,7 @@ class TaskCodegen : public IRVisitor {
     ir_->start_label(merge_label);
   }
 
-  void visit(ContinueStmt *stmt) override {
+  void TaskCodegen::visit(ContinueStmt *stmt)  {
     auto stmt_in_off_for = [stmt]() {
       TI_ASSERT(stmt->scope != nullptr);
       if (auto *offl = stmt->scope->cast<OffloadedStmt>(); offl) {
@@ -1874,8 +1860,7 @@ class TaskCodegen : public IRVisitor {
                         // which should be eliminated
   }
 
- private:
-  void emit_headers() {
+  void TaskCodegen::emit_headers() {
     /*
     for (int root = 0; root < compiled_structs_.size(); ++root) {
       get_buffer_value({BufferType::Root, root});
@@ -1907,7 +1892,7 @@ class TaskCodegen : public IRVisitor {
                                 group_size);  // kernel entry
   }
 
-  void generate_serial_kernel(OffloadedStmt *stmt) {
+  void TaskCodegen::generate_serial_kernel(OffloadedStmt *stmt) {
     task_attribs_.name = task_name_;
     task_attribs_.task_type = OffloadedTaskType::serial;
     task_attribs_.advisory_total_num_threads = 1;
@@ -1941,7 +1926,7 @@ class TaskCodegen : public IRVisitor {
     task_attribs_.texture_binds = get_texture_binds();
   }
 
-  void gen_array_range(Stmt *stmt) {
+  void TaskCodegen::gen_array_range(Stmt *stmt) {
     /* Fix issue 7493
      *
      * Prevent repeated range generation for the same array
@@ -1958,7 +1943,7 @@ class TaskCodegen : public IRVisitor {
     stmt->accept(this);
   }
 
-  void generate_range_for_kernel(OffloadedStmt *stmt) {
+  void TaskCodegen::generate_range_for_kernel(OffloadedStmt *stmt) {
     task_attribs_.name = task_name_;
     task_attribs_.task_type = OffloadedTaskType::range_for;
 
@@ -2104,7 +2089,7 @@ class TaskCodegen : public IRVisitor {
     task_attribs_.texture_binds = get_texture_binds();
   }
 
-  void generate_struct_for_kernel(OffloadedStmt *stmt) {
+  void TaskCodegen::generate_struct_for_kernel(OffloadedStmt *stmt) {
     task_attribs_.name = task_name_;
     task_attribs_.task_type = OffloadedTaskType::struct_for;
     task_attribs_.advisory_total_num_threads = 65536;
@@ -2171,7 +2156,7 @@ class TaskCodegen : public IRVisitor {
     task_attribs_.texture_binds = get_texture_binds();
   }
 
-  spirv::Value at_buffer(const Stmt *ptr, DataType dt) {
+  spirv::Value TaskCodegen::at_buffer(const Stmt *ptr, DataType dt) {
     spirv::Value ptr_val = ir_->query_value(ptr->raw_name());
 
     if (ptr_val.stype.dt == PrimitiveType::u64) {
@@ -2199,7 +2184,7 @@ class TaskCodegen : public IRVisitor {
     return ret;
   }
 
-  spirv::Value load_buffer(const Stmt *ptr, DataType dt) {
+  spirv::Value TaskCodegen::load_buffer(const Stmt *ptr, DataType dt) {
     spirv::Value ptr_val = ir_->query_value(ptr->raw_name());
 
     DataType ti_buffer_type = ir_->get_gstaichi_uint_type(dt);
@@ -2221,7 +2206,7 @@ class TaskCodegen : public IRVisitor {
                                  val_bits);
   }
 
-  void store_buffer(const Stmt *ptr, spirv::Value val) {
+  void TaskCodegen::store_buffer(const Stmt *ptr, spirv::Value val) {
     spirv::Value ptr_val = ir_->query_value(ptr->raw_name());
 
     DataType ti_buffer_type = ir_->get_gstaichi_uint_type(val.stype.dt);
@@ -2243,7 +2228,7 @@ class TaskCodegen : public IRVisitor {
     ir_->store_variable(buf_ptr, val_bits);
   }
 
-  spirv::Value get_buffer_value(BufferInfo buffer, DataType dt) {
+  spirv::Value TaskCodegen::get_buffer_value(BufferInfo buffer, DataType dt) {
     auto type = ir_->get_primitive_type(dt);
     auto key = std::make_pair(buffer, type.id);
 
@@ -2281,7 +2266,7 @@ class TaskCodegen : public IRVisitor {
     return buffer_value;
   }
 
-  spirv::Value make_pointer(size_t offset) {
+  spirv::Value TaskCodegen::make_pointer(size_t offset) {
     if (use_64bit_pointers) {
       // This is hacky, should check out how to encode uint64 values in spirv
       return ir_->uint_immediate_number(ir_->u64_type(), offset);
@@ -2290,7 +2275,7 @@ class TaskCodegen : public IRVisitor {
     }
   }
 
-  void compile_args_struct() {
+  void TaskCodegen::compile_args_struct() {
     if (!ctx_attribs_->has_args())
       return;
 
@@ -2366,7 +2351,7 @@ class TaskCodegen : public IRVisitor {
         ir_->uniform_struct_argument(args_struct_type_, 0, 0, "args");
   }
 
-  void compile_ret_struct() {
+  void TaskCodegen::compile_ret_struct() {
     if (!ctx_attribs_->has_rets())
       return;
 
@@ -2412,7 +2397,7 @@ class TaskCodegen : public IRVisitor {
         ir_->buffer_struct_argument(ret_struct_type_, 0, 1, "rets");
   }
 
-  std::vector<BufferBind> get_buffer_binds() {
+  std::vector<BufferBind> TaskCodegen::get_buffer_binds() {
     std::vector<BufferBind> result;
     for (auto &[key, val] : buffer_binding_map_) {
       result.push_back(BufferBind{key.first, int(val)});
@@ -2420,94 +2405,33 @@ class TaskCodegen : public IRVisitor {
     return result;
   }
 
-  std::vector<TextureBind> get_texture_binds() {
+  std::vector<TextureBind> TaskCodegen::get_texture_binds() {
     return texture_binds_;
   }
 
-  void push_loop_control_labels(spirv::Label continue_label,
+  void TaskCodegen::push_loop_control_labels(spirv::Label continue_label,
                                 spirv::Label merge_label) {
     continue_label_stack_.push_back(continue_label);
     merge_label_stack_.push_back(merge_label);
   }
 
-  void pop_loop_control_labels() {
+  void TaskCodegen::pop_loop_control_labels() {
     continue_label_stack_.pop_back();
     merge_label_stack_.pop_back();
   }
 
-  const spirv::Label current_continue_label() const {
+  const spirv::Label TaskCodegen::current_continue_label() const {
     return continue_label_stack_.back();
   }
 
-  const spirv::Label current_merge_label() const {
+  const spirv::Label TaskCodegen::current_merge_label() const {
     return merge_label_stack_.back();
   }
 
-  const spirv::Label return_label() const {
+  const spirv::Label TaskCodegen::return_label() const {
     return continue_label_stack_.front();
   }
 
-  Arch arch_;
-  DeviceCapabilityConfig *caps_;
-
-  struct BufferInfoTypeTupleHasher {
-    std::size_t operator()(const std::pair<BufferInfo, int> &buf) const {
-      return BufferInfoHasher()(buf.first) ^ (buf.second << 5);
-    }
-  };
-
-  spirv::SType args_struct_type_;
-  spirv::Value args_buffer_value_;
-
-  std::unordered_map<std::vector<int>,
-                     spirv::SType,
-                     hashing::Hasher<std::vector<int>>>
-      args_struct_types_;
-
-  std::vector<spirv::SType> rets_struct_types_;
-
-  spirv::SType ret_struct_type_;
-  spirv::Value ret_buffer_value_;
-
-  std::shared_ptr<spirv::IRBuilder> ir_;  // spirv binary code builder
-  std::unordered_map<std::pair<BufferInfo, int>,
-                     spirv::Value,
-                     BufferInfoTypeTupleHasher>
-      buffer_value_map_;
-  std::unordered_map<std::pair<BufferInfo, int>,
-                     uint32_t,
-                     BufferInfoTypeTupleHasher>
-      buffer_binding_map_;
-  std::vector<TextureBind> texture_binds_;
-  std::vector<spirv::Value> shared_array_binds_;
-  spirv::Value kernel_function_;
-  spirv::Label kernel_return_label_;
-  bool gen_label_{false};
-
-  int binding_head_{2};  // Args:0, Ret:1
-
-  /*
-  std::unordered_map<int, spirv::CompiledSpirvSNode>
-      spirv_snodes_;  // maps root id to spirv snode
-      */
-
-  OffloadedStmt *const task_ir_;  // not owned
-  std::vector<CompiledSNodeStructs> compiled_structs_;
-  std::unordered_map<int, int> snode_to_root_;
-  const KernelContextAttributes *const ctx_attribs_;  // not owned
-  const std::string task_name_;
-  std::vector<spirv::Label> continue_label_stack_;
-  std::vector<spirv::Label> merge_label_stack_;
-
-  std::unordered_set<const Stmt *> offload_loop_motion_;
-
-  TaskAttributes task_attribs_;
-  std::unordered_map<int, GetRootStmt *>
-      root_stmts_;  // maps root id to get root stmt
-  std::unordered_map<const Stmt *, BufferInfo> ptr_to_buffers_;
-  std::unordered_map<std::vector<int>, Value, hashing::Hasher<std::vector<int>>>
-      argid_to_tex_value_;
-};
 }  // namespace
 
 static void spriv_message_consumer(spv_message_level_t level,
