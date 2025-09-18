@@ -255,30 +255,9 @@ TEST(Scalarize, ScalarizeBugTmp222) {
 
     auto for2_body = std::make_unique<Block>();
     for2_body->push_back<AllocaStmt>(TypeFactory::get_instance().get_primitive_type(PrimitiveTypeID::f32));
-    std::vector<int> vector_shape = {4};
-    auto vector_type = TypeFactory::get_instance().get_tensor_type(vector_shape, TypeFactory::get_instance().get_primitive_type(PrimitiveTypeID::f32));
-    for2_body->push_back<AllocaStmt>(vector_type);
     auto zero_for2 = for2_body->push_back<ConstStmt>(TypedConstant(0));
     // auto place0 = 
 
-    auto root_snode = std::make_unique<SNode>(/*depth=*/0, /*t=*/SNodeType::root);
-    const std::vector<Axis> axes = {Axis{0}};
-    // ptr_snode_ = &(root_snode_->pointer(axes, kPointerSize));
-    auto dense_snode_ = &(root_snode->dense(axes, 1));
-    // Must end with a `place` SNode.
-    auto leaf_snode = &(dense_snode_->insert_children(SNodeType::place));
-    leaf_snode->dt = PrimitiveType::f32;
-    auto leaf_snode2 = &(dense_snode_->insert_children(SNodeType::place));
-    leaf_snode2->dt = PrimitiveType::f32;
-    auto leaf_snode3 = &(dense_snode_->insert_children(SNodeType::place));
-    leaf_snode3->dt = PrimitiveType::f32;
-    auto leaf_snode4 = &(dense_snode_->insert_children(SNodeType::place));
-    leaf_snode4->dt = PrimitiveType::f32;
-
-    std::vector<SNode *> snodes = {leaf_snode, leaf_snode2, leaf_snode3, leaf_snode4};
-    std::vector<Stmt *> indices = {zero_for2};
-    auto matrix_global_ptr = for2_body->push_back<MatrixOfGlobalPtrStmt>(snodes, indices, false, 1, PrimitiveType::f32, true);
-    for2_body->push_back<LocalLoadStmt>(matrix_global_ptr);
 
     // GlobalLoadStmt(Stmt *src, const DebugInfo &dbg_info = DebugInfo())
 
@@ -296,6 +275,34 @@ TEST(Scalarize, ScalarizeBugTmp222) {
             OffloadedStmt::TaskType::range_for, Arch::vulkan, kernel.get());
     auto offloaded = block->statements.back()->as<OffloadedStmt>();
     offloaded->body->push_back<ConstStmt>(TypedConstant(0));
+
+        auto root_snode = std::make_unique<SNode>(/*depth=*/0, /*t=*/SNodeType::root);
+    const std::vector<Axis> axes = {Axis{0}};
+    // ptr_snode_ = &(root_snode_->pointer(axes, kPointerSize));
+    auto dense_snode_ = &(root_snode->dense(axes, 1));
+    // Must end with a `place` SNode.
+    auto leaf_snode = &(dense_snode_->insert_children(SNodeType::place));
+    leaf_snode->dt = PrimitiveType::f32;
+    auto leaf_snode2 = &(dense_snode_->insert_children(SNodeType::place));
+    leaf_snode2->dt = PrimitiveType::f32;
+    auto leaf_snode3 = &(dense_snode_->insert_children(SNodeType::place));
+    leaf_snode3->dt = PrimitiveType::f32;
+    auto leaf_snode4 = &(dense_snode_->insert_children(SNodeType::place));
+    leaf_snode4->dt = PrimitiveType::f32;
+
+      std::vector<int> vector_shape = {4};
+    auto vector_type = TypeFactory::get_instance().get_tensor_type(vector_shape, TypeFactory::get_instance().get_primitive_type(PrimitiveTypeID::f32));
+
+    std::vector<SNode *> snodes = {leaf_snode, leaf_snode2, leaf_snode3, leaf_snode4};
+    std::vector<Stmt *> indices = {zero_for2};
+    auto matrix_global_ptr = offloaded->body->push_back<MatrixOfGlobalPtrStmt>(snodes, indices, false, 1, vector_type, true);
+    // auto matrix_global_ptr = offloaded->body->push_back<MatrixOfGlobalPtrStmt>(snodes, indices, false, 1, PrimitiveType::f32, true);
+    auto global_load = offloaded->body->push_back<GlobalLoadStmt>(matrix_global_ptr);
+
+    auto vector_alloca = offloaded->body->push_back<AllocaStmt>(vector_type);
+
+    // offloaded->body->push_back<AllocaStmt>();
+    offloaded->body->push_back<LocalStoreStmt>(vector_alloca, global_load);
 
             //RangeForStmt(Stmt *begin,
               //  Stmt *end,
