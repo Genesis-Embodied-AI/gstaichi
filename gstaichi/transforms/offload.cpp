@@ -348,6 +348,7 @@ class IdentifyValuesUsedInOtherOffloads : public BasicStmtVisitor {
     } else {
       std::size_t type_size = data_type_size(type);
       // align global_offset to a multiple of type_size
+      type_size = std::max(type_size, (std::size_t)4);
       global_offset_ =
           ((global_offset_ + type_size - 1) / type_size) * type_size;
       ret = global_offset_;
