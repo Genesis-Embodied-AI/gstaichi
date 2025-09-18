@@ -173,6 +173,18 @@ void compile_to_offloads(IRNode *ir,
       {false, /*autodiff_enabled*/ false, kernel->get_name(), verbose});
   print("Simplified III");
   irpass::analysis::verify(ir);
+
+    // const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
+    if (dump_ir_env != nullptr) {
+    std::filesystem::path filename =
+        IR_DUMP_DIR / (kernel->name + "_after_1_compile_to_offloads.ll");
+    if (std::ofstream out_file(filename.string()); out_file) {
+      std::string outString;
+      irpass::print(ir, &outString);
+      out_file << outString;
+    }
+  }
+
 }
 
 void offload_to_executable(IRNode *ir,
@@ -333,6 +345,18 @@ void offload_to_executable(IRNode *ir,
   // Final field registration correctness & type checking
   irpass::type_check(ir, config);
   irpass::analysis::verify(ir);
+
+      const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
+    if (dump_ir_env != nullptr) {
+    std::filesystem::path filename =
+        IR_DUMP_DIR / (kernel->name + "_after_2_compile_to_executable.ll");
+    if (std::ofstream out_file(filename.string()); out_file) {
+      std::string outString;
+      irpass::print(ir, &outString);
+      out_file << outString;
+    }
+  }
+
 }
 
 void compile_to_executable(IRNode *ir,
@@ -355,6 +379,18 @@ void compile_to_executable(IRNode *ir,
       /*determine_ad_stack_size=*/autodiff_mode == AutodiffMode::kReverse &&
           ad_use_stack,
       lower_global_access, make_thread_local, make_block_local);
+    
+  const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
+    if (dump_ir_env != nullptr) {
+    std::filesystem::path filename =
+        IR_DUMP_DIR / (kernel->name + "_after_3_compile_to_executable.ll");
+    if (std::ofstream out_file(filename.string()); out_file) {
+      std::string outString;
+      irpass::print(ir, &outString);
+      out_file << outString;
+    }
+  }
+
 }
 
 void compile_function(IRNode *ir,
