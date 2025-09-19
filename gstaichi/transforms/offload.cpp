@@ -352,6 +352,8 @@ class IdentifyValuesUsedInOtherOffloads : public BasicStmtVisitor {
       // Note that SPIR-V requires at least 4 byte alignment
       // TODO: is this a theoretical constraint of SPIR-V, or is this a
       // bug/feature of our SPIR-V codegen?
+      // Potentially relevant doc:
+      // https://vulkan.lunarg.com/doc/view/1.4.304.1/windows/antora/spec/latest/appendices/spirvenv.html
       type_size = std::max(type_size, (std::size_t)4);
       global_offset_ =
           ((global_offset_ + type_size - 1) / type_size) * type_size;
