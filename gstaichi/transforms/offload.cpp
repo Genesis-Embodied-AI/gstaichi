@@ -345,9 +345,16 @@ class IdentifyValuesUsedInOtherOffloads : public BasicStmtVisitor {
       auto tensor_type = type->cast<TensorType>();
       global_offset_ += tensor_type->get_num_elements() *
                         data_type_size(tensor_type->get_element_type());
+      // TODO: do we need to align this?
     } else {
       std::size_t type_size = data_type_size(type);
       // align global_offset to a multiple of type_size
+      // Note that SPIR-V requires at least 4 byte alignment
+      // TODO: is this a theoretical constraint of SPIR-V, or is this a
+      // bug/feature of our SPIR-V codegen?
+      // Potentially relevant doc:
+      // https://vulkan.lunarg.com/doc/view/1.4.304.1/windows/antora/spec/latest/appendices/spirvenv.html
+      type_size = std::max(type_size, (std::size_t)4);
       global_offset_ =
           ((global_offset_ + type_size - 1) / type_size) * type_size;
       ret = global_offset_;
