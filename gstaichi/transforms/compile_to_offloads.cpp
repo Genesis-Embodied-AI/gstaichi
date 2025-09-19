@@ -317,8 +317,16 @@ void offload_to_executable(IRNode *ir,
   bool half2_optimization_enabled =
       (config.arch == Arch::cuda && config.half2_vectorization &&
        !get_custom_cuda_library_path().empty());
+  std::string output;
+  irpass::print(ir, &output);
+  std::cout << output << std::endl;
+  std::cout << "^^^ before scalarize" << std::endl;
   if (config.real_matrix_scalarize) {
     if (irpass::scalarize(ir, half2_optimization_enabled)) {
+  irpass::print(ir, &output);
+  std::cout << output << std::endl;
+  std::cout << "^^^ after scalarize" << std::endl;
+
       irpass::die(ir);
       print("DIE");
 

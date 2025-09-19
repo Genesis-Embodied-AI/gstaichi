@@ -324,7 +324,8 @@ auto root_snode = std::make_unique<SNode>(/*depth=*/0, /*t=*/SNodeType::root);
 
   irpass::print(block.get());
 
-  irpass::scalarize(block.get());
+  ExtractLocalPointers::run(block.get())
+  // irpass::scalarize(block.get());
   irpass::print(block.get());
 
 }
