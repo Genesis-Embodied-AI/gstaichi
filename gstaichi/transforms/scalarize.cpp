@@ -1216,6 +1216,7 @@ class ExtractLocalPointers : public BasicStmtVisitor {
     // Extract to OffloadStmt
     Block *orig_top_level = top_level_;
     top_level_ = stmt->body.get();
+    first_const_.clear();
     stmt->all_blocks_accept(this);
     top_level_ = orig_top_level;
   }
