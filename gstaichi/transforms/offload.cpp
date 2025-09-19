@@ -349,9 +349,11 @@ class IdentifyValuesUsedInOtherOffloads : public BasicStmtVisitor {
     } else {
       std::size_t type_size = data_type_size(type);
       // align global_offset to a multiple of type_size
-      // note that our current SPIR-V codegen requires at least 4 byte alignment
-      // TODO: is this a theoretical constraint of SPIR-V, or is this a
-      // bug/feature of our SPIR-V codegen?
+      // Note that SPIR-V requires at least 4 byte alignment for certain data:
+      // https://vulkan.lunarg.com/doc/view/1.4.304.1/windows/antora/spec/latest/appendices/spirvenv.html
+      // "Output variables or block members decorated with Offset that have a
+      // 32-bit type, or a composite type contains a 32-bit type, mustspecify an
+      // Offset value aligned to a 4 byte boundary"
       type_size = std::max(type_size, (std::size_t)4);
       global_offset_ =
           ((global_offset_ + type_size - 1) / type_size) * type_size;
