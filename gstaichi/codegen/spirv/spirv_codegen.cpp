@@ -31,6 +31,7 @@ constexpr char kArgsBufferName[] = "args_buffer";
 constexpr char kRetBufferName[] = "ret_buffer";
 constexpr char kListgenBufferName[] = "listgen_buffer";
 constexpr char kExtArrBufferName[] = "ext_arr_buffer";
+constexpr char kArgPackBufferName[] = "argpack_buffer";
 
 constexpr int kMaxNumThreadsGridStrideLoop = 65536 * 2;
 
@@ -57,6 +58,9 @@ std::string buffer_instance_name(BufferInfo b) {
       return kListgenBufferName;
     case BufferType::ExtArr:
       return std::string(kExtArrBufferName) + "_" +
+             fmt::format("{}", fmt::join(b.root_id, "_"));
+    case BufferType::ArgPack:
+      return std::string(kArgPackBufferName) + "_" +
              fmt::format("{}", fmt::join(b.root_id, "_"));
     default:
       TI_NOT_IMPLEMENTED;
@@ -577,9 +581,15 @@ class TaskCodegen : public IRVisitor {
   void visit(ArgLoadStmt *stmt) override {
     const auto arg_id = stmt->arg_id;
     const std::vector<int> indices_l(stmt->arg_id.begin(),
-                                     stmt->arg_id.begin());
-    const std::vector<int> indices_r(stmt->arg_id.begin(), stmt->arg_id.end());
-    const auto arg_type = ctx_attribs_->args_type()->get_element_type(arg_id);
+                                     stmt->arg_id.begin() + stmt->arg_depth);
+    const std::vector<int> indices_r(stmt->arg_id.begin() + stmt->arg_depth,
+                                     stmt->arg_id.end());
+    const auto arg_type =
+        stmt->arg_depth == 0
+            ? ctx_attribs_->args_type()->get_element_type(arg_id)
+            : ctx_attribs_->argpack_type(indices_l)
+                  ->as<lang::StructType>()
+                  ->get_element_type(indices_r);
     if (arg_type->is<PointerType>() ||
         (arg_type->is<lang::StructType>() &&
          arg_type->as<lang::StructType>()->elements().size() >= 2 &&
@@ -596,12 +606,23 @@ class TaskCodegen : public IRVisitor {
       // `val_type` must be assigned after `get_buffer_value` because
       // `args_struct_types_` needs to be initialized by `get_buffer_value`.
       SType val_type;
-
-      buffer_value = get_buffer_value(BufferType::Args, PrimitiveType::i32);
-      val_type = is_bool ? ir_->i32_type() : args_struct_types_[arg_id];
-      buffer_val = ir_->make_access_chain(
-          ir_->get_pointer_type(val_type, spv::StorageClassUniform),
-          buffer_value, arg_id);
+      if (stmt->arg_depth > 0) {
+        // Inside argpacks, load value from argpack buffer
+        buffer_value = get_buffer_value({BufferType::ArgPack, indices_l},
+                                        PrimitiveType::i32);
+        val_type = is_bool ? ir_->i32_type()
+                           : argpack_struct_types_[indices_l][indices_r];
+        buffer_val = ir_->make_access_chain(
+            ir_->get_pointer_type(val_type, spv::StorageClassUniform),
+            buffer_value, indices_r);
+      } else {
+        // Not in argpacks, load value from args buffer
+        buffer_value = get_buffer_value(BufferType::Args, PrimitiveType::i32);
+        val_type = is_bool ? ir_->i32_type() : args_struct_types_[arg_id];
+        buffer_val = ir_->make_access_chain(
+            ir_->get_pointer_type(val_type, spv::StorageClassUniform),
+            buffer_value, arg_id);
+      }
       buffer_val.flag = ValueKind::kVariablePtr;
       if (!stmt->create_load) {
         ir_->register_value(stmt->raw_name(), buffer_val);
@@ -2202,7 +2223,7 @@ class TaskCodegen : public IRVisitor {
   spirv::Value load_buffer(const Stmt *ptr, DataType dt) {
     spirv::Value ptr_val = ir_->query_value(ptr->raw_name());
 
-    DataType ti_buffer_type = ir_->get_gstaichi_uint_type(dt);
+    DataType ti_buffer_type = ir_->get_taichi_uint_type(dt);
 
     if (ptr_val.stype.dt == PrimitiveType::u64) {
       ti_buffer_type = dt;
@@ -2266,6 +2287,19 @@ class TaskCodegen : public IRVisitor {
       buffer_binding_map_[key] = 1;
       buffer_value_map_[key] = ret_buffer_value_;
       return ret_buffer_value_;
+    }
+
+    if (buffer.type == BufferType::ArgPack) {
+      // Make sure that Args Buffer are loaded first:
+      get_buffer_value(BufferType::Args, PrimitiveType::i32);
+
+      int binding = binding_head_++;
+      buffer_binding_map_[key] = binding;
+
+      auto buffer_value = compile_argpack_struct(buffer.root_id, binding,
+                                                 buffer_instance_name(buffer));
+      buffer_value_map_[key] = buffer_value;
+      return buffer_value;
     }
 
     // Binding head starts at 2, so we don't break args and rets
@@ -2366,6 +2400,87 @@ class TaskCodegen : public IRVisitor {
         ir_->uniform_struct_argument(args_struct_type_, 0, 0, "args");
   }
 
+  spirv::Value compile_argpack_struct(const std::vector<int> &arg_id,
+                                      int binding,
+                                      const std::string &buffer_name) {
+    spirv::SType argpack_struct_type;
+    // Generate struct IR
+    tinyir::Block blk;
+    std::unordered_map<std::vector<int>, const tinyir::Type *,
+                       hashing::Hasher<std::vector<int>>>
+        element_types;
+    std::unordered_map<std::vector<int>, const taichi::lang::Type *,
+                       hashing::Hasher<std::vector<int>>>
+        element_taichi_types;
+    std::vector<const tinyir::Type *> root_element_types;
+    bool has_buffer_ptr =
+        caps_->get(DeviceCapability::spirv_has_physical_storage_buffer);
+    std::function<void(const std::vector<int> &indices, const Type *type)>
+        add_types_to_element_types =
+            [&](const std::vector<int> &indices, const Type *type) {
+              auto spirv_type = translate_ti_type(blk, type, has_buffer_ptr);
+              if (auto struct_type = type->cast<taichi::lang::StructType>()) {
+                for (int j = 0; j < struct_type->elements().size(); ++j) {
+                  std::vector<int> indices_copy = indices;
+                  indices_copy.push_back(j);
+                  add_types_to_element_types(indices_copy,
+                                             struct_type->elements()[j].type);
+                }
+              }
+              element_taichi_types[indices] = type;
+              element_types[indices] = spirv_type;
+            };
+    const lang::StructType *argpack_type =
+        ctx_attribs_->argpack_type(arg_id)->as<lang::StructType>();
+    for (int i = 0; i < argpack_type->elements().size(); i++) {
+      auto *type = argpack_type->elements()[i].type;
+      auto spirv_type = translate_ti_type(blk, type, has_buffer_ptr);
+      element_types[{i}] = spirv_type;
+      element_taichi_types[{i}] = type;
+      root_element_types.push_back(spirv_type);
+      if (auto struct_type = type->cast<taichi::lang::StructType>()) {
+        for (int j = 0; j < struct_type->elements().size(); ++j) {
+          add_types_to_element_types({i, j}, struct_type->elements()[j].type);
+        }
+      }
+    }
+    const tinyir::Type *struct_type =
+        blk.emplace_back<StructType>(root_element_types);
+
+    // Reduce struct IR
+    std::unordered_map<const tinyir::Type *, const tinyir::Type *> old2new;
+    auto reduced_blk = ir_reduce_types(&blk, old2new);
+    struct_type = old2new[struct_type];
+
+    for (auto &element : root_element_types) {
+      element = old2new[element];
+    }
+    for (auto &element : element_types) {
+      element.second = old2new[element.second];
+    }
+
+    // Layout & translate to SPIR-V
+    STD140LayoutContext layout_ctx;
+    auto ir2spirv_map =
+        ir_translate_to_spirv(reduced_blk.get(), layout_ctx, ir_.get());
+    argpack_struct_type.id = ir2spirv_map[struct_type];
+    argpack_struct_type.dt = argpack_type;
+
+    // Must use the same type in ArgLoadStmt as in the args struct,
+    // otherwise the validation will fail.
+    for (auto &element : element_types) {
+      spirv::SType spirv_type;
+      spirv_type.id = ir2spirv_map.at(element.second);
+      spirv_type.dt = element_taichi_types[element.first];
+      argpack_struct_types_[arg_id][element.first] = spirv_type;
+    }
+
+    argpack_types_[arg_id] = argpack_struct_type;
+    argpack_buffer_values_[arg_id] = ir_->uniform_struct_argument(
+        argpack_struct_type, 0, binding, buffer_name);
+    return argpack_buffer_values_[arg_id];
+  }
+
   void compile_ret_struct() {
     if (!ctx_attribs_->has_rets())
       return;
@@ -2463,6 +2578,20 @@ class TaskCodegen : public IRVisitor {
                      spirv::SType,
                      hashing::Hasher<std::vector<int>>>
       args_struct_types_;
+  std::unordered_map<std::vector<int>,
+                     std::unordered_map<std::vector<int>,
+                                        spirv::SType,
+                                        hashing::Hasher<std::vector<int>>>,
+                     hashing::Hasher<std::vector<int>>>
+      argpack_struct_types_;
+  std::unordered_map<std::vector<int>,
+                     spirv::SType,
+                     hashing::Hasher<std::vector<int>>>
+      argpack_types_;
+  std::unordered_map<std::vector<int>,
+                     spirv::Value,
+                     hashing::Hasher<std::vector<int>>>
+      argpack_buffer_values_;
 
   std::vector<spirv::SType> rets_struct_types_;
 
@@ -2589,16 +2718,19 @@ void KernelCodegen::run(GsTaichiKernelAttributes &kernel_attribs,
   auto *root = params_.ir_root->as<Block>();
 
   {
-    const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
-    if (dump_ir_env != nullptr && std::string(dump_ir_env) == "1") {
-      std::filesystem::create_directories(IR_DUMP_DIR);
+    const char *dump_ir_env = std::getenv("GSTAICHI_DUMP_IR");
+    const std::string dumpOutDir = "/tmp/ir/";
+    if (dump_ir_env != nullptr) {
+      std::filesystem::create_directories(dumpOutDir);
 
-      std::filesystem::path filename =
-          IR_DUMP_DIR / (params_.ti_kernel_name + "_before_final_spirv.ll");
-      if (std::ofstream out_file(filename); out_file) {
+      std::string filename =
+          dumpOutDir + "/" + params_.ti_kernel_name + "_before_final_spirv.ll";
+      std::ofstream out_file(filename);
+      if (out_file.is_open()) {
         std::string outString;
-        irpass::print(const_cast<IRNode *>(params_.ir_root), &outString);
+        irpass::print((IRNode *)(params_.ir_root), &outString);
         out_file << outString;
+        out_file.close();
       }
     }
   }
@@ -2643,15 +2775,23 @@ void KernelCodegen::run(GsTaichiKernelAttributes &kernel_attribs,
              task_res.spirv_code.size(), optimized_spv.size());
 
     {
-      const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
-      if (dump_ir_env != nullptr && std::string(dump_ir_env) == "1") {
-        std::filesystem::create_directories(IR_DUMP_DIR);
+      const char *dump_ir_env = std::getenv("GSTAICHI_DUMP_SPIRV");
+      const std::string dumpOutDir = "/tmp/spirv/";
+      if (dump_ir_env != nullptr) {
+        std::filesystem::create_directories(dumpOutDir);
+
+        // std::vector<uint32_t> &spirv =
+        //     success ? optimized_spv : task_res.spirv_code;
+
         std::string spirv_asm;
         spirv_tools_->Disassemble(optimized_spv, &spirv_asm);
         auto kernel_name = tp.ti_kernel_name;
-        std::filesystem::path filename = IR_DUMP_DIR / (kernel_name + ".spirv");
-        if (std::ofstream out_file(filename); out_file) {
+        std::string filename =
+            std::filesystem::path(dumpOutDir) / (kernel_name + ".spirv");
+        std::ofstream out_file(filename);
+        if (out_file.is_open()) {
           out_file.write(spirv_asm.c_str(), spirv_asm.size());
+          out_file.close();
         }
       }
     }

@@ -129,6 +129,12 @@ ContinueStmt *IRBuilder::create_continue() {
   return insert(Stmt::make_typed<ContinueStmt>());
 }
 
+void IRBuilder::create_assert(Stmt *cond, const std::string &msg) {
+  std::vector<Stmt *> empty_args;
+  auto assert_stmt = Stmt::make_typed<AssertStmt>(cond, msg, empty_args);
+  insert(std::move(assert_stmt));
+}
+
 FuncCallStmt *IRBuilder::create_func_call(Function *func,
                                           const std::vector<Stmt *> &args) {
   return insert(Stmt::make_typed<FuncCallStmt>(func, args));
@@ -136,6 +142,12 @@ FuncCallStmt *IRBuilder::create_func_call(Function *func,
 
 LoopIndexStmt *IRBuilder::get_loop_index(Stmt *loop, int index) {
   return insert(Stmt::make_typed<LoopIndexStmt>(loop, index));
+}
+
+ConstStmt *IRBuilder::get_bool(bool value) {
+  return insert(Stmt::make_typed<ConstStmt>(TypedConstant(
+      TypeFactory::get_instance().get_primitive_type(PrimitiveTypeID::u1),
+      value)));
 }
 
 ConstStmt *IRBuilder::get_int32(int32 value) {
@@ -180,9 +192,11 @@ RandStmt *IRBuilder::create_rand(DataType value_type) {
 
 ArgLoadStmt *IRBuilder::create_arg_load(const std::vector<int> &arg_id,
                                         DataType dt,
-                                        bool is_ptr) {
-  return insert(Stmt::make_typed<ArgLoadStmt>(arg_id, dt, is_ptr,
-                                              /*create_load*/ true));
+                                        bool is_ptr,
+                                        int arg_depth,
+                                        bool create_load) {
+  return insert(Stmt::make_typed<ArgLoadStmt>(arg_id, dt, is_ptr, create_load,
+                                              arg_depth));
 }
 
 ReturnStmt *IRBuilder::create_return(Stmt *value) {
@@ -505,11 +519,13 @@ MeshPatchIndexStmt *IRBuilder::get_patch_index() {
 }
 ArgLoadStmt *IRBuilder::create_ndarray_arg_load(const std::vector<int> &arg_id,
                                                 DataType dt,
-                                                int ndim) {
+                                                int ndim,
+                                                int arg_depth) {
   auto type = TypeFactory::get_instance().get_ndarray_struct_type(dt, ndim);
 
   return insert(Stmt::make_typed<ArgLoadStmt>(arg_id, type, /*is_ptr=*/true,
-                                              /*create_load=*/false));
+                                              /*create_load=*/false,
+                                              /*arg_depth=*/arg_depth));
 }
 
 }  // namespace gstaichi::lang
