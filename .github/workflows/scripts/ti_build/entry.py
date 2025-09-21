@@ -17,7 +17,7 @@ from .misc import banner
 from .ospkg import setup_os_pkgs
 from .python import get_desired_python_version, setup_python
 from .sccache import setup_sccache
-from .tinysh import Command, CommandFailed, git, nice
+from .tinysh import Command, CommandFailed, nice
 
 
 # -- code --
