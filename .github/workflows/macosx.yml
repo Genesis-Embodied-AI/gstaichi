@@ -92,9 +92,6 @@ jobs:
       matrix:
         MAC_OS_VERSION: [15]
         PYTHON_CP_VERSION: [cp310, cp311, cp312, cp313]
-        include:
-          - MAC_OS_VERSION: 14
-            PYTHON_CP_VERSION: cp310
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
