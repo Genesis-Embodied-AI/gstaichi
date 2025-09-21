@@ -88,7 +88,7 @@ jobs:
     needs: build_wheel
     concurrency:
       # group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-test
-      group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_VERSION }}-${{matrix.os}}-test
+      group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_VERSION }}-test
       cancel-in-progress: ${{ github.event_name != 'release' }}
     strategy:
       matrix:
@@ -110,7 +110,7 @@ jobs:
           echo "PYTHON_CP_VERSION=${cp}" >> $GITHUB_OUTPUT
       - uses: actions/download-artifact@v4
         with:
-          name: manylinux_wheel_${{ steps.set_cp_version.outputs.PYTHON_CP_VERSION }}_${{matrix.os}}
+          name: manylinux_wheel_${{ steps.set_cp_version.outputs.PYTHON_CP_VERSION }}
       - name: manylinux install wheel
         run: |
           set -x
