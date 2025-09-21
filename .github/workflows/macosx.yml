@@ -43,7 +43,7 @@ jobs:
           path: dist/*.whl
       - uses: actions/upload-artifact@v4
         with:
-          name: mac_cpptests_${{ matrix.MAC_OS_VERSION }}_${{ matrix.PYTHON_CP_VERSION }}
+          name: mac_cpptests_${{ matrix.MAC_OS_VERSION }}_${{ steps.set_cp_version.outputs.PYTHON_CP_VERSION }}
           path: build/gstaichi_cpp_tests
   test:
     needs: build_mac_14_15
@@ -76,7 +76,7 @@ jobs:
           path: dist
       - uses: actions/download-artifact@v4
         with:
-          name: mac_cpptests_15_${{ matrix.PYTHON_CP_VERSION }}
+          name: mac_cpptests_15_${{ steps.set_cp_version.outputs.PYTHON_CP_VERSION }}
           path: build
       - name: Mac OS X install
         run: |
