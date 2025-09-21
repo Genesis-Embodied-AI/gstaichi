@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        OS: ['ubuntu-22.04', 'ubuntu-22.04-arm']
+        OS: ['ubuntu-22.04']
     name: Linux Build
     runs-on: ${{ matrix.OS }}
     steps:
