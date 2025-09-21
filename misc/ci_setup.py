@@ -219,15 +219,13 @@ class Installer:
                 if self.build_type != "ci":  # Currently the CI machines have no sudo
                     execute_command("sudo apt-get update")
                     if self.build_type == "ci":
-                        execute_command("sudo apt-get install -y python3-dev libx11-dev")
+                        execute_command("sudo apt-get install -y python3-dev")
                     else:
-                        execute_command(
-                            "sudo apt-get install -y python3-dev git build-essential cmake make g++ libx11-dev"
-                        )
+                        execute_command("sudo apt-get install -y python3-dev git build-essential cmake make g++")
             elif dist == "arch":
                 execute_command("sudo pacman --needed -S git cmake make gcc")
             elif dist == "fedora":
-                execute_command("sudo dnf install python3-devel git cmake libX11-devel")
+                execute_command("sudo dnf install python3-devel git cmake")
             else:
                 print("Unsupported Linux distribution.")
 
