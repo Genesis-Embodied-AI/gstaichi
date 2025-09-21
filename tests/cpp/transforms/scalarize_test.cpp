@@ -261,7 +261,7 @@ TEST(Scalarize, ScalarizeBugTmp222) {
   block->push_back<RangeForStmt>(zero, one, std::move(for2_body), false, 0, 0,
                                  false);
 
-auto root_snode = std::make_unique<SNode>(/*depth=*/0, /*t=*/SNodeType::root);
+  auto root_snode = std::make_unique<SNode>(/*depth=*/0, /*t=*/SNodeType::root);
   const std::vector<Axis> axes = {Axis{0}};
 
   // create snodes
@@ -278,11 +278,12 @@ auto root_snode = std::make_unique<SNode>(/*depth=*/0, /*t=*/SNodeType::root);
                                  leaf_snode4};
 
   // create vector type and pointer to vector type
-    std::vector<int> vector_shape = {4};
+  std::vector<int> vector_shape = {4};
   auto vector_type = TypeFactory::get_instance().get_tensor_type(
       vector_shape,
       TypeFactory::get_instance().get_primitive_type(PrimitiveTypeID::f32));
-  auto pointer_to_vector_type = TypeFactory::get_instance().get_pointer_type(vector_type);
+  auto pointer_to_vector_type =
+      TypeFactory::get_instance().get_pointer_type(vector_type);
 
   // create offloaded0
   block->push_back<OffloadedStmt>(OffloadedStmt::TaskType::range_for,
@@ -296,10 +297,10 @@ auto root_snode = std::make_unique<SNode>(/*depth=*/0, /*t=*/SNodeType::root);
   auto vector_alloc = offloaded0->body->push_back<AllocaStmt>(vector_type);
   // auto global_load0 =
   //     offloaded0->body->push_back<GlobalLoadStmt>(matrix_global_ptr0);
-  // offloaded0->body->push_back<LocalStoreStmt>(pointer_vector_alloc, global_load0);
+  // offloaded0->body->push_back<LocalStoreStmt>(pointer_vector_alloc,
+  // global_load0);
 
   offloaded0->body->push_back<MatrixPtrStmt>(vector_alloc, zero);
-
 
   // create offloaded
   block->push_back<OffloadedStmt>(OffloadedStmt::TaskType::range_for,
@@ -308,7 +309,7 @@ auto root_snode = std::make_unique<SNode>(/*depth=*/0, /*t=*/SNodeType::root);
   offloaded->body->push_back<ConstStmt>(TypedConstant(0));
 
   auto vector_alloca = offloaded->body->push_back<AllocaStmt>(vector_type);
-    auto zero_for2 = offloaded->body->push_back<ConstStmt>(TypedConstant(0));
+  auto zero_for2 = offloaded->body->push_back<ConstStmt>(TypedConstant(0));
   std::vector<Stmt *> indices = {zero_for2};
   auto matrix_global_ptr = offloaded->body->push_back<MatrixOfGlobalPtrStmt>(
       snodes, indices, false, 1, pointer_to_vector_type, true);
@@ -316,17 +317,17 @@ auto root_snode = std::make_unique<SNode>(/*depth=*/0, /*t=*/SNodeType::root);
       offloaded->body->push_back<GlobalLoadStmt>(matrix_global_ptr);
   // offloaded->body->push_back<LocalStoreStmt>(vector_alloca, global_load);
   // auto vector_alloca2 = offloaded->body->push_back<AllocaStmt>(vector_type);
-  // auto vector_load2 = offloaded->body->push_back<LocalLoadStmt>(vector_alloca);
+  // auto vector_load2 =
+  // offloaded->body->push_back<LocalLoadStmt>(vector_alloca);
   // offloaded->body->push_back<LocalStoreStmt>(vector_alloca2, vector_load2);
-  auto matrix_ptr = offloaded->body->push_back<MatrixPtrStmt>(vector_alloca, zero_for2);
+  auto matrix_ptr =
+      offloaded->body->push_back<MatrixPtrStmt>(vector_alloca, zero_for2);
   offloaded->body->push_back<LocalLoadStmt>(matrix_ptr);
-
 
   irpass::print(block.get());
 
   irpass::scalarize(block.get());
   irpass::print(block.get());
-
 }
 
 }  // namespace gstaichi::lang
