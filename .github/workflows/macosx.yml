@@ -16,9 +16,6 @@ jobs:
       matrix:
         MAC_OS_VERSION: [15]
         PYTHON_VERSION: ['3.10', '3.11', '3.12', '3.13']
-        include:
-          - MAC_OS_VERSION: 14
-            PYTHON_VERSION: '3.10'
     name: Mac OS Build
     runs-on: macos-${{ matrix.MAC_OS_VERSION }}
     steps:
@@ -40,16 +37,45 @@ jobs:
       - name: Mac OS X build
         run: |
           bash .github/workflows/scripts_new/macosx/2_build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac_wheel_${{ matrix.MAC_OS_VERSION }}_${{ steps.set_cp_version.outputs.PYTHON_CP_VERSION }}
+          path: dist/*.whl
+  test:
+    needs: build_mac_14_15
+    name: Test on Mac
+    strategy:
+      fail-fast: false
+      matrix:
+        MAC_OS_VERSION: [15]
+        PYTHON_VERSION: ['3.10', '3.11', '3.12', '3.13']
+        include:
+          - MAC_OS_VERSION: 14
+            PYTHON_VERSION: '3.10'
+    runs-on: macos-${{ matrix.MAC_OS_VERSION }}
+    steps:
+      - name: Set Python CP version
+        id: set_cp_version
+        run: |
+          pip install packaging
+          cp=$(python -c "from packaging import tags; print(next(tags.sys_tags()).interpreter)")
+          echo "PYTHON_CP_VERSION=${cp}"
+          echo "PYTHON_CP_VERSION=${cp}" >> $GITHUB_OUTPUT
+      - uses: actions/checkout@v4
+      - name: Python check
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.PYTHON_VERSION}}
+      - uses: actions/download-artifact@v4
+        with:
+          name: mac_wheel_15_${{ steps.set_cp_version.outputs.PYTHON_CP_VERSION }}
+          path: dist
       - name: Mac OS X install
         run: |
           bash .github/workflows/scripts_new/macosx/3_install.sh
       - name: Mac OS X test
         run: |
           bash .github/workflows/scripts_new/macosx/4_test.sh
-      - uses: actions/upload-artifact@v4
-        with:
-          name: mac_wheel_${{ matrix.MAC_OS_VERSION }}_${{ steps.set_cp_version.outputs.PYTHON_CP_VERSION }}
-          path: dist/*.whl
   upload_to_storage:
     name: Mac wheel upload
     runs-on: ubuntu-22.04
@@ -80,29 +106,10 @@ jobs:
           mkdir -p dist
           mv *.whl dist/
           aws s3 sync dist/ s3://genesis-ai-compiler/ci/gstaichi/${GITHUB_SHA:0:7}/mac-${{ matrix.MAC_OS_VERSION }}-${{ matrix.PYTHON_CP_VERSION }}/
-  test_install_15_on_14:
-    needs: build_mac_14_15
-    runs-on: macos-14
-    steps:
-      - uses: actions/checkout@v4
-      - name: Python check
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-      - uses: actions/download-artifact@v4
-        with:
-          name: mac_wheel_15_cp310
-      - name: 'Test wheel on 14'
-        run: |
-          pip install *.whl
-          python -c "import gstaichi as ti; print(ti.__version__); ti.init(arch=ti.metal)"
-          pip install --group test
-          pip install -r requirements_test_xdist.txt
-          python tests/run_tests.py -v -k test_smoke.py --arch metal,vulkan,cpu
   publish_pypi:
     uses: ./.github/workflows/publish_pypi.yml
     if: github.event_name == 'release'
-    needs: test_install_15_on_14
+    needs: test
     permissions:
       id-token: write
       contents: read
