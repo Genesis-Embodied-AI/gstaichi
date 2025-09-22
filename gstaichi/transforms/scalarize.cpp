@@ -9,6 +9,7 @@
 #include "gstaichi/ir/visitors.h"
 #include "gstaichi/program/program.h"
 #include "gstaichi/system/profiler.h"
+#include "gstaichi/transforms/scalarize.h"
 
 namespace gstaichi::lang {
 
@@ -1169,93 +1170,55 @@ class ScalarizePointers : public BasicStmtVisitor {
   using BasicStmtVisitor::visit;
 };
 
-// The ExtractLocalPointers pass aims at removing redundant ConstStmts and
-// MatrixPtrStmts generated for any (AllocaStmt, integer) pair by extracting
-// a unique copy for any future usage.
-//
-// Example for redundant stmts:
-//   <i32> $0 = const 0
-//   <i32> $1 = const 1
-//   ...
-//   <[Tensor (3, 3) f32]> $47738 = alloca
-//   <i32> $47739 = const 0  [REDUNDANT]
-//   <*f32> $47740 = shift ptr [$47738 + $47739]
-//   $47741 : local store [$47740 <- $47713]
-//   <i32> $47742 = const 1  [REDUNDANT]
-//   <*f32> $47743 = shift ptr [$47738 + $47742]
-//   $47744 : local store [$47743 <- $47716]
-//   ...
-//   <i32> $47812 = const 1  [REDUNDANT]
-//   <*f32> $47813 = shift ptr [$47738 + $47812]  [REDUNDANT]
-//   <f32> $47814 = local load [$47813]
-class ExtractLocalPointers : public BasicStmtVisitor {
- public:
-  ImmediateIRModifier immediate_modifier_;
-  DelayedIRModifier delayed_modifier_;
-
-  std::unordered_map<std::pair<Stmt *, int>,
-                     Stmt *,
-                     hashing::Hasher<std::pair<Stmt *, int>>>
-      first_matrix_ptr_;  // mapping an (AllocaStmt, integer) pair to the
-                          // first MatrixPtrStmt representing it
-  std::unordered_map<int, Stmt *>
-      first_const_;  // mapping an integer to the first ConstStmt representing
-                     // it
-  Block *top_level_;
-
-  explicit ExtractLocalPointers(IRNode *root) : immediate_modifier_(root) {
-    if (root->is<OffloadedStmt>()) {
-      top_level_ = root->as<OffloadedStmt>()->body.get();
-    } else {
-      TI_ASSERT(root->is<Block>());
-      top_level_ = root->as<Block>();
-    }
+ExtractLocalPointers::ExtractLocalPointers(IRNode *root)
+    : immediate_modifier_(root) {
+  if (root->is<OffloadedStmt>()) {
+    top_level_ = root->as<OffloadedStmt>()->body.get();
+  } else {
+    TI_ASSERT(root->is<Block>());
+    top_level_ = root->as<Block>();
   }
+}
 
-  void visit(OffloadedStmt *stmt) override {
-    // Extract to OffloadStmt
-    Block *orig_top_level = top_level_;
-    top_level_ = stmt->body.get();
-    first_const_.clear();
-    stmt->all_blocks_accept(this);
-    top_level_ = orig_top_level;
-  }
+void ExtractLocalPointers::visit(OffloadedStmt *stmt) {
+  // Extract to OffloadStmt
+  Block *orig_top_level = top_level_;
+  top_level_ = stmt->body.get();
+  first_const_.clear();
+  stmt->all_blocks_accept(this);
+  top_level_ = orig_top_level;
+}
 
-  void visit(MatrixPtrStmt *stmt) override {
-    if (stmt->origin->is<AllocaStmt>()) {
-      auto alloca_stmt = stmt->origin->cast<AllocaStmt>();
-      auto tensor_type =
-          alloca_stmt->ret_type.ptr_removed()->cast<TensorType>();
-      TI_ASSERT(tensor_type != nullptr);
-      if (stmt->offset->is<ConstStmt>()) {
-        int offset = stmt->offset->cast<ConstStmt>()->val.val_int32();
-        if (first_const_.count(offset) == 0) {
-          first_const_[offset] = stmt->offset;
-          delayed_modifier_.extract_to_block_front(stmt->offset, top_level_);
-        }
-        auto key = std::make_pair(alloca_stmt, offset);
-        if (first_matrix_ptr_.count(key) == 0) {
-          auto extracted = std::make_unique<MatrixPtrStmt>(
-              alloca_stmt, first_const_[offset]);
-          first_matrix_ptr_[key] = extracted.get();
-          delayed_modifier_.insert_after(alloca_stmt, std::move(extracted));
-        }
-        auto new_stmt = first_matrix_ptr_[key];
-        immediate_modifier_.replace_usages_with(stmt, new_stmt);
-        delayed_modifier_.erase(stmt);
+void ExtractLocalPointers::visit(MatrixPtrStmt *stmt) {
+  if (stmt->origin->is<AllocaStmt>()) {
+    auto alloca_stmt = stmt->origin->cast<AllocaStmt>();
+    auto tensor_type = alloca_stmt->ret_type.ptr_removed()->cast<TensorType>();
+    TI_ASSERT(tensor_type != nullptr);
+    if (stmt->offset->is<ConstStmt>()) {
+      int offset = stmt->offset->cast<ConstStmt>()->val.val_int32();
+      if (first_const_.count(offset) == 0) {
+        first_const_[offset] = stmt->offset;
+        delayed_modifier_.extract_to_block_front(stmt->offset, top_level_);
       }
+      auto key = std::make_pair(alloca_stmt, offset);
+      if (first_matrix_ptr_.count(key) == 0) {
+        auto extracted =
+            std::make_unique<MatrixPtrStmt>(alloca_stmt, first_const_[offset]);
+        first_matrix_ptr_[key] = extracted.get();
+        delayed_modifier_.insert_after(alloca_stmt, std::move(extracted));
+      }
+      auto new_stmt = first_matrix_ptr_[key];
+      immediate_modifier_.replace_usages_with(stmt, new_stmt);
+      delayed_modifier_.erase(stmt);
     }
   }
+}
 
-  static bool run(IRNode *node) {
-    ExtractLocalPointers pass(node);
-    node->accept(&pass);
-    return pass.delayed_modifier_.modify_ir();
-  }
-
- private:
-  using BasicStmtVisitor::visit;
-};
+bool ExtractLocalPointers::run(IRNode *node) {
+  ExtractLocalPointers pass(node);
+  node->accept(&pass);
+  return pass.delayed_modifier_.modify_ir();
+}
 
 class FuseMatrixPtr : public BasicStmtVisitor {
  private:

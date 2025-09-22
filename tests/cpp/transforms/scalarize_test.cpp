@@ -2,6 +2,7 @@
 
 #include "gstaichi/ir/statements.h"
 #include "gstaichi/ir/transforms.h"
+#include "gstaichi/transforms/scalarize.h"
 #include "tests/cpp/program/test_program.h"
 
 namespace gstaichi::lang {
@@ -246,88 +247,42 @@ TEST(Scalarize, ScalarizeBugTmp222) {
   auto kernel =
       std::make_unique<Kernel>(*test_prog.prog(), func, "fake_kernel");
 
-  auto zero = block->push_back<ConstStmt>(TypedConstant(0));
-  auto one = block->push_back<ConstStmt>(TypedConstant(1));
-
-  auto for1_body = std::make_unique<Block>();
-
-  block->push_back<RangeForStmt>(zero, one, std::move(for1_body), false, 0, 0,
-                                 false);
-
-  auto for2_body = std::make_unique<Block>();
-  for2_body->push_back<AllocaStmt>(
-      TypeFactory::get_instance().get_primitive_type(PrimitiveTypeID::f32));
-
-  block->push_back<RangeForStmt>(zero, one, std::move(for2_body), false, 0, 0,
-                                 false);
-
-  auto root_snode = std::make_unique<SNode>(/*depth=*/0, /*t=*/SNodeType::root);
-  const std::vector<Axis> axes = {Axis{0}};
-
-  // create snodes
-  auto dense_snode_ = &(root_snode->dense(axes, 1));
-  auto leaf_snode = &(dense_snode_->insert_children(SNodeType::place));
-  leaf_snode->dt = PrimitiveType::f32;
-  auto leaf_snode2 = &(dense_snode_->insert_children(SNodeType::place));
-  leaf_snode2->dt = PrimitiveType::f32;
-  auto leaf_snode3 = &(dense_snode_->insert_children(SNodeType::place));
-  leaf_snode3->dt = PrimitiveType::f32;
-  auto leaf_snode4 = &(dense_snode_->insert_children(SNodeType::place));
-  leaf_snode4->dt = PrimitiveType::f32;
-  std::vector<SNode *> snodes = {leaf_snode, leaf_snode2, leaf_snode3,
-                                 leaf_snode4};
-
-  // create vector type and pointer to vector type
+  // create vector type
   std::vector<int> vector_shape = {4};
   auto vector_type = TypeFactory::get_instance().get_tensor_type(
       vector_shape,
       TypeFactory::get_instance().get_primitive_type(PrimitiveTypeID::f32));
-  auto pointer_to_vector_type =
-      TypeFactory::get_instance().get_pointer_type(vector_type);
 
-  // create offloaded0
+  // create offloaded1
   block->push_back<OffloadedStmt>(OffloadedStmt::TaskType::range_for,
                                   Arch::vulkan, kernel.get());
-  auto offloaded0 = block->statements.back()->as<OffloadedStmt>();
-  offloaded0->body->push_back<ConstStmt>(TypedConstant(0));
+  auto offloaded1 = block->statements.back()->as<OffloadedStmt>();
+  auto zero1 = offloaded1->body->push_back<ConstStmt>(TypedConstant(0));
+  auto vector_alloc1 = offloaded1->body->push_back<AllocaStmt>(vector_type);
+  offloaded1->body->push_back<MatrixPtrStmt>(vector_alloc1, zero1);
 
-  std::vector<Stmt *> indices0 = {zero};
-  auto matrix_global_ptr0 = offloaded0->body->push_back<MatrixOfGlobalPtrStmt>(
-      snodes, indices0, false, 1, pointer_to_vector_type, true);
-  auto vector_alloc = offloaded0->body->push_back<AllocaStmt>(vector_type);
-  // auto global_load0 =
-  //     offloaded0->body->push_back<GlobalLoadStmt>(matrix_global_ptr0);
-  // offloaded0->body->push_back<LocalStoreStmt>(pointer_vector_alloc,
-  // global_load0);
-
-  offloaded0->body->push_back<MatrixPtrStmt>(vector_alloc, zero);
-
-  // create offloaded
+  // create offloaded2
   block->push_back<OffloadedStmt>(OffloadedStmt::TaskType::range_for,
                                   Arch::vulkan, kernel.get());
-  auto offloaded = block->statements.back()->as<OffloadedStmt>();
-  offloaded->body->push_back<ConstStmt>(TypedConstant(0));
+  auto offloaded2 = block->statements.back()->as<OffloadedStmt>();
 
-  auto vector_alloca = offloaded->body->push_back<AllocaStmt>(vector_type);
-  auto zero_for2 = offloaded->body->push_back<ConstStmt>(TypedConstant(0));
-  std::vector<Stmt *> indices = {zero_for2};
-  auto matrix_global_ptr = offloaded->body->push_back<MatrixOfGlobalPtrStmt>(
-      snodes, indices, false, 1, pointer_to_vector_type, true);
-  auto global_load =
-      offloaded->body->push_back<GlobalLoadStmt>(matrix_global_ptr);
-  // offloaded->body->push_back<LocalStoreStmt>(vector_alloca, global_load);
-  // auto vector_alloca2 = offloaded->body->push_back<AllocaStmt>(vector_type);
-  // auto vector_load2 =
-  // offloaded->body->push_back<LocalLoadStmt>(vector_alloca);
-  // offloaded->body->push_back<LocalStoreStmt>(vector_alloca2, vector_load2);
-  auto matrix_ptr =
-      offloaded->body->push_back<MatrixPtrStmt>(vector_alloca, zero_for2);
-  offloaded->body->push_back<LocalLoadStmt>(matrix_ptr);
+  auto vector_alloca2 = offloaded2->body->push_back<AllocaStmt>(vector_type);
+  auto zero_for2 = offloaded2->body->push_back<ConstStmt>(TypedConstant(0));
+  offloaded2->body->push_back<MatrixPtrStmt>(vector_alloca2, zero_for2);
 
-  irpass::print(block.get());
+  ExtractLocalPointers::run(block.get());
 
-  irpass::scalarize(block.get());
-  irpass::print(block.get());
+  ASSERT_EQ(block->statements[1].get(), offloaded2);
+  bool foundMatrixPtr = false;
+  for (auto &stmt : offloaded2->body->statements) {
+    if (stmt->is<MatrixPtrStmt>()) {
+      auto matrix_ptr_new = stmt->as<MatrixPtrStmt>();
+      foundMatrixPtr = true;
+      EXPECT_EQ(matrix_ptr_new->offset, zero_for2);
+      EXPECT_NE(matrix_ptr_new->offset, zero1);
+    }
+  }
+  EXPECT_TRUE(foundMatrixPtr);
 }
 
 }  // namespace gstaichi::lang
