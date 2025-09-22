@@ -1,4 +1,5 @@
 import numbers
+import pathlib
 import weakref
 from types import FunctionType, MethodType
 from typing import TYPE_CHECKING, Any, Iterable, Sequence
@@ -363,6 +364,7 @@ class PyGsTaichi:
         self.short_circuit_operators: bool = False
         self.unrolling_limit: int = 0
         self.src_ll_cache: bool = True
+        self.debug_dump_path: pathlib.Path = pathlib.Path("/tmp")
 
     @property
     def compiling_callable(self) -> KernelCxx | Kernel | Function:

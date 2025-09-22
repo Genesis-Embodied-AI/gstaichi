@@ -1080,12 +1080,13 @@ class Kernel:
             )
 
         try:
-            prog = impl.get_runtime().prog
+            runtime = impl.get_runtime()
+            prog = runtime.prog
             if not compiled_kernel_data:
                 compile_result: CompileResult = prog.compile_kernel(prog.config(), prog.get_device_caps(), t_kernel)
                 if os.environ.get("TI_DUMP_KERNEL_CHECKSUMS", "0") == "1":
-                    checksums_file_path = pathlib.Path("/tmp/checksums.csv")
-                    kernels_dump_dir = pathlib.Path("/tmp/kernels")
+                    checksums_file_path = runtime.debug_dump_path / "checksums.csv"
+                    kernels_dump_dir = runtime.debug_dump_path / "kernels"
                     file_exists = checksums_file_path.exists()
                     if self.fast_checksum:
                         with checksums_file_path.open("a") as f:
