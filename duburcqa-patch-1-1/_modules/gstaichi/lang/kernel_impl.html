@@ -1248,8 +1248,7 @@
                                 <span class="s2">&quot;Non contiguous gradient tensors are not supported, please call tensor.grad.contiguous() before passing it into gstaichi kernel.&quot;</span>
                             <span class="p">)</span>
 
-                    <span class="n">v_taichi</span> <span class="o">=</span> <span class="n">v</span>
-                    <span class="n">grad_taichi</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">grad</span>
+                    <span class="n">grad</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">grad</span>
                     <span class="k">if</span> <span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">!=</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span>
                         <span class="n">v</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;cuda&quot;</span> <span class="ow">and</span> <span class="n">gstaichi_arch</span> <span class="o">==</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">Arch</span><span class="o">.</span><span class="n">cuda</span>
                     <span class="p">):</span>
@@ -1257,18 +1256,20 @@
                         <span class="c1"># memory must be hosted either on CPU, or on CUDA if and only if GsTaichi is using CUDA backend.</span>
                         <span class="c1"># We just replace it with a CPU tensor and by the end of kernel execution we&#39;ll use the callback</span>
                         <span class="c1"># to copy the values back to the original tensor.</span>
-                        <span class="n">v_taichi</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
-                        <span class="n">callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">get_call_back</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">v_taichi</span><span class="p">))</span>
-                        <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">grad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                            <span class="n">grad_taichi</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
-                            <span class="n">callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">get_call_back</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">grad</span><span class="p">,</span> <span class="n">grad_taichi</span><span class="p">))</span>
+                        <span class="n">v_cpu</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+                        <span class="n">v</span><span class="p">,</span> <span class="n">v_orig</span> <span class="o">=</span> <span class="n">v_cpu</span><span class="p">,</span> <span class="n">v</span>
+                        <span class="n">callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">get_call_back</span><span class="p">(</span><span class="n">v_orig</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
+                        <span class="k">if</span> <span class="n">grad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                            <span class="n">grad_cpu</span> <span class="o">=</span> <span class="n">grad</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+                            <span class="n">grad</span><span class="p">,</span> <span class="n">grad_orig</span> <span class="o">=</span> <span class="n">grad_cpu</span><span class="p">,</span> <span class="n">grad</span>
+                            <span class="n">callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">get_call_back</span><span class="p">(</span><span class="n">grad_orig</span><span class="p">,</span> <span class="n">grad</span><span class="p">))</span>
 
                     <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_arg_external_array_with_shape</span><span class="p">(</span>
                         <span class="n">indices</span><span class="p">,</span>
-                        <span class="nb">int</span><span class="p">(</span><span class="n">v_taichi</span><span class="o">.</span><span class="n">data_ptr</span><span class="p">()),</span>
-                        <span class="n">v_taichi</span><span class="o">.</span><span class="n">element_size</span><span class="p">()</span> <span class="o">*</span> <span class="n">v_taichi</span><span class="o">.</span><span class="n">nelement</span><span class="p">(),</span>
+                        <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">data_ptr</span><span class="p">()),</span>
+                        <span class="n">v</span><span class="o">.</span><span class="n">element_size</span><span class="p">()</span> <span class="o">*</span> <span class="n">v</span><span class="o">.</span><span class="n">nelement</span><span class="p">(),</span>
                         <span class="n">array_shape</span><span class="p">,</span>
-                        <span class="nb">int</span><span class="p">(</span><span class="n">grad_taichi</span><span class="o">.</span><span class="n">data_ptr</span><span class="p">())</span> <span class="k">if</span> <span class="n">grad_taichi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+                        <span class="nb">int</span><span class="p">(</span><span class="n">grad</span><span class="o">.</span><span class="n">data_ptr</span><span class="p">())</span> <span class="k">if</span> <span class="n">grad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
                     <span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="n">GsTaichiRuntimeTypeError</span><span class="p">(</span>
