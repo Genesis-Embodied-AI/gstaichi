@@ -927,8 +927,7 @@ class Kernel:
                                 "Non contiguous gradient tensors are not supported, please call tensor.grad.contiguous() before passing it into gstaichi kernel."
                             )
 
-                    v_taichi = v
-                    grad_taichi = v.grad
+                    grad = v.grad
                     if (v.device.type != "cpu") and not (
                         v.device.type == "cuda" and gstaichi_arch == _ti_core.Arch.cuda
                     ):
@@ -936,18 +935,20 @@ class Kernel:
                         # memory must be hosted either on CPU, or on CUDA if and only if GsTaichi is using CUDA backend.
                         # We just replace it with a CPU tensor and by the end of kernel execution we'll use the callback
                         # to copy the values back to the original tensor.
-                        v_taichi = v.to(device="cpu")
-                        callbacks.append(get_call_back(v, v_taichi))
-                        if v.grad is not None:
-                            grad_taichi = v.grad.to(device="cpu")
-                            callbacks.append(get_call_back(v.grad, grad_taichi))
+                        v_cpu = v.to(device="cpu")
+                        v, v_orig = v_cpu, v
+                        callbacks.append(get_call_back(v_orig, v))
+                        if grad is not None:
+                            grad_cpu = grad.to(device="cpu")
+                            grad, grad_orig = grad_cpu, grad
+                            callbacks.append(get_call_back(grad_orig, grad))
 
                     launch_ctx.set_arg_external_array_with_shape(
                         indices,
-                        int(v_taichi.data_ptr()),
-                        v_taichi.element_size() * v_taichi.nelement(),
+                        int(v.data_ptr()),
+                        v.element_size() * v.nelement(),
                         array_shape,
-                        int(grad_taichi.data_ptr()) if grad_taichi is not None else 0,
+                        int(grad.data_ptr()) if grad is not None else 0,
                     )
                 else:
                     raise GsTaichiRuntimeTypeError(
