@@ -38,9 +38,9 @@ std::string runtime_lib_dir() {
         "If you are running the gstaichi_cpp_tests please set $TI_LIB_DIR "
         "to $GSTAICHI_INSTALL_DIR/_lib/runtime. $GSTAICHI_INSTALL_DIR can be "
         "retrieved from gstaichi.__path__[0] in python. You can also use this "
-        "script to find out $TI_LIB_DIR:\n\n"
-        "python -c \"import os; import gstaichi as ti; p = "
-        "os.path.join(ti.__path__[0], '_lib', 'runtime'); print(p)\"");
+        "script to populate $TI_LIB_DIR:\n\n"
+        "export TI_LIB_DIR=$(python -c \"import os; import gstaichi as ti; "
+        "p = os.path.join(ti.__path__[0], '_lib', 'runtime'); print(p)\" | tail -n 1)");
     folder = std::string(ti_lib_dir);
   }
   return folder;
