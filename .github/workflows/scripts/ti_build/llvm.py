@@ -19,25 +19,22 @@ def setup_llvm() -> None:
     Download and install LLVM.
     """
     u = platform.uname()
+
+    release_url_template = "https://github.com/Genesis-Embodied-AI/gstaichi-sdk-builds/releases/download/llvm-17.0.6-hp-llvm-build-no-arm-202509220138/taichi-llvm-17.0.6-{platform}.zip"
+    out = get_cache_home() / "llvm17.0.6"
+
     if u.system == "Linux":
         if cmake_args.get_effective("TI_WITH_AMDGPU"):
-            out = get_cache_home() / "llvm15-amdgpu-005"
+            out = f"{out}-amdgpu"
             url = "https://github.com/GaleSeLee/assets/releases/download/v0.0.5/taichi-llvm-15.0.0-linux.zip"
         else:
-            out = get_cache_home() / "llvm15"
-            url = "https://github.com/taichi-dev/taichi_assets/releases/download/llvm15/taichi-llvm-15-linux.zip"
+            url = release_url_template.format(platform="linux-x86_64")
         download_dep(url, out, strip=1)
     elif (u.system, u.machine) == ("Darwin", "arm64"):
-        out = get_cache_home() / "llvm15-m1-nozstd"
-        url = "https://github.com/taichi-dev/taichi_assets/releases/download/llvm15/taichi-llvm-15-m1-nozstd.zip"
-        download_dep(url, out, strip=1)
-    elif (u.system, u.machine) == ("Darwin", "x86_64"):
-        out = get_cache_home() / "llvm15-mac"
-        url = "https://github.com/taichi-dev/taichi_assets/releases/download/llvm15/llvm-15-mac10.15.zip"
+        url = release_url_template.format(platform="macos-arm64")
         download_dep(url, out, strip=1)
     elif (u.system, u.machine) == ("Windows", "AMD64"):
-        out = get_cache_home() / "llvm15"
-        url = "https://github.com/python3kgae/taichi_assets/releases/download/llvm15_vs2019_clang/taichi-llvm-15.0.0-msvc2019.zip"
+        url = release_url_template.format(platform="windows-amd64")
         download_dep(url, out, strip=0)
     else:
         raise RuntimeError(f"Unsupported platform: {u.system} {u.machine}")

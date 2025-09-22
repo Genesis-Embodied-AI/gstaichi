@@ -290,8 +290,6 @@ void KernelCodeGenCPU::optimize_module(llvm::Module *module) {
   b.LoopVectorize = true;
   b.SLPVectorize = true;
 
-  target_machine->adjustPassManager(b);
-
   b.populateFunctionPassManager(function_pass_manager);
   b.populateModulePassManager(module_pass_manager);
 
