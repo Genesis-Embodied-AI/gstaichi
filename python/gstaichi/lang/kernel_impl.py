@@ -325,7 +325,9 @@ def _get_tree_and_ctx(
     )
 
 
-def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
+def _process_args(
+    self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], kwargs
+) -> tuple[Any, ...]:
     if is_func:
         self.arg_metas = _kernel_impl_dataclass.expand_func_arguments(self.arg_metas)
 
@@ -334,14 +336,20 @@ def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], k
 
     if len_args > len(fused_args):
         arg_str = ", ".join(map(str, args))
-        expected_str = ", ".join(f"{arg.name} : {arg.annotation}" for arg in self.arg_metas)
+        expected_str = ", ".join(
+            f"{arg.name} : {arg.annotation}" for arg in self.arg_metas
+        )
         msg_l = []
         msg_l.append(f"Too many arguments. Expected ({expected_str}), got ({arg_str}).")
         for i in range(len_args):
             if i < len(self.arg_metas):
-                msg_l.append(f" - {i} arg meta: {self.arg_metas[i].name} arg type: {type(args[i])}")
+                msg_l.append(
+                    f" - {i} arg meta: {self.arg_metas[i].name} arg type: {type(args[i])}"
+                )
             else:
-                msg_l.append(f" - {i} arg meta: <out of arg metas> arg type: {type(args[i])}")
+                msg_l.append(
+                    f" - {i} arg meta: <out of arg metas> arg type: {type(args[i])}"
+                )
         msg_l.append(f"In function: {self.func}")
         raise GsTaichiSyntaxError("\n".join(msg_l))
 
@@ -362,7 +370,9 @@ def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], k
     for i, arg in enumerate(fused_args):
         if arg is inspect.Parameter.empty:
             if self.arg_metas[i].annotation is inspect._empty:
-                missing_parameters.append(f"Parameter `{self.arg_metas[i].name}` missing.")
+                missing_parameters.append(
+                    f"Parameter `{self.arg_metas[i].name}` missing."
+                )
             else:
                 missing_parameters.append(
                     f"Parameter `{self.arg_metas[i].name} : {self.arg_metas[i].annotation}` missing."
@@ -387,7 +397,9 @@ def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], k
 class Func:
     function_counter = 0
 
-    def __init__(self, _func: Callable, _classfunc=False, _pyfunc=False, is_real_function=False) -> None:
+    def __init__(
+        self, _func: Callable, _classfunc=False, _pyfunc=False, is_real_function=False
+    ) -> None:
         self.func = _func
         self.func_id = Func.function_counter
         Func.function_counter += 1
@@ -412,13 +424,17 @@ class Func:
 
         if not impl.inside_kernel():
             if not self.pyfunc:
-                raise GsTaichiSyntaxError("GsTaichi functions cannot be called from Python-scope.")
+                raise GsTaichiSyntaxError(
+                    "GsTaichi functions cannot be called from Python-scope."
+                )
             return self.func(*args)
 
         current_kernel = impl.get_runtime().current_kernel
         if self.is_real_function:
             if current_kernel.autodiff_mode != AutodiffMode.NONE:
-                raise GsTaichiSyntaxError("Real function in gradient kernels unsupported.")
+                raise GsTaichiSyntaxError(
+                    "Real function in gradient kernels unsupported."
+                )
             instance_id, arg_features = self.mapper.lookup(args)
             key = _ti_core.FunctionKey(self.func.__name__, self.func_id, instance_id)
             if key.instance_id not in self.compiled:
@@ -434,11 +450,15 @@ class Func:
 
         struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
 
-        tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
+        tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(
+            tree, struct_locals=struct_locals
+        )
         ret = transform_tree(tree, ctx)
         if not self.is_real_function:
             if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
-                raise GsTaichiSyntaxError("Function has a return type but does not have a return statement")
+                raise GsTaichiSyntaxError(
+                    "Function has a return type but does not have a return statement"
+                )
         return ret
 
     def func_call_rvalue(self, key: FunctionKey, args: tuple[Any, ...]) -> Any:
@@ -452,13 +472,17 @@ class Func:
                 if id(anno) in primitive_types.type_ids:
                     non_template_args.append(ops.cast(args[i], anno))
                 elif isinstance(anno, primitive_types.RefType):
-                    non_template_args.append(_ti_core.make_reference(args[i].ptr, dbg_info))
+                    non_template_args.append(
+                        _ti_core.make_reference(args[i].ptr, dbg_info)
+                    )
                 elif isinstance(anno, ndarray_type.NdarrayType):
                     if not isinstance(args[i], AnyArray):
                         raise GsTaichiTypeError(
                             f"Expected ndarray in the kernel argument for argument {kernel_arg.name}, got {args[i]}"
                         )
-                    non_template_args += _ti_core.get_external_tensor_real_func_args(args[i].ptr, dbg_info)
+                    non_template_args += _ti_core.get_external_tensor_real_func_args(
+                        args[i].ptr, dbg_info
+                    )
                 else:
                     non_template_args.append(args[i])
         non_template_args = impl.make_expr_group(non_template_args)
@@ -477,21 +501,33 @@ class Func:
                 ret.append(
                     Expr(
                         _ti_core.make_get_element_expr(
-                            func_call.ptr, (i,), _ti_core.DebugInfo(impl.get_runtime().get_current_src_info())
+                            func_call.ptr,
+                            (i,),
+                            _ti_core.DebugInfo(
+                                impl.get_runtime().get_current_src_info()
+                            ),
                         )
                     )
                 )
             elif isinstance(return_type, (StructType, MatrixType)):
                 ret.append(return_type.from_gstaichi_object(func_call, (i,)))
             else:
-                raise GsTaichiTypeError(f"Unsupported return type for return value {i}: {return_type}")
+                raise GsTaichiTypeError(
+                    f"Unsupported return type for return value {i}: {return_type}"
+                )
         if len(ret) == 1:
             return ret[0]
         return tuple(ret)
 
-    def do_compile(self, key: FunctionKey, args: tuple[Any, ...], arg_features: tuple[Any, ...]) -> None:
+    def do_compile(
+        self, key: FunctionKey, args: tuple[Any, ...], arg_features: tuple[Any, ...]
+    ) -> None:
         tree, ctx = _get_tree_and_ctx(
-            self, is_kernel=False, args=args, arg_features=arg_features, is_real_function=self.is_real_function
+            self,
+            is_kernel=False,
+            args=args,
+            arg_features=arg_features,
+            is_real_function=self.is_real_function,
         )
         fn = impl.get_runtime().prog.create_function(key)
 
@@ -521,7 +557,9 @@ class Func:
                 self.return_type = (self.return_type,)
             for i, return_type in enumerate(self.return_type):
                 if return_type is Ellipsis:
-                    raise GsTaichiSyntaxError("Ellipsis is not supported in return type annotations")
+                    raise GsTaichiSyntaxError(
+                        "Ellipsis is not supported in return type annotations"
+                    )
         params = sig.parameters
         arg_names = params.keys()
         for i, arg_name in enumerate(arg_names):
@@ -535,9 +573,13 @@ class Func:
                     "GsTaichi functions do not support variable positional parameters (i.e., *args)"
                 )
             if param.kind == inspect.Parameter.KEYWORD_ONLY:
-                raise GsTaichiSyntaxError("GsTaichi functions do not support keyword parameters")
+                raise GsTaichiSyntaxError(
+                    "GsTaichi functions do not support keyword parameters"
+                )
             if param.kind != inspect.Parameter.POSITIONAL_OR_KEYWORD:
-                raise GsTaichiSyntaxError('GsTaichi functions only support "positional or keyword" parameters')
+                raise GsTaichiSyntaxError(
+                    'GsTaichi functions only support "positional or keyword" parameters'
+                )
             annotation = param.annotation
             if annotation is inspect.Parameter.empty:
                 if i == 0 and self.classfunc:
@@ -559,18 +601,25 @@ class Func:
                     pass
                 elif type(annotation) == gstaichi.types.annotations.Template:
                     pass
-                elif isinstance(annotation, template) or annotation == gstaichi.types.annotations.Template:
+                elif (
+                    isinstance(annotation, template)
+                    or annotation == gstaichi.types.annotations.Template
+                ):
                     pass
                 elif isinstance(annotation, primitive_types.RefType):
                     pass
-                elif isinstance(annotation, type) and dataclasses.is_dataclass(annotation):
+                elif isinstance(annotation, type) and dataclasses.is_dataclass(
+                    annotation
+                ):
                     pass
                 else:
                     raise GsTaichiSyntaxError(
                         f"Invalid type annotation (argument {i}) of GsTaichi function: {annotation}"
                     )
             self.arg_metas.append(ArgMetadata(annotation, param.name, param.default))
-            self.orig_arguments.append(ArgMetadata(annotation, param.name, param.default))
+            self.orig_arguments.append(
+                ArgMetadata(annotation, param.name, param.default)
+            )
 
 
 def _get_global_vars(_func: Callable) -> dict[str, Any]:
@@ -603,7 +652,9 @@ class FeLlCacheObservations:
 class Kernel:
     counter = 0
 
-    def __init__(self, _func: Callable, autodiff_mode: AutodiffMode, _classkernel=False) -> None:
+    def __init__(
+        self, _func: Callable, autodiff_mode: AutodiffMode, _classkernel=False
+    ) -> None:
         self.func = _func
         self.kernel_counter = Kernel.counter
         Kernel.counter += 1
@@ -635,10 +686,16 @@ class Kernel:
         self.gstaichi_callable: GsTaichiCallable | None = None
         self.visited_functions: set[FunctionSourceInfo] = set()
         self.kernel_function_info: FunctionSourceInfo | None = None
-        self.compiled_kernel_data_by_key: dict[CompiledKernelKeyType, CompiledKernelData] = {}
-        self._last_compiled_kernel_data: CompiledKernelData | None = None  # for dev/debug
+        self.compiled_kernel_data_by_key: dict[
+            CompiledKernelKeyType, CompiledKernelData
+        ] = {}
+        self._last_compiled_kernel_data: CompiledKernelData | None = (
+            None  # for dev/debug
+        )
 
-        self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
+        self.src_ll_cache_observations: SrcLlCacheObservations = (
+            SrcLlCacheObservations()
+        )
         self.fe_ll_cache_observations: FeLlCacheObservations = FeLlCacheObservations()
 
     def ast_builder(self) -> ASTBuilder:
@@ -662,7 +719,9 @@ class Kernel:
                 self.return_type = (self.return_type,)
             for return_type in self.return_type:
                 if return_type is Ellipsis:
-                    raise GsTaichiSyntaxError("Ellipsis is not supported in return type annotations")
+                    raise GsTaichiSyntaxError(
+                        "Ellipsis is not supported in return type annotations"
+                    )
         params = dict(sig.parameters)
         arg_names = params.keys()
         for i, arg_name in enumerate(arg_names):
@@ -676,17 +735,25 @@ class Kernel:
                     "GsTaichi kernels do not support variable positional parameters (i.e., *args)"
                 )
             if param.default is not inspect.Parameter.empty:
-                raise GsTaichiSyntaxError("GsTaichi kernels do not support default values for arguments")
+                raise GsTaichiSyntaxError(
+                    "GsTaichi kernels do not support default values for arguments"
+                )
             if param.kind == inspect.Parameter.KEYWORD_ONLY:
-                raise GsTaichiSyntaxError("GsTaichi kernels do not support keyword parameters")
+                raise GsTaichiSyntaxError(
+                    "GsTaichi kernels do not support keyword parameters"
+                )
             if param.kind != inspect.Parameter.POSITIONAL_OR_KEYWORD:
-                raise GsTaichiSyntaxError('GsTaichi kernels only support "positional or keyword" parameters')
+                raise GsTaichiSyntaxError(
+                    'GsTaichi kernels only support "positional or keyword" parameters'
+                )
             annotation = param.annotation
             if param.annotation is inspect.Parameter.empty:
                 if i == 0 and self.classkernel:  # The |self| parameter
                     annotation = template()
                 else:
-                    raise GsTaichiSyntaxError("GsTaichi kernels parameters must be type annotated")
+                    raise GsTaichiSyntaxError(
+                        "GsTaichi kernels parameters must be type annotated"
+                    )
             else:
                 if isinstance(
                     annotation,
@@ -711,13 +778,22 @@ class Kernel:
                     pass
                 elif annotation == template:
                     pass
-                elif isinstance(annotation, type) and dataclasses.is_dataclass(annotation):
+                elif isinstance(annotation, type) and dataclasses.is_dataclass(
+                    annotation
+                ):
                     pass
                 else:
-                    raise GsTaichiSyntaxError(f"Invalid type annotation (argument {i}) of Taichi kernel: {annotation}")
+                    raise GsTaichiSyntaxError(
+                        f"Invalid type annotation (argument {i}) of Taichi kernel: {annotation}"
+                    )
             self.arg_metas.append(ArgMetadata(annotation, param.name, param.default))
 
-    def materialize(self, key: CompiledKernelKeyType | None, args: tuple[Any, ...], arg_features=None):
+    def materialize(
+        self,
+        key: CompiledKernelKeyType | None,
+        args: tuple[Any, ...],
+        arg_features=None,
+    ):
         if key is None:
             key = (self.func, 0, self.autodiff_mode)
         self.runtime.materialize()
@@ -726,9 +802,15 @@ class Kernel:
         if key in self.materialized_kernels:
             return
 
-        if self.runtime.src_ll_cache and self.gstaichi_callable and self.gstaichi_callable.is_pure:
+        if (
+            self.runtime.src_ll_cache
+            and self.gstaichi_callable
+            and self.gstaichi_callable.is_pure
+        ):
             kernel_source_info, _src = get_source_info_and_src(self.func)
-            self.fast_checksum = src_hasher.create_cache_key(kernel_source_info, args, self.arg_metas)
+            self.fast_checksum = src_hasher.create_cache_key(
+                kernel_source_info, args, self.arg_metas
+            )
             if self.fast_checksum:
                 self.src_ll_cache_observations.cache_key_generated = True
             if self.fast_checksum and src_hasher.validate_cache_key(self.fast_checksum):
@@ -742,7 +824,11 @@ class Kernel:
                 )
                 if self.compiled_kernel_data_by_key[key]:
                     self.src_ll_cache_observations.cache_loaded = True
-        elif self.gstaichi_callable and not self.gstaichi_callable.is_pure and self.runtime.print_non_pure:
+        elif (
+            self.gstaichi_callable
+            and not self.gstaichi_callable.is_pure
+            and self.runtime.print_non_pure
+        ):
             # The bit in caps should not be modified without updating corresponding test
             # freetext can be freely modified.
             # As for why we are using `print` rather than eg logger.info, it is because
@@ -783,7 +869,9 @@ class Kernel:
             try:
                 ctx.ast_builder = kernel_cxx.ast_builder()
 
-                def ast_to_dict(node: ast.AST | list | primitive_types._python_primitive_types):
+                def ast_to_dict(
+                    node: ast.AST | list | primitive_types._python_primitive_types,
+                ):
                     if isinstance(node, ast.AST):
                         fields = {k: ast_to_dict(v) for k, v in ast.iter_fields(node)}
                         return {
@@ -814,26 +902,46 @@ class Kernel:
 
                     output_file = target_dir / f"{kernel_name}_gen_time.json"
                     output_file.write_text(
-                        json.dumps({"elapsed_txt": elapsed_txt, "elapsed_json": elapsed_json}, indent=2)
+                        json.dumps(
+                            {"elapsed_txt": elapsed_txt, "elapsed_json": elapsed_json},
+                            indent=2,
+                        )
                     )
-                struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
-                tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
-                ctx.only_parse_function_def = self.compiled_kernel_data_by_key.get(key) is not None
+                struct_locals = (
+                    _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
+                )
+                tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(
+                    tree, struct_locals=struct_locals
+                )
+                ctx.only_parse_function_def = (
+                    self.compiled_kernel_data_by_key.get(key) is not None
+                )
                 transform_tree(tree, ctx)
                 if not ctx.is_real_function and not ctx.only_parse_function_def:
                     if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
-                        raise GsTaichiSyntaxError("Kernel has a return type but does not have a return statement")
+                        raise GsTaichiSyntaxError(
+                            "Kernel has a return type but does not have a return statement"
+                        )
             finally:
                 self.runtime.inside_kernel = False
                 self.runtime._current_kernel = None
                 self.runtime._compiling_callable = None
 
-        gstaichi_kernel = impl.get_runtime().prog.create_kernel(gstaichi_ast_generator, kernel_name, self.autodiff_mode)
+        gstaichi_kernel = impl.get_runtime().prog.create_kernel(
+            gstaichi_ast_generator, kernel_name, self.autodiff_mode
+        )
         assert key not in self.materialized_kernels
         self.materialized_kernels[key] = gstaichi_kernel
 
-    def launch_kernel(self, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
-        assert len(args) == len(self.arg_metas), f"{len(self.arg_metas)} arguments needed but {len(args)} provided"
+    def launch_kernel(
+        self,
+        t_kernel: KernelCxx,
+        compiled_kernel_data: CompiledKernelData | None,
+        *args,
+    ) -> Any:
+        assert len(args) == len(
+            self.arg_metas
+        ), f"{len(self.arg_metas)} arguments needed but {len(args)} provided"
 
         tmps = []
         callbacks = []
@@ -843,7 +951,9 @@ class Kernel:
         max_arg_num = 512
         exceed_max_arg_num = False
 
-        def set_arg_ndarray(indices: tuple[int, ...], v: gstaichi.lang._ndarray.Ndarray) -> None:
+        def set_arg_ndarray(
+            indices: tuple[int, ...], v: gstaichi.lang._ndarray.Ndarray
+        ) -> None:
             v_primal = v.arr
             v_grad = v.grad.arr if v.grad else None
             if v_grad is None:
@@ -851,13 +961,19 @@ class Kernel:
             else:
                 launch_ctx.set_arg_ndarray_with_grad(indices, v_primal, v_grad)  # type: ignore
 
-        def set_arg_texture(indices: tuple[int, ...], v: gstaichi.lang._texture.Texture) -> None:
+        def set_arg_texture(
+            indices: tuple[int, ...], v: gstaichi.lang._texture.Texture
+        ) -> None:
             launch_ctx.set_arg_texture(indices, v.tex)
 
-        def set_arg_rw_texture(indices: tuple[int, ...], v: gstaichi.lang._texture.Texture) -> None:
+        def set_arg_rw_texture(
+            indices: tuple[int, ...], v: gstaichi.lang._texture.Texture
+        ) -> None:
             launch_ctx.set_arg_rw_texture(indices, v.tex)
 
-        def set_arg_ext_array(indices: tuple[int, ...], v: Any, needed: ndarray_type.NdarrayType) -> None:
+        def set_arg_ext_array(
+            indices: tuple[int, ...], v: Any, needed: ndarray_type.NdarrayType
+        ) -> None:
             # v is things like torch Tensor and numpy array
             # Not adding type for this, since adds additional dependencies
             #
@@ -868,16 +984,22 @@ class Kernel:
             is_soa = needed.layout == Layout.SOA
             array_shape = v.shape
             if functools.reduce(operator.mul, array_shape, 1) > np.iinfo(np.int32).max:
-                warnings.warn("Ndarray index might be out of int32 boundary but int64 indexing is not supported yet.")
+                warnings.warn(
+                    "Ndarray index might be out of int32 boundary but int64 indexing is not supported yet."
+                )
             if needed.dtype is None or id(needed.dtype) in primitive_types.type_ids:
                 element_dim = 0
             else:
                 element_dim = needed.dtype.ndim
-                array_shape = v.shape[element_dim:] if is_soa else v.shape[:-element_dim]
+                array_shape = (
+                    v.shape[element_dim:] if is_soa else v.shape[:-element_dim]
+                )
             if isinstance(v, np.ndarray):
                 # numpy
                 if v.flags.c_contiguous:
-                    launch_ctx.set_arg_external_array_with_shape(indices, int(v.ctypes.data), v.nbytes, array_shape, 0)
+                    launch_ctx.set_arg_external_array_with_shape(
+                        indices, int(v.ctypes.data), v.nbytes, array_shape, 0
+                    )
                 elif v.flags.f_contiguous:
                     # TODO: A better way that avoids copying is saving strides info.
                     tmp = np.ascontiguousarray(v)
@@ -909,7 +1031,7 @@ class Kernel:
 
                     def get_call_back(u, v):
                         def call_back():
-                            u.copy_(v)
+                            u.data.copy_(v)
 
                         return call_back
 
@@ -927,30 +1049,36 @@ class Kernel:
                                 "Non contiguous gradient tensors are not supported, please call tensor.grad.contiguous() before passing it into gstaichi kernel."
                             )
 
-                    tmp = v
-                    if (str(v.device) != "cpu") and not (
-                        str(v.device).startswith("cuda") and gstaichi_arch == _ti_core.Arch.cuda
+                    v_taichi = v
+                    grad_taichi = v.grad
+                    if (v.device.type != "cpu") and not (
+                        v.device.type == "cuda" and gstaichi_arch == _ti_core.Arch.cuda
                     ):
-                        # Getting a torch CUDA tensor on GsTaichi non-cuda arch:
-                        # We just replace it with a CPU tensor and by the end of kernel execution we'll use the
-                        # callback to copy the values back to the original CUDA tensor.
-                        host_v = v.to(device="cpu", copy=True)
-                        tmp = host_v
-                        callbacks.append(get_call_back(v, host_v))
+                        # For a torch tensor to be passed as as input argument (in and/or out) of a taichi kernel, its
+                        # memory must be hosted either on CPU, or on CUDA if and only if GsTaichi is using CUDA backend.
+                        # We just replace it with a CPU tensor and by the end of kernel execution we'll use the callback
+                        # to copy the values back to the original tensor.
+                        v_taichi = v.to(device="cpu")
+                        callbacks.append(get_call_back(v, v_taichi))
+                        if v.grad is not None:
+                            grad_taichi = v.grad.to(device="cpu")
+                            callbacks.append(get_call_back(v.grad, grad_taichi))
 
                     launch_ctx.set_arg_external_array_with_shape(
                         indices,
-                        int(tmp.data_ptr()),
-                        tmp.element_size() * tmp.nelement(),
+                        int(v_taichi.data_ptr()),
+                        v_taichi.element_size() * v_taichi.nelement(),
                         array_shape,
-                        int(v.grad.data_ptr()) if v.grad is not None else 0,
+                        int(grad_taichi.data_ptr()) if grad_taichi is not None else 0,
                     )
                 else:
                     raise GsTaichiRuntimeTypeError(
                         f"Argument of type {type(v)} cannot be converted into required type {needed}"
                     )
             else:
-                raise GsTaichiRuntimeTypeError(f"Argument {needed} cannot be converted into required type {v}")
+                raise GsTaichiRuntimeTypeError(
+                    f"Argument {needed} cannot be converted into required type {v}"
+                )
 
         def set_arg_matrix(indices: tuple[int, ...], v, needed) -> None:
             def cast_float(x: float | np.floating | np.integer | int) -> float:
@@ -973,10 +1101,14 @@ class Kernel:
             elif needed.dtype in primitive_types.integer_types:
                 cast_func = cast_int
             else:
-                raise ValueError(f"Matrix dtype {needed.dtype} is not integer type or real type.")
+                raise ValueError(
+                    f"Matrix dtype {needed.dtype} is not integer type or real type."
+                )
 
             if needed.ndim == 2:
-                v = [cast_func(v[i, j]) for i in range(needed.n) for j in range(needed.m)]
+                v = [
+                    cast_func(v[i, j]) for i in range(needed.n) for j in range(needed.m)
+                ]
             else:
                 v = [cast_func(v[i]) for i in range(needed.n)]
             v = needed(*v)
@@ -988,7 +1120,12 @@ class Kernel:
 
         set_later_list = []
 
-        def recursive_set_args(needed_arg_type: Type, provided_arg_type: Type, v: Any, indices: tuple[int, ...]) -> int:
+        def recursive_set_args(
+            needed_arg_type: Type,
+            provided_arg_type: Type,
+            v: Any,
+            indices: tuple[int, ...],
+        ) -> int:
             """
             Returns the number of kernel args set
             e.g. templates don't set kernel args, so returns 0
@@ -1004,12 +1141,16 @@ class Kernel:
             # Note: do not use sth like "needed == f32". That would be slow.
             if id(needed_arg_type) in primitive_types.real_type_ids:
                 if not isinstance(v, (float, int, np.floating, np.integer)):
-                    raise GsTaichiRuntimeTypeError.get(indices, needed_arg_type.to_string(), provided_arg_type)
+                    raise GsTaichiRuntimeTypeError.get(
+                        indices, needed_arg_type.to_string(), provided_arg_type
+                    )
                 launch_ctx.set_arg_float(indices, float(v))
                 return 1
             if id(needed_arg_type) in primitive_types.integer_type_ids:
                 if not isinstance(v, (int, np.integer)):
-                    raise GsTaichiRuntimeTypeError.get(indices, needed_arg_type.to_string(), provided_arg_type)
+                    raise GsTaichiRuntimeTypeError.get(
+                        indices, needed_arg_type.to_string(), provided_arg_type
+                    )
                 if is_signed(cook_dtype(needed_arg_type)):
                     launch_ctx.set_arg_int(indices, int(v))
                 else:
@@ -1020,18 +1161,26 @@ class Kernel:
                 return 1
             if dataclasses.is_dataclass(needed_arg_type):
                 if provided_arg_type != needed_arg_type:
-                    raise GsTaichiRuntimeError("needed", needed_arg_type, "!= provided", provided_arg_type)
+                    raise GsTaichiRuntimeError(
+                        "needed", needed_arg_type, "!= provided", provided_arg_type
+                    )
                 assert provided_arg_type == needed_arg_type
                 idx = 0
                 for j, field in enumerate(dataclasses.fields(needed_arg_type)):
                     assert not isinstance(field.type, str)
                     field_value = getattr(v, field.name)
-                    idx += recursive_set_args(field.type, field.type, field_value, (indices[0] + idx,))
+                    idx += recursive_set_args(
+                        field.type, field.type, field_value, (indices[0] + idx,)
+                    )
                 return idx
-            if isinstance(needed_arg_type, ndarray_type.NdarrayType) and isinstance(v, gstaichi.lang._ndarray.Ndarray):
+            if isinstance(needed_arg_type, ndarray_type.NdarrayType) and isinstance(
+                v, gstaichi.lang._ndarray.Ndarray
+            ):
                 set_arg_ndarray(indices, v)
                 return 1
-            if isinstance(needed_arg_type, texture_type.TextureType) and isinstance(v, gstaichi.lang._texture.Texture):
+            if isinstance(needed_arg_type, texture_type.TextureType) and isinstance(
+                v, gstaichi.lang._texture.Texture
+            ):
                 set_arg_texture(indices, v)
                 return 1
             if isinstance(needed_arg_type, texture_type.RWTextureType) and isinstance(
@@ -1058,7 +1207,9 @@ class Kernel:
                 return 1
             if needed_arg_type == template or isinstance(needed_arg_type, template):
                 return 0
-            raise ValueError(f"Argument type mismatch. Expecting {needed_arg_type}, got {type(v)}.")
+            raise ValueError(
+                f"Argument type mismatch. Expecting {needed_arg_type}, got {type(v)}."
+            )
 
         template_num = 0
         i_out = 0
@@ -1068,7 +1219,9 @@ class Kernel:
                 template_num += 1
                 i_out += 1
                 continue
-            i_out += recursive_set_args(needed_, type(val), val, (i_out - template_num,))
+            i_out += recursive_set_args(
+                needed_, type(val), val, (i_out - template_num,)
+            )
 
         for i, (set_arg_func, params) in enumerate(set_later_list):
             set_arg_func((len(args) - template_num + i,), *params)
@@ -1081,7 +1234,9 @@ class Kernel:
         try:
             prog = impl.get_runtime().prog
             if not compiled_kernel_data:
-                compile_result: CompileResult = prog.compile_kernel(prog.config(), prog.get_device_caps(), t_kernel)
+                compile_result: CompileResult = prog.compile_kernel(
+                    prog.config(), prog.get_device_caps(), t_kernel
+                )
                 compiled_kernel_data = compile_result.compiled_kernel_data
                 if compile_result.cache_hit:
                     self.fe_ll_cache_observations.cache_hit = True
@@ -1122,7 +1277,12 @@ class Kernel:
 
         return ret
 
-    def construct_kernel_ret(self, launch_ctx: KernelLaunchContext, ret_type: Any, index: tuple[int, ...] = ()):
+    def construct_kernel_ret(
+        self,
+        launch_ctx: KernelLaunchContext,
+        ret_type: Any,
+        index: tuple[int, ...] = (),
+    ):
         if isinstance(ret_type, CompoundType):
             return ret_type.from_kernel_struct_ret(launch_ctx, index)
         if ret_type in primitive_types.integer_types:
@@ -1133,11 +1293,15 @@ class Kernel:
             return launch_ctx.get_struct_ret_float(index)
         raise GsTaichiRuntimeTypeError(f"Invalid return type on index={index}")
 
-    def ensure_compiled(self, *args: tuple[Any, ...]) -> tuple[Callable, int, AutodiffMode]:
+    def ensure_compiled(
+        self, *args: tuple[Any, ...]
+    ) -> tuple[Callable, int, AutodiffMode]:
         try:
             instance_id, arg_features = self.mapper.lookup(args)
         except Exception as e:
-            raise type(e)(f"exception while trying to ensure compiled {self.func}:\n{e}") from e
+            raise type(e)(
+                f"exception while trying to ensure compiled {self.func}:\n{e}"
+            ) from e
         key = (self.func, instance_id, self.autodiff_mode)
         self.materialize(key=key, args=args, arg_features=arg_features)
         return key
@@ -1168,8 +1332,13 @@ class Kernel:
         ):
             self.runtime.target_tape.insert(self, args)
 
-        if self.autodiff_mode != AutodiffMode.NONE and impl.current_cfg().opt_level == 0:
-            _logging.warn("""opt_level = 1 is enforced to enable gradient computation.""")
+        if (
+            self.autodiff_mode != AutodiffMode.NONE
+            and impl.current_cfg().opt_level == 0
+        ):
+            _logging.warn(
+                """opt_level = 1 is enforced to enable gradient computation."""
+            )
             impl.current_cfg().opt_level = 1
         key = self.ensure_compiled(*args)
         kernel_cpp = self.materialized_kernels[key]
@@ -1211,7 +1380,9 @@ def _inside_class(level_of_class_stackframe: int) -> bool:
     return False
 
 
-def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool = False) -> GsTaichiCallable:
+def _kernel_impl(
+    _func: Callable, level_of_class_stackframe: int, verbose: bool = False
+) -> GsTaichiCallable:
     # Can decorators determine if a function is being defined inside a class?
     # https://stackoverflow.com/a/8793684/12003165
     is_classkernel = _inside_class(level_of_class_stackframe + 1)
@@ -1219,7 +1390,9 @@ def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool 
     if verbose:
         print(f"kernel={_func.__name__} is_classkernel={is_classkernel}")
     primal = Kernel(_func, autodiff_mode=AutodiffMode.NONE, _classkernel=is_classkernel)
-    adjoint = Kernel(_func, autodiff_mode=AutodiffMode.REVERSE, _classkernel=is_classkernel)
+    adjoint = Kernel(
+        _func, autodiff_mode=AutodiffMode.REVERSE, _classkernel=is_classkernel
+    )
     # Having |primal| contains |grad| makes the tape work.
     primal.grad = adjoint
 
@@ -1238,7 +1411,9 @@ def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool 
             # with @ti.data_oriented, otherwise getattr would have intercepted the call.
             clsobj = type(args[0])
             assert not hasattr(clsobj, "_data_oriented")
-            raise GsTaichiSyntaxError(f"Please decorate class {clsobj.__name__} with @ti.data_oriented")
+            raise GsTaichiSyntaxError(
+                f"Please decorate class {clsobj.__name__} with @ti.data_oriented"
+            )
 
         wrapped = GsTaichiCallable(_func, wrapped_classkernel)
     else:
@@ -1325,10 +1500,16 @@ def kernel(_fn: Callable[..., typing.Any] | None = None, *, pure: bool = False):
 
 
 class _BoundedDifferentiableMethod:
-    def __init__(self, kernel_owner: Any, wrapped_kernel_func: GsTaichiCallable | BoundGsTaichiCallable):
+    def __init__(
+        self,
+        kernel_owner: Any,
+        wrapped_kernel_func: GsTaichiCallable | BoundGsTaichiCallable,
+    ):
         clsobj = type(kernel_owner)
         if not getattr(clsobj, "_data_oriented", False):
-            raise GsTaichiSyntaxError(f"Please decorate class {clsobj.__name__} with @ti.data_oriented")
+            raise GsTaichiSyntaxError(
+                f"Please decorate class {clsobj.__name__} with @ti.data_oriented"
+            )
         self._kernel_owner = kernel_owner
         self._primal = wrapped_kernel_func._primal
         self._adjoint = wrapped_kernel_func._adjoint
@@ -1414,3 +1595,4 @@ def data_oriented(cls):
 
 
 __all__ = ["data_oriented", "func", "kernel", "pyfunc", "real_func"]
+
