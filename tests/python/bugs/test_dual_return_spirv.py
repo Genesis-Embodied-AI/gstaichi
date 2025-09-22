@@ -1,4 +1,5 @@
 import gstaichi as ti
+
 from tests import test_utils
 
 
@@ -14,7 +15,7 @@ def test_spirv_dual_return():
         a = False
         for i_b in ti.ndrange(1):
             a = True
-        
+
         b = False
         for i_b in ti.ndrange(1):
             b = i_b > n
