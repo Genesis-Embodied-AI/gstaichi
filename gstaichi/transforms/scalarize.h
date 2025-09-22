@@ -1,9 +1,27 @@
+#include "gstaichi/ir/visitors.h"
 #include "gstaichi/ir/ir.h"
 
 namespace gstaichi::lang {
 
-    namespace irpass {
-
+// The ExtractLocalPointers pass aims at removing redundant ConstStmts and
+// MatrixPtrStmts generated for any (AllocaStmt, integer) pair by extracting
+// a unique copy for any future usage.
+//
+// Example for redundant stmts:
+//   <i32> $0 = const 0
+//   <i32> $1 = const 1
+//   ...
+//   <[Tensor (3, 3) f32]> $47738 = alloca
+//   <i32> $47739 = const 0  [REDUNDANT]
+//   <*f32> $47740 = shift ptr [$47738 + $47739]
+//   $47741 : local store [$47740 <- $47713]
+//   <i32> $47742 = const 1  [REDUNDANT]
+//   <*f32> $47743 = shift ptr [$47738 + $47742]
+//   $47744 : local store [$47743 <- $47716]
+//   ...
+//   <i32> $47812 = const 1  [REDUNDANT]
+//   <*f32> $47813 = shift ptr [$47738 + $47812]  [REDUNDANT]
+//   <f32> $47814 = local load [$47813]
 class ExtractLocalPointers : public BasicStmtVisitor {
  public:
   ImmediateIRModifier immediate_modifier_;
@@ -19,7 +37,7 @@ class ExtractLocalPointers : public BasicStmtVisitor {
                      // it
   Block *top_level_;
 
-  explicit ExtractLocalPointers(IRNode *root) : immediate_modifier_(root);
+  explicit ExtractLocalPointers(IRNode *root);
   void visit(OffloadedStmt *stmt) override;
   void visit(MatrixPtrStmt *stmt) override;
   static bool run(IRNode *node);
@@ -28,7 +46,8 @@ class ExtractLocalPointers : public BasicStmtVisitor {
   using BasicStmtVisitor::visit;
 };
 
-    bool scalarize(IRNode *root, bool half2_optimization_enabled);
-} // namespace irpass
+namespace irpass {
+bool scalarize(IRNode *root, bool half2_optimization_enabled);
+}  // namespace irpass
 
-}  // namespace gstaichi::lang  
+}  // namespace gstaichi::lang

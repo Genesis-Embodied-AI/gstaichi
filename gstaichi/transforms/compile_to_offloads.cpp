@@ -323,9 +323,9 @@ void offload_to_executable(IRNode *ir,
   std::cout << "^^^ before scalarize" << std::endl;
   if (config.real_matrix_scalarize) {
     if (irpass::scalarize(ir, half2_optimization_enabled)) {
-  irpass::print(ir, &output);
-  std::cout << output << std::endl;
-  std::cout << "^^^ after scalarize" << std::endl;
+      irpass::print(ir, &output);
+      std::cout << output << std::endl;
+      std::cout << "^^^ after scalarize" << std::endl;
 
       irpass::die(ir);
       print("DIE");
