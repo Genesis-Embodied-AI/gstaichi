@@ -271,21 +271,9 @@ TEST(Scalarize, ScalarizeBugTmp222) {
   auto matrix_ptr2 = static_cast<MatrixPtrStmt *>(
       offloaded2->body->push_back<MatrixPtrStmt>(vector_alloca2, zero_for2));
 
-  irpass::print(block.get());
-
   ExtractLocalPointers::run(block.get());
-  irpass::print(block.get());
-
-  std::cout << " zero " << (void *)zero1 << std::endl;
-  std::cout << " zero_for2 " << (void *)zero_for2 << std::endl;
-  std::cout << " matrix_ptr->offset " << (void *)matrix_ptr2->offset
-            << std::endl;
 
   ASSERT_EQ(block->statements[1].get(), offloaded2);
-  irpass::print(offloaded2);
-
-  std::cout << " block len " << block->size() << std::endl;
-  int i = 0;
   bool foundMatrixPtr = false;
   for (auto &stmt : offloaded2->body->statements) {
     if (stmt->is<MatrixPtrStmt>()) {
@@ -294,9 +282,6 @@ TEST(Scalarize, ScalarizeBugTmp222) {
       EXPECT_EQ(matrix_ptr_new->offset, zero_for2);
       EXPECT_NE(matrix_ptr_new->offset, zero1);
     }
-    std::cout << i;
-    irpass::print(stmt.get());
-    i += 1;
   }
   EXPECT_TRUE(foundMatrixPtr);
 }

@@ -1173,17 +1173,14 @@ class ScalarizePointers : public BasicStmtVisitor {
 ExtractLocalPointers::ExtractLocalPointers(IRNode *root)
     : immediate_modifier_(root) {
   if (root->is<OffloadedStmt>()) {
-    std::cout << "ExtractLocalPointers: root is OffloadedStmt" << std::endl;
     top_level_ = root->as<OffloadedStmt>()->body.get();
   } else {
-    std::cout << "ExtractLocalPointers: root is Block" << std::endl;
     TI_ASSERT(root->is<Block>());
     top_level_ = root->as<Block>();
   }
 }
 
 void ExtractLocalPointers::visit(OffloadedStmt *stmt) {
-  std::cout << "ExtractLocalPointers visiting OffloadedStmt" << std::endl;
   // Extract to OffloadStmt
   Block *orig_top_level = top_level_;
   top_level_ = stmt->body.get();
@@ -1193,21 +1190,13 @@ void ExtractLocalPointers::visit(OffloadedStmt *stmt) {
 }
 
 void ExtractLocalPointers::visit(MatrixPtrStmt *stmt) {
-  std::cout << "ExtractLocalPointers visiting MatrixPtrStmt" << std::endl;
-  std::cout << "stmt: ";
-  irpass::print(stmt);
-  std::cout << " origin: ";
-  irpass::print(stmt->origin);
   if (stmt->origin->is<AllocaStmt>()) {
-    std::cout << "MatrixPtrStmt's origin is AllocaStmt" << std::endl;
     auto alloca_stmt = stmt->origin->cast<AllocaStmt>();
     auto tensor_type = alloca_stmt->ret_type.ptr_removed()->cast<TensorType>();
     TI_ASSERT(tensor_type != nullptr);
     if (stmt->offset->is<ConstStmt>()) {
       int offset = stmt->offset->cast<ConstStmt>()->val.val_int32();
       if (first_const_.count(offset) == 0) {
-        std::cout << "mapping const " << offset << " to " << stmt->offset
-                  << std::endl;
         first_const_[offset] = stmt->offset;
         delayed_modifier_.extract_to_block_front(stmt->offset, top_level_);
       }
