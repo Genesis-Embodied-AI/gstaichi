@@ -1146,6 +1146,21 @@ class Kernel:
     # Thus this part needs to be fast. (i.e. < 3us on a 4 GHz x64 CPU)
     @_shell_pop_print
     def __call__(self, *args, **kwargs) -> Any:
+        global mpm_grid_op_count
+        print("running kernel", self.func.__name__)
+        terminate = False
+        if "mpm_grid_op" in self.func.__name__:
+            mpm_grid_op_count += 1
+            print("mpm_grid_op_count", mpm_grid_op_count)
+            # if mpm_grid_op_count >= 4:
+            #     print("terminate after this call")
+            #     terminate = True
+        print("args:")
+        for i, arg in enumerate(args):
+            if isinstance(arg, (float, int)):
+                print(i, arg, type(arg))
+            else:
+                print(i, type(arg))
         args = _process_args(self, is_func=False, args=args, kwargs=kwargs)
 
         # Transform the primal kernel to forward mode grad kernel
@@ -1174,8 +1189,12 @@ class Kernel:
         key = self.ensure_compiled(*args)
         kernel_cpp = self.materialized_kernels[key]
         compiled_kernel_data = self.compiled_kernel_data_by_key.get(key, None)
-        return self.launch_kernel(kernel_cpp, compiled_kernel_data, *args)
+        res = self.launch_kernel(kernel_cpp, compiled_kernel_data, *args)
+        if terminate:
+            asdfadf
+        return res
 
+mpm_grid_op_count = 0
 
 # For a GsTaichi class definition like below:
 #
