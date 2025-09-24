@@ -312,7 +312,6 @@
   <h1>Source code for gstaichi.lang.misc</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">atexit</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
@@ -698,7 +697,6 @@
     <span class="n">require_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">print_non_pure</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">src_ll_cache</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="n">debug_dump_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;/tmp&quot;</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Initializes the GsTaichi runtime.</span>
@@ -715,7 +713,6 @@
 <span class="sd">                        @ti.pure</span>
 <span class="sd">        src_ll_cache: enable SRC-LL-CACHE, which will accelerate loading from cache, across all architectures,</span>
 <span class="sd">                      for pure kernels (i.e. kernels declared as @ti.pure)</span>
-<span class="sd">        debug_dump_path: used as the base path for TI_DUMP_KERNEL_CHECKSUMS and similar</span>
 <span class="sd">        **kwargs: GsTaichi provides highly customizable compilation through</span>
 <span class="sd">            ``kwargs``, which allows for fine grained control of GsTaichi compiler</span>
 <span class="sd">            behavior. Below we list some of the most frequently used ones. For a</span>
@@ -727,6 +724,7 @@
 <span class="sd">            * ``print_ir`` (bool): Prints the CHI IR of the GsTaichi kernels.</span>
 <span class="sd">            *``offline_cache`` (bool): Enables offline cache of the compiled kernels. Default to True. When this is enabled GsTaichi will cache compiled kernel on your local disk to accelerate future calls.</span>
 <span class="sd">            *``random_seed`` (int): Sets the seed of the random generator. The default is 0.</span>
+<span class="sd">            *``debug_dump_path`` (str): used as the base path for TI_DUMP_KERNEL_CHECKSUMS and similar</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># FIXME(https://github.com/taichi-dev/gstaichi/issues/4811): save the current working directory since it may be</span>
     <span class="c1"># changed by the Vulkan backend initialization on OS X.</span>
@@ -816,7 +814,6 @@
         <span class="n">runtime</span><span class="o">.</span><span class="n">unrolling_limit</span> <span class="o">=</span> <span class="n">spec_cfg</span><span class="o">.</span><span class="n">unrolling_limit</span>
         <span class="n">runtime</span><span class="o">.</span><span class="n">src_ll_cache</span> <span class="o">=</span> <span class="n">src_ll_cache</span>
         <span class="n">runtime</span><span class="o">.</span><span class="n">print_non_pure</span> <span class="o">=</span> <span class="n">print_non_pure</span>
-        <span class="n">runtime</span><span class="o">.</span><span class="n">debug_dump_path</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">debug_dump_path</span><span class="p">)</span>
         <span class="n">_logging</span><span class="o">.</span><span class="n">set_logging_level</span><span class="p">(</span><span class="n">spec_cfg</span><span class="o">.</span><span class="n">log_level</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
 
     <span class="c1"># select arch (backend):</span>
