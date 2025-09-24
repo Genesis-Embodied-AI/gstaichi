@@ -235,7 +235,7 @@ TEST(Scalarize, ScalarizeLocalLoad) {
   EXPECT_EQ(block->statements[7]->is<LocalLoadStmt>(), true);
 }
 
-TEST(Scalarize, ScalarizeBugTmp222) {
+TEST(Scalarize, ScalarizeBugInvalidRedundantConstantRemoval) {
   // Test for Genesis bug
   // https://linear.app/genesis-ai-company/issue/CMP-151/fix-genesis-unit-test-bug-with-spirv-on-mac
   TestProgram test_prog;
