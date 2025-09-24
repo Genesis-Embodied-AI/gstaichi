@@ -1,6 +1,5 @@
 import atexit
 import os
-import pathlib
 import shutil
 import tempfile
 import warnings
@@ -306,7 +305,6 @@ def init(
     require_version: str | None = None,
     print_non_pure: bool = False,
     src_ll_cache: bool = True,
-    debug_dump_path: str = "/tmp",
     **kwargs,
 ):
     """Initializes the GsTaichi runtime.
@@ -323,7 +321,6 @@ def init(
                         @ti.pure
         src_ll_cache: enable SRC-LL-CACHE, which will accelerate loading from cache, across all architectures,
                       for pure kernels (i.e. kernels declared as @ti.pure)
-        debug_dump_path: used as the base path for TI_DUMP_KERNEL_CHECKSUMS and similar
         **kwargs: GsTaichi provides highly customizable compilation through
             ``kwargs``, which allows for fine grained control of GsTaichi compiler
             behavior. Below we list some of the most frequently used ones. For a
@@ -335,6 +332,7 @@ def init(
             * ``print_ir`` (bool): Prints the CHI IR of the GsTaichi kernels.
             *``offline_cache`` (bool): Enables offline cache of the compiled kernels. Default to True. When this is enabled GsTaichi will cache compiled kernel on your local disk to accelerate future calls.
             *``random_seed`` (int): Sets the seed of the random generator. The default is 0.
+            *``debug_dump_path`` (str): used as the base path for TI_DUMP_KERNEL_CHECKSUMS and similar
     """
     # FIXME(https://github.com/taichi-dev/gstaichi/issues/4811): save the current working directory since it may be
     # changed by the Vulkan backend initialization on OS X.
@@ -424,7 +422,6 @@ def init(
         runtime.unrolling_limit = spec_cfg.unrolling_limit
         runtime.src_ll_cache = src_ll_cache
         runtime.print_non_pure = print_non_pure
-        runtime.debug_dump_path = pathlib.Path(debug_dump_path)
         _logging.set_logging_level(spec_cfg.log_level.lower())
 
     # select arch (backend):
