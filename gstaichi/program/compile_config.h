@@ -60,12 +60,13 @@ struct CompileConfig {
   int cpu_max_num_threads;
   int random_seed;
 
-  // LLVM backend options:
+  // Debugging options:
   bool print_struct_llvm_ir;
   bool print_kernel_llvm_ir;
   bool print_kernel_llvm_ir_optimized;
   bool print_kernel_asm;
   bool print_kernel_amdgcn;
+  std::string debug_dump_path;
 
   // CUDA/AMDGPU backend options:
   float64 device_memory_GB;
