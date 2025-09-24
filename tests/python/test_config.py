@@ -13,7 +13,7 @@ RET_SUCCESS = 42
 
 
 def config_debug_dump_path_child(args: list[str]) -> None:
-    print('args', args)
+    print("args", args)
     arch = args[0]
     tmp_path = args[1]
     specify_path = args[2].lower() == "true"
@@ -25,7 +25,7 @@ def config_debug_dump_path_child(args: list[str]) -> None:
 
     @ti.kernel(pure=True)
     def k1():
-        print('hello')
+        print("hello")
 
     k1()
     sys.exit(RET_SUCCESS)
