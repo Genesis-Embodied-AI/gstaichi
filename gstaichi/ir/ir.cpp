@@ -69,9 +69,9 @@ class StatementTypeNameVisitor : public IRVisitor {
   StatementTypeNameVisitor() {
   }
 
-#define PER_STATEMENT(x)                      \
-  void visit(x *stmt) override {              \
-    type_name = #x;                           \
+#define PER_STATEMENT(x)         \
+  void visit(x *stmt) override { \
+    type_name = #x;              \
   }
 #include "gstaichi/inc/statements.inc.h"
 
