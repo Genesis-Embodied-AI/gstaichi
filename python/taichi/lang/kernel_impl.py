@@ -1,6 +1,7 @@
 # type: ignore
 
 import ast
+import dataclasses
 import functools
 import inspect
 import json
@@ -174,17 +175,17 @@ def _get_tree_and_ctx(
 
 
 def _process_args(self: "Func | Kernel", args, kwargs):
-    ret = [argument.default for argument in self.arguments]
+    fused_args = [argument.default for argument in self.arguments]
     len_args = len(args)
 
-    if len_args > len(ret):
+    if len_args > len(fused_args):
         arg_str = ", ".join([str(arg) for arg in args])
         expected_str = ", ".join([f"{arg.name} : {arg.annotation}" for arg in self.arguments])
         msg = f"Too many arguments. Expected ({expected_str}), got ({arg_str})."
         raise TaichiSyntaxError(msg)
 
     for i, arg in enumerate(args):
-        ret[i] = arg
+        fused_args[i] = arg
 
     for key, value in kwargs.items():
         found = False
@@ -192,13 +193,13 @@ def _process_args(self: "Func | Kernel", args, kwargs):
             if key == arg.name:
                 if i < len_args:
                     raise TaichiSyntaxError(f"Multiple values for argument '{key}'.")
-                ret[i] = value
+                fused_args[i] = value
                 found = True
                 break
         if not found:
             raise TaichiSyntaxError(f"Unexpected argument '{key}'.")
 
-    for i, arg in enumerate(ret):
+    for i, arg in enumerate(fused_args):
         if arg is inspect.Parameter.empty:
             if self.arguments[i].annotation is inspect._empty:
                 raise TaichiSyntaxError(f"Parameter `{self.arguments[i].name}` missing.")
@@ -206,6 +207,9 @@ def _process_args(self: "Func | Kernel", args, kwargs):
                 raise TaichiSyntaxError(
                     f"Parameter `{self.arguments[i].name} : {self.arguments[i].annotation}` missing."
                 )
+
+    return tuple(fused_args)
+
 
     return ret
 
