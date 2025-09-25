@@ -13,7 +13,7 @@
 #include "gstaichi/util/line_appender.h"
 #include "gstaichi/codegen/spirv/kernel_utils.h"
 #include "gstaichi/codegen/spirv/spirv_ir_builder.h"
-#include "gstaichi/codegen/spirv/spirv_codegen_priv.h"
+#include "gstaichi/codegen/spirv/detail/spirv_codegen.h"
 #include "gstaichi/ir/transforms.h"
 #include "gstaichi/math/arithmetic.h"
 #include "gstaichi/codegen/ir_dump.h"
@@ -35,6 +35,7 @@ constexpr char kExtArrBufferName[] = "ext_arr_buffer";
 constexpr int kMaxNumThreadsGridStrideLoop = 65536 * 2;
 
 using BufferType = TaskAttributes::BufferType;
+using namespace detail;
 
 std::string buffer_instance_name(BufferInfo b) {
   // https://www.khronos.org/opengl/wiki/Interface_Block_(GLSL)#Syntax

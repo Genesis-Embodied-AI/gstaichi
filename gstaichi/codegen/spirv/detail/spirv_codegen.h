@@ -19,6 +19,7 @@
 
 namespace gstaichi::lang {
 namespace spirv {
+namespace detail {
 
 using BufferInfo = TaskAttributes::BufferInfo;
 using BufferBind = TaskAttributes::BufferBind;
@@ -208,5 +209,6 @@ class TaskCodegen : public IRVisitor {
   std::unordered_map<std::vector<int>, Value, hashing::Hasher<std::vector<int>>>
       argid_to_tex_value_;
 };
+}  // namespace detail
 }  // namespace spirv
 }  // namespace gstaichi::lang
