@@ -257,11 +257,17 @@ class CallTransformer:
             # not related to dataclasses). Necessary for calling further child functions
             build_stmts(ctx, node.args)
             build_stmts(ctx, node.keywords)
+
             node.args = CallTransformer._expand_Call_dataclass_args(node.args)
             node.keywords = CallTransformer._expand_Call_dataclass_kwargs(node.keywords)
+
             # create variables for the now-expanded dataclass members
-            build_stmts(ctx, node.args)
-            build_stmts(ctx, node.keywords)
+            for arg in node.args:
+                if not hasattr(arg, "ptr"):
+                    build_stmt(ctx, arg)
+            for arg in node.keywords:
+                if not hasattr(arg, "ptr"):
+                    build_stmt(ctx, arg)
 
         args = []
         for arg in node.args:
