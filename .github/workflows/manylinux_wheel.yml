@@ -136,7 +136,7 @@ jobs:
   publish_pypi:
     uses: ./.github/workflows/publish_pypi.yml
     if: github.event_name == 'release'
-    needs: test_wheel
+    needs: [test_wheel, test_gpu]
     permissions:
       id-token: write
       contents: read
