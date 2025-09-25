@@ -27,6 +27,11 @@ if TYPE_CHECKING:
 
 class Builder:
     def __call__(self, ctx: "ASTTransformerContext", node: ast.AST):
+        # indent = len(ctx.local_scopes) * "  "
+        # print(indent, node.__class__.__name__)
+        # if hasattr(node, "ptr"):
+        #     print(indent, "already built", node.__class__.__name__, type(node.ptr))
+        #     return node.ptr
         method_name = "build_" + node.__class__.__name__
         method = getattr(self, method_name, None)
         try:

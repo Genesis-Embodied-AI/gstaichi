@@ -258,6 +258,15 @@ class CallTransformer:
             build_stmts(ctx, node.args)
             build_stmts(ctx, node.keywords)
 
+            import os
+            if os.environ.get("oom") == "1":
+                print("build stmts")
+                build_stmts(ctx, node.args)
+                build_stmts(ctx, node.keywords)
+
+                build_stmts(ctx, node.args)
+                build_stmts(ctx, node.keywords)
+
             node.args = CallTransformer._expand_Call_dataclass_args(node.args)
             node.keywords = CallTransformer._expand_Call_dataclass_kwargs(node.keywords)
 
