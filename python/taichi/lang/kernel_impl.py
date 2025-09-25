@@ -389,6 +389,17 @@ class Func:
 
 
 class TaichiCallableTemplateMapper:
+    """
+    This should probably be renamed to sometihng like FeatureMapper, or
+    FeatureExtractor, since:
+    - it's not specific to templates
+    - it extracts what are later called 'features', for example for ndarray this includes:
+        - element type
+        - number dimensions
+        - needs grad (or not)
+    - these are returned as a heterogeneous tuple, whose contents depends on the type
+    """
+
     def __init__(self, arguments, template_slot_locations):
         self.arguments = arguments
         self.num_args = len(arguments)
@@ -396,8 +407,8 @@ class TaichiCallableTemplateMapper:
         self.mapping = {}
 
     @staticmethod
-    def extract_arg(arg, anno, arg_name):
-        if anno == template or isinstance(anno, template):
+    def extract_arg(arg, annotation, arg_name):
+        if annotation == template or isinstance(annotation, template):
             if isinstance(arg, taichi.lang.snode.SNode):
                 return arg.ptr
             if isinstance(arg, taichi.lang.expr.Expr):
@@ -405,7 +416,7 @@ class TaichiCallableTemplateMapper:
             if isinstance(arg, _ti_core.Expr):
                 return arg.get_underlying_ptr_address()
             if isinstance(arg, tuple):
-                return tuple(TaichiCallableTemplateMapper.extract_arg(item, anno, arg_name) for item in arg)
+                return tuple(TaichiCallableTemplateMapper.extract_arg(item, annotation, arg_name) for item in arg)
             if isinstance(arg, taichi.lang._ndarray.Ndarray):
                 raise TaichiRuntimeTypeError(
                     "Ndarray shouldn't be passed in via `ti.template()`, please annotate your kernel using `ti.types.ndarray(...)` instead"
@@ -424,45 +435,45 @@ class TaichiCallableTemplateMapper:
 
             # [Primitive arguments] Return the value
             return arg
-        if isinstance(anno, ArgPackType):
+        if isinstance(annotation, ArgPackType):
             if not isinstance(arg, ArgPack):
                 raise TaichiRuntimeTypeError(f"Argument {arg_name} must be a argument pack, got {type(arg)}")
             return tuple(
                 TaichiCallableTemplateMapper.extract_arg(arg[name], dtype, arg_name)
-                for index, (name, dtype) in enumerate(anno.members.items())
+                for index, (name, dtype) in enumerate(annotation.members.items())
             )
-        if isinstance(anno, texture_type.TextureType):
+        if isinstance(annotation, texture_type.TextureType):
             if not isinstance(arg, taichi.lang._texture.Texture):
                 raise TaichiRuntimeTypeError(f"Argument {arg_name} must be a texture, got {type(arg)}")
-            if arg.num_dims != anno.num_dimensions:
+            if arg.num_dims != annotation.num_dimensions:
                 raise TaichiRuntimeTypeError(
-                    f"TextureType dimension mismatch for argument {arg_name}: expected {anno.num_dimensions}, got {arg.num_dims}"
+                    f"TextureType dimension mismatch for argument {arg_name}: expected {annotation.num_dimensions}, got {arg.num_dims}"
                 )
             return (arg.num_dims,)
-        if isinstance(anno, texture_type.RWTextureType):
+        if isinstance(annotation, texture_type.RWTextureType):
             if not isinstance(arg, taichi.lang._texture.Texture):
                 raise TaichiRuntimeTypeError(f"Argument {arg_name} must be a texture, got {type(arg)}")
-            if arg.num_dims != anno.num_dimensions:
+            if arg.num_dims != annotation.num_dimensions:
                 raise TaichiRuntimeTypeError(
-                    f"RWTextureType dimension mismatch for argument {arg_name}: expected {anno.num_dimensions}, got {arg.num_dims}"
+                    f"RWTextureType dimension mismatch for argument {arg_name}: expected {annotation.num_dimensions}, got {arg.num_dims}"
                 )
-            if arg.fmt != anno.fmt:
+            if arg.fmt != annotation.fmt:
                 raise TaichiRuntimeTypeError(
-                    f"RWTextureType format mismatch for argument {arg_name}: expected {anno.fmt}, got {arg.fmt}"
+                    f"RWTextureType format mismatch for argument {arg_name}: expected {annotation.fmt}, got {arg.fmt}"
                 )
             # (penguinliong) '0' is the assumed LOD level. We currently don't
             # support mip-mapping.
             return arg.num_dims, arg.fmt, 0
-        if isinstance(anno, ndarray_type.NdarrayType):
+        if isinstance(annotation, ndarray_type.NdarrayType):
             if isinstance(arg, taichi.lang._ndarray.Ndarray):
-                anno.check_matched(arg.get_type(), arg_name)
-                needs_grad = (arg.grad is not None) if anno.needs_grad is None else anno.needs_grad
+                annotation.check_matched(arg.get_type(), arg_name)
+                needs_grad = (arg.grad is not None) if annotation.needs_grad is None else annotation.needs_grad
                 assert arg.shape is not None
-                return arg.element_type, len(arg.shape), needs_grad, anno.boundary
+                return arg.element_type, len(arg.shape), needs_grad, annotation.boundary
             if isinstance(arg, AnyArray):
                 ty = arg.get_type()
-                anno.check_matched(arg.get_type(), arg_name)
-                return ty.element_type, len(arg.shape), ty.needs_grad, anno.boundary
+                annotation.check_matched(arg.get_type(), arg_name)
+                return ty.element_type, len(arg.shape), ty.needs_grad, annotation.boundary
             # external arrays
             shape = getattr(arg, "shape", None)
             if shape is None:
@@ -470,47 +481,49 @@ class TaichiCallableTemplateMapper:
             shape = tuple(shape)
             element_shape: tuple[int, ...] = ()
             dtype = to_taichi_type(arg.dtype)
-            if isinstance(anno.dtype, MatrixType):
-                if anno.ndim is not None:
-                    if len(shape) != anno.dtype.ndim + anno.ndim:
+            if isinstance(annotation.dtype, MatrixType):
+                if annotation.ndim is not None:
+                    if len(shape) != annotation.dtype.ndim + annotation.ndim:
                         raise ValueError(
-                            f"Invalid value for argument {arg_name} - required array has ndim={anno.ndim} element_dim={anno.dtype.ndim}, "
+                            f"Invalid value for argument {arg_name} - required array has ndim={annotation.ndim} element_dim={annotation.dtype.ndim}, "
                             f"array with {len(shape)} dimensions is provided"
                         )
                 else:
-                    if len(shape) < anno.dtype.ndim:
+                    if len(shape) < annotation.dtype.ndim:
                         raise ValueError(
-                            f"Invalid value for argument {arg_name} - required element_dim={anno.dtype.ndim}, "
+                            f"Invalid value for argument {arg_name} - required element_dim={annotation.dtype.ndim}, "
                             f"array with {len(shape)} dimensions is provided"
                         )
-                element_shape = shape[-anno.dtype.ndim :]
-                anno_element_shape = anno.dtype.get_shape()
+                element_shape = shape[-annotation.dtype.ndim :]
+                anno_element_shape = annotation.dtype.get_shape()
                 if None not in anno_element_shape and element_shape != anno_element_shape:
                     raise ValueError(
                         f"Invalid value for argument {arg_name} - required element_shape={anno_element_shape}, "
                         f"array with element shape of {element_shape} is provided"
                     )
-            elif anno.dtype is not None:
+            elif annotation.dtype is not None:
                 # User specified scalar dtype
-                if anno.dtype != dtype:
+                if annotation.dtype != dtype:
                     raise ValueError(
-                        f"Invalid value for argument {arg_name} - required array has dtype={anno.dtype.to_string()}, "
+                        f"Invalid value for argument {arg_name} - required array has dtype={annotation.dtype.to_string()}, "
                         f"array with dtype={dtype.to_string()} is provided"
                     )
 
-                if anno.ndim is not None and len(shape) != anno.ndim:
+                if annotation.ndim is not None and len(shape) != annotation.ndim:
                     raise ValueError(
-                        f"Invalid value for argument {arg_name} - required array has ndim={anno.ndim}, "
+                        f"Invalid value for argument {arg_name} - required array has ndim={annotation.ndim}, "
                         f"array with {len(shape)} dimensions is provided"
                     )
-            needs_grad = getattr(arg, "requires_grad", False) if anno.needs_grad is None else anno.needs_grad
+            needs_grad = (
+                getattr(arg, "requires_grad", False) if annotation.needs_grad is None else annotation.needs_grad
+            )
             element_type = (
                 _ti_core.get_type_factory_instance().get_tensor_type(element_shape, dtype)
                 if len(element_shape) != 0
                 else arg.dtype
             )
-            return element_type, len(shape) - len(element_shape), needs_grad, anno.boundary
-        if isinstance(anno, sparse_matrix_builder):
+            return element_type, len(shape) - len(element_shape), needs_grad, annotation.boundary
+        if isinstance(annotation, sparse_matrix_builder):
             return arg.dtype
         # Use '#' as a placeholder because other kinds of arguments are not involved in template instantiation
         return "#"
