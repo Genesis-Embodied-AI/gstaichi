@@ -47,6 +47,7 @@ struct CacheData {
 struct CompileResult {
   const CompiledKernelData &compiled_kernel_data;
   bool cache_hit;
+  std::string cache_key;
 };
 
 class KernelCompilationManager final {
