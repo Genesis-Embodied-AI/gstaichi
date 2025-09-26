@@ -262,7 +262,7 @@ if (APPLE)
 endif ()
 
 if (LINUX)
-    target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE X11 pthread)
+    target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE pthread)
     if (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "x86_64")
         # Avoid glibc dependencies
         if (TI_WITH_VULKAN)

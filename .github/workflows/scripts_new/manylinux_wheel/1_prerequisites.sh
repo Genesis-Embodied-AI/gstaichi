@@ -8,8 +8,20 @@ yum install -y git wget
 git config --global --add safe.directory /__w/gstaichi/gstaichi
 git submodule update --init --jobs 2
 
-wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.4/clang+llvm-15.0.4-x86_64-linux-gnu-rhel-8.4.tar.xz
-tar -xf clang+llvm-15.0.4-x86_64-linux-gnu-rhel-8.4.tar.xz
+PLATFORM=$(uname -m)
+if [ "$PLATFORM" = "x86_64" ]; then
+    PLATFORM="x86_64"
+elif [ "$PLATFORM" = "aarch64" ]; then
+    PLATFORM="aarch64"
+else
+    echo "Unsupported architecture: $PLATFORM"
+    exit 1
+fi
+
+echo "Detected platform: $PLATFORM"
+wget -q https://github.com/Genesis-Embodied-AI/gstaichi-sdk-builds/releases/download/llvm-15.0.7-hp-llvm-u18-container-202509201548/taichi-llvm-15.0.7-linux-${PLATFORM}.zip
+unzip taichi-llvm-15.0.7-linux-${PLATFORM}.zip
+ls -l
 
 # clang++ searches for libstd++.so, not libstdc++.so.6
 # without this, then the compiler checks will fail
