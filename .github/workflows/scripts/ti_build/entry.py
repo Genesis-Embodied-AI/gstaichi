@@ -26,8 +26,11 @@ def build_wheel(python: Command, pip: Command) -> None:
     extra = []
 
     cmake_args.writeback()
-    if platform.system() == "Linux":
+    u = platform.uname()
+    if (u.system, u.machine) == ("Linux", "x86_64"):
         extra.extend(["-p", "manylinux_2_27_x86_64"])
+    elif (u.system, u.machine) in (("Linux", "arm64"), ("Linux", "aarch64")):
+        extra.extend(["-p", "manylinux_2_27_aarch64"])
     if platform.system() == "Darwin":
         extra.extend(["-p", "macosx-11.0-arm64"])
 
@@ -49,6 +52,8 @@ def setup_basic_build_env():
         # Use MSVC on Windows
         setup_clang(as_compiler=False)
         setup_msvc()
+    elif u.system == "Linux":
+        setup_clang(as_compiler=False)
     else:
         # Use Clang on all other platforms
         setup_clang()
