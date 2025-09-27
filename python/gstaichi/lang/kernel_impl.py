@@ -312,13 +312,6 @@ def _get_tree_and_ctx(
             py_args=args,
         )
 
-    if current_kernel is not None:  # Kernel
-        current_kernel.kernel_function_info = function_source_info
-    if current_kernel is None:
-        current_kernel = impl.get_runtime()._current_kernel
-    assert current_kernel is not None
-    current_kernel.visited_functions.add(function_source_info)
-
     return tree, ASTTransformerContext(
         excluded_parameters=excluded_parameters,
         is_kernel=is_kernel,
