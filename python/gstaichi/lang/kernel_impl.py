@@ -292,7 +292,18 @@ def _get_tree_and_ctx(
     func_body = tree.body[0]
     func_body.decorator_list = []  # type: ignore , kick that can down the road...
 
-    global_vars = _get_global_vars(self.func)
+    if current_kernel is not None:  # Kernel
+        current_kernel.kernel_function_info = function_source_info
+    if current_kernel is None:
+        current_kernel = impl.get_runtime()._current_kernel
+    assert current_kernel is not None
+    current_kernel.visited_functions.add(function_source_info)
+
+    gstaichi_callable = current_kernel.gstaichi_callable
+    assert gstaichi_callable is not None
+    print("self.func.is_pure", gstaichi_callable.is_pure)
+
+    global_vars = _get_global_vars(self.func) if not gstaichi_callable.is_pure else {}
 
     if is_kernel or is_real_function:
         _populate_global_vars_for_templates(
