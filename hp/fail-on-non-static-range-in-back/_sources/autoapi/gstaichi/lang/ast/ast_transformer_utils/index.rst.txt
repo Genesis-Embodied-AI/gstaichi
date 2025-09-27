@@ -264,6 +264,12 @@ Module Contents
    .. py:attribute:: autodiff_mode
 
 
+   .. py:attribute:: loop_depth
+      :type:  int
+      :value: 0
+
+
+
    .. py:method:: variable_scope_guard()
 
 

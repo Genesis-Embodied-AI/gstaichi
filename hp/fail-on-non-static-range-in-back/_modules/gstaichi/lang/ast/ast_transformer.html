@@ -323,7 +323,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi._lib</span><span class="w"> </span><span class="kn">import</span> <span class="n">core</span> <span class="k">as</span> <span class="n">_ti_core</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang</span><span class="w"> </span><span class="kn">import</span> <span class="n">expr</span><span class="p">,</span> <span class="n">impl</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">mesh</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang</span><span class="w"> </span><span class="kn">import</span> <span class="n">exception</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="n">impl</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">mesh</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang</span><span class="w"> </span><span class="kn">import</span> <span class="n">ops</span> <span class="k">as</span> <span class="n">ti_ops</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang._ndrange</span><span class="w"> </span><span class="kn">import</span> <span class="n">_Ndrange</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.ast.ast_transformer_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -1368,7 +1368,9 @@
 
             <span class="n">for_di</span> <span class="o">=</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">DebugInfo</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">get_pos_info</span><span class="p">(</span><span class="n">node</span><span class="p">))</span>
             <span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="o">.</span><span class="n">begin_frontend_range_for</span><span class="p">(</span><span class="n">loop_var</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="n">begin</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="n">end</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="n">for_di</span><span class="p">)</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">-=</span> <span class="mi">1</span>
             <span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="o">.</span><span class="n">end_frontend_range_for</span><span class="p">()</span>
         <span class="k">return</span> <span class="kc">None</span></div>
 
@@ -1414,7 +1416,9 @@
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">targets</span><span class="p">):</span>
                     <span class="n">I</span><span class="o">.</span><span class="n">_assign</span><span class="p">(</span><span class="n">I</span> <span class="o">-</span> <span class="n">target_tmp</span> <span class="o">*</span> <span class="n">ndrange_var</span><span class="o">.</span><span class="n">acc_dimensions</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">-=</span> <span class="mi">1</span>
             <span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="o">.</span><span class="n">end_frontend_range_for</span><span class="p">()</span>
         <span class="k">return</span> <span class="kc">None</span></div>
 
@@ -1451,7 +1455,9 @@
                 <span class="n">impl</span><span class="o">.</span><span class="n">subscript</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="p">,</span> <span class="n">target_var</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">_assign</span><span class="p">(</span><span class="n">target_tmp</span> <span class="o">+</span> <span class="n">ndrange_var</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
                 <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">ndrange_var</span><span class="o">.</span><span class="n">dimensions</span><span class="p">):</span>
                     <span class="n">I</span><span class="o">.</span><span class="n">_assign</span><span class="p">(</span><span class="n">I</span> <span class="o">-</span> <span class="n">target_tmp</span> <span class="o">*</span> <span class="n">ndrange_var</span><span class="o">.</span><span class="n">acc_dimensions</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">-=</span> <span class="mi">1</span>
             <span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="o">.</span><span class="n">end_frontend_range_for</span><span class="p">()</span>
         <span class="k">return</span> <span class="kc">None</span></div>
 
@@ -1488,7 +1494,9 @@
                 <span class="n">loop_var</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">iter</span><span class="o">.</span><span class="n">ptr</span>
                 <span class="n">expr_group</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">make_expr_group</span><span class="p">(</span><span class="o">*</span><span class="n">_vars</span><span class="p">)</span>
                 <span class="n">impl</span><span class="o">.</span><span class="n">begin_frontend_struct_for</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="p">,</span> <span class="n">expr_group</span><span class="p">,</span> <span class="n">loop_var</span><span class="p">)</span>
+                <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+                <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">-=</span> <span class="mi">1</span>
                 <span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="o">.</span><span class="n">end_frontend_struct_for</span><span class="p">()</span>
         <span class="k">return</span> <span class="kc">None</span></div>
 
@@ -1514,7 +1522,9 @@
                 <span class="n">node</span><span class="o">.</span><span class="n">iter</span><span class="o">.</span><span class="n">ptr</span><span class="o">.</span><span class="n">_type</span><span class="p">,</span>
                 <span class="n">_ti_core</span><span class="o">.</span><span class="n">DebugInfo</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">get_current_src_info</span><span class="p">()),</span>
             <span class="p">)</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">-=</span> <span class="mi">1</span>
             <span class="n">ctx</span><span class="o">.</span><span class="n">mesh</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="o">.</span><span class="n">end_frontend_mesh_for</span><span class="p">()</span>
         <span class="k">return</span> <span class="kc">None</span></div>
@@ -1548,7 +1558,9 @@
             <span class="n">entry_expr</span><span class="o">.</span><span class="n">type_check</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">prog</span><span class="o">.</span><span class="n">config</span><span class="p">())</span>
             <span class="n">mesh_idx</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">MeshElementFieldProxy</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">mesh</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">iter</span><span class="o">.</span><span class="n">ptr</span><span class="o">.</span><span class="n">to_element_type</span><span class="p">,</span> <span class="n">entry_expr</span><span class="p">)</span>
             <span class="n">ctx</span><span class="o">.</span><span class="n">create_variable</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">mesh_idx</span><span class="p">)</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">-=</span> <span class="mi">1</span>
             <span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="o">.</span><span class="n">end_frontend_range_for</span><span class="p">()</span>
 
         <span class="k">return</span> <span class="kc">None</span></div>
@@ -1589,8 +1601,8 @@
                 <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">iter</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span>
                 <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">iter</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s2">&quot;range&quot;</span>
             <span class="p">):</span>
-                <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">autodiff_mode</span> <span class="o">==</span> <span class="n">AutodiffMode</span><span class="o">.</span><span class="n">REVERSE</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Cannot use non static range in Backwards mode&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">autodiff_mode</span> <span class="o">==</span> <span class="n">AutodiffMode</span><span class="o">.</span><span class="n">REVERSE</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">exception</span><span class="o">.</span><span class="n">GsTaichiCompilationError</span><span class="p">(</span><span class="s2">&quot;Cannot use non static range in Backwards mode&quot;</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">ASTTransformer</span><span class="o">.</span><span class="n">build_range_for</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">iter</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">IfExp</span><span class="p">):</span>
                 <span class="c1"># Handle inline if expression as the top level iterator expression, e.g.:</span>
