@@ -88,29 +88,29 @@ jobs:
     needs: build_wheel
     concurrency:
       # group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-test
-      group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-test
+      group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_VERSION }}-test
       cancel-in-progress: ${{ github.event_name != 'release' }}
     strategy:
       matrix:
-        include:
-          - PYTHON_CP_VERSION: 'cp310'
-            PYTHON_VERSION: '3.10'
-          - PYTHON_CP_VERSION: 'cp311'
-            PYTHON_VERSION: '3.11'
-          - PYTHON_CP_VERSION: 'cp312'
-            PYTHON_VERSION: '3.12'
-          - PYTHON_CP_VERSION: 'cp313'
-            PYTHON_VERSION: '3.13'
+        PYTHON_VERSION: ['3.10', '3.11', '3.12', '3.13']
+        os: ['ubuntu-22.04']
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}
       - name: Python check
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.PYTHON_VERSION }}
+      - name: Set Python CP version
+        id: set_cp_version
+        run: |
+          pip install packaging
+          cp=$(python -c "from packaging import tags; print(next(tags.sys_tags()).interpreter)")
+          echo "PYTHON_CP_VERSION=${cp}"
+          echo "PYTHON_CP_VERSION=${cp}" >> $GITHUB_OUTPUT
+      - uses: actions/download-artifact@v4
+        with:
+          name: manylinux_wheel_${{ steps.set_cp_version.outputs.PYTHON_CP_VERSION }}
       - name: manylinux install wheel
         run: |
           set -x
@@ -142,7 +142,7 @@ jobs:
       contents: read
     concurrency:
       # group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-test
-      group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-test
+      group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-publish-pypi
       cancel-in-progress: true
     strategy:
       matrix:

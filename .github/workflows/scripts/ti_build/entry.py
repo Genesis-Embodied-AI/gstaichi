@@ -49,6 +49,8 @@ def setup_basic_build_env():
         # Use MSVC on Windows
         setup_clang(as_compiler=False)
         setup_msvc()
+    elif u.system == "Linux":
+        setup_clang(as_compiler=False)
     else:
         # Use Clang on all other platforms
         setup_clang()
