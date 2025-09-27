@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 
 import gstaichi as ti
@@ -9,11 +11,12 @@ from tests import test_utils
 if has_pytorch():
     import torch
 
-archs_support_ndarray_ad = [ti.cpu, ti.cuda]
+archs_support_ndarray_ad = [ti.cpu, ti.cuda, ti.metal]
+target_fp = ti.f64 if sys.platform != "darwin" else ti.f32
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp)
 def test_simple_demo():
     @test_utils.torch_op(output_shapes=[(1,)])
     @ti.kernel
@@ -30,7 +33,7 @@ def test_simple_demo():
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp)
 def test_ad_reduce():
     @test_utils.torch_op(output_shapes=[(1,)])
     @ti.kernel
@@ -84,7 +87,7 @@ def test_ad_reduce():
     ],
 )
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp)
 def test_poly(tifunc):
     s = (4,)
 
@@ -100,7 +103,7 @@ def test_poly(tifunc):
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp)
 def test_ad_select():
     s = (4,)
 
@@ -116,7 +119,7 @@ def test_ad_select():
     torch.autograd.gradcheck(test, [x, y])
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp)
 def test_ad_sum():
     N = 10
 
@@ -147,7 +150,7 @@ def test_ad_sum():
         assert a.grad[i] == b[i]
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp)
 def test_ad_sum_local_atomic():
     N = 10
     a = ti.ndarray(ti.f32, shape=N, needs_grad=True)
@@ -178,7 +181,7 @@ def test_ad_sum_local_atomic():
         assert a.grad[i] == b[i]
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64, require=ti.extension.adstack)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.adstack)
 def test_ad_power():
     N = 10
     a = ti.ndarray(ti.f32, shape=N, needs_grad=True)
@@ -209,7 +212,7 @@ def test_ad_power():
         assert a.grad[i] == b[i] * 3 ** (b[i] - 1)
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64, require=ti.extension.adstack)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.adstack)
 def test_ad_fibonacci():
     N = 15
     a = ti.ndarray(ti.f32, shape=N, needs_grad=True)
@@ -247,7 +250,7 @@ def test_ad_fibonacci():
         assert b.grad[i] == f[i]
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f32, require=ti.extension.adstack)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.adstack)
 def test_ad_fibonacci_index():
     N = 5
     M = 10
@@ -279,7 +282,7 @@ def test_ad_fibonacci_index():
         assert b[i] == is_fib * N
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64, require=ti.extension.adstack)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.adstack)
 def test_integer_stack():
     N = 5
     a = ti.ndarray(ti.f32, shape=N, needs_grad=True)
@@ -318,7 +321,7 @@ def test_integer_stack():
         t = t * 10 + 1
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64, require=ti.extension.adstack)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.adstack)
 def test_double_for_loops():
     N = 5
     a = ti.ndarray(ti.f32, shape=N, needs_grad=True)
@@ -356,7 +359,7 @@ def test_double_for_loops():
         assert b.grad[i] == 2 * i
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64, require=ti.extension.adstack)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.adstack)
 def test_double_for_loops_more_nests():
     N = 6
     a = ti.ndarray(ti.f32, shape=N, needs_grad=True)
@@ -402,7 +405,7 @@ def test_double_for_loops_more_nests():
         assert b.grad[i] == total_grad_b
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64, require=ti.extension.adstack)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.adstack)
 def test_complex_body():
     N = 5
     a = ti.ndarray(ti.f32, shape=N, needs_grad=True)
@@ -441,7 +444,7 @@ def test_complex_body():
         # assert a.grad[i] == g[i]
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64, require=ti.extension.adstack)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.adstack)
 def test_mixed_inner_loops():
     x = ti.ndarray(dtype=ti.f32, shape=(1,), needs_grad=True)
     arr = ti.ndarray(dtype=ti.f32, shape=(5))
@@ -463,7 +466,7 @@ def test_mixed_inner_loops():
     assert x.grad[0] == 15.0
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64, require=ti.extension.adstack)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.adstack)
 def test_mixed_inner_loops_tape():
     x = ti.ndarray(dtype=ti.f32, shape=(1,), needs_grad=True)
     arr = ti.ndarray(dtype=ti.f32, shape=(5))
