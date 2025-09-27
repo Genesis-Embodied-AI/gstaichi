@@ -301,8 +301,6 @@ def _get_tree_and_ctx(
 
     gstaichi_callable = current_kernel.gstaichi_callable
     assert gstaichi_callable is not None
-    print("self.func.is_pure", gstaichi_callable.is_pure)
-
     global_vars = _get_global_vars(self.func) if not gstaichi_callable.is_pure else {}
 
     if is_kernel or is_real_function:
