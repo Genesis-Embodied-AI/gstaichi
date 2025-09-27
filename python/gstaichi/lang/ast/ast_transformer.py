@@ -40,6 +40,8 @@ from gstaichi.lang.struct import Struct, StructType
 from gstaichi.types import primitive_types
 from gstaichi.types.utils import is_integral
 
+AutodiffMode = _ti_core.AutodiffMode
+
 
 def reshape_list(flat_list: list[Any], target_shape: Sequence[int]) -> list[Any]:
     if len(target_shape) < 2:
@@ -1106,6 +1108,8 @@ class ASTTransformer(Builder):
                 and isinstance(node.iter.func, ast.Name)
                 and node.iter.func.id == "range"
             ):
+                if ctx.autodiff_mode == AutodiffMode.REVERSE:
+                    raise Exception("Cannot use non static range in Backwards mode")
                 return ASTTransformer.build_range_for(ctx, node)
             elif isinstance(node.iter, ast.IfExp):
                 # Handle inline if expression as the top level iterator expression, e.g.:

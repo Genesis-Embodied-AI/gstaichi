@@ -7,6 +7,7 @@ from enum import Enum
 from textwrap import TextWrapper
 from typing import TYPE_CHECKING, Any, List
 
+from gstaichi._lib import core as _ti_core
 from gstaichi._lib.core.gstaichi_python import ASTBuilder
 from gstaichi.lang import impl
 from gstaichi.lang._ndrange import ndrange
@@ -17,6 +18,9 @@ from gstaichi.lang.exception import (
     GsTaichiSyntaxError,
     handle_exception_from_cpp,
 )
+
+AutodiffMode = _ti_core.AutodiffMode
+
 
 if TYPE_CHECKING:
     from gstaichi.lang.kernel_impl import (
@@ -168,6 +172,7 @@ class ASTTransformerContext:
         start_lineno: int,
         ast_builder: ASTBuilder | None,
         is_real_function: bool,
+        autodiff_mode: AutodiffMode,
     ):
         self.func = func
         self.local_scopes: list[dict[str, Any]] = []
@@ -199,6 +204,7 @@ class ASTTransformerContext:
         self.is_real_function = is_real_function
         self.kernel_args: list = []
         self.only_parse_function_def: bool = False
+        self.autodiff_mode = autodiff_mode
 
     # e.g.: FunctionDef, Module, Global
     def variable_scope_guard(self):
