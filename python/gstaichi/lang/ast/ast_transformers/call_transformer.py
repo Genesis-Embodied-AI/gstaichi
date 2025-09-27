@@ -22,8 +22,8 @@ from gstaichi.lang import ops as ti_ops
 from gstaichi.lang._dataclass_util import create_flat_name
 from gstaichi.lang.ast.ast_transformer_utils import (
     ASTTransformerContext,
-    get_decorator,
     PtrSource,
+    get_decorator,
 )
 from gstaichi.lang.exception import (
     GsTaichiSyntaxError,
@@ -247,7 +247,6 @@ class CallTransformer:
         example ast:
         Call(func=Name(id='f2', ctx=Load()), args=[Name(id='my_struct_ab', ctx=Load())], keywords=[])
         """
-        print("build_Call", ast.dump(node))
         if get_decorator(ctx, node) in ["static", "static_assert"]:
             with ctx.static_scope_guard():
                 build_stmt(ctx, node.func)
@@ -272,7 +271,6 @@ class CallTransformer:
                 ptr_source = PtrSource.GLOBAL
 
         for kw in node.keywords:
-            print("kw", kw, type(kw), ast.dump(kw))
             if kw.value.ptr_source == PtrSource.GLOBAL:
                 ptr_source = PtrSource.GLOBAL
         node.ptr_source = ptr_source

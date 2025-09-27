@@ -46,7 +46,6 @@ class FunctionDefTransformer:
             assert ctx.global_vars is not None
             if name in ctx.template_vars:
                 return True, ctx.template_vars[name]
-            # if ctx.
             return True, ctx.global_vars.get(name, ctx.template_vars.get(name))
         if isinstance(annotation, annotations.sparse_matrix_builder):
             return False, (

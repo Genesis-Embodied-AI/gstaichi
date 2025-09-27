@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, Any, List
 
 from gstaichi._lib.core.gstaichi_python import ASTBuilder
 from gstaichi.lang import impl
-from gstaichi.lang.util import is_data_oriented
 from gstaichi.lang._ndrange import ndrange
 from gstaichi.lang.ast.symbol_resolver import ASTResolver
 from gstaichi.lang.exception import (
@@ -18,6 +17,7 @@ from gstaichi.lang.exception import (
     GsTaichiSyntaxError,
     handle_exception_from_cpp,
 )
+from gstaichi.lang.util import is_data_oriented
 
 if TYPE_CHECKING:
     from gstaichi.lang.kernel_impl import (
@@ -282,31 +282,22 @@ class ASTTransformerContext:
 
     def get_var_by_name(self, name: str) -> tuple[PtrSource, Any]:
         for s in reversed(self.local_scopes):
-            print("local scope", s, type(s))
             if name in s:
-                print("found", name, "in local vars")
                 val = s[name]
                 ptr_source = PtrSource.LOCAL
                 if self.is_pure and is_data_oriented(val):
                     # a data oriented is as good as global, from pov of pure constraints
-                    ptr_source= PtrSource.GLOBAL
+                    ptr_source = PtrSource.GLOBAL
                 return ptr_source, val
+
         ptr_source = None
-        # found_name = False
         if name in self.template_vars:
-            print("found", name, "in template vars")
             var = self.template_vars[name]
-            # found_name = True
             ptr_source = PtrSource.TEMPLATE
         elif name in self.global_vars:
-            print("found", name, "in global vars")
             var = self.global_vars[name]
-            # found_name = True
             ptr_source = PtrSource.GLOBAL
-        # else:
-        #     raise GsTaichiCompilationError("Name not found", name)
-        # if name in self.global_vars:
-            # var = self.global_vars[name]
+
         if ptr_source:
             from gstaichi.lang.matrix import (  # pylint: disable-msg=C0415
                 Matrix,
