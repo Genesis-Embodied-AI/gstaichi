@@ -34,7 +34,7 @@ def test_pure_validation_prim():
     def k2():
         print(a)
 
-    with pytest.raises(ti.GsTaichiNameError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         k2()
 
 
@@ -60,7 +60,7 @@ def test_pure_validation_field():
     def k2_f():
         print(a[0])
 
-    with pytest.raises(ti.GsTaichiNameError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         k2_f()
 
 
@@ -98,5 +98,22 @@ def test_pure_validation_field_child():
     def k2():
         k2_f()
 
-    with pytest.raises(ti.GsTaichiNameError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         k2()
+
+
+@test_utils.test()
+def test_pure_validation_data_oriented():
+    @ti.data_oriented
+    class MyDataOriented:
+        def __init__(self) -> None:
+            self.b = ti.field(ti.i32, (10,))
+
+        @ti.pure
+        @ti.kernel
+        def k1(self) -> None:
+            self.b[0] = 5
+
+    my_do = MyDataOriented()
+    with pytest.raises(ti.GsTaichiCompilationError):
+        my_do.k1()
