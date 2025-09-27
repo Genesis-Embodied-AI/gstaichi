@@ -205,6 +205,7 @@ class ASTTransformerContext:
         self.kernel_args: list = []
         self.only_parse_function_def: bool = False
         self.autodiff_mode = autodiff_mode
+        self.loop_depth: int = 0
 
     # e.g.: FunctionDef, Module, Global
     def variable_scope_guard(self):
