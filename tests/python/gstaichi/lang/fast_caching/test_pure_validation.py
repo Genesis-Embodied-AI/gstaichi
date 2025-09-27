@@ -1,12 +1,13 @@
 import pytest
+
 import gstaichi as ti
+
 from tests import test_utils
 
 
 @test_utils.test()
 def test_pure_validation_prim():
     a = 2
-
 
     @ti.kernel
     def k1():
@@ -21,14 +22,12 @@ def test_pure_validation_prim():
 
     k1b(a)
 
-
     @ti.pure
     @ti.kernel
     def k1c(a: ti.Template):
         print(a)
 
     k1c(a)
-
 
     @ti.pure
     @ti.kernel
@@ -65,7 +64,6 @@ def test_pure_validation_field():
         k2_f()
 
 
-
 @test_utils.test()
 def test_pure_validation_field_child():
     a = ti.field(ti.i32, (10,))
@@ -94,7 +92,6 @@ def test_pure_validation_field_child():
     @ti.func
     def k2_f():
         print(a[0])
-
 
     @ti.pure
     @ti.kernel
