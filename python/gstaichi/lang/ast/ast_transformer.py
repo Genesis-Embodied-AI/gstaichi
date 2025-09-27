@@ -11,7 +11,7 @@ from typing import Any, Sequence, Type
 import numpy as np
 
 from gstaichi._lib import core as _ti_core
-from gstaichi.lang import expr, impl, matrix, mesh
+from gstaichi.lang import expr, impl, matrix, mesh, exception
 from gstaichi.lang import ops as ti_ops
 from gstaichi.lang._ndrange import _Ndrange
 from gstaichi.lang.ast.ast_transformer_utils import (
@@ -19,6 +19,7 @@ from gstaichi.lang.ast.ast_transformer_utils import (
     Builder,
     LoopStatus,
     ReturnStatus,
+    PtrSource,
     get_decorator,
 )
 from gstaichi.lang.ast.ast_transformers.call_transformer import CallTransformer
@@ -71,10 +72,18 @@ def boundary_type_cast_warning(expression: Expr) -> None:
 class ASTTransformer(Builder):
     @staticmethod
     def build_Name(ctx: ASTTransformerContext, node: ast.Name):
-        node.ptr = ctx.get_var_by_name(node.id)
+        print("build_Name", ast.dump(node))
+        ptr_source, node.ptr = ctx.get_var_by_name(node.id)
         if isinstance(node, (ast.stmt, ast.expr)) and isinstance(node.ptr, Expr):
             node.ptr.dbg_info = _ti_core.DebugInfo(ctx.get_pos_info(node))
             node.ptr.ptr.set_dbg_info(node.ptr.dbg_info)
+        node.ptr_source = ptr_source
+        print('is_pure', ctx.is_pure, 'ptr_source', ptr_source)
+        if ctx.is_pure and ptr_source == PtrSource.GLOBAL and not ctx.static_scope_status.is_in_static_scope:
+            print("ctx.static_scope_status", ctx.static_scope_status.is_in_static_scope)
+            if isinstance(node.ptr, (float, int, Field)):
+                raise exception.GsTaichiCompilationError("Accessing global variable", node.id, type(node.ptr))
+            print("node.ptr", node.ptr, type(node.ptr))
         return node.ptr
 
     @staticmethod
@@ -242,6 +251,7 @@ class ASTTransformer(Builder):
         if not ASTTransformer.is_tuple(node.slice):
             node.slice.ptr = [node.slice.ptr]
         node.ptr = impl.subscript(ctx.ast_builder, node.value.ptr, *node.slice.ptr)
+        node.ptr_source = node.value.ptr_source
         return node.ptr
 
     @staticmethod
@@ -274,7 +284,12 @@ class ASTTransformer(Builder):
 
     @staticmethod
     def build_List(ctx: ASTTransformerContext, node: ast.List):
+        node.ptr_source = PtrSource.LOCAL
         build_stmts(ctx, node.elts)
+        for elt in node.elts:
+            if elt.ptr_source == PtrSource.GLOBAL:
+                node.ptr_source = PtrSource.GLOBAL
+            # print("elt", ast.dump(elt), getattr(elt, "ptr_source", None))
         node.ptr = [elt.ptr for elt in node.elts]
         return node.ptr
 
@@ -301,17 +316,26 @@ class ASTTransformer(Builder):
 
     @staticmethod
     def process_generators(ctx: ASTTransformerContext, node: ast.GeneratorExp, now_comp, func, result):
+        node.ptr_source = PtrSource.LOCAL
         if now_comp >= len(node.generators):
+            print("now_comp >= len node.generators")
             return func(ctx, node, result)
         with ctx.static_scope_guard():
+            print("using static scope guard, building stmts")
             _iter = build_stmt(ctx, node.generators[now_comp].iter)
 
         if isinstance(_iter, impl.Expr) and _iter.ptr.is_tensor():
+            print("iter is expr, and iter.ptr is tensor")
             shape = _iter.ptr.get_shape()
             flattened = [Expr(x) for x in ctx.ast_builder.expand_exprs([_iter.ptr])]
             _iter = reshape_list(flattened, shape)
 
         for value in _iter:
+            # these are actual python objects, not ast nodes
+            # print("value", value, type(value))
+            # if value.ptr_source == PtrSource.GLOBAL:
+            #     node.ptr_source = PtrSource.GLOBAL
+            # print('iterate over _iter')
             with ctx.variable_scope_guard():
                 ASTTransformer.build_assign_unpack(ctx, node.generators[now_comp].target, value, True)
                 with ctx.static_scope_guard():
@@ -351,6 +375,7 @@ class ASTTransformer(Builder):
     @staticmethod
     def build_Constant(ctx: ASTTransformerContext, node: ast.Constant):
         node.ptr = node.value
+        node.ptr_source = PtrSource.LOCAL
         return node.ptr
 
     @staticmethod
@@ -582,6 +607,7 @@ class ASTTransformer(Builder):
 
     @staticmethod
     def build_Attribute(ctx: ASTTransformerContext, node: ast.Attribute):
+        print("build_Attribute", ast.dump(node))
         # There are two valid cases for the methods of Dynamic SNode:
         #
         # 1. x[i, j].append (where the dimension of the field (3 in this case) is equal to one plus the number of the
@@ -613,9 +639,11 @@ class ASTTransformer(Builder):
             raise e
 
         if ASTTransformer.build_attribute_if_is_dynamic_snode_method(ctx, node):
+            print("is dynamic snode")
             return node.ptr
 
         if isinstance(node.value.ptr, Expr) and not hasattr(node.value.ptr, node.attr):
+            print("is expr")
             if node.attr in Matrix._swizzle_to_keygroup:
                 keygroup = Matrix._swizzle_to_keygroup[node.attr]
                 Matrix._keygroup_to_checker[keygroup](node.value.ptr, node.attr)
@@ -647,9 +675,18 @@ class ASTTransformer(Builder):
                 node.ptr = getattr(tensor_ops, node.attr)
                 setattr(node, "caller", node.value.ptr)
         elif dataclasses.is_dataclass(node.value.ptr):
+            print("is dataclass")
             node.ptr = next(field.type for field in dataclasses.fields(node.value.ptr))
         else:
+            print("following .")
+            # print("parent is", type(node.value.ptr))
             node.ptr = getattr(node.value.ptr, node.attr)
+            node.ptr_source = node.value.ptr_source
+            if ctx.is_pure and node.ptr_source == PtrSource.GLOBAL and not ctx.static_scope_status.is_in_static_scope:
+                print("node.ptr_source is global")
+                if isinstance(node.ptr, (int, float, Field)):
+                    raise exception.GsTaichiCompilationError(f"Accessing global var {node.attr} from outside function scope within pure kernel")
+            print('node.ptr', node.ptr, type(node.ptr))
         return node.ptr
 
     @staticmethod

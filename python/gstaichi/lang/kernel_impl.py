@@ -300,16 +300,20 @@ def _get_tree_and_ctx(
     current_kernel.visited_functions.add(function_source_info)
 
     gstaichi_callable = current_kernel.gstaichi_callable
-    if gstaichi_callable is not None and gstaichi_callable.is_pure:
-        global_vars = {k: v for k, v in _get_global_vars(self.func).items() if isinstance(v, Callable)}
-    else:
-        global_vars = _get_global_vars(self.func)
+    is_pure = gstaichi_callable is not None and gstaichi_callable.is_pure
+    # if gstaichi_callable is not None and gstaichi_callable.is_pure:
+    #     global_vars = {k: v for k, v in _get_global_vars(self.func).items() if isinstance(v, Callable)}
+    # else:
+    global_vars = _get_global_vars(self.func)
+    # self.func.template_vars
 
+    template_vars = {}
     if is_kernel or is_real_function:
         _populate_global_vars_for_templates(
             template_slot_locations=self.template_slot_locations,
             argument_metas=self.arg_metas,
-            global_vars=global_vars,
+            # global_vars=ctx.template_vars,
+            global_vars=template_vars,
             fn=self.func,
             py_args=args,
         )
@@ -317,9 +321,11 @@ def _get_tree_and_ctx(
     return tree, ASTTransformerContext(
         excluded_parameters=excluded_parameters,
         is_kernel=is_kernel,
+        is_pure=is_pure,
         func=self,
         arg_features=arg_features,
         global_vars=global_vars,
+        template_vars=template_vars,
         argument_data=args,
         src=src,
         start_lineno=function_source_info.start_lineno,

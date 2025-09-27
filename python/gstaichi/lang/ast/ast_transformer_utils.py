@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, List
 
 from gstaichi._lib.core.gstaichi_python import ASTBuilder
 from gstaichi.lang import impl
+from gstaichi.lang.util import is_data_oriented
 from gstaichi.lang._ndrange import ndrange
 from gstaichi.lang.ast.symbol_resolver import ASTResolver
 from gstaichi.lang.exception import (
@@ -25,6 +26,13 @@ if TYPE_CHECKING:
     )
 
 
+class PtrSource(Enum):
+    GLOBAL = 1
+    TEMPLATE = 2
+    BUILTIN = 3
+    LOCAL = 4
+
+
 class Builder:
     def __call__(self, ctx: "ASTTransformerContext", node: ast.AST):
         method_name = "build_" + node.__class__.__name__
@@ -35,7 +43,10 @@ class Builder:
                 raise GsTaichiSyntaxError(error_msg)
             info = ctx.get_pos_info(node) if isinstance(node, (ast.stmt, ast.expr)) else ""
             with impl.get_runtime().src_info_guard(info):
-                return method(ctx, node)
+                res = method(ctx, node)
+                if not hasattr(node, "ptr_source"):
+                    node.ptr_source = PtrSource.LOCAL
+                return res
         except Exception as e:
             if impl.get_runtime().print_full_traceback:
                 raise e
@@ -162,6 +173,8 @@ class ASTTransformerContext:
         func: "Func | Kernel",
         arg_features: list[tuple[Any, ...]] | None,
         global_vars: dict[str, Any],
+        template_vars: dict[str, Any],
+        is_pure: bool,
         argument_data,
         file: str,
         src: list[str],
@@ -177,6 +190,8 @@ class ASTTransformerContext:
         self.arg_features = arg_features
         self.returns = None
         self.global_vars = global_vars
+        self.template_vars = template_vars
+        self.is_pure = is_pure
         self.argument_data = argument_data
         self.return_data: tuple[Any, ...] | Any | None = None
         self.file = file
@@ -265,22 +280,44 @@ class ASTTransformerContext:
                 f"Variable '{loop_var}' is already declared in the outer scope and cannot be used as loop variable"
             )
 
-    def get_var_by_name(self, name: str) -> Any:
+    def get_var_by_name(self, name: str) -> tuple[PtrSource, Any]:
         for s in reversed(self.local_scopes):
+            print("local scope", s, type(s))
             if name in s:
-                return s[name]
-        if name in self.global_vars:
+                print("found", name, "in local vars")
+                val = s[name]
+                ptr_source = PtrSource.LOCAL
+                if self.is_pure and is_data_oriented(val):
+                    # a data oriented is as good as global, from pov of pure constraints
+                    ptr_source= PtrSource.GLOBAL
+                return ptr_source, val
+        ptr_source = None
+        # found_name = False
+        if name in self.template_vars:
+            print("found", name, "in template vars")
+            var = self.template_vars[name]
+            # found_name = True
+            ptr_source = PtrSource.TEMPLATE
+        elif name in self.global_vars:
+            print("found", name, "in global vars")
             var = self.global_vars[name]
+            # found_name = True
+            ptr_source = PtrSource.GLOBAL
+        # else:
+        #     raise GsTaichiCompilationError("Name not found", name)
+        # if name in self.global_vars:
+            # var = self.global_vars[name]
+        if ptr_source:
             from gstaichi.lang.matrix import (  # pylint: disable-msg=C0415
                 Matrix,
                 make_matrix,
             )
 
             if isinstance(var, Matrix):
-                return make_matrix(var.to_list())
-            return var
+                return ptr_source, make_matrix(var.to_list())
+            return ptr_source, var
         try:
-            return getattr(builtins, name)
+            return PtrSource.BUILTIN, getattr(builtins, name)
         except AttributeError:
             raise GsTaichiNameError(f'Name "{name}" is not defined')
 
