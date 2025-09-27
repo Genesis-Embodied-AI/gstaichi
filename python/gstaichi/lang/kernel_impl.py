@@ -300,8 +300,10 @@ def _get_tree_and_ctx(
     current_kernel.visited_functions.add(function_source_info)
 
     gstaichi_callable = current_kernel.gstaichi_callable
-    assert gstaichi_callable is not None
-    global_vars = _get_global_vars(self.func) if not gstaichi_callable.is_pure else {}
+    if gstaichi_callable is not None and gstaichi_callable.is_pure:
+        global_vars = {k: v for k, v in _get_global_vars(self.func).items() if isinstance(v, Callable)}
+    else:
+        global_vars = _get_global_vars(self.func)
 
     if is_kernel or is_real_function:
         _populate_global_vars_for_templates(
