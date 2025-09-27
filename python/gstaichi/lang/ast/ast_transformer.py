@@ -11,7 +11,7 @@ from typing import Any, Sequence, Type
 import numpy as np
 
 from gstaichi._lib import core as _ti_core
-from gstaichi.lang import expr, impl, matrix, mesh
+from gstaichi.lang import exception, expr, impl, matrix, mesh
 from gstaichi.lang import ops as ti_ops
 from gstaichi.lang._ndrange import _Ndrange
 from gstaichi.lang.ast.ast_transformer_utils import (
@@ -1121,7 +1121,7 @@ class ASTTransformer(Builder):
                 and node.iter.func.id == "range"
             ):
                 if ctx.loop_depth > 0 and ctx.autodiff_mode == AutodiffMode.REVERSE:
-                    raise Exception("Cannot use non static range in Backwards mode loop depth " + str(ctx.loop_depth))
+                    raise exception.GsTaichiCompilationError("Cannot use non static range in Backwards mode")
                 return ASTTransformer.build_range_for(ctx, node)
             elif isinstance(node.iter, ast.IfExp):
                 # Handle inline if expression as the top level iterator expression, e.g.:
