@@ -110,3 +110,50 @@ def test_for_static_if_forwards_backwards(use_field: bool) -> None:
 
     k1(is_backward=False, field_a=field_a, field_target=field_target)
     k1(is_backward=True, field_a=field_a, field_target=field_target)
+
+
+@test_utils.test()
+def test_for_static_if_no_ad1():
+    @ti.kernel
+    def k1():
+        for b in range(2):
+            for i in range(2):
+                ...
+
+    k1()
+    with pytest.raises(ti.GsTaichiCompilationError):
+        k1.grad()
+
+
+@test_utils.test()
+def test_for_static_if_no_ad2():
+    B = 10
+    x = ti.field(ti.f32, shape=(3, B), needs_grad=True)
+    y = ti.field(ti.math.vec3, shape=(3, B), needs_grad=True)
+    loss = ti.field(ti.f32, shape=(), needs_grad=True)
+
+    x[0, 0] = 1.0
+    y[0, 0].fill(2.0)
+
+    @ti.kernel
+    def k1(use_static: ti.template()):
+        for i_b in ti.ndrange(B):
+            z = ti.Vector.zero(ti.f32, 3)
+
+            # Non-static inner loop is not supported in backward
+            for i_3 in ti.static(range(3)) if ti.static(use_static) else range(3):
+                z += x[i_3, i_b] * y[i_3, i_b]
+
+            loss[None] += z.x + z.y + z.z
+
+    use_static = False
+
+    loss.fill(0.0)
+    k1(use_static)
+
+    loss.grad[None] = 1.0
+    x.grad.fill(0.0)
+    y.grad.fill(0.0)
+
+    with pytest.raises(ti.GsTaichiCompilationError):
+        k1.grad(use_static)

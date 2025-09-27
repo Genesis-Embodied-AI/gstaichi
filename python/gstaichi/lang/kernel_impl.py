@@ -310,6 +310,7 @@ def _get_tree_and_ctx(
     assert current_kernel is not None
     current_kernel.visited_functions.add(function_source_info)
 
+    autodiff_mode = current_kernel.autodiff_mode
     return tree, ASTTransformerContext(
         excluded_parameters=excluded_parameters,
         is_kernel=is_kernel,
@@ -323,6 +324,7 @@ def _get_tree_and_ctx(
         file=function_source_info.filepath,
         ast_builder=ast_builder,
         is_real_function=is_real_function,
+        autodiff_mode=autodiff_mode,
     )
 
 

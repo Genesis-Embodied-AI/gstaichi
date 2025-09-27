@@ -11,7 +11,7 @@ from typing import Any, Sequence, Type
 import numpy as np
 
 from gstaichi._lib import core as _ti_core
-from gstaichi.lang import expr, impl, matrix, mesh
+from gstaichi.lang import exception, expr, impl, matrix, mesh
 from gstaichi.lang import ops as ti_ops
 from gstaichi.lang._ndrange import _Ndrange
 from gstaichi.lang.ast.ast_transformer_utils import (
@@ -39,6 +39,8 @@ from gstaichi.lang.snode import append, deactivate, length
 from gstaichi.lang.struct import Struct, StructType
 from gstaichi.types import primitive_types
 from gstaichi.types.utils import is_integral
+
+AutodiffMode = _ti_core.AutodiffMode
 
 
 def reshape_list(flat_list: list[Any], target_shape: Sequence[int]) -> list[Any]:
@@ -903,7 +905,9 @@ class ASTTransformer(Builder):
 
             for_di = _ti_core.DebugInfo(ctx.get_pos_info(node))
             ctx.ast_builder.begin_frontend_range_for(loop_var.ptr, begin.ptr, end.ptr, for_di)
+            ctx.loop_depth += 1
             build_stmts(ctx, node.body)
+            ctx.loop_depth -= 1
             ctx.ast_builder.end_frontend_range_for()
         return None
 
@@ -946,7 +950,9 @@ class ASTTransformer(Builder):
                 )
                 if i + 1 < len(targets):
                     I._assign(I - target_tmp * ndrange_var.acc_dimensions[i + 1])
+            ctx.loop_depth += 1
             build_stmts(ctx, node.body)
+            ctx.loop_depth -= 1
             ctx.ast_builder.end_frontend_range_for()
         return None
 
@@ -980,7 +986,9 @@ class ASTTransformer(Builder):
                 impl.subscript(ctx.ast_builder, target_var, i)._assign(target_tmp + ndrange_var.bounds[i][0])
                 if i + 1 < len(ndrange_var.dimensions):
                     I._assign(I - target_tmp * ndrange_var.acc_dimensions[i + 1])
+            ctx.loop_depth += 1
             build_stmts(ctx, node.body)
+            ctx.loop_depth -= 1
             ctx.ast_builder.end_frontend_range_for()
         return None
 
@@ -1014,7 +1022,9 @@ class ASTTransformer(Builder):
                 loop_var = node.iter.ptr
                 expr_group = expr.make_expr_group(*_vars)
                 impl.begin_frontend_struct_for(ctx.ast_builder, expr_group, loop_var)
+                ctx.loop_depth += 1
                 build_stmts(ctx, node.body)
+                ctx.loop_depth -= 1
                 ctx.ast_builder.end_frontend_struct_for()
         return None
 
@@ -1037,7 +1047,9 @@ class ASTTransformer(Builder):
                 node.iter.ptr._type,
                 _ti_core.DebugInfo(impl.get_runtime().get_current_src_info()),
             )
+            ctx.loop_depth += 1
             build_stmts(ctx, node.body)
+            ctx.loop_depth -= 1
             ctx.mesh = None
             ctx.ast_builder.end_frontend_mesh_for()
         return None
@@ -1068,7 +1080,9 @@ class ASTTransformer(Builder):
             entry_expr.type_check(impl.get_runtime().prog.config())
             mesh_idx = mesh.MeshElementFieldProxy(ctx.mesh, node.iter.ptr.to_element_type, entry_expr)
             ctx.create_variable(target, mesh_idx)
+            ctx.loop_depth += 1
             build_stmts(ctx, node.body)
+            ctx.loop_depth -= 1
             ctx.ast_builder.end_frontend_range_for()
 
         return None
@@ -1106,6 +1120,8 @@ class ASTTransformer(Builder):
                 and isinstance(node.iter.func, ast.Name)
                 and node.iter.func.id == "range"
             ):
+                if ctx.loop_depth > 0 and ctx.autodiff_mode == AutodiffMode.REVERSE:
+                    raise exception.GsTaichiCompilationError("Cannot use non static range in Backwards mode")
                 return ASTTransformer.build_range_for(ctx, node)
             elif isinstance(node.iter, ast.IfExp):
                 # Handle inline if expression as the top level iterator expression, e.g.:
