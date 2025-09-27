@@ -334,6 +334,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang._dataclass_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_flat_name</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.ast.ast_transformer_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ASTTransformerContext</span><span class="p">,</span>
+    <span class="n">PtrSource</span><span class="p">,</span>
     <span class="n">get_decorator</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.exception</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -578,6 +579,17 @@
             <span class="c1"># create variables for the now-expanded dataclass members</span>
             <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
             <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>
+
+        <span class="n">ptr_source</span> <span class="o">=</span> <span class="n">PtrSource</span><span class="o">.</span><span class="n">LOCAL</span>
+        <span class="c1"># if any args are global, then ptr source is global</span>
+        <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">ptr_source</span> <span class="o">==</span> <span class="n">PtrSource</span><span class="o">.</span><span class="n">GLOBAL</span><span class="p">:</span>
+                <span class="n">ptr_source</span> <span class="o">=</span> <span class="n">PtrSource</span><span class="o">.</span><span class="n">GLOBAL</span>
+
+        <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">keywords</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">kw</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">ptr_source</span> <span class="o">==</span> <span class="n">PtrSource</span><span class="o">.</span><span class="n">GLOBAL</span><span class="p">:</span>
+                <span class="n">ptr_source</span> <span class="o">=</span> <span class="n">PtrSource</span><span class="o">.</span><span class="n">GLOBAL</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">ptr_source</span> <span class="o">=</span> <span class="n">ptr_source</span>
 
         <span class="n">args</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
