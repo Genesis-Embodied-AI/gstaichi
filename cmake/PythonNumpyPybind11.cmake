@@ -1,4 +1,8 @@
 # Python, numpy, and pybind11
+execute_process(COMMAND ${PYTHON_EXECUTABLE} -m pybind11 --cmake
+                OUTPUT_VARIABLE pybind11_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND ${PYTHON_EXECUTABLE} -m pybind11 --version
+                OUTPUT_VARIABLE pybind11_version OUTPUT_STRIP_TRAILING_WHITESPACE)
 execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import numpy;print(numpy.get_include())"
                 OUTPUT_VARIABLE NUMPY_INCLUDE_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
 
@@ -12,15 +16,16 @@ include_directories(${NUMPY_INCLUDE_DIR})
 
 include(FetchContent)
 
-message("Using pybind11 version: ${PYBIND11_VERSION}")
-FetchContent_Declare(
-  pybind11
-  GIT_REPOSITORY https://github.com/pybind/pybind11.git
-  GIT_TAG v${PYBIND11_VERSION}  # Should be less than 3.0.0 for now
-     # pybind11 3.0.0 caused builds to start failing. This PR downgrades pybind11 to latest <3.0.0 release,
-     # which fixes the issue
-     # whilst we could probably get 3.0.0 working too, I feel that x.0.0 releases, in opensource (and closed source
-     # too often) might not always be very stable, so we might want to wait 3-6 months before trying it?)
-)
+message("Using pybind11 version: ${pybind11_version}")
+find_package(pybind11 CONFIG REQUIRED)
+# FetchContent_Declare(
+#   pybind11
+#   GIT_REPOSITORY https://github.com/pybind/pybind11.git
+#   GIT_TAG v${PYBIND11_VERSION}  # Should be less than 3.0.0 for now
+#      # pybind11 3.0.0 caused builds to start failing. This PR downgrades pybind11 to latest <3.0.0 release,
+#      # which fixes the issue
+#      # whilst we could probably get 3.0.0 working too, I feel that x.0.0 releases, in opensource (and closed source
+#      # too often) might not always be very stable, so we might want to wait 3-6 months before trying it?)
+# )
 
-FetchContent_MakeAvailable(pybind11)
+# FetchContent_MakeAvailable(pybind11)

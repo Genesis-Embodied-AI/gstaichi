@@ -51,7 +51,11 @@ dev = [
     "colorama",
     "coverage",
     "Pillow",
-    "pybind11",
+    # pybind11 should be less than 3.0.0 for now
+    # pybind11 3.0.0 caused builds to start failing.
+    # whilst we could probably get 3.0.0 working too, I feel that x.0.0 releases, in opensource (and closed source
+    # too often) might not always be very stable, so we might want to wait 3-6 months before trying it?)
+    "pybind11<3.0.0",
     "pybind11-stubgen",
     "pydantic",
     "GitPython",
