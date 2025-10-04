@@ -259,8 +259,9 @@ def src_ll_cache_has_return_child(args: list[str]) -> None:
 @pytest.mark.parametrize("src_ll_cache", [False, True])
 @test_utils.test()
 def test_src_ll_cache_has_return(tmp_path: pathlib.Path, src_ll_cache: bool, return_something: bool) -> None:
+    assert ti.lang is not None
     arch = ti.lang.impl.current_cfg().arch.name
-    env = os.environ
+    env = dict(os.environ)
     env["PYTHONPATH"] = "."
     # need to test what happens when loading from fast cache, so run several runs
     # - first iteration stores to cache
