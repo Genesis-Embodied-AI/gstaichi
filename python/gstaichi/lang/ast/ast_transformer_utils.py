@@ -208,9 +208,12 @@ class ASTTransformerContext:
         self.loop_depth: int = 0
         from gstaichi import extension  # pylint: disable=import-outside-toplevel
 
-        self.adstack_enabled: bool = _ti_core.is_extension_supported(
-            impl.current_cfg().arch,
-            extension.adstack,
+        self.adstack_enabled: bool = (
+            _ti_core.is_extension_supported(
+                impl.current_cfg().arch,
+                extension.adstack,
+            )
+            and impl.current_cfg().ad_stack_experimental_enabled
         )
 
     # e.g.: FunctionDef, Module, Global

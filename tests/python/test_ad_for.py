@@ -7,6 +7,9 @@ from tests import test_utils
 def test_ad_nested_for():
     N = 5
 
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
+
     loss = ti.field(float, shape=(), needs_grad=True)
 
     @ti.kernel
@@ -40,6 +43,9 @@ def test_ad_sum():
 
     compute_sum()
 
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
+
     for i in range(N):
         assert p[i] == a[i] * b[i] + 1
         p.grad[i] = 1
@@ -71,6 +77,9 @@ def test_ad_sum_local_atomic():
 
     compute_sum()
 
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
+
     for i in range(N):
         assert p[i] == 3 * b[i] + 1
         p.grad[i] = 1
@@ -101,6 +110,9 @@ def test_ad_power():
         b[i] = i
 
     power()
+
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     for i in range(N):
         assert p[i] == 3 ** b[i]
@@ -136,6 +148,9 @@ def test_ad_fibonacci():
 
     fib()
 
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
+
     for i in range(N):
         f.grad[i] = 1
 
@@ -169,6 +184,9 @@ def test_ad_fibonacci_index():
 
         for i in range(M):
             f[None] += b[i]
+
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     f.grad[None] = 1
     a.fill(1)
@@ -204,6 +222,9 @@ def test_ad_global_ptr():
     for i in range(N):
         a[i] = i
 
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
+
     task()
     task.grad()
 
@@ -237,6 +258,9 @@ def test_integer_stack():
         c[i] = i
 
     int_stack()
+
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     for i in range(N):
         print(f[i])
@@ -278,6 +302,9 @@ def test_double_for_loops():
 
     double_for()
 
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
+
     for i in range(N):
         assert f[i] == 2 * i * (1 + 2**i)
         f.grad[i] = 1
@@ -317,6 +344,9 @@ def test_double_for_loops_more_nests():
             c[i, k] = i + k
 
     double_for()
+
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     for i in range(N):
         for k in range(N // 2):
@@ -364,6 +394,9 @@ def test_complex_body():
     a.fill(2)
     b.fill(1)
 
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
+
     for i in range(N):
         c[i] = i
         f.grad[i] = 1
@@ -404,6 +437,9 @@ def test_triple_for_loops_bls():
 
     triple_for()
 
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
+
     for i in range(N - M):
         for k in range(N):
             assert f[i, k] == 2 * M * 2**M + (4 * i + 2 * M - 1) * M
@@ -431,6 +467,9 @@ def test_mixed_inner_loops():
             for j in range(2):
                 loss[None] += ti.sin(x[None]) + 1.0
 
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
+
     loss.grad[None] = 1.0
     x[None] = 0.0
     mixed_inner_loops()
@@ -452,6 +491,9 @@ def test_mixed_inner_loops_tape():
             loss[None] += ti.sin(x[None])
             for j in range(2):
                 loss[None] += ti.sin(x[None]) + 1.0
+
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     x[None] = 0.0
     with ti.ad.Tape(loss=loss):
@@ -478,6 +520,9 @@ def test_inner_loops_local_variable_fixed_stack_size_tape():
                     t += ti.sin(x[None])
                 loss[None] += s + t
 
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
+
     x[None] = 0.0
     with ti.ad.Tape(loss=loss):
         test_inner_loops_local_variable()
@@ -502,6 +547,9 @@ def test_inner_loops_local_variable_fixed_stack_size_kernel_grad():
                     s += ti.sin(x[None]) + 1.0
                     t += ti.sin(x[None])
                 loss[None] += s + t
+
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     loss.grad[None] = 1.0
     x[None] = 0.0
@@ -529,6 +577,9 @@ def test_inner_loops_local_variable_adaptive_stack_size_tape():
                     t += ti.sin(x[None])
                 loss[None] += s + t
 
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
+
     x[None] = 0.0
     with ti.ad.Tape(loss=loss):
         test_inner_loops_local_variable()
@@ -553,6 +604,9 @@ def test_inner_loops_local_variable_adaptive_stack_size_kernel_grad():
                     s += ti.sin(x[None]) + 1.0
                     t += ti.sin(x[None])
                 loss[None] += s + t
+
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     loss.grad[None] = 1.0
     x[None] = 0.0
@@ -582,6 +636,9 @@ def test_more_inner_loops_local_variable_adaptive_stack_size_tape():
                     loss[None] += u
                 loss[None] += s
 
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
+
     x[None] = 0.0
     with ti.ad.Tape(loss=loss):
         test_more_inner_loops_local_variable()
@@ -608,6 +665,9 @@ def test_more_inner_loops_local_variable_fixed_stack_size_tape():
                         u += ti.sin(x[None])
                     loss[None] += u
                 loss[None] += s
+
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     x[None] = 0.0
     with ti.ad.Tape(loss=loss):
@@ -637,6 +697,9 @@ def test_stacked_inner_loops_local_variable_fixed_stack_size_kernel_grad():
                 for k in range(3):
                     s += ti.sin(x[None]) + 1.0
                 loss[None] += s
+
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     loss.grad[None] = 1.0
     x[None] = 0.0
@@ -669,6 +732,9 @@ def test_stacked_mixed_ib_and_non_ib_inner_loops_local_variable_fixed_stack_size
                 for k in range(3):
                     loss[None] += ti.sin(x[None]) + 1.0
 
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
+
     loss.grad[None] = 1.0
     x[None] = 0.0
     test_stacked_mixed_ib_and_non_ib_inner_loops_local_variable()
@@ -698,6 +764,9 @@ def test_stacked_inner_loops_local_variable_adaptive_stack_size_kernel_grad():
                 for k in range(3):
                     s += ti.sin(x[None]) + 1.0
                 loss[None] += s
+
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     loss.grad[None] = 1.0
     x[None] = 0.0
@@ -730,6 +799,9 @@ def test_stacked_mixed_ib_and_non_ib_inner_loops_local_variable_adaptive_stack_s
                 for k in range(3):
                     loss[None] += ti.sin(x[None]) + 1.0
 
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
+
     loss.grad[None] = 1.0
     x[None] = 0.0
     test_stacked_mixed_ib_and_non_ib_inner_loops_local_variable()
@@ -752,6 +824,9 @@ def test_large_for_loops_adaptive_stack_size():
                 for k in range(1000):
                     loss[None] += ti.sin(x[None]) + 1.0
 
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
+
     with ti.ad.Tape(loss=loss):
         test_large_loop()
 
@@ -772,6 +847,9 @@ def test_large_for_loops_fixed_stack_size():
                 for k in range(1000):
                     loss[None] += ti.sin(x[None]) + 1.0
 
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
+
     with ti.ad.Tape(loss=loss):
         test_large_loop()
 
@@ -791,6 +869,9 @@ def test_multiple_ib():
                 y[None] += x[None]
             for i in range(3):
                 y[None] += x[None]
+
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     x[None] = 1.0
     with ti.ad.Tape(y):
@@ -817,6 +898,9 @@ def test_multiple_ib_multiple_outermost():
                 y[None] += x[None]
             for i in range(3):
                 y[None] += x[None]
+
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     x[None] = 1.0
     with ti.ad.Tape(y):
@@ -846,6 +930,9 @@ def test_multiple_ib_multiple_outermost_mixed():
                 for ii in range(3):
                     y[None] += x[None]
 
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
+
     x[None] = 1.0
     with ti.ad.Tape(y):
         compute_y()
@@ -870,6 +957,9 @@ def test_multiple_ib_mixed():
                     y[None] += x[None]
             for i in range(3):
                 y[None] += x[None]
+
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     x[None] = 1.0
     with ti.ad.Tape(y):
@@ -897,6 +987,9 @@ def test_multiple_ib_deeper():
                     for iii in range(2):
                         y[None] += x[None]
 
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
+
     x[None] = 1.0
     with ti.ad.Tape(y):
         compute_y()
@@ -923,6 +1016,9 @@ def test_multiple_ib_deeper_non_scalar():
                 for ii in range(2):
                     for iii in range(j):
                         y[j] += x[j]
+
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     x.fill(1.0)
     for i in range(N):
@@ -956,6 +1052,9 @@ def test_multiple_ib_inner_mixed():
                     for iii in range(2):
                         y[None] += x[None]
 
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
+
     x[None] = 1.0
     with ti.ad.Tape(y):
         compute_y()
@@ -984,6 +1083,9 @@ def test_ib_global_load():
         b[i] = 2
 
     compute()
+
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     for i in range(N):
         assert p[i] == i * i
@@ -1025,6 +1127,9 @@ def test_for_loop_index():
             x_sum_grad = loss.grad[None] * ti.exp(x_sum)
             for j in range(M):
                 my_x_grad[i, j] = x_sum_grad
+
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     # Compute gradient using AD
     loss[None] = 0

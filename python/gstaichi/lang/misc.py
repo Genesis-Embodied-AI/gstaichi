@@ -750,6 +750,13 @@ def is_extension_enabled(ext: Extension) -> bool:
     pass in current architecture
     """
     arch = impl.current_cfg().arch
+    print(
+        "is_extension_supported(arch, ext)",
+        is_extension_supported(arch, ext),
+        ext,
+        "impl.current_cfg().ad_stack_experimental_enabled",
+        impl.current_cfg().ad_stack_experimental_enabled,
+    )
     return is_extension_supported(arch, ext) and impl.current_cfg().ad_stack_experimental_enabled
 
 
