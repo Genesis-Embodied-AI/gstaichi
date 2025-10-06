@@ -13,10 +13,11 @@ if has_pytorch():
 
 archs_support_ndarray_ad = [ti.cpu, ti.cuda, ti.metal]
 target_fp = ti.f64 if sys.platform != "darwin" else ti.f32
+print("target_fp", target_fp, 'sys.platform', sys.platform)
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.data64)
 def test_simple_demo():
     @test_utils.torch_op(output_shapes=[(1,)])
     @ti.kernel
@@ -33,7 +34,7 @@ def test_simple_demo():
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.data64)
 def test_ad_reduce():
     @test_utils.torch_op(output_shapes=[(1,)])
     @ti.kernel
@@ -87,7 +88,7 @@ def test_ad_reduce():
     ],
 )
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.data64)
 def test_poly(tifunc):
     s = (4,)
 
@@ -103,7 +104,7 @@ def test_poly(tifunc):
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.data64)
 def test_ad_select():
     s = (4,)
 
@@ -119,7 +120,7 @@ def test_ad_select():
     torch.autograd.gradcheck(test, [x, y])
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.data64)
 def test_ad_sum():
     N = 10
 
@@ -150,7 +151,7 @@ def test_ad_sum():
         assert a.grad[i] == b[i]
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.data64)
 def test_ad_sum_local_atomic():
     N = 10
     a = ti.ndarray(ti.f32, shape=N, needs_grad=True)
@@ -1085,7 +1086,7 @@ def test_ad_if_mutable():
     assert x.grad[1] == 1
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
+@test_utils.test(arch=archs_support_ndarray_ad, require=[ti.extension.adstack, ti.extension.data64])
 def test_ad_if_parallel():
     x = ti.ndarray(ti.f32, shape=2, needs_grad=True)
     y = ti.ndarray(ti.f32, shape=2, needs_grad=True)
@@ -1170,8 +1171,7 @@ def test_ad_ndarray_i32():
         ti.ndarray(ti.i32, shape=3, needs_grad=True)
 
 
-@test_utils.test(arch=archs_support_ndarray_ad)
-@pytest.mark.flaky(retries=5)
+@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
 def test_ad_sum_vector():
     N = 10
 
@@ -1198,7 +1198,7 @@ def test_ad_sum_vector():
             assert a.grad[i][j] == 2
 
 
-@test_utils.test(arch=archs_support_ndarray_ad)
+@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
 def test_ad_multiple_tapes():
     N = 10
 
@@ -1235,7 +1235,7 @@ def test_ad_multiple_tapes():
         assert a.grad[i][1] == 3
 
 
-@test_utils.test(arch=archs_support_ndarray_ad)
+@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
 def test_ad_set_loss_grad():
     x = ti.ndarray(dtype=ti.f32, shape=(), needs_grad=True)
     loss = ti.ndarray(dtype=ti.f32, shape=(), needs_grad=True)
@@ -1267,7 +1267,7 @@ def test_ad_set_loss_grad():
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad)
+@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.data64)
 def test_ad_mixed_with_torch():
     @test_utils.torch_op(output_shapes=[(1,)])
     @ti.kernel
@@ -1327,7 +1327,7 @@ def test_ad_tape_throw():
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad)
+@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.data64)
 def test_tape_torch_tensor_grad_none():
     N = 3
 
@@ -1351,7 +1351,7 @@ def test_tape_torch_tensor_grad_none():
         assert a.grad[i] == 1.0
 
 
-@test_utils.test(arch=archs_support_ndarray_ad)
+@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.data64)
 def test_grad_tensor_in_kernel():
     N = 10
 
@@ -1372,7 +1372,7 @@ def test_grad_tensor_in_kernel():
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad)
+@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.data64)
 def test_tensor_shape():
     N = 3
 
@@ -1443,7 +1443,7 @@ def test_torch_needs_grad_false():
         assert x.grad[i] == 0.0
 
 
-@test_utils.test(arch=archs_support_ndarray_ad)
+@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
 def test_ad_vector_arg():
     N = 10
 
@@ -1471,7 +1471,7 @@ def test_ad_vector_arg():
             assert a.grad[i][j] == 2
 
 
-@test_utils.test(arch=archs_support_ndarray_ad)
+@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
 def test_hash_encoder_simple():
     @ti.kernel
     def hash_encoder_kernel(

@@ -3,7 +3,7 @@ import gstaichi as ti
 from tests import test_utils
 
 
-@test_utils.test()
+@test_utils.test(require=ti.extension.adstack)
 def test_ad_sum_fwd():
     N = 10
     a = ti.field(ti.f32, shape=N)
@@ -141,7 +141,7 @@ def test_ad_fibonacci_fwd():
         assert f.dual[i] == f[i]
 
 
-@test_utils.test()
+@test_utils.test(require=ti.extension.adstack)
 def test_ad_fibonacci_index_fwd():
     N = 5
     M = 10
@@ -173,7 +173,7 @@ def test_ad_fibonacci_index_fwd():
         assert b[i] == is_fib * N
 
 
-@test_utils.test()
+@test_utils.test(require=ti.extension.adstack)
 def test_double_for_loops():
     N = 5
     a = ti.field(ti.f32, shape=N)
