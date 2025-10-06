@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gstaichi.lang.ast.ast_transformer_utils &#8212; GsTaichi 2.4.1 documentation</title>
+    <title>gstaichi.lang.ast.ast_transformer_utils &#8212; GsTaichi 2.5.1 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../../_static/documentation_options.js?v=e9ebdb8f"></script>
+    <script src="../../../../_static/documentation_options.js?v=983e91d6"></script>
     <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -59,7 +59,7 @@
     <link rel="search" title="Search" href="../../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.4.1" />
+  <meta name="docsearch:version" content="2.5.1" />
   </head>
   
   
@@ -121,7 +121,7 @@
   
   
   
-    <p class="title logo__title">GsTaichi 2.4.1 documentation</p>
+    <p class="title logo__title">GsTaichi 2.5.1 documentation</p>
   
 </a></div>
     
@@ -338,28 +338,6 @@
     <span class="p">)</span>
 
 
-<div class="viewcode-block" id="PtrSource">
-<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.PtrSource">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">PtrSource</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-<div class="viewcode-block" id="PtrSource.GLOBAL">
-<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.PtrSource.GLOBAL">[docs]</a>
-    <span class="n">GLOBAL</span> <span class="o">=</span> <span class="mi">1</span></div>
-
-<div class="viewcode-block" id="PtrSource.TEMPLATE">
-<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.PtrSource.TEMPLATE">[docs]</a>
-    <span class="n">TEMPLATE</span> <span class="o">=</span> <span class="mi">2</span></div>
-
-<div class="viewcode-block" id="PtrSource.BUILTIN">
-<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.PtrSource.BUILTIN">[docs]</a>
-    <span class="n">BUILTIN</span> <span class="o">=</span> <span class="mi">3</span></div>
-
-<div class="viewcode-block" id="PtrSource.LOCAL">
-<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.PtrSource.LOCAL">[docs]</a>
-    <span class="n">LOCAL</span> <span class="o">=</span> <span class="mi">4</span></div>
-</div>
-
-
-
 <div class="viewcode-block" id="Builder">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.Builder">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Builder</span><span class="p">:</span>
@@ -373,8 +351,9 @@
             <span class="n">info</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">get_pos_info</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">stmt</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">expr</span><span class="p">))</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
             <span class="k">with</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">src_info_guard</span><span class="p">(</span><span class="n">info</span><span class="p">):</span>
                 <span class="n">res</span> <span class="o">=</span> <span class="n">method</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;ptr_source&quot;</span><span class="p">):</span>
-                    <span class="n">node</span><span class="o">.</span><span class="n">ptr_source</span> <span class="o">=</span> <span class="n">PtrSource</span><span class="o">.</span><span class="n">LOCAL</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;violates_pure&quot;</span><span class="p">):</span>
+                    <span class="c1"># assume False until proven otherwise</span>
+                    <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">False</span>
                 <span class="k">return</span> <span class="n">res</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">print_full_traceback</span><span class="p">:</span>
@@ -827,35 +806,37 @@
 
 <div class="viewcode-block" id="ASTTransformerContext.get_var_by_name">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.get_var_by_name">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_var_by_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PtrSource</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_var_by_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_scopes</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
                 <span class="n">val</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
-                <span class="n">ptr_source</span> <span class="o">=</span> <span class="n">PtrSource</span><span class="o">.</span><span class="n">LOCAL</span>
+                <span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">False</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_pure</span> <span class="ow">and</span> <span class="n">is_data_oriented</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
                     <span class="c1"># a data oriented is as good as global, from pov of pure constraints</span>
-                    <span class="n">ptr_source</span> <span class="o">=</span> <span class="n">PtrSource</span><span class="o">.</span><span class="n">GLOBAL</span>
-                <span class="k">return</span> <span class="n">ptr_source</span><span class="p">,</span> <span class="n">val</span>
+                    <span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">return</span> <span class="n">violates_pure</span><span class="p">,</span> <span class="n">val</span>
 
-        <span class="n">ptr_source</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">violates_pure</span><span class="p">,</span> <span class="n">found_name</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">template_vars</span><span class="p">:</span>
             <span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">template_vars</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
-            <span class="n">ptr_source</span> <span class="o">=</span> <span class="n">PtrSource</span><span class="o">.</span><span class="n">TEMPLATE</span>
+            <span class="n">found_name</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">elif</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_vars</span><span class="p">:</span>
             <span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_vars</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
-            <span class="n">ptr_source</span> <span class="o">=</span> <span class="n">PtrSource</span><span class="o">.</span><span class="n">GLOBAL</span>
+            <span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">found_name</span> <span class="o">=</span> <span class="kc">True</span>
 
-        <span class="k">if</span> <span class="n">ptr_source</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">found_name</span><span class="p">:</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.matrix</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># pylint: disable-msg=C0415</span>
                 <span class="n">Matrix</span><span class="p">,</span>
                 <span class="n">make_matrix</span><span class="p">,</span>
             <span class="p">)</span>
 
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">Matrix</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">ptr_source</span><span class="p">,</span> <span class="n">make_matrix</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">to_list</span><span class="p">())</span>
-            <span class="k">return</span> <span class="n">ptr_source</span><span class="p">,</span> <span class="n">var</span>
+                <span class="k">return</span> <span class="n">violates_pure</span><span class="p">,</span> <span class="n">make_matrix</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">to_list</span><span class="p">())</span>
+            <span class="k">return</span> <span class="n">violates_pure</span><span class="p">,</span> <span class="n">var</span>
+
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">PtrSource</span><span class="o">.</span><span class="n">BUILTIN</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">builtins</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">builtins</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">GsTaichiNameError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Name &quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&quot; is not defined&#39;</span><span class="p">)</span></div>
 

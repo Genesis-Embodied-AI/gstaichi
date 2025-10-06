@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gstaichi.lang.ast.ast_transformer &#8212; GsTaichi 2.4.1 documentation</title>
+    <title>gstaichi.lang.ast.ast_transformer &#8212; GsTaichi 2.5.1 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../../_static/documentation_options.js?v=e9ebdb8f"></script>
+    <script src="../../../../_static/documentation_options.js?v=983e91d6"></script>
     <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -59,7 +59,7 @@
     <link rel="search" title="Search" href="../../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.4.1" />
+  <meta name="docsearch:version" content="2.5.1" />
   </head>
   
   
@@ -121,7 +121,7 @@
   
   
   
-    <p class="title logo__title">GsTaichi 2.4.1 documentation</p>
+    <p class="title logo__title">GsTaichi 2.5.1 documentation</p>
   
 </a></div>
     
@@ -330,7 +330,6 @@
     <span class="n">ASTTransformerContext</span><span class="p">,</span>
     <span class="n">Builder</span><span class="p">,</span>
     <span class="n">LoopStatus</span><span class="p">,</span>
-    <span class="n">PtrSource</span><span class="p">,</span>
     <span class="n">ReturnStatus</span><span class="p">,</span>
     <span class="n">get_decorator</span><span class="p">,</span>
 <span class="p">)</span>
@@ -394,12 +393,12 @@
 <div class="viewcode-block" id="ASTTransformer.build_Name">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer/index.html#gstaichi.lang.ast.ast_transformer.ASTTransformer.build_Name">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">build_Name</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">ASTTransformerContext</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">):</span>
-        <span class="n">ptr_source</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">get_var_by_name</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+        <span class="n">violates_pure</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">get_var_by_name</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">stmt</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">expr</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="n">Expr</span><span class="p">):</span>
             <span class="n">node</span><span class="o">.</span><span class="n">ptr</span><span class="o">.</span><span class="n">dbg_info</span> <span class="o">=</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">DebugInfo</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">get_pos_info</span><span class="p">(</span><span class="n">node</span><span class="p">))</span>
             <span class="n">node</span><span class="o">.</span><span class="n">ptr</span><span class="o">.</span><span class="n">ptr</span><span class="o">.</span><span class="n">set_dbg_info</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ptr</span><span class="o">.</span><span class="n">dbg_info</span><span class="p">)</span>
-        <span class="n">node</span><span class="o">.</span><span class="n">ptr_source</span> <span class="o">=</span> <span class="n">ptr_source</span>
-        <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">is_pure</span> <span class="ow">and</span> <span class="n">ptr_source</span> <span class="o">==</span> <span class="n">PtrSource</span><span class="o">.</span><span class="n">GLOBAL</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ctx</span><span class="o">.</span><span class="n">static_scope_status</span><span class="o">.</span><span class="n">is_in_static_scope</span><span class="p">:</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="o">=</span> <span class="n">violates_pure</span>
+        <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">is_pure</span> <span class="ow">and</span> <span class="n">violates_pure</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ctx</span><span class="o">.</span><span class="n">static_scope_status</span><span class="o">.</span><span class="n">is_in_static_scope</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">Field</span><span class="p">)):</span>
                 <span class="k">raise</span> <span class="n">exception</span><span class="o">.</span><span class="n">GsTaichiCompilationError</span><span class="p">(</span><span class="s2">&quot;Accessing global variable&quot;</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ptr</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr</span></div>
@@ -593,7 +592,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">ASTTransformer</span><span class="o">.</span><span class="n">is_tuple</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">slice</span><span class="p">):</span>
             <span class="n">node</span><span class="o">.</span><span class="n">slice</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">slice</span><span class="o">.</span><span class="n">ptr</span><span class="p">]</span>
         <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">subscript</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="o">*</span><span class="n">node</span><span class="o">.</span><span class="n">slice</span><span class="o">.</span><span class="n">ptr</span><span class="p">)</span>
-        <span class="n">node</span><span class="o">.</span><span class="n">ptr_source</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">ptr_source</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">violates_pure</span>
         <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr</span></div>
 
 
@@ -638,11 +637,11 @@
 <div class="viewcode-block" id="ASTTransformer.build_List">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer/index.html#gstaichi.lang.ast.ast_transformer.ASTTransformer.build_List">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">build_List</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">ASTTransformerContext</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">List</span><span class="p">):</span>
-        <span class="n">node</span><span class="o">.</span><span class="n">ptr_source</span> <span class="o">=</span> <span class="n">PtrSource</span><span class="o">.</span><span class="n">LOCAL</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">elts</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">elt</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">elts</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">elt</span><span class="o">.</span><span class="n">ptr_source</span> <span class="o">==</span> <span class="n">PtrSource</span><span class="o">.</span><span class="n">GLOBAL</span><span class="p">:</span>
-                <span class="n">node</span><span class="o">.</span><span class="n">ptr_source</span> <span class="o">=</span> <span class="n">PtrSource</span><span class="o">.</span><span class="n">GLOBAL</span>
+            <span class="k">if</span> <span class="n">elt</span><span class="o">.</span><span class="n">violates_pure</span><span class="p">:</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="p">[</span><span class="n">elt</span><span class="o">.</span><span class="n">ptr</span> <span class="k">for</span> <span class="n">elt</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">elts</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr</span></div>
 
@@ -681,7 +680,7 @@
 <div class="viewcode-block" id="ASTTransformer.process_generators">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer/index.html#gstaichi.lang.ast.ast_transformer.ASTTransformer.process_generators">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">process_generators</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">ASTTransformerContext</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">GeneratorExp</span><span class="p">,</span> <span class="n">now_comp</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
-        <span class="n">node</span><span class="o">.</span><span class="n">ptr_source</span> <span class="o">=</span> <span class="n">PtrSource</span><span class="o">.</span><span class="n">LOCAL</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="n">now_comp</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">generators</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
         <span class="k">with</span> <span class="n">ctx</span><span class="o">.</span><span class="n">static_scope_guard</span><span class="p">():</span>
@@ -747,7 +746,7 @@
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer/index.html#gstaichi.lang.ast.ast_transformer.ASTTransformer.build_Constant">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">build_Constant</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">ASTTransformerContext</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Constant</span><span class="p">):</span>
         <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span>
-        <span class="n">node</span><span class="o">.</span><span class="n">ptr_source</span> <span class="o">=</span> <span class="n">PtrSource</span><span class="o">.</span><span class="n">LOCAL</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr</span></div>
 
 
@@ -1089,8 +1088,8 @@
             <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">type</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">fields</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">ptr</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">attr</span><span class="p">)</span>
-            <span class="n">node</span><span class="o">.</span><span class="n">ptr_source</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">ptr_source</span>
-            <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">is_pure</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr_source</span> <span class="o">==</span> <span class="n">PtrSource</span><span class="o">.</span><span class="n">GLOBAL</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ctx</span><span class="o">.</span><span class="n">static_scope_status</span><span class="o">.</span><span class="n">is_in_static_scope</span><span class="p">:</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">violates_pure</span>
+            <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">is_pure</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ctx</span><span class="o">.</span><span class="n">static_scope_status</span><span class="o">.</span><span class="n">is_in_static_scope</span><span class="p">:</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">Field</span><span class="p">)):</span>
                     <span class="k">raise</span> <span class="n">exception</span><span class="o">.</span><span class="n">GsTaichiCompilationError</span><span class="p">(</span>
                         <span class="sa">f</span><span class="s2">&quot;Accessing global var </span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">attr</span><span class="si">}</span><span class="s2"> from outside function scope within pure kernel&quot;</span>

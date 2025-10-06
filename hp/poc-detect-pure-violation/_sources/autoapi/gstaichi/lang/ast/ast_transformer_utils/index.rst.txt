@@ -9,7 +9,6 @@ Classes
 
 .. autoapisummary::
 
-   gstaichi.lang.ast.ast_transformer_utils.PtrSource
    gstaichi.lang.ast.ast_transformer_utils.Builder
    gstaichi.lang.ast.ast_transformer_utils.VariableScopeGuard
    gstaichi.lang.ast.ast_transformer_utils.StaticScopeStatus
@@ -34,36 +33,6 @@ Functions
 
 Module Contents
 ---------------
-
-.. py:class:: PtrSource
-
-   Bases: :py:obj:`enum.Enum`
-
-
-   Generic enumeration.
-
-   Derive from this class to define new enumerations.
-
-
-   .. py:attribute:: GLOBAL
-      :value: 1
-
-
-
-   .. py:attribute:: TEMPLATE
-      :value: 2
-
-
-
-   .. py:attribute:: BUILTIN
-      :value: 3
-
-
-
-   .. py:attribute:: LOCAL
-      :value: 4
-
-
 
 .. py:class:: Builder
 
@@ -333,7 +302,7 @@ Module Contents
    .. py:method:: check_loop_var(loop_var: str) -> None
 
 
-   .. py:method:: get_var_by_name(name: str) -> tuple[PtrSource, Any]
+   .. py:method:: get_var_by_name(name: str) -> tuple[bool, Any]
 
 
    .. py:method:: get_pos_info(node: ast.AST) -> str
