@@ -18,7 +18,6 @@ from gstaichi.lang.ast.ast_transformer_utils import (
     ASTTransformerContext,
     Builder,
     LoopStatus,
-    PtrSource,
     ReturnStatus,
     get_decorator,
 )
@@ -72,12 +71,12 @@ def boundary_type_cast_warning(expression: Expr) -> None:
 class ASTTransformer(Builder):
     @staticmethod
     def build_Name(ctx: ASTTransformerContext, node: ast.Name):
-        ptr_source, node.ptr = ctx.get_var_by_name(node.id)
+        violates_pure, node.ptr = ctx.get_var_by_name(node.id)
         if isinstance(node, (ast.stmt, ast.expr)) and isinstance(node.ptr, Expr):
             node.ptr.dbg_info = _ti_core.DebugInfo(ctx.get_pos_info(node))
             node.ptr.ptr.set_dbg_info(node.ptr.dbg_info)
-        node.ptr_source = ptr_source
-        if ctx.is_pure and ptr_source == PtrSource.GLOBAL and not ctx.static_scope_status.is_in_static_scope:
+        node.violates_pure = violates_pure
+        if ctx.is_pure and violates_pure and not ctx.static_scope_status.is_in_static_scope:
             if isinstance(node.ptr, (float, int, Field)):
                 raise exception.GsTaichiCompilationError("Accessing global variable", node.id, type(node.ptr))
         return node.ptr
@@ -247,7 +246,7 @@ class ASTTransformer(Builder):
         if not ASTTransformer.is_tuple(node.slice):
             node.slice.ptr = [node.slice.ptr]
         node.ptr = impl.subscript(ctx.ast_builder, node.value.ptr, *node.slice.ptr)
-        node.ptr_source = node.value.ptr_source
+        node.violates_pure = node.value.violates_pure
         return node.ptr
 
     @staticmethod
@@ -280,11 +279,11 @@ class ASTTransformer(Builder):
 
     @staticmethod
     def build_List(ctx: ASTTransformerContext, node: ast.List):
-        node.ptr_source = PtrSource.LOCAL
+        node.violates_pure = False
         build_stmts(ctx, node.elts)
         for elt in node.elts:
-            if elt.ptr_source == PtrSource.GLOBAL:
-                node.ptr_source = PtrSource.GLOBAL
+            if elt.violates_pure:
+                node.violates_pure = True
         node.ptr = [elt.ptr for elt in node.elts]
         return node.ptr
 
@@ -311,7 +310,7 @@ class ASTTransformer(Builder):
 
     @staticmethod
     def process_generators(ctx: ASTTransformerContext, node: ast.GeneratorExp, now_comp, func, result):
-        node.ptr_source = PtrSource.LOCAL
+        node.violates_pure = False
         if now_comp >= len(node.generators):
             return func(ctx, node, result)
         with ctx.static_scope_guard():
@@ -362,7 +361,7 @@ class ASTTransformer(Builder):
     @staticmethod
     def build_Constant(ctx: ASTTransformerContext, node: ast.Constant):
         node.ptr = node.value
-        node.ptr_source = PtrSource.LOCAL
+        node.violates_pure = False
         return node.ptr
 
     @staticmethod
@@ -662,8 +661,8 @@ class ASTTransformer(Builder):
             node.ptr = next(field.type for field in dataclasses.fields(node.value.ptr))
         else:
             node.ptr = getattr(node.value.ptr, node.attr)
-            node.ptr_source = node.value.ptr_source
-            if ctx.is_pure and node.ptr_source == PtrSource.GLOBAL and not ctx.static_scope_status.is_in_static_scope:
+            node.violates_pure = node.value.violates_pure
+            if ctx.is_pure and node.violates_pure and not ctx.static_scope_status.is_in_static_scope:
                 if isinstance(node.ptr, (int, float, Field)):
                     raise exception.GsTaichiCompilationError(
                         f"Accessing global var {node.attr} from outside function scope within pure kernel"

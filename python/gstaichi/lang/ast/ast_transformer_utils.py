@@ -26,13 +26,6 @@ if TYPE_CHECKING:
     )
 
 
-class PtrSource(Enum):
-    GLOBAL = 1
-    TEMPLATE = 2
-    BUILTIN = 3
-    LOCAL = 4
-
-
 class Builder:
     def __call__(self, ctx: "ASTTransformerContext", node: ast.AST):
         method_name = "build_" + node.__class__.__name__
@@ -44,8 +37,9 @@ class Builder:
             info = ctx.get_pos_info(node) if isinstance(node, (ast.stmt, ast.expr)) else ""
             with impl.get_runtime().src_info_guard(info):
                 res = method(ctx, node)
-                if not hasattr(node, "ptr_source"):
-                    node.ptr_source = PtrSource.LOCAL
+                if not hasattr(node, "violates_pure"):
+                    # assume False until proven otherwise
+                    node.violates_pure = False
                 return res
         except Exception as e:
             if impl.get_runtime().print_full_traceback:
@@ -280,35 +274,37 @@ class ASTTransformerContext:
                 f"Variable '{loop_var}' is already declared in the outer scope and cannot be used as loop variable"
             )
 
-    def get_var_by_name(self, name: str) -> tuple[PtrSource, Any]:
+    def get_var_by_name(self, name: str) -> tuple[bool, Any]:
         for s in reversed(self.local_scopes):
             if name in s:
                 val = s[name]
-                ptr_source = PtrSource.LOCAL
+                violates_pure = False
                 if self.is_pure and is_data_oriented(val):
                     # a data oriented is as good as global, from pov of pure constraints
-                    ptr_source = PtrSource.GLOBAL
-                return ptr_source, val
+                    violates_pure = True
+                return violates_pure, val
 
-        ptr_source = None
+        violates_pure, found_name = False, False
         if name in self.template_vars:
             var = self.template_vars[name]
-            ptr_source = PtrSource.TEMPLATE
+            found_name = True
         elif name in self.global_vars:
             var = self.global_vars[name]
-            ptr_source = PtrSource.GLOBAL
+            violates_pure = True
+            found_name = True
 
-        if ptr_source:
+        if found_name:
             from gstaichi.lang.matrix import (  # pylint: disable-msg=C0415
                 Matrix,
                 make_matrix,
             )
 
             if isinstance(var, Matrix):
-                return ptr_source, make_matrix(var.to_list())
-            return ptr_source, var
+                return violates_pure, make_matrix(var.to_list())
+            return violates_pure, var
+
         try:
-            return PtrSource.BUILTIN, getattr(builtins, name)
+            return False, getattr(builtins, name)
         except AttributeError:
             raise GsTaichiNameError(f'Name "{name}" is not defined')
 

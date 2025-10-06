@@ -22,7 +22,6 @@ from gstaichi.lang import ops as ti_ops
 from gstaichi.lang._dataclass_util import create_flat_name
 from gstaichi.lang.ast.ast_transformer_utils import (
     ASTTransformerContext,
-    PtrSource,
     get_decorator,
 )
 from gstaichi.lang.exception import (
@@ -264,16 +263,16 @@ class CallTransformer:
             build_stmts(ctx, node.args)
             build_stmts(ctx, node.keywords)
 
-        ptr_source = PtrSource.LOCAL
+        violates_pure = False
         # if any args are global, then ptr source is global
         for arg in node.args:
-            if arg.ptr_source == PtrSource.GLOBAL:
-                ptr_source = PtrSource.GLOBAL
+            if arg.violates_pure:
+                violates_pure = True
 
         for kw in node.keywords:
-            if kw.value.ptr_source == PtrSource.GLOBAL:
-                ptr_source = PtrSource.GLOBAL
-        node.ptr_source = ptr_source
+            if kw.value.violates_pure:
+                violates_pure = True
+        node.violates_pure = violates_pure
 
         args = []
         for arg in node.args:
