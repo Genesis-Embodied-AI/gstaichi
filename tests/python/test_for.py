@@ -121,8 +121,12 @@ def test_for_static_if_no_ad1():
                 ...
 
     k1()
-    with pytest.raises(ti.GsTaichiCompilationError):
+
+    if ti.is_extension_enabled(ti.extension.adstack):
         k1.grad()
+    else:
+        with pytest.raises(ti.GsTaichiCompilationError):
+            k1.grad()
 
 
 @test_utils.test()
@@ -155,5 +159,8 @@ def test_for_static_if_no_ad2():
     x.grad.fill(0.0)
     y.grad.fill(0.0)
 
-    with pytest.raises(ti.GsTaichiCompilationError):
+    if ti.is_extension_enabled(ti.extension.adstack):
         k1.grad(use_static)
+    else:
+        with pytest.raises(ti.GsTaichiCompilationError):
+            k1.grad(use_static)

@@ -206,7 +206,7 @@ class ASTTransformerContext:
         self.only_parse_function_def: bool = False
         self.autodiff_mode = autodiff_mode
         self.loop_depth: int = 0
-        from gstaichi import extension
+        from gstaichi import extension  # pylint: disable=import-outside-toplevel
 
         self.adstack_enabled: bool = _ti_core.is_extension_supported(
             impl.current_cfg().arch,

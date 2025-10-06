@@ -7,6 +7,7 @@ from copy import deepcopy as _deepcopy
 
 from gstaichi import _logging, _snode
 from gstaichi._lib import core as _ti_core
+from gstaichi._lib.core.gstaichi_python import Extension
 from gstaichi.lang import impl
 from gstaichi.lang.expr import Expr
 from gstaichi.lang.impl import axes, get_runtime
@@ -743,6 +744,15 @@ def get_host_arch_list():
     return [_ti_core.host_arch()]
 
 
+def is_extension_enabled(ext: Extension) -> bool:
+    """
+    Directly returns whether extension is enabled, without needing to
+    pass in current architecture
+    """
+    arch = impl.current_cfg().arch
+    return is_extension_supported(arch, ext)
+
+
 __all__ = [
     "i",
     "ij",
@@ -779,4 +789,5 @@ __all__ = [
     "no_activate",
     "reset",
     "mesh_patch_idx",
+    "is_extension_enabled",
 ]
