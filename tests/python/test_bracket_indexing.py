@@ -1,4 +1,5 @@
 import gstaichi as ti
+
 from tests import test_utils
 
 
@@ -9,7 +10,7 @@ def test_bracket_indexing_field():
     @ti.kernel
     def k1():
         a[()] += 1
-    
+
     k1()
     assert a[()] == 1
 
@@ -21,6 +22,6 @@ def test_bracket_indexing_ndarray():
     @ti.kernel
     def k1(a: ti.types.NDArray[ti.i32, 0]):
         a[()] += 1
-    
+
     k1(a)
     assert a[()] == 1
