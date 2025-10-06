@@ -45,6 +45,7 @@ docs = [
     "sphinx-design",
     "pydata-sphinx-theme",
     "sphinx-autoapi",
+    "astroid<4.0.0",  # upgrade to 4.0.0 on oct 5 2025 broke the build
 ]
 dev = [
     "cmake<4.0.0",
