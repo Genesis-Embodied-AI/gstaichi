@@ -13,7 +13,7 @@ if has_pytorch():
 
 archs_support_ndarray_ad = [ti.cpu, ti.cuda, ti.metal]
 target_fp = ti.f64 if sys.platform != "darwin" else ti.f32
-print("target_fp", target_fp, 'sys.platform', sys.platform)
+print("target_fp", target_fp, "sys.platform", sys.platform)
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
