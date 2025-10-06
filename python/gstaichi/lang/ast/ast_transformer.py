@@ -1120,7 +1120,7 @@ class ASTTransformer(Builder):
                 and isinstance(node.iter.func, ast.Name)
                 and node.iter.func.id == "range"
             ):
-                if ctx.loop_depth > 0 and ctx.autodiff_mode == AutodiffMode.REVERSE:
+                if ctx.loop_depth > 0 and ctx.autodiff_mode == AutodiffMode.REVERSE and not ctx.adstack_enabled:
                     raise exception.GsTaichiCompilationError("Cannot use non static range in Backwards mode")
                 return ASTTransformer.build_range_for(ctx, node)
             elif isinstance(node.iter, ast.IfExp):
