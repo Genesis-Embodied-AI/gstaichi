@@ -376,6 +376,7 @@ Module Contents
 .. py:function:: is_extension_enabled(ext: gstaichi._lib.core.gstaichi_python.Extension) -> bool
 
    Directly returns whether extension is enabled, without needing to
-   pass in current architecture
+   pass in current architecture. Also takes into account config, in the case
+   of adstack
 
 

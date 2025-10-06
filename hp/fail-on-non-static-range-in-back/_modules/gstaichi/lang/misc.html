@@ -1166,17 +1166,13 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">is_extension_enabled</span><span class="p">(</span><span class="n">ext</span><span class="p">:</span> <span class="n">Extension</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Directly returns whether extension is enabled, without needing to</span>
-<span class="sd">    pass in current architecture</span>
+<span class="sd">    pass in current architecture. Also takes into account config, in the case</span>
+<span class="sd">    of adstack</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">arch</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span><span class="o">.</span><span class="n">arch</span>
-    <span class="nb">print</span><span class="p">(</span>
-        <span class="s2">&quot;is_extension_supported(arch, ext)&quot;</span><span class="p">,</span>
-        <span class="n">is_extension_supported</span><span class="p">(</span><span class="n">arch</span><span class="p">,</span> <span class="n">ext</span><span class="p">),</span>
-        <span class="n">ext</span><span class="p">,</span>
-        <span class="s2">&quot;impl.current_cfg().ad_stack_experimental_enabled&quot;</span><span class="p">,</span>
-        <span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span><span class="o">.</span><span class="n">ad_stack_experimental_enabled</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">is_extension_supported</span><span class="p">(</span><span class="n">arch</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span> <span class="ow">and</span> <span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span><span class="o">.</span><span class="n">ad_stack_experimental_enabled</span></div>
+    <span class="k">if</span> <span class="n">ext</span> <span class="o">==</span> <span class="n">extension</span><span class="o">.</span><span class="n">adstack</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">is_extension_supported</span><span class="p">(</span><span class="n">arch</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span> <span class="ow">and</span> <span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span><span class="o">.</span><span class="n">ad_stack_experimental_enabled</span>
+    <span class="k">return</span> <span class="n">is_extension_supported</span><span class="p">(</span><span class="n">arch</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span></div>
 
 
 
