@@ -166,7 +166,7 @@ class CallTransformer:
         return args
 
     @staticmethod
-    def _expand_Call_dataclass_args(args: tuple[ast.stmt]) -> tuple[tuple[ast.stmt], tuple[ast.stmt]]:
+    def _expand_Call_dataclass_args(args: tuple[ast.stmt, ...]) -> tuple[tuple[ast.stmt, ...], tuple[ast.stmt, ...]]:
         """
         We require that each node has a .ptr attribute added to it, that contains
         the associated Python object
