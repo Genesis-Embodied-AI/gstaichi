@@ -38,6 +38,8 @@ class TI_DLL_EXPORT Kernel : public Callable {
     return ir_is_ast_;
   }
 
+  std::string to_string() const;
+
   LaunchContextBuilder make_launch_context();
 
   template <typename T>

@@ -332,6 +332,7 @@ def init(
             * ``print_ir`` (bool): Prints the CHI IR of the GsTaichi kernels.
             *``offline_cache`` (bool): Enables offline cache of the compiled kernels. Default to True. When this is enabled GsTaichi will cache compiled kernel on your local disk to accelerate future calls.
             *``random_seed`` (int): Sets the seed of the random generator. The default is 0.
+            *``debug_dump_path`` (str): used as the base path for TI_DUMP_KERNEL_CHECKSUMS and similar
     """
     # FIXME(https://github.com/taichi-dev/gstaichi/issues/4811): save the current working directory since it may be
     # changed by the Vulkan backend initialization on OS X.

@@ -1,4 +1,5 @@
 import ast
+import csv
 import dataclasses
 import functools
 import inspect
@@ -1084,9 +1085,33 @@ class Kernel:
             )
 
         try:
-            prog = impl.get_runtime().prog
+            runtime = impl.get_runtime()
+            prog = runtime.prog
             if not compiled_kernel_data:
                 compile_result: CompileResult = prog.compile_kernel(prog.config(), prog.get_device_caps(), t_kernel)
+                if os.environ.get("TI_DUMP_KERNEL_CHECKSUMS", "0") == "1":
+                    debug_dump_path = pathlib.Path(impl.current_cfg().debug_dump_path)
+                    checksums_file_path = debug_dump_path / "checksums.csv"
+                    kernels_dump_dir = debug_dump_path / "kernels"
+                    file_exists = checksums_file_path.exists()
+                    if self.fast_checksum:
+                        with checksums_file_path.open("a") as f:
+                            dict_writer = csv.DictWriter(f, fieldnames=["kernel", "fe", "src"])
+                            if not file_exists:
+                                dict_writer.writeheader()
+                            dict_writer.writerow(
+                                {
+                                    "kernel": self.func.__name__,
+                                    "fe": compile_result.cache_key,
+                                    "src": self.fast_checksum,
+                                }
+                            )
+                            f.flush()
+                        kernels_dump_dir.mkdir(exist_ok=True)
+                        ch_ir_path = kernels_dump_dir / f"{compile_result.cache_key}.ll"
+                        if not ch_ir_path.exists() and self.kernel_cpp:
+                            with ch_ir_path.open("w") as f:
+                                f.write(self.kernel_cpp.to_string())
                 compiled_kernel_data = compile_result.compiled_kernel_data
                 if compile_result.cache_hit:
                     self.fe_ll_cache_observations.cache_hit = True
