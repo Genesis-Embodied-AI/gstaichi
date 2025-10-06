@@ -242,7 +242,7 @@ def test_stack():
     func()
 
 
-@test_utils.test()
+@test_utils.test(require=[ti.extension.adstack])
 def test_if_condition_depend_on_for_loop_index():
     scalar = lambda: ti.field(dtype=ti.f32)
     vec = lambda: ti.Vector.field(3, dtype=ti.f32)
@@ -268,6 +268,9 @@ def test_if_condition_depend_on_for_loop_index():
                     f = f_bend[0] * pos[coord]
                 F[coord] += f
             pos[coord] += 1.0 * t
+
+    assert ti.lang is not None
+    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     with ti.ad.Tape(loss=loss_n):
         simulation(5)
