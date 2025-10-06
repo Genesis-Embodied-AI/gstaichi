@@ -747,17 +747,13 @@ def get_host_arch_list():
 def is_extension_enabled(ext: Extension) -> bool:
     """
     Directly returns whether extension is enabled, without needing to
-    pass in current architecture
+    pass in current architecture. Also takes into account config, in the case
+    of adstack
     """
     arch = impl.current_cfg().arch
-    print(
-        "is_extension_supported(arch, ext)",
-        is_extension_supported(arch, ext),
-        ext,
-        "impl.current_cfg().ad_stack_experimental_enabled",
-        impl.current_cfg().ad_stack_experimental_enabled,
-    )
-    return is_extension_supported(arch, ext) and impl.current_cfg().ad_stack_experimental_enabled
+    if ext == extension.adstack:
+        return is_extension_supported(arch, ext) and impl.current_cfg().ad_stack_experimental_enabled
+    return is_extension_supported(arch, ext)
 
 
 __all__ = [
