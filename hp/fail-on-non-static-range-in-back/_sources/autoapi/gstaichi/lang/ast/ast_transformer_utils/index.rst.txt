@@ -270,6 +270,10 @@ Module Contents
 
 
 
+   .. py:attribute:: adstack_enabled
+      :type:  bool
+
+
    .. py:method:: variable_scope_guard()
 
 

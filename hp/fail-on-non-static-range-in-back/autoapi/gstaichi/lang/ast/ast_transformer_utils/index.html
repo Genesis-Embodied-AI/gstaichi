@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>gstaichi.lang.ast.ast_transformer_utils &#8212; GsTaichi 2.4.1 documentation</title>
+    <title>gstaichi.lang.ast.ast_transformer_utils &#8212; GsTaichi 2.5.1 documentation</title>
   
   
   
@@ -43,7 +43,7 @@
   <link rel="preload" as="script" href="../../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../../../_static/documentation_options.js?v=e9ebdb8f"></script>
+    <script src="../../../../../_static/documentation_options.js?v=983e91d6"></script>
     <script src="../../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -62,7 +62,7 @@
     <link rel="prev" title="gstaichi.lang.ast.ast_transformer" href="../ast_transformer/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.4.1" />
+  <meta name="docsearch:version" content="2.5.1" />
   </head>
   
   
@@ -124,7 +124,7 @@
   
   
   
-    <p class="title logo__title">GsTaichi 2.4.1 documentation</p>
+    <p class="title logo__title">GsTaichi 2.5.1 documentation</p>
   
 </a></div>
     
@@ -784,6 +784,11 @@
 <span class="sig-name descname"><span class="pre">loop_depth</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="reference internal" href="../../../../../_modules/gstaichi/lang/ast/ast_transformer_utils.html#ASTTransformerContext.loop_depth"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.loop_depth" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.adstack_enabled">
+<span class="sig-name descname"><span class="pre">adstack_enabled</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="reference internal" href="../../../../../_modules/gstaichi/lang/ast/ast_transformer_utils.html#ASTTransformerContext.adstack_enabled"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.adstack_enabled" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.variable_scope_guard">
 <span class="sig-name descname"><span class="pre">variable_scope_guard</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/gstaichi/lang/ast/ast_transformer_utils.html#ASTTransformerContext.variable_scope_guard"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.variable_scope_guard" title="Link to this definition">#</a></dt>
@@ -1009,6 +1014,7 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.only_parse_function_def"><code class="docutils literal notranslate"><span class="pre">ASTTransformerContext.only_parse_function_def</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.autodiff_mode"><code class="docutils literal notranslate"><span class="pre">ASTTransformerContext.autodiff_mode</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.loop_depth"><code class="docutils literal notranslate"><span class="pre">ASTTransformerContext.loop_depth</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.adstack_enabled"><code class="docutils literal notranslate"><span class="pre">ASTTransformerContext.adstack_enabled</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.variable_scope_guard"><code class="docutils literal notranslate"><span class="pre">ASTTransformerContext.variable_scope_guard()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.loop_scope_guard"><code class="docutils literal notranslate"><span class="pre">ASTTransformerContext.loop_scope_guard()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.non_static_if_guard"><code class="docutils literal notranslate"><span class="pre">ASTTransformerContext.non_static_if_guard()</span></code></a></li>
