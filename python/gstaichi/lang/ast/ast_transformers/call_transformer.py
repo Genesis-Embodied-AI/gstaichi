@@ -166,12 +166,13 @@ class CallTransformer:
         return args
 
     @staticmethod
-    def _expand_Call_dataclass_args(args: tuple[ast.stmt]) -> tuple[ast.stmt]:
+    def _expand_Call_dataclass_args(args: tuple[ast.stmt]) -> tuple[tuple[ast.stmt], tuple[ast.stmt]]:
         """
         We require that each node has a .ptr attribute added to it, that contains
         the associated Python object
         """
         args_new = []
+        added_args = []
         for arg in args:
             val = arg.ptr
             if dataclasses.is_dataclass(val):
@@ -192,20 +193,24 @@ class CallTransformer:
                     )
                     if dataclasses.is_dataclass(field.type):
                         arg_node.ptr = field.type
-                        args_new.extend(CallTransformer._expand_Call_dataclass_args((arg_node,)))
+                        _added_args, _args_new = CallTransformer._expand_Call_dataclass_args((arg_node,))
+                        args_new.extend(_args_new)
+                        added_args.extend(_added_args)
                     else:
                         args_new.append(arg_node)
+                        added_args.append(arg_node)
             else:
                 args_new.append(arg)
-        return tuple(args_new)
+        return tuple(added_args), tuple(args_new)
 
     @staticmethod
-    def _expand_Call_dataclass_kwargs(kwargs: list[ast.keyword]) -> list[ast.keyword]:
+    def _expand_Call_dataclass_kwargs(kwargs: list[ast.keyword]) -> tuple[list[ast.keyword], list[ast.keyword]]:
         """
         We require that each node has a .ptr attribute added to it, that contains
         the associated Python object
         """
         kwargs_new = []
+        added_kwargs = []
         for i, kwarg in enumerate(kwargs):
             val = kwarg.ptr[kwarg.arg]
             if dataclasses.is_dataclass(val):
@@ -233,12 +238,15 @@ class CallTransformer:
                     )
                     if dataclasses.is_dataclass(field.type):
                         kwarg_node.ptr = {child_name: field.type}
-                        kwargs_new.extend(CallTransformer._expand_Call_dataclass_kwargs([kwarg_node]))
+                        _added_kwargs, _kwargs_new = extend(CallTransformer._expand_Call_dataclass_kwargs([kwarg_node]))
+                        kwargs_new.extend(_kwargs_new)
+                        added_kwargs.extend(_added_kwargs)
                     else:
                         kwargs_new.append(kwarg_node)
+                        added_kwargs.append(kwarg_node)
             else:
                 kwargs_new.append(kwarg)
-        return kwargs_new
+        return added_kwargs, kwargs_new
 
     @staticmethod
     def build_Call(ctx: ASTTransformerContext, node: ast.Call, build_stmt, build_stmts) -> Any | None:
@@ -258,16 +266,16 @@ class CallTransformer:
             build_stmts(ctx, node.args)
             build_stmts(ctx, node.keywords)
 
-            node.args = CallTransformer._expand_Call_dataclass_args(node.args)
-            node.keywords = CallTransformer._expand_Call_dataclass_kwargs(node.keywords)
+            added_args, node.args = CallTransformer._expand_Call_dataclass_args(node.args)
+            added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(node.keywords)
 
             # create variables for the now-expanded dataclass members
-            for arg in node.args:
-                if not hasattr(arg, "ptr"):
-                    build_stmt(ctx, arg)
-            for arg in node.keywords:
-                if not hasattr(arg, "ptr"):
-                    build_stmt(ctx, arg)
+            for arg in added_args:
+                assert not hasattr(arg, "ptr")
+                build_stmt(ctx, arg)
+            for arg in added_keywords:
+                assert not hasattr(arg, "ptr")
+                build_stmt(ctx, arg)
 
         args = []
         for arg in node.args:
