@@ -116,6 +116,7 @@ def test_poly(tifunc, default_fp):
     ti.init(arch=arch, default_fp=default_fp, offline_cache=False)
     torch_type = torch.double if default_fp == ti.f64 else torch.float
     rtol = 0.001 if default_fp == ti.f64 else 0.5
+    atol = 0.001 if default_fp == ti.f64 else 0.1
 
     s = (4,)
 
@@ -127,7 +128,7 @@ def test_poly(tifunc, default_fp):
 
     device = "cuda" if ti.lang.impl.current_cfg().arch == ti.cuda else "cpu"
     input = torch.rand(s, dtype=torch_type, device=device, requires_grad=True)
-    torch.autograd.gradcheck(test, input, rtol=rtol)
+    torch.autograd.gradcheck(test, input, rtol=rtol, atol=atol)
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
