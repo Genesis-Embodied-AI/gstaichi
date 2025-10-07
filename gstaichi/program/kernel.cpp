@@ -6,6 +6,7 @@
 #include "gstaichi/common/task.h"
 #include "gstaichi/ir/statements.h"
 #include "gstaichi/program/program.h"
+#include "gstaichi/ir/transforms.h"
 
 #ifdef TI_WITH_LLVM
 #include "gstaichi/runtime/program_impls/llvm/llvm_program.h"
@@ -28,6 +29,12 @@ Kernel::Kernel(Program &program,
                AutodiffMode autodiff_mode) {
   // due to #6362, we cannot write [func, this] { return func(this); }
   this->init(program, [&] { return func(this); }, primal_name, autodiff_mode);
+}
+
+std::string Kernel::to_string() const {
+  std::string ret;
+  irpass::print(ir.get(), &ret);
+  return ret;
 }
 
 Kernel::Kernel(Program &program,
