@@ -193,7 +193,7 @@ def test_ad_sum(default_fp):
         assert a.grad[i] == b[i]
 
 
-@test_utils.test(arch=archs_support_ndarray_ad)
+@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
 @pytest.mark.parametrize("default_fp", [ti.f32, ti.f64])
 def test_ad_sum_local_atomic(default_fp) -> None:
     assert ti.lang is not None
