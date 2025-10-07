@@ -12,8 +12,6 @@ if has_pytorch():
     import torch
 
 archs_support_ndarray_ad = [ti.cpu, ti.cuda, ti.metal]
-# TODO: remove target_fp
-target_fp = ti.f64 if sys.platform != "darwin" else ti.f32
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
