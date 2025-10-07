@@ -1481,7 +1481,7 @@ def test_tape_torch_tensor_grad_none(default_fp):
         assert a.grad[i] == 1.0
 
 
-@test_utils.test(arch=archs_support_ndarray_ad)
+@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
 def test_grad_tensor_in_kernel():
     N = 10
 
@@ -1502,7 +1502,7 @@ def test_grad_tensor_in_kernel():
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad)
+@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
 def test_tensor_shape():
     N = 3
 
