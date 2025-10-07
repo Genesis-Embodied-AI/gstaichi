@@ -155,7 +155,7 @@ def test_ad_select(default_fp):
     torch.autograd.gradcheck(test, [x, y], eps=eps)
 
 
-@test_utils.test(arch=archs_support_ndarray_ad)
+@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
 @pytest.mark.parametrize("default_fp", [ti.f32, ti.f64])
 def test_ad_sum(default_fp):
     assert ti.lang is not None
@@ -1447,7 +1447,7 @@ def test_ad_tape_throw():
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
 @pytest.mark.parametrize("default_fp", [ti.f32, ti.f64])
-@test_utils.test(arch=archs_support_ndarray_ad)
+@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
 def test_tape_torch_tensor_grad_none(default_fp):
     assert ti.lang is not None
     arch = ti.lang.impl.current_cfg().arch
@@ -1524,7 +1524,7 @@ def test_tensor_shape():
         assert a.grad[i] == 1.0
 
 
-@test_utils.test(arch=archs_support_ndarray_ad)
+@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
 def test_ndarray_needs_grad_false():
     N = 3
 
@@ -1548,7 +1548,7 @@ def test_ndarray_needs_grad_false():
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad)
+@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
 def test_torch_needs_grad_false():
     N = 3
 
