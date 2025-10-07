@@ -20,22 +20,24 @@ def setup_llvm() -> None:
     """
     u = platform.uname()
 
-    release_url_template = "https://github.com/Genesis-Embodied-AI/gstaichi-sdk-builds/releases/download/llvm-15.0.7-202509261351/taichi-llvm-15.0.7-{platform}.zip"
+    llm_version = "15.0.7"
+    build_version = "202510071403"
+    release_url_template = "https://github.com/Genesis-Embodied-AI/gstaichi-sdk-builds/releases/download/llvm-{llm_version}-{build_version}/taichi-llvm-{llm_version}-{platform}.zip"
 
     if u.system == "Linux":
         if cmake_args.get_effective("TI_WITH_AMDGPU"):
-            out = get_cache_home() / "llvm15-amdgpu-005"
+            out = get_cache_home() / f"llvm-{llm_version}-amdgpu-{build_version}"
             url = "https://github.com/GaleSeLee/assets/releases/download/v0.0.5/taichi-llvm-15.0.0-linux.zip"
         else:
-            out = get_cache_home() / "llvm15.0.7-x86"
+            out = get_cache_home() / f"llvm-{llm_version}-x86-{build_version}"
             url = release_url_template.format(platform="linux-x86_64")
         download_dep(url, out, strip=1)
     elif (u.system, u.machine) == ("Darwin", "arm64"):
-        out = get_cache_home() / "llvm15-m1-nozstd"
+        out = get_cache_home() / f"llvm1-{llm_version}-{build_version}"
         url = release_url_template.format(platform="macos-arm64")
         download_dep(url, out, strip=1)
     elif (u.system, u.machine) == ("Windows", "AMD64"):
-        out = get_cache_home() / "llvm15"
+        out = get_cache_home() / f"llvm-{llm_version}-{build_version}"
         url = release_url_template.format(platform="windows-amd64")
         download_dep(url, out, strip=0)
     else:
