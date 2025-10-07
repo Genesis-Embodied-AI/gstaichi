@@ -1338,9 +1338,17 @@ def test_ad_set_loss_grad():
     assert x.grad[None] == 4
 
 
+
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
+@pytest.mark.parametrize("default_fp", [ti.f32, ti.f64])
 @test_utils.test(arch=archs_support_ndarray_ad)
-def test_ad_mixed_with_torch():
+def test_ad_mixed_with_torch(default_fp):
+    assert ti.lang is not None
+    arch = ti.lang.impl.current_cfg().arch
+    if sys.platform == "darwin" and arch in [ti.metal, ti.vulkan] and default_fp == ti.f64:
+        pytest.skip("fp64 not supported on mac gpu")
+    ti.init(arch=arch, default_fp=default_fp, offline_cache=False)
+
     @test_utils.torch_op(output_shapes=[(1,)])
     @ti.kernel
     def compute_sum(a: ti.types.ndarray(), p: ti.types.ndarray()):
