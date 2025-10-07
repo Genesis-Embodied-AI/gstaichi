@@ -1406,9 +1406,19 @@ def test_ad_tape_throw():
             compute_sum(b, n)
 
 
+
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
+@pytest.mark.parametrize("default_fp", [ti.f32, ti.f64])
 @test_utils.test(arch=archs_support_ndarray_ad)
-def test_tape_torch_tensor_grad_none():
+def test_tape_torch_tensor_grad_none(default_fp):
+    assert ti.lang is not None
+    arch = ti.lang.impl.current_cfg().arch
+    if sys.platform == "darwin" and arch in [ti.metal, ti.vulkan] and default_fp == ti.f64:
+        pytest.skip("fp64 not supported on mac gpu")
+    ti.init(arch=arch, default_fp=default_fp, offline_cache=False)
+    torch_type = torch.double if default_fp == ti.f64 else torch.float
+    # eps = 0.001 if default_fp == ti.f64 else 0.1
+
     N = 3
 
     @ti.kernel
@@ -1419,10 +1429,10 @@ def test_tape_torch_tensor_grad_none():
                 a += x[i] / 3
             y[0] += a
 
-    device = "cuda" if ti.lang.impl.current_cfg().arch == ti.cuda else "cpu"
+    device = "cuda" if arch == ti.cuda else "cpu"
 
-    a = torch.zeros((N,), device=device, requires_grad=True)
-    loss = torch.zeros((1,), device=device, requires_grad=True)
+    a = torch.zeros((N,), dtype=torch_type, device=device, requires_grad=True)
+    loss = torch.zeros((1,), dtype=torch_type, device=device, requires_grad=True)
 
     with ti.ad.Tape(loss=loss):
         test(a, loss)
