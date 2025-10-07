@@ -88,7 +88,16 @@ def probe_mirrors():
     SHOULD_USE_MIRROR["_probed"] = True
 
 
-def download_dep(url, outdir, *, strip=0, force=False, args=None, plain=False, elevate=False):
+def download_dep(
+    url: str,
+    outdir: Path,
+    *,
+    strip: int = 0,
+    force: bool = False,
+    args=None,
+    plain: bool = False,
+    elevate: bool = False,
+):
     """
     Download a dependency archive from `url` and expand it to `outdir`,
     optionally stripping `strip` components, from the filepath, during unzip.
@@ -150,9 +159,11 @@ def download_dep(url, outdir, *, strip=0, force=False, args=None, plain=False, e
     if name.endswith(".zip"):
         outdir.mkdir(parents=True, exist_ok=True)
         unzip(local_cached, outdir, strip=strip)
+        local_cached.unlink()
     elif any(name.endswith(ext) for ext in [".tar.gz", ".tgz", ".xz", ".tar.bz2"]):
         outdir.mkdir(parents=True, exist_ok=True)
         tar("-xf", local_cached, "-C", outdir, f"--strip-components={strip}")
+        local_cached.unlink()
     elif name.endswith(".sh"):
         bash(local_cached, *args)
     elif "." not in name and args is not None:
@@ -170,5 +181,6 @@ def download_dep(url, outdir, *, strip=0, force=False, args=None, plain=False, e
     elif plain:
         outdir.mkdir(parents=True, exist_ok=True)
         shutil.copy(local_cached, outdir / name)
+        local_cached.unlink()
     else:
         raise RuntimeError(f"Unknown file type: {name}")
