@@ -611,6 +611,7 @@ def test_mixed_inner_loops_tape_static(default_fp) -> None:
 
 @test_utils.test(arch=archs_support_ndarray_ad)
 def test_inner_loops_local_variable_fixed_stack_size_kernel_grad_static():
+    # fails currently...
     x = ti.ndarray(dtype=float, shape=(1), needs_grad=True)
     arr = ti.ndarray(dtype=float, shape=(2), needs_grad=True)
     loss = ti.ndarray(dtype=float, shape=(1), needs_grad=True)
@@ -635,8 +636,9 @@ def test_inner_loops_local_variable_fixed_stack_size_kernel_grad_static():
     assert x.grad[0] == 36.0
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack, ad_stack_size=0)
-def test_inner_loops_local_variable_adaptive_stack_size_tape():
+@test_utils.test(arch=archs_support_ndarray_ad)
+def test_inner_loops_local_variable_adaptive_stack_size_tape_static():
+    # fails too
     x = ti.ndarray(dtype=float, shape=(1), needs_grad=True)
     arr = ti.ndarray(dtype=float, shape=(2), needs_grad=True)
     loss = ti.ndarray(dtype=float, shape=(1), needs_grad=True)
@@ -644,10 +646,10 @@ def test_inner_loops_local_variable_adaptive_stack_size_tape():
     @ti.kernel
     def test_inner_loops_local_variable(x: ti.types.ndarray(), arr: ti.types.ndarray(), loss: ti.types.ndarray()):
         for i in arr:
-            for j in range(3):
+            for j in ti.static(range(3)):
                 s = 0.0
                 t = 0.0
-                for k in range(3):
+                for k in ti.static(range(3)):
                     s += ti.sin(x[0]) + 1.0
                     t += ti.sin(x[0])
                 loss[0] += s + t
@@ -660,7 +662,7 @@ def test_inner_loops_local_variable_adaptive_stack_size_tape():
     assert x.grad[0] == 36.0
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack, ad_stack_size=0)
+@test_utils.test(arch=archs_support_ndarray_ad)
 def test_more_inner_loops_local_variable_adaptive_stack_size_tape():
     x = ti.ndarray(dtype=float, shape=(1), needs_grad=True)
     arr = ti.ndarray(dtype=float, shape=(2), needs_grad=True)
@@ -669,12 +671,12 @@ def test_more_inner_loops_local_variable_adaptive_stack_size_tape():
     @ti.kernel
     def test_more_inner_loops_local_variable(x: ti.types.ndarray(), arr: ti.types.ndarray(), loss: ti.types.ndarray()):
         for i in arr:
-            for j in range(2):
+            for j in ti.static(range(2)):
                 s = 0.0
-                for k in range(3):
+                for k in ti.static(range(3)):
                     u = 0.0
                     s += ti.sin(x[0]) + 1.0
-                    for l in range(2):
+                    for l in ti.static(range(2)):
                         u += ti.sin(x[0])
                     loss[0] += u
                 loss[0] += s
@@ -687,8 +689,8 @@ def test_more_inner_loops_local_variable_adaptive_stack_size_tape():
     assert x.grad[0] == 36.0
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack, ad_stack_size=32)
-def test_more_inner_loops_local_variable_fixed_stack_size_tape():
+@test_utils.test(arch=archs_support_ndarray_ad)
+def test_more_inner_loops_local_variable_fixed_stack_size_tape_static():
     x = ti.ndarray(dtype=float, shape=(1), needs_grad=True)
     arr = ti.ndarray(dtype=float, shape=(2), needs_grad=True)
     loss = ti.ndarray(dtype=float, shape=(1), needs_grad=True)
@@ -696,12 +698,12 @@ def test_more_inner_loops_local_variable_fixed_stack_size_tape():
     @ti.kernel
     def test_more_inner_loops_local_variable(x: ti.types.ndarray(), arr: ti.types.ndarray(), loss: ti.types.ndarray()):
         for i in arr:
-            for j in range(2):
+            for j in ti.static(range(2)):
                 s = 0.0
-                for k in range(3):
+                for k in ti.static(range(3)):
                     u = 0.0
                     s += ti.sin(x[0]) + 1.0
-                    for l in range(2):
+                    for l in ti.static(range(2)):
                         u += ti.sin(x[0])
                     loss[0] += u
                 loss[0] += s
@@ -714,8 +716,8 @@ def test_more_inner_loops_local_variable_fixed_stack_size_tape():
     assert x.grad[0] == 36.0
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack, ad_stack_size=32)
-def test_stacked_inner_loops_local_variable_fixed_stack_size_kernel_grad():
+@test_utils.test(arch=archs_support_ndarray_ad)
+def test_stacked_inner_loops_local_variable_fixed_stack_size_kernel_grad_static():
     x = ti.ndarray(dtype=float, shape=(), needs_grad=True)
     arr = ti.ndarray(dtype=float, shape=(2), needs_grad=True)
     loss = ti.ndarray(dtype=float, shape=(), needs_grad=True)
@@ -726,14 +728,14 @@ def test_stacked_inner_loops_local_variable_fixed_stack_size_kernel_grad():
     ):
         for i in arr:
             loss[None] += ti.sin(x[None])
-            for j in range(3):
+            for j in ti.static(range(3)):
                 s = 0.0
-                for k in range(3):
+                for k in ti.static(range(3)):
                     s += ti.sin(x[None]) + 1.0
                 loss[None] += s
-            for j in range(3):
+            for j in ti.static(range(3)):
                 s = 0.0
-                for k in range(3):
+                for k in ti.static(range(3)):
                     s += ti.sin(x[None]) + 1.0
                 loss[None] += s
 
@@ -746,8 +748,8 @@ def test_stacked_inner_loops_local_variable_fixed_stack_size_kernel_grad():
     assert x.grad[None] == 38.0
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack, ad_stack_size=32)
-def test_stacked_mixed_ib_and_non_ib_inner_loops_local_variable_fixed_stack_size_kernel_grad():
+@test_utils.test(arch=archs_support_ndarray_ad)
+def test_stacked_mixed_ib_and_non_ib_inner_loops_local_variable_fixed_stack_size_kernel_grad_static():
     x = ti.ndarray(dtype=float, shape=(), needs_grad=True)
     arr = ti.ndarray(dtype=float, shape=(2), needs_grad=True)
     loss = ti.ndarray(dtype=float, shape=(), needs_grad=True)
@@ -758,16 +760,16 @@ def test_stacked_mixed_ib_and_non_ib_inner_loops_local_variable_fixed_stack_size
     ):
         for i in arr:
             loss[None] += ti.sin(x[None])
-            for j in range(3):
-                for k in range(3):
+            for j in ti.static(range(3)):
+                for k in ti.static(range(3)):
                     loss[None] += ti.sin(x[None]) + 1.0
-            for j in range(3):
+            for j in ti.static(range(3)):
                 s = 0.0
-                for k in range(3):
+                for k in ti.static(range(3)):
                     s += ti.sin(x[None]) + 1.0
                 loss[None] += s
-            for j in range(3):
-                for k in range(3):
+            for j in ti.static(range(3)):
+                for k in ti.static(range(3)):
                     loss[None] += ti.sin(x[None]) + 1.0
 
     loss.grad[None] = 1.0
@@ -779,8 +781,8 @@ def test_stacked_mixed_ib_and_non_ib_inner_loops_local_variable_fixed_stack_size
     assert x.grad[None] == 56.0
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack, ad_stack_size=0)
-def test_stacked_inner_loops_local_variable_adaptive_stack_size_kernel_grad():
+@test_utils.test(arch=archs_support_ndarray_ad)
+def test_stacked_inner_loops_local_variable_adaptive_stack_size_kernel_grad_static():
     x = ti.ndarray(dtype=float, shape=(), needs_grad=True)
     arr = ti.ndarray(dtype=float, shape=(2), needs_grad=True)
     loss = ti.ndarray(dtype=float, shape=(), needs_grad=True)
@@ -791,14 +793,14 @@ def test_stacked_inner_loops_local_variable_adaptive_stack_size_kernel_grad():
     ):
         for i in arr:
             loss[None] += ti.sin(x[None])
-            for j in range(3):
+            for j in ti.static(range(3)):
                 s = 0.0
-                for k in range(3):
+                for k in ti.static(range(3)):
                     s += ti.sin(x[None]) + 1.0
                 loss[None] += s
-            for j in range(3):
+            for j in ti.static(range(3)):
                 s = 0.0
-                for k in range(3):
+                for k in ti.static(range(3)):
                     s += ti.sin(x[None]) + 1.0
                 loss[None] += s
 
@@ -812,8 +814,8 @@ def test_stacked_inner_loops_local_variable_adaptive_stack_size_kernel_grad():
 
 
 @pytest.mark.flaky(reruns=5)
-@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack, ad_stack_size=0)
-def test_stacked_mixed_ib_and_non_ib_inner_loops_local_variable_adaptive_stack_size_kernel_grad():
+@test_utils.test(arch=archs_support_ndarray_ad)
+def test_stacked_mixed_ib_and_non_ib_inner_loops_local_variable_adaptive_stack_size_kernel_grad_static():
     x = ti.ndarray(dtype=float, shape=(), needs_grad=True)
     arr = ti.ndarray(dtype=float, shape=(2), needs_grad=True)
     loss = ti.ndarray(dtype=float, shape=(), needs_grad=True)
@@ -824,16 +826,16 @@ def test_stacked_mixed_ib_and_non_ib_inner_loops_local_variable_adaptive_stack_s
     ):
         for i in arr:
             loss[None] += ti.sin(x[None])
-            for j in range(3):
-                for k in range(3):
+            for j in ti.static(range(3)):
+                for k in ti.static(range(3)):
                     loss[None] += ti.sin(x[None]) + 1.0
-            for j in range(3):
+            for j in ti.static(range(3)):
                 s = 0.0
-                for k in range(3):
+                for k in ti.static(range(3)):
                     s += ti.sin(x[None]) + 1.0
                 loss[None] += s
-            for j in range(3):
-                for k in range(3):
+            for j in ti.static(range(3)):
+                for k in ti.static(range(3)):
                     loss[None] += ti.sin(x[None]) + 1.0
 
     loss.grad[None] = 1.0
@@ -845,8 +847,9 @@ def test_stacked_mixed_ib_and_non_ib_inner_loops_local_variable_adaptive_stack_s
     assert x.grad[None] == 56.0
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack, ad_stack_size=0)
-def test_large_for_loops_adaptive_stack_size():
+@test_utils.test(arch=archs_support_ndarray_ad)
+def test_large_for_loops_adaptive_stack_size_static():
+    # fails too
     x = ti.ndarray(dtype=float, shape=(), needs_grad=True)
     arr = ti.ndarray(dtype=float, shape=(2), needs_grad=True)
     loss = ti.ndarray(dtype=float, shape=(), needs_grad=True)
@@ -854,8 +857,8 @@ def test_large_for_loops_adaptive_stack_size():
     @ti.kernel
     def test_large_loop(x: ti.types.ndarray(), arr: ti.types.ndarray(), loss: ti.types.ndarray()):
         for i in range(5):
-            for j in range(2000):
-                for k in range(1000):
+            for j in ti.static(range(2000)):
+                for k in ti.static(range(1000)):
                     loss[None] += ti.sin(x[None]) + 1.0
 
     with ti.ad.Tape(loss=loss):
