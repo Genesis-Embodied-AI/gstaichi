@@ -30,13 +30,10 @@ def warn(msg: str) -> None:
 
 
 def error(msg: str) -> None:
-    if options and options.permissive:
-        warn(msg)
-    else:
-        R = escape_codes["bold_red"]
-        N = escape_codes["reset"]
-        print(f"{R}!! ERROR {msg}{N}", file=sys.stderr, flush=True)
-        sys.exit(1)
+    R = escape_codes["bold_red"]
+    N = escape_codes["reset"]
+    print(f"{R}!! ERROR {msg}{N}", file=sys.stderr, flush=True)
+    sys.exit(1)
 
 
 def banner(msg: str) -> Callable:

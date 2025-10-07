@@ -17,17 +17,12 @@ from .misc import banner
 from .ospkg import setup_os_pkgs
 from .python import get_desired_python_version, setup_python
 from .sccache import setup_sccache
-from .tinysh import Command, CommandFailed, git, nice
+from .tinysh import Command, CommandFailed, nice
 
 
 # -- code --
 @banner("Build GsTaichi Wheel")
 def build_wheel(python: Command, pip: Command) -> None:
-    """
-    Build the GsTaichi wheel
-    """
-
-    git.fetch("origin", "main", "--tags", "--force")
     extra = []
 
     cmake_args.writeback()
@@ -37,7 +32,6 @@ def build_wheel(python: Command, pip: Command) -> None:
         extra.extend(["-p", "macosx-11.0-arm64"])
 
     python("setup.py", "clean")
-    python("misc/make_changelog.py", "--ver", "origin/main", "--repo_dir", "./", "--save")
 
     with nice():
         python("setup.py", "bdist_wheel", *extra)
