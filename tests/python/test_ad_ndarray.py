@@ -12,13 +12,22 @@ if has_pytorch():
     import torch
 
 archs_support_ndarray_ad = [ti.cpu, ti.cuda, ti.metal]
+# TODO: remove target_fp
 target_fp = ti.f64 if sys.platform != "darwin" else ti.f32
-print("target_fp", target_fp, "sys.platform", sys.platform)
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.data64)
-def test_simple_demo():
+@pytest.mark.parametrize("default_fp", [ti.f32, ti.f64])
+@test_utils.test(arch=archs_support_ndarray_ad)
+def test_simple_demo(default_fp) -> None:
+    assert ti.lang is not None
+    arch = ti.lang.impl.current_cfg().arch
+    if sys.platform == "darwin" and arch in [ti.metal, ti.vulkan] and default_fp == ti.f64:
+        pytest.skip("fp64 not supported on mac gpu")
+    ti.init(arch=arch, default_fp=default_fp, offline_cache=False)
+    torch_type = torch.double if default_fp == ti.f64 else torch.float
+    eps = 0.001 if default_fp == ti.f64 else 0.1
+
     @test_utils.torch_op(output_shapes=[(1,)])
     @ti.kernel
     def test(x: ti.types.ndarray(), y: ti.types.ndarray()):
@@ -29,13 +38,22 @@ def test_simple_demo():
             y[0] += a
 
     device = "cuda" if ti.lang.impl.current_cfg().arch == ti.cuda else "cpu"
-    input = torch.rand(4, dtype=torch.double, device=device, requires_grad=True)
-    torch.autograd.gradcheck(test, input)
+    input = torch.rand(4, dtype=torch_type, device=device, requires_grad=True)
+    torch.autograd.gradcheck(test, input, eps=eps)
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.data64)
-def test_ad_reduce():
+@pytest.mark.parametrize("default_fp", [ti.f32, ti.f64])
+@test_utils.test(arch=archs_support_ndarray_ad)
+def test_ad_reduce(default_fp) -> None:
+    assert ti.lang is not None
+    arch = ti.lang.impl.current_cfg().arch
+    if sys.platform == "darwin" and arch in [ti.metal, ti.vulkan] and default_fp == ti.f64:
+        pytest.skip("fp64 not supported on mac gpu")
+    ti.init(arch=arch, default_fp=default_fp, offline_cache=False)
+    torch_type = torch.double if default_fp == ti.f64 else torch.float
+    eps = 0.001 if default_fp == ti.f64 else 0.1
+
     @test_utils.torch_op(output_shapes=[(1,)])
     @ti.kernel
     def test(x: ti.types.ndarray(), y: ti.types.ndarray()):
@@ -43,8 +61,8 @@ def test_ad_reduce():
             y[0] += x[i] ** 2
 
     device = "cuda" if ti.lang.impl.current_cfg().arch == ti.cuda else "cpu"
-    input = torch.rand(4, dtype=torch.double, device=device, requires_grad=True)
-    torch.autograd.gradcheck(test, input)
+    input = torch.rand(4, dtype=torch_type, device=device, requires_grad=True)
+    torch.autograd.gradcheck(test, input, eps=eps)
 
 
 @pytest.mark.parametrize(
@@ -88,8 +106,17 @@ def test_ad_reduce():
     ],
 )
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.data64)
-def test_poly(tifunc):
+@pytest.mark.parametrize("default_fp", [ti.f32, ti.f64])
+@test_utils.test(arch=archs_support_ndarray_ad)
+def test_poly(tifunc, default_fp):
+    assert ti.lang is not None
+    arch = ti.lang.impl.current_cfg().arch
+    if sys.platform == "darwin" and arch in [ti.metal, ti.vulkan] and default_fp == ti.f64:
+        pytest.skip("fp64 not supported on mac gpu")
+    ti.init(arch=arch, default_fp=default_fp, offline_cache=False)
+    torch_type = torch.double if default_fp == ti.f64 else torch.float
+    eps = 0.001 if default_fp == ti.f64 else 0.1
+
     s = (4,)
 
     @test_utils.torch_op(output_shapes=[s])
@@ -99,13 +126,22 @@ def test_poly(tifunc):
             y[i] = tifunc(x[i])
 
     device = "cuda" if ti.lang.impl.current_cfg().arch == ti.cuda else "cpu"
-    input = torch.rand(s, dtype=torch.double, device=device, requires_grad=True)
-    torch.autograd.gradcheck(test, input)
+    input = torch.rand(s, dtype=torch_type, device=device, requires_grad=True)
+    torch.autograd.gradcheck(test, input, eps=eps)
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.data64)
-def test_ad_select():
+@pytest.mark.parametrize("default_fp", [ti.f32, ti.f64])
+@test_utils.test(arch=archs_support_ndarray_ad)
+def test_ad_select(default_fp):
+    assert ti.lang is not None
+    arch = ti.lang.impl.current_cfg().arch
+    if sys.platform == "darwin" and arch in [ti.metal, ti.vulkan] and default_fp == ti.f64:
+        pytest.skip("fp64 not supported on mac gpu")
+    ti.init(arch=arch, default_fp=default_fp, offline_cache=False)
+    torch_type = torch.double if default_fp == ti.f64 else torch.float
+    eps = 0.001 if default_fp == ti.f64 else 0.1
+
     s = (4,)
 
     @test_utils.torch_op(output_shapes=[s])
@@ -115,13 +151,20 @@ def test_ad_select():
             z[i] = ti.select(i % 2, x[i], y[i])
 
     device = "cuda" if ti.lang.impl.current_cfg().arch == ti.cuda else "cpu"
-    x = torch.rand(s, dtype=torch.double, device=device, requires_grad=True)
-    y = torch.rand(s, dtype=torch.double, device=device, requires_grad=True)
-    torch.autograd.gradcheck(test, [x, y])
+    x = torch.rand(s, dtype=torch_type, device=device, requires_grad=True)
+    y = torch.rand(s, dtype=torch_type, device=device, requires_grad=True)
+    torch.autograd.gradcheck(test, [x, y], eps=eps)
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.data64)
-def test_ad_sum():
+@test_utils.test(arch=archs_support_ndarray_ad)
+@pytest.mark.parametrize("default_fp", [ti.f32, ti.f64])
+def test_ad_sum(default_fp):
+    assert ti.lang is not None
+    arch = ti.lang.impl.current_cfg().arch
+    if sys.platform == "darwin" and arch in [ti.metal, ti.vulkan] and default_fp == ti.f64:
+        pytest.skip("fp64 not supported on mac gpu")
+    ti.init(arch=arch, default_fp=default_fp, offline_cache=False)
+
     N = 10
 
     @ti.kernel
@@ -151,8 +194,15 @@ def test_ad_sum():
         assert a.grad[i] == b[i]
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.data64)
-def test_ad_sum_local_atomic():
+@test_utils.test(arch=archs_support_ndarray_ad)
+@pytest.mark.parametrize("default_fp", [ti.f32, ti.f64])
+def test_ad_sum_local_atomic(default_fp) -> None:
+    assert ti.lang is not None
+    arch = ti.lang.impl.current_cfg().arch
+    if sys.platform == "darwin" and arch in [ti.metal, ti.vulkan] and default_fp == ti.f64:
+        pytest.skip("fp64 not supported on mac gpu")
+    ti.init(arch=arch, default_fp=default_fp, offline_cache=False)
+
     N = 10
     a = ti.ndarray(ti.f32, shape=N, needs_grad=True)
     b = ti.ndarray(ti.i32, shape=N)
@@ -182,8 +232,15 @@ def test_ad_sum_local_atomic():
         assert a.grad[i] == b[i]
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.adstack)
-def test_ad_power():
+@pytest.mark.parametrize("default_fp", [ti.f32, ti.f64])
+@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
+def test_ad_power(default_fp):
+    assert ti.lang is not None
+    arch = ti.lang.impl.current_cfg().arch
+    if sys.platform == "darwin" and arch in [ti.metal, ti.vulkan] and default_fp == ti.f64:
+        pytest.skip("fp64 not supported on mac gpu")
+    ti.init(arch=arch, default_fp=default_fp, offline_cache=False)
+
     N = 10
     a = ti.ndarray(ti.f32, shape=N, needs_grad=True)
     b = ti.ndarray(ti.i32, shape=N)
@@ -213,8 +270,15 @@ def test_ad_power():
         assert a.grad[i] == b[i] * 3 ** (b[i] - 1)
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.adstack)
-def test_ad_fibonacci():
+@pytest.mark.parametrize("default_fp", [ti.f32, ti.f64])
+@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
+def test_ad_fibonacci(default_fp):
+    assert ti.lang is not None
+    arch = ti.lang.impl.current_cfg().arch
+    if sys.platform == "darwin" and arch in [ti.metal, ti.vulkan] and default_fp == ti.f64:
+        pytest.skip("fp64 not supported on mac gpu")
+    ti.init(arch=arch, default_fp=default_fp, offline_cache=False)
+
     N = 15
     a = ti.ndarray(ti.f32, shape=N, needs_grad=True)
     b = ti.ndarray(ti.f32, shape=N, needs_grad=True)
@@ -251,8 +315,15 @@ def test_ad_fibonacci():
         assert b.grad[i] == f[i]
 
 
+@pytest.mark.parametrize("default_fp", [ti.f32, ti.f64])
 @test_utils.test(arch=archs_support_ndarray_ad, default_fp=target_fp, require=ti.extension.adstack)
-def test_ad_fibonacci_index():
+def test_ad_fibonacci_index(default_fp):
+    assert ti.lang is not None
+    arch = ti.lang.impl.current_cfg().arch
+    if sys.platform == "darwin" and arch in [ti.metal, ti.vulkan] and default_fp == ti.f64:
+        pytest.skip("fp64 not supported on mac gpu")
+    ti.init(arch=arch, default_fp=default_fp, offline_cache=False)
+
     N = 5
     M = 10
     a = ti.ndarray(ti.f32, shape=M, needs_grad=True)
@@ -1086,7 +1157,7 @@ def test_ad_if_mutable():
     assert x.grad[1] == 1
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, require=[ti.extension.adstack, ti.extension.data64])
+@test_utils.test(arch=archs_support_ndarray_ad, require=[ti.extension.adstack])
 def test_ad_if_parallel():
     x = ti.ndarray(ti.f32, shape=2, needs_grad=True)
     y = ti.ndarray(ti.f32, shape=2, needs_grad=True)
@@ -1267,7 +1338,7 @@ def test_ad_set_loss_grad():
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.data64)
+@test_utils.test(arch=archs_support_ndarray_ad)
 def test_ad_mixed_with_torch():
     @test_utils.torch_op(output_shapes=[(1,)])
     @ti.kernel
@@ -1327,7 +1398,7 @@ def test_ad_tape_throw():
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.data64)
+@test_utils.test(arch=archs_support_ndarray_ad)
 def test_tape_torch_tensor_grad_none():
     N = 3
 
@@ -1351,7 +1422,7 @@ def test_tape_torch_tensor_grad_none():
         assert a.grad[i] == 1.0
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.data64)
+@test_utils.test(arch=archs_support_ndarray_ad)
 def test_grad_tensor_in_kernel():
     N = 10
 
@@ -1372,7 +1443,7 @@ def test_grad_tensor_in_kernel():
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.data64)
+@test_utils.test(arch=archs_support_ndarray_ad)
 def test_tensor_shape():
     N = 3
 
