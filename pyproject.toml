@@ -45,13 +45,18 @@ docs = [
     "sphinx-design",
     "pydata-sphinx-theme",
     "sphinx-autoapi",
+    "astroid<4.0.0",  # upgrade to 4.0.0 on oct 5 2025 broke the build
 ]
 dev = [
     "cmake<4.0.0",
     "colorama",
     "coverage",
     "Pillow",
-    "pybind11",
+    # pybind11 should be less than 3.0.0 for now
+    # pybind11 3.0.0 caused builds to start failing.
+    # whilst we could probably get 3.0.0 working too, I feel that x.0.0 releases, in opensource (and closed source
+    # too often) might not always be very stable, so we might want to wait 3-6 months before trying it?)
+    "pybind11<3.0.0",
     "pybind11-stubgen",
     "pydantic",
     "GitPython",
@@ -103,7 +108,7 @@ requires = [
     "setuptools>=77.0.0",
     "wheel",
     "numpy>=2.0.0",
-    "pybind11",
+    "pybind11<3.0.0",
     "pybind11-stubgen",
     "cmake>=3.11",
     "scikit-build",
