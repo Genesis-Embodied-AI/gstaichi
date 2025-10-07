@@ -27,24 +27,21 @@ def setup_llvm() -> None:
         build_version=build_version,
         platform="{platform}",
     )
+    out = get_cache_home() / f"llvm-{llvm_version}-{build_version}"
 
+    strip = 1
     if u.system == "Linux":
-        if cmake_args.get_effective("TI_WITH_AMDGPU"):
-            raise Exception("AMD not currently supported")
-        else:
-            out = get_cache_home() / f"llvm-{llvm_version}-x86-{build_version}"
-            url = release_url_template.format(platform="linux-x86_64")
-        download_dep(url, out, strip=1)
+        target_platform = "linux-x86_64"
     elif (u.system, u.machine) == ("Darwin", "arm64"):
-        out = get_cache_home() / f"llvm-{llvm_version}-{build_version}"
-        url = release_url_template.format(platform="macos-arm64")
-        download_dep(url, out, strip=1)
+        target_platform = "macos-arm64"
     elif (u.system, u.machine) == ("Windows", "AMD64"):
-        out = get_cache_home() / f"llvm-{llvm_version}-{build_version}"
-        url = release_url_template.format(platform="windows-amd64")
-        download_dep(url, out, strip=0)
+        target_platform = "windows-amd64"
+        strip = 0
     else:
         raise RuntimeError(f"Unsupported platform: {u.system} {u.machine}")
+
+    url = release_url_template.format(platform=target_platform)
+    download_dep(url, out, strip=strip)
 
     # We should use LLVM toolchains shipped with OS.
     # path_prepend('PATH', out / 'bin')

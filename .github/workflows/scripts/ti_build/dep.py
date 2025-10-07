@@ -91,7 +91,7 @@ def probe_mirrors():
 def download_dep(url, outdir, *, strip=0, force=False, args=None, plain=False, elevate=False):
     """
     Download a dependency archive from `url` and expand it to `outdir`,
-    optionally stripping `strip` components.
+    optionally stripping `strip` components, from the filepath, during unzip.
     """
     outdir = Path(outdir)
     if outdir.exists() and len(list(outdir.glob("*"))) > 0 and not force:
