@@ -293,7 +293,6 @@ class ASTTransformer(Builder):
         reason = []
         for elt in node.elts:
             if elt.violates_pure:
-                print("list member violates pure", elt)
                 node.violates_pure = True
                 reason.append("list member violates pure " + str(elt))
         node.ptr = [elt.ptr for elt in node.elts]
@@ -688,9 +687,6 @@ class ASTTransformer(Builder):
                         # ignore this built-in module
                         violation = False
                     if violation:
-                        print("node.ptr", node.ptr, type(node.ptr), isinstance(node.ptr, enum.Enum))
-                        print("node.value.ptr", node.value.ptr, type(node.value.ptr), "node.attr", node.attr)
-                        # ctx.pure_violations.add(PureViolation(var_name=node.attr))
                         message = f"WARNING: Accessing global var {node.attr} from outside function scope within pure kernel {node.value.violates_pure_reason}"
                         if node.attr.upper() == node.attr:
                             print(message)

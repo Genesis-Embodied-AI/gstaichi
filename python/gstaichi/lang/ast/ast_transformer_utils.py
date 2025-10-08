@@ -31,7 +31,6 @@ class Builder:
         method_name = "build_" + node.__class__.__name__
         method = getattr(self, method_name, None)
         try:
-            # if True:
             if method is None:
                 error_msg = f'Unsupported node "{node.__class__.__name__}"'
                 raise GsTaichiSyntaxError(error_msg)
@@ -43,7 +42,6 @@ class Builder:
                     node.violates_pure = False
                 return res
         except Exception as e:
-            # traceback.print_exc()
             stack_trace = traceback.format_exc()
             if impl.get_runtime().print_full_traceback:
                 raise e
@@ -54,7 +52,13 @@ class Builder:
             if not isinstance(e, GsTaichiCompilationError):
                 msg = ctx.get_pos_info(node) + traceback.format_exc()
                 raise GsTaichiCompilationError(msg) from None
-            msg = stack_trace + "\n\n" + ctx.get_pos_info(node) + str(e)
+            msg = (
+                "gstaichi stack trace:\n====\n"
+                + stack_trace
+                + "\n====\n\nYour code:\n"
+                + ctx.get_pos_info(node)
+                + str(e)
+            )
             raise type(e)(msg) from None
 
 
@@ -287,15 +291,7 @@ class ASTTransformerContext:
         for s in reversed(self.local_scopes):
             if name in s:
                 val = s[name]
-                violates_pure = False
-                reason = None
-                print("found in local scopes", name, "val is", val, type(val))
-                # if self.is_pure and is_data_oriented(val):
-                #     # a data oriented is as good as global, from pov of pure constraints
-                #     reason = f"{name} is from data_oriented therefore violates global"
-                #     print(reason)
-                #     violates_pure = True
-                return violates_pure, val, reason
+                return False, val, None
 
         reason = None
         violates_pure, found_name = False, False
@@ -305,7 +301,6 @@ class ASTTransformerContext:
         elif name in self.global_vars:
             var = self.global_vars[name]
             reason = f"{name} is in global vars, therefore violates pure"
-            print(reason)
             violates_pure = True
             found_name = True
 
