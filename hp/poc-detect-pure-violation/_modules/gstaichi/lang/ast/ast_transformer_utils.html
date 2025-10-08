@@ -314,6 +314,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">ast</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">builtins</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">traceback</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">textwrap</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextWrapper</span>
@@ -329,7 +330,6 @@
     <span class="n">GsTaichiSyntaxError</span><span class="p">,</span>
     <span class="n">handle_exception_from_cpp</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_data_oriented</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.kernel_impl</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -345,6 +345,7 @@
         <span class="n">method_name</span> <span class="o">=</span> <span class="s2">&quot;build_&quot;</span> <span class="o">+</span> <span class="n">node</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
         <span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method_name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># if True:</span>
             <span class="k">if</span> <span class="n">method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">error_msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Unsupported node &quot;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1">&quot;&#39;</span>
                 <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="n">error_msg</span><span class="p">)</span>
@@ -356,6 +357,8 @@
                     <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">False</span>
                 <span class="k">return</span> <span class="n">res</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># traceback.print_exc()</span>
+            <span class="n">stack_trace</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">print_full_traceback</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">e</span>
             <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">raised</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">stmt</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">expr</span><span class="p">)):</span>
@@ -365,7 +368,7 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">GsTaichiCompilationError</span><span class="p">):</span>
                 <span class="n">msg</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">get_pos_info</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="o">+</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
                 <span class="k">raise</span> <span class="n">GsTaichiCompilationError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">get_pos_info</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">stack_trace</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">ctx</span><span class="o">.</span><span class="n">get_pos_info</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
             <span class="k">raise</span> <span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span></div>
 
 
@@ -560,6 +563,17 @@
 
 
 
+<span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="viewcode-block" id="PureViolation">
+<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.PureViolation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PureViolation</span><span class="p">:</span>
+<div class="viewcode-block" id="PureViolation.var_name">
+<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.PureViolation.var_name">[docs]</a>
+    <span class="n">var_name</span><span class="p">:</span> <span class="nb">str</span></div>
+</div>
+
+
+
 <div class="viewcode-block" id="ASTTransformerContext">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ASTTransformerContext</span><span class="p">:</span>
@@ -693,6 +707,10 @@
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.only_parse_function_def">[docs]</a>
         <span class="bp">self</span><span class="o">.</span><span class="n">only_parse_function_def</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
 
+<div class="viewcode-block" id="ASTTransformerContext.pure_violations">
+<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.pure_violations">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pure_violations</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">PureViolation</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span></div>
+
 
     <span class="c1"># e.g.: FunctionDef, Module, Global</span>
 <div class="viewcode-block" id="ASTTransformerContext.variable_scope_guard">
@@ -806,22 +824,29 @@
 
 <div class="viewcode-block" id="ASTTransformerContext.get_var_by_name">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.get_var_by_name">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_var_by_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_var_by_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
         <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_scopes</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
                 <span class="n">val</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
                 <span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">False</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_pure</span> <span class="ow">and</span> <span class="n">is_data_oriented</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
-                    <span class="c1"># a data oriented is as good as global, from pov of pure constraints</span>
-                    <span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">True</span>
-                <span class="k">return</span> <span class="n">violates_pure</span><span class="p">,</span> <span class="n">val</span>
+                <span class="n">reason</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;found in local scopes&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s2">&quot;val is&quot;</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">))</span>
+                <span class="c1"># if self.is_pure and is_data_oriented(val):</span>
+                <span class="c1">#     # a data oriented is as good as global, from pov of pure constraints</span>
+                <span class="c1">#     reason = f&quot;{name} is from data_oriented therefore violates global&quot;</span>
+                <span class="c1">#     print(reason)</span>
+                <span class="c1">#     violates_pure = True</span>
+                <span class="k">return</span> <span class="n">violates_pure</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">reason</span>
 
+        <span class="n">reason</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">violates_pure</span><span class="p">,</span> <span class="n">found_name</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">template_vars</span><span class="p">:</span>
             <span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">template_vars</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
             <span class="n">found_name</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">elif</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_vars</span><span class="p">:</span>
             <span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_vars</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="n">reason</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is in global vars, therefore violates pure&quot;</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">reason</span><span class="p">)</span>
             <span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="n">found_name</span> <span class="o">=</span> <span class="kc">True</span>
 
@@ -832,11 +857,11 @@
             <span class="p">)</span>
 
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">Matrix</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">violates_pure</span><span class="p">,</span> <span class="n">make_matrix</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">to_list</span><span class="p">())</span>
-            <span class="k">return</span> <span class="n">violates_pure</span><span class="p">,</span> <span class="n">var</span>
+                <span class="k">return</span> <span class="n">violates_pure</span><span class="p">,</span> <span class="n">make_matrix</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">to_list</span><span class="p">()),</span> <span class="n">reason</span>
+            <span class="k">return</span> <span class="n">violates_pure</span><span class="p">,</span> <span class="n">var</span><span class="p">,</span> <span class="n">reason</span>
 
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">builtins</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">builtins</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span> <span class="kc">None</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">GsTaichiNameError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Name &quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&quot; is not defined&#39;</span><span class="p">)</span></div>
 

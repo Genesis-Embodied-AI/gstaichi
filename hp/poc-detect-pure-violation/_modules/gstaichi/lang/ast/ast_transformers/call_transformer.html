@@ -595,13 +595,20 @@
 
         <span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="c1"># if any args are global, then ptr source is global</span>
+        <span class="n">reason</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">violates_pure</span><span class="p">:</span>
+                <span class="c1"># reason = &quot;calling arg violates pure for &quot; + ast.dump(arg)</span>
+                <span class="n">reason</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">violates_pure_reason</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;calling arg violates pure for&quot;</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">arg</span><span class="p">))</span>
                 <span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">keywords</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">kw</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">violates_pure</span><span class="p">:</span>
                 <span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">reason</span> <span class="o">=</span> <span class="n">kw</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">violates_pure_reason</span>
+                <span class="c1"># reason = &quot;kw.value violates pure for &quot; + ast.dump(kw)</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">violates_pure_reason</span> <span class="o">=</span> <span class="n">reason</span>
         <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="o">=</span> <span class="n">violates_pure</span>
 
         <span class="n">args</span> <span class="o">=</span> <span class="p">[]</span>
