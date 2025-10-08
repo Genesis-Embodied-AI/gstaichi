@@ -55,8 +55,12 @@ def stringify_obj_type(path: tuple[str, ...], obj: object, arg_meta: ArgMetadata
 
     Note that fields are not included in fast cache.
 
-    arg_meta should only be non-None for the top level arguments. e.g. counter-examples:
-    children of data_oriented, and children of dataclasses should have arg_meta set to None.
+    arg_meta should only be non-None for the top level arguments and for data oriented objects. It is
+    used currently to determine whether a value is added to the cache key, as well as the name. eg
+    - at the top level, primitive types have their values added to the cache key if their annotation is ti.Template,
+      since they are baked into the kernel
+    - in data oriented objects, the values of all primitive types are added to the cache key, since they are baked
+      into the kernel, and require a kernel recompilation, when they change
     """
     arg_type = type(obj)
     if isinstance(obj, ScalarNdarray):
@@ -84,7 +88,7 @@ def stringify_obj_type(path: tuple[str, ...], obj: object, arg_meta: ArgMetadata
     if is_data_oriented(obj):
         child_repr_l = ["da"]
         for k, v in obj.__dict__.items():
-            _child_repr = stringify_obj_type((*path, k), v, None)
+            _child_repr = stringify_obj_type((*path, k), v, ArgMetadata(Template, ""))
             if _child_repr is None:
                 print("not representable child", k, type(v), "path", path)
                 return None
