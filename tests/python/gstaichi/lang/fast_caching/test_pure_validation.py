@@ -1,5 +1,4 @@
 import enum
-import math
 
 import pytest
 
@@ -144,7 +143,7 @@ def test_pure_validation_builtin_values():
 
     @ti.kernel(pure=True)
     def k1() -> ti.i32:
-        return math.inf
+        return ti.math.inf
 
     v = k1()
     print("v", v)
