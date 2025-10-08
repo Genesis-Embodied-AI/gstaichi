@@ -1,4 +1,6 @@
 import enum
+import math
+import numpy as np
 
 import pytest
 
@@ -170,7 +172,7 @@ def test_pure_validation_builtin_values_inf():
 
 
 @test_utils.test()
-def test_pure_validation_builtin_values_pi():
+def test_pure_validation_builtin_values_ti_pi():
     class MyEnum(enum.IntEnum):
         foo = 1
         bar = 2
@@ -178,6 +180,34 @@ def test_pure_validation_builtin_values_pi():
     @ti.kernel(pure=True)
     def k1() -> ti.i32:
         return ti.math.pi
+
+    v = k1()
+    print("v", v)
+
+
+@test_utils.test()
+def test_pure_validation_builtin_values_np_pi():
+    class MyEnum(enum.IntEnum):
+        foo = 1
+        bar = 2
+
+    @ti.kernel(pure=True)
+    def k1() -> ti.i32:
+        return np.pi
+
+    v = k1()
+    print("v", v)
+
+
+@test_utils.test()
+def test_pure_validation_builtin_values_math_pi():
+    class MyEnum(enum.IntEnum):
+        foo = 1
+        bar = 2
+
+    @ti.kernel(pure=True)
+    def k1() -> ti.i32:
+        return math.pi
 
     v = k1()
     print("v", v)

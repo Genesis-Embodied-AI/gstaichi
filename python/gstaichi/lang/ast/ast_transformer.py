@@ -683,7 +683,7 @@ class ASTTransformer(Builder):
                     violation = True
                     if violation and isinstance(node.ptr, enum.Enum):
                         violation = False
-                    if violation and node.value.ptr in [ti_math, math]:
+                    if violation and node.value.ptr in [ti_math, math, np]:
                         # ignore this built-in module
                         violation = False
                     if violation:
