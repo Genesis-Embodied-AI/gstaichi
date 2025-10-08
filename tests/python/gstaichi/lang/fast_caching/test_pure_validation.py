@@ -105,7 +105,9 @@ def test_pure_validation_field_child():
 
 
 @test_utils.test()
-def test_pure_validation_data_oriented():
+def test_pure_validation_data_oriented_not_param():
+    # When the data oriented arrives into the kernel without being passed in as a parameter,
+    # to the kernel, that's a pure violation
     @ti.data_oriented
     class MyDataOriented:
         def __init__(self) -> None:
@@ -119,6 +121,24 @@ def test_pure_validation_data_oriented():
     my_do = MyDataOriented()
     with pytest.raises(ti.GsTaichiCompilationError):
         my_do.k1()
+
+
+@test_utils.test()
+def test_pure_validation_data_oriented_as_param():
+    # When the data oriented arrives into the kernel as a parameter,
+    # to the kernel, that's ok
+    @ti.data_oriented
+    class MyDataOriented:
+        def __init__(self) -> None:
+            self.b = ti.field(ti.i32, (10,))
+
+    @ti.pure
+    @ti.kernel
+    def k1(my_data_oriented: ti.template()) -> None:
+        my_data_oriented.b[0] = 5
+
+    my_do = MyDataOriented()
+    k1(my_do)
 
 
 @test_utils.test()
@@ -136,7 +156,7 @@ def test_pure_validation_enum():
 
 
 @test_utils.test()
-def test_pure_validation_builtin_values():
+def test_pure_validation_builtin_values_inf():
     class MyEnum(enum.IntEnum):
         foo = 1
         bar = 2
@@ -144,6 +164,20 @@ def test_pure_validation_builtin_values():
     @ti.kernel(pure=True)
     def k1() -> ti.i32:
         return ti.math.inf
+
+    v = k1()
+    print("v", v)
+
+
+@test_utils.test()
+def test_pure_validation_builtin_values_pi():
+    class MyEnum(enum.IntEnum):
+        foo = 1
+        bar = 2
+
+    @ti.kernel(pure=True)
+    def k1() -> ti.i32:
+        return ti.math.pi
 
     v = k1()
     print("v", v)

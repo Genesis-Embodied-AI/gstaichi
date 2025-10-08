@@ -279,13 +279,20 @@ class CallTransformer:
 
         violates_pure = False
         # if any args are global, then ptr source is global
+        reason = None
         for arg in node.args:
             if arg.violates_pure:
+                # reason = "calling arg violates pure for " + ast.dump(arg)
+                reason = arg.violates_pure_reason
+                print("calling arg violates pure for", ast.dump(arg))
                 violates_pure = True
 
         for kw in node.keywords:
             if kw.value.violates_pure:
                 violates_pure = True
+                reason = kw.value.violates_pure_reason
+                # reason = "kw.value violates pure for " + ast.dump(kw)
+        node.violates_pure_reason = reason
         node.violates_pure = violates_pure
 
         args = []

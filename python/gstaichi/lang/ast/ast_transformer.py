@@ -5,6 +5,7 @@ import collections.abc
 import dataclasses
 import enum
 import itertools
+import math
 import warnings
 from ast import unparse
 from typing import Any, Sequence, Type
@@ -72,14 +73,19 @@ def boundary_type_cast_warning(expression: Expr) -> None:
 class ASTTransformer(Builder):
     @staticmethod
     def build_Name(ctx: ASTTransformerContext, node: ast.Name):
-        violates_pure, node.ptr = ctx.get_var_by_name(node.id)
+        violates_pure, node.ptr, violates_pure_reason = ctx.get_var_by_name(node.id)
         if isinstance(node, (ast.stmt, ast.expr)) and isinstance(node.ptr, Expr):
             node.ptr.dbg_info = _ti_core.DebugInfo(ctx.get_pos_info(node))
             node.ptr.ptr.set_dbg_info(node.ptr.dbg_info)
         node.violates_pure = violates_pure
+        node.violates_pure_reason = violates_pure_reason
         if ctx.is_pure and violates_pure and not ctx.static_scope_status.is_in_static_scope:
             if isinstance(node.ptr, (float, int, Field)):
-                raise exception.GsTaichiCompilationError("Accessing global variable", node.id, type(node.ptr))
+                message = f"WARNING: Accessing global variable {node.id} {type(node.ptr)} {violates_pure_reason}"
+                if node.id.upper() == node.id:
+                    print(message)
+                else:
+                    raise exception.GsTaichiCompilationError(message)
         return node.ptr
 
     @staticmethod
@@ -282,10 +288,14 @@ class ASTTransformer(Builder):
     def build_List(ctx: ASTTransformerContext, node: ast.List):
         node.violates_pure = False
         build_stmts(ctx, node.elts)
+        reason = []
         for elt in node.elts:
             if elt.violates_pure:
+                print("list member violates pure", elt)
                 node.violates_pure = True
+                reason.append("list member violates pure " + str(elt))
         node.ptr = [elt.ptr for elt in node.elts]
+        node.violates_pure_reason = "\n".join(reason) if len(reason) > 0 else None
         return node.ptr
 
     @staticmethod
@@ -665,20 +675,25 @@ class ASTTransformer(Builder):
         else:
             node.ptr = getattr(node.value.ptr, node.attr)
             node.violates_pure = node.value.violates_pure
+            if node.violates_pure:
+                node.violates_pure_reason = node.value.violates_pure_reason
             if ctx.is_pure and node.violates_pure and not ctx.static_scope_status.is_in_static_scope:
                 if isinstance(node.ptr, (int, float, Field)):
                     violation = True
                     if violation and isinstance(node.ptr, enum.Enum):
                         violation = False
-                    if violation and node.value.ptr == ti_math:
+                    if violation and node.value.ptr in [ti_math, math]:
                         # ignore this built-in module
                         violation = False
                     if violation:
                         print("node.ptr", node.ptr, type(node.ptr), isinstance(node.ptr, enum.Enum))
-                        print("node.value.ptr", node.value.ptr, "node.attr", node.attr)
-                        raise exception.GsTaichiCompilationError(
-                            f"Accessing global var {node.attr} from outside function scope within pure kernel"
-                        )
+                        print("node.value.ptr", node.value.ptr, type(node.value.ptr), "node.attr", node.attr)
+                        # ctx.pure_violations.add(PureViolation(var_name=node.attr))
+                        message = f"WARNING: Accessing global var {node.attr} from outside function scope within pure kernel {node.value.violates_pure_reason}"
+                        if node.attr.upper() == node.attr:
+                            print(message)
+                        else:
+                            raise exception.GsTaichiCompilationError(message)
         return node.ptr
 
     @staticmethod

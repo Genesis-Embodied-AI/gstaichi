@@ -839,6 +839,8 @@ class Kernel:
                 self.runtime._compiling_callable = None
 
         gstaichi_kernel = impl.get_runtime().prog.create_kernel(gstaichi_ast_generator, kernel_name, self.autodiff_mode)
+        for violation in ctx.pure_violations:
+            print("WARNING: violates pure", violation)
         assert key not in self.materialized_kernels
         self.materialized_kernels[key] = gstaichi_kernel
 
@@ -1279,12 +1281,13 @@ def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool 
 
         @functools.wraps(_func)
         def wrapped_func(*args, **kwargs):
-            try:
-                return primal(*args, **kwargs)
-            except (GsTaichiCompilationError, GsTaichiRuntimeError) as e:
-                if impl.get_runtime().print_full_traceback:
-                    raise e
-                raise type(e)("\n" + str(e)) from None
+            # try:
+            return primal(*args, **kwargs)
+
+        # except (GsTaichiCompilationError, GsTaichiRuntimeError) as e:
+        #     if impl.get_runtime().print_full_traceback:
+        #         raise e
+        #     raise type(e)("\n" + str(e)) from None
 
         wrapped = GsTaichiCallable(_func, wrapped_func)
         wrapped.grad = adjoint

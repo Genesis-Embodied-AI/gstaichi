@@ -2,6 +2,7 @@
 
 import ast
 import builtins
+import dataclasses
 import traceback
 from enum import Enum
 from textwrap import TextWrapper
@@ -17,7 +18,6 @@ from gstaichi.lang.exception import (
     GsTaichiSyntaxError,
     handle_exception_from_cpp,
 )
-from gstaichi.lang.util import is_data_oriented
 
 if TYPE_CHECKING:
     from gstaichi.lang.kernel_impl import (
@@ -31,6 +31,7 @@ class Builder:
         method_name = "build_" + node.__class__.__name__
         method = getattr(self, method_name, None)
         try:
+            # if True:
             if method is None:
                 error_msg = f'Unsupported node "{node.__class__.__name__}"'
                 raise GsTaichiSyntaxError(error_msg)
@@ -42,6 +43,8 @@ class Builder:
                     node.violates_pure = False
                 return res
         except Exception as e:
+            # traceback.print_exc()
+            stack_trace = traceback.format_exc()
             if impl.get_runtime().print_full_traceback:
                 raise e
             if ctx.raised or not isinstance(node, (ast.stmt, ast.expr)):
@@ -51,7 +54,7 @@ class Builder:
             if not isinstance(e, GsTaichiCompilationError):
                 msg = ctx.get_pos_info(node) + traceback.format_exc()
                 raise GsTaichiCompilationError(msg) from None
-            msg = ctx.get_pos_info(node) + str(e)
+            msg = stack_trace + "\n\n" + ctx.get_pos_info(node) + str(e)
             raise type(e)(msg) from None
 
 
@@ -158,6 +161,11 @@ class ReturnStatus(Enum):
     ReturnedValue = 2
 
 
+@dataclasses.dataclass(frozen=True)
+class PureViolation:
+    var_name: str
+
+
 class ASTTransformerContext:
     def __init__(
         self,
@@ -208,6 +216,7 @@ class ASTTransformerContext:
         self.is_real_function = is_real_function
         self.kernel_args: list = []
         self.only_parse_function_def: bool = False
+        self.pure_violations: set[PureViolation] = set()
 
     # e.g.: FunctionDef, Module, Global
     def variable_scope_guard(self):
@@ -274,22 +283,29 @@ class ASTTransformerContext:
                 f"Variable '{loop_var}' is already declared in the outer scope and cannot be used as loop variable"
             )
 
-    def get_var_by_name(self, name: str) -> tuple[bool, Any]:
+    def get_var_by_name(self, name: str) -> tuple[bool, Any, str | None]:
         for s in reversed(self.local_scopes):
             if name in s:
                 val = s[name]
                 violates_pure = False
-                if self.is_pure and is_data_oriented(val):
-                    # a data oriented is as good as global, from pov of pure constraints
-                    violates_pure = True
-                return violates_pure, val
+                reason = None
+                print("found in local scopes", name, "val is", val, type(val))
+                # if self.is_pure and is_data_oriented(val):
+                #     # a data oriented is as good as global, from pov of pure constraints
+                #     reason = f"{name} is from data_oriented therefore violates global"
+                #     print(reason)
+                #     violates_pure = True
+                return violates_pure, val, reason
 
+        reason = None
         violates_pure, found_name = False, False
         if name in self.template_vars:
             var = self.template_vars[name]
             found_name = True
         elif name in self.global_vars:
             var = self.global_vars[name]
+            reason = f"{name} is in global vars, therefore violates pure"
+            print(reason)
             violates_pure = True
             found_name = True
 
@@ -300,11 +316,11 @@ class ASTTransformerContext:
             )
 
             if isinstance(var, Matrix):
-                return violates_pure, make_matrix(var.to_list())
-            return violates_pure, var
+                return violates_pure, make_matrix(var.to_list()), reason
+            return violates_pure, var, reason
 
         try:
-            return False, getattr(builtins, name)
+            return False, getattr(builtins, name), None
         except AttributeError:
             raise GsTaichiNameError(f'Name "{name}" is not defined')
 
