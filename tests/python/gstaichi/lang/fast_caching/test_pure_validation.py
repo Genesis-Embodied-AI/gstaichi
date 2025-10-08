@@ -1,4 +1,5 @@
 import enum
+
 import pytest
 
 import gstaichi as ti

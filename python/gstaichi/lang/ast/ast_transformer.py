@@ -3,8 +3,8 @@
 import ast
 import collections.abc
 import dataclasses
-import itertools
 import enum
+import itertools
 import warnings
 from ast import unparse
 from typing import Any, Sequence, Type
