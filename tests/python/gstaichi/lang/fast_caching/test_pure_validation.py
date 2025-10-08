@@ -113,14 +113,14 @@ def test_pure_validation_data_oriented_not_param():
         def __init__(self) -> None:
             self.b = ti.field(ti.i32, (10,))
 
-        @ti.pure
-        @ti.kernel
-        def k1(self) -> None:
-            self.b[0] = 5
+    @ti.pure
+    @ti.kernel
+    def k1() -> None:
+        my_do.b[0] = 5
 
     my_do = MyDataOriented()
     with pytest.raises(ti.GsTaichiCompilationError):
-        my_do.k1()
+        k1()
 
 
 @test_utils.test()

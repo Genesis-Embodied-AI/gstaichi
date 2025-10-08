@@ -254,6 +254,8 @@ class ASTTransformer(Builder):
             node.slice.ptr = [node.slice.ptr]
         node.ptr = impl.subscript(ctx.ast_builder, node.value.ptr, *node.slice.ptr)
         node.violates_pure = node.value.violates_pure
+        if node.violates_pure:
+            node.violates_pure_reason = node.value.violates_pure_reason
         return node.ptr
 
     @staticmethod
