@@ -315,6 +315,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">ast</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">collections.abc</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">enum</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">ast</span><span class="w"> </span><span class="kn">import</span> <span class="n">unparse</span>
@@ -1040,6 +1041,8 @@
         <span class="c1"># whether it is a method of Dynamic SNode and build the expression if it is by calling</span>
         <span class="c1"># build_attribute_if_is_dynamic_snode_method. If we find that it is not a method of Dynamic SNode,</span>
         <span class="c1"># we continue to process it as a normal attribute node.</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi</span><span class="w"> </span><span class="kn">import</span> <span class="n">math</span> <span class="k">as</span> <span class="n">ti_math</span>  <span class="c1"># pylint: disable=import-outside-toplevel</span>
+
         <span class="k">try</span><span class="p">:</span>
             <span class="n">build_stmt</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -1091,9 +1094,18 @@
             <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">violates_pure</span>
             <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">is_pure</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ctx</span><span class="o">.</span><span class="n">static_scope_status</span><span class="o">.</span><span class="n">is_in_static_scope</span><span class="p">:</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">Field</span><span class="p">)):</span>
-                    <span class="k">raise</span> <span class="n">exception</span><span class="o">.</span><span class="n">GsTaichiCompilationError</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;Accessing global var </span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">attr</span><span class="si">}</span><span class="s2"> from outside function scope within pure kernel&quot;</span>
-                    <span class="p">)</span>
+                    <span class="n">violation</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">if</span> <span class="n">violation</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
+                        <span class="n">violation</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="k">if</span> <span class="n">violation</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">ptr</span> <span class="o">==</span> <span class="n">ti_math</span><span class="p">:</span>
+                        <span class="c1"># ignore this built-in module</span>
+                        <span class="n">violation</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="k">if</span> <span class="n">violation</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;node.ptr&quot;</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ptr</span><span class="p">),</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">))</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;node.value.ptr&quot;</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="s2">&quot;node.attr&quot;</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">attr</span><span class="p">)</span>
+                        <span class="k">raise</span> <span class="n">exception</span><span class="o">.</span><span class="n">GsTaichiCompilationError</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Accessing global var </span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">attr</span><span class="si">}</span><span class="s2"> from outside function scope within pure kernel&quot;</span>
+                        <span class="p">)</span>
         <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr</span></div>
 
 
