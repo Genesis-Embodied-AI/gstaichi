@@ -238,7 +238,7 @@ class CallTransformer:
                     )
                     if dataclasses.is_dataclass(field.type):
                         kwarg_node.ptr = {child_name: field.type}
-                        _added_kwargs, _kwargs_new = extend(CallTransformer._expand_Call_dataclass_kwargs([kwarg_node]))
+                        _added_kwargs, _kwargs_new = CallTransformer._expand_Call_dataclass_kwargs([kwarg_node])
                         kwargs_new.extend(_kwargs_new)
                         added_kwargs.extend(_added_kwargs)
                     else:
