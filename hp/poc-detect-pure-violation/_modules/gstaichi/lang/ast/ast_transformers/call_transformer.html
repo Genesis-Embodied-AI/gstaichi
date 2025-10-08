@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gstaichi.lang.ast.ast_transformers.call_transformer &#8212; GsTaichi 2.6.1 documentation</title>
+    <title>gstaichi.lang.ast.ast_transformers.call_transformer &#8212; GsTaichi 2.7.0 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../../../_static/documentation_options.js?v=0a414f3d"></script>
+    <script src="../../../../../_static/documentation_options.js?v=dfec817d"></script>
     <script src="../../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -59,7 +59,7 @@
     <link rel="search" title="Search" href="../../../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.6.1" />
+  <meta name="docsearch:version" content="2.7.0" />
   </head>
   
   
@@ -121,7 +121,7 @@
   
   
   
-    <p class="title logo__title">GsTaichi 2.6.1 documentation</p>
+    <p class="title logo__title">GsTaichi 2.7.0 documentation</p>
   
 </a></div>
     
@@ -594,20 +594,17 @@
                 <span class="n">build_stmt</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span>
 
         <span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="c1"># if any args are global, then ptr source is global</span>
+        <span class="c1"># if any arg violates pure, then node also violates global</span>
         <span class="n">reason</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">violates_pure</span><span class="p">:</span>
-                <span class="c1"># reason = &quot;calling arg violates pure for &quot; + ast.dump(arg)</span>
                 <span class="n">reason</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">violates_pure_reason</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;calling arg violates pure for&quot;</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">arg</span><span class="p">))</span>
                 <span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">keywords</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">kw</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">violates_pure</span><span class="p">:</span>
                 <span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="n">reason</span> <span class="o">=</span> <span class="n">kw</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">violates_pure_reason</span>
-                <span class="c1"># reason = &quot;kw.value violates pure for &quot; + ast.dump(kw)</span>
         <span class="n">node</span><span class="o">.</span><span class="n">violates_pure_reason</span> <span class="o">=</span> <span class="n">reason</span>
         <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="o">=</span> <span class="n">violates_pure</span>
 
