@@ -4,6 +4,7 @@ import ast
 import collections.abc
 import dataclasses
 import itertools
+import enum
 import warnings
 from ast import unparse
 from typing import Any, Sequence, Type
@@ -664,9 +665,11 @@ class ASTTransformer(Builder):
             node.violates_pure = node.value.violates_pure
             if ctx.is_pure and node.violates_pure and not ctx.static_scope_status.is_in_static_scope:
                 if isinstance(node.ptr, (int, float, Field)):
-                    raise exception.GsTaichiCompilationError(
-                        f"Accessing global var {node.attr} from outside function scope within pure kernel"
-                    )
+                    if not isinstance(node.ptr, enum.Enum):
+                        print("node.ptr", node.ptr, type(node.ptr), isinstance(node.ptr, enum.Enum))
+                        raise exception.GsTaichiCompilationError(
+                            f"Accessing global var {node.attr} from outside function scope within pure kernel"
+                        )
         return node.ptr
 
     @staticmethod

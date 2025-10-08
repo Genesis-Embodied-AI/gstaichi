@@ -1,3 +1,4 @@
+import enum
 import pytest
 
 import gstaichi as ti
@@ -117,3 +118,17 @@ def test_pure_validation_data_oriented():
     my_do = MyDataOriented()
     with pytest.raises(ti.GsTaichiCompilationError):
         my_do.k1()
+
+
+@test_utils.test()
+def test_pure_validation_enum():
+    class MyEnum(enum.IntEnum):
+        foo = 1
+        bar = 2
+
+    @ti.kernel(pure=True)
+    def k1() -> ti.i32:
+        return MyEnum.foo
+
+    v = k1()
+    print("v", v)
