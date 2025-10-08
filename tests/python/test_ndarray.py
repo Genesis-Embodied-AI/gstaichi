@@ -835,7 +835,7 @@ def test_scalar_ndarray_oob():
 )
 def test_matrix_ndarray_oob():
     if sys.platform == "win32":
-        pytest.skip("out of bound access detection flaky on windows")
+        pytest.xfail("out of bound access detection flaky on windows")
 
     @ti.kernel
     def access_arr(input: ti.types.NDArray[ti.math.mat2, 2], p: ti.i32, q: ti.i32, x: ti.i32, y: ti.i32) -> ti.f32:
