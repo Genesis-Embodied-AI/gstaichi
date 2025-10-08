@@ -1,4 +1,5 @@
 import enum
+import math
 
 import pytest
 
@@ -130,6 +131,20 @@ def test_pure_validation_enum():
     @ti.kernel(pure=True)
     def k1() -> ti.i32:
         return MyEnum.foo
+
+    v = k1()
+    print("v", v)
+
+
+@test_utils.test()
+def test_pure_validation_builtin_values():
+    class MyEnum(enum.IntEnum):
+        foo = 1
+        bar = 2
+
+    @ti.kernel(pure=True)
+    def k1() -> ti.i32:
+        return math.inf
 
     v = k1()
     print("v", v)
