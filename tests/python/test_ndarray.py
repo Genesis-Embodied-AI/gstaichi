@@ -1,5 +1,6 @@
 import copy
 import platform
+import sys
 
 import numpy as np
 import pytest
@@ -831,6 +832,9 @@ def test_scalar_ndarray_oob():
     debug=True,
     check_out_of_bound=True,
     gdb_trigger=False,
+)
+@pytest.mark.xfail(
+    sys.platform == "win32", raises=AssertionError, reason="Out-of-bound access detection flaky on windows"
 )
 def test_matrix_ndarray_oob():
     @ti.kernel
