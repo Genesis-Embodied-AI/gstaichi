@@ -221,7 +221,6 @@ class ASTTransformerContext:
         self.is_real_function = is_real_function
         self.kernel_args: list = []
         self.only_parse_function_def: bool = False
-        self.pure_violations: set[PureViolation] = set()
 
     # e.g.: FunctionDef, Module, Global
     def variable_scope_guard(self):
