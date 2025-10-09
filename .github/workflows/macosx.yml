@@ -83,7 +83,7 @@ jobs:
           bash .github/workflows/scripts_new/macosx/3_install.sh
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
-        timeout-minutes: 240
+        timeout-minutes: 360
       - name: Mac OS X test
         run: |
           bash .github/workflows/scripts_new/macosx/4_test.sh
