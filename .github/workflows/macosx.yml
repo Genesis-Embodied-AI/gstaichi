@@ -15,7 +15,8 @@ jobs:
       fail-fast: false
       matrix:
         MAC_OS_VERSION: [15]
-        PYTHON_VERSION: ['3.10', '3.11', '3.12', '3.13']
+        PYTHON_VERSION: ['3.10']
+        # PYTHON_VERSION: ['3.10', '3.11', '3.12', '3.13']
     name: Mac OS Build
     runs-on: macos-${{ matrix.MAC_OS_VERSION }}
     steps:
