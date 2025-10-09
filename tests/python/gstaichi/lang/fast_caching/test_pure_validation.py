@@ -151,10 +151,10 @@ def test_pure_validation_enum():
 
     @ti.kernel(pure=True)
     def k1() -> ti.i32:
-        return MyEnum.foo
+        return MyEnum.bar
 
     v = k1()
-    print("v", v)
+    assert v == 2
 
 
 @test_utils.test()
@@ -168,7 +168,7 @@ def test_pure_validation_builtin_values_inf():
         return ti.math.inf
 
     v = k1()
-    print("v", v)
+    assert v > 1e8
 
 
 @test_utils.test()
@@ -178,11 +178,11 @@ def test_pure_validation_builtin_values_ti_pi():
         bar = 2
 
     @ti.kernel(pure=True)
-    def k1() -> ti.i32:
+    def k1() -> ti.f32:
         return ti.math.pi
 
     v = k1()
-    print("v", v)
+    assert int(k1() * 100) == 314
 
 
 @test_utils.test()
@@ -192,11 +192,11 @@ def test_pure_validation_builtin_values_np_pi():
         bar = 2
 
     @ti.kernel(pure=True)
-    def k1() -> ti.i32:
+    def k1() -> ti.f32:
         return np.pi
 
     v = k1()
-    print("v", v)
+    assert int(k1() * 100) == 314
 
 
 @test_utils.test()
@@ -206,8 +206,7 @@ def test_pure_validation_builtin_values_math_pi():
         bar = 2
 
     @ti.kernel(pure=True)
-    def k1() -> ti.i32:
+    def k1() -> ti.f32:
         return math.pi
 
-    v = k1()
-    print("v", v)
+    assert int(k1() * 100) == 314
