@@ -19,13 +19,13 @@ jobs:
           python-version: '3.10'
       - name: Linux x86 prerequisites
         run: |
-          bash .github/workflows/scripts_new/linux_x86/1_prerequisites.sh
+          bash .github/workflows/scripts_new/linux/1_prerequisites.sh
       - name: Linux x86 build
         run: |
-          bash .github/workflows/scripts_new/linux_x86/2_build.sh
+          bash .github/workflows/scripts_new/linux/2_build.sh
       - name: Linux x86 install
         run: |
-          bash .github/workflows/scripts_new/linux_x86/3_install.sh
+          bash .github/workflows/scripts_new/linux/3_install.sh
       - name: Linux x86 test
         run: |
-          bash .github/workflows/scripts_new/linux_x86/4_test.sh
+          bash .github/workflows/scripts_new/linux/4_test.sh
