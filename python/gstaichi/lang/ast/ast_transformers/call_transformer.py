@@ -278,7 +278,7 @@ class CallTransformer:
                 build_stmt(ctx, arg)
 
         violates_pure = False
-        # if any arg violates pure, then node also violates global
+        # if any arg violates pure, then node also violates pure
         reason = None
         for arg in node.args:
             if arg.violates_pure:
