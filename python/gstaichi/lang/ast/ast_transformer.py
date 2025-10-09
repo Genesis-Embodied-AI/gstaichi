@@ -73,15 +73,13 @@ def boundary_type_cast_warning(expression: Expr) -> None:
 class ASTTransformer(Builder):
     @staticmethod
     def build_Name(ctx: ASTTransformerContext, node: ast.Name):
-        violates_pure, node.ptr, violates_pure_reason = ctx.get_var_by_name(node.id)
+        node.violates_pure, node.ptr, node.violates_pure_reason = ctx.get_var_by_name(node.id)
         if isinstance(node, (ast.stmt, ast.expr)) and isinstance(node.ptr, Expr):
             node.ptr.dbg_info = _ti_core.DebugInfo(ctx.get_pos_info(node))
             node.ptr.ptr.set_dbg_info(node.ptr.dbg_info)
-        node.violates_pure = violates_pure
-        node.violates_pure_reason = violates_pure_reason
-        if ctx.is_pure and violates_pure and not ctx.static_scope_status.is_in_static_scope:
+        if ctx.is_pure and node.violates_pure and not ctx.static_scope_status.is_in_static_scope:
             if isinstance(node.ptr, (float, int, Field)):
-                message = f"WARNING: Accessing global variable {node.id} {type(node.ptr)} {violates_pure_reason}"
+                message = f"WARNING: Accessing global variable {node.id} {type(node.ptr)} {node.violates_pure_reason}"
                 if node.id.upper() == node.id:
                     print(message)
                 else:
@@ -288,7 +286,6 @@ class ASTTransformer(Builder):
 
     @staticmethod
     def build_List(ctx: ASTTransformerContext, node: ast.List):
-        node.violates_pure = False
         build_stmts(ctx, node.elts)
         reason = []
         for elt in node.elts:
@@ -296,7 +293,7 @@ class ASTTransformer(Builder):
                 node.violates_pure = True
                 reason.append("list member violates pure " + str(elt))
         node.ptr = [elt.ptr for elt in node.elts]
-        node.violates_pure_reason = "\n".join(reason) if len(reason) > 0 else None
+        node.violates_pure_reason = "\n".join(reason) if reason else None
         return node.ptr
 
     @staticmethod
@@ -322,7 +319,6 @@ class ASTTransformer(Builder):
 
     @staticmethod
     def process_generators(ctx: ASTTransformerContext, node: ast.GeneratorExp, now_comp, func, result):
-        node.violates_pure = False
         if now_comp >= len(node.generators):
             return func(ctx, node, result)
         with ctx.static_scope_guard():
@@ -373,7 +369,6 @@ class ASTTransformer(Builder):
     @staticmethod
     def build_Constant(ctx: ASTTransformerContext, node: ast.Constant):
         node.ptr = node.value
-        node.violates_pure = False
         return node.ptr
 
     @staticmethod

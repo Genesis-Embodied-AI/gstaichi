@@ -40,6 +40,7 @@ class Builder:
                 if not hasattr(node, "violates_pure"):
                     # assume False until proven otherwise
                     node.violates_pure = False
+                    node.violates_pure_reason = None
                 return res
         except Exception as e:
             stack_trace = traceback.format_exc()
