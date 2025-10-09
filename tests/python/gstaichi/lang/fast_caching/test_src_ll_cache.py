@@ -321,6 +321,7 @@ def test_src_ll_cache_self_arg_checked(tmp_path: pathlib.Path) -> None:
     arch = ti.lang.impl.current_cfg().arch
 
     # need to initialize up front, in order that config hash doesn't change when we re-init later
+    ti.reset()
     ti.init(arch=arch, offline_cache_file_path=str(tmp_path), offline_cache=True)
     my_do.a = 5
     my_do.child.b = 20
@@ -328,30 +329,35 @@ def test_src_ll_cache_self_arg_checked(tmp_path: pathlib.Path) -> None:
     assert my_do.k1._primal.src_ll_cache_observations.cache_key_generated
     assert not my_do.k1._primal.src_ll_cache_observations.cache_validated
 
+    ti.reset()
     ti.init(arch=arch, offline_cache_file_path=str(tmp_path), offline_cache=True)
     my_do.a = 5
     assert tuple(my_do.k1()) == (5, 20)
     assert my_do.k1._primal.src_ll_cache_observations.cache_key_generated
     assert my_do.k1._primal.src_ll_cache_observations.cache_validated
 
+    ti.reset()
     ti.init(arch=arch, offline_cache_file_path=str(tmp_path), offline_cache=True)
     my_do.a = 7
     assert tuple(my_do.k1()) == (7, 20)
     assert my_do.k1._primal.src_ll_cache_observations.cache_key_generated
     assert not my_do.k1._primal.src_ll_cache_observations.cache_validated
 
+    ti.reset()
     ti.init(arch=arch, offline_cache_file_path=str(tmp_path), offline_cache=True)
     my_do.a = 7
     assert tuple(my_do.k1()) == (7, 20)
     assert my_do.k1._primal.src_ll_cache_observations.cache_key_generated
     assert my_do.k1._primal.src_ll_cache_observations.cache_validated
 
+    ti.reset()
     ti.init(arch=arch, offline_cache_file_path=str(tmp_path), offline_cache=True)
     my_do.child.b = 30
     assert tuple(my_do.k1()) == (7, 30)
     assert my_do.k1._primal.src_ll_cache_observations.cache_key_generated
     assert not my_do.k1._primal.src_ll_cache_observations.cache_validated
 
+    ti.reset()
     ti.init(arch=arch, offline_cache_file_path=str(tmp_path), offline_cache=True)
     my_do.child.b = 30
     assert tuple(my_do.k1()) == (7, 30)
