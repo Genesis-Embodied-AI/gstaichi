@@ -45,13 +45,19 @@ def _validate_hashed_function_info(hashed_function_info: HashedFunctionSourceInf
     Checks the hash
     """
     if not os.path.isfile(hashed_function_info.function_source_info.filepath):
+        print('not exist file', hashed_function_info.function_source_info.filepath)
         return False
     _hash = _hash_function(hashed_function_info.function_source_info)
+    print('hash from file', _hash)
+    print('expected hash', hashed_function_info.hash)
+    print('match?', _hash == hashed_function_info.hash)
     return _hash == hashed_function_info.hash
 
 
 def validate_hashed_function_infos(function_infos: Iterable[HashedFunctionSourceInfo]) -> bool:
     for function_info in function_infos:
+        print("validate function info", function_info)
         if not _validate_hashed_function_info(function_info):
+            print("not validated")
             return False
     return True
