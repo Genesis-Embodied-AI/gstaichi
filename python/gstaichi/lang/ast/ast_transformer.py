@@ -682,10 +682,9 @@ class ASTTransformer(Builder):
                         # ignore this built-in module
                         violation = False
                     if violation:
-                        message = f"WARNING: Accessing global var {node.attr} from outside function scope within pure kernel {node.value.violates_pure_reason}"
+                        message = f"[PURE.VIOLATION] WARNING: Accessing global var {node.attr} from outside function scope within pure kernel {node.value.violates_pure_reason}"
                         if node.attr.upper() == node.attr:
-
-                            print(message)
+                            warnings.warn(message)
                         else:
                             raise exception.GsTaichiCompilationError(message)
         return node.ptr

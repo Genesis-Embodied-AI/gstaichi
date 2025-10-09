@@ -238,3 +238,16 @@ def test_pure_validation_actual_violation_warning():
 
     with pytest.warns(UserWarning, match=r"\[PURE\.VIOLATION\]"):
         assert k1() == 5
+
+    class Foo:
+        def __init__(self) -> None:
+            self.BAR = 23
+
+    foo = Foo()
+
+    @ti.kernel(pure=True)
+    def k2() -> ti.f32:
+        return foo.BAR
+
+    with pytest.warns(UserWarning, match=r"\[PURE\.VIOLATION\]"):
+        assert k2() == 23
