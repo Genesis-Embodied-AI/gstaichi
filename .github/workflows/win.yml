@@ -43,16 +43,47 @@ jobs:
       - name: Windows 2025 build
         run: |
           & .\.github\workflows\scripts_new\win\2_build.ps1
-      - name: Windows 2025 install
-        run: |
-          & .\.github\workflows\scripts_new\win\3_install.ps1
-      - name: Windows 2025 test
-        run: |
-          & .\.github\workflows\scripts_new\win\4_test.ps1
       - uses: actions/upload-artifact@v4
         with:
           name: win_wheel_${{ steps.set_cp_version.outputs.python_CP_VERSION }}
           path: dist/*.whl
+  win_test:
+    name: Windows 2025 Test
+    runs-on: windows-2025
+    needs: win_build
+    strategy:
+      matrix:
+        PYTHON_VERSION: ['3.10', '3.11', '3.12', '3.13']
+      fail-fast: false
+    steps:
+      - name: Python check
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.PYTHON_VERSION}}
+      - name: Set Python CP version
+        id: set_cp_version
+        run: |
+          pip install packaging
+          $cp = python -c "from packaging import tags; print(next(tags.sys_tags()).interpreter)"
+          echo "PYTHON_CP_VERSION=$cp"
+          echo "PYTHON_CP_VERSION=$cp" >> $env:GITHUB_OUTPUT
+      - name: Check Python CP version
+        run: |
+          echo "PYTHON_CP_VERSION=${{ steps.set_cp_version.outputs.PYTHON_CP_VERSION }}"
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 1
+      - uses: actions/download-artifact@v4
+        with:
+          name: win_wheel_${{ steps.set_cp_version.outputs.python_CP_VERSION }}
+      - name: Windows 2025 install
+        run: |
+          $whl = Get-ChildItem .\*.whl | Select-Object -First 1
+          pip install $whl
+      - name: Windows 2025 test
+        run: |
+          & .\.github\workflows\scripts_new\win\3_test.ps1
   upload_to_storage:
     name: Windows wheel upload
     runs-on: ubuntu-22.04
@@ -82,7 +113,7 @@ jobs:
   publish_pypi:
     uses: ./.github/workflows/publish_pypi.yml
     if: github.event_name == 'release'
-    needs: win_build
+    needs: win_test
     permissions:
       id-token: write
       contents: read

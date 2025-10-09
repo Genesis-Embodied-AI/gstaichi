@@ -1,4 +1,5 @@
 import ast
+import csv
 import dataclasses
 import functools
 import inspect
@@ -13,7 +14,7 @@ import time
 import types
 import typing
 import warnings
-from typing import Any, Callable, Type
+from typing import Any, Callable, Type, TypeVar, cast, overload
 
 import numpy as np
 
@@ -1079,9 +1080,33 @@ class Kernel:
             )
 
         try:
-            prog = impl.get_runtime().prog
+            runtime = impl.get_runtime()
+            prog = runtime.prog
             if not compiled_kernel_data:
                 compile_result: CompileResult = prog.compile_kernel(prog.config(), prog.get_device_caps(), t_kernel)
+                if os.environ.get("TI_DUMP_KERNEL_CHECKSUMS", "0") == "1":
+                    debug_dump_path = pathlib.Path(impl.current_cfg().debug_dump_path)
+                    checksums_file_path = debug_dump_path / "checksums.csv"
+                    kernels_dump_dir = debug_dump_path / "kernels"
+                    file_exists = checksums_file_path.exists()
+                    if self.fast_checksum:
+                        with checksums_file_path.open("a") as f:
+                            dict_writer = csv.DictWriter(f, fieldnames=["kernel", "fe", "src"])
+                            if not file_exists:
+                                dict_writer.writeheader()
+                            dict_writer.writerow(
+                                {
+                                    "kernel": self.func.__name__,
+                                    "fe": compile_result.cache_key,
+                                    "src": self.fast_checksum,
+                                }
+                            )
+                            f.flush()
+                        kernels_dump_dir.mkdir(exist_ok=True)
+                        ch_ir_path = kernels_dump_dir / f"{compile_result.cache_key}.ll"
+                        if not ch_ir_path.exists() and self.kernel_cpp:
+                            with ch_ir_path.open("w") as f:
+                                f.write(self.kernel_cpp.to_string())
                 compiled_kernel_data = compile_result.compiled_kernel_data
                 if compile_result.cache_hit:
                     self.fe_ll_cache_observations.cache_hit = True
@@ -1263,8 +1288,28 @@ def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool 
     return wrapped
 
 
-def kernel(fn: Callable):
-    """Marks a function as a GsTaichi kernel.
+F = TypeVar("F", bound=Callable[..., typing.Any])
+
+
+@overload
+# TODO: This callable should be Callable[[F], F].
+# See comments below.
+def kernel(_fn: None = None, *, pure: bool = False) -> Callable[[Any], Any]: ...
+
+
+# TODO: This next overload should return F, but currently that will cause issues
+# with ndarray type. We need to migrate ndarray type to be basically
+# the actual Ndarray, with Generic types, rather than some other
+# NdarrayType class. The _fn should also be F by the way.
+# However, by making it return Any, we can make the pure parameter
+# change now, without breaking pyright.
+@overload
+def kernel(_fn: Any, *, pure: bool = False) -> Any: ...
+
+
+def kernel(_fn: Callable[..., typing.Any] | None = None, *, pure: bool = False):
+    """
+    Marks a function as a GsTaichi kernel.
 
     A GsTaichi kernel is a function written in Python, and gets JIT compiled by
     GsTaichi into native CPU/GPU instructions (e.g. a series of CUDA kernels).
@@ -1272,14 +1317,6 @@ def kernel(fn: Callable):
     to either a CPU thread pool or massively parallel GPUs.
 
     Kernel's gradient kernel would be generated automatically by the AutoDiff system.
-
-    See also https://docs.taichi-lang.org/docs/syntax#kernel.
-
-    Args:
-        fn (Callable): the Python function to be decorated
-
-    Returns:
-        Callable: The decorated function
 
     Example::
 
@@ -1291,7 +1328,25 @@ def kernel(fn: Callable):
         >>>     for i in x:
         >>>         x[i] = i
     """
-    return _kernel_impl(fn, level_of_class_stackframe=3)
+
+    def decorator(fn: F, has_kernel_params: bool = True) -> F:
+        # Adjust stack frame: +1 if called via decorator factory (@kernel()), else as-is (@kernel)
+        if has_kernel_params:
+            level = 3
+        else:
+            level = 4
+
+        wrapped = _kernel_impl(fn, level_of_class_stackframe=level)
+        wrapped.is_pure = pure
+
+        functools.update_wrapper(wrapped, fn)
+        return cast(F, wrapped)
+
+    if _fn is None:
+        # Called with @kernel() or @kernel(foo="bar")
+        return decorator
+
+    return decorator(_fn, has_kernel_params=False)
 
 
 class _BoundedDifferentiableMethod:

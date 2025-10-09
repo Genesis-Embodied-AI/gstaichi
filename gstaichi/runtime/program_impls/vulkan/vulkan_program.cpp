@@ -7,8 +7,6 @@
 #include "gstaichi/runtime/gfx/snode_tree_manager.h"
 #include "gstaichi/rhi/common/host_memory_pool.h"
 
-#include "gstaichi/rhi/common/window_system.h"
-
 using namespace gstaichi::lang::vulkan;
 
 namespace gstaichi::lang {

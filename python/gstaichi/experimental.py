@@ -1,5 +1,3 @@
-# type: ignore
-
 import warnings
 
 from gstaichi.lang.kernel_impl import real_func as _real_func
