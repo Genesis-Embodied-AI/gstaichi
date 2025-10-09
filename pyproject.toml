@@ -14,7 +14,6 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
-license = "Apache-2.0"
 license-files = ["LICENSE"]
 keywords = ["graphics", "simulation"]
 dynamic = ["version"]
