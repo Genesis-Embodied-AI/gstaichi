@@ -25,9 +25,6 @@ def test_loop_grad():
         x[k, 0] = k
     func()
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     for k in range(n):
         x.grad[k, m - 1] = 1
     func.grad()
@@ -61,9 +58,6 @@ def test_loop_grad_complex():
     for k in range(n):
         x[k, 0] = k
     func()
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     for k in range(n):
         x.grad[k, m - 1] = 1

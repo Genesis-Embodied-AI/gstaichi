@@ -10,7 +10,7 @@ archs_support_ndarray_ad = [ti.cpu, ti.cuda]
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64, require=ti.extension.adstack)
 def test_simple_demo():
     import torch
 
@@ -22,9 +22,6 @@ def test_simple_demo():
             for j in range(1):
                 a += x[i] / 3
             y[0] += a
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     device = "cuda" if ti.lang.impl.current_cfg().arch == ti.cuda else "cpu"
     input = torch.rand(4, dtype=torch.double, device=device, requires_grad=True)
@@ -41,9 +38,6 @@ def test_ad_reduce():
     def test(x: ti.types.ndarray(), y: ti.types.ndarray()):
         for i in x:
             y[0] += x[i] ** 2
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     device = "cuda" if ti.lang.impl.current_cfg().arch == ti.cuda else "cpu"
     input = torch.rand(4, dtype=torch.double, device=device, requires_grad=True)
@@ -103,9 +97,6 @@ def test_poly(tifunc):
         for i in x:
             y[i] = tifunc(x[i])
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     device = "cuda" if ti.lang.impl.current_cfg().arch == ti.cuda else "cpu"
     input = torch.rand(s, dtype=torch.double, device=device, requires_grad=True)
     torch.autograd.gradcheck(test, input)
@@ -124,16 +115,13 @@ def test_ad_select():
         for i in x:
             z[i] = ti.select(i % 2, x[i], y[i])
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     device = "cuda" if ti.lang.impl.current_cfg().arch == ti.cuda else "cpu"
     x = torch.rand(s, dtype=torch.double, device=device, requires_grad=True)
     y = torch.rand(s, dtype=torch.double, device=device, requires_grad=True)
     torch.autograd.gradcheck(test, [x, y])
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64, require=ti.extension.adstack)
 def test_ad_sum():
 
     N = 10
@@ -159,16 +147,13 @@ def test_ad_sum():
         assert p[i] == a[i] * b[i] + 1
         p.grad[i] = 1
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     compute_sum.grad(a, b, p)
 
     for i in range(N):
         assert a.grad[i] == b[i]
 
 
-@test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64)
+@test_utils.test(arch=archs_support_ndarray_ad, default_fp=ti.f64, require=ti.extension.adstack)
 def test_ad_sum_local_atomic():
 
     N = 10
@@ -193,9 +178,6 @@ def test_ad_sum_local_atomic():
     for i in range(N):
         assert p[i] == 3 * b[i] + 1
         p.grad[i] = 1
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     compute_sum.grad(a, b, p)
 
@@ -227,9 +209,6 @@ def test_ad_power():
     for i in range(N):
         assert p[i] == 3 ** b[i]
         p.grad[i] = 1
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     power.grad(a, b, p)
 
@@ -264,9 +243,6 @@ def test_ad_fibonacci():
     for i in range(N):
         f.grad[i] = 1
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     fib.grad(a, b, c, f)
 
     for i in range(N):
@@ -300,9 +276,6 @@ def test_ad_fibonacci_index():
 
     f.grad[None] = 1
     a.fill(1)
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     fib(a, b, f)
     fib.grad(a, b, f)
@@ -342,9 +315,6 @@ def test_integer_stack():
     for i in range(N):
         print(f[i])
         f.grad[i] = 1
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     int_stack.grad(a, b, c, f)
 
@@ -386,9 +356,6 @@ def test_double_for_loops():
         assert f[i] == 2 * i * (1 + 2**i)
         f.grad[i] = 1
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     double_for.grad(a, b, c, f)
 
     for i in range(N):
@@ -429,9 +396,6 @@ def test_double_for_loops_more_nests():
         for k in range(N // 2):
             assert f[i, k] == 2 * (i + k) * (1 + 2 ** (i + k))
             f.grad[i, k] = 1
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     double_for.grad(a, b, c, f)
 
@@ -476,9 +440,6 @@ def test_complex_body():
         c[i] = i
         f.grad[i] = 1
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     complex(a, c, f, g)
     complex.grad(a, c, f, g)
 
@@ -499,9 +460,6 @@ def test_mixed_inner_loops():
             loss[0] += ti.sin(x[0])
             for j in range(2):
                 loss[0] += ti.sin(x[0]) + 1.0
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     loss.grad[0] = 1.0
     x[0] = 0.0
@@ -524,9 +482,6 @@ def test_mixed_inner_loops_tape():
             loss[0] += ti.sin(x[0])
             for j in range(2):
                 loss[0] += ti.sin(x[0]) + 1.0
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     x[0] = 0.0
     with ti.ad.Tape(loss=loss):
@@ -551,9 +506,6 @@ def test_inner_loops_local_variable_fixed_stack_size_kernel_grad():
                     s += ti.sin(x[0]) + 1.0
                     t += ti.sin(x[0])
                 loss[0] += s + t
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     loss.grad[0] = 1.0
     x[0] = 0.0
@@ -580,9 +532,6 @@ def test_inner_loops_local_variable_adaptive_stack_size_tape():
                     s += ti.sin(x[0]) + 1.0
                     t += ti.sin(x[0])
                 loss[0] += s + t
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     x[0] = 0.0
     with ti.ad.Tape(loss=loss):
@@ -611,9 +560,6 @@ def test_more_inner_loops_local_variable_adaptive_stack_size_tape():
                     loss[0] += u
                 loss[0] += s
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     x[0] = 0.0
     with ti.ad.Tape(loss=loss):
         test_more_inner_loops_local_variable(x, arr, loss)
@@ -640,9 +586,6 @@ def test_more_inner_loops_local_variable_fixed_stack_size_tape():
                         u += ti.sin(x[0])
                     loss[0] += u
                 loss[0] += s
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     x[0] = 0.0
     with ti.ad.Tape(loss=loss):
@@ -674,9 +617,6 @@ def test_stacked_inner_loops_local_variable_fixed_stack_size_kernel_grad():
                 for k in range(3):
                     s += ti.sin(x[None]) + 1.0
                 loss[None] += s
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     loss.grad[None] = 1.0
     x[None] = 0.0
@@ -711,9 +651,6 @@ def test_stacked_mixed_ib_and_non_ib_inner_loops_local_variable_fixed_stack_size
                 for k in range(3):
                     loss[None] += ti.sin(x[None]) + 1.0
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     loss.grad[None] = 1.0
     x[None] = 0.0
     test_stacked_mixed_ib_and_non_ib_inner_loops_local_variable(x, arr, loss)
@@ -745,9 +682,6 @@ def test_stacked_inner_loops_local_variable_adaptive_stack_size_kernel_grad():
                 for k in range(3):
                     s += ti.sin(x[None]) + 1.0
                 loss[None] += s
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     loss.grad[None] = 1.0
     x[None] = 0.0
@@ -783,9 +717,6 @@ def test_stacked_mixed_ib_and_non_ib_inner_loops_local_variable_adaptive_stack_s
                 for k in range(3):
                     loss[None] += ti.sin(x[None]) + 1.0
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     loss.grad[None] = 1.0
     x[None] = 0.0
     test_stacked_mixed_ib_and_non_ib_inner_loops_local_variable(x, arr, loss)
@@ -808,9 +739,6 @@ def test_large_for_loops_adaptive_stack_size():
                 for k in range(1000):
                     loss[None] += ti.sin(x[None]) + 1.0
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     with ti.ad.Tape(loss=loss):
         test_large_loop(x, arr, loss)
 
@@ -831,9 +759,6 @@ def test_large_for_loops_fixed_stack_size():
                 for k in range(1000):
                     loss[None] += ti.sin(x[None]) + 1.0
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     with ti.ad.Tape(loss=loss):
         test_large_loop(x, arr, loss)
 
@@ -853,9 +778,6 @@ def test_multiple_ib():
                 y[None] += x[None]
             for i in range(3):
                 y[None] += x[None]
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     x[None] = 1.0
     with ti.ad.Tape(y):
@@ -882,9 +804,6 @@ def test_multiple_ib_multiple_outermost():
                 y[None] += x[None]
             for i in range(3):
                 y[None] += x[None]
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     x[None] = 1.0
     with ti.ad.Tape(y):
@@ -914,9 +833,6 @@ def test_multiple_ib_multiple_outermost_mixed():
                 for ii in range(3):
                     y[None] += x[None]
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     x[None] = 1.0
     with ti.ad.Tape(y):
         compute_y(x, y)
@@ -941,9 +857,6 @@ def test_multiple_ib_mixed():
                     y[None] += x[None]
             for i in range(3):
                 y[None] += x[None]
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     x[None] = 1.0
     with ti.ad.Tape(y):
@@ -971,9 +884,6 @@ def test_multiple_ib_deeper():
                     for iii in range(2):
                         y[None] += x[None]
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     x[None] = 1.0
     with ti.ad.Tape(y):
         compute_y(x, y)
@@ -1000,9 +910,6 @@ def test_multiple_ib_deeper_non_scalar():
                 for ii in range(2):
                     for iii in range(j):
                         y[j] += x[j]
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     x.fill(1.0)
     for i in range(N):
@@ -1035,9 +942,6 @@ def test_multiple_ib_inner_mixed():
                 for ii in range(2):
                     for iii in range(2):
                         y[None] += x[None]
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     x[None] = 1.0
     with ti.ad.Tape(y):
@@ -1072,9 +976,6 @@ def test_ib_global_load():
         assert p[i] == i * i
         p.grad[i] = 1
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     compute.grad(a, b, p)
     for i in range(N):
         assert a.grad[i] == i
@@ -1092,9 +993,6 @@ def test_ad_if_simple():
 
     x[None] = 1
     y.grad[None] = 1
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     func(x, y)
     func.grad(x, y)
@@ -1118,9 +1016,6 @@ def test_ad_if():
     x[1] = 1
     y.grad[0] = 1
     y.grad[1] = 1
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     func(0, x, y)
     func.grad(0, x, y)
@@ -1157,9 +1052,6 @@ def test_ad_if_nested():
     for i in range(n):
         x[i] = i % 4
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     func(x, y, z)
     for i in range(n):
         assert y[i] == i % 4
@@ -1187,9 +1079,6 @@ def test_ad_if_mutable():
     x[1] = 1
     y.grad[0] = 1
     y.grad[1] = 1
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     func(0, x, y)
     func.grad(0, x, y)
@@ -1219,9 +1108,6 @@ def test_ad_if_parallel():
     y.grad[0] = 1
     y.grad[1] = 1
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     func(x, y)
     func.grad(x, y)
 
@@ -1248,9 +1134,6 @@ def test_ad_if_parallel_f64():
     y.grad[0] = 1
     y.grad[1] = 1
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     func(x, y)
     func.grad(x, y)
 
@@ -1276,9 +1159,6 @@ def test_ad_if_parallel_complex():
     x[1] = 2
     y.grad[0] = 1
     y.grad[1] = 1
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     func(x, y)
     func.grad(x, y)
@@ -1315,9 +1195,6 @@ def test_ad_sum_vector():
         assert p[i] == [a[i] * 2, a[i] * 3]
         p.grad[i] = [1, 1]
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     compute_sum.grad(a, p)
 
     for i in range(N):
@@ -1340,9 +1217,6 @@ def test_ad_multiple_tapes():
     init_val = 3
     for i in range(N):
         a[i] = [init_val, init_val]
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     with ti.ad.Tape(loss=p):
         compute_sum(a, p)
@@ -1386,9 +1260,6 @@ def test_ad_set_loss_grad():
     def compute_3(x: ti.types.ndarray(), loss: ti.types.ndarray()):
         loss[None] = 4 * x[None]
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     eval_x(x)
     with ti.ad.Tape(loss=loss):
         compute_1(x, loss)
@@ -1409,9 +1280,6 @@ def test_ad_mixed_with_torch():
     def compute_sum(a: ti.types.ndarray(), p: ti.types.ndarray()):
         for i in a:
             p[0] += a[i] * 2
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     N = 4
     a = torch.ones(N, requires_grad=True)
@@ -1437,9 +1305,6 @@ def test_ad_tape_throw():
 
     a = torch.ones(N, requires_grad=True)
     p = torch.ones(2, requires_grad=True)
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     with pytest.raises(RuntimeError, match=r"he loss of `Tape` must be a tensor only contains one element"):
         with ti.ad.Tape(loss=p):
@@ -1470,7 +1335,7 @@ def test_ad_tape_throw():
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad)
+@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
 def test_tape_torch_tensor_grad_none():
     import torch
 
@@ -1488,9 +1353,6 @@ def test_tape_torch_tensor_grad_none():
 
     a = torch.zeros((N,), device=device, requires_grad=True)
     loss = torch.zeros((1,), device=device, requires_grad=True)
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     with ti.ad.Tape(loss=loss):
         test(a, loss)
@@ -1515,15 +1377,12 @@ def test_grad_tensor_in_kernel():
     test(a, b)
     assert b[None] == N * 2.0
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     with pytest.raises(RuntimeError, match=r"Cannot automatically differentiate through a grad tensor"):
         test.grad(a, b)
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad)
+@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
 def test_tensor_shape():
     import torch
 
@@ -1542,9 +1401,6 @@ def test_tensor_shape():
     a = torch.zeros((N,), device=device, requires_grad=True)
     loss = torch.zeros((1,), device=device, requires_grad=True)
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     with ti.ad.Tape(loss=loss):
         test(a, loss)
 
@@ -1552,7 +1408,7 @@ def test_tensor_shape():
         assert a.grad[i] == 1.0
 
 
-@test_utils.test(arch=archs_support_ndarray_ad)
+@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
 def test_ndarray_needs_grad_false():
     N = 3
 
@@ -1569,9 +1425,6 @@ def test_ndarray_needs_grad_false():
 
     test(x, y)
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     y.grad.fill(1.0)
     test.grad(x, y)
     for i in range(N):
@@ -1579,7 +1432,7 @@ def test_ndarray_needs_grad_false():
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
-@test_utils.test(arch=archs_support_ndarray_ad)
+@test_utils.test(arch=archs_support_ndarray_ad, require=ti.extension.adstack)
 def test_torch_needs_grad_false():
     import torch
 
@@ -1597,9 +1450,6 @@ def test_torch_needs_grad_false():
     y = torch.rand((1,), dtype=torch.float, requires_grad=True)
 
     test(x, y)
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     y.grad.fill_(1.0)
     test.grad(x, y)
@@ -1627,9 +1477,6 @@ def test_ad_vector_arg():
     for i in range(N):
         assert p[i] == [a[i] * 2, a[i] * 2]
         p.grad[i] = [1, 1]
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     compute_sum.grad(a, p, z)
 
@@ -1668,9 +1515,6 @@ def test_hash_encoder_simple():
     table.grad[0] = 0.0
     output_embedding[0, 0] = 0.7515
     output_embedding.grad[0, 0] = 2.8942e-06
-
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
 
     hash_encoder_kernel.grad(table, output_embedding)
 

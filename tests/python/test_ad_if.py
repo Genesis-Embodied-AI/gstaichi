@@ -269,8 +269,5 @@ def test_if_condition_depend_on_for_loop_index():
                 F[coord] += f
             pos[coord] += 1.0 * t
 
-    assert ti.lang is not None
-    ti.lang.impl.current_cfg().ad_stack_experimental_enabled = True
-
     with ti.ad.Tape(loss=loss_n):
         simulation(5)
