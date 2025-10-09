@@ -727,16 +727,21 @@ class Kernel:
             key = (self.func, 0, self.autodiff_mode)
         self.runtime.materialize()
         self.fast_checksum = None
+        print("materialize")
 
         if key in self.materialized_kernels:
+            print("key in materialized kernels")
             return
 
         if self.runtime.src_ll_cache and self.gstaichi_callable and self.gstaichi_callable.is_pure:
+            print("creating fast cache key")
             kernel_source_info, _src = get_source_info_and_src(self.func)
             self.fast_checksum = src_hasher.create_cache_key(kernel_source_info, args, self.arg_metas)
             if self.fast_checksum:
+                print("got fast cache key", self.fast_checksum)
                 self.src_ll_cache_observations.cache_key_generated = True
             if self.fast_checksum and src_hasher.validate_cache_key(self.fast_checksum):
+                print("validated cache key")
                 self.src_ll_cache_observations.cache_validated = True
                 prog = impl.get_runtime().prog
                 self.compiled_kernel_data_by_key[key] = prog.load_fast_cache(
@@ -747,6 +752,8 @@ class Kernel:
                 )
                 if self.compiled_kernel_data_by_key[key]:
                     self.src_ll_cache_observations.cache_loaded = True
+            else:
+                print('failed to validate cache key')
         elif self.gstaichi_callable and not self.gstaichi_callable.is_pure and self.runtime.print_non_pure:
             # The bit in caps should not be modified without updating corresponding test
             # freetext can be freely modified.
