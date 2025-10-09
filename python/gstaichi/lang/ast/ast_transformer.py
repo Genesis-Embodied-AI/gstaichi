@@ -79,9 +79,9 @@ class ASTTransformer(Builder):
             node.ptr.ptr.set_dbg_info(node.ptr.dbg_info)
         if ctx.is_pure and node.violates_pure and not ctx.static_scope_status.is_in_static_scope:
             if isinstance(node.ptr, (float, int, Field)):
-                message = f"WARNING: Accessing global variable {node.id} {type(node.ptr)} {node.violates_pure_reason}"
+                message = f"[PURE.VIOLATION] WARNING: Accessing global variable {node.id} {type(node.ptr)} {node.violates_pure_reason}"
                 if node.id.upper() == node.id:
-                    print(message)
+                    warnings.warn(message)
                 else:
                     raise exception.GsTaichiCompilationError(message)
         return node.ptr
@@ -684,6 +684,7 @@ class ASTTransformer(Builder):
                     if violation:
                         message = f"WARNING: Accessing global var {node.attr} from outside function scope within pure kernel {node.value.violates_pure_reason}"
                         if node.attr.upper() == node.attr:
+
                             print(message)
                         else:
                             raise exception.GsTaichiCompilationError(message)

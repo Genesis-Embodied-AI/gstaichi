@@ -1,5 +1,6 @@
 import enum
 import math
+import sys
 
 import numpy as np
 import pytest
@@ -210,3 +211,31 @@ def test_pure_validation_builtin_values_math_pi():
         return math.pi
 
     assert int(k1() * 100) == 314
+
+
+@test_utils.test()
+def test_pure_validation_actual_violation_exceptoin():
+    a = 5
+
+    @ti.kernel(pure=True)
+    def k1() -> ti.f32:
+        return a
+
+    with pytest.raises(ti.GsTaichiCompilationError):
+        k1()
+
+
+@test_utils.test()
+def test_pure_validation_actual_violation_warning():
+    assert ti.lang is not None
+    arch = ti.lang.impl.current_cfg().arch
+    ti.init(arch=arch, offline_cache=False)
+
+    SOME_GLOBAL = 5
+
+    @ti.kernel(pure=True)
+    def k1() -> ti.f32:
+        return SOME_GLOBAL
+
+    with pytest.warns(UserWarning, match=r"\[PURE\.VIOLATION\]"):
+        assert k1() == 5
