@@ -264,10 +264,6 @@ Module Contents
 
 
 
-   .. py:attribute:: pure_violations
-      :type:  set[PureViolation]
-
-
    .. py:method:: variable_scope_guard()
 
 

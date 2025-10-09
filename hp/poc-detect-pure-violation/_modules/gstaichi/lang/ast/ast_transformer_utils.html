@@ -367,13 +367,14 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">GsTaichiCompilationError</span><span class="p">):</span>
                 <span class="n">msg</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">get_pos_info</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="o">+</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
                 <span class="k">raise</span> <span class="n">GsTaichiCompilationError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="s2">&quot;gstaichi stack trace:</span><span class="se">\n</span><span class="s2">====</span><span class="se">\n</span><span class="s2">&quot;</span>
-                <span class="o">+</span> <span class="n">stack_trace</span>
-                <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">====</span><span class="se">\n\n</span><span class="s2">Your code:</span><span class="se">\n</span><span class="s2">&quot;</span>
-                <span class="o">+</span> <span class="n">ctx</span><span class="o">.</span><span class="n">get_pos_info</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-                <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-            <span class="p">)</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;gstaichi stack trace:</span>
+<span class="s2">===</span>
+<span class="si">{</span><span class="n">stack_trace</span><span class="si">}</span>
+<span class="s2">===</span>
+
+<span class="s2">Your code:</span>
+<span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">get_pos_info</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="si">}{</span><span class="n">e</span><span class="si">}</span>
+<span class="s2">&quot;&quot;&quot;</span>
             <span class="k">raise</span> <span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span></div>
 
 
@@ -711,10 +712,6 @@
 <div class="viewcode-block" id="ASTTransformerContext.only_parse_function_def">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.only_parse_function_def">[docs]</a>
         <span class="bp">self</span><span class="o">.</span><span class="n">only_parse_function_def</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
-
-<div class="viewcode-block" id="ASTTransformerContext.pure_violations">
-<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.pure_violations">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pure_violations</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">PureViolation</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span></div>
 
 
     <span class="c1"># e.g.: FunctionDef, Module, Global</span>

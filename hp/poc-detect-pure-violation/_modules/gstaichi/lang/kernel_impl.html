@@ -1160,8 +1160,6 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">_compiling_callable</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="n">gstaichi_kernel</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">prog</span><span class="o">.</span><span class="n">create_kernel</span><span class="p">(</span><span class="n">gstaichi_ast_generator</span><span class="p">,</span> <span class="n">kernel_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">autodiff_mode</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">violation</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">pure_violations</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;WARNING: violates pure&quot;</span><span class="p">,</span> <span class="n">violation</span><span class="p">)</span>
         <span class="k">assert</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">materialized_kernels</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">materialized_kernels</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">gstaichi_kernel</span>
 
