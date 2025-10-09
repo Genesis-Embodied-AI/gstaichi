@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gstaichi.lang.ast.ast_transformers.call_transformer &#8212; GsTaichi 2.3.2 documentation</title>
+    <title>gstaichi.lang.ast.ast_transformers.call_transformer &#8212; GsTaichi 2.6.1 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../../../_static/documentation_options.js?v=5048a02b"></script>
+    <script src="../../../../../_static/documentation_options.js?v=0a414f3d"></script>
     <script src="../../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -59,7 +59,7 @@
     <link rel="search" title="Search" href="../../../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.3.2" />
+  <meta name="docsearch:version" content="2.6.1" />
   </head>
   
   
@@ -121,7 +121,7 @@
   
   
   
-    <p class="title logo__title">GsTaichi 2.3.2 documentation</p>
+    <p class="title logo__title">GsTaichi 2.6.1 documentation</p>
   
 </a></div>
     
@@ -480,12 +480,13 @@
         <span class="k">return</span> <span class="n">args</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_expand_Call_dataclass_args</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">stmt</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">stmt</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_expand_Call_dataclass_args</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">stmt</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">stmt</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">stmt</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        We require that each node has a .ptr attribute added to it, that contains</span>
 <span class="sd">        the associated Python object</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">args_new</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">added_args</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
             <span class="n">val</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">ptr</span>
             <span class="k">if</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">is_dataclass</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
@@ -506,20 +507,24 @@
                     <span class="p">)</span>
                     <span class="k">if</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">is_dataclass</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">type</span><span class="p">):</span>
                         <span class="n">arg_node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">type</span>
-                        <span class="n">args_new</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">CallTransformer</span><span class="o">.</span><span class="n">_expand_Call_dataclass_args</span><span class="p">((</span><span class="n">arg_node</span><span class="p">,)))</span>
+                        <span class="n">_added_args</span><span class="p">,</span> <span class="n">_args_new</span> <span class="o">=</span> <span class="n">CallTransformer</span><span class="o">.</span><span class="n">_expand_Call_dataclass_args</span><span class="p">((</span><span class="n">arg_node</span><span class="p">,))</span>
+                        <span class="n">args_new</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_args_new</span><span class="p">)</span>
+                        <span class="n">added_args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_added_args</span><span class="p">)</span>
                     <span class="k">else</span><span class="p">:</span>
                         <span class="n">args_new</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg_node</span><span class="p">)</span>
+                        <span class="n">added_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg_node</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">args_new</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">args_new</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">added_args</span><span class="p">),</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">args_new</span><span class="p">)</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_expand_Call_dataclass_kwargs</span><span class="p">(</span><span class="n">kwargs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">keyword</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">keyword</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_expand_Call_dataclass_kwargs</span><span class="p">(</span><span class="n">kwargs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">keyword</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">keyword</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">keyword</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        We require that each node has a .ptr attribute added to it, that contains</span>
 <span class="sd">        the associated Python object</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">kwargs_new</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">added_kwargs</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">kwarg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">kwargs</span><span class="p">):</span>
             <span class="n">val</span> <span class="o">=</span> <span class="n">kwarg</span><span class="o">.</span><span class="n">ptr</span><span class="p">[</span><span class="n">kwarg</span><span class="o">.</span><span class="n">arg</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">is_dataclass</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
@@ -547,12 +552,15 @@
                     <span class="p">)</span>
                     <span class="k">if</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">is_dataclass</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">type</span><span class="p">):</span>
                         <span class="n">kwarg_node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="p">{</span><span class="n">child_name</span><span class="p">:</span> <span class="n">field</span><span class="o">.</span><span class="n">type</span><span class="p">}</span>
-                        <span class="n">kwargs_new</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">CallTransformer</span><span class="o">.</span><span class="n">_expand_Call_dataclass_kwargs</span><span class="p">([</span><span class="n">kwarg_node</span><span class="p">]))</span>
+                        <span class="n">_added_kwargs</span><span class="p">,</span> <span class="n">_kwargs_new</span> <span class="o">=</span> <span class="n">CallTransformer</span><span class="o">.</span><span class="n">_expand_Call_dataclass_kwargs</span><span class="p">([</span><span class="n">kwarg_node</span><span class="p">])</span>
+                        <span class="n">kwargs_new</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_kwargs_new</span><span class="p">)</span>
+                        <span class="n">added_kwargs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_added_kwargs</span><span class="p">)</span>
                     <span class="k">else</span><span class="p">:</span>
                         <span class="n">kwargs_new</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">kwarg_node</span><span class="p">)</span>
+                        <span class="n">added_kwargs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">kwarg_node</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">kwargs_new</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">kwarg</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">kwargs_new</span>
+        <span class="k">return</span> <span class="n">added_kwargs</span><span class="p">,</span> <span class="n">kwargs_new</span>
 
     <span class="nd">@staticmethod</span>
 <div class="viewcode-block" id="CallTransformer.build_Call">
@@ -573,11 +581,17 @@
             <span class="c1"># not related to dataclasses). Necessary for calling further child functions</span>
             <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
             <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>
-            <span class="n">node</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">CallTransformer</span><span class="o">.</span><span class="n">_expand_Call_dataclass_args</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
-            <span class="n">node</span><span class="o">.</span><span class="n">keywords</span> <span class="o">=</span> <span class="n">CallTransformer</span><span class="o">.</span><span class="n">_expand_Call_dataclass_kwargs</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>
+
+            <span class="n">added_args</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">CallTransformer</span><span class="o">.</span><span class="n">_expand_Call_dataclass_args</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+            <span class="n">added_keywords</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">keywords</span> <span class="o">=</span> <span class="n">CallTransformer</span><span class="o">.</span><span class="n">_expand_Call_dataclass_kwargs</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>
+
             <span class="c1"># create variables for the now-expanded dataclass members</span>
-            <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
-            <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">added_args</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="s2">&quot;ptr&quot;</span><span class="p">)</span>
+                <span class="n">build_stmt</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">added_keywords</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="s2">&quot;ptr&quot;</span><span class="p">)</span>
+                <span class="n">build_stmt</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span>
 
         <span class="n">args</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
