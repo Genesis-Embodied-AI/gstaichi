@@ -53,13 +53,14 @@ class Builder:
             if not isinstance(e, GsTaichiCompilationError):
                 msg = ctx.get_pos_info(node) + traceback.format_exc()
                 raise GsTaichiCompilationError(msg) from None
-            msg = (
-                "gstaichi stack trace:\n====\n"
-                + stack_trace
-                + "\n====\n\nYour code:\n"
-                + ctx.get_pos_info(node)
-                + str(e)
-            )
+            msg = f"""gstaichi stack trace:
+===
+{stack_trace}
+===
+
+Your code:
+{ctx.get_pos_info(node)}{e}
+"""
             raise type(e)(msg) from None
 
 
