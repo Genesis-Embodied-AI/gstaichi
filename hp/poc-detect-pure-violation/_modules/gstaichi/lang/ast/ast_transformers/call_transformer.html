@@ -593,20 +593,16 @@
                 <span class="k">assert</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="s2">&quot;ptr&quot;</span><span class="p">)</span>
                 <span class="n">build_stmt</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span>
 
-        <span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="c1"># if any arg violates pure, then node also violates global</span>
-        <span class="n">reason</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># if any arg violates pure, then node also violates pure</span>
         <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">violates_pure</span><span class="p">:</span>
-                <span class="n">reason</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">violates_pure_reason</span>
-                <span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">violates_pure_reason</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">violates_pure_reason</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">keywords</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">kw</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">violates_pure</span><span class="p">:</span>
-                <span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">True</span>
-                <span class="n">reason</span> <span class="o">=</span> <span class="n">kw</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">violates_pure_reason</span>
-        <span class="n">node</span><span class="o">.</span><span class="n">violates_pure_reason</span> <span class="o">=</span> <span class="n">reason</span>
-        <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="o">=</span> <span class="n">violates_pure</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">violates_pure_reason</span> <span class="o">=</span> <span class="n">kw</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">violates_pure_reason</span>
 
         <span class="n">args</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>

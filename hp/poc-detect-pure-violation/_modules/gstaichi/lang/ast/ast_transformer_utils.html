@@ -354,6 +354,7 @@
                 <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;violates_pure&quot;</span><span class="p">):</span>
                     <span class="c1"># assume False until proven otherwise</span>
                     <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="n">node</span><span class="o">.</span><span class="n">violates_pure_reason</span> <span class="o">=</span> <span class="kc">None</span>
                 <span class="k">return</span> <span class="n">res</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">stack_trace</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
