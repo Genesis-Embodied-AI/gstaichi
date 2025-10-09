@@ -1,6 +1,5 @@
 import enum
 import math
-import sys
 
 import numpy as np
 import pytest
