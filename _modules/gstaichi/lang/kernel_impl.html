@@ -970,6 +970,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">materialized_kernels</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compiled_kernel_data_by_key</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_compiled_kernel_data</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">src_ll_cache_observations</span> <span class="o">=</span> <span class="n">SrcLlCacheObservations</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fe_ll_cache_observations</span> <span class="o">=</span> <span class="n">FeLlCacheObservations</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">extract_arguments</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
