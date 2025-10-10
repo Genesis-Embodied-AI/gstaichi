@@ -44,7 +44,7 @@ class FunctionDefTransformer:
             ctx.kernel_args.append(name)
         if annotation == annotations.template or isinstance(annotation, annotations.template):
             assert ctx.global_vars is not None
-            return True, ctx.global_vars[name]
+            return True, ctx.global_vars.get(name, ctx.template_vars.get(name))
         if isinstance(annotation, annotations.sparse_matrix_builder):
             return False, (
                 kernel_arguments.decl_sparse_matrix,

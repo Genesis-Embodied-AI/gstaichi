@@ -277,6 +277,17 @@ class CallTransformer:
                 assert not hasattr(arg, "ptr")
                 build_stmt(ctx, arg)
 
+        # if any arg violates pure, then node also violates pure
+        for arg in node.args:
+            if arg.violates_pure:
+                node.violates_pure_reason = arg.violates_pure_reason
+                node.violates_pure = True
+
+        for kw in node.keywords:
+            if kw.value.violates_pure:
+                node.violates_pure = True
+                node.violates_pure_reason = kw.value.violates_pure_reason
+
         args = []
         for arg in node.args:
             if isinstance(arg, ast.Starred):
