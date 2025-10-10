@@ -164,7 +164,7 @@ def test_pure_validation_builtin_values_inf():
         bar = 2
 
     @ti.kernel(pure=True)
-    def k1() -> ti.i32:
+    def k1() -> ti.f32:
         return ti.math.inf
 
     v = k1()
