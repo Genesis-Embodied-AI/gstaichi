@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         MAC_OS_VERSION: [15]
-        PYTHON_VERSION: ['3.10']
+        PYTHON_VERSION: ['3.10', '3.11', '3.12', '3.13']
     name: Mac OS Build
     runs-on: macos-${{ matrix.MAC_OS_VERSION }}
     steps:
@@ -52,11 +52,10 @@ jobs:
       fail-fast: false
       matrix:
         MAC_OS_VERSION: [15]
-        # PYTHON_VERSION: ['3.10', '3.11', '3.12', '3.13']
-        PYTHON_VERSION: ['3.10']
-        # include:
-        #   - MAC_OS_VERSION: 14
-        #     PYTHON_VERSION: '3.10'
+        PYTHON_VERSION: ['3.10', '3.11', '3.12', '3.13']
+        include:
+          - MAC_OS_VERSION: 14
+            PYTHON_VERSION: '3.10'
     runs-on: macos-${{ matrix.MAC_OS_VERSION }}
     steps:
       - uses: actions/checkout@v4
@@ -86,9 +85,6 @@ jobs:
         run: |
           pip install --prefer-binary --group test
           pip install -r requirements_test_xdist.txt
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        timeout-minutes: 360
       - name: Mac OS X test
         run: |
           bash .github/workflows/scripts_new/macosx/4_test.sh
