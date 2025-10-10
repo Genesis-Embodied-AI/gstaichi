@@ -16,7 +16,6 @@ jobs:
       matrix:
         MAC_OS_VERSION: [15]
         PYTHON_VERSION: ['3.10']
-        # PYTHON_VERSION: ['3.10', '3.11', '3.12', '3.13']
     name: Mac OS Build
     runs-on: macos-${{ matrix.MAC_OS_VERSION }}
     steps:
@@ -38,13 +37,6 @@ jobs:
       - name: Mac OS X build
         run: |
           bash .github/workflows/scripts_new/macosx/2_build.sh
-      - name: 'setup for testing'
-        run: |
-          pip install --prefer-binary --group test
-          pip install -r requirements_test_xdist.txt
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        timeout-minutes: 360
       - uses: actions/upload-artifact@v4
         with:
           name: mac_wheel_${{ matrix.MAC_OS_VERSION }}_${{ steps.set_cp_version.outputs.PYTHON_CP_VERSION }}
@@ -107,7 +99,7 @@ jobs:
     strategy:
       matrix:
         MAC_OS_VERSION: [15]
-        PYTHON_CP_VERSION: [cp310, cp311, cp312, cp313]
+        PYTHON_CP_VERSION: [cp310]
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
