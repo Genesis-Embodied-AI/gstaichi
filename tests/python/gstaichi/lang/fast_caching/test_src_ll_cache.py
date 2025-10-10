@@ -318,7 +318,9 @@ def test_src_ll_cache_self_arg_checked(tmp_path: pathlib.Path) -> None:
 
     my_do = MyDataOriented()
 
-    arch = ti.lang.impl.current_cfg().arch
+    # weirdly, if I don't use the name to get the arch, then on Mac github CI, the value of
+    # arch can change during the below execcution 🤔
+    arch = getattr(ti, ti.lang.impl.current_cfg().arch.name)
 
     # need to initialize up front, in order that config hash doesn't change when we re-init later
     ti.reset()
