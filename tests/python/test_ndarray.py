@@ -833,6 +833,7 @@ def test_scalar_ndarray_oob():
     check_out_of_bound=True,
     gdb_trigger=False,
 )
+# TODO: investigate why this crashes sometimes on Windows
 @pytest.mark.skipif(sys.platform == "win32", reason="Crashes frequently on windows")
 def test_matrix_ndarray_oob():
     @ti.kernel
