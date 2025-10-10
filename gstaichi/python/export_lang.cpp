@@ -12,7 +12,6 @@
 #include "pybind11/pybind11.h"
 #include "pybind11/eigen.h"
 #include "pybind11/numpy.h"
-#include "fp16.h"
 
 #include "gstaichi/ir/expression_ops.h"
 #include "gstaichi/ir/frontend_ir.h"
