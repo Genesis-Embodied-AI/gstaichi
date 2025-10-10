@@ -1,5 +1,4 @@
 import pytest
-import pytest
 
 import gstaichi as ti
 
