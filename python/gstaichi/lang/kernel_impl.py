@@ -910,7 +910,7 @@ class Kernel:
 
                     def get_call_back(u, v):
                         def call_back():
-                            u.copy_(v)
+                            u.data.copy_(v)
 
                         return call_back
 
@@ -928,23 +928,28 @@ class Kernel:
                                 "Non contiguous gradient tensors are not supported, please call tensor.grad.contiguous() before passing it into gstaichi kernel."
                             )
 
-                    tmp = v
-                    if (str(v.device) != "cpu") and not (
-                        str(v.device).startswith("cuda") and gstaichi_arch == _ti_core.Arch.cuda
+                    grad = v.grad
+                    if (v.device.type != "cpu") and not (
+                        v.device.type == "cuda" and gstaichi_arch == _ti_core.Arch.cuda
                     ):
-                        # Getting a torch CUDA tensor on GsTaichi non-cuda arch:
-                        # We just replace it with a CPU tensor and by the end of kernel execution we'll use the
-                        # callback to copy the values back to the original CUDA tensor.
-                        host_v = v.to(device="cpu", copy=True)
-                        tmp = host_v
-                        callbacks.append(get_call_back(v, host_v))
+                        # For a torch tensor to be passed as as input argument (in and/or out) of a taichi kernel, its
+                        # memory must be hosted either on CPU, or on CUDA if and only if GsTaichi is using CUDA backend.
+                        # We just replace it with a CPU tensor and by the end of kernel execution we'll use the callback
+                        # to copy the values back to the original tensor.
+                        v_cpu = v.to(device="cpu")
+                        v, v_orig = v_cpu, v
+                        callbacks.append(get_call_back(v_orig, v))
+                        if grad is not None:
+                            grad_cpu = grad.to(device="cpu")
+                            grad, grad_orig = grad_cpu, grad
+                            callbacks.append(get_call_back(grad_orig, grad))
 
                     launch_ctx.set_arg_external_array_with_shape(
                         indices,
-                        int(tmp.data_ptr()),
-                        tmp.element_size() * tmp.nelement(),
+                        int(v.data_ptr()),
+                        v.element_size() * v.nelement(),
                         array_shape,
-                        int(v.grad.data_ptr()) if v.grad is not None else 0,
+                        int(grad.data_ptr()) if grad is not None else 0,
                     )
                 else:
                     raise GsTaichiRuntimeTypeError(
