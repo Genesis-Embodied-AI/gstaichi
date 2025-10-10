@@ -76,9 +76,7 @@ def validate_cache_key(cache_key: str) -> bool:
     """
     maybe_hashed_function_source_infos = _try_load(cache_key)
     if not maybe_hashed_function_source_infos:
-        print("couldnt load maybe_hashed_function_source_infos")
         return False
-    print("loaded maybe_hashed_function_source_infos", maybe_hashed_function_source_infos)
     return function_hasher.validate_hashed_function_infos(maybe_hashed_function_source_infos)
 
 

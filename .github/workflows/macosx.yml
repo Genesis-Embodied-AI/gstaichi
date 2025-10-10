@@ -81,10 +81,6 @@ jobs:
       - name: Mac OS X install
         run: |
           bash .github/workflows/scripts_new/macosx/3_install.sh
-      - name: 'setup for testing'
-        run: |
-          pip install --prefer-binary --group test
-          pip install -r requirements_test_xdist.txt
       - name: Mac OS X test
         run: |
           bash .github/workflows/scripts_new/macosx/4_test.sh
@@ -95,7 +91,7 @@ jobs:
     strategy:
       matrix:
         MAC_OS_VERSION: [15]
-        PYTHON_CP_VERSION: [cp310]
+        PYTHON_CP_VERSION: [cp310, cp311, cp312, cp313]
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
