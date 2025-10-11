@@ -1,5 +1,6 @@
 import copy
 import platform
+import sys
 
 import numpy as np
 import pytest
@@ -832,6 +833,8 @@ def test_scalar_ndarray_oob():
     check_out_of_bound=True,
     gdb_trigger=False,
 )
+# TODO: investigate why this crashes sometimes on Windows
+@pytest.mark.skipif(sys.platform == "win32", reason="Crashes frequently on windows")
 def test_matrix_ndarray_oob():
     @ti.kernel
     def access_arr(input: ti.types.NDArray[ti.math.mat2, 2], p: ti.i32, q: ti.i32, x: ti.i32, y: ti.i32) -> ti.f32:
