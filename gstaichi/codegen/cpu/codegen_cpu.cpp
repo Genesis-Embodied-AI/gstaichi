@@ -12,10 +12,10 @@
 #include "gstaichi/ir/analysis.h"
 #include "gstaichi/analysis/offline_cache_util.h"
 
-#include "llvm/Support/Host.h"
+#include "llvm/TargetParser/Host.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Transforms/IPO.h"
-#include "llvm/Transforms/IPO/PassManagerBuilder.h"
+// #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h"
 
