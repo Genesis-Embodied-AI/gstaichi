@@ -242,7 +242,7 @@ def test_stack():
     func()
 
 
-@test_utils.test()
+@test_utils.test(require=[ti.extension.adstack])
 def test_if_condition_depend_on_for_loop_index():
     scalar = lambda: ti.field(dtype=ti.f32)
     vec = lambda: ti.Vector.field(3, dtype=ti.f32)

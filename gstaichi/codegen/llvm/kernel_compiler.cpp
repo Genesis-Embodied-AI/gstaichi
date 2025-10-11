@@ -19,10 +19,11 @@ KernelCompiler::IRNodePtr KernelCompiler::compile(
   if (kernel_def.is_accessor && !compile_config.print_accessor_ir) {
     verbose = false;
   }
+  bool use_ad_stack = compile_config.ad_stack_experimental_enabled;
   irpass::compile_to_offloads(ir.get(), compile_config, &kernel_def,
                               /*verbose=*/verbose,
                               /*autodiff_mode=*/kernel_def.autodiff_mode,
-                              /*ad_use_stack=*/true,
+                              /*ad_use_stack=*/use_ad_stack,
                               /*start_from_ast=*/kernel_def.ir_is_ast());
   return ir;
 }

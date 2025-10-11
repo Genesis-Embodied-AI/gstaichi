@@ -1,9 +1,11 @@
+import pytest
+
 import gstaichi as ti
 
 from tests import test_utils
 
 
-@test_utils.test(exclude=[ti.vulkan])
+@test_utils.test(require=ti.extension.adstack)
 def test_loop_grad():
     x = ti.field(ti.f32)
 
@@ -34,9 +36,9 @@ def test_loop_grad():
         assert x.grad[k, 0] == 2 ** (m - 1 - 0)
 
 
-@test_utils.test(exclude=[ti.vulkan])
+@test_utils.test(require=ti.extension.adstack)
+@pytest.mark.skip(reason="not yet supported")
 def test_loop_grad_complex():
-    return  # This case is not supported yet
     x = ti.field(ti.f32)
 
     n = 16

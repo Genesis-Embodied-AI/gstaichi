@@ -157,6 +157,7 @@ user_api[ti] = [
     "int64",
     "int8",
     "is_active",
+    "is_extension_enabled",
     "is_logging_effective",
     "j",
     "jk",
