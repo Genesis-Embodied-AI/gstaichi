@@ -651,6 +651,10 @@ class Kernel:
     def reset(self) -> None:
         self.runtime = impl.get_runtime()
         self.materialized_kernels = {}
+        self.compiled_kernel_data_by_key = {}
+        self._last_compiled_kernel_data = None
+        self.src_ll_cache_observations = SrcLlCacheObservations()
+        self.fe_ll_cache_observations = FeLlCacheObservations()
 
     def extract_arguments(self) -> None:
         sig = inspect.signature(self.func)

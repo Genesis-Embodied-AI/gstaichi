@@ -292,7 +292,84 @@ def test_src_ll_cache_has_return(tmp_path: pathlib.Path, src_ll_cache: bool, ret
         assert proc.returncode == RET_SUCCESS
 
 
-# The following lines are critical for the tests to work. If they are missing, the test will
+@test_utils.test()
+def test_src_ll_cache_self_arg_checked(tmp_path: pathlib.Path) -> None:
+    """
+    Check that modifiying primtiive values in a data oriented object does result
+    in the kernel correctly recompiling to reflect those new values, even with pure on.
+    """
+    ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
+
+    @ti.data_oriented
+    class MyDataOrientedChild:
+        def __init__(self) -> None:
+            self.b = 10
+
+    @ti.data_oriented
+    class MyDataOriented:
+        def __init__(self) -> None:
+            self.a = 3
+            self.child = MyDataOrientedChild()
+
+        @ti.pure
+        @ti.kernel
+        def k1(self) -> tuple[ti.i32, ti.i32]:
+            return self.a, self.child.b
+
+    my_do = MyDataOriented()
+
+    # weirdly, if I don't use the name to get the arch, then on Mac github CI, the value of
+    # arch can change during the below execcution 🤔
+    # TODO: figure out why this is happening, and/or remove arch from python config object (replace
+    # with arch_name and arch_idx for example)
+    arch = getattr(ti, ti.lang.impl.current_cfg().arch.name)
+
+    # need to initialize up front, in order that config hash doesn't change when we re-init later
+    ti.reset()
+    ti.init(arch=arch, offline_cache_file_path=str(tmp_path), offline_cache=True)
+    my_do.a = 5
+    my_do.child.b = 20
+    assert tuple(my_do.k1()) == (5, 20)
+    assert my_do.k1._primal.src_ll_cache_observations.cache_key_generated
+    assert not my_do.k1._primal.src_ll_cache_observations.cache_validated
+
+    ti.reset()
+    ti.init(arch=arch, offline_cache_file_path=str(tmp_path), offline_cache=True)
+    my_do.a = 5
+    assert tuple(my_do.k1()) == (5, 20)
+    assert my_do.k1._primal.src_ll_cache_observations.cache_key_generated
+    assert my_do.k1._primal.src_ll_cache_observations.cache_validated
+
+    ti.reset()
+    ti.init(arch=arch, offline_cache_file_path=str(tmp_path), offline_cache=True)
+    my_do.a = 7
+    assert tuple(my_do.k1()) == (7, 20)
+    assert my_do.k1._primal.src_ll_cache_observations.cache_key_generated
+    assert not my_do.k1._primal.src_ll_cache_observations.cache_validated
+
+    ti.reset()
+    ti.init(arch=arch, offline_cache_file_path=str(tmp_path), offline_cache=True)
+    my_do.a = 7
+    assert tuple(my_do.k1()) == (7, 20)
+    assert my_do.k1._primal.src_ll_cache_observations.cache_key_generated
+    assert my_do.k1._primal.src_ll_cache_observations.cache_validated
+
+    ti.reset()
+    ti.init(arch=arch, offline_cache_file_path=str(tmp_path), offline_cache=True)
+    my_do.child.b = 30
+    assert tuple(my_do.k1()) == (7, 30)
+    assert my_do.k1._primal.src_ll_cache_observations.cache_key_generated
+    assert not my_do.k1._primal.src_ll_cache_observations.cache_validated
+
+    ti.reset()
+    ti.init(arch=arch, offline_cache_file_path=str(tmp_path), offline_cache=True)
+    my_do.child.b = 30
+    assert tuple(my_do.k1()) == (7, 30)
+    assert my_do.k1._primal.src_ll_cache_observations.cache_key_generated
+    assert my_do.k1._primal.src_ll_cache_observations.cache_validated
+
+
+# The following lines are critical for subprocess-using tests to work. If they are missing, the tests will
 # incorrectly pass, without doing anything.
 if __name__ == "__main__":
     globals()[sys.argv[1]](sys.argv[2:])
