@@ -1,3 +1,4 @@
+#include <math.h>
 #include "gstaichi/rhi/metal/metal_device.h"
 #include "gstaichi/rhi/device.h"
 #include "gstaichi/rhi/device_capability.h"
