@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gstaichi.lang.ast.ast_transformer &#8212; GsTaichi 3.0.0 documentation</title>
+    <title>gstaichi.lang.ast.ast_transformer &#8212; GsTaichi 2.7.0 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../../_static/documentation_options.js?v=acc74ff5"></script>
+    <script src="../../../../_static/documentation_options.js?v=dfec817d"></script>
     <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -59,7 +59,7 @@
     <link rel="search" title="Search" href="../../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="3.0.0" />
+  <meta name="docsearch:version" content="2.7.0" />
   </head>
   
   
@@ -121,7 +121,7 @@
   
   
   
-    <p class="title logo__title">GsTaichi 3.0.0 documentation</p>
+    <p class="title logo__title">GsTaichi 2.7.0 documentation</p>
   
 </a></div>
     
@@ -315,7 +315,9 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">ast</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">collections.abc</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">enum</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">ast</span><span class="w"> </span><span class="kn">import</span> <span class="n">unparse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Type</span>
@@ -351,11 +353,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.struct</span><span class="w"> </span><span class="kn">import</span> <span class="n">Struct</span><span class="p">,</span> <span class="n">StructType</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">primitive_types</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.types.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_integral</span>
-
-<div class="viewcode-block" id="AutodiffMode">
-<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer/index.html#gstaichi.lang.ast.ast_transformer.AutodiffMode">[docs]</a>
-<span class="n">AutodiffMode</span> <span class="o">=</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">AutodiffMode</span></div>
-
 
 
 <div class="viewcode-block" id="reshape_list">
@@ -398,10 +395,17 @@
 <div class="viewcode-block" id="ASTTransformer.build_Name">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer/index.html#gstaichi.lang.ast.ast_transformer.ASTTransformer.build_Name">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">build_Name</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">ASTTransformerContext</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">):</span>
-        <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">get_var_by_name</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">violates_pure_reason</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">get_var_by_name</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">stmt</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">expr</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="n">Expr</span><span class="p">):</span>
             <span class="n">node</span><span class="o">.</span><span class="n">ptr</span><span class="o">.</span><span class="n">dbg_info</span> <span class="o">=</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">DebugInfo</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">get_pos_info</span><span class="p">(</span><span class="n">node</span><span class="p">))</span>
             <span class="n">node</span><span class="o">.</span><span class="n">ptr</span><span class="o">.</span><span class="n">ptr</span><span class="o">.</span><span class="n">set_dbg_info</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ptr</span><span class="o">.</span><span class="n">dbg_info</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">is_pure</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ctx</span><span class="o">.</span><span class="n">static_scope_status</span><span class="o">.</span><span class="n">is_in_static_scope</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">Field</span><span class="p">)):</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;[PURE.VIOLATION] WARNING: Accessing global variable </span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ptr</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">violates_pure_reason</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">==</span> <span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">:</span>
+                    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">exception</span><span class="o">.</span><span class="n">GsTaichiCompilationError</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr</span></div>
 
 
@@ -593,6 +597,9 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">ASTTransformer</span><span class="o">.</span><span class="n">is_tuple</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">slice</span><span class="p">):</span>
             <span class="n">node</span><span class="o">.</span><span class="n">slice</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">slice</span><span class="o">.</span><span class="n">ptr</span><span class="p">]</span>
         <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">subscript</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="o">*</span><span class="n">node</span><span class="o">.</span><span class="n">slice</span><span class="o">.</span><span class="n">ptr</span><span class="p">)</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">violates_pure</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span><span class="p">:</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">violates_pure_reason</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">violates_pure_reason</span>
         <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr</span></div>
 
 
@@ -638,7 +645,13 @@
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer/index.html#gstaichi.lang.ast.ast_transformer.ASTTransformer.build_List">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">build_List</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">ASTTransformerContext</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">List</span><span class="p">):</span>
         <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">elts</span><span class="p">)</span>
+        <span class="n">reason</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">elt</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">elts</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">elt</span><span class="o">.</span><span class="n">violates_pure</span><span class="p">:</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">reason</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;list member violates pure &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">elt</span><span class="p">))</span>
         <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="p">[</span><span class="n">elt</span><span class="o">.</span><span class="n">ptr</span> <span class="k">for</span> <span class="n">elt</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">elts</span><span class="p">]</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">violates_pure_reason</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">reason</span><span class="p">)</span> <span class="k">if</span> <span class="n">reason</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr</span></div>
 
 
@@ -1034,6 +1047,8 @@
         <span class="c1"># whether it is a method of Dynamic SNode and build the expression if it is by calling</span>
         <span class="c1"># build_attribute_if_is_dynamic_snode_method. If we find that it is not a method of Dynamic SNode,</span>
         <span class="c1"># we continue to process it as a normal attribute node.</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi</span><span class="w"> </span><span class="kn">import</span> <span class="n">math</span> <span class="k">as</span> <span class="n">ti_math</span>  <span class="c1"># pylint: disable=import-outside-toplevel</span>
+
         <span class="k">try</span><span class="p">:</span>
             <span class="n">build_stmt</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -1082,6 +1097,23 @@
             <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">type</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">fields</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">ptr</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">attr</span><span class="p">)</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">violates_pure</span>
+            <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span><span class="p">:</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">violates_pure_reason</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">violates_pure_reason</span>
+            <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">is_pure</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ctx</span><span class="o">.</span><span class="n">static_scope_status</span><span class="o">.</span><span class="n">is_in_static_scope</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">Field</span><span class="p">)):</span>
+                    <span class="n">violation</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">if</span> <span class="n">violation</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
+                        <span class="n">violation</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="k">if</span> <span class="n">violation</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">ptr</span> <span class="ow">in</span> <span class="p">[</span><span class="n">ti_math</span><span class="p">,</span> <span class="n">math</span><span class="p">,</span> <span class="n">np</span><span class="p">]:</span>
+                        <span class="c1"># ignore this built-in module</span>
+                        <span class="n">violation</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="k">if</span> <span class="n">violation</span><span class="p">:</span>
+                        <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;[PURE.VIOLATION] WARNING: Accessing global var </span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">attr</span><span class="si">}</span><span class="s2"> from outside function scope within pure kernel </span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">violates_pure_reason</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">attr</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">==</span> <span class="n">node</span><span class="o">.</span><span class="n">attr</span><span class="p">:</span>
+                            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="k">raise</span> <span class="n">exception</span><span class="o">.</span><span class="n">GsTaichiCompilationError</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr</span></div>
 
 
@@ -1368,9 +1400,7 @@
 
             <span class="n">for_di</span> <span class="o">=</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">DebugInfo</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">get_pos_info</span><span class="p">(</span><span class="n">node</span><span class="p">))</span>
             <span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="o">.</span><span class="n">begin_frontend_range_for</span><span class="p">(</span><span class="n">loop_var</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="n">begin</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="n">end</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="n">for_di</span><span class="p">)</span>
-            <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
-            <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">-=</span> <span class="mi">1</span>
             <span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="o">.</span><span class="n">end_frontend_range_for</span><span class="p">()</span>
         <span class="k">return</span> <span class="kc">None</span></div>
 
@@ -1416,9 +1446,7 @@
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">targets</span><span class="p">):</span>
                     <span class="n">I</span><span class="o">.</span><span class="n">_assign</span><span class="p">(</span><span class="n">I</span> <span class="o">-</span> <span class="n">target_tmp</span> <span class="o">*</span> <span class="n">ndrange_var</span><span class="o">.</span><span class="n">acc_dimensions</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
-            <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
-            <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">-=</span> <span class="mi">1</span>
             <span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="o">.</span><span class="n">end_frontend_range_for</span><span class="p">()</span>
         <span class="k">return</span> <span class="kc">None</span></div>
 
@@ -1455,9 +1483,7 @@
                 <span class="n">impl</span><span class="o">.</span><span class="n">subscript</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="p">,</span> <span class="n">target_var</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">_assign</span><span class="p">(</span><span class="n">target_tmp</span> <span class="o">+</span> <span class="n">ndrange_var</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
                 <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">ndrange_var</span><span class="o">.</span><span class="n">dimensions</span><span class="p">):</span>
                     <span class="n">I</span><span class="o">.</span><span class="n">_assign</span><span class="p">(</span><span class="n">I</span> <span class="o">-</span> <span class="n">target_tmp</span> <span class="o">*</span> <span class="n">ndrange_var</span><span class="o">.</span><span class="n">acc_dimensions</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
-            <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
-            <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">-=</span> <span class="mi">1</span>
             <span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="o">.</span><span class="n">end_frontend_range_for</span><span class="p">()</span>
         <span class="k">return</span> <span class="kc">None</span></div>
 
@@ -1494,9 +1520,7 @@
                 <span class="n">loop_var</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">iter</span><span class="o">.</span><span class="n">ptr</span>
                 <span class="n">expr_group</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">make_expr_group</span><span class="p">(</span><span class="o">*</span><span class="n">_vars</span><span class="p">)</span>
                 <span class="n">impl</span><span class="o">.</span><span class="n">begin_frontend_struct_for</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="p">,</span> <span class="n">expr_group</span><span class="p">,</span> <span class="n">loop_var</span><span class="p">)</span>
-                <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
-                <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">-=</span> <span class="mi">1</span>
                 <span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="o">.</span><span class="n">end_frontend_struct_for</span><span class="p">()</span>
         <span class="k">return</span> <span class="kc">None</span></div>
 
@@ -1522,9 +1546,7 @@
                 <span class="n">node</span><span class="o">.</span><span class="n">iter</span><span class="o">.</span><span class="n">ptr</span><span class="o">.</span><span class="n">_type</span><span class="p">,</span>
                 <span class="n">_ti_core</span><span class="o">.</span><span class="n">DebugInfo</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">get_current_src_info</span><span class="p">()),</span>
             <span class="p">)</span>
-            <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
-            <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">-=</span> <span class="mi">1</span>
             <span class="n">ctx</span><span class="o">.</span><span class="n">mesh</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="o">.</span><span class="n">end_frontend_mesh_for</span><span class="p">()</span>
         <span class="k">return</span> <span class="kc">None</span></div>
@@ -1558,9 +1580,7 @@
             <span class="n">entry_expr</span><span class="o">.</span><span class="n">type_check</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">prog</span><span class="o">.</span><span class="n">config</span><span class="p">())</span>
             <span class="n">mesh_idx</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">MeshElementFieldProxy</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">mesh</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">iter</span><span class="o">.</span><span class="n">ptr</span><span class="o">.</span><span class="n">to_element_type</span><span class="p">,</span> <span class="n">entry_expr</span><span class="p">)</span>
             <span class="n">ctx</span><span class="o">.</span><span class="n">create_variable</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">mesh_idx</span><span class="p">)</span>
-            <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
-            <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">-=</span> <span class="mi">1</span>
             <span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="o">.</span><span class="n">end_frontend_range_for</span><span class="p">()</span>
 
         <span class="k">return</span> <span class="kc">None</span></div>
@@ -1601,8 +1621,6 @@
                 <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">iter</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">)</span>
                 <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">iter</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s2">&quot;range&quot;</span>
             <span class="p">):</span>
-                <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">autodiff_mode</span> <span class="o">==</span> <span class="n">AutodiffMode</span><span class="o">.</span><span class="n">REVERSE</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ctx</span><span class="o">.</span><span class="n">adstack_enabled</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">exception</span><span class="o">.</span><span class="n">GsTaichiCompilationError</span><span class="p">(</span><span class="s2">&quot;Cannot use non static range in Backwards mode&quot;</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">ASTTransformer</span><span class="o">.</span><span class="n">build_range_for</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">iter</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">IfExp</span><span class="p">):</span>
                 <span class="c1"># Handle inline if expression as the top level iterator expression, e.g.:</span>

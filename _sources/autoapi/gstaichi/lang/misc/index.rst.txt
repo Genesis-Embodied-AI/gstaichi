@@ -51,7 +51,6 @@ Functions
    gstaichi.lang.misc.loop_config
    gstaichi.lang.misc.global_thread_idx
    gstaichi.lang.misc.mesh_patch_idx
-   gstaichi.lang.misc.is_extension_enabled
 
 
 Module Contents
@@ -371,12 +370,5 @@ Module Contents
    only available for backends supporting `ti.extension.mesh` and to use within mesh-for loop.
 
    Related to https://github.com/taichi-dev/gstaichi/issues/3608
-
-
-.. py:function:: is_extension_enabled(ext: gstaichi._lib.core.gstaichi_python.Extension) -> bool
-
-   Directly returns whether extension is enabled, without needing to
-   pass in current architecture. Also takes into account config, in the case
-   of adstack
 
 

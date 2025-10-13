@@ -4,14 +4,6 @@ gstaichi.lang.ast.ast_transformer_utils
 .. py:module:: gstaichi.lang.ast.ast_transformer_utils
 
 
-Attributes
-----------
-
-.. autoapisummary::
-
-   gstaichi.lang.ast.ast_transformer_utils.AutodiffMode
-
-
 Classes
 -------
 
@@ -28,6 +20,7 @@ Classes
    gstaichi.lang.ast.ast_transformer_utils.LoopScopeGuard
    gstaichi.lang.ast.ast_transformer_utils.NonStaticIfGuard
    gstaichi.lang.ast.ast_transformer_utils.ReturnStatus
+   gstaichi.lang.ast.ast_transformer_utils.PureViolation
    gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext
 
 
@@ -41,8 +34,6 @@ Functions
 
 Module Contents
 ---------------
-
-.. py:data:: AutodiffMode
 
 .. py:class:: Builder
 
@@ -161,7 +152,13 @@ Module Contents
 
 
 
-.. py:class:: ASTTransformerContext(excluded_parameters, end_lineno: int, is_kernel: bool, func: Func | Kernel, arg_features: list[tuple[Any, Ellipsis]] | None, global_vars: dict[str, Any], argument_data, file: str, src: list[str], start_lineno: int, ast_builder: gstaichi._lib.core.gstaichi_python.ASTBuilder | None, is_real_function: bool, autodiff_mode: AutodiffMode)
+.. py:class:: PureViolation
+
+   .. py:attribute:: var_name
+      :type:  str
+
+
+.. py:class:: ASTTransformerContext(excluded_parameters, end_lineno: int, is_kernel: bool, func: Func | Kernel, arg_features: list[tuple[Any, Ellipsis]] | None, global_vars: dict[str, Any], template_vars: dict[str, Any], is_pure: bool, argument_data, file: str, src: list[str], start_lineno: int, ast_builder: gstaichi._lib.core.gstaichi_python.ASTBuilder | None, is_real_function: bool)
 
    .. py:attribute:: func
 
@@ -193,6 +190,12 @@ Module Contents
 
 
    .. py:attribute:: global_vars
+
+
+   .. py:attribute:: template_vars
+
+
+   .. py:attribute:: is_pure
 
 
    .. py:attribute:: argument_data
@@ -261,19 +264,6 @@ Module Contents
 
 
 
-   .. py:attribute:: autodiff_mode
-
-
-   .. py:attribute:: loop_depth
-      :type:  int
-      :value: 0
-
-
-
-   .. py:attribute:: adstack_enabled
-      :type:  bool
-
-
    .. py:method:: variable_scope_guard()
 
 
@@ -319,7 +309,7 @@ Module Contents
    .. py:method:: check_loop_var(loop_var: str) -> None
 
 
-   .. py:method:: get_var_by_name(name: str) -> Any
+   .. py:method:: get_var_by_name(name: str) -> tuple[bool, Any, str | None]
 
 
    .. py:method:: get_pos_info(node: ast.AST) -> str
