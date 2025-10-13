@@ -9,6 +9,7 @@ Attributes
 
 .. autoapisummary::
 
+   gstaichi.lang.ast.ast_transformer.AutodiffMode
    gstaichi.lang.ast.ast_transformer.build_stmt
 
 
@@ -32,6 +33,8 @@ Functions
 
 Module Contents
 ---------------
+
+.. py:data:: AutodiffMode
 
 .. py:function:: reshape_list(flat_list: list[Any], target_shape: Sequence[int]) -> list[Any]
 

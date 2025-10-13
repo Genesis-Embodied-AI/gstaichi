@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>gstaichi.lang.misc &#8212; GsTaichi 2.7.0 documentation</title>
+    <title>gstaichi.lang.misc &#8212; GsTaichi 3.0.0 documentation</title>
   
   
   
@@ -43,7 +43,7 @@
   <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../../_static/documentation_options.js?v=dfec817d"></script>
+    <script src="../../../../_static/documentation_options.js?v=acc74ff5"></script>
     <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -62,7 +62,7 @@
     <link rel="prev" title="gstaichi.lang.mesh" href="../mesh/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.7.0" />
+  <meta name="docsearch:version" content="3.0.0" />
   </head>
   
   
@@ -124,7 +124,7 @@
   
   
   
-    <p class="title logo__title">GsTaichi 2.7.0 documentation</p>
+    <p class="title logo__title">GsTaichi 3.0.0 documentation</p>
   
 </a></div>
     
@@ -531,6 +531,9 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#gstaichi.lang.misc.mesh_patch_idx" title="gstaichi.lang.misc.mesh_patch_idx"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mesh_patch_idx</span></code></a>()</p></td>
 <td><p>Returns the internal mesh patch id of this running thread,</p></td>
 </tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.misc.is_extension_enabled" title="gstaichi.lang.misc.is_extension_enabled"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_extension_enabled</span></code></a>(→ bool)</p></td>
+<td><p>Directly returns whether extension is enabled, without needing to</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -917,6 +920,14 @@ only available for backends supporting <cite>ti.extension.mesh</cite> and to use
 <p>Related to <a class="github reference external" href="https://github.com/taichi-dev/gstaichi/issues/3608">taichi-dev/gstaichi#3608</a></p>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="gstaichi.lang.misc.is_extension_enabled">
+<span class="sig-prename descclassname"><span class="pre">gstaichi.lang.misc.</span></span><span class="sig-name descname"><span class="pre">is_extension_enabled</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ext</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">gstaichi._lib.core.gstaichi_python.Extension</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../../_modules/gstaichi/lang/misc.html#is_extension_enabled"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.misc.is_extension_enabled" title="Link to this definition">#</a></dt>
+<dd><p>Directly returns whether extension is enabled, without needing to
+pass in current architecture. Also takes into account config, in the case
+of adstack</p>
+</dd></dl>
+
 </section>
 </section>
 
@@ -1005,6 +1016,7 @@ only available for backends supporting <cite>ti.extension.mesh</cite> and to use
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.misc.loop_config"><code class="docutils literal notranslate"><span class="pre">loop_config()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.misc.global_thread_idx"><code class="docutils literal notranslate"><span class="pre">global_thread_idx()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.misc.mesh_patch_idx"><code class="docutils literal notranslate"><span class="pre">mesh_patch_idx()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.misc.is_extension_enabled"><code class="docutils literal notranslate"><span class="pre">is_extension_enabled()</span></code></a></li>
 </ul>
 </li>
 </ul>
