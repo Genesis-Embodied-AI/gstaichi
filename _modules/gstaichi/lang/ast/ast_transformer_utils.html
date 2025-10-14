@@ -320,6 +320,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">textwrap</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextWrapper</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi._lib</span><span class="w"> </span><span class="kn">import</span> <span class="n">core</span> <span class="k">as</span> <span class="n">_ti_core</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi._lib.core.gstaichi_python</span><span class="w"> </span><span class="kn">import</span> <span class="n">ASTBuilder</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang</span><span class="w"> </span><span class="kn">import</span> <span class="n">impl</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang._ndrange</span><span class="w"> </span><span class="kn">import</span> <span class="n">ndrange</span>
@@ -330,6 +331,12 @@
     <span class="n">GsTaichiSyntaxError</span><span class="p">,</span>
     <span class="n">handle_exception_from_cpp</span><span class="p">,</span>
 <span class="p">)</span>
+
+<div class="viewcode-block" id="AutodiffMode">
+<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.AutodiffMode">[docs]</a>
+<span class="n">AutodiffMode</span> <span class="o">=</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">AutodiffMode</span></div>
+
+
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.kernel_impl</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -599,7 +606,10 @@
         <span class="n">start_lineno</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">ast_builder</span><span class="p">:</span> <span class="n">ASTBuilder</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">is_real_function</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">autodiff_mode</span><span class="p">:</span> <span class="n">AutodiffMode</span><span class="p">,</span>
     <span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi</span><span class="w"> </span><span class="kn">import</span> <span class="n">extension</span>  <span class="c1"># pylint: disable=import-outside-toplevel</span>
+
 <div class="viewcode-block" id="ASTTransformerContext.func">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.func">[docs]</a>
         <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span></div>
@@ -712,6 +722,25 @@
 <div class="viewcode-block" id="ASTTransformerContext.only_parse_function_def">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.only_parse_function_def">[docs]</a>
         <span class="bp">self</span><span class="o">.</span><span class="n">only_parse_function_def</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="ASTTransformerContext.autodiff_mode">
+<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.autodiff_mode">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">autodiff_mode</span> <span class="o">=</span> <span class="n">autodiff_mode</span></div>
+
+<div class="viewcode-block" id="ASTTransformerContext.loop_depth">
+<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.loop_depth">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loop_depth</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="ASTTransformerContext.adstack_enabled">
+<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.adstack_enabled">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adstack_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">_ti_core</span><span class="o">.</span><span class="n">is_extension_supported</span><span class="p">(</span>
+                <span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span><span class="o">.</span><span class="n">arch</span><span class="p">,</span>
+                <span class="n">extension</span><span class="o">.</span><span class="n">adstack</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="ow">and</span> <span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span><span class="o">.</span><span class="n">ad_stack_experimental_enabled</span>
+        <span class="p">)</span></div>
 
 
     <span class="c1"># e.g.: FunctionDef, Module, Global</span>

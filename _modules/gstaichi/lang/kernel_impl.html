@@ -620,6 +620,8 @@
     <span class="k">assert</span> <span class="n">current_kernel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
     <span class="n">current_kernel</span><span class="o">.</span><span class="n">visited_functions</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">function_source_info</span><span class="p">)</span>
 
+    <span class="n">autodiff_mode</span> <span class="o">=</span> <span class="n">current_kernel</span><span class="o">.</span><span class="n">autodiff_mode</span>
+
     <span class="n">gstaichi_callable</span> <span class="o">=</span> <span class="n">current_kernel</span><span class="o">.</span><span class="n">gstaichi_callable</span>
     <span class="n">is_pure</span> <span class="o">=</span> <span class="n">gstaichi_callable</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">gstaichi_callable</span><span class="o">.</span><span class="n">is_pure</span>
     <span class="n">global_vars</span> <span class="o">=</span> <span class="n">_get_global_vars</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
@@ -649,6 +651,7 @@
         <span class="n">file</span><span class="o">=</span><span class="n">function_source_info</span><span class="o">.</span><span class="n">filepath</span><span class="p">,</span>
         <span class="n">ast_builder</span><span class="o">=</span><span class="n">ast_builder</span><span class="p">,</span>
         <span class="n">is_real_function</span><span class="o">=</span><span class="n">is_real_function</span><span class="p">,</span>
+        <span class="n">autodiff_mode</span><span class="o">=</span><span class="n">autodiff_mode</span><span class="p">,</span>
     <span class="p">)</span>
 
 

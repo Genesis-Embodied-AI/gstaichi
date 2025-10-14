@@ -4,6 +4,14 @@ gstaichi.lang.ast.ast_transformer_utils
 .. py:module:: gstaichi.lang.ast.ast_transformer_utils
 
 
+Attributes
+----------
+
+.. autoapisummary::
+
+   gstaichi.lang.ast.ast_transformer_utils.AutodiffMode
+
+
 Classes
 -------
 
@@ -34,6 +42,8 @@ Functions
 
 Module Contents
 ---------------
+
+.. py:data:: AutodiffMode
 
 .. py:class:: Builder
 
@@ -158,7 +168,7 @@ Module Contents
       :type:  str
 
 
-.. py:class:: ASTTransformerContext(excluded_parameters, end_lineno: int, is_kernel: bool, func: Func | Kernel, arg_features: list[tuple[Any, Ellipsis]] | None, global_vars: dict[str, Any], template_vars: dict[str, Any], is_pure: bool, argument_data, file: str, src: list[str], start_lineno: int, ast_builder: gstaichi._lib.core.gstaichi_python.ASTBuilder | None, is_real_function: bool)
+.. py:class:: ASTTransformerContext(excluded_parameters, end_lineno: int, is_kernel: bool, func: Func | Kernel, arg_features: list[tuple[Any, Ellipsis]] | None, global_vars: dict[str, Any], template_vars: dict[str, Any], is_pure: bool, argument_data, file: str, src: list[str], start_lineno: int, ast_builder: gstaichi._lib.core.gstaichi_python.ASTBuilder | None, is_real_function: bool, autodiff_mode: AutodiffMode)
 
    .. py:attribute:: func
 
@@ -262,6 +272,19 @@ Module Contents
       :type:  bool
       :value: False
 
+
+
+   .. py:attribute:: autodiff_mode
+
+
+   .. py:attribute:: loop_depth
+      :type:  int
+      :value: 0
+
+
+
+   .. py:attribute:: adstack_enabled
+      :type:  bool
 
 
    .. py:method:: variable_scope_guard()

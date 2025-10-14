@@ -319,6 +319,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi</span><span class="w"> </span><span class="kn">import</span> <span class="n">_logging</span><span class="p">,</span> <span class="n">_snode</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi._lib</span><span class="w"> </span><span class="kn">import</span> <span class="n">core</span> <span class="k">as</span> <span class="n">_ti_core</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi._lib.core.gstaichi_python</span><span class="w"> </span><span class="kn">import</span> <span class="n">Extension</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang</span><span class="w"> </span><span class="kn">import</span> <span class="n">impl</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.expr</span><span class="w"> </span><span class="kn">import</span> <span class="n">Expr</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.impl</span><span class="w"> </span><span class="kn">import</span> <span class="n">axes</span><span class="p">,</span> <span class="n">get_runtime</span>
@@ -1160,6 +1161,21 @@
     <span class="k">return</span> <span class="p">[</span><span class="n">_ti_core</span><span class="o">.</span><span class="n">host_arch</span><span class="p">()]</span>
 
 
+<div class="viewcode-block" id="is_extension_enabled">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/misc/index.html#gstaichi.lang.misc.is_extension_enabled">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_extension_enabled</span><span class="p">(</span><span class="n">ext</span><span class="p">:</span> <span class="n">Extension</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Directly returns whether extension is enabled, without needing to</span>
+<span class="sd">    pass in current architecture. Also takes into account config, in the case</span>
+<span class="sd">    of adstack</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">arch</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span><span class="o">.</span><span class="n">arch</span>
+    <span class="k">if</span> <span class="n">ext</span> <span class="o">==</span> <span class="n">extension</span><span class="o">.</span><span class="n">adstack</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">is_extension_supported</span><span class="p">(</span><span class="n">arch</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span> <span class="ow">and</span> <span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span><span class="o">.</span><span class="n">ad_stack_experimental_enabled</span>
+    <span class="k">return</span> <span class="n">is_extension_supported</span><span class="p">(</span><span class="n">arch</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span></div>
+
+
+
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;i&quot;</span><span class="p">,</span>
     <span class="s2">&quot;ij&quot;</span><span class="p">,</span>
@@ -1196,6 +1212,7 @@
     <span class="s2">&quot;no_activate&quot;</span><span class="p">,</span>
     <span class="s2">&quot;reset&quot;</span><span class="p">,</span>
     <span class="s2">&quot;mesh_patch_idx&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;is_extension_enabled&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 </pre></div>
 

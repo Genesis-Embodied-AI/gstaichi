@@ -421,7 +421,10 @@
 <h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.ast.ast_transformer.build_stmt" title="gstaichi.lang.ast.ast_transformer.build_stmt"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_stmt</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.ast.ast_transformer.AutodiffMode" title="gstaichi.lang.ast.ast_transformer.AutodiffMode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AutodiffMode</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#gstaichi.lang.ast.ast_transformer.build_stmt" title="gstaichi.lang.ast.ast_transformer.build_stmt"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_stmt</span></code></a></p></td>
 <td><p></p></td>
 </tr>
 </tbody>
@@ -458,6 +461,11 @@
 </section>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="gstaichi.lang.ast.ast_transformer.AutodiffMode">
+<span class="sig-prename descclassname"><span class="pre">gstaichi.lang.ast.ast_transformer.</span></span><span class="sig-name descname"><span class="pre">AutodiffMode</span></span><a class="reference internal" href="../../../../../_modules/gstaichi/lang/ast/ast_transformer.html#AutodiffMode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.ast.ast_transformer.AutodiffMode" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="gstaichi.lang.ast.ast_transformer.reshape_list">
 <span class="sig-prename descclassname"><span class="pre">gstaichi.lang.ast.ast_transformer.</span></span><span class="sig-name descname"><span class="pre">reshape_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">flat_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/gstaichi/lang/ast/ast_transformer.html#reshape_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.ast.ast_transformer.reshape_list" title="Link to this definition">#</a></dt>
@@ -888,6 +896,7 @@ See also: <a class="reference external" href="https://docs.python.org/3/library/
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer.AutodiffMode"><code class="docutils literal notranslate"><span class="pre">AutodiffMode</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer.reshape_list"><code class="docutils literal notranslate"><span class="pre">reshape_list()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer.boundary_type_cast_warning"><code class="docutils literal notranslate"><span class="pre">boundary_type_cast_warning()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer.ASTTransformer"><code class="docutils literal notranslate"><span class="pre">ASTTransformer</span></code></a><ul class="nav section-nav flex-column">
