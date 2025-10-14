@@ -292,17 +292,6 @@ def _get_tree_and_ctx(
     func_body = tree.body[0]
     func_body.decorator_list = []  # type: ignore , kick that can down the road...
 
-    global_vars = _get_global_vars(self.func)
-
-    if is_kernel or is_real_function:
-        _populate_global_vars_for_templates(
-            template_slot_locations=self.template_slot_locations,
-            argument_metas=self.arg_metas,
-            global_vars=global_vars,
-            fn=self.func,
-            py_args=args,
-        )
-
     if current_kernel is not None:  # Kernel
         current_kernel.kernel_function_info = function_source_info
     if current_kernel is None:
@@ -311,12 +300,29 @@ def _get_tree_and_ctx(
     current_kernel.visited_functions.add(function_source_info)
 
     autodiff_mode = current_kernel.autodiff_mode
+
+    gstaichi_callable = current_kernel.gstaichi_callable
+    is_pure = gstaichi_callable is not None and gstaichi_callable.is_pure
+    global_vars = _get_global_vars(self.func)
+
+    template_vars = {}
+    if is_kernel or is_real_function:
+        _populate_global_vars_for_templates(
+            template_slot_locations=self.template_slot_locations,
+            argument_metas=self.arg_metas,
+            global_vars=template_vars,
+            fn=self.func,
+            py_args=args,
+        )
+
     return tree, ASTTransformerContext(
         excluded_parameters=excluded_parameters,
         is_kernel=is_kernel,
+        is_pure=is_pure,
         func=self,
         arg_features=arg_features,
         global_vars=global_vars,
+        template_vars=template_vars,
         argument_data=args,
         src=src,
         start_lineno=function_source_info.start_lineno,

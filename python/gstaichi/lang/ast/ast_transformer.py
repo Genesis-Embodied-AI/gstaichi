@@ -3,7 +3,9 @@
 import ast
 import collections.abc
 import dataclasses
+import enum
 import itertools
+import math
 import warnings
 from ast import unparse
 from typing import Any, Sequence, Type
@@ -73,10 +75,17 @@ def boundary_type_cast_warning(expression: Expr) -> None:
 class ASTTransformer(Builder):
     @staticmethod
     def build_Name(ctx: ASTTransformerContext, node: ast.Name):
-        node.ptr = ctx.get_var_by_name(node.id)
+        node.violates_pure, node.ptr, node.violates_pure_reason = ctx.get_var_by_name(node.id)
         if isinstance(node, (ast.stmt, ast.expr)) and isinstance(node.ptr, Expr):
             node.ptr.dbg_info = _ti_core.DebugInfo(ctx.get_pos_info(node))
             node.ptr.ptr.set_dbg_info(node.ptr.dbg_info)
+        if ctx.is_pure and node.violates_pure and not ctx.static_scope_status.is_in_static_scope:
+            if isinstance(node.ptr, (float, int, Field)):
+                message = f"[PURE.VIOLATION] WARNING: Accessing global variable {node.id} {type(node.ptr)} {node.violates_pure_reason}"
+                if node.id.upper() == node.id:
+                    warnings.warn(message)
+                else:
+                    raise exception.GsTaichiCompilationError(message)
         return node.ptr
 
     @staticmethod
@@ -244,6 +253,9 @@ class ASTTransformer(Builder):
         if not ASTTransformer.is_tuple(node.slice):
             node.slice.ptr = [node.slice.ptr]
         node.ptr = impl.subscript(ctx.ast_builder, node.value.ptr, *node.slice.ptr)
+        node.violates_pure = node.value.violates_pure
+        if node.violates_pure:
+            node.violates_pure_reason = node.value.violates_pure_reason
         return node.ptr
 
     @staticmethod
@@ -277,7 +289,13 @@ class ASTTransformer(Builder):
     @staticmethod
     def build_List(ctx: ASTTransformerContext, node: ast.List):
         build_stmts(ctx, node.elts)
+        reason = []
+        for elt in node.elts:
+            if elt.violates_pure:
+                node.violates_pure = True
+                reason.append("list member violates pure " + str(elt))
         node.ptr = [elt.ptr for elt in node.elts]
+        node.violates_pure_reason = "\n".join(reason) if reason else None
         return node.ptr
 
     @staticmethod
@@ -604,6 +622,8 @@ class ASTTransformer(Builder):
         # whether it is a method of Dynamic SNode and build the expression if it is by calling
         # build_attribute_if_is_dynamic_snode_method. If we find that it is not a method of Dynamic SNode,
         # we continue to process it as a normal attribute node.
+        from gstaichi import math as ti_math  # pylint: disable=import-outside-toplevel
+
         try:
             build_stmt(ctx, node.value)
         except Exception as e:
@@ -652,6 +672,23 @@ class ASTTransformer(Builder):
             node.ptr = next(field.type for field in dataclasses.fields(node.value.ptr))
         else:
             node.ptr = getattr(node.value.ptr, node.attr)
+            node.violates_pure = node.value.violates_pure
+            if node.violates_pure:
+                node.violates_pure_reason = node.value.violates_pure_reason
+            if ctx.is_pure and node.violates_pure and not ctx.static_scope_status.is_in_static_scope:
+                if isinstance(node.ptr, (int, float, Field)):
+                    violation = True
+                    if violation and isinstance(node.ptr, enum.Enum):
+                        violation = False
+                    if violation and node.value.ptr in [ti_math, math, np]:
+                        # ignore this built-in module
+                        violation = False
+                    if violation:
+                        message = f"[PURE.VIOLATION] WARNING: Accessing global var {node.attr} from outside function scope within pure kernel {node.value.violates_pure_reason}"
+                        if node.attr.upper() == node.attr:
+                            warnings.warn(message)
+                        else:
+                            raise exception.GsTaichiCompilationError(message)
         return node.ptr
 
     @staticmethod

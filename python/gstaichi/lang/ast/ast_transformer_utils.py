@@ -2,6 +2,7 @@
 
 import ast
 import builtins
+import dataclasses
 import traceback
 from enum import Enum
 from textwrap import TextWrapper
@@ -39,8 +40,14 @@ class Builder:
                 raise GsTaichiSyntaxError(error_msg)
             info = ctx.get_pos_info(node) if isinstance(node, (ast.stmt, ast.expr)) else ""
             with impl.get_runtime().src_info_guard(info):
-                return method(ctx, node)
+                res = method(ctx, node)
+                if not hasattr(node, "violates_pure"):
+                    # assume False until proven otherwise
+                    node.violates_pure = False
+                    node.violates_pure_reason = None
+                return res
         except Exception as e:
+            stack_trace = traceback.format_exc()
             if impl.get_runtime().print_full_traceback:
                 raise e
             if ctx.raised or not isinstance(node, (ast.stmt, ast.expr)):
@@ -50,7 +57,14 @@ class Builder:
             if not isinstance(e, GsTaichiCompilationError):
                 msg = ctx.get_pos_info(node) + traceback.format_exc()
                 raise GsTaichiCompilationError(msg) from None
-            msg = ctx.get_pos_info(node) + str(e)
+            msg = f"""gstaichi stack trace:
+===
+{stack_trace}
+===
+
+Your code:
+{ctx.get_pos_info(node)}{e}
+"""
             raise type(e)(msg) from None
 
 
@@ -157,6 +171,11 @@ class ReturnStatus(Enum):
     ReturnedValue = 2
 
 
+@dataclasses.dataclass(frozen=True)
+class PureViolation:
+    var_name: str
+
+
 class ASTTransformerContext:
     def __init__(
         self,
@@ -166,6 +185,8 @@ class ASTTransformerContext:
         func: "Func | Kernel",
         arg_features: list[tuple[Any, ...]] | None,
         global_vars: dict[str, Any],
+        template_vars: dict[str, Any],
+        is_pure: bool,
         argument_data,
         file: str,
         src: list[str],
@@ -184,6 +205,8 @@ class ASTTransformerContext:
         self.arg_features = arg_features
         self.returns = None
         self.global_vars = global_vars
+        self.template_vars = template_vars
+        self.is_pure = is_pure
         self.argument_data = argument_data
         self.return_data: tuple[Any, ...] | Any | None = None
         self.file = file
@@ -282,22 +305,35 @@ class ASTTransformerContext:
                 f"Variable '{loop_var}' is already declared in the outer scope and cannot be used as loop variable"
             )
 
-    def get_var_by_name(self, name: str) -> Any:
+    def get_var_by_name(self, name: str) -> tuple[bool, Any, str | None]:
         for s in reversed(self.local_scopes):
             if name in s:
-                return s[name]
-        if name in self.global_vars:
+                val = s[name]
+                return False, val, None
+
+        reason = None
+        violates_pure, found_name = False, False
+        if name in self.template_vars:
+            var = self.template_vars[name]
+            found_name = True
+        elif name in self.global_vars:
             var = self.global_vars[name]
+            reason = f"{name} is in global vars, therefore violates pure"
+            violates_pure = True
+            found_name = True
+
+        if found_name:
             from gstaichi.lang.matrix import (  # pylint: disable-msg=C0415
                 Matrix,
                 make_matrix,
             )
 
             if isinstance(var, Matrix):
-                return make_matrix(var.to_list())
-            return var
+                return violates_pure, make_matrix(var.to_list()), reason
+            return violates_pure, var, reason
+
         try:
-            return getattr(builtins, name)
+            return False, getattr(builtins, name), None
         except AttributeError:
             raise GsTaichiNameError(f'Name "{name}" is not defined')
 
