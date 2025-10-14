@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gstaichi.lang.kernel_impl &#8212; GsTaichi 2.6.2 documentation</title>
+    <title>gstaichi.lang.kernel_impl &#8212; GsTaichi 3.0.0 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../_static/documentation_options.js?v=3db9c557"></script>
+    <script src="../../../_static/documentation_options.js?v=acc74ff5"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -59,7 +59,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.6.2" />
+  <meta name="docsearch:version" content="3.0.0" />
   </head>
   
   
@@ -121,7 +121,7 @@
   
   
   
-    <p class="title logo__title">GsTaichi 2.6.2 documentation</p>
+    <p class="title logo__title">GsTaichi 3.0.0 documentation</p>
   
 </a></div>
     
@@ -613,17 +613,6 @@
     <span class="n">func_body</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">body</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">func_body</span><span class="o">.</span><span class="n">decorator_list</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># type: ignore , kick that can down the road...</span>
 
-    <span class="n">global_vars</span> <span class="o">=</span> <span class="n">_get_global_vars</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">is_kernel</span> <span class="ow">or</span> <span class="n">is_real_function</span><span class="p">:</span>
-        <span class="n">_populate_global_vars_for_templates</span><span class="p">(</span>
-            <span class="n">template_slot_locations</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">template_slot_locations</span><span class="p">,</span>
-            <span class="n">argument_metas</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">,</span>
-            <span class="n">global_vars</span><span class="o">=</span><span class="n">global_vars</span><span class="p">,</span>
-            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">,</span>
-            <span class="n">py_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
-        <span class="p">)</span>
-
     <span class="k">if</span> <span class="n">current_kernel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># Kernel</span>
         <span class="n">current_kernel</span><span class="o">.</span><span class="n">kernel_function_info</span> <span class="o">=</span> <span class="n">function_source_info</span>
     <span class="k">if</span> <span class="n">current_kernel</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -632,12 +621,29 @@
     <span class="n">current_kernel</span><span class="o">.</span><span class="n">visited_functions</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">function_source_info</span><span class="p">)</span>
 
     <span class="n">autodiff_mode</span> <span class="o">=</span> <span class="n">current_kernel</span><span class="o">.</span><span class="n">autodiff_mode</span>
+
+    <span class="n">gstaichi_callable</span> <span class="o">=</span> <span class="n">current_kernel</span><span class="o">.</span><span class="n">gstaichi_callable</span>
+    <span class="n">is_pure</span> <span class="o">=</span> <span class="n">gstaichi_callable</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">gstaichi_callable</span><span class="o">.</span><span class="n">is_pure</span>
+    <span class="n">global_vars</span> <span class="o">=</span> <span class="n">_get_global_vars</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
+
+    <span class="n">template_vars</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">is_kernel</span> <span class="ow">or</span> <span class="n">is_real_function</span><span class="p">:</span>
+        <span class="n">_populate_global_vars_for_templates</span><span class="p">(</span>
+            <span class="n">template_slot_locations</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">template_slot_locations</span><span class="p">,</span>
+            <span class="n">argument_metas</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">,</span>
+            <span class="n">global_vars</span><span class="o">=</span><span class="n">template_vars</span><span class="p">,</span>
+            <span class="n">fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">,</span>
+            <span class="n">py_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+        <span class="p">)</span>
+
     <span class="k">return</span> <span class="n">tree</span><span class="p">,</span> <span class="n">ASTTransformerContext</span><span class="p">(</span>
         <span class="n">excluded_parameters</span><span class="o">=</span><span class="n">excluded_parameters</span><span class="p">,</span>
         <span class="n">is_kernel</span><span class="o">=</span><span class="n">is_kernel</span><span class="p">,</span>
+        <span class="n">is_pure</span><span class="o">=</span><span class="n">is_pure</span><span class="p">,</span>
         <span class="n">func</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
         <span class="n">arg_features</span><span class="o">=</span><span class="n">arg_features</span><span class="p">,</span>
         <span class="n">global_vars</span><span class="o">=</span><span class="n">global_vars</span><span class="p">,</span>
+        <span class="n">template_vars</span><span class="o">=</span><span class="n">template_vars</span><span class="p">,</span>
         <span class="n">argument_data</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
         <span class="n">src</span><span class="o">=</span><span class="n">src</span><span class="p">,</span>
         <span class="n">start_lineno</span><span class="o">=</span><span class="n">function_source_info</span><span class="o">.</span><span class="n">start_lineno</span><span class="p">,</span>

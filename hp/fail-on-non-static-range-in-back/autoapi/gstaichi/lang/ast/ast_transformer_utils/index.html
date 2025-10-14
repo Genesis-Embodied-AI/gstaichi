@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>gstaichi.lang.ast.ast_transformer_utils &#8212; GsTaichi 2.6.2 documentation</title>
+    <title>gstaichi.lang.ast.ast_transformer_utils &#8212; GsTaichi 3.0.0 documentation</title>
   
   
   
@@ -43,7 +43,7 @@
   <link rel="preload" as="script" href="../../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../../../_static/documentation_options.js?v=3db9c557"></script>
+    <script src="../../../../../_static/documentation_options.js?v=acc74ff5"></script>
     <script src="../../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -62,7 +62,7 @@
     <link rel="prev" title="gstaichi.lang.ast.ast_transformer" href="../ast_transformer/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2.6.2" />
+  <meta name="docsearch:version" content="3.0.0" />
   </head>
   
   
@@ -124,7 +124,7 @@
   
   
   
-    <p class="title logo__title">GsTaichi 2.6.2 documentation</p>
+    <p class="title logo__title">GsTaichi 3.0.0 documentation</p>
   
 </a></div>
     
@@ -465,7 +465,10 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.ast.ast_transformer_utils.ReturnStatus" title="gstaichi.lang.ast.ast_transformer_utils.ReturnStatus"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ReturnStatus</span></code></a></p></td>
 <td><p>Generic enumeration.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext" title="gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ASTTransformerContext</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#gstaichi.lang.ast.ast_transformer_utils.PureViolation" title="gstaichi.lang.ast.ast_transformer_utils.PureViolation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PureViolation</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext" title="gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ASTTransformerContext</span></code></a></p></td>
 <td><p></p></td>
 </tr>
 </tbody>
@@ -647,8 +650,18 @@
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="gstaichi.lang.ast.ast_transformer_utils.PureViolation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gstaichi.lang.ast.ast_transformer_utils.</span></span><span class="sig-name descname"><span class="pre">PureViolation</span></span><a class="reference internal" href="../../../../../_modules/gstaichi/lang/ast/ast_transformer_utils.html#PureViolation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.ast.ast_transformer_utils.PureViolation" title="Link to this definition">#</a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="gstaichi.lang.ast.ast_transformer_utils.PureViolation.var_name">
+<span class="sig-name descname"><span class="pre">var_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="reference internal" href="../../../../../_modules/gstaichi/lang/ast/ast_transformer_utils.html#PureViolation.var_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.ast.ast_transformer_utils.PureViolation.var_name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gstaichi.lang.ast.ast_transformer_utils.</span></span><span class="sig-name descname"><span class="pre">ASTTransformerContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">excluded_parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_lineno</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_kernel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Func</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg_features</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Ellipsis</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_vars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">argument_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">src</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_lineno</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_builder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">gstaichi._lib.core.gstaichi_python.ASTBuilder</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_real_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">autodiff_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AutodiffMode</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/gstaichi/lang/ast/ast_transformer_utils.html#ASTTransformerContext"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gstaichi.lang.ast.ast_transformer_utils.</span></span><span class="sig-name descname"><span class="pre">ASTTransformerContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">excluded_parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_lineno</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_kernel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Func</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg_features</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Ellipsis</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_vars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">template_vars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_pure</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">argument_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">src</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_lineno</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ast_builder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">gstaichi._lib.core.gstaichi_python.ASTBuilder</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_real_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">autodiff_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AutodiffMode</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/gstaichi/lang/ast/ast_transformer_utils.html#ASTTransformerContext"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext" title="Link to this definition">#</a></dt>
 <dd><dl class="py attribute">
 <dt class="sig sig-object py" id="gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.func">
 <span class="sig-name descname"><span class="pre">func</span></span><a class="reference internal" href="../../../../../_modules/gstaichi/lang/ast/ast_transformer_utils.html#ASTTransformerContext.func"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.func" title="Link to this definition">#</a></dt>
@@ -687,6 +700,16 @@
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.global_vars">
 <span class="sig-name descname"><span class="pre">global_vars</span></span><a class="reference internal" href="../../../../../_modules/gstaichi/lang/ast/ast_transformer_utils.html#ASTTransformerContext.global_vars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.global_vars" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.template_vars">
+<span class="sig-name descname"><span class="pre">template_vars</span></span><a class="reference internal" href="../../../../../_modules/gstaichi/lang/ast/ast_transformer_utils.html#ASTTransformerContext.template_vars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.template_vars" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.is_pure">
+<span class="sig-name descname"><span class="pre">is_pure</span></span><a class="reference internal" href="../../../../../_modules/gstaichi/lang/ast/ast_transformer_utils.html#ASTTransformerContext.is_pure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.is_pure" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -866,7 +889,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.get_var_by_name">
-<span class="sig-name descname"><span class="pre">get_var_by_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../../../../_modules/gstaichi/lang/ast/ast_transformer_utils.html#ASTTransformerContext.get_var_by_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.get_var_by_name" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">get_var_by_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../../_modules/gstaichi/lang/ast/ast_transformer_utils.html#ASTTransformerContext.get_var_by_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.get_var_by_name" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -986,6 +1009,10 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer_utils.ReturnStatus.ReturnedValue"><code class="docutils literal notranslate"><span class="pre">ReturnStatus.ReturnedValue</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer_utils.PureViolation"><code class="docutils literal notranslate"><span class="pre">PureViolation</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer_utils.PureViolation.var_name"><code class="docutils literal notranslate"><span class="pre">PureViolation.var_name</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext"><code class="docutils literal notranslate"><span class="pre">ASTTransformerContext</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.func"><code class="docutils literal notranslate"><span class="pre">ASTTransformerContext.func</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.local_scopes"><code class="docutils literal notranslate"><span class="pre">ASTTransformerContext.local_scopes</span></code></a></li>
@@ -995,6 +1022,8 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.arg_features"><code class="docutils literal notranslate"><span class="pre">ASTTransformerContext.arg_features</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.returns"><code class="docutils literal notranslate"><span class="pre">ASTTransformerContext.returns</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.global_vars"><code class="docutils literal notranslate"><span class="pre">ASTTransformerContext.global_vars</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.template_vars"><code class="docutils literal notranslate"><span class="pre">ASTTransformerContext.template_vars</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.is_pure"><code class="docutils literal notranslate"><span class="pre">ASTTransformerContext.is_pure</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.argument_data"><code class="docutils literal notranslate"><span class="pre">ASTTransformerContext.argument_data</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.return_data"><code class="docutils literal notranslate"><span class="pre">ASTTransformerContext.return_data</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext.file"><code class="docutils literal notranslate"><span class="pre">ASTTransformerContext.file</span></code></a></li>
