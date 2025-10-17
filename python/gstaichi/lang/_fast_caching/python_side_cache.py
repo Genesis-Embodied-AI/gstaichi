@@ -1,4 +1,5 @@
 import os
+import warnings
 
 from .. import impl
 
@@ -40,14 +41,22 @@ class PythonSideCache:
 
     def store(self, key: str, value: str) -> None:
         filepath = self._get_filepath(key)
-        with open(filepath + "~", "w") as f:
-            f.write(value)
-        os.rename(filepath + "~", filepath)
+        try:
+            with open(filepath + "~", "w") as f:
+                f.write(value)
+            os.rename(filepath + "~", filepath)
+        except Exception as e:
+            warnings.warn(f"Failed to write to cache at {filepath} {e}")
 
     def try_load(self, key: str) -> str | None:
         filepath = self._get_filepath(key)
         if not os.path.isfile(filepath):
             return None
-        self._touch(filepath)
-        with open(filepath) as f:
-            return f.read()
+        try:
+            with open(filepath) as f:
+                res = f.read()
+            self._touch(filepath)
+            return res
+        except Exception as e:
+            warnings.warn(f"Failed to read from cache at {filepath} {e}")
+        return None
