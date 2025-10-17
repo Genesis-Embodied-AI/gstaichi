@@ -67,6 +67,16 @@ std::pair<JITTargetMachineBuilder, llvm::DataLayout> get_host_target_info() {
   if (!expected_jtmb)
     TI_ERROR("LLVM TargetMachineBuilder has failed.");
   auto jtmb = *expected_jtmb;
+
+  // Add ARM64-specific flags to disable outlined atomics
+#if defined(__aarch64__) || defined(__arm64__)
+  // Get the target triple and add the no-outline-atomics flag
+  auto triple = jtmb.getTargetTriple();
+  if (triple.isAArch64()) {
+    jtmb.addTargetOptions("-mno-outline-atomics");
+  }
+#endif
+
   auto expected_data_layout = jtmb.getDefaultDataLayoutForTarget();
   if (!expected_data_layout) {
     TI_ERROR("LLVM TargetMachineBuilder has failed when getting data layout.");
@@ -131,10 +141,20 @@ class JITSessionCPU : public JITSession {
         mangle_(es_, this->dl_),
         module_counter_(0),
         memory_manager_(nullptr) {
-    if (JTMB.getTargetTriple().isOSBinFormatCOFF()) {
-      object_layer_.setOverrideObjectFlagsWithResponsibilityFlags(true);
-      object_layer_.setAutoClaimResponsibilityForObjectSymbols(true);
-    }
+#if defined(__linux__) && defined(__aarch64__)
+    // On ELF-based targets LLVM's ORC JIT expects the object layer to claim
+    // responsibility for every symbol emitted by the module. Without this the
+    // resolver may encounter symbols that were not pre-registered in the
+    // materialization responsibility set and abort with
+    // "Resolving symbol outside this responsibility set" (observed on
+    // manylinux aarch64).
+    object_layer_.setOverrideObjectFlagsWithResponsibilityFlags(true);
+    object_layer_.setAutoClaimResponsibilityForObjectSymbols(true);
+#elif defined(_WIN32) || JTMB.getTargetTriple().isOSBinFormatCOFF()
+    // On Windows (COFF) targets, also set these flags
+    object_layer_.setOverrideObjectFlagsWithResponsibilityFlags(true);
+    object_layer_.setAutoClaimResponsibilityForObjectSymbols(true);
+#endif
   }
 
   ~JITSessionCPU() override {
@@ -159,6 +179,18 @@ class JITSessionCPU : public JITSession {
     dylib.addGenerator(
         cantFail(llvm::orc::DynamicLibrarySearchGenerator::GetForCurrentProcess(
             dl_.getGlobalPrefix())));
+
+    // Alternative solution: Link against libatomic for ARM64 outlined atomics
+    // This is commented out since we're using -mno-outline-atomics instead
+    // #if defined(__aarch64__) || defined(__arm64__)
+    //   // Try to load libatomic for outlined atomic operations
+    //   if (auto libatomic_generator =
+    //   llvm::orc::DynamicLibrarySearchGenerator::Load(
+    //           "libatomic.so.1", dl_.getGlobalPrefix())) {
+    //     dylib.addGenerator(std::move(*libatomic_generator));
+    //   }
+    // #endif
+
     auto *thread_safe_context =
         this->tlctx_->get_this_thread_thread_safe_context();
     cantFail(compile_layer_.add(

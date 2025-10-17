@@ -29,7 +29,10 @@ def setup_llvm() -> None:
     )
 
     if u.system == "Linux":
-        if cmake_args.get_effective("TI_WITH_AMDGPU"):
+        if (u.machine) in ("arm64", "aarch64"):
+            out = get_cache_home() / f"llvm-{llvm_version}-aarch64-{build_version}"
+            url = release_url_template.format(platform="linux-aarch64")
+        elif cmake_args.get_effective("TI_WITH_AMDGPU"):
             out = get_cache_home() / f"llvm-{llvm_version}-amdgpu-{build_version}"
             url = "https://github.com/GaleSeLee/assets/releases/download/v0.0.5/taichi-llvm-15.0.0-linux.zip"
         else:
