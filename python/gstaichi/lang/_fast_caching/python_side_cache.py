@@ -40,8 +40,9 @@ class PythonSideCache:
 
     def store(self, key: str, value: str) -> None:
         filepath = self._get_filepath(key)
-        with open(filepath, "w") as f:
+        with open(filepath + "~", "w") as f:
             f.write(value)
+        os.rename(filepath + "~", filepath)
 
     def try_load(self, key: str) -> str | None:
         filepath = self._get_filepath(key)
