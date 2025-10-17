@@ -44,7 +44,8 @@ class PythonSideCache:
         filepath = self._get_filepath(key)
         tmp_path = None
         try:
-            fd, tmp_path = tempfile.mkstemp(dir=self.cache_folder, prefix=f"{key}.", suffix=".tmp")
+            target_dir = os.path.dirname(filepath)
+            fd, tmp_path = tempfile.mkstemp(dir=target_dir, prefix=f"{key}.", suffix=".tmp")
             with os.fdopen(fd, "w") as f:
                 f.write(value)
                 f.flush()
