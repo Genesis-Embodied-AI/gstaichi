@@ -1,4 +1,5 @@
 import os
+import tempfile
 import warnings
 
 from .. import impl
@@ -41,12 +42,21 @@ class PythonSideCache:
 
     def store(self, key: str, value: str) -> None:
         filepath = self._get_filepath(key)
+        tmp_path = None
         try:
-            with open(filepath + "~", "w") as f:
+            fd, tmp_path = tempfile.mkstemp(dir=self.cache_folder, prefix=f"{key}.", suffix=".tmp")
+            with os.fdopen(fd, "w") as f:
                 f.write(value)
-            os.rename(filepath + "~", filepath)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(tmp_path, filepath)
         except Exception as e:
             warnings.warn(f"Failed to write to cache at {filepath} {e}")
+            try:
+                if tmp_path and os.path.exists(tmp_path):
+                    os.unlink(tmp_path)
+            except Exception:
+                pass
 
     def try_load(self, key: str) -> str | None:
         filepath = self._get_filepath(key)
