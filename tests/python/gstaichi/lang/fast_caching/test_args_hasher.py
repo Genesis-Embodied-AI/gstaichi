@@ -272,11 +272,11 @@ def test_args_hasher_torch_tensor() -> None:
 
 @test_utils.test()
 def test_args_hasher_custom_torch_tensor() -> None:
-    class MySunTensor(torch.Tensor): ...
+    class CustomTensor(torch.Tensor): ...
 
     seen = set()
-    arg = MySunTensor((2, 3))
-    for it in [0, 1]:
+    arg = CustomTensor((2, 3))
+    for it in range(2):
         hash = args_hasher.hash_args([arg], [None])
         assert hash is not None
         if it == 0:

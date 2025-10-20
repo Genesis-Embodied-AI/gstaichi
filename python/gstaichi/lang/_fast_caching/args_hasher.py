@@ -19,9 +19,9 @@ from .hash_utils import hash_iterable_strings
 try:
     import torch
 
-    torch_types = torch.Tensor
+    torch_type = torch.Tensor
 except ImportError:
-    torch_types = ()
+    torch_type = ()
 
 
 g_num_calls = 0
@@ -82,7 +82,7 @@ def stringify_obj_type(path: tuple[str, ...], obj: object, arg_meta: ArgMetadata
         return None
     if isinstance(obj, MatrixNdarray):
         return f"[ndm-{obj.m}-{obj.n}-{obj.dtype}-{len(obj.shape)}]"
-    if isinstance(obj, torch_types):
+    if isinstance(obj, torch_type):
         return f"[pt-{obj.dtype}-{obj.ndim}]"  # type: ignore
     if isinstance(obj, np.ndarray):
         return f"[np-{obj.dtype}-{obj.ndim}]"
