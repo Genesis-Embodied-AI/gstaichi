@@ -157,7 +157,7 @@ class GsTaichiCallable:
         self._adjoint: Kernel | None = None
         self.grad: Kernel | None = None
         self._is_staticmethod: bool = False
-        self.is_pure = False
+        self.is_pure: bool = False
         functools.update_wrapper(self, fn)
 
     def __call__(self, *args, **kwargs):
