@@ -10,6 +10,7 @@ git submodule update --init --jobs 2
 
 LLVM_DIR=$(python download_llvm.py | tail -n 1)
 export PATH=${LLVM_DIR}/bin:$PATH
+chmod +x ${LLVM_DIR}/bin/*
 clang --version
 which clang
 
