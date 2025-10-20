@@ -8,7 +8,7 @@ yum install -y git wget
 git config --global --add safe.directory /__w/gstaichi/gstaichi
 git submodule update --init --jobs 2
 
-LLVM_DIR=$(python download_llvm.py)
+LLVM_DIR=$(python download_llvm.py | tail -n 1)
 export PATH=${LLVM_DIR}/bin:$PATH
 which clang
 clang --version
