@@ -14,7 +14,7 @@ git submodule update --init --jobs 2
 wget -q https://github.com/Genesis-Embodied-AI/gstaichi-sdk-builds/releases/download/llvm-15.0.7-202510071403/taichi-llvm-15.0.7-linux-x86_64.zip
 unzip taichi-llvm-15.0.7-linux-x86_64.zip
 ls
-mkdirs -p ~/.cache/ti-build-cache
+mkdir -p ~/.cache/ti-build-cache
 # yes, this is super hacky...
 mv taichi-llvm-15.0.7-linux-x86_64 ~/.cache/ti-build-cache/llvm-15.0.7-202510071403
 ls ~/.cache/ti-build-cache/
