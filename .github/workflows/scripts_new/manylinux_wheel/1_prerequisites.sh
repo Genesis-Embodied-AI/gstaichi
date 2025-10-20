@@ -10,8 +10,8 @@ git submodule update --init --jobs 2
 
 LLVM_DIR=$(python download_llvm.py | tail -n 1)
 export PATH=${LLVM_DIR}/bin:$PATH
-which clang
 clang --version
+which clang
 
 # clang++ searches for libstd++.so, not libstdc++.so.6
 # without this, then the compiler checks will fail
