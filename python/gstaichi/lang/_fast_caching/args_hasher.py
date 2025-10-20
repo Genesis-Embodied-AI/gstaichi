@@ -90,7 +90,7 @@ def stringify_obj_type(path: tuple[str, ...], obj: object, arg_meta: ArgMetadata
         for k, v in obj.__dict__.items():
             _child_repr = stringify_obj_type((*path, k), v, ArgMetadata(Template, ""))
             if _child_repr is None:
-                print("not representable child", k, type(v), "path", path)
+                _logging.warn(f"not representable child {k} {type(v)} path {path}")
                 return None
             child_repr_l.append(f"{k}: {_child_repr}")
         return ", ".join(child_repr_l)
