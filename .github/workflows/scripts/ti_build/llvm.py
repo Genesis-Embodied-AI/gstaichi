@@ -14,7 +14,7 @@ from .misc import banner, get_cache_home
 
 # -- code --
 @banner("Setup LLVM")
-def setup_llvm() -> None:
+def setup_llvm() -> str:
     """
     Download and install LLVM.
     """
@@ -50,3 +50,9 @@ def setup_llvm() -> None:
     # We should use LLVM toolchains shipped with OS.
     # path_prepend('PATH', out / 'bin')
     os.environ["LLVM_DIR"] = str(out)
+    return str(out)
+
+
+def main() -> None:
+    llvm_dir = setup_llvm()
+    print(llvm_dir)
