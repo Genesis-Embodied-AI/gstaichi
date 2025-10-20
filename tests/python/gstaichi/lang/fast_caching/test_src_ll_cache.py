@@ -9,6 +9,7 @@ import pytest
 import gstaichi as ti
 import gstaichi.lang
 from gstaichi._test_tools import ti_init_same_arch
+from gstaichi.lang.kernel_impl import SrcLlCacheObservations
 
 from tests import test_utils
 
@@ -57,6 +58,62 @@ def test_src_ll_cache1(tmp_path: pathlib.Path) -> None:
     assert has_pure._primal.src_ll_cache_observations.cache_key_generated
     assert has_pure._primal.src_ll_cache_observations.cache_validated
     assert has_pure._primal.src_ll_cache_observations.cache_loaded
+    if gstaichi.lang.impl.current_cfg().arch in [ti.cpu, ti.cuda]:
+        assert has_pure._primal._last_compiled_kernel_data._debug_dump_to_string() == last_compiled_kernel_data_str
+
+
+@test_utils.test()
+def test_src_ll_cache_with_corruption(tmp_path: pathlib.Path) -> None:
+    ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
+
+    @ti.pure
+    @ti.kernel
+    def has_pure() -> None:
+        pass
+
+    has_pure()
+    assert has_pure._primal is not None
+    assert has_pure._primal.src_ll_cache_observations.cache_key_generated
+    assert not has_pure._primal.src_ll_cache_observations.cache_validated
+    assert not has_pure._primal.src_ll_cache_observations.cache_loaded
+    assert has_pure._primal.src_ll_cache_observations.cache_stored
+    assert has_pure._primal._last_compiled_kernel_data is not None
+
+    # reset observations
+    has_pure._primal.src_ll_cache_observations = SrcLlCacheObservations()
+    assert not has_pure._primal.src_ll_cache_observations.cache_key_generated
+
+    last_compiled_kernel_data_str = None
+    if gstaichi.lang.impl.current_cfg().arch in [ti.cpu, ti.cuda]:
+        # we only support _last_compiled_kernel_data on cpu and cuda
+        # and it only changes anything on cuda anyway, because it affects the PTX
+        # cache
+        last_compiled_kernel_data_str = has_pure._primal._last_compiled_kernel_data._debug_dump_to_string()
+        assert last_compiled_kernel_data_str is not None and last_compiled_kernel_data_str != ""
+
+    ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
+    # corrupt the cache files
+    for file in tmp_path.glob("python_side_cache/*"):
+        print("file", file)
+        with open(file, "a") as f:
+            f.write("hello")
+
+    # check cache doesnt crash
+    has_pure()
+    assert has_pure._primal.src_ll_cache_observations.cache_key_generated
+    assert not has_pure._primal.src_ll_cache_observations.cache_validated
+    assert not has_pure._primal.src_ll_cache_observations.cache_loaded
+    has_pure._primal.src_ll_cache_observations = SrcLlCacheObservations()
+    if gstaichi.lang.impl.current_cfg().arch in [ti.cpu, ti.cuda]:
+        assert has_pure._primal._last_compiled_kernel_data._debug_dump_to_string() == last_compiled_kernel_data_str
+
+    # check cache works again
+    ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
+    has_pure()
+    assert has_pure._primal.src_ll_cache_observations.cache_key_generated
+    assert has_pure._primal.src_ll_cache_observations.cache_validated
+    assert has_pure._primal.src_ll_cache_observations.cache_loaded
+    has_pure._primal.src_ll_cache_observations = SrcLlCacheObservations()
     if gstaichi.lang.impl.current_cfg().arch in [ti.cpu, ti.cuda]:
         assert has_pure._primal._last_compiled_kernel_data._debug_dump_to_string() == last_compiled_kernel_data_str
 

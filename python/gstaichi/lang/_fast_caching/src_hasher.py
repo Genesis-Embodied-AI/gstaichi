@@ -1,5 +1,8 @@
+import json
+import warnings
 from typing import Any, Iterable, Sequence
 
+import pydantic
 from pydantic import BaseModel
 
 from gstaichi import _logging
@@ -65,7 +68,11 @@ def _try_load(cache_key: str) -> Sequence[HashedFunctionSourceInfo] | None:
     maybe_cache_value_json = cache.try_load(cache_key)
     if maybe_cache_value_json is None:
         return None
-    cache_value_obj = CacheValue.parse_raw(maybe_cache_value_json)
+    try:
+        cache_value_obj = CacheValue.parse_raw(maybe_cache_value_json)
+    except (pydantic.ValidationError, json.JSONDecodeError, UnicodeDecodeError) as e:
+        warnings.warn(f"Failed to parse cache file {e}")
+        return None
     return cache_value_obj.hashed_function_source_infos
 
 
