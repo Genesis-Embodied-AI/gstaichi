@@ -1,5 +1,4 @@
 from inspect import currentframe, getframeinfo
-from sys import version_info
 
 import pytest
 
