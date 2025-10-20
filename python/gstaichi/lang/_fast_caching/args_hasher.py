@@ -90,7 +90,20 @@ def stringify_obj_type(path: tuple[str, ...], obj: object, arg_meta: ArgMetadata
         for k, v in obj.__dict__.items():
             _child_repr = stringify_obj_type((*path, k), v, ArgMetadata(Template, ""))
             if _child_repr is None:
-                _logging.warn(f"not representable child {k} {type(v)} path {path}")
+                _logging.warn(
+                    f"""
+A kernel that has been marked as eligible for fast cache was passed 1 or more parameterss that are not,
+in fact, eligible for fast cache.
+
+Concretely, one of the parameters was a @ti.data_oriented objects, and one of its children was not eligible.
+
+The data oriented object was of type {type(obj)}.
+
+The child {k}={type(v)} was not eligible for usage with fast cache.
+
+Technical information: the path of the value was {path}.
+"""
+                )
                 return None
             child_repr_l.append(f"{k}: {_child_repr}")
         return ", ".join(child_repr_l)
