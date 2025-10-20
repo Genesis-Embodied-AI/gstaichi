@@ -28,6 +28,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Free Disk Space
+        run: |
+          df -h
+          pushd /opt/python
+          rm -Rf cp39-cp39 cp314-cp314 cp314-cp314t cp38-cp38 cp313-cp313t pp310-pypy310_pp73 pp311-pypy311_pp73
+          for cpversion in cp310 cp311 cp312 cp313; do {
+            if [[ "${cpversion}" != "${{ matrix.PYTHON_CP_VERSION }}" ]]; then
+              rm -Rf ${cpversion}-${cpversion}
+            fi
+          } done
+          ls /opt/python/
+          df -h
       - name: manylinux wheel prerequisites
         run: |
           export PATH=/opt/python/${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION }}/bin:$PATH
