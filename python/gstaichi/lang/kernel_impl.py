@@ -68,6 +68,8 @@ from gstaichi.types.compound_types import CompoundType
 from gstaichi.types.enums import AutodiffMode, Layout
 from gstaichi.types.utils import is_signed
 
+from .._test_tools import warnings_helper
+
 CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
 
 
@@ -155,7 +157,7 @@ class GsTaichiCallable:
         self._adjoint: Kernel | None = None
         self.grad: Kernel | None = None
         self._is_staticmethod: bool = False
-        self.is_pure = False
+        self.is_pure: bool = False
         functools.update_wrapper(self, fn)
 
     def __call__(self, *args, **kwargs):
@@ -1319,7 +1321,7 @@ def kernel(_fn: None = None, *, pure: bool = False) -> Callable[[Any], Any]: ...
 def kernel(_fn: Any, *, pure: bool = False) -> Any: ...
 
 
-def kernel(_fn: Callable[..., typing.Any] | None = None, *, pure: bool = False):
+def kernel(_fn: Callable[..., typing.Any] | None = None, *, pure: bool | None = None, fastcache: bool = False):
     """
     Marks a function as a GsTaichi kernel.
 
@@ -1349,7 +1351,12 @@ def kernel(_fn: Callable[..., typing.Any] | None = None, *, pure: bool = False):
             level = 4
 
         wrapped = _kernel_impl(fn, level_of_class_stackframe=level)
-        wrapped.is_pure = pure
+        wrapped.is_pure = pure is not None and pure or fastcache
+        if pure is not None:
+            warnings_helper.warn_once(
+                "@ti.kernel parameter `pure` is deprecated. Please use parameter `fastcache`. "
+                "`pure` parameter is intended to be removed in 4.0.0"
+            )
 
         functools.update_wrapper(wrapped, fn)
         return cast(F, wrapped)
