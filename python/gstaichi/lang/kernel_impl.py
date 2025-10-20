@@ -1321,7 +1321,7 @@ def kernel(_fn: None = None, *, pure: bool = False) -> Callable[[Any], Any]: ...
 def kernel(_fn: Any, *, pure: bool = False) -> Any: ...
 
 
-def kernel(_fn: Callable[..., typing.Any] | None = None, *, pure: bool = False, fastcache: bool = False):
+def kernel(_fn: Callable[..., typing.Any] | None = None, *, pure: bool | None = None, fastcache: bool = False):
     """
     Marks a function as a GsTaichi kernel.
 
@@ -1351,8 +1351,8 @@ def kernel(_fn: Callable[..., typing.Any] | None = None, *, pure: bool = False, 
             level = 4
 
         wrapped = _kernel_impl(fn, level_of_class_stackframe=level)
-        wrapped.is_pure = pure or fastcache
-        if pure:
+        wrapped.is_pure = pure is not None and pure or fastcache
+        if pure is not None:
             warnings_helper.warn_once(
                 "@ti.kernel parameter `pure` is deprecated. Please use parameter `fastcache`. "
                 "`pure` parameter is intended to be removed in 4.0.0"
