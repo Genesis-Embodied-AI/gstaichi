@@ -8,8 +8,17 @@ yum install -y git wget
 git config --global --add safe.directory /__w/gstaichi/gstaichi
 git submodule update --init --jobs 2
 
-wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.4/clang+llvm-15.0.4-x86_64-linux-gnu-rhel-8.4.tar.xz
-tar -xf clang+llvm-15.0.4-x86_64-linux-gnu-rhel-8.4.tar.xz
+# wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.4/clang+llvm-15.0.4-x86_64-linux-gnu-rhel-8.4.tar.xz
+# tar -xf clang+llvm-15.0.4-x86_64-linux-gnu-rhel-8.4.tar.xz
+
+wget -q https://github.com/Genesis-Embodied-AI/gstaichi-sdk-builds/releases/download/llvm-15.0.7-202510071403/taichi-llvm-15.0.7-linux-x86_64.zip
+unzip taichi-llvm-15.0.7-linux-x86_64.zip
+ls
+mkdirs -p ~/.cache/ti-build-cache
+# yes, this is super hacky...
+mv taichi-llvm-15.0.7-linux-x86_64 ~/.cache/ti-build-cache/llvm-15.0.7-202510071403
+ls ~/.cache/ti-build-cache/
+df -h
 
 # clang++ searches for libstd++.so, not libstdc++.so.6
 # without this, then the compiler checks will fail
