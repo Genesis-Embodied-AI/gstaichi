@@ -1,6 +1,9 @@
+import json
 import os
 import tempfile
 import warnings
+
+import pydantic
 
 from .. import impl
 
@@ -43,21 +46,14 @@ class PythonSideCache:
     def store(self, key: str, value: str) -> None:
         filepath = self._get_filepath(key)
         tmp_path = None
-        try:
-            target_dir = os.path.dirname(filepath)
-            fd, tmp_path = tempfile.mkstemp(dir=target_dir, prefix=f"{key}.", suffix=".tmp")
-            with os.fdopen(fd, "w") as f:
-                f.write(value)
-                f.flush()
-                os.fsync(f.fileno())
-            os.replace(tmp_path, filepath)
-        except Exception as e:
-            warnings.warn(f"Failed to write to cache at {filepath} {e}")
-            try:
-                if tmp_path and os.path.exists(tmp_path):
-                    os.unlink(tmp_path)
-            except Exception:
-                pass
+
+        target_dir = os.path.dirname(filepath)
+        fd, tmp_path = tempfile.mkstemp(dir=target_dir, prefix=f"{key}.", suffix=".tmp")
+        with os.fdopen(fd, "w") as f:
+            f.write(value)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp_path, filepath)
 
     def try_load(self, key: str) -> str | None:
         filepath = self._get_filepath(key)
@@ -68,6 +64,6 @@ class PythonSideCache:
                 res = f.read()
             self._touch(filepath)
             return res
-        except Exception as e:
+        except (pydantic.ValidationError, json.JSONDecodeError, UnicodeDecodeError) as e:
             warnings.warn(f"Failed to read from cache at {filepath} {e}")
         return None
