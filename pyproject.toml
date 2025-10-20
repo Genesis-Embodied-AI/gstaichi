@@ -98,6 +98,7 @@ test = [
     "PyYAML",
     "pyevtk",
     "pyright",
+    "torch>=2.0.0,<3.0.0",
 ]
 
 [project.urls]

@@ -2,6 +2,7 @@ import dataclasses
 
 import numpy as np
 import pytest
+import torch
 
 import gstaichi as ti
 from gstaichi.lang._fast_caching import FIELD_METADATA_CACHE_VALUE, args_hasher
@@ -253,3 +254,33 @@ def test_cache_values_checked() -> None:
     assert h_base is not None
     assert h_base == h([same], [None])
     assert h_base != h([diff], [None])
+
+
+@test_utils.test()
+def test_args_hasher_torch_tensor() -> None:
+    seen = set()
+    arg = torch.zeros((2, 3), dtype=float)
+    for it in [0, 1]:
+        hash = args_hasher.hash_args([arg], [None])
+        assert hash is not None
+        if it == 0:
+            assert hash not in seen
+            seen.add(hash)
+        else:
+            assert hash in seen
+
+
+@test_utils.test()
+def test_args_hasher_custom_torch_tensor() -> None:
+    class MySunTensor(torch.Tensor): ...
+
+    seen = set()
+    arg = MySunTensor((2, 3))
+    for it in [0, 1]:
+        hash = args_hasher.hash_args([arg], [None])
+        assert hash is not None
+        if it == 0:
+            assert hash not in seen
+            seen.add(hash)
+        else:
+            assert hash in seen
