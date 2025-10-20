@@ -56,4 +56,4 @@ def setup_llvm() -> str:
 # if __name__ == '__main__':
 def main() -> None:
     llvm_dir = setup_llvm()
-    print(f"LLVM_DIR={llvm_dir}")
+    print(llvm_dir)
