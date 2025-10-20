@@ -9,6 +9,9 @@ git config --global --add safe.directory /__w/gstaichi/gstaichi
 git submodule update --init --jobs 2
 
 LLVM_DIR=$(python download_llvm.py)
+export PATH=${LLVM_DIR}/bin:$PATH
+which clang
+clang --version
 
 # clang++ searches for libstd++.so, not libstdc++.so.6
 # without this, then the compiler checks will fail
