@@ -24,6 +24,8 @@ from gstaichi.types import (
 )
 from gstaichi.types.enums import AutodiffMode
 
+from .util import is_data_oriented
+
 CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
 
 
@@ -54,9 +56,10 @@ class TemplateMapper:
         self.num_args: int = len(arguments)
         self.template_slot_locations: list[int] = template_slot_locations
         self.mapping: dict[tuple[Any, ...], int] = {}
+        # self.raise_on_templated_floats = raise_on_templated_floats
 
     @staticmethod
-    def extract_arg(arg: Any, annotation: AnnotationType, arg_name: str) -> Any:
+    def extract_arg(raise_on_templated_floats: bool, arg: Any, annotation: AnnotationType, arg_name: str) -> Any:
         if is_ti_template(annotation):
             if isinstance(arg, gstaichi.lang.snode.SNode):
                 return arg.ptr
@@ -65,13 +68,15 @@ class TemplateMapper:
             if isinstance(arg, _ti_core.ExprCxx):
                 return arg.get_underlying_ptr_address()
             if isinstance(arg, tuple):
-                return tuple(TemplateMapper.extract_arg(item, annotation, arg_name) for item in arg)
+                return tuple(
+                    TemplateMapper.extract_arg(raise_on_templated_floats, item, annotation, arg_name) for item in arg
+                )
             if isinstance(arg, gstaichi.lang._ndarray.Ndarray):
                 raise GsTaichiRuntimeTypeError(
                     "Ndarray shouldn't be passed in via `ti.template()`, please annotate your kernel using `ti.types.ndarray(...)` instead"
                 )
 
-            if isinstance(arg, (list, tuple, dict, set)) or hasattr(arg, "_data_oriented"):
+            if isinstance(arg, (list, tuple, dict, set)) or is_data_oriented(arg):
                 # [Composite arguments] Return weak reference to the object
                 # GsTaichi kernel will cache the extracted arguments, thus we can't simply return the original argument.
                 # Instead, a weak reference to the original value is returned to avoid memory leak.
@@ -83,13 +88,17 @@ class TemplateMapper:
                 return weakref.ref(arg)
 
             # [Primitive arguments] Return the value
+            if raise_on_templated_floats and isinstance(arg, float):
+                raise ValueError("Floats not allowed as templated types.")
             return arg
         if dataclasses.is_dataclass(annotation):
             _res_l = []
             for field in dataclasses.fields(annotation):
                 field_value = getattr(arg, field.name)
                 child_name = _dataclass_util.create_flat_name(arg_name, field.name)
-                field_extracted = TemplateMapper.extract_arg(field_value, field.type, child_name)
+                field_extracted = TemplateMapper.extract_arg(
+                    raise_on_templated_floats, field_value, field.type, child_name
+                )
                 _res_l.append(field_extracted)
             return tuple(_res_l)
         if isinstance(annotation, texture_type.TextureType):
@@ -178,17 +187,19 @@ class TemplateMapper:
         # Use '#' as a placeholder because other kinds of arguments are not involved in template instantiation
         return "#"
 
-    def extract(self, args: tuple[Any, ...]) -> tuple[Any, ...]:
+    def extract(self, raise_on_templated_floats: bool, args: tuple[Any, ...]) -> tuple[Any, ...]:
         extracted: list[Any] = []
         for arg, kernel_arg in zip(args, self.arguments):
-            extracted.append(self.extract_arg(arg, kernel_arg.annotation, kernel_arg.name))
+            extracted.append(
+                TemplateMapper.extract_arg(raise_on_templated_floats, arg, kernel_arg.annotation, kernel_arg.name)
+            )
         return tuple(extracted)
 
-    def lookup(self, args: tuple[Any, ...]) -> tuple[int, tuple[Any, ...]]:
+    def lookup(self, raise_on_templated_floats: bool, args: tuple[Any, ...]) -> tuple[int, tuple[Any, ...]]:
         if len(args) != self.num_args:
             raise TypeError(f"{self.num_args} argument(s) needed but {len(args)} provided.")
 
-        key = self.extract(args)
+        key = self.extract(raise_on_templated_floats, args)
         if key not in self.mapping:
             count = len(self.mapping)
             self.mapping[key] = count
