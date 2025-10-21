@@ -317,6 +317,8 @@ def _get_tree_and_ctx(
             py_args=args,
         )
 
+    raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
+
     return tree, ASTTransformerContext(
         excluded_parameters=excluded_parameters,
         is_kernel=is_kernel,
@@ -333,6 +335,7 @@ def _get_tree_and_ctx(
         ast_builder=ast_builder,
         is_real_function=is_real_function,
         autodiff_mode=autodiff_mode,
+        raise_on_templated_floats=raise_on_templated_floats,
     )
 
 
@@ -430,7 +433,7 @@ class Func:
         if self.is_real_function:
             if current_kernel.autodiff_mode != AutodiffMode.NONE:
                 raise GsTaichiSyntaxError("Real function in gradient kernels unsupported.")
-            instance_id, arg_features = self.mapper.lookup(args)
+            instance_id, arg_features = self.mapper.lookup(impl.current_cfg().raise_on_templated_floats, args)
             key = _ti_core.FunctionKey(self.func.__name__, self.func_id, instance_id)
             if key.instance_id not in self.compiled:
                 self.do_compile(key=key, args=args, arg_features=arg_features)
@@ -587,7 +590,6 @@ class Func:
 def _get_global_vars(_func: Callable) -> dict[str, Any]:
     # Discussions: https://github.com/taichi-dev/gstaichi/issues/282
     global_vars = _func.__globals__.copy()
-
     freevar_names = _func.__code__.co_freevars
     closure = _func.__closure__
     if closure:
@@ -743,7 +745,10 @@ class Kernel:
 
         if self.runtime.src_ll_cache and self.gstaichi_callable and self.gstaichi_callable.is_pure:
             kernel_source_info, _src = get_source_info_and_src(self.func)
-            self.fast_checksum = src_hasher.create_cache_key(kernel_source_info, args, self.arg_metas)
+            raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
+            self.fast_checksum = src_hasher.create_cache_key(
+                raise_on_templated_floats, kernel_source_info, args, self.arg_metas
+            )
             if self.fast_checksum:
                 self.src_ll_cache_observations.cache_key_generated = True
             if self.fast_checksum and src_hasher.validate_cache_key(self.fast_checksum):
@@ -1174,7 +1179,7 @@ class Kernel:
 
     def ensure_compiled(self, *args: tuple[Any, ...]) -> tuple[Callable, int, AutodiffMode]:
         try:
-            instance_id, arg_features = self.mapper.lookup(args)
+            instance_id, arg_features = self.mapper.lookup(impl.current_cfg().raise_on_templated_floats, args)
         except Exception as e:
             raise type(e)(f"exception while trying to ensure compiled {self.func}:\n{e}") from e
         key = (self.func, instance_id, self.autodiff_mode)

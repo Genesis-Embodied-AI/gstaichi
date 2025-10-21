@@ -16,7 +16,10 @@ from .python_side_cache import PythonSideCache
 
 
 def create_cache_key(
-    kernel_source_info: FunctionSourceInfo, args: Sequence[Any], arg_metas: Sequence[ArgMetadata]
+    raise_on_templated_floats: bool,
+    kernel_source_info: FunctionSourceInfo,
+    args: Sequence[Any],
+    arg_metas: Sequence[ArgMetadata],
 ) -> str | None:
     """
     cache key takes into account:
@@ -25,7 +28,7 @@ def create_cache_key(
     - kernel function (but not sub functions)
     - compilation config (which includes arch, and debug)
     """
-    args_hash = args_hasher.hash_args(args, arg_metas)
+    args_hash = args_hasher.hash_args(raise_on_templated_floats, args, arg_metas)
     if args_hash is None:
         # the bit in caps at start should not be modified without modifying corresponding text
         # freetext bit can be freely modified

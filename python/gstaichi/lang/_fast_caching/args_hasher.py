@@ -34,11 +34,11 @@ g_num_ignored_calls = 0
 FIELD_METADATA_CACHE_VALUE = "add_value_to_cache_key"
 
 
-def dataclass_to_repr(path: tuple[str, ...], arg: Any) -> str:
+def dataclass_to_repr(raise_on_templated_floats: bool, path: tuple[str, ...], arg: Any) -> str:
     repr_l = []
     for field in dataclasses.fields(arg):
         child_value = getattr(arg, field.name)
-        _repr = stringify_obj_type(path + (field.name,), child_value, arg_meta=None)
+        _repr = stringify_obj_type(raise_on_templated_floats, path + (field.name,), child_value, arg_meta=None)
         full_repr = f"{field.name}: ({_repr})"
         if field.metadata.get(FIELD_METADATA_CACHE_VALUE, False):
             full_repr += f" = {child_value}"
@@ -53,7 +53,9 @@ def _is_template(arg_meta: ArgMetadata | None) -> bool:
     return annot is Template or isinstance(annot, Template)
 
 
-def stringify_obj_type(path: tuple[str, ...], obj: object, arg_meta: ArgMetadata | None) -> str | None:
+def stringify_obj_type(
+    raise_on_templated_floats: bool, path: tuple[str, ...], obj: object, arg_meta: ArgMetadata | None
+) -> str | None:
     """
     Convert an object into a string representation that only depends on its type.
 
@@ -92,11 +94,11 @@ def stringify_obj_type(path: tuple[str, ...], obj: object, arg_meta: ArgMetadata
         # TODO: think about whether there is a way to include fields
         return None
     if dataclasses.is_dataclass(obj):
-        return dataclass_to_repr(path, obj)
+        return dataclass_to_repr(raise_on_templated_floats, path, obj)
     if is_data_oriented(obj):
         child_repr_l = ["da"]
         for k, v in obj.__dict__.items():
-            _child_repr = stringify_obj_type((*path, k), v, ArgMetadata(Template, ""))
+            _child_repr = stringify_obj_type(raise_on_templated_floats, (*path, k), v, ArgMetadata(Template, ""))
             if _child_repr is None:
                 _logging.warn(
                     f"""A kernel that has been marked as eligible for fast cache was passed 1 or more parameters that are not, in fact, eligible for fast cache: one of the parameters was a @ti.data_oriented objects, and one of its children was not eligible.
@@ -107,6 +109,8 @@ The data oriented object was of type {type(obj)} and the child {k}={type(v)} was
         return ", ".join(child_repr_l)
     if issubclass(arg_type, (numbers.Number, np.number)):
         if _is_template(arg_meta):
+            if raise_on_templated_floats and isinstance(obj, float):
+                raise ValueError("Floats should not be used in template parameters.")
             # cache value too
             return f"{arg_type}={obj}"
         return str(arg_type)
@@ -127,7 +131,9 @@ The data oriented object was of type {type(obj)} and the child {k}={type(v)} was
     return None
 
 
-def hash_args(args: Sequence[Any], arg_metas: Sequence[ArgMetadata | None]) -> str | None:
+def hash_args(
+    raise_on_templated_floats: bool, args: Sequence[Any], arg_metas: Sequence[ArgMetadata | None]
+) -> str | None:
     global g_num_calls, g_num_args, g_hashing_time, g_repr_time, g_num_ignored_calls
     g_num_calls += 1
     g_num_args += len(args)
@@ -138,7 +144,7 @@ def hash_args(args: Sequence[Any], arg_metas: Sequence[ArgMetadata | None]) -> s
         )
     for i_arg, arg in enumerate(args):
         start = time.time()
-        _hash = stringify_obj_type((str(i_arg),), arg, arg_metas[i_arg])
+        _hash = stringify_obj_type(raise_on_templated_floats, (str(i_arg),), arg, arg_metas[i_arg])
         g_repr_time += time.time() - start
         if not _hash:
             g_num_ignored_calls += 1
