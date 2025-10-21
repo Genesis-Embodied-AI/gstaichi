@@ -15,6 +15,7 @@ struct CompileConfig {
   int opt_level;
   int external_optimization_level;
   int max_vector_width;
+  bool raise_on_templated_floats{false};
   bool print_preprocessed_ir;
   bool print_ir;
   bool print_accessor_ir;
