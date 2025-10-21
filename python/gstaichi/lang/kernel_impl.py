@@ -636,7 +636,6 @@ class Kernel:
         for i, arg in enumerate(self.arg_metas):
             if arg.annotation == template or isinstance(arg.annotation, template):
                 self.template_slot_locations.append(i)
-        # raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
         self.mapper = TemplateMapper(self.arg_metas, self.template_slot_locations)
         impl.get_runtime().kernels.append(self)
         self.reset()
