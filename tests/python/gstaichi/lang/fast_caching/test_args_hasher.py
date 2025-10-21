@@ -1,4 +1,5 @@
 import dataclasses
+from typing import NamedTuple
 
 import numpy as np
 import pytest
@@ -253,3 +254,20 @@ def test_cache_values_checked() -> None:
     assert h_base is not None
     assert h_base == h([same], [None])
     assert h_base != h([diff], [None])
+
+
+@test_utils.test()
+def test_args_hasher_named_tuple() -> None:
+    @ti.data_oriented
+    class Geom(NamedTuple):
+        pos: ti.Template
+
+    @ti.kernel(fastcache=True)
+    def set_pos(geom: ti.Template, value: ti.types.NDArray):
+        for I in ti.grouped(ti.ndrange(*geom.pos.shape)):
+            for j in ti.static(range(3)):
+                geom.pos[I][j] = value[(*I, j)]
+
+    geom = Geom(pos=ti.field(dtype=ti.types.vector(3, ti.f32), shape=(1,)))
+    set_pos(geom, np.ones((1, 3), dtype=np.float32))
+    print(geom.pos.to_numpy())

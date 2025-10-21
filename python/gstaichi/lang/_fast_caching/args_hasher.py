@@ -87,7 +87,9 @@ def stringify_obj_type(path: tuple[str, ...], obj: object, arg_meta: ArgMetadata
         return dataclass_to_repr(path, obj)
     if is_data_oriented(obj):
         child_repr_l = ["da"]
-        for k, v in obj.__dict__.items():
+        # _asdict() is for NamedTuple's
+        _dict = obj.__dict__ if hasattr(obj, "__dict__") else obj._asdict()
+        for k, v in _dict.items():
             _child_repr = stringify_obj_type((*path, k), v, ArgMetadata(Template, ""))
             if _child_repr is None:
                 _logging.warn(
