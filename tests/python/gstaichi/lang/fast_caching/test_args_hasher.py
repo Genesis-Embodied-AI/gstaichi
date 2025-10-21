@@ -270,4 +270,4 @@ def test_args_hasher_named_tuple() -> None:
 
     geom = Geom(pos=ti.field(dtype=ti.types.vector(3, ti.f32), shape=(1,)))
     set_pos(geom, np.ones((1, 3), dtype=np.float32))
-    print(geom.pos.to_numpy())
+    assert np.all(geom.pos.to_numpy() == np.ones(1, 3))
