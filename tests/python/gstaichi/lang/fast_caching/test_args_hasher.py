@@ -260,7 +260,7 @@ def test_cache_values_checked() -> None:
 def test_args_hasher_torch_tensor() -> None:
     seen = set()
     arg = torch.zeros((2, 3), dtype=float)
-    for it in [0, 1]:
+    for it in range(2):
         hash = args_hasher.hash_args([arg], [None])
         assert hash is not None
         if it == 0:
