@@ -97,7 +97,14 @@ def stringify_obj_type(
         return dataclass_to_repr(raise_on_templated_floats, path, obj)
     if is_data_oriented(obj):
         child_repr_l = ["da"]
-        for k, v in obj.__dict__.items():
+        _dict = {}
+        try:
+            # pyright is ok with this approach
+            _asdict = getattr(obj, "_asdict")
+            _dict = _asdict()
+        except AttributeError:
+            _dict = obj.__dict__
+        for k, v in _dict.items():
             _child_repr = stringify_obj_type(raise_on_templated_floats, (*path, k), v, ArgMetadata(Template, ""))
             if _child_repr is None:
                 _logging.warn(
