@@ -26,11 +26,11 @@ g_num_ignored_calls = 0
 FIELD_METADATA_CACHE_VALUE = "add_value_to_cache_key"
 
 
-def dataclass_to_repr(path: tuple[str, ...], arg: Any) -> str:
+def dataclass_to_repr(raise_on_templated_floats: bool, path: tuple[str, ...], arg: Any) -> str:
     repr_l = []
     for field in dataclasses.fields(arg):
         child_value = getattr(arg, field.name)
-        _repr = stringify_obj_type(path + (field.name,), child_value, arg_meta=None)
+        _repr = stringify_obj_type(raise_on_templated_floats, path + (field.name,), child_value, arg_meta=None)
         full_repr = f"{field.name}: ({_repr})"
         if field.metadata.get(FIELD_METADATA_CACHE_VALUE, False):
             full_repr += f" = {child_value}"
@@ -86,7 +86,7 @@ def stringify_obj_type(
         # TODO: think about whether there is a way to include fields
         return None
     if dataclasses.is_dataclass(obj):
-        return dataclass_to_repr(path, obj)
+        return dataclass_to_repr(raise_on_templated_floats, path, obj)
     if is_data_oriented(obj):
         child_repr_l = ["da"]
         for k, v in obj.__dict__.items():
