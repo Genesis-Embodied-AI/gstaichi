@@ -262,7 +262,7 @@ def test_args_hasher_torch_tensor() -> None:
     seen = set()
     arg = torch.zeros((2, 3), dtype=float)
     for it in range(2):
-        hash = args_hasher.hash_args([arg], [None])
+        hash = args_hasher.hash_args(False, [arg], [None])
         assert hash is not None
         if it == 0:
             assert hash not in seen
@@ -278,7 +278,7 @@ def test_args_hasher_custom_torch_tensor() -> None:
     seen = set()
     arg = CustomTensor((2, 3))
     for it in range(2):
-        hash = args_hasher.hash_args([arg], [None])
+        hash = args_hasher.hash_args(False, [arg], [None])
         assert hash is not None
         if it == 0:
             assert hash not in seen
@@ -287,6 +287,7 @@ def test_args_hasher_custom_torch_tensor() -> None:
             assert hash in seen
 
 
+@test_utils.test()
 def test_args_hasher_named_tuple() -> None:
     @ti.data_oriented
     class Geom(NamedTuple):
