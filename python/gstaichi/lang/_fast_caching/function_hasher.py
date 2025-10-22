@@ -24,7 +24,9 @@ def _read_file(function_info: FunctionSourceInfo) -> list[str]:
         with open(function_info.filepath) as f:
             return list(islice(f, function_info.start_lineno, function_info.end_lineno + 1))
     except Exception as e:
-        raise Exception(f"Couldnt read file {function_info.filepath} lines {function_info.start_lineno}-{function_info.end_lineno} {function_info} exception {e}")
+        raise Exception(
+            f"Couldnt read file {function_info.filepath} lines {function_info.start_lineno}-{function_info.end_lineno} {function_info} exception {e}"
+        )
 
 
 def _hash_function(function_info: FunctionSourceInfo) -> str:
