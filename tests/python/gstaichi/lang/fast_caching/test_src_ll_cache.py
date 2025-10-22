@@ -95,8 +95,9 @@ def test_src_ll_cache_with_corruption(tmp_path: pathlib.Path) -> None:
     # corrupt the cache files
     for file in tmp_path.glob("python_side_cache/*"):
         print("file", file)
-        with open(file, "a") as f:
-            f.write("hello")
+        with open(file, "wb") as f:
+            f.write(b"\x00\x0a\xe2\xff\xfe\x80\x99JUNK")
+        os.system(f"hexdump -C {file}")
 
     # check cache doesnt crash
     has_pure()
