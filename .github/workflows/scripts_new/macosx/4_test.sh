@@ -4,6 +4,7 @@ set -ex
 
 pip install --prefer-binary --group test
 pip install -r requirements_test_xdist.txt
+pip install torch
 find . -name '*.bc'
 ls -lh build/
 export TI_LIB_DIR="$(python -c 'import gstaichi as ti; print(ti.__path__[0])' | tail -n 1)/_lib/runtime"

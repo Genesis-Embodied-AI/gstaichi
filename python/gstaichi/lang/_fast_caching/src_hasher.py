@@ -1,5 +1,8 @@
+import json
+import warnings
 from typing import Any, Iterable, Sequence
 
+import pydantic
 from pydantic import BaseModel
 
 from gstaichi import _logging
@@ -13,7 +16,10 @@ from .python_side_cache import PythonSideCache
 
 
 def create_cache_key(
-    kernel_source_info: FunctionSourceInfo, args: Sequence[Any], arg_metas: Sequence[ArgMetadata]
+    raise_on_templated_floats: bool,
+    kernel_source_info: FunctionSourceInfo,
+    args: Sequence[Any],
+    arg_metas: Sequence[ArgMetadata],
 ) -> str | None:
     """
     cache key takes into account:
@@ -22,7 +28,7 @@ def create_cache_key(
     - kernel function (but not sub functions)
     - compilation config (which includes arch, and debug)
     """
-    args_hash = args_hasher.hash_args(args, arg_metas)
+    args_hash = args_hasher.hash_args(raise_on_templated_floats, args, arg_metas)
     if args_hash is None:
         # the bit in caps at start should not be modified without modifying corresponding text
         # freetext bit can be freely modified
@@ -65,7 +71,11 @@ def _try_load(cache_key: str) -> Sequence[HashedFunctionSourceInfo] | None:
     maybe_cache_value_json = cache.try_load(cache_key)
     if maybe_cache_value_json is None:
         return None
-    cache_value_obj = CacheValue.parse_raw(maybe_cache_value_json)
+    try:
+        cache_value_obj = CacheValue.parse_raw(maybe_cache_value_json)
+    except (pydantic.ValidationError, json.JSONDecodeError, UnicodeDecodeError) as e:
+        warnings.warn(f"Failed to parse cache file {e}")
+        return None
     return cache_value_obj.hashed_function_source_infos
 
 

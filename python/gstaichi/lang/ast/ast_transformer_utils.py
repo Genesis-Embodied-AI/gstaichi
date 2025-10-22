@@ -194,6 +194,7 @@ class ASTTransformerContext:
         ast_builder: ASTBuilder | None,
         is_real_function: bool,
         autodiff_mode: AutodiffMode,
+        raise_on_templated_floats: bool,
     ):
         from gstaichi import extension  # pylint: disable=import-outside-toplevel
 
@@ -231,6 +232,7 @@ class ASTTransformerContext:
         self.only_parse_function_def: bool = False
         self.autodiff_mode = autodiff_mode
         self.loop_depth: int = 0
+        self.raise_on_templated_floats = raise_on_templated_floats
 
         self.adstack_enabled: bool = (
             _ti_core.is_extension_supported(
@@ -315,12 +317,16 @@ class ASTTransformerContext:
         violates_pure, found_name = False, False
         if name in self.template_vars:
             var = self.template_vars[name]
+            if self.raise_on_templated_floats and isinstance(var, float):
+                raise ValueError("Not permitted to access floats as templated values")
             found_name = True
         elif name in self.global_vars:
             var = self.global_vars[name]
             reason = f"{name} is in global vars, therefore violates pure"
             violates_pure = True
             found_name = True
+            if self.raise_on_templated_floats and isinstance(var, float):
+                raise ValueError("Not permitted to access floats as global values")
 
         if found_name:
             from gstaichi.lang.matrix import (  # pylint: disable-msg=C0415
