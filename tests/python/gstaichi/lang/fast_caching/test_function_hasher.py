@@ -35,30 +35,33 @@ def test_read_file(tmp_path: pathlib.Path) -> None:
     )
 
 
-# @test_utils.test()
-# def test_read_file_with_arrows(tmp_path: pathlib.Path) -> None:
-#     out_filepath = tmp_path / "somefile.txt"
-#     with open(out_filepath, "w") as f:
-#         f.write(
-#             """0
-# 1 → \xff\xe2
-# 2 😂 \xff
-# 3 🙌 \xe2
-# 4 🙃
-# 5 🔥
-# """
-#         )
-#     info = _wrap_inspect.FunctionSourceInfo(
-#         function_name="foo", filepath=str(out_filepath), start_lineno=1, end_lineno=3
-#     )
-#     src = function_hasher._read_file(info)
-#     assert (
-#         "".join(src)
-#         == """1
-# 2
-# 3
-# """
-#     )
+@test_utils.test()
+def test_read_file_with_arrows(monkeypatch, tmp_path: pathlib.Path) -> None:
+    """
+    This test doesn't actually reproduce the 0xe28094 bug with the hyphen, but anyway
+    """
+    out_filepath = tmp_path / "somefile.txt"
+    with open(out_filepath, "w") as f:
+        f.write(
+            """0
+1 →
+2 😂
+3 🙌 —
+4 🙃
+5 🔥
+"""
+        )
+    info = _wrap_inspect.FunctionSourceInfo(
+        function_name="foo", filepath=str(out_filepath), start_lineno=1, end_lineno=3
+    )
+    src = function_hasher._read_file(info)
+    assert (
+        "".join(src)
+        == """1 →
+2 😂
+3 🙌 —
+"""
+    )
 
 
 @test_utils.test()

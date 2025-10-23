@@ -21,7 +21,7 @@ def pure(fn: "GsTaichiCallable") -> "GsTaichiCallable":
 
 def _read_file(function_info: FunctionSourceInfo) -> list[str]:
     try:
-        with open(function_info.filepath) as f:
+        with open(function_info.filepath, encoding="utf-8") as f:
             return list(islice(f, function_info.start_lineno, function_info.end_lineno + 1))
     except Exception as e:
         raise Exception(
