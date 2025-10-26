@@ -1,6 +1,5 @@
 import ast
 import csv
-import dataclasses
 import functools
 import inspect
 import json
@@ -14,14 +13,11 @@ import time
 import types
 import typing
 import warnings
-from typing import Any, Callable, Type, TypeVar, cast, overload
+from dataclasses import _FIELD, _FIELDS, dataclass, is_dataclass
+from typing import Any, Callable, Iterable, Type, TypeVar, cast, overload
 
 import numpy as np
 
-import gstaichi.lang
-import gstaichi.lang._ndarray
-import gstaichi.lang._texture
-import gstaichi.types.annotations
 from gstaichi import _logging
 from gstaichi._lib import core as _ti_core
 from gstaichi._lib.core.gstaichi_python import (
@@ -34,7 +30,9 @@ from gstaichi._lib.core.gstaichi_python import (
 )
 from gstaichi.lang import _kernel_impl_dataclass, impl, ops, runtime_ops
 from gstaichi.lang._fast_caching import src_hasher
+from gstaichi.lang._ndarray import Ndarray
 from gstaichi.lang._template_mapper import TemplateMapper
+from gstaichi.lang._texture import Texture
 from gstaichi.lang._wrap_inspect import FunctionSourceInfo, get_source_info_and_src
 from gstaichi.lang.any_array import AnyArray
 from gstaichi.lang.ast import (
@@ -71,6 +69,9 @@ from gstaichi.types.utils import is_signed
 from .._test_tools import warnings_helper
 
 CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
+
+
+MAX_ARG_NUM = 512
 
 
 class GsTaichiCallable:
@@ -268,7 +269,7 @@ def _populate_global_vars_for_templates(
         global_vars[template_var_name] = py_args[i]
     parameters = inspect.signature(fn).parameters
     for i, (parameter_name, parameter) in enumerate(parameters.items()):
-        if dataclasses.is_dataclass(parameter.annotation):
+        if is_dataclass(parameter.annotation):
             _kernel_impl_dataclass.populate_global_vars_from_dataclass(
                 parameter_name,
                 parameter.annotation,
@@ -563,21 +564,20 @@ class Func:
                         f"GsTaichi function `{self.func.__name__}` parameter `{arg_name}` must be type annotated"
                     )
             else:
-                if isinstance(annotation, ndarray_type.NdarrayType):
+                annotation_type = type(annotation)
+                if annotation_type is ndarray_type.NdarrayType:
                     pass
-                elif isinstance(annotation, MatrixType):
+                elif issubclass(annotation_type, MatrixType):
                     pass
-                elif isinstance(annotation, StructType):
+                elif annotation_type is StructType:
                     pass
                 elif id(annotation) in primitive_types.type_ids:
                     pass
-                elif type(annotation) == gstaichi.types.annotations.Template:
+                elif annotation_type is template or annotation is template:
                     pass
-                elif isinstance(annotation, template) or annotation == gstaichi.types.annotations.Template:
+                elif annotation_type is primitive_types.RefType:
                     pass
-                elif isinstance(annotation, primitive_types.RefType):
-                    pass
-                elif isinstance(annotation, type) and dataclasses.is_dataclass(annotation):
+                elif annotation_type is type and is_dataclass(annotation):
                     pass
                 else:
                     raise GsTaichiSyntaxError(
@@ -600,7 +600,7 @@ def _get_global_vars(_func: Callable) -> dict[str, Any]:
     return global_vars
 
 
-@dataclasses.dataclass
+@dataclass
 class SrcLlCacheObservations:
     cache_key_generated: bool = False
     cache_validated: bool = False
@@ -608,9 +608,232 @@ class SrcLlCacheObservations:
     cache_stored: bool = False
 
 
-@dataclasses.dataclass
+@dataclass
 class FeLlCacheObservations:
     cache_hit: bool = False
+
+
+def cast_float(x: float | np.floating | np.integer | int) -> float:
+    if not isinstance(x, (int, float, np.integer, np.floating)):
+        raise ValueError
+    return float(x)
+
+
+def cast_int(x: int | np.integer) -> int:
+    if not isinstance(x, (int, np.integer)):
+        raise ValueError
+    return int(x)
+
+
+def _recursive_set_args(
+    launch_ctx: KernelLaunchContext,
+    actual_argument_slot: int,
+    exceed_max_arg_num: bool,
+    set_later_list: list[tuple[Callable, Iterable[Any]]],
+    needed_arg_type: Type,
+    provided_arg_type: Type,
+    v: Any,
+    indices: tuple[int, ...],
+    callbacks: list[Callable[[], None]],
+    buffers: list[np.ndarray],
+) -> int:
+    """
+    Returns the number of kernel args set e.g. templates don't set kernel args, so returns 0
+    a single ndarray is 1 kernel arg, so returns 1
+    a struct of 3 ndarrays would set 3 kernel args, so return 3
+    note: len(indices) > 1 only happens with argpack (which we are removing support for)
+    """
+    if actual_argument_slot >= MAX_ARG_NUM:
+        exceed_max_arg_num = True
+        return 0
+    actual_argument_slot += 1
+
+    needed_arg_type_id = id(needed_arg_type)
+    needed_arg_basetype = type(needed_arg_type)
+
+    # Note: do not use sth like "needed == f32". That would be slow.
+    if needed_arg_type_id in primitive_types.real_type_ids:
+        if not isinstance(v, (float, int, np.floating, np.integer)):
+            raise GsTaichiRuntimeTypeError.get(indices, needed_arg_type.to_string(), provided_arg_type)
+        launch_ctx.set_arg_float(indices, float(v))
+        return 1
+    if needed_arg_type_id in primitive_types.integer_type_ids:
+        if not isinstance(v, (int, np.integer)):
+            raise GsTaichiRuntimeTypeError.get(indices, needed_arg_type.to_string(), provided_arg_type)
+        if is_signed(cook_dtype(needed_arg_type)):
+            launch_ctx.set_arg_int(indices, int(v))
+        else:
+            launch_ctx.set_arg_uint(indices, int(v))
+        return 1
+    needed_arg_fields = getattr(needed_arg_type, _FIELDS, None)
+    if needed_arg_fields is not None:
+        if provided_arg_type is not needed_arg_type:
+            raise GsTaichiRuntimeError("needed", needed_arg_type, "!= provided", provided_arg_type)
+        idx = 0
+        offset = indices[0]
+        for field in needed_arg_fields.values():
+            if field._field_type is not _FIELD:
+                continue
+            assert not isinstance(field.type, str)
+            field_value = getattr(v, field.name)
+            idx += _recursive_set_args(
+                launch_ctx,
+                actual_argument_slot,
+                exceed_max_arg_num,
+                set_later_list,
+                field.type,
+                field.type,
+                field_value,
+                (offset + idx,),
+                callbacks,
+                buffers,
+            )
+        return idx
+    if needed_arg_basetype is ndarray_type.NdarrayType and isinstance(v, Ndarray):
+        v_primal = v.arr
+        v_grad = v.grad.arr if v.grad else None
+        if v_grad is None:
+            launch_ctx.set_arg_ndarray(indices, v_primal)  # type: ignore , solvable probably, just not today
+        else:
+            launch_ctx.set_arg_ndarray_with_grad(indices, v_primal, v_grad)  # type: ignore
+        return 1
+    if needed_arg_basetype is ndarray_type.NdarrayType:
+        # v is things like torch Tensor and numpy array
+        # Not adding type for this, since adds additional dependencies
+        #
+        # Element shapes are already specialized in GsTaichi codegen.
+        # The shape information for element dims are no longer needed.
+        # Therefore we strip the element shapes from the shape vector,
+        # so that it only holds "real" array shapes.
+        is_soa = needed_arg_type.layout == Layout.SOA
+        array_shape = v.shape
+        if functools.reduce(operator.mul, array_shape, 1) > np.iinfo(np.int32).max:
+            warnings.warn("Ndarray index might be out of int32 boundary but int64 indexing is not supported yet.")
+        needed_arg_dtype = needed_arg_type.dtype
+        if needed_arg_dtype is None or id(needed_arg_dtype) in primitive_types.type_ids:
+            element_dim = 0
+        else:
+            element_dim = needed_arg_dtype.ndim
+            array_shape = v.shape[element_dim:] if is_soa else v.shape[:-element_dim]
+        if isinstance(v, np.ndarray):
+            # numpy
+            if v.flags.c_contiguous:
+                launch_ctx.set_arg_external_array_with_shape(indices, int(v.ctypes.data), v.nbytes, array_shape, 0)
+            elif v.flags.f_contiguous:
+                # TODO: A better way that avoids copying is saving strides info.
+                tmp = np.ascontiguousarray(v)
+                # Purpose: DO NOT GC |tmp|!
+                buffers.append(tmp)
+
+                def callback(original, updated):
+                    np.copyto(original, np.asfortranarray(updated))
+
+                callbacks.append(functools.partial(callback, v, tmp))
+                launch_ctx.set_arg_external_array_with_shape(indices, int(tmp.ctypes.data), tmp.nbytes, array_shape, 0)
+            else:
+                raise ValueError(
+                    "Non contiguous numpy arrays are not supported, please call np.ascontiguousarray(arr) "
+                    "before passing it into gstaichi kernel."
+                )
+        elif has_pytorch():
+            import torch  # pylint: disable=C0415
+
+            if isinstance(v, torch.Tensor):
+                if not v.is_contiguous():
+                    raise ValueError(
+                        "Non contiguous tensors are not supported, please call tensor.contiguous() before "
+                        "passing it into gstaichi kernel."
+                    )
+                gstaichi_arch = impl.current_cfg().arch
+
+                def get_call_back(u, v):
+                    def call_back():
+                        u.copy_(v)
+
+                    return call_back
+
+                # FIXME: only allocate when launching grad kernel
+                if v.requires_grad and v.grad is None:
+                    v.grad = torch.zeros_like(v)
+
+                if v.requires_grad:
+                    if not isinstance(v.grad, torch.Tensor):
+                        raise ValueError(
+                            f"Expecting torch.Tensor for gradient tensor, but getting {v.grad.__class__.__name__} instead"
+                        )
+                    if not v.grad.is_contiguous():
+                        raise ValueError(
+                            "Non contiguous gradient tensors are not supported, please call tensor.grad.contiguous() before passing it into gstaichi kernel."
+                        )
+
+                tmp = v
+                if (str(v.device) != "cpu") and not (
+                    str(v.device).startswith("cuda") and gstaichi_arch == _ti_core.Arch.cuda
+                ):
+                    # Getting a torch CUDA tensor on GsTaichi non-cuda arch:
+                    # We just replace it with a CPU tensor and by the end of kernel execution we'll use the
+                    # callback to copy the values back to the original CUDA tensor.
+                    host_v = v.to(device="cpu", copy=True)
+                    tmp = host_v
+                    callbacks.append(get_call_back(v, host_v))
+
+                launch_ctx.set_arg_external_array_with_shape(
+                    indices,
+                    int(tmp.data_ptr()),
+                    tmp.element_size() * tmp.nelement(),
+                    array_shape,
+                    int(v.grad.data_ptr()) if v.grad is not None else 0,
+                )
+            else:
+                raise GsTaichiRuntimeTypeError(
+                    f"Argument of type {type(v)} cannot be converted into required type {needed_arg_type}"
+                )
+        else:
+            raise GsTaichiRuntimeTypeError(f"Argument {needed_arg_type} cannot be converted into required type {v}")
+        return 1
+    if issubclass(needed_arg_basetype, MatrixType):
+        cast_func = None
+        if needed_arg_type.dtype in primitive_types.real_types:
+            cast_func = cast_float
+        elif needed_arg_type.dtype in primitive_types.integer_types:
+            cast_func = cast_int
+        else:
+            raise ValueError(f"Matrix dtype {needed_arg_type.dtype} is not integer type or real type.")
+
+        try:
+            if needed_arg_type.ndim == 2:
+                v = [cast_func(v[i, j]) for i in range(needed_arg_type.n) for j in range(needed_arg_type.m)]
+            else:
+                v = [cast_func(v[i]) for i in range(needed_arg_type.n)]
+        except ValueError:
+            raise GsTaichiRuntimeTypeError(f"Argument {needed.dtype} cannot be converted into required type {type(x)}")
+
+        v = needed_arg_type(*v)
+        needed_arg_type.set_kernel_struct_args(v, launch_ctx, indices)
+        return 1
+    if needed_arg_basetype is StructType:
+        # Unclear how to make the following pass typing checks StructType implements __instancecheck__,
+        # which should be a classmethod, but is currently an instance method.
+        # TODO: look into this more deeply at some point
+        if not isinstance(v, needed_arg_type):  # type: ignore
+            raise GsTaichiRuntimeTypeError(
+                f"Argument {provided_arg_type} cannot be converted into required type {needed_arg_type}"
+            )
+        needed_arg_type.set_kernel_struct_args(v, launch_ctx, indices)
+        return 1
+    if needed_arg_type is template or needed_arg_basetype is template:
+        return 0
+    if needed_arg_basetype is sparse_matrix_builder:
+        # Pass only the base pointer of the ti.types.sparse_matrix_builder() argument
+        launch_ctx.set_arg_uint(indices, v._get_ndarray_addr())
+        return 1
+    if needed_arg_basetype is texture_type.TextureType and isinstance(v, Texture):
+        launch_ctx.set_arg_texture(indices, v.tex)
+        return 1
+    if needed_arg_basetype is texture_type.RWTextureType and isinstance(v, Texture):
+        launch_ctx.set_arg_rw_texture(indices, v.tex)
+        return 1
+    raise ValueError(f"Argument type mismatch. Expecting {needed_arg_type}, got {type(v)}.")
 
 
 class Kernel:
@@ -707,12 +930,7 @@ class Kernel:
             else:
                 if isinstance(
                     annotation,
-                    (
-                        template,
-                        ndarray_type.NdarrayType,
-                        texture_type.TextureType,
-                        texture_type.RWTextureType,
-                    ),
+                    (template, ndarray_type.NdarrayType, texture_type.TextureType, texture_type.RWTextureType),
                 ):
                     pass
                 elif annotation is ndarray_type.NdarrayType:
@@ -726,9 +944,9 @@ class Kernel:
                     pass
                 elif isinstance(annotation, StructType):
                     pass
-                elif annotation == template:
+                elif annotation is template:
                     pass
-                elif isinstance(annotation, type) and dataclasses.is_dataclass(annotation):
+                elif isinstance(annotation, type) and is_dataclass(annotation):
                     pass
                 else:
                     raise GsTaichiSyntaxError(f"Invalid type annotation (argument {i}) of Taichi kernel: {annotation}")
@@ -855,247 +1073,41 @@ class Kernel:
     def launch_kernel(self, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
         assert len(args) == len(self.arg_metas), f"{len(self.arg_metas)} arguments needed but {len(args)} provided"
 
-        tmps = []
-        callbacks = []
-
         actual_argument_slot = 0
         launch_ctx = t_kernel.make_launch_context()
-        max_arg_num = 512
         exceed_max_arg_num = False
-
-        def set_arg_ndarray(indices: tuple[int, ...], v: gstaichi.lang._ndarray.Ndarray) -> None:
-            v_primal = v.arr
-            v_grad = v.grad.arr if v.grad else None
-            if v_grad is None:
-                launch_ctx.set_arg_ndarray(indices, v_primal)  # type: ignore , solvable probably, just not today
-            else:
-                launch_ctx.set_arg_ndarray_with_grad(indices, v_primal, v_grad)  # type: ignore
-
-        def set_arg_texture(indices: tuple[int, ...], v: gstaichi.lang._texture.Texture) -> None:
-            launch_ctx.set_arg_texture(indices, v.tex)
-
-        def set_arg_rw_texture(indices: tuple[int, ...], v: gstaichi.lang._texture.Texture) -> None:
-            launch_ctx.set_arg_rw_texture(indices, v.tex)
-
-        def set_arg_ext_array(indices: tuple[int, ...], v: Any, needed: ndarray_type.NdarrayType) -> None:
-            # v is things like torch Tensor and numpy array
-            # Not adding type for this, since adds additional dependencies
-            #
-            # Element shapes are already specialized in GsTaichi codegen.
-            # The shape information for element dims are no longer needed.
-            # Therefore we strip the element shapes from the shape vector,
-            # so that it only holds "real" array shapes.
-            is_soa = needed.layout == Layout.SOA
-            array_shape = v.shape
-            if functools.reduce(operator.mul, array_shape, 1) > np.iinfo(np.int32).max:
-                warnings.warn("Ndarray index might be out of int32 boundary but int64 indexing is not supported yet.")
-            if needed.dtype is None or id(needed.dtype) in primitive_types.type_ids:
-                element_dim = 0
-            else:
-                element_dim = needed.dtype.ndim
-                array_shape = v.shape[element_dim:] if is_soa else v.shape[:-element_dim]
-            if isinstance(v, np.ndarray):
-                # numpy
-                if v.flags.c_contiguous:
-                    launch_ctx.set_arg_external_array_with_shape(indices, int(v.ctypes.data), v.nbytes, array_shape, 0)
-                elif v.flags.f_contiguous:
-                    # TODO: A better way that avoids copying is saving strides info.
-                    tmp = np.ascontiguousarray(v)
-                    # Purpose: DO NOT GC |tmp|!
-                    tmps.append(tmp)
-
-                    def callback(original, updated):
-                        np.copyto(original, np.asfortranarray(updated))
-
-                    callbacks.append(functools.partial(callback, v, tmp))
-                    launch_ctx.set_arg_external_array_with_shape(
-                        indices, int(tmp.ctypes.data), tmp.nbytes, array_shape, 0
-                    )
-                else:
-                    raise ValueError(
-                        "Non contiguous numpy arrays are not supported, please call np.ascontiguousarray(arr) "
-                        "before passing it into gstaichi kernel."
-                    )
-            elif has_pytorch():
-                import torch  # pylint: disable=C0415
-
-                if isinstance(v, torch.Tensor):
-                    if not v.is_contiguous():
-                        raise ValueError(
-                            "Non contiguous tensors are not supported, please call tensor.contiguous() before "
-                            "passing it into gstaichi kernel."
-                        )
-                    gstaichi_arch = self.runtime.prog.config().arch
-
-                    def get_call_back(u, v):
-                        def call_back():
-                            u.copy_(v)
-
-                        return call_back
-
-                    # FIXME: only allocate when launching grad kernel
-                    if v.requires_grad and v.grad is None:
-                        v.grad = torch.zeros_like(v)
-
-                    if v.requires_grad:
-                        if not isinstance(v.grad, torch.Tensor):
-                            raise ValueError(
-                                f"Expecting torch.Tensor for gradient tensor, but getting {v.grad.__class__.__name__} instead"
-                            )
-                        if not v.grad.is_contiguous():
-                            raise ValueError(
-                                "Non contiguous gradient tensors are not supported, please call tensor.grad.contiguous() before passing it into gstaichi kernel."
-                            )
-
-                    tmp = v
-                    if (str(v.device) != "cpu") and not (
-                        str(v.device).startswith("cuda") and gstaichi_arch == _ti_core.Arch.cuda
-                    ):
-                        # Getting a torch CUDA tensor on GsTaichi non-cuda arch:
-                        # We just replace it with a CPU tensor and by the end of kernel execution we'll use the
-                        # callback to copy the values back to the original CUDA tensor.
-                        host_v = v.to(device="cpu", copy=True)
-                        tmp = host_v
-                        callbacks.append(get_call_back(v, host_v))
-
-                    launch_ctx.set_arg_external_array_with_shape(
-                        indices,
-                        int(tmp.data_ptr()),
-                        tmp.element_size() * tmp.nelement(),
-                        array_shape,
-                        int(v.grad.data_ptr()) if v.grad is not None else 0,
-                    )
-                else:
-                    raise GsTaichiRuntimeTypeError(
-                        f"Argument of type {type(v)} cannot be converted into required type {needed}"
-                    )
-            else:
-                raise GsTaichiRuntimeTypeError(f"Argument {needed} cannot be converted into required type {v}")
-
-        def set_arg_matrix(indices: tuple[int, ...], v, needed) -> None:
-            def cast_float(x: float | np.floating | np.integer | int) -> float:
-                if not isinstance(x, (int, float, np.integer, np.floating)):
-                    raise GsTaichiRuntimeTypeError(
-                        f"Argument {needed.dtype} cannot be converted into required type {type(x)}"
-                    )
-                return float(x)
-
-            def cast_int(x: int | np.integer) -> int:
-                if not isinstance(x, (int, np.integer)):
-                    raise GsTaichiRuntimeTypeError(
-                        f"Argument {needed.dtype} cannot be converted into required type {type(x)}"
-                    )
-                return int(x)
-
-            cast_func = None
-            if needed.dtype in primitive_types.real_types:
-                cast_func = cast_float
-            elif needed.dtype in primitive_types.integer_types:
-                cast_func = cast_int
-            else:
-                raise ValueError(f"Matrix dtype {needed.dtype} is not integer type or real type.")
-
-            if needed.ndim == 2:
-                v = [cast_func(v[i, j]) for i in range(needed.n) for j in range(needed.m)]
-            else:
-                v = [cast_func(v[i]) for i in range(needed.n)]
-            v = needed(*v)
-            needed.set_kernel_struct_args(v, launch_ctx, indices)
-
-        def set_arg_sparse_matrix_builder(indices: tuple[int, ...], v) -> None:
-            # Pass only the base pointer of the ti.types.sparse_matrix_builder() argument
-            launch_ctx.set_arg_uint(indices, v._get_ndarray_addr())
-
         set_later_list = []
-
-        def recursive_set_args(needed_arg_type: Type, provided_arg_type: Type, v: Any, indices: tuple[int, ...]) -> int:
-            """
-            Returns the number of kernel args set
-            e.g. templates don't set kernel args, so returns 0
-            a single ndarray is 1 kernel arg, so returns 1
-            a struct of 3 ndarrays would set 3 kernel args, so return 3
-            note: len(indices) > 1 only happens with argpack (which we are removing support for)
-            """
-            nonlocal actual_argument_slot, exceed_max_arg_num, set_later_list
-            if actual_argument_slot >= max_arg_num:
-                exceed_max_arg_num = True
-                return 0
-            actual_argument_slot += 1
-            # Note: do not use sth like "needed == f32". That would be slow.
-            if id(needed_arg_type) in primitive_types.real_type_ids:
-                if not isinstance(v, (float, int, np.floating, np.integer)):
-                    raise GsTaichiRuntimeTypeError.get(indices, needed_arg_type.to_string(), provided_arg_type)
-                launch_ctx.set_arg_float(indices, float(v))
-                return 1
-            if id(needed_arg_type) in primitive_types.integer_type_ids:
-                if not isinstance(v, (int, np.integer)):
-                    raise GsTaichiRuntimeTypeError.get(indices, needed_arg_type.to_string(), provided_arg_type)
-                if is_signed(cook_dtype(needed_arg_type)):
-                    launch_ctx.set_arg_int(indices, int(v))
-                else:
-                    launch_ctx.set_arg_uint(indices, int(v))
-                return 1
-            if isinstance(needed_arg_type, sparse_matrix_builder):
-                set_arg_sparse_matrix_builder(indices, v)
-                return 1
-            if dataclasses.is_dataclass(needed_arg_type):
-                if provided_arg_type != needed_arg_type:
-                    raise GsTaichiRuntimeError("needed", needed_arg_type, "!= provided", provided_arg_type)
-                assert provided_arg_type == needed_arg_type
-                idx = 0
-                for j, field in enumerate(dataclasses.fields(needed_arg_type)):
-                    assert not isinstance(field.type, str)
-                    field_value = getattr(v, field.name)
-                    idx += recursive_set_args(field.type, field.type, field_value, (indices[0] + idx,))
-                return idx
-            if isinstance(needed_arg_type, ndarray_type.NdarrayType) and isinstance(v, gstaichi.lang._ndarray.Ndarray):
-                set_arg_ndarray(indices, v)
-                return 1
-            if isinstance(needed_arg_type, texture_type.TextureType) and isinstance(v, gstaichi.lang._texture.Texture):
-                set_arg_texture(indices, v)
-                return 1
-            if isinstance(needed_arg_type, texture_type.RWTextureType) and isinstance(
-                v, gstaichi.lang._texture.Texture
-            ):
-                set_arg_rw_texture(indices, v)
-                return 1
-            if isinstance(needed_arg_type, ndarray_type.NdarrayType):
-                set_arg_ext_array(indices, v, needed_arg_type)
-                return 1
-            if isinstance(needed_arg_type, MatrixType):
-                set_arg_matrix(indices, v, needed_arg_type)
-                return 1
-            if isinstance(needed_arg_type, StructType):
-                # Unclear how to make the following pass typing checks
-                # StructType implements __instancecheck__, which should be a classmethod, but
-                # is currently an instance method
-                # TODO: look into this more deeply at some point
-                if not isinstance(v, needed_arg_type):  # type: ignore
-                    raise GsTaichiRuntimeTypeError(
-                        f"Argument {provided_arg_type} cannot be converted into required type {needed_arg_type}"
-                    )
-                needed_arg_type.set_kernel_struct_args(v, launch_ctx, indices)
-                return 1
-            if needed_arg_type == template or isinstance(needed_arg_type, template):
-                return 0
-            raise ValueError(f"Argument type mismatch. Expecting {needed_arg_type}, got {type(v)}.")
+        callbacks = []
+        buffers = []
 
         template_num = 0
         i_out = 0
         for i_in, val in enumerate(args):
             needed_ = self.arg_metas[i_in].annotation
-            if needed_ == template or isinstance(needed_, template):
+            if needed_ is template or type(needed_) is template:
                 template_num += 1
                 i_out += 1
                 continue
-            i_out += recursive_set_args(needed_, type(val), val, (i_out - template_num,))
+            i_out += _recursive_set_args(
+                launch_ctx,
+                actual_argument_slot,
+                exceed_max_arg_num,
+                set_later_list,
+                needed_,
+                type(val),
+                val,
+                (i_out - template_num,),
+                callbacks,
+                buffers,
+            )
 
         for i, (set_arg_func, params) in enumerate(set_later_list):
             set_arg_func((len(args) - template_num + i,), *params)
 
         if exceed_max_arg_num:
             raise GsTaichiRuntimeError(
-                f"The number of elements in kernel arguments is too big! Do not exceed {max_arg_num} on {_ti_core.arch_name(impl.current_cfg().arch)} backend."
+                f"The number of elements in kernel arguments is too big! Do not exceed {MAX_ARG_NUM} on "
+                f"{_ti_core.arch_name(impl.current_cfg().arch)} backend."
             )
 
         try:
@@ -1160,9 +1172,8 @@ class Kernel:
                 ret.append(self.construct_kernel_ret(launch_ctx, ret_type, (i,)))
             if len(ret_dt) == 1:
                 ret = ret[0]
-        if callbacks:
-            for c in callbacks:
-                c()
+        for c in callbacks:
+            c()
 
         return ret
 
@@ -1432,9 +1443,9 @@ def data_oriented(cls):
     """
 
     def _getattr(self, item):
-        method = cls.__dict__.get(item, None)
-        is_property = method.__class__ == property
-        is_staticmethod = method.__class__ == staticmethod
+        method = cls.__dict__.get(item)
+        method_type = type(method)
+        is_property = method_type is property
         if is_property:
             x = method.fget
         else:
@@ -1445,7 +1456,7 @@ def data_oriented(cls):
             else:
                 wrapped = x
             assert isinstance(wrapped, (BoundGsTaichiCallable, GsTaichiCallable))
-            wrapped._is_staticmethod = is_staticmethod
+            wrapped._is_staticmethod = method_type is staticmethod
             if wrapped._is_classkernel:
                 ret = _BoundedDifferentiableMethod(self, wrapped)
                 ret.__name__ = wrapped.__name__  # type: ignore

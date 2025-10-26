@@ -91,7 +91,7 @@ class NdarrayType:
         self.ndim = ndim
         self.layout = Layout.AOS
         self.needs_grad = needs_grad
-        self.boundary = to_boundary_enum(boundary)
+        self.boundary = int(to_boundary_enum(boundary))
 
     @classmethod
     def __class_getitem__(cls, args, **kwargs):
