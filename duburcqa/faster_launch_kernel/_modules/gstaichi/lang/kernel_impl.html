@@ -1771,9 +1771,9 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
-        <span class="n">method</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">is_property</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="vm">__class__</span> <span class="o">==</span> <span class="nb">property</span>
-        <span class="n">is_staticmethod</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="vm">__class__</span> <span class="o">==</span> <span class="nb">staticmethod</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="n">method_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
+        <span class="n">is_property</span> <span class="o">=</span> <span class="n">method_type</span> <span class="ow">is</span> <span class="nb">property</span>
         <span class="k">if</span> <span class="n">is_property</span><span class="p">:</span>
             <span class="n">x</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">fget</span>
         <span class="k">else</span><span class="p">:</span>
@@ -1784,7 +1784,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">wrapped</span> <span class="o">=</span> <span class="n">x</span>
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">wrapped</span><span class="p">,</span> <span class="p">(</span><span class="n">BoundGsTaichiCallable</span><span class="p">,</span> <span class="n">GsTaichiCallable</span><span class="p">))</span>
-            <span class="n">wrapped</span><span class="o">.</span><span class="n">_is_staticmethod</span> <span class="o">=</span> <span class="n">is_staticmethod</span>
+            <span class="n">wrapped</span><span class="o">.</span><span class="n">_is_staticmethod</span> <span class="o">=</span> <span class="n">method_type</span> <span class="ow">is</span> <span class="nb">staticmethod</span>
             <span class="k">if</span> <span class="n">wrapped</span><span class="o">.</span><span class="n">_is_classkernel</span><span class="p">:</span>
                 <span class="n">ret</span> <span class="o">=</span> <span class="n">_BoundedDifferentiableMethod</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wrapped</span><span class="p">)</span>
                 <span class="n">ret</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="n">wrapped</span><span class="o">.</span><span class="vm">__name__</span>  <span class="c1"># type: ignore</span>
