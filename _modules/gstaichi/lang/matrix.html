@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gstaichi.lang.matrix &#8212; GsTaichi 3.1.1 documentation</title>
+    <title>gstaichi.lang.matrix &#8212; GsTaichi 3.1.2 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../_static/documentation_options.js?v=796a81b5"></script>
+    <script src="../../../_static/documentation_options.js?v=4e920bdf"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -59,7 +59,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="3.1.1" />
+  <meta name="docsearch:version" content="3.1.2" />
   </head>
   
   
@@ -121,7 +121,7 @@
   
   
   
-    <p class="title logo__title">GsTaichi 3.1.1 documentation</p>
+    <p class="title logo__title">GsTaichi 3.1.2 documentation</p>
   
 </a></div>
     
@@ -333,6 +333,7 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.field</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span><span class="p">,</span> <span class="n">ScalarField</span><span class="p">,</span> <span class="n">SNodeHostAccess</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.util</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DataTypeCxxWrapper</span><span class="p">,</span>
     <span class="n">cook_dtype</span><span class="p">,</span>
     <span class="n">get_traceback</span><span class="p">,</span>
     <span class="n">gstaichi_scope</span><span class="p">,</span>
@@ -2095,7 +2096,7 @@
 
 <div class="viewcode-block" id="MatrixNdarray.element_type">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/matrix/index.html#gstaichi.lang.matrix.MatrixNdarray.element_type">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">element_type</span> <span class="o">=</span> <span class="n">_type_factory</span><span class="o">.</span><span class="n">get_tensor_type</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">element_type</span> <span class="o">=</span> <span class="n">DataTypeCxxWrapper</span><span class="p">(</span><span class="n">_type_factory</span><span class="o">.</span><span class="n">get_tensor_type</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">get_ptr</span><span class="p">())</span></div>
 
         <span class="c1"># TODO: we should pass in element_type, shape, layout instead.</span>
 <div class="viewcode-block" id="MatrixNdarray.arr">
@@ -2240,7 +2241,7 @@
 
 <div class="viewcode-block" id="VectorNdarray.element_type">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/matrix/index.html#gstaichi.lang.matrix.VectorNdarray.element_type">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">element_type</span> <span class="o">=</span> <span class="n">_type_factory</span><span class="o">.</span><span class="n">get_tensor_type</span><span class="p">((</span><span class="n">n</span><span class="p">,),</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">element_type</span> <span class="o">=</span> <span class="n">DataTypeCxxWrapper</span><span class="p">(</span><span class="n">_type_factory</span><span class="o">.</span><span class="n">get_tensor_type</span><span class="p">((</span><span class="n">n</span><span class="p">,),</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">get_ptr</span><span class="p">())</span></div>
 
 <div class="viewcode-block" id="VectorNdarray.arr">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/matrix/index.html#gstaichi.lang.matrix.VectorNdarray.arr">[docs]</a>
