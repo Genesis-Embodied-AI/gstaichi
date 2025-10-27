@@ -261,7 +261,7 @@ class DataTypeCxxWrapper(_ti_core.DataTypeCxx):
         return self._hash
 
 
-def cook_dtype(dtype):
+def cook_dtype(dtype: Any) -> _ti_core.DataTypeCxx:
     # Convert Python dtype to CPP dtype
     _type = type(dtype)
     if issubclass(_type, _ti_core.DataTypeCxx):

@@ -13,7 +13,12 @@ import time
 import types
 import typing
 import warnings
-from dataclasses import _FIELD, _FIELDS, dataclass, is_dataclass
+from dataclasses import (
+    _FIELD,  # type: ignore[reportAttributeAccessIssue]
+    _FIELDS,  # type: ignore[reportAttributeAccessIssue]
+    dataclass,
+    is_dataclass,
+)
 from typing import Any, Callable, Iterable, Type, TypeVar, cast, overload
 
 import numpy as np
@@ -615,13 +620,13 @@ class FeLlCacheObservations:
 
 def cast_float(x: float | np.floating | np.integer | int) -> float:
     if not isinstance(x, (int, float, np.integer, np.floating)):
-        raise ValueError
+        raise ValueError(f"Invalid argument type '{type(x)}")
     return float(x)
 
 
 def cast_int(x: int | np.integer) -> int:
     if not isinstance(x, (int, np.integer)):
-        raise ValueError
+        raise ValueError(f"Invalid argument type '{type(x)}")
     return int(x)
 
 
@@ -805,8 +810,10 @@ def _recursive_set_args(
                 v = [cast_func(v[i, j]) for i in range(needed_arg_type.n) for j in range(needed_arg_type.m)]
             else:
                 v = [cast_func(v[i]) for i in range(needed_arg_type.n)]
-        except ValueError:
-            raise GsTaichiRuntimeTypeError(f"Argument {needed.dtype} cannot be converted into required type {type(x)}")
+        except ValueError as e:
+            raise GsTaichiRuntimeTypeError(
+                f"Argument cannot be converted into required type {needed_arg_type.dtype}"
+            ) from e
 
         v = needed_arg_type(*v)
         needed_arg_type.set_kernel_struct_args(v, launch_ctx, indices)
