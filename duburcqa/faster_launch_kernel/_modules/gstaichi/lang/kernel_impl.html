@@ -1114,14 +1114,12 @@
         <span class="k">return</span> <span class="mi">1</span>
     <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">needed_arg_basetype</span><span class="p">,</span> <span class="n">MatrixType</span><span class="p">):</span>
         <span class="n">cast_func</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">needed_arg_dtype</span> <span class="o">=</span> <span class="n">needed_arg_type</span><span class="o">.</span><span class="n">dtype</span>
-        <span class="n">needed_arg_dtype_id</span> <span class="o">=</span> <span class="nb">id</span><span class="p">(</span><span class="n">needed_arg_dtype</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">needed_arg_dtype_id</span> <span class="ow">in</span> <span class="n">primitive_types</span><span class="o">.</span><span class="n">real_type_ids</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">needed_arg_type</span><span class="o">.</span><span class="n">dtype</span> <span class="ow">in</span> <span class="n">primitive_types</span><span class="o">.</span><span class="n">real_types</span><span class="p">:</span>
             <span class="n">cast_func</span> <span class="o">=</span> <span class="n">cast_float</span>
-        <span class="k">elif</span> <span class="n">needed_arg_dtype_id</span> <span class="ow">in</span> <span class="n">primitive_types</span><span class="o">.</span><span class="n">integer_type_ids</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">needed_arg_type</span><span class="o">.</span><span class="n">dtype</span> <span class="ow">in</span> <span class="n">primitive_types</span><span class="o">.</span><span class="n">integer_types</span><span class="p">:</span>
             <span class="n">cast_func</span> <span class="o">=</span> <span class="n">cast_int</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Matrix dtype </span><span class="si">{</span><span class="n">needed_arg_dtype</span><span class="si">}</span><span class="s2"> is not integer type or real type.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Matrix dtype </span><span class="si">{</span><span class="n">needed_arg_type</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2"> is not integer type or real type.&quot;</span><span class="p">)</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">needed_arg_type</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
