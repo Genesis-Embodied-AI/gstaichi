@@ -326,6 +326,8 @@ def get_traceback(stacklevel=1):
 
 
 def is_data_oriented(obj: Any) -> bool:
+    # Use getattr on class instead of object to bypass custom __getattr__ method that is
+    # overwritten at instance level and very slow.
     return getattr(type(obj), "_data_oriented", False)
 
 

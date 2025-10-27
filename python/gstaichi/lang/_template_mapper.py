@@ -12,7 +12,7 @@ from gstaichi.lang.expr import Expr
 from gstaichi.lang.kernel_arguments import ArgMetadata
 from gstaichi.lang.matrix import MatrixType
 from gstaichi.lang.snode import SNode
-from gstaichi.lang.util import to_gstaichi_type
+from gstaichi.lang.util import is_data_oriented, to_gstaichi_type
 from gstaichi.types import (
     ndarray_type,
     primitive_types,
@@ -56,7 +56,7 @@ def _extract_arg(raise_on_templated_floats: bool, arg: Any, annotation: Annotati
             raise GsTaichiRuntimeTypeError(
                 "Ndarray shouldn't be passed in via `ti.template()`, please annotate your kernel using `ti.types.ndarray(...)` instead"
             )
-        if arg_type in _composite_mutable_types or getattr(arg_type, "_data_oriented", False):
+        if arg_type in _composite_mutable_types or is_data_oriented(arg):
             # [Composite arguments] Return weak reference to the object
             # GsTaichi kernel will cache the extracted arguments, thus we can't simply return the original argument.
             # Instead, a weak reference to the original value is returned to avoid memory leak.
@@ -135,6 +135,7 @@ def _extract_arg(raise_on_templated_floats: bool, arg: Any, annotation: Annotati
         else:
             element_type = arg.dtype
         return element_type, len(shape) - len(element_shape), needs_grad, annotation.boundary
+    # Inlining `dataclasses.is_dataclass` and `dataclasess.fields`, which are very slow due to extra runtime checks
     annotation_fields = getattr(annotation, _FIELDS, None)
     if annotation_fields is not None:
         return tuple(
