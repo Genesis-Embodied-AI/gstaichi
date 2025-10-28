@@ -667,13 +667,13 @@ void export_lang(py::module &m) {
              for (int i = 0; i < arg_ids.size(); ++i)
                launch_ctx->set_arg_ndarray({arg_ids[i]}, *arrs[i]);
            })
-      .def("set_arg_ndarray", &LaunchContextBuilder::set_arg_ndarray)
+      .def("set_arg_ndarray", static_cast<void (LaunchContextBuilder::*)(
+                                  const std::vector<int> &, const Ndarray &)>(
+                                  &LaunchContextBuilder::set_arg_ndarray))
       .def("set_arg_ndarray",
-           [](LaunchContextBuilder *launch_ctx, const std::vector<int> &arg_ids,
-              const std::vector<Ndarray *> &arrs) {
-             for (int i = 0; i < arg_ids.size(); ++i)
-               launch_ctx->set_arg_ndarray({arg_ids[i]}, *arrs[i]);
-           })
+           static_cast<void (LaunchContextBuilder::*)(
+               const std::vector<int> &, const std::vector<Ndarray *> &)>(
+               &LaunchContextBuilder::set_arg_ndarray))
       .def("set_arg_ndarray_with_grad",
            &LaunchContextBuilder::set_arg_ndarray_with_grad)
       .def("set_arg_ndarray_with_grad",

@@ -224,8 +224,10 @@ void LaunchContextBuilder::set_arg_external_array_with_shape(
                  "External array cannot have > {max_num_indices} indices");
   array_ptrs[concatenate_vector<int>(
       arg_id, {TypeFactory::DATA_PTR_POS_IN_NDARRAY})] = (void *)ptr;
-  array_ptrs[concatenate_vector<int>(
-      arg_id, {TypeFactory::GRAD_PTR_POS_IN_NDARRAY})] = (void *)grad_ptr;
+  if (grad_ptr != 0) {
+    array_ptrs[concatenate_vector<int>(
+        arg_id, {TypeFactory::GRAD_PTR_POS_IN_NDARRAY})] = (void *)grad_ptr;
+  }
   set_array_runtime_size(arg_id, size);
   set_array_device_allocation_type(arg_id, DevAllocType::kNone);
   for (uint64 i = 0; i < shape.size(); ++i) {
@@ -240,6 +242,25 @@ void LaunchContextBuilder::set_arg_ndarray(const std::vector<int> &arg_id,
   TI_ASSERT_INFO(arr.shape.size() <= gstaichi_max_num_indices,
                  "External array cannot have > {max_num_indices} indices");
   set_arg_ndarray_impl(arg_id, ptr, arr.shape);
+}
+
+void LaunchContextBuilder::set_arg_ndarray(const std::vector<int> &arg_ids,
+                                           const std::vector<Ndarray *> &arrs) {
+  for (int i = 0; i < arg_ids.size(); ++i) {
+    const int arg_id = arg_ids[i];
+    const Ndarray &arr = *arrs[i];
+
+    intptr_t ptr = arr.get_device_allocation_ptr_as_int();
+    array_ptrs[{arg_id, TypeFactory::DATA_PTR_POS_IN_NDARRAY}] = (void *)ptr;
+    set_array_device_allocation_type({arg_id}, DevAllocType::kNdarray);
+    const std::vector<int> &shape = arr.shape;
+    size_t total_size = 1;
+    for (int32 i = 0; i < shape.size(); i++) {
+      set_struct_arg({arg_id, 0, i}, (int32)shape[i]);
+      total_size *= shape[i];
+    }
+    set_array_runtime_size({arg_id}, total_size);
+  }
 }
 
 void LaunchContextBuilder::set_arg_ndarray_with_grad(
@@ -294,7 +315,7 @@ void LaunchContextBuilder::set_arg_ndarray_impl(const std::vector<int> &arg_id,
   // Set array ptr
   array_ptrs[concatenate_vector<int>(
       arg_id, {TypeFactory::DATA_PTR_POS_IN_NDARRAY})] = (void *)devalloc_ptr;
-  if (devalloc_ptr != 0) {
+  if (devalloc_ptr_grad != 0) {
     array_ptrs[concatenate_vector<int>(
         arg_id, {TypeFactory::GRAD_PTR_POS_IN_NDARRAY})] =
         (void *)devalloc_ptr_grad;
