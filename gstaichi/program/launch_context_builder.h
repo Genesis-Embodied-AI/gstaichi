@@ -74,8 +74,8 @@ class LaunchContextBuilder {
                             const std::vector<int> &shape,
                             intptr_t devalloc_ptr_grad = 0);
   void set_arg_ndarray(const std::vector<int> &arg_id, const Ndarray &arr);
-  void set_arg_ndarray(const std::vector<int> &arg_id,
-                       const std::vector<Ndarray *> &arr);
+  void set_args_ndarray(const std::vector<int> &arg_ids,
+                        const std::vector<Ndarray *> &arrs);
   void set_arg_ndarray_with_grad(const std::vector<int> &arg_id,
                                  const Ndarray &arr,
                                  const Ndarray &arr_grad);

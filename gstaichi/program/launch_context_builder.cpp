@@ -244,8 +244,9 @@ void LaunchContextBuilder::set_arg_ndarray(const std::vector<int> &arg_id,
   set_arg_ndarray_impl(arg_id, ptr, arr.shape);
 }
 
-void LaunchContextBuilder::set_arg_ndarray(const std::vector<int> &arg_ids,
-                                           const std::vector<Ndarray *> &arrs) {
+void LaunchContextBuilder::set_args_ndarray(
+    const std::vector<int> &arg_ids,
+    const std::vector<Ndarray *> &arrs) {
   const size_t num_arrs = arg_ids.size();
 
   array_ptrs.reserve(array_ptrs.size() + num_arrs);

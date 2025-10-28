@@ -635,21 +635,21 @@ void export_lang(py::module &m) {
 
   py::class_<LaunchContextBuilder>(m, "KernelLaunchContext")
       .def("set_arg_int", &LaunchContextBuilder::set_arg_int)
-      .def("set_arg_int",
+      .def("set_args_int",
            [](LaunchContextBuilder *launch_ctx, const std::vector<int> &arg_ids,
               const std::vector<int64> &vec) {
              for (int i = 0; i < arg_ids.size(); ++i)
                launch_ctx->set_arg_int({arg_ids[i]}, vec[i]);
            })
       .def("set_arg_uint", &LaunchContextBuilder::set_arg_uint)
-      .def("set_arg_uint",
+      .def("set_args_uint",
            [](LaunchContextBuilder *launch_ctx, const std::vector<int> &arg_ids,
               const std::vector<uint64> &vec) {
              for (int i = 0; i < arg_ids.size(); ++i)
                launch_ctx->set_arg_uint({arg_ids[i]}, vec[i]);
            })
       .def("set_arg_float", &LaunchContextBuilder::set_arg_float)
-      .def("set_arg_float",
+      .def("set_args_float",
            [](LaunchContextBuilder *launch_ctx, const std::vector<int> &arg_ids,
               const std::vector<float> &vec) {
              for (int i = 0; i < arg_ids.size(); ++i)
@@ -667,16 +667,11 @@ void export_lang(py::module &m) {
              for (int i = 0; i < arg_ids.size(); ++i)
                launch_ctx->set_arg_ndarray({arg_ids[i]}, *arrs[i]);
            })
-      .def("set_arg_ndarray", static_cast<void (LaunchContextBuilder::*)(
-                                  const std::vector<int> &, const Ndarray &)>(
-                                  &LaunchContextBuilder::set_arg_ndarray))
-      .def("set_arg_ndarray",
-           static_cast<void (LaunchContextBuilder::*)(
-               const std::vector<int> &, const std::vector<Ndarray *> &)>(
-               &LaunchContextBuilder::set_arg_ndarray))
+      .def("set_arg_ndarray", &LaunchContextBuilder::set_arg_ndarray)
+      .def("set_args_ndarray", &LaunchContextBuilder::set_args_ndarray)
       .def("set_arg_ndarray_with_grad",
            &LaunchContextBuilder::set_arg_ndarray_with_grad)
-      .def("set_arg_ndarray_with_grad",
+      .def("set_args_ndarray_with_grad",
            [](LaunchContextBuilder *launch_ctx, const std::vector<int> &arg_ids,
               const std::vector<Ndarray *> &arrs,
               const std::vector<Ndarray *> &arrs_grad) {
