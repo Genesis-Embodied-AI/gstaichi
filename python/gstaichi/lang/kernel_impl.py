@@ -19,7 +19,7 @@ from dataclasses import (
     dataclass,
     is_dataclass,
 )
-from typing import Any, Callable, Iterable, Type, TypeVar, cast, overload
+from typing import Any, Callable, Type, TypeVar, cast, overload
 
 import numpy as np
 
@@ -632,25 +632,23 @@ def cast_int(x: int | np.integer) -> int:
 
 def _recursive_set_args(
     launch_ctx: KernelLaunchContext,
-    actual_argument_slot: int,
-    exceed_max_arg_num: bool,
-    set_later_list: list[tuple[Callable, Iterable[Any]]],
     needed_arg_type: Type,
     provided_arg_type: Type,
     v: Any,
     indices: tuple[int, ...],
+    actual_argument_slot: int,
     callbacks: list[Callable[[], None]],
-    buffers: list[np.ndarray],
 ) -> int:
     """
     Returns the number of kernel args set e.g. templates don't set kernel args, so returns 0
     a single ndarray is 1 kernel arg, so returns 1
     a struct of 3 ndarrays would set 3 kernel args, so return 3
-    note: len(indices) > 1 only happens with argpack (which we are removing support for)
     """
     if actual_argument_slot >= MAX_ARG_NUM:
-        exceed_max_arg_num = True
-        return 0
+        raise GsTaichiRuntimeError(
+            f"The number of elements in kernel arguments is too big! Do not exceed {MAX_ARG_NUM} on "
+            f"{_ti_core.arch_name(impl.current_cfg().arch)} backend."
+        )
     actual_argument_slot += 1
 
     needed_arg_type_id = id(needed_arg_type)
@@ -679,19 +677,11 @@ def _recursive_set_args(
         for field in needed_arg_fields.values():
             if field._field_type is not _FIELD:
                 continue
-            assert not isinstance(field.type, str)
+            field_type = field.type
+            assert not isinstance(field_type, str)
             field_value = getattr(v, field.name)
             idx += _recursive_set_args(
-                launch_ctx,
-                actual_argument_slot,
-                exceed_max_arg_num,
-                set_later_list,
-                field.type,
-                field.type,
-                field_value,
-                (offset + idx,),
-                callbacks,
-                buffers,
+                launch_ctx, field_type, field_type, field_value, (offset + idx,), actual_argument_slot, callbacks,
             )
         return idx
     if needed_arg_basetype is ndarray_type.NdarrayType and isinstance(v, Ndarray):
@@ -727,13 +717,7 @@ def _recursive_set_args(
             elif v.flags.f_contiguous:
                 # TODO: A better way that avoids copying is saving strides info.
                 tmp = np.ascontiguousarray(v)
-                # Purpose: DO NOT GC |tmp|!
-                buffers.append(tmp)
-
-                def callback(original, updated):
-                    np.copyto(original, np.asfortranarray(updated))
-
-                callbacks.append(functools.partial(callback, v, tmp))
+                callbacks.append(functools.partial(np.copyto, v, tmp))
                 launch_ctx.set_arg_external_array_with_shape(indices, int(tmp.ctypes.data), tmp.nbytes, array_shape, 0)
             else:
                 raise ValueError(
@@ -1082,10 +1066,7 @@ class Kernel:
 
         actual_argument_slot = 0
         launch_ctx = t_kernel.make_launch_context()
-        exceed_max_arg_num = False
-        set_later_list = []
-        callbacks = []
-        buffers = []
+        callbacks: list[Callable[[], None]] = []
 
         template_num = 0
         i_out = 0
@@ -1096,25 +1077,7 @@ class Kernel:
                 i_out += 1
                 continue
             i_out += _recursive_set_args(
-                launch_ctx,
-                actual_argument_slot,
-                exceed_max_arg_num,
-                set_later_list,
-                needed_,
-                type(val),
-                val,
-                (i_out - template_num,),
-                callbacks,
-                buffers,
-            )
-
-        for i, (set_arg_func, params) in enumerate(set_later_list):
-            set_arg_func((len(args) - template_num + i,), *params)
-
-        if exceed_max_arg_num:
-            raise GsTaichiRuntimeError(
-                f"The number of elements in kernel arguments is too big! Do not exceed {MAX_ARG_NUM} on "
-                f"{_ti_core.arch_name(impl.current_cfg().arch)} backend."
+                launch_ctx, needed_, type(val), val, (i_out - template_num,), actual_argument_slot, callbacks,
             )
 
         try:
@@ -1184,16 +1147,16 @@ class Kernel:
 
         return ret
 
-    def construct_kernel_ret(self, launch_ctx: KernelLaunchContext, ret_type: Any, index: tuple[int, ...] = ()):
+    def construct_kernel_ret(self, launch_ctx: KernelLaunchContext, ret_type: Any, indices: tuple[int, ...]):
         if isinstance(ret_type, CompoundType):
-            return ret_type.from_kernel_struct_ret(launch_ctx, index)
+            return ret_type.from_kernel_struct_ret(launch_ctx, indices)
         if ret_type in primitive_types.integer_types:
             if is_signed(cook_dtype(ret_type)):
-                return launch_ctx.get_struct_ret_int(index)
-            return launch_ctx.get_struct_ret_uint(index)
+                return launch_ctx.get_struct_ret_int(indices)
+            return launch_ctx.get_struct_ret_uint(indices)
         if ret_type in primitive_types.real_types:
-            return launch_ctx.get_struct_ret_float(index)
-        raise GsTaichiRuntimeTypeError(f"Invalid return type on index={index}")
+            return launch_ctx.get_struct_ret_float(indices)
+        raise GsTaichiRuntimeTypeError(f"Invalid return type on index={indices}")
 
     def ensure_compiled(self, *args: tuple[Any, ...]) -> tuple[Callable, int, AutodiffMode]:
         try:
