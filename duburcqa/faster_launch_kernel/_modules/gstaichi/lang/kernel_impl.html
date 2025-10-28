@@ -958,24 +958,21 @@
     <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">KernelArgType</span><span class="p">(</span><span class="n">IntEnum</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">KernelBatchedArgType</span><span class="p">(</span><span class="n">IntEnum</span><span class="p">):</span>
     <span class="n">FLOAT</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">INT</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">UINT</span> <span class="o">=</span> <span class="mi">2</span>
     <span class="n">TI_ARRAY</span> <span class="o">=</span> <span class="mi">3</span>
     <span class="n">TI_ARRAY_WITH_GRAD</span> <span class="o">=</span> <span class="mi">4</span>
-    <span class="n">EXTERNAL_ARRAY</span> <span class="o">=</span> <span class="mi">5</span>
-    <span class="n">TEXTURE</span> <span class="o">=</span> <span class="mi">6</span>
-    <span class="n">RW_TEXTURE</span> <span class="o">=</span> <span class="mi">7</span>
 
 
 <span class="c1"># Define proxies for fast lookup</span>
-<span class="n">_FLOAT</span><span class="p">,</span> <span class="n">_INT</span><span class="p">,</span> <span class="n">_UINT</span><span class="p">,</span> <span class="n">_TI_ARRAY</span><span class="p">,</span> <span class="n">_TI_ARRAY_WITH_GRAD</span><span class="p">,</span> <span class="n">_EXTERNAL_ARRAY</span><span class="p">,</span> <span class="n">_TEXTURE</span><span class="p">,</span> <span class="n">_RW_TEXTURE</span> <span class="o">=</span> <span class="n">KernelArgType</span>
+<span class="n">_FLOAT</span><span class="p">,</span> <span class="n">_INT</span><span class="p">,</span> <span class="n">_UINT</span><span class="p">,</span> <span class="n">_TI_ARRAY</span><span class="p">,</span> <span class="n">_TI_ARRAY_WITH_GRAD</span> <span class="o">=</span> <span class="n">KernelBatchedArgType</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_recursive_set_args</span><span class="p">(</span>
     <span class="n">launch_ctx</span><span class="p">:</span> <span class="n">KernelLaunchContext</span><span class="p">,</span>
-    <span class="n">launch_ctx_buffer</span><span class="p">:</span> <span class="n">DefaultDict</span><span class="p">[</span><span class="n">KernelArgType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]],</span>
+    <span class="n">launch_ctx_buffer</span><span class="p">:</span> <span class="n">DefaultDict</span><span class="p">[</span><span class="n">KernelBatchedArgType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]],</span>
     <span class="n">needed_arg_type</span><span class="p">:</span> <span class="n">Type</span><span class="p">,</span>
     <span class="n">provided_arg_type</span><span class="p">:</span> <span class="n">Type</span><span class="p">,</span>
     <span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
@@ -1076,7 +1073,7 @@
                     <span class="s2">&quot;Non contiguous numpy arrays are not supported, please call np.ascontiguousarray(arr) &quot;</span>
                     <span class="s2">&quot;before passing it into gstaichi kernel.&quot;</span>
                 <span class="p">)</span>
-            <span class="n">launch_ctx_buffer</span><span class="p">[</span><span class="n">_EXTERNAL_ARRAY</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">indices</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">ctypes</span><span class="o">.</span><span class="n">data</span><span class="p">),</span> <span class="n">v</span><span class="o">.</span><span class="n">nbytes</span><span class="p">,</span> <span class="n">array_shape</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_arg_external_array_with_shape</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">ctypes</span><span class="o">.</span><span class="n">data</span><span class="p">),</span> <span class="n">v</span><span class="o">.</span><span class="n">nbytes</span><span class="p">,</span> <span class="n">array_shape</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">has_pytorch</span><span class="p">():</span>
             <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>  <span class="c1"># pylint: disable=C0415</span>
 
@@ -1117,14 +1114,12 @@
                         <span class="n">grad</span><span class="p">,</span> <span class="n">grad_orig</span> <span class="o">=</span> <span class="n">grad_cpu</span><span class="p">,</span> <span class="n">grad</span>
                         <span class="n">callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">grad_orig</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy_</span><span class="p">,</span> <span class="n">grad</span><span class="p">))</span>
 
-                <span class="n">launch_ctx_buffer</span><span class="p">[</span><span class="n">_EXTERNAL_ARRAY</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="p">(</span>
-                        <span class="n">indices</span><span class="p">,</span>
-                        <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">data_ptr</span><span class="p">()),</span>
-                        <span class="n">v</span><span class="o">.</span><span class="n">element_size</span><span class="p">()</span> <span class="o">*</span> <span class="n">v</span><span class="o">.</span><span class="n">nelement</span><span class="p">(),</span>
-                        <span class="n">array_shape</span><span class="p">,</span>
-                        <span class="nb">int</span><span class="p">(</span><span class="n">grad</span><span class="o">.</span><span class="n">data_ptr</span><span class="p">())</span> <span class="k">if</span> <span class="n">grad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
-                    <span class="p">)</span>
+                <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_arg_external_array_with_shape</span><span class="p">(</span>
+                    <span class="n">indices</span><span class="p">,</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">data_ptr</span><span class="p">()),</span>
+                    <span class="n">v</span><span class="o">.</span><span class="n">element_size</span><span class="p">()</span> <span class="o">*</span> <span class="n">v</span><span class="o">.</span><span class="n">nelement</span><span class="p">(),</span>
+                    <span class="n">array_shape</span><span class="p">,</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="n">grad</span><span class="o">.</span><span class="n">data_ptr</span><span class="p">())</span> <span class="k">if</span> <span class="n">grad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">GsTaichiRuntimeTypeError</span><span class="p">(</span>
@@ -1172,10 +1167,10 @@
         <span class="n">launch_ctx_buffer</span><span class="p">[</span><span class="n">_UINT</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">indices</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">_get_ndarray_addr</span><span class="p">()))</span>
         <span class="k">return</span> <span class="mi">1</span>
     <span class="k">if</span> <span class="n">needed_arg_basetype</span> <span class="ow">is</span> <span class="n">texture_type</span><span class="o">.</span><span class="n">TextureType</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Texture</span><span class="p">):</span>
-        <span class="n">launch_ctx_buffer</span><span class="p">[</span><span class="n">_TEXTURE</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">indices</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">tex</span><span class="p">))</span>
+        <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_arg_texture</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">tex</span><span class="p">)</span>
         <span class="k">return</span> <span class="mi">1</span>
     <span class="k">if</span> <span class="n">needed_arg_basetype</span> <span class="ow">is</span> <span class="n">texture_type</span><span class="o">.</span><span class="n">RWTextureType</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Texture</span><span class="p">):</span>
-        <span class="n">launch_ctx_buffer</span><span class="p">[</span><span class="n">_RW_TEXTURE</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">indices</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">tex</span><span class="p">))</span>
+        <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_arg_rw_texture</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">tex</span><span class="p">)</span>
         <span class="k">return</span> <span class="mi">1</span>
     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Argument type mismatch. Expecting </span><span class="si">{</span><span class="n">needed_arg_type</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
 
@@ -1419,7 +1414,7 @@
 
         <span class="n">actual_argument_slot</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">launch_ctx</span> <span class="o">=</span> <span class="n">t_kernel</span><span class="o">.</span><span class="n">make_launch_context</span><span class="p">()</span>
-        <span class="n">launch_ctx_buffer</span><span class="p">:</span> <span class="n">DefaultDict</span><span class="p">[</span><span class="n">KernelArgType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="n">launch_ctx_buffer</span><span class="p">:</span> <span class="n">DefaultDict</span><span class="p">[</span><span class="n">KernelBatchedArgType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
         <span class="n">callbacks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="n">template_num</span> <span class="o">=</span> <span class="mi">0</span>
@@ -1447,29 +1442,20 @@
         <span class="c1"># arguments in an unordered list. The actual runtime (gfx, llvm...) will later query this context</span>
         <span class="c1"># in correct order.</span>
         <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_FLOAT</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">params</span> <span class="ow">in</span> <span class="n">launch_ctx_args</span><span class="p">:</span>
-                <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_arg_float</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">)</span>
+            <span class="n">indices</span><span class="p">,</span> <span class="n">vec</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">)</span>
+            <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_arg_float</span><span class="p">(</span><span class="nb">tuple</span><span class="p">([</span><span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]),</span> <span class="n">vec</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_INT</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">params</span> <span class="ow">in</span> <span class="n">launch_ctx_args</span><span class="p">:</span>
-                <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_arg_int</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">)</span>
+            <span class="n">indices</span><span class="p">,</span> <span class="n">vec</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">)</span>
+            <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_arg_int</span><span class="p">(</span><span class="nb">tuple</span><span class="p">([</span><span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]),</span> <span class="n">vec</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_UINT</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">params</span> <span class="ow">in</span> <span class="n">launch_ctx_args</span><span class="p">:</span>
-                <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_arg_uint</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">)</span>
+            <span class="n">indices</span><span class="p">,</span> <span class="n">vec</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">)</span>
+            <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_arg_uint</span><span class="p">(</span><span class="nb">tuple</span><span class="p">([</span><span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]),</span> <span class="n">vec</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_TI_ARRAY</span><span class="p">):</span>
             <span class="n">indices</span><span class="p">,</span> <span class="n">arrs</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">)</span>
-            <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_arg_ndarray</span><span class="p">(</span><span class="nb">tuple</span><span class="p">([</span><span class="n">index</span> <span class="k">for</span> <span class="p">(</span><span class="n">index</span><span class="p">,)</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]),</span> <span class="n">arrs</span><span class="p">)</span>
+            <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_arg_ndarray</span><span class="p">(</span><span class="nb">tuple</span><span class="p">([</span><span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]),</span> <span class="n">arrs</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_TI_ARRAY_WITH_GRAD</span><span class="p">):</span>
             <span class="n">indices</span><span class="p">,</span> <span class="n">arrs</span><span class="p">,</span> <span class="n">arrs_grad</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">)</span>
-            <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_arg_ndarray_with_grad</span><span class="p">(</span><span class="nb">tuple</span><span class="p">([</span><span class="n">index</span> <span class="k">for</span> <span class="p">(</span><span class="n">index</span><span class="p">,)</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]),</span> <span class="n">arrs</span><span class="p">,</span> <span class="n">arrs_grad</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_EXTERNAL_ARRAY</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">params</span> <span class="ow">in</span> <span class="n">launch_ctx_args</span><span class="p">:</span>
-                <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_arg_external_array_with_shape</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_TEXTURE</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">params</span> <span class="ow">in</span> <span class="n">launch_ctx_args</span><span class="p">:</span>
-                <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_arg_texture</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_RW_TEXTURE</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">params</span> <span class="ow">in</span> <span class="n">launch_ctx_args</span><span class="p">:</span>
-                <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_arg_rw_texture</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">)</span>
+            <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_arg_ndarray_with_grad</span><span class="p">(</span><span class="nb">tuple</span><span class="p">([</span><span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]),</span> <span class="n">arrs</span><span class="p">,</span> <span class="n">arrs_grad</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="n">runtime</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span>
