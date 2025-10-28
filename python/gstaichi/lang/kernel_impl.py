@@ -81,6 +81,7 @@ MAX_ARG_NUM = 512
 
 _arch_cuda = _ti_core.Arch.cuda
 
+
 class GsTaichiCallable:
     """
     BoundGsTaichiCallable is used to enable wrapping a bindable function with a class.
@@ -683,7 +684,13 @@ def _recursive_set_args(
             assert not isinstance(field_type, str)
             field_value = getattr(v, field.name)
             idx += _recursive_set_args(
-                launch_ctx, field_type, field_type, field_value, (offset + idx,), actual_argument_slot, callbacks,
+                launch_ctx,
+                field_type,
+                field_type,
+                field_value,
+                (offset + idx,),
+                actual_argument_slot,
+                callbacks,
             )
         return idx
     if needed_arg_basetype is ndarray_type.NdarrayType and isinstance(v, Ndarray):
@@ -880,7 +887,7 @@ class Kernel:
 
     def extract_arguments(self) -> None:
         sig = inspect.signature(self.func)
-        if sig.return_annotation not in (inspect._empty, None):
+        if sig.return_annotation not in {inspect._empty, None}:
             self.return_type = sig.return_annotation
             if (
                 isinstance(self.return_type, (types.GenericAlias, typing._GenericAlias))  # type: ignore
@@ -1075,7 +1082,13 @@ class Kernel:
                 i_out += 1
                 continue
             i_out += _recursive_set_args(
-                launch_ctx, needed_, type(val), val, (i_out - template_num,), actual_argument_slot, callbacks,
+                launch_ctx,
+                needed_,
+                type(val),
+                val,
+                (i_out - template_num,),
+                actual_argument_slot,
+                callbacks,
             )
 
         try:
@@ -1127,23 +1140,18 @@ class Kernel:
                 raise e
             raise e from None
 
-        ret = None
-        ret_dt = self.return_type
-        has_ret = ret_dt is not None
-
-        if has_ret or self.has_print:
-            runtime_ops.sync()
-
-        if has_ret:
-            ret = []
-            for i, ret_type in enumerate(ret_dt):
-                ret.append(self.construct_kernel_ret(launch_ctx, ret_type, (i,)))
-            if len(ret_dt) == 1:
-                ret = ret[0]
         for c in callbacks:
             c()
 
-        return ret
+        return_type = self.return_type
+        if return_type or self.has_print:
+            runtime_ops.sync()
+
+        if not return_type:
+            return None
+        if len(return_type) == 1:
+            return self.construct_kernel_ret(launch_ctx, return_type[0], (0,))
+        return tuple([self.construct_kernel_ret(launch_ctx, ret_type, (i,)) for i, ret_type in enumerate(return_type)])
 
     def construct_kernel_ret(self, launch_ctx: KernelLaunchContext, ret_type: Any, indices: tuple[int, ...]):
         if isinstance(ret_type, CompoundType):
