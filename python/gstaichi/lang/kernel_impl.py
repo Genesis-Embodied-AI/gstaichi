@@ -18,6 +18,8 @@ from dataclasses import (
     dataclass,
     is_dataclass,
 )
+
+# Must import 'partial' directly instead of the entire module to avoid attribute lookup overhead.
 from functools import partial, update_wrapper, wraps
 from typing import Any, Callable, Type, TypeVar, cast, overload
 
@@ -680,6 +682,7 @@ def _recursive_set_args(
         for field in needed_arg_fields.values():
             if field._field_type is not _FIELD:
                 continue
+            # Storing attribute in a temporary to avoid repeated attribute lookup (~20ns penalty)
             field_type = field.type
             assert not isinstance(field_type, str)
             field_value = getattr(v, field.name)
@@ -720,12 +723,15 @@ def _recursive_set_args(
             element_dim = needed_arg_dtype.ndim
             array_shape = v.shape[element_dim:] if is_soa else v.shape[:-element_dim]
         if isinstance(v, np.ndarray):
-            if v.flags.f_contiguous:
+            # Check ndarray flags is expensive (~250ns), so it is important to order branches according to hit stats
+            if v.flags.c_contiguous:
+                pass
+            elif v.flags.f_contiguous:
                 # TODO: A better way that avoids copying is saving strides info.
                 v_contiguous = np.ascontiguousarray(v)
                 v, v_orig_np = v_contiguous, v
                 callbacks.append(partial(np.copyto, v_orig_np, v))
-            elif not v.flags.c_contiguous:
+            else:
                 raise ValueError(
                     "Non contiguous numpy arrays are not supported, please call np.ascontiguousarray(arr) "
                     "before passing it into gstaichi kernel."
