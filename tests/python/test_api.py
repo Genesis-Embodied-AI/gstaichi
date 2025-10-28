@@ -1,8 +1,7 @@
-import sys
-
 import pytest
 
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
 
@@ -55,7 +54,6 @@ def _get_expected_matrix_apis():
 
 user_api = {}
 user_api[ti] = [
-    "ArgPack",
     "BitpackedFields",
     "CRITICAL",
     "DEBUG",
@@ -64,7 +62,6 @@ user_api[ti] = [
     "Field",
     "FieldsBuilder",
     "Format",
-    "GUI",
     "INFO",
     "Layout",
     "Matrix",
@@ -79,13 +76,14 @@ user_api[ti] = [
     "Struct",
     "StructField",
     "TRACE",
-    "TaichiAssertionError",
-    "TaichiCompilationError",
-    "TaichiNameError",
-    "TaichiRuntimeError",
-    "TaichiRuntimeTypeError",
-    "TaichiSyntaxError",
-    "TaichiTypeError",
+    "GsTaichiAssertionError",
+    "GsTaichiCompilationError",
+    "GsTaichiNameError",
+    "GsTaichiRuntimeError",
+    "GsTaichiRuntimeTypeError",
+    "GsTaichiSyntaxError",
+    "GsTaichiTypeError",
+    "Template",
     "Texture",
     "Vector",
     "VectorNdarray",
@@ -96,9 +94,7 @@ user_api[ti] = [
     "ad",
     "algorithms",
     "amdgpu",
-    "aot",
     "append",
-    "argpack",
     "arm64",
     "asin",
     "assume_in_range",
@@ -125,8 +121,6 @@ user_api[ti] = [
     "dataclass",
     "deactivate",
     "deactivate_all_snodes",
-    "dx11",
-    "dx12",
     "eig",
     "exp",
     "experimental",
@@ -142,12 +136,9 @@ user_api[ti] = [
     "frexp",
     "func",
     "get_addr",
-    "gles",
     "global_thread_idx",
     "gpu",
-    "graph",
     "grouped",
-    "hex_to_rgb",
     "i",
     "i16",
     "i32",
@@ -166,6 +157,7 @@ user_api[ti] = [
     "int64",
     "int8",
     "is_active",
+    "is_extension_enabled",
     "is_logging_effective",
     "j",
     "jk",
@@ -190,10 +182,10 @@ user_api[ti] = [
     "ndrange",
     "no_activate",
     "one",
-    "opengl",
     "polar_decompose",
     "pow",
     "profiler",
+    "pure",
     "pyfunc",
     "randn",
     "random",
@@ -203,7 +195,6 @@ user_api[ti] = [
     "ref",
     "rescale_index",
     "reset",
-    "rgb_to_hex",
     "root",
     "round",
     "rsqrt",
@@ -232,7 +223,6 @@ user_api[ti] = [
     "u32",
     "u64",
     "u8",
-    "ui",
     "uint1",
     "uint16",
     "uint32",
@@ -257,13 +247,11 @@ user_api[ti.Field] = [
     "dtype",
     "fill",
     "from_numpy",
-    "from_paddle",
     "from_torch",
     "parent",
     "shape",
     "snode",
     "to_numpy",
-    "to_paddle",
     "to_torch",
 ]
 user_api[ti.FieldsBuilder] = [
@@ -357,14 +345,12 @@ user_api[ti.MatrixField] = [
     "dtype",
     "fill",
     "from_numpy",
-    "from_paddle",
     "from_torch",
     "get_scalar_field",
     "parent",
     "shape",
     "snode",
     "to_numpy",
-    "to_paddle",
     "to_torch",
 ]
 user_api[ti.MatrixNdarray] = [
@@ -395,13 +381,11 @@ user_api[ti.ScalarField] = [
     "dtype",
     "fill",
     "from_numpy",
-    "from_paddle",
     "from_torch",
     "parent",
     "shape",
     "snode",
     "to_numpy",
-    "to_paddle",
     "to_torch",
 ]
 user_api[ti.ScalarNdarray] = [
@@ -413,13 +397,11 @@ user_api[ti.ScalarNdarray] = [
     "to_numpy",
 ]
 user_api[ti.Struct] = ["entries", "field", "items", "keys", "methods", "to_dict"]
-user_api[ti.ArgPack] = ["items", "keys", "to_dict"]
 user_api[ti.StructField] = [
     "copy_from",
     "dtype",
     "fill",
     "from_numpy",
-    "from_paddle",
     "from_torch",
     "get_member_field",
     "keys",
@@ -427,7 +409,6 @@ user_api[ti.StructField] = [
     "shape",
     "snode",
     "to_numpy",
-    "to_paddle",
     "to_torch",
 ]
 user_api[ti.VectorNdarray] = [
@@ -444,10 +425,6 @@ user_api[ti.sparse] = ["grid", "usage"]
 @pytest.mark.parametrize("src", user_api.keys())
 @test_utils.test(arch=ti.cpu)
 def test_api(src):
-    # When Python version is below 3.7, deprecated names are
-    # handled as normal names, which will fail this test.
-    expected = user_api[src]
-    actual = [s for s in dir(src) if not s.startswith("_")]
-    assert (
-        sys.version_info < (3, 7) or actual == expected
-    ), f"Failed for API={src}:\n  expected={expected}\n  actual={actual}"
+    expected = sorted(user_api[src])
+    actual = sorted([s for s in dir(src) if not s.startswith("_")])
+    assert actual == expected, f"Failed for API={src}:\n  expected={expected}\n  actual={actual}"

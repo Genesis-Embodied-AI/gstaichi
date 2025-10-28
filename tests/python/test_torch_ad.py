@@ -3,8 +3,9 @@ import sys
 import numpy as np
 import pytest
 
-import taichi as ti
-from taichi.lang.util import has_pytorch
+import gstaichi as ti
+from gstaichi.lang.util import has_pytorch
+
 from tests import test_utils
 
 if has_pytorch():
@@ -62,8 +63,7 @@ def test_torch_ad():
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
 @pytest.mark.skipif(sys.platform == "win32", reason="not working on Windows.")
-# FIXME: crashes at glCreateShader when arch=ti.opengl
-@test_utils.test(exclude=[ti.opengl, ti.gles])
+@test_utils.test()
 def test_torch_ad_gpu():
     if not torch.cuda.is_available():
         return

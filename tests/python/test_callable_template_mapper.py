@@ -1,6 +1,7 @@
-import taichi as ti
-from taichi.lang.kernel_arguments import KernelArgument
-from taichi.lang.kernel_impl import TaichiCallableTemplateMapper
+import gstaichi as ti
+from gstaichi.lang.kernel_arguments import ArgMetadata
+from gstaichi.lang.kernel_impl import TemplateMapper
+
 from tests import test_utils
 
 
@@ -11,45 +12,45 @@ def test_callable_template_mapper():
 
     ti.root.place(x, y)
 
-    mapper = TaichiCallableTemplateMapper(
+    mapper = TemplateMapper(
         (
-            KernelArgument(ti.template(), ti.template()),
-            KernelArgument(ti.template(), ti.template()),
-            KernelArgument(ti.template(), ti.template()),
+            ArgMetadata(ti.template(), ti.template()),
+            ArgMetadata(ti.template(), ti.template()),
+            ArgMetadata(ti.template(), ti.template()),
         ),
         template_slot_locations=(0, 1, 2),
     )
-    assert mapper.lookup((0, 0, 0))[0] == 0
-    assert mapper.lookup((0, 1, 0))[0] == 1
-    assert mapper.lookup((0, 0, 0))[0] == 0
-    assert mapper.lookup((0, 0, 1))[0] == 2
-    assert mapper.lookup((0, 1, 0))[0] == 1
+    assert mapper.lookup(False, (0, 0, 0))[0] == 0
+    assert mapper.lookup(False, (0, 1, 0))[0] == 1
+    assert mapper.lookup(False, (0, 0, 0))[0] == 0
+    assert mapper.lookup(False, (0, 0, 1))[0] == 2
+    assert mapper.lookup(False, (0, 1, 0))[0] == 1
 
-    mapper = TaichiCallableTemplateMapper(
+    mapper = TemplateMapper(
         (
-            KernelArgument(ti.i32, ti.i32),
-            KernelArgument(ti.i32, ti.i32),
-            KernelArgument(ti.i32, ti.i32),
+            ArgMetadata(ti.i32, ti.i32),
+            ArgMetadata(ti.i32, ti.i32),
+            ArgMetadata(ti.i32, ti.i32),
         ),
         (),
     )
-    assert mapper.lookup((0, 0, 0))[0] == 0
-    assert mapper.lookup((0, 1, 0))[0] == 0
-    assert mapper.lookup((0, 0, 0))[0] == 0
-    assert mapper.lookup((0, 0, 1))[0] == 0
-    assert mapper.lookup((0, 1, 0))[0] == 0
+    assert mapper.lookup(False, (0, 0, 0))[0] == 0
+    assert mapper.lookup(False, (0, 1, 0))[0] == 0
+    assert mapper.lookup(False, (0, 0, 0))[0] == 0
+    assert mapper.lookup(False, (0, 0, 1))[0] == 0
+    assert mapper.lookup(False, (0, 1, 0))[0] == 0
 
-    mapper = TaichiCallableTemplateMapper(
+    mapper = TemplateMapper(
         (
-            KernelArgument(ti.i32, ti.i32),
-            KernelArgument(ti.template(), ti.template()),
-            KernelArgument(ti.i32, ti.i32),
+            ArgMetadata(ti.i32, ti.i32),
+            ArgMetadata(ti.template(), ti.template()),
+            ArgMetadata(ti.i32, ti.i32),
         ),
         (1,),
     )
-    assert mapper.lookup((0, x, 0))[0] == 0
-    assert mapper.lookup((0, y, 0))[0] == 1
-    assert mapper.lookup((0, x, 1))[0] == 0
+    assert mapper.lookup(False, (0, x, 0))[0] == 0
+    assert mapper.lookup(False, (0, y, 0))[0] == 1
+    assert mapper.lookup(False, (0, x, 1))[0] == 0
 
 
 @test_utils.test()
@@ -60,14 +61,14 @@ def test_callable_template_mapper_numpy():
     ti.root.place(x, y)
 
     annotations = (
-        KernelArgument(ti.template(), ti.template()),
-        KernelArgument(ti.template(), ti.template()),
-        KernelArgument(ti.types.ndarray(), ti.types.ndarray()),
+        ArgMetadata(ti.template(), ti.template()),
+        ArgMetadata(ti.template(), ti.template()),
+        ArgMetadata(ti.types.ndarray(), ti.types.ndarray()),
     )
 
     import numpy as np
 
-    mapper = TaichiCallableTemplateMapper(annotations, (0, 1, 2))
-    assert mapper.lookup((0, 0, np.ones(shape=(1, 2, 3), dtype=np.float32)))[0] == 0
-    assert mapper.lookup((0, 0, np.ones(shape=(1, 2, 4), dtype=np.float32)))[0] == 0
-    assert mapper.lookup((0, 0, np.ones(shape=(1, 2, 1), dtype=np.int32)))[0] == 1
+    mapper = TemplateMapper(annotations, (0, 1, 2))
+    assert mapper.lookup(False, (0, 0, np.ones(shape=(1, 2, 3), dtype=np.float32)))[0] == 0
+    assert mapper.lookup(False, (0, 0, np.ones(shape=(1, 2, 4), dtype=np.float32)))[0] == 0
+    assert mapper.lookup(False, (0, 0, np.ones(shape=(1, 2, 1), dtype=np.int32)))[0] == 1

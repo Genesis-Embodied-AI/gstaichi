@@ -1,37 +1,32 @@
 import atexit
 import functools
 import math
+import os
+import pathlib
 import shutil
 import threading
-from os import listdir, rmdir, stat
-from os.path import join
 from tempfile import mkdtemp
 
 import pytest
 
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
-OFFLINE_CACHE_TEMP_DIR = mkdtemp()
-atexit.register(lambda: rmdir(OFFLINE_CACHE_TEMP_DIR))
+OFFLINE_CACHE_TEMP_DIR = pathlib.Path(mkdtemp())
+atexit.register(lambda: shutil.rmtree(OFFLINE_CACHE_TEMP_DIR))
 
 supported_llvm_archs = {ti.cpu, ti.cuda, ti.amdgpu}
-supported_gfx_archs = {ti.opengl, ti.vulkan, ti.metal, ti.dx11}
+supported_gfx_archs = {ti.vulkan, ti.metal}
 supported_archs_offline_cache = supported_llvm_archs | supported_gfx_archs
 supported_archs_offline_cache = {v for v in supported_archs_offline_cache if v in test_utils.expected_archs()}
 
 
-def is_offline_cache_file(filename):
-    suffixes = (".tic",)
-    return filename.endswith(suffixes)
-
-
-def cache_files_size(path):
-    files = listdir(path)
+def cache_files_size(path: pathlib.Path) -> int:
     result = 0
-    for file in files:
-        if is_offline_cache_file(file):
-            result += stat(join(path, file)).st_size
+    for filepath in path.rglob("*.tic"):
+        if filepath.is_file():
+            result += os.stat(filepath).st_size
     return result
 
 
@@ -42,22 +37,32 @@ def expected_num_cache_files(num_kernels: int = 0) -> int:
     return num_kernels + 1
 
 
-def tmp_offline_cache_file_path():
-    return join(OFFLINE_CACHE_TEMP_DIR, str(threading.currentThread().ident))
+def tmp_offline_cache_file_path_base() -> pathlib.Path:
+    return OFFLINE_CACHE_TEMP_DIR / str(threading.current_thread().ident)
+
+
+def tmp_offline_cache_file_path() -> pathlib.Path:
+    return tmp_offline_cache_file_path_base() / "kernel_compilation_manager"
 
 
 def current_thread_ext_options():
     return {
         "offline_cache": True,
-        "offline_cache_file_path": tmp_offline_cache_file_path(),
+        "offline_cache_file_path": str(tmp_offline_cache_file_path_base()),
         "cuda_stack_limit": 1024,
         "device_memory_GB": 0.2,
     }
 
 
-def cache_files_cnt():
+def cache_files_cnt(folder: pathlib.Path | None = None) -> int:
+    if folder is None:
+        folder = tmp_offline_cache_file_path()
     try:
-        return len(listdir(tmp_offline_cache_file_path()))
+        count = 0
+        for filepath in folder.rglob("*"):
+            if filepath.is_file():
+                count += 1
+        return count
     except FileNotFoundError:
         return 0
 
@@ -217,7 +222,7 @@ def _test_closing_offline_cache_for_a_kernel(curr_arch, kernel, args, result):
             arch=curr_arch,
             enable_fallback=False,
             offline_cache=False,
-            offline_cache_file_path=tmp_offline_cache_file_path(),
+            offline_cache_file_path=str(tmp_offline_cache_file_path_base()),
             cuda_stack_limit=1024,
             device_memory_GB=0.1,
         )
@@ -253,6 +258,11 @@ def test_offline_cache_per_kernel(curr_arch):
 def test_multiple_ib_with_offline_cache(curr_arch):
     count_of_cache_file = cache_files_cnt()
 
+    assert ti.lang is not None
+    arch_supported = ti.lang.misc.is_extension_supported(curr_arch, ti.extension.adstack)
+    if not arch_supported:
+        pytest.skip(reason=f"architecture not supported for adstack {curr_arch}")
+
     def added_files():
         return cache_files_cnt() - count_of_cache_file
 
@@ -275,11 +285,11 @@ def test_multiple_ib_with_offline_cache(curr_arch):
         assert y[None] == 12.0
         assert x.grad[None] == 12.0
 
-    ti.init(arch=curr_arch, enable_fallback=False, **current_thread_ext_options())
+    ti.init(arch=curr_arch, enable_fallback=False, ad_stack_experimental_enabled=True, **current_thread_ext_options())
     helper()
     assert added_files() == expected_num_cache_files()
 
-    ti.init(arch=curr_arch, enable_fallback=False, **current_thread_ext_options())
+    ti.init(arch=curr_arch, enable_fallback=False, ad_stack_experimental_enabled=True, **current_thread_ext_options())
     assert added_files() == expected_num_cache_files(9)
     helper()
 
@@ -399,7 +409,7 @@ def test_offline_cache_with_different_snode_trees(curr_arch):
         def trigger_compile():
             x[0] += 1
 
-        # This case is used for testing SNodeTree storeing order matters (i.e., use a ordered container such as vector instead of unordered_map or unordered_set) when generating kernel offline cache key
+        # This case is used for testing SNodeTree storing order matters (i.e., use a ordered container such as vector instead of unordered_map or unordered_set) when generating kernel offline cache key
         # The multiple `trigger_compile` equalivant to allocate each field to a different SNodeTree
         # i.e.,
         # x = ti.field(float)
@@ -496,7 +506,7 @@ def test_offline_cache_cleaning(curr_arch, factor, policy):
             offline_cache_cleaning_policy=policy,
             offline_cache_max_size_of_files=max_size,  # bytes
             offline_cache_cleaning_factor=factor,
-            **current_thread_ext_options()
+            **current_thread_ext_options(),
         )
 
     def run_simple_kernels(max_size):

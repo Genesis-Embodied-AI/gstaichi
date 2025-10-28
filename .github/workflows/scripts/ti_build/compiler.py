@@ -35,9 +35,8 @@ def setup_clang(as_compiler=True) -> None:
     if u.system == "Linux":
         for v in ("-15", "-14", "-13", "-12", "-11", "-10", ""):
             clang = shutil.which(f"clang{v}")
-            if clang is not None:
-                clangpp = shutil.which(f"clang++{v}")
-                assert clangpp
+            clangpp = shutil.which(f"clang++{v}")
+            if clang is not None and clangpp is not None:
                 break
         else:
             error("Could not find clang of any version")
@@ -59,6 +58,7 @@ def setup_clang(as_compiler=True) -> None:
         raise RuntimeError(f"Unsupported platform: {u.system} {u.machine}")
 
     cmake_args["CLANG_EXECUTABLE"] = clang
+    cmake_args["CMAKE_CXX_COMPILER_WORKS"] = "1"
 
     if as_compiler:
         cc = os.environ.get("CC")
@@ -126,13 +126,13 @@ def setup_msvc() -> None:
             if not vs.exists():
                 continue
 
-            if os.environ.get("TI_CI") and not os.environ.get("TAICHI_USE_MSBUILD"):
+            if os.environ.get("TI_CI") and not os.environ.get("GSTAICHI_USE_MSBUILD"):
                 # Use Ninja + MSVC in CI, for better caching
                 _vs_devshell(vs)
                 cmake_args["CMAKE_C_COMPILER"] = "cl.exe"
                 cmake_args["CMAKE_CXX_COMPILER"] = "cl.exe"
             else:
-                os.environ["TAICHI_USE_MSBUILD"] = "1"
+                os.environ["GSTAICHI_USE_MSBUILD"] = "1"
 
             return
     else:

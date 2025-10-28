@@ -1,9 +1,5 @@
-import operator as ops
+import gstaichi as ti
 
-import numpy as np
-import pytest
-
-import taichi as ti
 from tests import test_utils
 
 

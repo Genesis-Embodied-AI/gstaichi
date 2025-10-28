@@ -1,14 +1,16 @@
 import math
 import operator
+import sys
 
 import numpy as np
 import pytest
 from pytest import approx
 
-import taichi as ti
-from taichi.lang import impl
-from taichi.lang.exception import TaichiCompilationError, TaichiTypeError
-from taichi.lang.misc import get_host_arch_list
+import gstaichi as ti
+from gstaichi.lang import impl
+from gstaichi.lang.exception import GsTaichiCompilationError
+from gstaichi.lang.misc import get_host_arch_list
+
 from tests import test_utils
 
 matrix_operation_types = [operator.add, operator.sub, operator.matmul]
@@ -117,7 +119,7 @@ def test_constant_matrices():
 
 
 @test_utils.test(arch=get_host_arch_list())
-def test_taichi_scope_vector_operations_with_global_vectors():
+def test_gstaichi_scope_vector_operations_with_global_vectors():
     for ops in vector_operation_types:
         a, b, c = test_vector_arrays[:3]
         m1, m2 = ti.Vector(a), ti.Vector(b)
@@ -138,7 +140,7 @@ def test_taichi_scope_vector_operations_with_global_vectors():
 
 
 @test_utils.test(arch=get_host_arch_list())
-def test_taichi_scope_matrix_operations_with_global_matrices():
+def test_gstaichi_scope_matrix_operations_with_global_matrices():
     for ops in matrix_operation_types:
         a, b, c = test_matrix_arrays[:3]
         m1, m2 = ti.Matrix(a), ti.Matrix(b)
@@ -293,7 +295,7 @@ def test_matrix_to_list():
 
 @test_utils.test()
 def test_matrix_needs_grad():
-    # Just make sure the usage doesn't crash, see https://github.com/taichi-dev/taichi/pull/1545
+    # Just make sure the usage doesn't crash, see https://github.com/taichi-dev/gstaichi/pull/1545
     n = 8
     m1 = ti.Matrix.field(2, 2, ti.f32, n, needs_grad=True)
     m2 = ti.Matrix.field(2, 2, ti.f32, n, needs_grad=True)
@@ -308,7 +310,7 @@ def test_matrix_needs_grad():
 
 
 @test_utils.test(debug=True)
-def test_copy_python_scope_matrix_to_taichi_scope():
+def test_copy_python_scope_matrix_to_gstaichi_scope():
     a = ti.Vector([1, 2, 3])
 
     @ti.kernel
@@ -326,7 +328,7 @@ def test_copy_python_scope_matrix_to_taichi_scope():
 
 
 @test_utils.test(debug=True)
-def test_copy_matrix_field_element_to_taichi_scope():
+def test_copy_matrix_field_element_to_gstaichi_scope():
     a = ti.Vector.field(3, ti.i32, shape=())
     a[None] = ti.Vector([1, 2, 3])
 
@@ -350,7 +352,7 @@ def test_copy_matrix_field_element_to_taichi_scope():
 
 
 @test_utils.test(debug=True)
-def test_copy_matrix_in_taichi_scope():
+def test_copy_matrix_in_gstaichi_scope():
     @ti.kernel
     def test():
         a = ti.Vector([1, 2, 3])
@@ -576,14 +578,14 @@ def test_python_scope_inplace_operator():
         assert np.allclose(m1.to_numpy(), ops(a, b))
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_indexing():
     @ti.kernel
     def foo():
         m = ti.Matrix([[0.0, 0.0, 0.0, 0.0] for _ in range(4)])
         print(m[0])
 
-    with pytest.raises(TaichiCompilationError, match=r"Expected 2 indices, got 1"):
+    with pytest.raises(GsTaichiCompilationError, match=r"Expected 2 indices, got 1"):
         foo()
 
     @ti.kernel
@@ -591,11 +593,11 @@ def test_indexing():
         vec = ti.Vector([1, 2, 3, 4])
         print(vec[0, 0])
 
-    with pytest.raises(TaichiCompilationError, match=r"Expected 1 indices, got 2"):
+    with pytest.raises(GsTaichiCompilationError, match=r"Expected 1 indices, got 2"):
         bar()
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_indexing_in_fields():
     f = ti.Matrix.field(3, 3, ti.f32, shape=())
 
@@ -604,7 +606,7 @@ def test_indexing_in_fields():
         f[None][0, 0] = 1.0
         print(f[None][0])
 
-    with pytest.raises(TaichiCompilationError, match=r"Expected 2 indices, got 1"):
+    with pytest.raises(GsTaichiCompilationError, match=r"Expected 2 indices, got 1"):
         foo()
 
     g = ti.Vector.field(3, ti.f32, shape=())
@@ -614,18 +616,18 @@ def test_indexing_in_fields():
         g[None][0] = 1.0
         print(g[None][0, 0])
 
-    with pytest.raises(TaichiCompilationError, match=r"Expected 1 indices, got 2"):
+    with pytest.raises(GsTaichiCompilationError, match=r"Expected 1 indices, got 2"):
         bar()
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_indexing_in_struct():
     @ti.kernel
     def foo():
         s = ti.Struct(a=ti.Vector([0, 0, 0]), b=2)
         print(s.a[0, 0])
 
-    with pytest.raises(TaichiCompilationError, match=r"Expected 1 indices, got 2"):
+    with pytest.raises(GsTaichiCompilationError, match=r"Expected 1 indices, got 2"):
         foo()
 
     @ti.kernel
@@ -633,11 +635,11 @@ def test_indexing_in_struct():
         s = ti.Struct(m=ti.Matrix([[0, 0, 0], [0, 0, 0]]), n=2)
         print(s.m[0])
 
-    with pytest.raises(TaichiCompilationError, match=r"Expected 2 indices, got 1"):
+    with pytest.raises(GsTaichiCompilationError, match=r"Expected 2 indices, got 1"):
         bar()
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_indexing_in_struct_field():
     s = ti.Struct.field({"v": ti.types.vector(3, ti.f32), "m": ti.types.matrix(3, 3, ti.f32)}, shape=())
 
@@ -645,14 +647,14 @@ def test_indexing_in_struct_field():
     def foo():
         print(s[None].v[0, 0])
 
-    with pytest.raises(TaichiCompilationError, match=r"Expected 1 indices, got 2"):
+    with pytest.raises(GsTaichiCompilationError, match=r"Expected 1 indices, got 2"):
         foo()
 
     @ti.kernel
     def bar():
         print(s[None].m[0])
 
-    with pytest.raises(TaichiCompilationError, match=r"Expected 2 indices, got 1"):
+    with pytest.raises(GsTaichiCompilationError, match=r"Expected 2 indices, got 1"):
         bar()
 
 
@@ -751,14 +753,14 @@ def test_local_matrix_indexing_ops():
             assert f[i, j] == xs[j][i]
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_local_matrix_index_check():
     @ti.kernel
     def foo():
         mat = ti.Matrix([[1, 2, 3], [4, 5, 6]])
         print(mat[0])
 
-    with pytest.raises(TaichiCompilationError, match=r"Expected 2 indices, got 1"):
+    with pytest.raises(GsTaichiCompilationError, match=r"Expected 2 indices, got 1"):
         foo()
 
     @ti.kernel
@@ -766,7 +768,7 @@ def test_local_matrix_index_check():
         vec = ti.Vector([1, 2, 3, 4])
         print(vec[0, 0])
 
-    with pytest.raises(TaichiCompilationError, match=r"Expected 1 indices, got 2"):
+    with pytest.raises(GsTaichiCompilationError, match=r"Expected 1 indices, got 2"):
         bar()
 
 
@@ -982,7 +984,7 @@ def test_binary_op_scalarize():
     _test_field_and_ndarray(field, ndarray, func, verify)
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_trace_op():
     @ti.kernel
     def test_fun() -> ti.f32:
@@ -994,7 +996,7 @@ def test_trace_op():
     x = ti.Matrix([[0.1, 3.0], [5.0, 7.0]])
     assert np.abs(x.trace() - 7.1) < 1e-6
 
-    with pytest.raises(TaichiCompilationError, match=r"expected a square matrix, got shape \(3, 2\)"):
+    with pytest.raises(GsTaichiCompilationError, match=r"expected a square matrix, got shape \(3, 2\)"):
         x = ti.Matrix([[0.1, 3.0], [5.0, 7.0], [1.0, 2.0]])
         print(x.trace())
 
@@ -1003,7 +1005,7 @@ def test_trace_op():
         x = ti.Matrix([[0.1, 3.0], [5.0, 7.0], [1.0, 2.0]])
         print(x.trace())
 
-    with pytest.raises(TaichiCompilationError, match=r"expected a square matrix, got shape \(3, 2\)"):
+    with pytest.raises(GsTaichiCompilationError, match=r"expected a square matrix, got shape \(3, 2\)"):
         failed_func()
 
 
@@ -1081,7 +1083,7 @@ def test_atomic_op_scalarize():
     _test_field_and_ndarray(field, ndarray, func, verify)
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_vector_transpose():
     @ti.kernel
     def foo():
@@ -1090,7 +1092,7 @@ def test_vector_transpose():
         z = x @ y.transpose()
 
     with pytest.raises(
-        TaichiCompilationError,
+        GsTaichiCompilationError,
         match=r"`transpose\(\)` cannot apply to a vector. If you want something like `a @ b.transpose\(\)`, write `a.outer_product\(b\)` instead.",
     ):
         foo()
@@ -1135,6 +1137,16 @@ def test_cross_scope_matrix_ternary_ops():
 
 
 @test_utils.test(debug=True)
+@pytest.mark.skipif(
+    sys.platform == "darwin",
+    reason=(
+        "segfaults on Mac with multiprocess. Runs ok with -t 1 "
+        "SHOULD PASS. Created "
+        "https://linear.app/genesis-ai-company/issue/CMP-31/"
+        "fix-failing-test-cross-scope-matrix-atomic-ops-on-mac-in-multiprocess"
+        " to track"
+    ),
+)
 def test_cross_scope_matrix_atomic_ops():
     n = 128
     x = ti.Vector.field(3, dtype=int, shape=(n, n))
@@ -1153,7 +1165,7 @@ def test_cross_scope_matrix_atomic_ops():
 
 @test_utils.test(debug=True)
 def test_global_tmp_overwrite():
-    # https://github.com/taichi-dev/taichi/issues/6663
+    # https://github.com/taichi-dev/gstaichi/issues/6663
     @ti.kernel
     def foo() -> ti.i32:
         p = ti.Matrix([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])

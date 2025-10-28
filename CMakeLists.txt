@@ -1,15 +1,15 @@
 #*********************************************************************
-# The Taichi Programming Language
+# The GsTaichi Programming Language
 #*********************************************************************
 
 cmake_minimum_required(VERSION 3.17)
 
-project(taichi)
+project(gstaichi)
 
 include("cmake/utils.cmake")
 
 if (NOT DEFINED TI_VERSION_MAJOR)
-    message(WARNING "It seems that you are running cmake manually, which may cause issues. Please use setup.py to build taichi from source, see https://docs.taichi-lang.org/docs/dev_install for more details.")
+    message(WARNING "It seems that you are running cmake manually, which may cause issues. Please use setup.py to build gstaichi from source, see https://docs.taichi-lang.org/docs/dev_install for more details.")
     file(READ "${CMAKE_CURRENT_LIST_DIR}/version.txt" TI_VERSION_LITERAL)
     string(REGEX MATCH "v([0-9]+)\\.([0-9]+)\\.([0-9]+)" TI_VERSION_LITERAL ${TI_VERSION_LITERAL})
     set(TI_VERSION_MAJOR ${CMAKE_MATCH_1})
@@ -34,7 +34,7 @@ execute_process(
 string(STRIP ${TI_COMMIT_HASH} TI_COMMIT_HASH)
 string(STRIP ${TI_COMMIT_SHORT_HASH} TI_COMMIT_SHORT_HASH)
 
-message("Taichi Version ${TI_VERSION_MAJOR}.${TI_VERSION_MINOR}.${TI_VERSION_PATCH}")
+message("GsTaichi Version ${TI_VERSION_MAJOR}.${TI_VERSION_MINOR}.${TI_VERSION_PATCH}")
 message("       Commit ${TI_COMMIT_HASH}")
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -44,7 +44,7 @@ RelWithDebInfo MinSizeRel."
             FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
-set(TAICHI_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake/")
+set(GSTAICHI_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake/")
 
 if (WIN32)
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/")
@@ -72,13 +72,14 @@ option(TI_WITH_BACKTRACE "Use backward-cpp to print out C++ stack trace upon fai
 option(TI_GENERATE_PDB "Generate Program Database (PDB) files (will make compilation uncacheable)" OFF)
 option(TI_WITH_LTO "Enable Link Time Optimization (LTO) (affects Windows + MSVC for now)" OFF)  # wheel-tag: lto
 
-if(LINUX OR APPLE)
-    if (NOT IOS)
-        # (penguinliong) Not compatible with -fembed-bitcode. Not sure where it
-        # comes from; probably a XCode preset?
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffunction-sections -fdata-sections")
-    endif()
-    add_definitions(-D__MAC_OS_X_VERSION_MIN_REQUIRED=140000)
+if((LINUX OR APPLE) AND NOT IOS)
+      # (penguinliong) Not compatible with -fembed-bitcode. Not sure where it
+      # comes from; probably a XCode preset?
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffunction-sections -fdata-sections")
+endif()
+
+if(APPLE)
+    add_definitions(-DOSX_DEPLOYMENT_TARGET=11.0)
     add_definitions(-DTARGET_OS_OSX)
 endif()
 
@@ -113,10 +114,11 @@ if (WIN32)
   message("CMAKE_MSVC_RUNTIME_LIBRARY: ${CMAKE_MSVC_RUNTIME_LIBRARY}")
 endif()
 
-# No support of Python for Android build; or in any case taichi is integrated
+# No support of Python for any case gstaichi is integrated
 # in another project as submodule.
+set(PYBIND11_VERSION "2.13.6" CACHE STRING "Pybind11 version to use")
 option(TI_WITH_PYTHON "Build with Python language binding" ON)
-if (TI_WITH_PYTHON AND NOT ANDROID)
+if (TI_WITH_PYTHON)
     include(cmake/PythonNumpyPybind11.cmake)
 endif()
 
@@ -128,28 +130,20 @@ if (TI_DISTRIBUTED_COMPILE)
     include(cmake/Distributed.cmake)
 endif()
 
-include(cmake/TaichiCXXFlags.cmake)
-include(cmake/TaichiCore.cmake)
+include(cmake/GsTaichiCXXFlags.cmake)
+include(cmake/GsTaichiCore.cmake)
 
 option(TI_BUILD_TESTS "Build the CPP tests" OFF)
 
 if (TI_BUILD_TESTS)
   add_subdirectory(external/googletest EXCLUDE_FROM_ALL)
-  include(cmake/TaichiTests.cmake)
-endif()
-
-option(TI_BUILD_EXAMPLES "Build the CPP examples" ON)
-option(TI_BUILD_RHI_EXAMPLES "Build the Unified Device API examples" OFF)
-
-if(NOT TI_WITH_LLVM OR NOT TI_WITH_METAL)
-    set(TI_BUILD_EXAMPLES OFF)
+  include(cmake/GsTaichiTests.cmake)
 endif()
 
 message("C++ Flags: ${CMAKE_CXX_FLAGS}")
 message("Build type: ${CMAKE_BUILD_TYPE}")
 
 if (NOT TI_WITH_CUDA)
-    set(CUDA_VERSION "0.0")
     set(CUDA_TOOLKIT_ROOT_DIR "")
 endif()
 
@@ -159,10 +153,6 @@ endif()
 
 if (TI_WITH_AMDGPU)
     set(AMDGPU_ARCH "amdgpu")
-endif()
-
-if (TI_WITH_DX12)
-    set(DX12_ARCH "dx12")
 endif()
 
 if (TI_WITH_LLVM)
@@ -199,37 +189,11 @@ if (TI_WITH_LLVM)
 
     check_clang_version()
 
-    add_subdirectory(taichi/runtime/llvm/runtime_module)
+    add_subdirectory(gstaichi/runtime/llvm/runtime_module)
 endif()
 
-configure_file(taichi/common/version.h.in ${CMAKE_SOURCE_DIR}/taichi/common/version.h)
-configure_file(taichi/common/commit_hash.h.in ${CMAKE_SOURCE_DIR}/taichi/common/commit_hash.h)
-
-option(TI_WITH_C_API "build taichi runtime c-api library" ON)  # wheel-tag: aot
-option(TI_WITH_STATIC_C_API "build static taichi runtime c-api library" OFF)  # wheel-tag: static_aot
-
-if(TI_WITH_STATIC_C_API)
-    set(TI_WITH_C_API ${TI_WITH_STATIC_C_API})
-    if(NOT APPLE)
-        message(FATAL_ERROR "TI_WITH_STATIC_C_API requires Apple compilation sdk, thus only supported on MacOS")
-    endif()
-endif()
-
-if (TI_WITH_C_API)
-  include(cmake/TaichiCAPI.cmake)
-  if (TI_BUILD_TESTS)
-    include(cmake/TaichiCAPITests.cmake)
-  endif()
-endif()
-
-if (TI_BUILD_EXAMPLES)
-  include(cmake/TaichiExamples.cmake)
-endif()
-
-if (TI_BUILD_RHI_EXAMPLES)
-  add_subdirectory(cpp_examples/rhi_examples)
-endif()
-
+configure_file(gstaichi/common/version.h.in ${CMAKE_SOURCE_DIR}/gstaichi/common/version.h)
+configure_file(gstaichi/common/commit_hash.h.in ${CMAKE_SOURCE_DIR}/gstaichi/common/commit_hash.h)
 
 option(TI_WITH_GRAPHVIZ "generate dependency graphs between targets" OFF)  # wheel-tag: viz
 if (TI_WITH_GRAPHVIZ)

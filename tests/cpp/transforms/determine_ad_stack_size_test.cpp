@@ -1,12 +1,12 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/analysis.h"
-#include "taichi/ir/statements.h"
-#include "taichi/ir/ir_builder.h"
-#include "taichi/ir/transforms.h"
-#include "taichi/program/program.h"
+#include "gstaichi/ir/analysis.h"
+#include "gstaichi/ir/statements.h"
+#include "gstaichi/ir/ir_builder.h"
+#include "gstaichi/ir/transforms.h"
+#include "gstaichi/program/program.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 
 class DetermineAdStackSizeTest
     : public ::testing::TestWithParam<std::tuple<int, int>> {
@@ -108,7 +108,7 @@ TEST_P(DetermineAdStackSizeTest, If) {
   bool has_false_branch = (kFalseBranchPushes > 0);
 
   IRBuilder builder;
-  auto *arg = builder.create_arg_load({0}, get_data_type<int>(), false, 0);
+  auto *arg = builder.create_arg_load({0}, get_data_type<int>(), false);
   auto *stack =
       builder.create_ad_stack(get_data_type<int>(), 0 /*adaptive size*/);
   auto *if_stmt = builder.create_if(arg);
@@ -157,7 +157,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST_F(DetermineAdStackSizeTest, EmptyNodes) {
   IRBuilder builder;
-  auto *arg = builder.create_arg_load({0}, get_data_type<int>(), false, 0);
+  auto *arg = builder.create_arg_load({0}, get_data_type<int>(), false);
   auto *stack =
       builder.create_ad_stack(get_data_type<int>(), 0 /*adaptive size*/);
   auto *one = builder.get_int32(1);
@@ -183,4 +183,4 @@ TEST_F(DetermineAdStackSizeTest, EmptyNodes) {
   EXPECT_EQ(stack->max_size, 2);
 }
 
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

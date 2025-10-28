@@ -1,7 +1,7 @@
 import re
 from os import system
 
-from taichi_json import (
+from gstaichi_json import (
     Alias,
     BitField,
     BuiltInType,
@@ -288,9 +288,9 @@ def print_module_header(module: Module):
         ]
 
     out += [
-        "#ifndef TAICHI_H",
-        '#include "taichi.h"',
-        "#endif // TAICHI_H",
+        "#ifndef GSTAICHI_H",
+        '#include "gstaichi.h"',
+        "#endif // GSTAICHI_H",
         "",
         "#ifdef __cplusplus",
         'extern "C" {',

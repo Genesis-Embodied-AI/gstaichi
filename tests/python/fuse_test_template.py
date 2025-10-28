@@ -1,6 +1,6 @@
 import time
 
-import taichi as ti
+import gstaichi as ti
 
 
 def template_fuse_dense_x2y2z(

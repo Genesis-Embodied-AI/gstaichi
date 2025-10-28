@@ -3,8 +3,9 @@ import math
 import numpy as np
 import pytest
 
-import taichi as ti
-from taichi.lang.misc import get_host_arch_list
+import gstaichi as ti
+from gstaichi.lang.misc import get_host_arch_list
+
 from tests import test_utils
 
 
@@ -185,7 +186,7 @@ def _test_polar_decomp(dim, dt):
 
 
 @pytest.mark.parametrize("dim", [2, 3])
-@test_utils.test(default_fp=ti.f32, exclude=[ti.opengl, ti.gles])
+@test_utils.test(default_fp=ti.f32)
 def test_polar_decomp_f32(dim):
     _test_polar_decomp(dim, ti.f32)
 

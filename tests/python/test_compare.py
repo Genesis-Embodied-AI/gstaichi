@@ -1,7 +1,8 @@
 import pytest
 
-import taichi as ti
-from taichi.lang import impl
+import gstaichi as ti
+from gstaichi.lang import impl
+
 from tests import test_utils
 
 
@@ -159,7 +160,7 @@ def test_static_in():
 
 @test_utils.test()
 def test_non_static_in():
-    with pytest.raises(ti.TaichiCompilationError, match='"In" is only supported inside `ti.static`.'):
+    with pytest.raises(ti.GsTaichiCompilationError, match='"In" is only supported inside `ti.static`.'):
 
         @ti.kernel
         def foo(a: ti.template()) -> ti.i32:

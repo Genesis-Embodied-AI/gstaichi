@@ -109,7 +109,7 @@ class CPPTestItem(pytest.Item):
         self.args = args
 
     def runtest(self):
-        import taichi as ti
+        import gstaichi as ti
 
         ti_lib_dir = Path(ti.__path__[0]) / "_lib" / "runtime"
 
@@ -120,7 +120,6 @@ class CPPTestItem(pytest.Item):
                     {
                         "TI_DEVICE_MEMORY_GB": "0.5",
                         "TI_LIB_DIR": str(ti_lib_dir),
-                        "TAICHI_AOT_FOLDER_PATH": tmpdir,
                     }
                 )
                 if self.script:

@@ -1,14 +1,14 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/ir_builder.h"
-#include "taichi/ir/statements.h"
+#include "gstaichi/ir/ir_builder.h"
+#include "gstaichi/ir/statements.h"
 #include "tests/cpp/program/test_program.h"
 #include "tests/cpp/ir/ndarray_kernel.h"
 #ifdef TI_WITH_VULKAN
-#include "taichi/rhi/vulkan/vulkan_loader.h"
+#include "gstaichi/rhi/vulkan/vulkan_loader.h"
 #endif
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 
 TEST(IRBuilder, Basic) {
   IRBuilder builder;
@@ -96,8 +96,8 @@ TEST(IRBuilder, ExternalPtr) {
   auto array = std::make_unique<int[]>(size);
   array[0] = 2;
   array[2] = 40;
-  auto *arg = builder.create_ndarray_arg_load(/*arg_id=*/{0},
-                                              get_data_type<int>(), 1, 0);
+  auto *arg =
+      builder.create_ndarray_arg_load(/*arg_id=*/{0}, get_data_type<int>(), 1);
   auto *zero = builder.get_int32(0);
   auto *one = builder.get_int32(1);
   auto *two = builder.get_int32(2);
@@ -117,8 +117,9 @@ TEST(IRBuilder, ExternalPtr) {
   launch_ctx.set_arg_external_array_with_shape(
       /*arg_id=*/{0}, (uint64)array.get(), size, {size});
   auto *prog = test_prog.prog();
-  const auto &compiled_kernel_data = prog->compile_kernel(
-      prog->compile_config(), prog->get_device_caps(), *ker);
+  auto compile_result = prog->compile_kernel(prog->compile_config(),
+                                             prog->get_device_caps(), *ker);
+  auto &compiled_kernel_data = compile_result.compiled_kernel_data;
   prog->launch_kernel(compiled_kernel_data, launch_ctx);
   EXPECT_EQ(array[0], 2);
   EXPECT_EQ(array[1], 1);
@@ -128,8 +129,8 @@ TEST(IRBuilder, ExternalPtr) {
 TEST(IRBuilder, Ndarray) {
   TestProgram test_prog;
 #ifdef TI_WITH_VULKAN
-  Arch arch = taichi::lang::vulkan::is_vulkan_api_available() ? Arch::vulkan
-                                                              : Arch::x64;
+  Arch arch = gstaichi::lang::vulkan::is_vulkan_api_available() ? Arch::vulkan
+                                                                : Arch::x64;
 #else
   Arch arch = Arch::x64;
 #endif
@@ -145,8 +146,9 @@ TEST(IRBuilder, Ndarray) {
   auto ker1 = setup_kernel1(test_prog.prog());
   auto launch_ctx1 = ker1->make_launch_context();
   launch_ctx1.set_arg_ndarray(/*arg_id=*/{0}, array);
-  const auto &compiled_kernel_data = prog->compile_kernel(
-      prog->compile_config(), prog->get_device_caps(), *ker1);
+  auto compile_result = prog->compile_kernel(prog->compile_config(),
+                                             prog->get_device_caps(), *ker1);
+  auto &compiled_kernel_data = compile_result.compiled_kernel_data;
   prog->launch_kernel(compiled_kernel_data, launch_ctx1);
   EXPECT_EQ(array.read_int({0}), 2);
   EXPECT_EQ(array.read_int({1}), 1);
@@ -156,8 +158,9 @@ TEST(IRBuilder, Ndarray) {
   auto launch_ctx2 = ker2->make_launch_context();
   launch_ctx2.set_arg_ndarray(/*arg_id=*/{0}, array);
   launch_ctx2.set_arg_int(/*arg_id=*/{1}, 3);
-  const auto &compiled_kernel_data2 = prog->compile_kernel(
-      prog->compile_config(), prog->get_device_caps(), *ker2);
+  auto compile_result2 = prog->compile_kernel(prog->compile_config(),
+                                              prog->get_device_caps(), *ker2);
+  auto &compiled_kernel_data2 = compile_result2.compiled_kernel_data;
   prog->launch_kernel(compiled_kernel_data2, launch_ctx2);
   EXPECT_EQ(array.read_int({0}), 2);
   EXPECT_EQ(array.read_int({1}), 3);
@@ -173,8 +176,8 @@ TEST(IRBuilder, AtomicOp) {
   auto array = std::make_unique<int[]>(size);
   array[0] = 2;
   array[2] = 40;
-  auto *arg = builder.create_ndarray_arg_load(/*arg_id=*/{0},
-                                              get_data_type<int>(), 1, 0);
+  auto *arg =
+      builder.create_ndarray_arg_load(/*arg_id=*/{0}, get_data_type<int>(), 1);
   auto *zero = builder.get_int32(0);
   auto *one = builder.get_int32(1);
   auto *a0ptr = builder.create_external_ptr(arg, {zero});
@@ -187,9 +190,10 @@ TEST(IRBuilder, AtomicOp) {
   launch_ctx.set_arg_external_array_with_shape(
       /*arg_id=*/{0}, (uint64)array.get(), size, {size});
   auto *prog = test_prog.prog();
-  const auto &compiled_kernel_data = prog->compile_kernel(
-      prog->compile_config(), prog->get_device_caps(), *ker);
+  auto compile_result = prog->compile_kernel(prog->compile_config(),
+                                             prog->get_device_caps(), *ker);
+  auto &compiled_kernel_data = compile_result.compiled_kernel_data;
   prog->launch_kernel(compiled_kernel_data, launch_ctx);
   EXPECT_EQ(array[0], 3);
 }
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

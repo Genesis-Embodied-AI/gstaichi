@@ -3,10 +3,10 @@
 #include <vector>
 
 #include "gtest/gtest.h"
-#include "taichi/common/core.h"
-#include "taichi/ir/type_factory.h"
+#include "gstaichi/common/core.h"
+#include "gstaichi/ir/type_factory.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 namespace {
 
 class BinIoPair {
@@ -264,4 +264,4 @@ TEST(Serialization, JsonSerde) {
 }
 
 }  // namespace
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

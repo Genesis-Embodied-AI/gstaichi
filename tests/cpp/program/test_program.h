@@ -2,9 +2,9 @@
 
 #include <memory>
 
-#include "taichi/program/program.h"
+#include "gstaichi/program/program.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 
 class TestProgram {
  public:
@@ -18,4 +18,4 @@ class TestProgram {
   std::unique_ptr<Program> prog_{nullptr};
 };
 
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

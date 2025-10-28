@@ -1,16 +1,16 @@
-#include "taichi/analysis/bls_analyzer.h"
+#include "gstaichi/analysis/bls_analyzer.h"
 
 #include <memory>
 
 #include "gtest/gtest.h"
-#include "taichi/ir/ir_builder.h"
-#include "taichi/ir/scratch_pad.h"
-#include "taichi/ir/snode.h"
-#include "taichi/ir/transforms.h"
-#include "taichi/struct/struct.h"
+#include "gstaichi/ir/ir_builder.h"
+#include "gstaichi/ir/scratch_pad.h"
+#include "gstaichi/ir/snode.h"
+#include "gstaichi/ir/transforms.h"
+#include "gstaichi/struct/struct.h"
 #include "tests/cpp/struct/fake_struct_compiler.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 namespace {
 
 constexpr int kBlockSize = 8;
@@ -143,4 +143,4 @@ TEST_F(BLSAnalyzerTest, Shl) {
 }
 
 }  // namespace
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

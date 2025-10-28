@@ -1,28 +1,20 @@
 # -*- coding: utf-8 -*-
 
 # -- stdlib --
+import argparse
 import inspect
 import os
-import platform
 import sys
-from pathlib import Path
 from typing import Any, Callable
+
+from .bootstrap import get_cache_home  # noqa: F401 This is a re-export
 
 # -- third party --
 # -- own --
-from .bootstrap import get_cache_home  # noqa, this is a re-export
 from .escapes import escape_codes
 
 # -- code --
-options = None
-
-
-def is_manylinux2014() -> bool:
-    """
-    Are we in a manylinux2014 environment?
-    This means a particular CentOS docker image.
-    """
-    return platform.system() == "Linux" and Path("/etc/centos-release").exists()
+options: argparse.Namespace | None = None
 
 
 def info(msg: str) -> None:
@@ -38,13 +30,10 @@ def warn(msg: str) -> None:
 
 
 def error(msg: str) -> None:
-    if options and options.permissive:
-        warn(msg)
-    else:
-        R = escape_codes["bold_red"]
-        N = escape_codes["reset"]
-        print(f"{R}!! ERROR {msg}{N}", file=sys.stderr, flush=True)
-        sys.exit(1)
+    R = escape_codes["bold_red"]
+    N = escape_codes["reset"]
+    print(f"{R}!! ERROR {msg}{N}", file=sys.stderr, flush=True)
+    sys.exit(1)
 
 
 def banner(msg: str) -> Callable:

@@ -1,8 +1,9 @@
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
 
-@test_utils.test()
+@test_utils.test(require=ti.extension.adstack)
 def test_ad_nested_for():
     N = 5
 

@@ -1,6 +1,7 @@
-import taichi as ti
-from taichi.lang import impl
-from taichi.lang.misc import get_host_arch_list
+import gstaichi as ti
+from gstaichi.lang import impl
+from gstaichi.lang.misc import get_host_arch_list
+
 from tests import test_utils
 
 
@@ -241,7 +242,7 @@ def test_stack():
     func()
 
 
-@test_utils.test()
+@test_utils.test(require=[ti.extension.adstack])
 def test_if_condition_depend_on_for_loop_index():
     scalar = lambda: ti.field(dtype=ti.f32)
     vec = lambda: ti.Vector.field(3, dtype=ti.f32)

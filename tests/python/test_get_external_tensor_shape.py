@@ -1,15 +1,13 @@
 import numpy as np
 import pytest
 
-import taichi as ti
-from taichi.lang.util import has_paddle, has_pytorch
+import gstaichi as ti
+from gstaichi.lang.util import has_pytorch
+
 from tests import test_utils
 
 if has_pytorch():
     import torch
-
-if has_paddle():
-    import paddle
 
 
 @pytest.mark.parametrize("size", [[1], [1, 2, 3, 4]])
@@ -45,7 +43,7 @@ def test_get_external_tensor_shape_sum_numpy(size):
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
 @pytest.mark.parametrize("size", [[1, 2, 3, 4]])
-@test_utils.test(exclude=ti.opengl)
+@test_utils.test()
 def test_get_external_tensor_shape_access_torch(size):
     @ti.kernel
     def func(x: ti.types.ndarray(), index: ti.template()) -> ti.i32:
@@ -59,27 +57,13 @@ def test_get_external_tensor_shape_access_torch(size):
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
 @pytest.mark.parametrize("size", [[1, 2, 3, 4]])
-@test_utils.test(arch=[ti.cpu, ti.cuda, ti.opengl])
+@test_utils.test(arch=[ti.cpu, ti.cuda])
 def test_get_external_tensor_shape_access_ndarray(size):
     @ti.kernel
     def func(x: ti.types.ndarray(), index: ti.template()) -> ti.i32:
         return x.shape[index]
 
     x_hat = ti.ndarray(ti.i32, shape=size)
-    for idx, y_ref in enumerate(size):
-        y_hat = func(x_hat, idx)
-        assert y_ref == y_hat, "Size of axis {} should equal {} and not {}.".format(idx, y_ref, y_hat)
-
-
-@pytest.mark.skipif(not has_paddle(), reason="Paddle not installed.")
-@pytest.mark.parametrize("size", [[1, 2, 3, 4]])
-@test_utils.test(arch=[ti.cpu, ti.cuda])
-def test_get_external_tensor_shape_access_paddle(size):
-    @ti.kernel
-    def func(x: ti.types.ndarray(), index: ti.template()) -> ti.i32:
-        return x.shape[index]
-
-    x_hat = paddle.ones(shape=size, dtype=paddle.int32)
     for idx, y_ref in enumerate(size):
         y_hat = func(x_hat, idx)
         assert y_ref == y_hat, "Size of axis {} should equal {} and not {}.".format(idx, y_ref, y_hat)

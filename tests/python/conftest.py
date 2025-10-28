@@ -1,3 +1,4 @@
+import gc
 import sys
 
 import pytest
@@ -7,9 +8,47 @@ import pytest
 # so we need to override it
 import pytest_rerunfailures
 
-import taichi as ti
+import gstaichi as ti
 
 pytest_rerunfailures.works_with_current_xdist = lambda: True
+
+
+@pytest.fixture(autouse=True)
+def run_gc_after_test():
+    """
+    This is necessary to prevent random test failures when testing with ndarray.
+
+    ndarray comprises two separate objects:
+    - a c++ side ndarray, which then links the actual data, and contains metadata around
+      the shape, and so on
+      - let's call this 'ndarray-cpp'
+    - a python side ndarray object, that represents the c++ side ndarray, from pybind11
+      - let's call this 'ndarray-pybind'
+    - a python side ndarray object, that is created independently of the pybind11-created
+      python side ndarray object
+      - let's call this 'ndarray-py'
+
+    pybind11 is configured such that ownership of ndarray-cpp is NOT passed to the python side
+
+    However, pybind-py has a __del__ method on it, which is called when pybind-py is garbage-
+    collected
+    - when pybind-py __del__ is called, it calls a c++ method, via pybind, to delete the
+      underling ndarray-cpp
+
+    When ti.init() or similar is called, during tests, ndarray-cpp is no longer considered allocated
+    - however ndarray-cp has not yet been garbage collected, still exists, and still has a pointer
+      to where the ndarray-cpp used to be
+    - on mac os x, it regularly happens, as an artifact of how memory management works, that new
+      ndarray-cpps are allocated with the exact same address as the old one
+    - when garbage collection runs, __del__ is called on the old ndarray-py
+        - causing the new ndarray-cpp to be deleted
+        - at this point => crash bug
+
+    By calling gc.collect after each test, we avoid this issue.
+    """
+    yield
+    gc.collect()
+    gc.collect()
 
 
 @pytest.fixture(autouse=True)
@@ -29,6 +68,8 @@ def wanted_arch(request, req_arch, req_options):
             else:
                 # Serial tests run without aggressive resource optimization
                 req_options = {"device_memory_GB": 1, **req_options}
+        if "print_full_traceback" not in req_options:
+            req_options["print_full_traceback"] = True
         ti.init(arch=req_arch, enable_fallback=False, **req_options)
     yield
     if req_arch is not None:
@@ -67,3 +108,33 @@ def pytest_runtest_logreport(report):
             break
 
     interactor.retire(layoff=layoff)
+
+
+import importlib
+import sys
+
+import pytest
+
+
+@pytest.fixture
+def temporary_module():
+    """
+    Fixture to import and then unload a module after test
+
+    Use like:
+
+    def test_with_temporary_module(temporary_module):
+        module = temporary_module('your_module')
+    """
+    modules_to_delete = []
+
+    def _import(module_name):
+        assert module_name not in sys.modules
+        mod = importlib.import_module(module_name)
+        modules_to_delete.append(module_name)
+        return mod
+
+    yield _import
+
+    for name in modules_to_delete:
+        del sys.modules[name]

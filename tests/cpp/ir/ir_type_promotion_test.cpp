@@ -1,17 +1,17 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/statements.h"
-#include "taichi/ir/ir_builder.h"
-#include "taichi/ir/transforms.h"
+#include "gstaichi/ir/statements.h"
+#include "gstaichi/ir/ir_builder.h"
+#include "gstaichi/ir/transforms.h"
 #include "tests/cpp/program/test_program.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 
 TEST(IRTypePromotionTest, ShiftOp) {
   IRBuilder builder;
 
   // (u8)x << (i32)1 -> (u8)res
-  auto *lhs = builder.create_arg_load({0}, get_data_type<uint8>(), false, 0);
+  auto *lhs = builder.create_arg_load({0}, get_data_type<uint8>(), false);
   builder.create_shl(lhs, builder.get_int32(1));
   auto ir = builder.extract_ir();
 
@@ -55,4 +55,4 @@ TEST(IRPromotionTest, TensorType) {
               ret_type->cast<TensorType>()->get_element_type()->is_primitive(
                   PrimitiveTypeID::f32));
 }
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

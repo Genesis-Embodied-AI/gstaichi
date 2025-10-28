@@ -1,7 +1,8 @@
 import pytest
 
-import taichi as ti
-from taichi.lang.exception import TaichiRuntimeError
+import gstaichi as ti
+from gstaichi.lang.exception import GsTaichiRuntimeError
+
 from tests import test_utils
 
 
@@ -58,14 +59,14 @@ def _ipow_negative_exp(dt):
     def foo(x: dt, y: ti.template()):
         z[None] = x**y
 
-    with pytest.raises(TaichiRuntimeError):
+    with pytest.raises(GsTaichiRuntimeError):
         foo(10, -10)
 
 
 @test_utils.test(
     debug=True,
     advanced_optimization=False,
-    exclude=[ti.vulkan, ti.metal, ti.opengl, ti.gles],
+    exclude=[ti.vulkan, ti.metal],
 )
 def test_ipow_negative_exp_i32():
     _ipow_negative_exp(ti.i32)
@@ -75,7 +76,7 @@ def test_ipow_negative_exp_i32():
     debug=True,
     advanced_optimization=False,
     require=ti.extension.data64,
-    exclude=[ti.vulkan, ti.metal, ti.opengl, ti.gles],
+    exclude=[ti.vulkan, ti.metal],
 )
 def test_ipow_negative_exp_i64():
     _ipow_negative_exp(ti.i64)

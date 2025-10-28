@@ -1,8 +1,7 @@
-import sys
-
 import pytest
 
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
 # TODO: validation layer support on macos vulkan backend is not working.
@@ -11,18 +10,65 @@ vk_on_mac = (ti.vulkan, "Darwin")
 # TODO: capfd doesn't function well on CUDA backend on Windows
 cuda_on_windows = (ti.cuda, "Windows")
 
-if sys.version_info >= (3, 8):
-    # Import the test case only if the Python version is >= 3.8
-    from .py38_only import (
-        test_print_docs_matrix_self_documenting_exp,
-        test_print_docs_scalar_self_documenting_exp,
-    )
+
+def filter_lines(target: str, match: str) -> str:
+    """
+    Returns target string, with
+    - only lines included that contains `match` string
+        - this is so we can filter out various other stdout messages
+    - anything before `match` string is removed
+        - this is so we can handle Vulkan print messages, which are often prefixed with something like
+          `vkSubmitQueue():  `
+    """
+    lines = []
+    for line in target.split("\n"):
+        if match in line:
+            _, splitter, post = line.partition(match)
+            lines.append(f"{splitter}{post}")
+    return "\n".join(lines)
+
+
+@test_utils.test(arch=[ti.cpu, ti.cuda, ti.vulkan], exclude=[vk_on_mac, cuda_on_windows], debug=True)
+def test_print_docs_scalar_self_documenting_exp(capfd):
+    a = ti.field(ti.f32, 4)
+
+    @ti.kernel
+    def func():
+        a[0] = 1.0
+
+        # with self-documenting expressions
+        print(f"TEST_PRINT: {a[0] = :.1f}")
+
+    func()
+    ti.sync()
+
+    out, err = capfd.readouterr()
+    out = filter_lines(out, "TEST_PRINT:")
+    expected_out = """TEST_PRINT: a[0] = 1.0"""
+    assert out == expected_out and err == ""
+
+
+@test_utils.test(arch=[ti.cpu, ti.cuda, ti.vulkan], exclude=[vk_on_mac, cuda_on_windows], debug=True)
+def test_print_docs_matrix_self_documenting_exp(capfd):
+    @ti.kernel
+    def func():
+        m = ti.Matrix([[2e1, 3e2, 4e3], [5e4, 6e5, 7e6]], ti.f32)
+
+        # with self-documenting expressions
+        print(f"TEST_PRINT: {m = :g}")
+
+    func()
+    ti.sync()
+
+    out, err = capfd.readouterr()
+    out = filter_lines(out, "TEST_PRINT:")
+    expected_out = """TEST_PRINT: m = [[20, 300, 4000], [50000, 600000, 7e+06]]"""
+    assert out == expected_out and err == ""
 
 
 # Not really testable..
 # Just making sure it does not crash
 # Metal doesn't support print() or 64-bit data
-# While OpenGL does support print, but not 64-bit data
 @pytest.mark.parametrize("dt", ti.types.primitive_types.all_types)
 @test_utils.test(arch=[ti.cpu, ti.cuda])
 def test_print(dt):
@@ -31,7 +77,7 @@ def test_print(dt):
         print(ti.cast(123.4, dt))
 
     func()
-    # Discussion: https://github.com/taichi-dev/taichi/issues/1063#issuecomment-636421904
+    # Discussion: https://github.com/taichi-dev/gstaichi/issues/1063#issuecomment-636421904
     # Synchronize to prevent cross-test failure of print:
     ti.sync()
 
@@ -102,18 +148,18 @@ def test_print_matrix_string_format_with_spec(capfd):
     def func(k: ti.f32):
         x[None][0, 0] = -1.0
         y[2] += 1.0
-        print("hello {:.2f} world!".format(x[None]))
-        print("{:.3f} {:e} {:.2}".format(y[2] * k, x[None] / k, y[2]))
-        print("hello {:.10d} world!".format(z[None]))
+        print("TEST_PRINT: hello {:.2f} world!".format(x[None]))
+        print("TEST_PRINT: {:.3f} {:e} {:.2}".format(y[2] * k, x[None] / k, y[2]))
+        print("TEST_PRINT: hello {:.10d} world!".format(z[None]))
 
     func(233.3)
     ti.sync()
 
     out, err = capfd.readouterr()
-    expected_out = """hello [[-1.00, 0.00, 0.00], [0.00, 0.00, 0.00]] world!
-[233.300, 233.300, 233.300] [[-4.286326e-03, 0.000000e+00, 0.000000e+00], [0.000000e+00, 0.000000e+00, 0.000000e+00]] [1.00, 1.00, 1.00]
-hello [[0000000000, 0000000000, 0000000000], [0000000000, 0000000000, 0000000000]] world!
-"""
+    out = filter_lines(out, "TEST_PRINT: ")
+    expected_out = """TEST_PRINT: hello [[-1.00, 0.00, 0.00], [0.00, 0.00, 0.00]] world!
+TEST_PRINT: [233.300, 233.300, 233.300] [[-4.286326e-03, 0.000000e+00, 0.000000e+00], [0.000000e+00, 0.000000e+00, 0.000000e+00]] [1.00, 1.00, 1.00]
+TEST_PRINT: hello [[0000000000, 0000000000, 0000000000], [0000000000, 0000000000, 0000000000]] world!"""
     assert out == expected_out and err == ""
 
 
@@ -137,11 +183,11 @@ def test_print_matrix_string_format_with_spec_mismatch():
 
     x[None][0, 0] = -1.0
     y[2] += 1.0
-    with pytest.raises(ti.TaichiTypeError, match=r"'.2d' doesn't match 'f32'."):
+    with pytest.raises(ti.GsTaichiTypeError, match=r"'.2d' doesn't match 'f32'."):
         test_x()
-    with pytest.raises(ti.TaichiTypeError, match=r"'- #0.233lli' doesn't match 'f32'."):
+    with pytest.raises(ti.GsTaichiTypeError, match=r"'- #0.233lli' doesn't match 'f32'."):
         test_y(233.3)
-    with pytest.raises(ti.TaichiTypeError, match=r"'.2e' doesn't match 'i32'."):
+    with pytest.raises(ti.GsTaichiTypeError, match=r"'.2e' doesn't match 'i32'."):
         test_z()
     ti.sync()
 
@@ -172,18 +218,18 @@ def test_print_matrix_fstring_with_spec(capfd):
     def func(k: ti.f32):
         x[None][0, 0] = -1.0
         y[2] += 1.0
-        print(f"hello {x[None]:.2f} world!")
-        print(f"{(y[2] * k):.3f} {(x[None] / k):e} {y[2]:.2}")
-        print(f"hello {z[None]:.2d} world!")
+        print(f"TEST_PRINT: hello {x[None]:.2f} world!")
+        print(f"TEST_PRINT: {(y[2] * k):.3f} {(x[None] / k):e} {y[2]:.2}")
+        print(f"TEST_PRINT: hello {z[None]:.2d} world!")
 
     func(233.3)
     ti.sync()
 
     out, err = capfd.readouterr()
-    expected_out = """hello [[-1.00, 0.00, 0.00], [0.00, 0.00, 0.00]] world!
-[233.300, 233.300, 233.300] [[-4.286326e-03, 0.000000e+00, 0.000000e+00], [0.000000e+00, 0.000000e+00, 0.000000e+00]] [1.00, 1.00, 1.00]
-hello [[00, 00, 00], [00, 00, 00]] world!
-"""
+    out = filter_lines(out, "TEST_PRINT: ")
+    expected_out = """TEST_PRINT: hello [[-1.00, 0.00, 0.00], [0.00, 0.00, 0.00]] world!
+TEST_PRINT: [233.300, 233.300, 233.300] [[-4.286326e-03, 0.000000e+00, 0.000000e+00], [0.000000e+00, 0.000000e+00, 0.000000e+00]] [1.00, 1.00, 1.00]
+TEST_PRINT: hello [[00, 00, 00], [00, 00, 00]] world!"""
     assert out == expected_out and err == ""
 
 
@@ -207,11 +253,11 @@ def test_print_matrix_fstring_with_spec_mismatch():
 
     x[None][0, 0] = -1.0
     y[2] += 1.0
-    with pytest.raises(ti.TaichiTypeError, match=r"'.2d' doesn't match 'f32'."):
+    with pytest.raises(ti.GsTaichiTypeError, match=r"'.2d' doesn't match 'f32'."):
         test_x()
-    with pytest.raises(ti.TaichiTypeError, match=r"'- #0.233lli' doesn't match 'f32'."):
+    with pytest.raises(ti.GsTaichiTypeError, match=r"'- #0.233lli' doesn't match 'f32'."):
         test_y(233.3)
-    with pytest.raises(ti.TaichiTypeError, match=r"'.2e' doesn't match 'i32'."):
+    with pytest.raises(ti.GsTaichiTypeError, match=r"'.2e' doesn't match 'i32'."):
         test_z()
     ti.sync()
 
@@ -225,37 +271,39 @@ def test_print_docs_scalar(capfd):
         a[0] = 1.0
 
         # comma-separated string
-        print("a[0] =", a[0])
+        print("TEST_PRINT: a[0] =", a[0])
 
         # f-string
-        print(f"a[0] = {a[0]}")
+        print(f"TEST_PRINT: a[0] = {a[0]}")
         # with format specifier
-        print(f"a[0] = {a[0]:.1f}")
+        print(f"TEST_PRINT: a[0] = {a[0]:.1f}")
         # without conversion
-        print(f"a[0] = {a[0]:.1}")
+        print(f"TEST_PRINT: a[0] = {a[0]:.1}")
 
         # formatted string via `str.format()` method
-        print("a[0] = {}".format(a[0]))
+        print("TEST_PRINT: a[0] = {}".format(a[0]))
         # with format specifier
-        print("a[0] = {:.1f}".format(a[0]))
+        print("TEST_PRINT: a[0] = {:.1f}".format(a[0]))
         # without conversion
-        print("a[0] = {:.1}".format(a[0]))
+        print("TEST_PRINT: a[0] = {:.1}".format(a[0]))
         # with positional arguments
-        print("a[3] = {3:.3f}, a[2] = {2:.2f}, a[1] = {1:.1f}, a[0] = {0:.0f}".format(a[0], a[1], a[2], a[3]))
+        print(
+            "TEST_PRINT: a[3] = {3:.3f}, a[2] = {2:.2f}, a[1] = {1:.1f}, a[0] = {0:.0f}".format(a[0], a[1], a[2], a[3])
+        )
 
     func()
     ti.sync()
 
     out, err = capfd.readouterr()
-    expected_out = """a[0] = 1.000000
-a[0] = 1.000000
-a[0] = 1.0
-a[0] = 1.0
-a[0] = 1.000000
-a[0] = 1.0
-a[0] = 1.0
-a[3] = 0.000, a[2] = 0.00, a[1] = 0.0, a[0] = 1
-"""
+    out = filter_lines(out, "TEST_PRINT: ")
+    expected_out = """TEST_PRINT: a[0] = 1.000000
+TEST_PRINT: a[0] = 1.000000
+TEST_PRINT: a[0] = 1.0
+TEST_PRINT: a[0] = 1.0
+TEST_PRINT: a[0] = 1.000000
+TEST_PRINT: a[0] = 1.0
+TEST_PRINT: a[0] = 1.0
+TEST_PRINT: a[3] = 0.000, a[2] = 0.00, a[1] = 0.0, a[0] = 1"""
     assert out == expected_out and err == ""
 
 
@@ -268,34 +316,34 @@ def test_print_docs_matrix(capfd):
         m = ti.Matrix([[2e1, 3e2, 4e3], [5e4, 6e5, 7e6]], ti.f32)
 
         # comma-seperated string is supported
-        print("m =", m)
+        print("TEST_PRINT: m =", m)
 
         # f-string is supported
-        print(f"m = {m}")
+        print(f"TEST_PRINT: m = {m}")
         # can with format specifier
-        print(f"m = {m:.1f}")
+        print(f"TEST_PRINT: m = {m:.1f}")
         # can omitting conversion
-        print(f"m = {m:.1}")
+        print(f"TEST_PRINT: m = {m:.1}")
 
         # formatted string via `str.format()` method is supported
-        print("m = {}".format(m))
+        print("TEST_PRINT: m = {}".format(m))
         # can with format specifier
-        print("m = {:e}".format(m))
+        print("TEST_PRINT: m = {:e}".format(m))
         # and can omitting conversion
-        print("m = {:.1}".format(m))
+        print("TEST_PRINT: m = {:.1}".format(m))
 
     func()
     ti.sync()
 
     out, err = capfd.readouterr()
-    expected_out = """m = [[20.000000, 300.000000, 4000.000000], [50000.000000, 600000.000000, 7000000.000000]]
-m = [[20.000000, 300.000000, 4000.000000], [50000.000000, 600000.000000, 7000000.000000]]
-m = [[20.0, 300.0, 4000.0], [50000.0, 600000.0, 7000000.0]]
-m = [[20.0, 300.0, 4000.0], [50000.0, 600000.0, 7000000.0]]
-m = [[20.000000, 300.000000, 4000.000000], [50000.000000, 600000.000000, 7000000.000000]]
-m = [[2.000000e+01, 3.000000e+02, 4.000000e+03], [5.000000e+04, 6.000000e+05, 7.000000e+06]]
-m = [[20.0, 300.0, 4000.0], [50000.0, 600000.0, 7000000.0]]
-"""
+    out = filter_lines(out, "TEST_PRINT: ")
+    expected_out = """TEST_PRINT: m = [[20.000000, 300.000000, 4000.000000], [50000.000000, 600000.000000, 7000000.000000]]
+TEST_PRINT: m = [[20.000000, 300.000000, 4000.000000], [50000.000000, 600000.000000, 7000000.000000]]
+TEST_PRINT: m = [[20.0, 300.0, 4000.0], [50000.0, 600000.0, 7000000.0]]
+TEST_PRINT: m = [[20.0, 300.0, 4000.0], [50000.0, 600000.0, 7000000.0]]
+TEST_PRINT: m = [[20.000000, 300.000000, 4000.000000], [50000.000000, 600000.000000, 7000000.000000]]
+TEST_PRINT: m = [[2.000000e+01, 3.000000e+02, 4.000000e+03], [5.000000e+04, 6.000000e+05, 7.000000e+06]]
+TEST_PRINT: m = [[20.0, 300.0, 4000.0], [50000.0, 600000.0, 7000000.0]]"""
     assert out == expected_out and err == ""
 
 
@@ -305,7 +353,7 @@ def test_print_sep_end():
     def func():
         # hello 42 world!
         print("hello", 42, "world!")
-        # hello 42 Taichi 233 world!
+        # hello 42 GsTaichi 233 world!
         print("hello", 42, "Tai", end="")
         print("chi", 233, "world!")
         # hello42world!
@@ -387,23 +435,23 @@ def test_print_string_format():
 def test_print_string_format_with_spec(capfd):
     @ti.kernel
     def func(k: ti.f32):
-        print(123)
-        print("{:d} abc".format(123))
-        print("{:i} {:.1} {:.10d}".format(1, 2, 3))
-        print("{:.2} {name:i} {value:d}".format(k, name=999, value=123))
+        print("TEST_PRINT: ", 123)
+        print("TEST_PRINT: {:d} abc".format(123))
+        print("TEST_PRINT: {:i} {:.1} {:.10d}".format(1, 2, 3))
+        print("TEST_PRINT: {:.2} {name:i} {value:d}".format(k, name=999, value=123))
         name = 123.4
         value = 456.7
-        print("{:.2e} {name:.3G} {value:.4f}".format(k, name=name, value=value))
+        print("TEST_PRINT: {:.2e} {name:.3G} {value:.4f}".format(k, name=name, value=value))
 
     func(233.3)
     ti.sync()
     out, err = capfd.readouterr()
-    expected_out = """123
-123 abc
-1 2 0000000003
-233.30 999 123
-2.33e+02 123 456.7000
-"""
+    out = filter_lines(out, "TEST_PRINT: ")
+    expected_out = """TEST_PRINT:  123
+TEST_PRINT: 123 abc
+TEST_PRINT: 1 2 0000000003
+TEST_PRINT: 233.30 999 123
+TEST_PRINT: 2.33e+02 123 456.7000"""
     assert out == expected_out and err == ""
 
 
@@ -425,11 +473,11 @@ def test_print_string_format_with_spec_mismatch():
     def test_f(u: ti.f32):
         print("{:i}".format(foo1(u)))
 
-    with pytest.raises(ti.TaichiTypeError, match=r"'u' doesn't match 'i32'."):
+    with pytest.raises(ti.GsTaichiTypeError, match=r"'u' doesn't match 'i32'."):
         test_i(123)
-    with pytest.raises(ti.TaichiTypeError, match=r"'d' doesn't match 'u32'."):
+    with pytest.raises(ti.GsTaichiTypeError, match=r"'d' doesn't match 'u32'."):
         test_u(123)
-    with pytest.raises(ti.TaichiTypeError, match=r"'i' doesn't match 'f32'."):
+    with pytest.raises(ti.GsTaichiTypeError, match=r"'i' doesn't match 'f32'."):
         test_f(123)
     ti.sync()
 
@@ -438,17 +486,17 @@ def test_print_string_format_with_spec_mismatch():
 def test_print_string_format_with_positional_arg(capfd):
     @ti.kernel
     def func(k: ti.f32):
-        print("{0} {1} {2}".format(1, 2, 3))
-        print("{2} {1} {}".format(3, 2, 1))
-        print("{2} {} {1} {k} {0} {k} {0} {k}".format(3, 2, 1, k=k))
+        print("TEST_PRINT: {0} {1} {2}".format(1, 2, 3))
+        print("TEST_PRINT: {2} {1} {}".format(3, 2, 1))
+        print("TEST_PRINT: {2} {} {1} {k} {0} {k} {0} {k}".format(3, 2, 1, k=k))
 
     func(233.3)
     ti.sync()
     out, err = capfd.readouterr()
-    expected_out = """1 2 3
-1 2 3
-1 3 2 233.300003 3 233.300003 3 233.300003
-"""
+    out = filter_lines(out, "TEST_PRINT: ")
+    expected_out = """TEST_PRINT: 1 2 3
+TEST_PRINT: 1 2 3
+TEST_PRINT: 1 3 2 233.300003 3 233.300003 3 233.300003"""
     assert out == expected_out and err == ""
 
 
@@ -456,17 +504,17 @@ def test_print_string_format_with_positional_arg(capfd):
 def test_print_string_format_with_positional_arg_with_spec(capfd):
     @ti.kernel
     def func(k: ti.f32):
-        print("{0:d} {1:} {2:i}".format(1, 2, 3))
-        print("{2:d} {1:.2} {:.10}".format(3, 2, 1))
-        print("{2:.1} {:.2} {1:.3} {k:.4e} {0:.5} {k:.5f} {0:.5} {k:.4g}".format(3.0, 2.0, 1.0, k=k))
+        print("TEST_PRINT: {0:d} {1:} {2:i}".format(1, 2, 3))
+        print("TEST_PRINT: {2:d} {1:.2} {:.10}".format(3, 2, 1))
+        print("TEST_PRINT: {2:.1} {:.2} {1:.3} {k:.4e} {0:.5} {k:.5f} {0:.5} {k:.4g}".format(3.0, 2.0, 1.0, k=k))
 
     func(233.3)
     ti.sync()
     out, err = capfd.readouterr()
-    expected_out = """1 2 3
-1 02 0000000003
-1.0 3.00 2.000 2.3330e+02 3.00000 233.30000 3.00000 233.3
-"""
+    out = filter_lines(out, "TEST_PRINT: ")
+    expected_out = """TEST_PRINT: 1 2 3
+TEST_PRINT: 1 02 0000000003
+TEST_PRINT: 1.0 3.00 2.000 2.3330e+02 3.00000 233.30000 3.00000 233.3"""
     assert out == expected_out and err == ""
 
 
@@ -495,18 +543,18 @@ def test_print_string_format_with_positional_arg_mismatch():
         print("{0} {1} {2}".format(1, 2))
 
     with pytest.raises(
-        ti.TaichiSyntaxError,
+        ti.GsTaichiSyntaxError,
         match=r"Expected 3 positional argument\(s\), but received 4 instead.",
     ):
         func_more_args()
     with pytest.raises(
-        ti.TaichiSyntaxError,
+        ti.GsTaichiSyntaxError,
         match=r"Expected 3 positional argument\(s\), but received 2 instead.",
     ):
         func_less_args()
-    with pytest.raises(ti.TaichiSyntaxError, match=r"Keyword 'k' not used."):
+    with pytest.raises(ti.GsTaichiSyntaxError, match=r"Keyword 'k' not used."):
         func_k_not_used(233.3)
-    with pytest.raises(ti.TaichiSyntaxError, match=r"Keyword 'k' not found."):
+    with pytest.raises(ti.GsTaichiSyntaxError, match=r"Keyword 'k' not found."):
         func_k_not_defined()
     ti.sync()
 
@@ -533,13 +581,13 @@ def test_print_fstring_with_spec(capfd):
 
     @ti.kernel
     def func(i: ti.i32, f: ti.f32):
-        print(f"qwe {foo1(1):d} {(foo1(2) * 2 - 1):.10d} {i} {f:.1f} {4} {True} {1.23}")
+        print(f"TEST_PRINT: qwe {foo1(1):d} {(foo1(2) * 2 - 1):.10d} {i} {f:.1f} {4} {True} {1.23}")
 
     func(123, 4.56)
     ti.sync()
     out, err = capfd.readouterr()
-    expected_out = """qwe 2 0000000005 123 4.6 4 True 1.23
-"""
+    out = filter_lines(out, "TEST_PRINT: ")
+    expected_out = """TEST_PRINT: qwe 2 0000000005 123 4.6 4 True 1.23"""
     assert out == expected_out and err == ""
 
 
@@ -561,11 +609,11 @@ def test_print_fstring_with_spec_mismatch():
     def test_f(u: ti.f32):
         print(f"{foo1(u):i}")
 
-    with pytest.raises(ti.TaichiTypeError, match=r"'u' doesn't match 'i32'."):
+    with pytest.raises(ti.GsTaichiTypeError, match=r"'u' doesn't match 'i32'."):
         test_i(123)
-    with pytest.raises(ti.TaichiTypeError, match=r"'d' doesn't match 'u32'."):
+    with pytest.raises(ti.GsTaichiTypeError, match=r"'d' doesn't match 'u32'."):
         test_u(123)
-    with pytest.raises(ti.TaichiTypeError, match=r"'i' doesn't match 'f32'."):
+    with pytest.raises(ti.GsTaichiTypeError, match=r"'i' doesn't match 'f32'."):
         test_f(123)
     ti.sync()
 

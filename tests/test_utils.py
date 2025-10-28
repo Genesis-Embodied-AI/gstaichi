@@ -9,10 +9,10 @@ from tempfile import NamedTemporaryFile, mkstemp
 import numpy as np
 import pytest
 
-import taichi as ti
-from taichi._lib import core as _ti_core
-from taichi.lang import cpu, cuda, dx11, gles, gpu, metal, opengl, vulkan
-from taichi.lang.misc import is_arch_supported
+import gstaichi as ti
+from gstaichi._lib import core as _ti_core
+from gstaichi.lang import cpu, cuda, gpu, metal, vulkan
+from gstaichi.lang.misc import is_arch_supported
 
 
 # Helper functions
@@ -45,12 +45,10 @@ def verify_image(image, image_name, tolerance=0.1, regerate_groundtruth_images=F
 
 def get_rel_eps():
     arch = ti.lang.impl.current_cfg().arch
-    if arch == ti.opengl:
-        return 1e-3
     if arch == ti.metal:
         # Debatable, different hardware could yield different precisions
         # On AMD Radeon Pro 5500M, 1e-6 works fine...
-        # https://github.com/taichi-dev/taichi/pull/1779
+        # https://github.com/taichi-dev/gstaichi/pull/1779
         return 1e-4
     return 1e-6
 
@@ -137,11 +135,11 @@ def expected_archs():
     all supported archs except archs specified in it will be returned.
     If `TI_WANTED_ARCHS` is not set, all supported archs will be returned.
     Returns:
-        List[taichi_python.Arch]: All expected archs on the machine.
+        List[gstaichi_python.Arch]: All expected archs on the machine.
     """
 
     def get_archs():
-        archs = set([cpu, cuda, metal, vulkan, opengl, gles])
+        archs = set([cpu, cuda, metal, vulkan])
         # TODO: now expected_archs is not called per test so we cannot test it
         archs = set(filter(is_arch_supported, archs))
         return archs
@@ -249,6 +247,9 @@ def test(arch=None, exclude=None, require=None, **options):
             if not all(_ti_core.is_extension_supported(req_arch, e) for e in require):
                 continue
 
+            if ti.extension.adstack in require:
+                options["ad_stack_experimental_enabled"] = True
+
             current_options = copy.deepcopy(options)
             for feature, param in zip(_test_features, req_params):
                 value = param.value
@@ -275,7 +276,7 @@ def test(arch=None, exclude=None, require=None, **options):
             )
 
     def decorator(func):
-        func.__ti_test__ = True  # Mark the function as a taichi test
+        func.__ti_test__ = True  # Mark the function as a gstaichi test
         for mark in reversed(marks):  # Apply the marks in reverse order
             func = mark(func)
         return func
@@ -285,12 +286,12 @@ def test(arch=None, exclude=None, require=None, **options):
 
 def torch_op(*, output_shapes=[(1,)]):
     def inner(f):
-        from taichi.lang.util import has_pytorch
+        from gstaichi.lang.util import has_pytorch
 
         if has_pytorch():
             import torch
 
-        class CustomTaichiOp(torch.autograd.Function):
+        class CustomGsTaichiOp(torch.autograd.Function):
             @staticmethod
             def forward(ctx, *inputs):
                 outputs = tuple([torch.zeros(shape, dtype=torch.double, requires_grad=True) for shape in output_shapes])
@@ -316,7 +317,7 @@ def torch_op(*, output_shapes=[(1,)]):
                 return tuple([input.grad for input in inputs])
 
         def wrapper(*args, **kwargs):
-            return CustomTaichiOp.apply(*args, **kwargs)
+            return CustomGsTaichiOp.apply(*args, **kwargs)
 
         return wrapper
 

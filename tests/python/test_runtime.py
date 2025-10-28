@@ -1,13 +1,12 @@
-import copy
 import os
 import pathlib
 import platform
-import sys
 from contextlib import contextmanager
 
 import pytest
 
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
 
@@ -96,7 +95,7 @@ def test_xdg_basedir(tmpdir):
         repo_dir = ti_python_core.get_repo_dir()
 
         repo_path = pathlib.Path(repo_dir).resolve()
-        expected_path = pathlib.Path(tmpdir / "taichi").resolve()
+        expected_path = pathlib.Path(tmpdir / "gstaichi").resolve()
 
         assert repo_path == expected_path
 

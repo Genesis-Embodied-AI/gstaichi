@@ -1,10 +1,10 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/statements.h"
-#include "taichi/ir/transforms.h"
+#include "gstaichi/ir/statements.h"
+#include "gstaichi/ir/transforms.h"
 #include "tests/cpp/program/test_program.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 
 TEST(Half2Vectorization, Ndarray) {
   // Basic tests within a basic block
@@ -22,7 +22,7 @@ TEST(Half2Vectorization, Ndarray) {
 
   auto argload_stmt = block->push_back<ArgLoadStmt>(
       std::vector<int>{0} /*arg_id*/, PrimitiveType::f16, /*is_ptr*/ true,
-      /*create_load*/ false, /*arg_depth*/ 0);
+      /*create_load*/ false);
   argload_stmt->ret_type = half2_type;
   auto const_0_stmt = block->push_back<ConstStmt>(TypedConstant(0));
 
@@ -210,4 +210,4 @@ TEST(Half2Vectorization, Field) {
   EXPECT_EQ(block->statements[7]->is<AtomicOpStmt>(), true);
 }
 
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

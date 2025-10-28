@@ -1,16 +1,14 @@
 import functools
 
-import numpy as np
-import pytest
+import gstaichi as ti
 
-import taichi as ti
 from tests import test_utils
 
 has_autograd = False
 
 try:
-    import autograd.numpy as np
-    from autograd import grad
+    import autograd.numpy as np  # noqa: F401
+    from autograd import grad  # noqa: F401
 
     has_autograd = True
 except:

@@ -1,10 +1,10 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/ir.h"
-#include "taichi/ir/statements.h"
-#include "taichi/util/testing.h"
+#include "gstaichi/ir/ir.h"
+#include "gstaichi/ir/statements.h"
+#include "gstaichi/util/testing.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 
 namespace {
 class TestStmt : public Stmt {
@@ -73,4 +73,4 @@ TEST(StmtFieldManager, TestStmtFieldManagerWithVector) {
   EXPECT_EQ(a->field_manager.equal(c->field_manager), false);
 }
 
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

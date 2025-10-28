@@ -1,10 +1,11 @@
+# type: ignore
+
 #!/usr/bin/env python3
 
 # compares with origin/main, so make sure you have origin/main available
 
 import argparse
 import fnmatch
-import re
 import subprocess
 import sys
 from pathlib import Path

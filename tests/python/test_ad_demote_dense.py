@@ -1,8 +1,9 @@
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
 
-@test_utils.test(exclude=[ti.metal, ti.opengl])
+@test_utils.test(exclude=[ti.metal])
 def test_ad_demote_dense():
     a = ti.field(ti.f32, shape=(7, 3, 19))
 

@@ -26,9 +26,14 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
 
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.8
+    hooks:
+      - id: ruff
+
   - repo: https://github.com/PyCQA/pylint
     rev: v3.3.4
     hooks:
       - id: pylint
         args: ['-rn', '-sn']
-        files: ^python/taichi/
+        files: ^python/gstaichi/

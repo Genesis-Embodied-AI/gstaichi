@@ -1,5 +1,6 @@
-import taichi as ti
-from taichi.lang.misc import loop_unique
+import gstaichi as ti
+from gstaichi.lang.misc import loop_unique
+
 from tests import test_utils
 
 

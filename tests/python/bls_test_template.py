@@ -2,7 +2,7 @@ import random
 
 import numpy as np
 
-import taichi as ti
+import gstaichi as ti
 
 
 def bls_test_template(dim, N, bs, stencil, block_dim=None, scatter=False, benchmark=0, dense=False):

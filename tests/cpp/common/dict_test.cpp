@@ -1,13 +1,13 @@
 /*******************************************************************************
-    Copyright (c) The Taichi Authors (2016- ). All Rights Reserved.
+    Copyright (c) The GsTaichi Authors (2016- ). All Rights Reserved.
     The use of this software is governed by the LICENSE file.
 *******************************************************************************/
 #include "gtest/gtest.h"
 
-#include "taichi/common/dict.h"
-#include "taichi/util/testing.h"
+#include "gstaichi/common/dict.h"
+#include "gstaichi/util/testing.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 
 TEST(Dict, Config) {
   Dict dict;
@@ -31,4 +31,4 @@ TEST(Dict, Config) {
   EXPECT_EQ(dict.get<std::string>("str"), "Hello");
 }
 
-}  // namespace taichi::lang
+}  // namespace gstaichi::lang

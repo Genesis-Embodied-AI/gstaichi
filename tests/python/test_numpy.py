@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
 
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
 
@@ -149,7 +150,7 @@ def test_numpy_3d():
                 assert a[i, j, k] == i * j * (k + 1) + i + j + k * 2
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_numpy_3d_error():
     val = ti.field(ti.i32)
 
@@ -168,7 +169,7 @@ def test_numpy_3d_error():
 
     a = np.empty(shape=(n, m, p), dtype=np.int32)
 
-    with pytest.raises(ti.TaichiCompilationError):
+    with pytest.raises(ti.GsTaichiCompilationError):
         test_numpy(a)
 
 

@@ -1,16 +1,16 @@
 from inspect import currentframe, getframeinfo
-from sys import version_info
 
 import pytest
 
-import taichi as ti
+import gstaichi as ti
+
 from tests import test_utils
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_exception_multiline():
     frameinfo = getframeinfo(currentframe())
-    with pytest.raises(ti.TaichiNameError) as e:
+    with pytest.raises(ti.GsTaichiNameError) as e:
         # yapf: disable
         @ti.kernel
         def foo():
@@ -21,23 +21,17 @@ def test_exception_multiline():
         foo()
         # yapf: enable
 
-    if version_info < (3, 8):
-        msg = f"""
-File "{frameinfo.filename}", line {frameinfo.lineno + 5}, in foo:
-            aaaa(111,"""
-    else:
-        msg = f"""
+    msg = f"""
 File "{frameinfo.filename}", line {frameinfo.lineno + 5}, in foo:
             aaaa(111,
             ^^^^"""
-    print(e.value.args[0])
-    assert e.value.args[0][:len(msg)] == msg
+    assert msg in e.value.args[0]
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_exception_from_func():
     frameinfo = getframeinfo(currentframe())
-    with pytest.raises(ti.TaichiNameError) as e:
+    with pytest.raises(ti.GsTaichiNameError) as e:
 
         @ti.func
         def baz():
@@ -54,33 +48,25 @@ def test_exception_from_func():
         foo()
     lineno = frameinfo.lineno
     file = frameinfo.filename
-    if version_info < (3, 8):
-        msg = f"""
-File "{file}", line {lineno + 13}, in foo:
+    msg_l = [
+        f"""File "{file}", line {lineno + 13}, in foo:
             bar()
-File "{file}", line {lineno + 9}, in bar:
+            ^^^^^""",
+        f"""File "{file}", line {lineno + 9}, in bar:
             baz()
-File "{file}", line {lineno + 5}, in baz:
-            t()"""
-    else:
-        msg = f"""
-File "{file}", line {lineno + 13}, in foo:
-            bar()
-            ^^^^^
-File "{file}", line {lineno + 9}, in bar:
-            baz()
-            ^^^^^
-File "{file}", line {lineno + 5}, in baz:
+            ^^^^^""",
+        f"""File "{file}", line {lineno + 5}, in baz:
             t()
-            ^"""
-    print(e.value.args[0])
-    assert e.value.args[0][:len(msg)] == msg
+            ^""",
+    ]
+    for msg in msg_l:
+        assert msg in e.value.args[0]
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_tab():
     frameinfo = getframeinfo(currentframe())
-    with pytest.raises(ti.TaichiNameError) as e:
+    with pytest.raises(ti.GsTaichiNameError) as e:
         # yapf: disable
         @ti.kernel
         def foo():
@@ -89,23 +75,17 @@ def test_tab():
         # yapf: enable
     lineno = frameinfo.lineno
     file = frameinfo.filename
-    if version_info < (3, 8):
-        msg = f"""
-File "{file}", line {lineno + 5}, in foo:
-            a(11,   22, 3)"""
-    else:
-        msg = f"""
+    msg = f"""
 File "{file}", line {lineno + 5}, in foo:
             a(11,   22, 3)
             ^"""
-    print(e.value.args[0])
-    assert e.value.args[0][:len(msg)] == msg
+    assert msg in e.value.args[0]
 
 
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_super_long_line():
     frameinfo = getframeinfo(currentframe())
-    with pytest.raises(ti.TaichiNameError) as e:
+    with pytest.raises(ti.GsTaichiNameError) as e:
         # yapf: disable
         @ti.kernel
         def foo():
@@ -114,13 +94,7 @@ def test_super_long_line():
         # yapf: enable
     lineno = frameinfo.lineno
     file = frameinfo.filename
-    if version_info < (3, 8):
-        msg = f"""
-File "{file}", line {lineno + 5}, in foo:
-            aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(111)
-"""
-    else:
-        msg = f"""
+    msg = f"""
 File "{file}", line {lineno + 5}, in foo:
             aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbaaaaaa
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -128,12 +102,10 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 bbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(111)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"""
-    print(e.value.args[0])
-    assert e.value.args[0][:len(msg)] == msg
+    assert msg in e.value.args[0]
 
 
-@pytest.mark.skipif(version_info < (3, 8), reason="This is a feature for python>=3.8")
-@test_utils.test()
+@test_utils.test(print_full_traceback=False)
 def test_exception_in_node_with_body():
     frameinfo = getframeinfo(currentframe())
     @ti.kernel
@@ -144,7 +116,7 @@ def test_exception_in_node_with_body():
             c = 1
             d = 1
 
-    with pytest.raises(ti.TaichiCompilationError) as e:
+    with pytest.raises(ti.GsTaichiCompilationError) as e:
         foo()
     lineno = frameinfo.lineno
     file = frameinfo.filename
@@ -153,6 +125,5 @@ File "{file}", line {lineno + 3}, in foo:
         for i in range(1, 2, 3):
         ^^^^^^^^^^^^^^^^^^^^^^^^
 Range should have 1 or 2 arguments, found 3"""
-    print(e.value.args[0])
-    assert e.value.args[0] == msg
+    assert msg in e.value.args[0]
 

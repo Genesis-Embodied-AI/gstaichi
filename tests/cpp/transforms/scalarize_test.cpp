@@ -1,10 +1,11 @@
 #include "gtest/gtest.h"
 
-#include "taichi/ir/statements.h"
-#include "taichi/ir/transforms.h"
+#include "gstaichi/ir/statements.h"
+#include "gstaichi/ir/transforms.h"
+#include "gstaichi/transforms/scalarize.h"
 #include "tests/cpp/program/test_program.h"
 
-namespace taichi::lang {
+namespace gstaichi::lang {
 
 TEST(Scalarize, ScalarizeGlobalStore) {
   // Basic tests within a basic block
@@ -33,7 +34,7 @@ TEST(Scalarize, ScalarizeGlobalStore) {
 
   auto argload_stmt = block->push_back<ArgLoadStmt>(
       std::vector<int>{0} /*arg_id*/, type, /*is_ptr*/ true,
-      /*create_load*/ false, /*arg_depth*/ 0);
+      /*create_load*/ false);
 
   std::vector<Stmt *> indices = {};
   Stmt *dest_stmt = block->push_back<ExternalPtrStmt>(
@@ -98,7 +99,7 @@ TEST(Scalarize, ScalarizeGlobalLoad) {
 
   auto argload_stmt = block->push_back<ArgLoadStmt>(
       std::vector<int>{0} /*arg_id*/, type, /*is_ptr*/ true,
-      /*create_load*/ false, /*arg_depth*/ 0);
+      /*create_load*/ false);
 
   std::vector<Stmt *> indices = {};
   Stmt *src_stmt = block->push_back<ExternalPtrStmt>(
@@ -234,4 +235,54 @@ TEST(Scalarize, ScalarizeLocalLoad) {
   EXPECT_EQ(block->statements[7]->is<LocalLoadStmt>(), true);
 }
 
-}  // namespace taichi::lang
+TEST(Scalarize, ScalarizeBugInvalidRedundantConstantRemoval) {
+  // Test for Genesis bug
+  // https://linear.app/genesis-ai-company/issue/CMP-151/fix-genesis-unit-test-bug-with-spirv-on-mac
+  TestProgram test_prog;
+  test_prog.setup();
+
+  auto block = std::make_unique<Block>();
+
+  auto func = []() {};
+  auto kernel =
+      std::make_unique<Kernel>(*test_prog.prog(), func, "fake_kernel");
+
+  // create vector type
+  std::vector<int> vector_shape = {4};
+  auto vector_type = TypeFactory::get_instance().get_tensor_type(
+      vector_shape,
+      TypeFactory::get_instance().get_primitive_type(PrimitiveTypeID::f32));
+
+  // create offloaded1
+  block->push_back<OffloadedStmt>(OffloadedStmt::TaskType::range_for,
+                                  Arch::vulkan, kernel.get());
+  auto offloaded1 = block->statements.back()->as<OffloadedStmt>();
+  auto zero1 = offloaded1->body->push_back<ConstStmt>(TypedConstant(0));
+  auto vector_alloc1 = offloaded1->body->push_back<AllocaStmt>(vector_type);
+  offloaded1->body->push_back<MatrixPtrStmt>(vector_alloc1, zero1);
+
+  // create offloaded2
+  block->push_back<OffloadedStmt>(OffloadedStmt::TaskType::range_for,
+                                  Arch::vulkan, kernel.get());
+  auto offloaded2 = block->statements.back()->as<OffloadedStmt>();
+
+  auto vector_alloca2 = offloaded2->body->push_back<AllocaStmt>(vector_type);
+  auto zero_for2 = offloaded2->body->push_back<ConstStmt>(TypedConstant(0));
+  offloaded2->body->push_back<MatrixPtrStmt>(vector_alloca2, zero_for2);
+
+  ExtractLocalPointers::run(block.get());
+
+  ASSERT_EQ(block->statements[1].get(), offloaded2);
+  bool foundMatrixPtr = false;
+  for (auto &stmt : offloaded2->body->statements) {
+    if (stmt->is<MatrixPtrStmt>()) {
+      auto matrix_ptr_new = stmt->as<MatrixPtrStmt>();
+      foundMatrixPtr = true;
+      EXPECT_EQ(matrix_ptr_new->offset, zero_for2);
+      EXPECT_NE(matrix_ptr_new->offset, zero1);
+    }
+  }
+  EXPECT_TRUE(foundMatrixPtr);
+}
+
+}  // namespace gstaichi::lang

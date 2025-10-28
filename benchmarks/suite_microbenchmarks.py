@@ -1,5 +1,4 @@
 import os
-import time
 
 from microbenchmarks import benchmark_plan_list
 from utils import dump2json
