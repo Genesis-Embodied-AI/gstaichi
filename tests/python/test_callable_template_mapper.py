@@ -68,7 +68,15 @@ def test_callable_template_mapper_numpy():
 
     import numpy as np
 
-    mapper = TemplateMapper(annotations, (0, 1, 2))
+    mapper = TemplateMapper(annotations, (0, 1))
+    print('')
+    # ndim=3, dtype=float32
     assert mapper.lookup(False, (0, 0, np.ones(shape=(1, 2, 3), dtype=np.float32)))[0] == 0
+
+    print('')
+    # ndim=3, dtype=float32
     assert mapper.lookup(False, (0, 0, np.ones(shape=(1, 2, 4), dtype=np.float32)))[0] == 0
+
+    print('')
+    # ndim=3, dtype=int32
     assert mapper.lookup(False, (0, 0, np.ones(shape=(1, 2, 1), dtype=np.int32)))[0] == 1

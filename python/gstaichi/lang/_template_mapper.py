@@ -18,6 +18,7 @@ class TemplateMapper:
     """
 
     def __init__(self, arguments: list[ArgMetadata], template_slot_locations: list[int]) -> None:
+        print("template_slot_locations", template_slot_locations)
         self.arguments: list[ArgMetadata] = arguments
         self.num_args: int = len(arguments)
         self.template_slot_locations: list[int] = template_slot_locations
@@ -35,18 +36,31 @@ class TemplateMapper:
     def lookup(self, raise_on_templated_floats: bool, args: tuple[Any, ...]) -> tuple[int, tuple[Any, ...]]:
         if len(args) != self.num_args:
             raise TypeError(f"{self.num_args} argument(s) needed but {len(args)} provided.")
+        print("lookup", "args", args)
 
         fast_key = tuple([id(arg) for arg in args])
+        print("fast_key", fast_key)
         if fast_key in self._fast_weak_map:
+            print("fast key in fast weak map returning", self._fast_weak_map[fast_key])
             return self._fast_weak_map[fast_key]
+        print("fast key not in map")
         key = self.extract(raise_on_templated_floats, args)
+        print("key", key)
         try:
             res = self.mapping[key], key
+            print('res', res)
             needs_grad = any([isinstance(arg, tuple) and len(arg) >= 3 and arg[2] for arg in args])
+            print('needs_grad', needs_grad)
             if not needs_grad:
+                print('storing in weak map key=', fast_key, 'res', res)
                 self._fast_weak_map[fast_key] = res
+            print('returning res', res)
             return res
         except KeyError:
+            print("key not in self.mapping")
             count = len(self.mapping)
+            print('count', count)
+            print('setting self.mapping key', key, '=count', count)
             self.mapping[key] = count
+            print('returning', count, key)
             return count, key
