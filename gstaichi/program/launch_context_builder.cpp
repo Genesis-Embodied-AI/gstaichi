@@ -246,7 +246,14 @@ void LaunchContextBuilder::set_arg_ndarray(const std::vector<int> &arg_id,
 
 void LaunchContextBuilder::set_arg_ndarray(const std::vector<int> &arg_ids,
                                            const std::vector<Ndarray *> &arrs) {
-  for (int i = 0; i < arg_ids.size(); ++i) {
+  const size_t num_arrs = arg_ids.size();
+
+  array_ptrs.reserve(array_ptrs.size() + num_arrs);
+  array_runtime_sizes.reserve(array_runtime_sizes.size() + num_arrs);
+  device_allocation_type.reserve(device_allocation_type.size() + num_arrs);
+
+  TI_ASSERT(num_arrs == arg_ids.size());
+  for (int i = 0; i < num_arrs; ++i) {
     const int arg_id = arg_ids[i];
     const Ndarray &arr = *arrs[i];
 
