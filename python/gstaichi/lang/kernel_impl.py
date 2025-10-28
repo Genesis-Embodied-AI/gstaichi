@@ -12,16 +12,18 @@ import time
 import types
 import typing
 import warnings
+from collections import defaultdict
 from dataclasses import (
     _FIELD,  # type: ignore[reportAttributeAccessIssue]
     _FIELDS,  # type: ignore[reportAttributeAccessIssue]
     dataclass,
     is_dataclass,
 )
+from enum import IntEnum
 
 # Must import 'partial' directly instead of the entire module to avoid attribute lookup overhead.
 from functools import partial, update_wrapper, wraps
-from typing import Any, Callable, Type, TypeVar, cast, overload
+from typing import Any, Callable, DefaultDict, Type, TypeVar, cast, overload
 
 import numpy as np
 
@@ -635,8 +637,21 @@ def cast_int(x: int | np.integer) -> int:
     return int(x)
 
 
+class KernelBatchedArgType(IntEnum):
+    FLOAT = 0
+    INT = 1
+    UINT = 2
+    TI_ARRAY = 3
+    TI_ARRAY_WITH_GRAD = 4
+
+
+# Define proxies for fast lookup
+_FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = KernelBatchedArgType
+
+
 def _recursive_set_args(
     launch_ctx: KernelLaunchContext,
+    launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]],
     needed_arg_type: Type,
     provided_arg_type: Type,
     v: Any,
@@ -663,15 +678,15 @@ def _recursive_set_args(
     if needed_arg_type_id in primitive_types.real_type_ids:
         if not isinstance(v, (float, int, np.floating, np.integer)):
             raise GsTaichiRuntimeTypeError.get(indices, needed_arg_type.to_string(), provided_arg_type)
-        launch_ctx.set_arg_float(indices, float(v))
+        launch_ctx_buffer[_FLOAT].append((indices, float(v)))
         return 1
     if needed_arg_type_id in primitive_types.integer_type_ids:
         if not isinstance(v, (int, np.integer)):
             raise GsTaichiRuntimeTypeError.get(indices, needed_arg_type.to_string(), provided_arg_type)
         if is_signed(cook_dtype(needed_arg_type)):
-            launch_ctx.set_arg_int(indices, int(v))
+            launch_ctx_buffer[_INT].append((indices, int(v)))
         else:
-            launch_ctx.set_arg_uint(indices, int(v))
+            launch_ctx_buffer[_UINT].append((indices, int(v)))
         return 1
     needed_arg_fields = getattr(needed_arg_type, _FIELDS, None)
     if needed_arg_fields is not None:
@@ -688,6 +703,7 @@ def _recursive_set_args(
             field_value = getattr(v, field.name)
             idx += _recursive_set_args(
                 launch_ctx,
+                launch_ctx_buffer,
                 field_type,
                 field_type,
                 field_value,
@@ -700,9 +716,9 @@ def _recursive_set_args(
         v_primal = v.arr
         v_grad = v.grad.arr if v.grad else None
         if v_grad is None:
-            launch_ctx.set_arg_ndarray(indices, v_primal)  # type: ignore , solvable probably, just not today
+            launch_ctx_buffer[_TI_ARRAY].append((indices, v_primal))
         else:
-            launch_ctx.set_arg_ndarray_with_grad(indices, v_primal, v_grad)  # type: ignore
+            launch_ctx_buffer[_TI_ARRAY_WITH_GRAD].append((indices, v_primal, v_grad))
         return 1
     if needed_arg_basetype is ndarray_type.NdarrayType:
         # v is things like torch Tensor and numpy array
@@ -792,7 +808,7 @@ def _recursive_set_args(
             raise GsTaichiRuntimeTypeError(f"Argument {needed_arg_type} cannot be converted into required type {v}")
         return 1
     if issubclass(needed_arg_basetype, MatrixType):
-        cast_func = None
+        cast_func: Callable[[Any], int | float] | None = None
         if needed_arg_type.dtype in primitive_types.real_types:
             cast_func = cast_float
         elif needed_arg_type.dtype in primitive_types.integer_types:
@@ -827,7 +843,7 @@ def _recursive_set_args(
         return 0
     if needed_arg_basetype is sparse_matrix_builder:
         # Pass only the base pointer of the ti.types.sparse_matrix_builder() argument
-        launch_ctx.set_arg_uint(indices, v._get_ndarray_addr())
+        launch_ctx_buffer[_UINT].append((indices, v._get_ndarray_addr()))
         return 1
     if needed_arg_basetype is texture_type.TextureType and isinstance(v, Texture):
         launch_ctx.set_arg_texture(indices, v.tex)
@@ -1077,6 +1093,7 @@ class Kernel:
 
         actual_argument_slot = 0
         launch_ctx = t_kernel.make_launch_context()
+        launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]] = defaultdict(list)
         callbacks: list[Callable[[], None]] = []
 
         template_num = 0
@@ -1089,6 +1106,7 @@ class Kernel:
                 continue
             i_out += _recursive_set_args(
                 launch_ctx,
+                launch_ctx_buffer,
                 needed_,
                 type(val),
                 val,
@@ -1096,6 +1114,27 @@ class Kernel:
                 actual_argument_slot,
                 callbacks,
             )
+
+        # All arguments to context in batches to mitigate overhead of calling Python bindings repeatedly.
+        # This is essential because calling any pybind11 function is adding ~180ns penalty no matter what.
+        # Note that we are allowed to do this because GsTaichi Launch Kernel context is storing the input
+        # arguments in an unordered list. The actual runtime (gfx, llvm...) will later query this context
+        # in correct order.
+        if launch_ctx_args := launch_ctx_buffer.get(_FLOAT):
+            indices, vec = zip(*launch_ctx_args)
+            launch_ctx.set_arg_float(tuple([index for index, in indices]), vec)  # type: ignore
+        if launch_ctx_args := launch_ctx_buffer.get(_INT):
+            indices, vec = zip(*launch_ctx_args)
+            launch_ctx.set_arg_int(tuple([index for index, in indices]), vec)
+        if launch_ctx_args := launch_ctx_buffer.get(_UINT):
+            indices, vec = zip(*launch_ctx_args)
+            launch_ctx.set_arg_uint(tuple([index for index, in indices]), vec)
+        if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY):
+            indices, arrs = zip(*launch_ctx_args)
+            launch_ctx.set_arg_ndarray(tuple([index for index, in indices]), arrs)
+        if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY_WITH_GRAD):
+            indices, arrs, arrs_grad = zip(*launch_ctx_args)
+            launch_ctx.set_arg_ndarray_with_grad(tuple([index for index, in indices]), arrs, arrs_grad)  # type: ignore
 
         try:
             runtime = impl.get_runtime()
