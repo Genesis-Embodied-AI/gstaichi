@@ -1,9 +1,8 @@
 import ast
 import csv
-import functools
 import inspect
 import json
-import operator
+import math
 import os
 import pathlib
 import re
@@ -19,6 +18,7 @@ from dataclasses import (
     dataclass,
     is_dataclass,
 )
+from functools import partial, update_wrapper, wraps
 from typing import Any, Callable, Type, TypeVar, cast, overload
 
 import numpy as np
@@ -78,6 +78,8 @@ CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
 
 MAX_ARG_NUM = 512
 
+
+_arch_cuda = _ti_core.Arch.cuda
 
 class GsTaichiCallable:
     """
@@ -164,7 +166,7 @@ class GsTaichiCallable:
         self.grad: Kernel | None = None
         self._is_staticmethod: bool = False
         self.is_pure: bool = False
-        functools.update_wrapper(self, fn)
+        update_wrapper(self, fn)
 
     def __call__(self, *args, **kwargs):
         return self.wrapper.__call__(*args, **kwargs)
@@ -637,7 +639,7 @@ def _recursive_set_args(
     v: Any,
     indices: tuple[int, ...],
     actual_argument_slot: int,
-    callbacks: list[Callable[[], None]],
+    callbacks: list[Callable[[], Any]],
 ) -> int:
     """
     Returns the number of kernel args set e.g. templates don't set kernel args, so returns 0
@@ -702,7 +704,7 @@ def _recursive_set_args(
         # so that it only holds "real" array shapes.
         is_soa = needed_arg_type.layout == Layout.SOA
         array_shape = v.shape
-        if functools.reduce(operator.mul, array_shape, 1) > np.iinfo(np.int32).max:
+        if math.prod(array_shape) > np.iinfo(np.int32).max:
             warnings.warn("Ndarray index might be out of int32 boundary but int64 indexing is not supported yet.")
         needed_arg_dtype = needed_arg_type.dtype
         if needed_arg_dtype is None or id(needed_arg_dtype) in primitive_types.type_ids:
@@ -711,19 +713,17 @@ def _recursive_set_args(
             element_dim = needed_arg_dtype.ndim
             array_shape = v.shape[element_dim:] if is_soa else v.shape[:-element_dim]
         if isinstance(v, np.ndarray):
-            # numpy
-            if v.flags.c_contiguous:
-                launch_ctx.set_arg_external_array_with_shape(indices, int(v.ctypes.data), v.nbytes, array_shape, 0)
-            elif v.flags.f_contiguous:
+            if v.flags.f_contiguous:
                 # TODO: A better way that avoids copying is saving strides info.
-                tmp = np.ascontiguousarray(v)
-                callbacks.append(functools.partial(np.copyto, v, tmp))
-                launch_ctx.set_arg_external_array_with_shape(indices, int(tmp.ctypes.data), tmp.nbytes, array_shape, 0)
-            else:
+                v_contiguous = np.ascontiguousarray(v)
+                v, v_orig_np = v_contiguous, v
+                callbacks.append(partial(np.copyto, v_orig_np, v))
+            elif not v.flags.c_contiguous:
                 raise ValueError(
                     "Non contiguous numpy arrays are not supported, please call np.ascontiguousarray(arr) "
                     "before passing it into gstaichi kernel."
                 )
+            launch_ctx.set_arg_external_array_with_shape(indices, int(v.ctypes.data), v.nbytes, array_shape, 0)
         elif has_pytorch():
             import torch  # pylint: disable=C0415
 
@@ -734,12 +734,6 @@ def _recursive_set_args(
                         "passing it into gstaichi kernel."
                     )
                 gstaichi_arch = impl.current_cfg().arch
-
-                def get_call_back(u, v):
-                    def call_back():
-                        u.copy_(v)
-
-                    return call_back
 
                 # FIXME: only allocate when launching grad kernel
                 if v.requires_grad and v.grad is None:
@@ -752,26 +746,30 @@ def _recursive_set_args(
                         )
                     if not v.grad.is_contiguous():
                         raise ValueError(
-                            "Non contiguous gradient tensors are not supported, please call tensor.grad.contiguous() before passing it into gstaichi kernel."
+                            "Non contiguous gradient tensors are not supported, please call tensor.grad.contiguous() "
+                            "before passing it into gstaichi kernel."
                         )
 
-                tmp = v
-                if (str(v.device) != "cpu") and not (
-                    str(v.device).startswith("cuda") and gstaichi_arch == _ti_core.Arch.cuda
-                ):
-                    # Getting a torch CUDA tensor on GsTaichi non-cuda arch:
-                    # We just replace it with a CPU tensor and by the end of kernel execution we'll use the
-                    # callback to copy the values back to the original CUDA tensor.
-                    host_v = v.to(device="cpu", copy=True)
-                    tmp = host_v
-                    callbacks.append(get_call_back(v, host_v))
+                grad = v.grad
+                if (v.device.type != "cpu") and not (v.device.type == "cuda" and gstaichi_arch == _arch_cuda):
+                    # For a torch tensor to be passed as as input argument (in and/or out) of a taichi kernel, its
+                    # memory must be hosted either on CPU, or on CUDA if and only if GsTaichi is using CUDA backend.
+                    # We just replace it with a CPU tensor and by the end of kernel execution we'll use the callback
+                    # to copy the values back to the original tensor.
+                    v_cpu = v.to(device="cpu")
+                    v, v_orig_tc = v_cpu, v
+                    callbacks.append(partial(v_orig_tc.data.copy_, v))
+                    if grad is not None:
+                        grad_cpu = grad.to(device="cpu")
+                        grad, grad_orig = grad_cpu, grad
+                        callbacks.append(partial(grad_orig.data.copy_, grad))
 
                 launch_ctx.set_arg_external_array_with_shape(
                     indices,
-                    int(tmp.data_ptr()),
-                    tmp.element_size() * tmp.nelement(),
+                    int(v.data_ptr()),
+                    v.element_size() * v.nelement(),
                     array_shape,
-                    int(v.grad.data_ptr()) if v.grad is not None else 0,
+                    int(grad.data_ptr()) if grad is not None else 0,
                 )
             else:
                 raise GsTaichiRuntimeTypeError(
@@ -1257,7 +1255,7 @@ def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool 
         # owning the kernel, which is not known until the kernel is accessed.
         #
         # See also: _BoundedDifferentiableMethod, data_oriented.
-        @functools.wraps(_func)
+        @wraps(_func)
         def wrapped_classkernel(*args, **kwargs):
             # If we reach here (we should never), it means the class is not decorated
             # with @ti.data_oriented, otherwise getattr would have intercepted the call.
@@ -1268,7 +1266,7 @@ def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool 
         wrapped = GsTaichiCallable(_func, wrapped_classkernel)
     else:
 
-        @functools.wraps(_func)
+        @wraps(_func)
         def wrapped_func(*args, **kwargs):
             try:
                 return primal(*args, **kwargs)
@@ -1344,7 +1342,7 @@ def kernel(_fn: Callable[..., typing.Any] | None = None, *, pure: bool | None = 
                 "`pure` parameter is intended to be removed in 4.0.0"
             )
 
-        functools.update_wrapper(wrapped, fn)
+        update_wrapper(wrapped, fn)
         return cast(F, wrapped)
 
     if _fn is None:
