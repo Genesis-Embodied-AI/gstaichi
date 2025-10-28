@@ -23,7 +23,8 @@ class TemplateMapper:
         self.num_args: int = len(arguments)
         self.template_slot_locations: list[int] = template_slot_locations
         self.mapping: dict[tuple[Any, ...], int] = {}
-        self._fast_weak_map: dict = {}
+        self._fast_weak_map: dict = {}  # dict from tuple of ids of objects to the lookup result
+        self._weak_ref_by_id: dict = {}  # dict from id to weakref, so we can check the id is still valid
 
     def extract(self, raise_on_templated_floats: bool, args: tuple[Any, ...]) -> tuple[Any, ...]:
         return tuple(
@@ -41,8 +42,15 @@ class TemplateMapper:
         fast_key = tuple([id(arg) for arg in args])
         print("fast_key", fast_key)
         if fast_key in self._fast_weak_map:
-            print("fast key in fast weak map returning", self._fast_weak_map[fast_key])
-            return self._fast_weak_map[fast_key]
+            # check the ids still match the objects
+            _valid = all(id(self._weak_ref_by_id[_id]()) == _id for _id in fast_key)
+            print('fast key valid?', _valid)
+            # for _id in fast_key:
+            #     weak_ref = self._weakref_by_id[_id]
+            #     assert id(weak_ref()) == _id
+            if _valid:
+                print("fast key in fast weak map returning", self._fast_weak_map[fast_key])
+                return self._fast_weak_map[fast_key]
         print("fast key not in map")
         key = self.extract(raise_on_templated_floats, args)
         print("key", key)
