@@ -11,90 +11,91 @@ class Program;
 class IRNode;
 class FrontendContext;
 
+struct Parameter {
+  std::string name;
+  bool is_array{
+      false};  // This is true for both ndarray and external array args.
+  std::size_t total_dim{0};  // total dim of array
+  BufferFormat format{BufferFormat::unknown};
+  bool needs_grad{false};  // TODO: reorder for better alignment
+  std::vector<int> element_shape{};
+  ParameterType ptype{ParameterType::kUnknown};
+  TI_IO_DEF(is_array,
+            total_dim,
+            format,
+            dt_,
+            needs_grad,
+            element_shape,
+            ptype);
+
+  bool operator==(const Parameter &o) const {
+    return is_array == o.is_array && total_dim == o.total_dim &&
+            format == o.format && dt_ == o.dt_ && needs_grad == o.needs_grad &&
+            element_shape == o.element_shape && ptype == o.ptype;
+  }
+
+  /* [arguments with TensorType]
+
+  GsTaichi used to represent TensorType with the combination of
+  "PrimitiveType" & "element_shape" and there are a bunch of interfaces
+  designed like this (it allows creating TensorType by passing in
+  PrimitiveType + element_shape)
+
+  Here we removed the "element_shape" member in the underlying objects (class
+  Arg, class ExternalTensorExpression, ...), and forced them to use TensorType
+  in their "dtype" member.
+
+  However we kept the interfaces unchanged temporarily, so as to minimize
+  possible regressions.
+  */
+  explicit Parameter(const DataType &dt = PrimitiveType::unknown,
+                      bool is_array = false,
+                      std::size_t size_unused = 0,
+                      int total_dim = 0,
+                      std::vector<int> element_shape = {},
+                      BufferFormat format = BufferFormat::unknown,
+                      bool needs_grad = false) {
+    // TODO: Currently dt is only PrimitiveType or StructType for
+    // ndarray/texture/matrix
+    //       We should always keep it either PrimitiveType or TensorType. In
+    //       other words, `get_type_for_kernel_args` which we currently do in
+    //       Python should be delayed until finalize_params.
+    if (dt->is<PrimitiveType>() && element_shape.size() > 0) {
+      this->dt_ =
+          gstaichi::lang::TypeFactory::get_instance().create_tensor_type(
+              element_shape, dt);
+    } else {
+      this->dt_ = dt;
+    }
+    this->element_shape = element_shape;
+    this->is_array = is_array;
+    this->total_dim = total_dim;
+    this->format = format;
+    this->needs_grad = needs_grad;
+  }
+
+  std::vector<int> get_element_shape() const {
+    return dt_.get_shape();
+  }
+
+  DataType get_element_type() const {
+    return dt_.get_element_type();
+  }
+
+  int get_element_size() const {
+    return data_type_size(dt_);
+  }
+
+  DataType get_dtype() const {
+    return dt_;
+  }
+
+  private:
+  DataType dt_;
+};
+
 class TI_DLL_EXPORT CallableBase {
  public:
-  struct Parameter {
-    std::string name;
-    bool is_array{
-        false};  // This is true for both ndarray and external array args.
-    std::size_t total_dim{0};  // total dim of array
-    BufferFormat format{BufferFormat::unknown};
-    bool needs_grad{false};  // TODO: reorder for better alignment
-    std::vector<int> element_shape{};
-    ParameterType ptype{ParameterType::kUnknown};
-    TI_IO_DEF(is_array,
-              total_dim,
-              format,
-              dt_,
-              needs_grad,
-              element_shape,
-              ptype);
-
-    bool operator==(const Parameter &o) const {
-      return is_array == o.is_array && total_dim == o.total_dim &&
-             format == o.format && dt_ == o.dt_ && needs_grad == o.needs_grad &&
-             element_shape == o.element_shape && ptype == o.ptype;
-    }
-
-    /* [arguments with TensorType]
-
-    GsTaichi used to represent TensorType with the combination of
-    "PrimitiveType" & "element_shape" and there are a bunch of interfaces
-    designed like this (it allows creating TensorType by passing in
-    PrimitiveType + element_shape)
-
-    Here we removed the "element_shape" member in the underlying objects (class
-    Arg, class ExternalTensorExpression, ...), and forced them to use TensorType
-    in their "dtype" member.
-
-    However we kept the interfaces unchanged temporarily, so as to minimize
-    possible regressions.
-    */
-    explicit Parameter(const DataType &dt = PrimitiveType::unknown,
-                       bool is_array = false,
-                       std::size_t size_unused = 0,
-                       int total_dim = 0,
-                       std::vector<int> element_shape = {},
-                       BufferFormat format = BufferFormat::unknown,
-                       bool needs_grad = false) {
-      // TODO: Currently dt is only PrimitiveType or StructType for
-      // ndarray/texture/matrix
-      //       We should always keep it either PrimitiveType or TensorType. In
-      //       other words, `get_type_for_kernel_args` which we currently do in
-      //       Python should be delayed until finalize_params.
-      if (dt->is<PrimitiveType>() && element_shape.size() > 0) {
-        this->dt_ =
-            gstaichi::lang::TypeFactory::get_instance().create_tensor_type(
-                element_shape, dt);
-      } else {
-        this->dt_ = dt;
-      }
-      this->element_shape = element_shape;
-      this->is_array = is_array;
-      this->total_dim = total_dim;
-      this->format = format;
-      this->needs_grad = needs_grad;
-    }
-
-    std::vector<int> get_element_shape() const {
-      return dt_.get_shape();
-    }
-
-    DataType get_element_type() const {
-      return dt_.get_element_type();
-    }
-
-    int get_element_size() const {
-      return data_type_size(dt_);
-    }
-
-    DataType get_dtype() const {
-      return dt_;
-    }
-
-   private:
-    DataType dt_;
-  };
 
   struct Ret {
     DataType dt;
