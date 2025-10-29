@@ -1154,19 +1154,19 @@ class Kernel:
         # in correct order.
         if launch_ctx_args := launch_ctx_buffer.get(_FLOAT):
             indices, vec = zip(*launch_ctx_args)
-            launch_ctx.set_arg_float(tuple([index for index, in indices]), vec)  # type: ignore
+            launch_ctx.set_args_float(tuple([index for index, in indices]), vec)  # type: ignore
         if launch_ctx_args := launch_ctx_buffer.get(_INT):
             indices, vec = zip(*launch_ctx_args)
-            launch_ctx.set_arg_int(tuple([index for index, in indices]), vec)
+            launch_ctx.set_args_int(tuple([index for index, in indices]), vec)
         if launch_ctx_args := launch_ctx_buffer.get(_UINT):
             indices, vec = zip(*launch_ctx_args)
-            launch_ctx.set_arg_uint(tuple([index for index, in indices]), vec)
+            launch_ctx.set_args_uint(tuple([index for index, in indices]), vec)
         if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY):
             indices, arrs = zip(*launch_ctx_args)
-            launch_ctx.set_arg_ndarray(tuple([index for index, in indices]), arrs)
+            launch_ctx.set_args_ndarray(tuple([index for index, in indices]), arrs)  # type: ignore
         if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY_WITH_GRAD):
             indices, arrs, arrs_grad = zip(*launch_ctx_args)
-            launch_ctx.set_arg_ndarray_with_grad(tuple([index for index, in indices]), arrs, arrs_grad)  # type: ignore
+            launch_ctx.set_args_ndarray_with_grad(tuple([index for index, in indices]), arrs, arrs_grad)  # type: ignore
 
         try:
             runtime = impl.get_runtime()
