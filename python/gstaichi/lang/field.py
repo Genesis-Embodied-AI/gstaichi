@@ -186,13 +186,16 @@ class Field:
         Args:
             other (Field): The source field.
         """
+        print("start of copy from")
         if not isinstance(other, Field):
             raise TypeError("Cannot copy from a non-field object")
         if self.shape != other.shape:
             raise ValueError(f"ti.field shape {self.shape} does not match" f" the source field shape {other.shape}")
         from gstaichi._kernels import tensor_to_tensor  # pylint: disable=C0415
 
+        print("calling tensor to tensor")
         tensor_to_tensor(self, other)
+        print("after tensor to tensor")
 
     @python_scope
     def __setitem__(self, key, value):

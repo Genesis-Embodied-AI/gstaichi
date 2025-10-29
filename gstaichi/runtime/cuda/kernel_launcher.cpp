@@ -19,11 +19,13 @@ class ArgsManager {
           &parameters,
       char const *const device_result_buffer) {
     size_t parameters_hash = hash_parameters_by_address(parameters);
+    std::cout << "parameters hash " << parameters_hash << std::endl;
     auto device_arg_buffer_it = device_arg_buffer_by_hash.find(parameters_hash);
     if (device_arg_buffer_it != device_arg_buffer_by_hash.end()) {
       char *device_arg_buffer = device_arg_buffer_it->second;
       ctx.arg_buffer_size = arg_buffer_size_by_hash[parameters_hash];
       ctx.get_context().arg_buffer = device_arg_buffer;
+      std::cout << " cache hit device arg buffer " << (void *)device_arg_buffer << " arg buffer size " << ctx.arg_buffer_size << std::endl;
       return;
     }
 
@@ -114,6 +116,7 @@ class ArgsManager {
     if (transfers.size() == 0) {
       device_arg_buffer_by_hash[parameters_hash] = device_arg_buffer;
       arg_buffer_size_by_hash[parameters_hash] = ctx.arg_buffer_size;
+      std::cout << "caching for parameters hash " << parameters_hash << " device arg buffer " << (void *)device_arg_buffer << " arg buffer size " << ctx.arg_buffer_size << std::endl;
       caching_arg_buffer = true;
     }
   }
@@ -181,8 +184,10 @@ class ArgsManager {
       const std::vector<std::pair<std::vector<int>, CallableBase::Parameter>>
           &parameters) {
     size_t seed = 0;
+    std::cout << "hashing " << parameters.size() << " parameters by address" << std::endl;
     for (const auto &kv : parameters) {
       // Hash the address of kv.second
+      // std::cout << " param " << kv.second
       auto addr = reinterpret_cast<uintptr_t>(&kv.second);
       seed ^=
           std::hash<uintptr_t>{}(addr) + 0x9e3779b9 + (seed << 6) + (seed >> 2);

@@ -1223,6 +1223,7 @@ class Kernel:
     @_shell_pop_print
     def __call__(self, *args, **kwargs) -> Any:
         args = _process_args(self, is_func=False, args=args, kwargs=kwargs)
+        print("Kernel.__call__", self.func.__name__)
 
         # Transform the primal kernel to forward mode grad kernel
         # then recover to primal when exiting the forward mode manager

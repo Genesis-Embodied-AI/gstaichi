@@ -62,39 +62,58 @@ float64 SNodeRwAccessorsBank::Accessors::read_float(const std::vector<int> &I) {
 // for int32 and int64
 void SNodeRwAccessorsBank::Accessors::write_int(const std::vector<int> &I,
                                                 int64 val) {
+  std::cout << "SNodeRwAccessorsBank::Accessors::write_int called" << " val " << val << std::endl;
   auto launch_ctx = writer_->make_launch_context();
+  std::cout << "SNodeRwAccessorsBank::Accessors::write_int set_kernel_args " << " num active indices " << snode_->num_active_indices << std::endl;
   set_kernel_args(I, snode_->num_active_indices, &launch_ctx);
+  std::cout << "SNodeRwAccessorsBank::Accessors::write_int launch_ctx.set_arg_int " << " num active indices " << snode_->num_active_indices << " val " << val << std::endl;
   launch_ctx.set_arg_int({snode_->num_active_indices}, val);
+  std::cout << "SNodeRwAccessorsBank::Accessors::write_int after set arg int" << std::endl;
   prog_->synchronize();
   CompileResult compile_result = prog_->compile_kernel(
       prog_->compile_config(), prog_->get_device_caps(), *writer_);
   auto &compiled_kernel_data = compile_result.compiled_kernel_data;
+  std::cout << "SNodeRwAccessorsBank::Accessors::write_int launch kernel" << std::endl;
   prog_->launch_kernel(compiled_kernel_data, launch_ctx);
+  std::cout << "SNodeRwAccessorsBank::Accessors::write_int after launch kernel" << std::endl;
 }
 
 // for int32 and int64
 void SNodeRwAccessorsBank::Accessors::write_uint(const std::vector<int> &I,
                                                  uint64 val) {
+  std::cout << "SNodeRwAccessorsBank::Accessors::write_uint called" << " val " << val << std::endl;
   auto launch_ctx = writer_->make_launch_context();
+  std::cout << "SNodeRwAccessorsBank::Accessors::write_uint set_kernel_args " << " num active indices " << snode_->num_active_indices << std::endl;
   set_kernel_args(I, snode_->num_active_indices, &launch_ctx);
+  std::cout << "SNodeRwAccessorsBank::Accessors::write_uint launch_ctx.set_arg_int " << " num active indices " << snode_->num_active_indices << " val " << val << std::endl;
   launch_ctx.set_arg_uint({snode_->num_active_indices}, val);
+  std::cout << "SNodeRwAccessorsBank::Accessors::write_uint after set arg int" << std::endl;
   prog_->synchronize();
   CompileResult compile_result = prog_->compile_kernel(
       prog_->compile_config(), prog_->get_device_caps(), *writer_);
   auto &compiled_kernel_data = compile_result.compiled_kernel_data;
+  std::cout << "SNodeRwAccessorsBank::Accessors::write_uint launch kernel" << std::endl;
   prog_->launch_kernel(compiled_kernel_data, launch_ctx);
+  std::cout << "SNodeRwAccessorsBank::Accessors::write_uint after launch kernel" << std::endl;
 }
 
 int64 SNodeRwAccessorsBank::Accessors::read_int(const std::vector<int> &I) {
+  std::cout << "SNodeRwAccessorsBank::Accessors::read_int called" << std::endl;
   prog_->synchronize();
   auto launch_ctx = reader_->make_launch_context();
+  std::cout << "SNodeRwAccessorsBank::Accessors::read_int set_kernel_args " << " num active indices " << snode_->num_active_indices << std::endl;
   set_kernel_args(I, snode_->num_active_indices, &launch_ctx);
   CompileResult compile_result = prog_->compile_kernel(
       prog_->compile_config(), prog_->get_device_caps(), *reader_);
   auto &compiled_kernel_data = compile_result.compiled_kernel_data;
+  std::cout << "SNodeRwAccessorsBank::Accessors::read_int launch kernel" << std::endl;
   prog_->launch_kernel(compiled_kernel_data, launch_ctx);
+  std::cout << "SNodeRwAccessorsBank::Accessors::read_int after launch kernel" << std::endl;
   prog_->synchronize();
-  return launch_ctx.get_struct_ret_int({0});
+  std::cout << "SNodeRwAccessorsBank::Accessors::read_int call get_struct_ret_int" << std::endl;
+  auto res = launch_ctx.get_struct_ret_int({0});
+  std::cout << "SNodeRwAccessorsBank::Accessors::read_int after call get_struct_ret_int" << std::endl;
+  return res;
 }
 
 uint64 SNodeRwAccessorsBank::Accessors::read_uint(const std::vector<int> &I) {
