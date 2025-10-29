@@ -57,6 +57,15 @@ void LaunchContextBuilder::set_arg_float(const std::vector<int> &arg_id,
   }
 }
 
+void LaunchContextBuilder::set_args_float(const std::vector<int> &args_id,
+                                          const std::vector<float64> &vec) {
+  const size_t num_arrs = args_id.size();
+  TI_ASSERT(num_arrs == vec.size());
+  for (int i = 0; i < num_arrs; i++) {
+    set_arg_float({args_id[i]}, vec[i]);
+  }
+}
+
 template <typename T>
 void LaunchContextBuilder::set_struct_arg(std::vector<int> arg_indices, T d) {
   auto dt = kernel_->args_type->get_element_type(arg_indices);
@@ -136,9 +145,27 @@ void LaunchContextBuilder::set_arg_int(const std::vector<int> &arg_id,
   }
 }
 
+void LaunchContextBuilder::set_args_int(const std::vector<int> &args_id,
+                                        const std::vector<int64> &vec) {
+  const size_t num_arrs = args_id.size();
+  TI_ASSERT(num_arrs == vec.size());
+  for (int i = 0; i < num_arrs; i++) {
+    set_arg_int({args_id[i]}, vec[i]);
+  }
+}
+
 void LaunchContextBuilder::set_arg_uint(const std::vector<int> &arg_id,
                                         uint64 d) {
   set_arg_int(arg_id, d);
+}
+
+void LaunchContextBuilder::set_args_uint(const std::vector<int> &args_id,
+                                         const std::vector<uint64> &vec) {
+  const size_t num_arrs = args_id.size();
+  TI_ASSERT(num_arrs == vec.size());
+  for (int i = 0; i < num_arrs; i++) {
+    set_arg_uint({args_id[i]}, vec[i]);
+  }
 }
 
 template <>
@@ -230,7 +257,7 @@ void LaunchContextBuilder::set_arg_external_array_with_shape(
   }
   set_array_runtime_size(arg_id, size);
   set_array_device_allocation_type(arg_id, DevAllocType::kNone);
-  for (uint64 i = 0; i < shape.size(); ++i) {
+  for (uint64 i = 0; i < shape.size(); i++) {
     set_struct_arg(concatenate_vector<int>(arg_id, {0, (int32)i}),
                    (int32)shape[i]);
   }
@@ -245,17 +272,17 @@ void LaunchContextBuilder::set_arg_ndarray(const std::vector<int> &arg_id,
 }
 
 void LaunchContextBuilder::set_args_ndarray(
-    const std::vector<int> &arg_ids,
+    const std::vector<int> &args_id,
     const std::vector<Ndarray *> &arrs) {
-  const size_t num_arrs = arg_ids.size();
+  const size_t num_arrs = args_id.size();
 
   array_ptrs.reserve(array_ptrs.size() + num_arrs);
   array_runtime_sizes.reserve(array_runtime_sizes.size() + num_arrs);
   device_allocation_type.reserve(device_allocation_type.size() + num_arrs);
 
-  TI_ASSERT(num_arrs == arg_ids.size());
-  for (int i = 0; i < num_arrs; ++i) {
-    const int arg_id = arg_ids[i];
+  TI_ASSERT(num_arrs == args_id.size());
+  for (int i = 0; i < num_arrs; i++) {
+    const int arg_id = args_id[i];
     const Ndarray &arr = *arrs[i];
 
     intptr_t ptr = arr.get_device_allocation_ptr_as_int();
@@ -280,6 +307,18 @@ void LaunchContextBuilder::set_arg_ndarray_with_grad(
   TI_ASSERT_INFO(arr.shape.size() <= gstaichi_max_num_indices,
                  "External array cannot have > {max_num_indices} indices");
   set_arg_ndarray_impl(arg_id, ptr, arr.shape, ptr_grad);
+}
+
+void LaunchContextBuilder::set_args_ndarray_with_grad(
+    const std::vector<int> &args_id,
+    const std::vector<Ndarray *> &arrs,
+    const std::vector<Ndarray *> &arrs_grad) {
+  const size_t num_arrs = args_id.size();
+  TI_ASSERT(num_arrs == arrs.size());
+  TI_ASSERT(num_arrs == arrs_grad.size());
+  for (int i = 0; i < num_arrs; i++) {
+    set_arg_ndarray_with_grad({args_id[i]}, *arrs[i], *arrs_grad[i]);
+  }
 }
 
 void LaunchContextBuilder::set_arg_texture(const std::vector<int> &arg_id,
@@ -311,7 +350,7 @@ void LaunchContextBuilder::set_arg_rw_texture_impl(
   array_ptrs[arg_id] = (void *)alloc_ptr;
   set_array_device_allocation_type(arg_id, DevAllocType::kRWTexture);
   TI_ASSERT(shape.size() <= gstaichi_max_num_indices);
-  for (int i = 0; i < shape.size(); ++i) {
+  for (int i = 0; i < shape.size(); i++) {
     set_struct_arg(concatenate_vector<int>(arg_id, {0, i}), shape[i]);
   }
 }
