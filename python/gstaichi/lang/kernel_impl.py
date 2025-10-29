@@ -1,9 +1,8 @@
 import ast
 import csv
-import functools
 import inspect
 import json
-import operator
+import math
 import os
 import pathlib
 import re
@@ -13,13 +12,18 @@ import time
 import types
 import typing
 import warnings
+from collections import defaultdict
 from dataclasses import (
     _FIELD,  # type: ignore[reportAttributeAccessIssue]
     _FIELDS,  # type: ignore[reportAttributeAccessIssue]
     dataclass,
     is_dataclass,
 )
-from typing import Any, Callable, Iterable, Type, TypeVar, cast, overload
+from enum import IntEnum
+
+# Must import 'partial' directly instead of the entire module to avoid attribute lookup overhead.
+from functools import partial, update_wrapper, wraps
+from typing import Any, Callable, DefaultDict, Type, TypeVar, cast, overload
 
 import numpy as np
 
@@ -77,6 +81,9 @@ CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
 
 
 MAX_ARG_NUM = 512
+
+
+_arch_cuda = _ti_core.Arch.cuda
 
 
 class GsTaichiCallable:
@@ -164,7 +171,7 @@ class GsTaichiCallable:
         self.grad: Kernel | None = None
         self._is_staticmethod: bool = False
         self.is_pure: bool = False
-        functools.update_wrapper(self, fn)
+        update_wrapper(self, fn)
 
     def __call__(self, *args, **kwargs):
         return self.wrapper.__call__(*args, **kwargs)
@@ -630,27 +637,38 @@ def cast_int(x: int | np.integer) -> int:
     return int(x)
 
 
+class KernelBatchedArgType(IntEnum):
+    FLOAT = 0
+    INT = 1
+    UINT = 2
+    TI_ARRAY = 3
+    TI_ARRAY_WITH_GRAD = 4
+
+
+# Define proxies for fast lookup
+_FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = KernelBatchedArgType
+
+
 def _recursive_set_args(
     launch_ctx: KernelLaunchContext,
-    actual_argument_slot: int,
-    exceed_max_arg_num: bool,
-    set_later_list: list[tuple[Callable, Iterable[Any]]],
+    launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]],
     needed_arg_type: Type,
     provided_arg_type: Type,
     v: Any,
     indices: tuple[int, ...],
-    callbacks: list[Callable[[], None]],
-    buffers: list[np.ndarray],
+    actual_argument_slot: int,
+    callbacks: list[Callable[[], Any]],
 ) -> int:
     """
     Returns the number of kernel args set e.g. templates don't set kernel args, so returns 0
     a single ndarray is 1 kernel arg, so returns 1
     a struct of 3 ndarrays would set 3 kernel args, so return 3
-    note: len(indices) > 1 only happens with argpack (which we are removing support for)
     """
     if actual_argument_slot >= MAX_ARG_NUM:
-        exceed_max_arg_num = True
-        return 0
+        raise GsTaichiRuntimeError(
+            f"The number of elements in kernel arguments is too big! Do not exceed {MAX_ARG_NUM} on "
+            f"{_ti_core.arch_name(impl.current_cfg().arch)} backend."
+        )
     actual_argument_slot += 1
 
     needed_arg_type_id = id(needed_arg_type)
@@ -660,15 +678,15 @@ def _recursive_set_args(
     if needed_arg_type_id in primitive_types.real_type_ids:
         if not isinstance(v, (float, int, np.floating, np.integer)):
             raise GsTaichiRuntimeTypeError.get(indices, needed_arg_type.to_string(), provided_arg_type)
-        launch_ctx.set_arg_float(indices, float(v))
+        launch_ctx_buffer[_FLOAT].append((indices, float(v)))
         return 1
     if needed_arg_type_id in primitive_types.integer_type_ids:
         if not isinstance(v, (int, np.integer)):
             raise GsTaichiRuntimeTypeError.get(indices, needed_arg_type.to_string(), provided_arg_type)
         if is_signed(cook_dtype(needed_arg_type)):
-            launch_ctx.set_arg_int(indices, int(v))
+            launch_ctx_buffer[_INT].append((indices, int(v)))
         else:
-            launch_ctx.set_arg_uint(indices, int(v))
+            launch_ctx_buffer[_UINT].append((indices, int(v)))
         return 1
     needed_arg_fields = getattr(needed_arg_type, _FIELDS, None)
     if needed_arg_fields is not None:
@@ -679,28 +697,28 @@ def _recursive_set_args(
         for field in needed_arg_fields.values():
             if field._field_type is not _FIELD:
                 continue
-            assert not isinstance(field.type, str)
+            # Storing attribute in a temporary to avoid repeated attribute lookup (~20ns penalty)
+            field_type = field.type
+            assert not isinstance(field_type, str)
             field_value = getattr(v, field.name)
             idx += _recursive_set_args(
                 launch_ctx,
-                actual_argument_slot,
-                exceed_max_arg_num,
-                set_later_list,
-                field.type,
-                field.type,
+                launch_ctx_buffer,
+                field_type,
+                field_type,
                 field_value,
                 (offset + idx,),
+                actual_argument_slot,
                 callbacks,
-                buffers,
             )
         return idx
     if needed_arg_basetype is ndarray_type.NdarrayType and isinstance(v, Ndarray):
         v_primal = v.arr
         v_grad = v.grad.arr if v.grad else None
         if v_grad is None:
-            launch_ctx.set_arg_ndarray(indices, v_primal)  # type: ignore , solvable probably, just not today
+            launch_ctx_buffer[_TI_ARRAY].append((indices, v_primal))
         else:
-            launch_ctx.set_arg_ndarray_with_grad(indices, v_primal, v_grad)  # type: ignore
+            launch_ctx_buffer[_TI_ARRAY_WITH_GRAD].append((indices, v_primal, v_grad))
         return 1
     if needed_arg_basetype is ndarray_type.NdarrayType:
         # v is things like torch Tensor and numpy array
@@ -712,7 +730,7 @@ def _recursive_set_args(
         # so that it only holds "real" array shapes.
         is_soa = needed_arg_type.layout == Layout.SOA
         array_shape = v.shape
-        if functools.reduce(operator.mul, array_shape, 1) > np.iinfo(np.int32).max:
+        if math.prod(array_shape) > np.iinfo(np.int32).max:
             warnings.warn("Ndarray index might be out of int32 boundary but int64 indexing is not supported yet.")
         needed_arg_dtype = needed_arg_type.dtype
         if needed_arg_dtype is None or id(needed_arg_dtype) in primitive_types.type_ids:
@@ -721,25 +739,20 @@ def _recursive_set_args(
             element_dim = needed_arg_dtype.ndim
             array_shape = v.shape[element_dim:] if is_soa else v.shape[:-element_dim]
         if isinstance(v, np.ndarray):
-            # numpy
+            # Check ndarray flags is expensive (~250ns), so it is important to order branches according to hit stats
             if v.flags.c_contiguous:
-                launch_ctx.set_arg_external_array_with_shape(indices, int(v.ctypes.data), v.nbytes, array_shape, 0)
+                pass
             elif v.flags.f_contiguous:
                 # TODO: A better way that avoids copying is saving strides info.
-                tmp = np.ascontiguousarray(v)
-                # Purpose: DO NOT GC |tmp|!
-                buffers.append(tmp)
-
-                def callback(original, updated):
-                    np.copyto(original, np.asfortranarray(updated))
-
-                callbacks.append(functools.partial(callback, v, tmp))
-                launch_ctx.set_arg_external_array_with_shape(indices, int(tmp.ctypes.data), tmp.nbytes, array_shape, 0)
+                v_contiguous = np.ascontiguousarray(v)
+                v, v_orig_np = v_contiguous, v
+                callbacks.append(partial(np.copyto, v_orig_np, v))
             else:
                 raise ValueError(
                     "Non contiguous numpy arrays are not supported, please call np.ascontiguousarray(arr) "
                     "before passing it into gstaichi kernel."
                 )
+            launch_ctx.set_arg_external_array_with_shape(indices, int(v.ctypes.data), v.nbytes, array_shape, 0)
         elif has_pytorch():
             import torch  # pylint: disable=C0415
 
@@ -750,12 +763,6 @@ def _recursive_set_args(
                         "passing it into gstaichi kernel."
                     )
                 gstaichi_arch = impl.current_cfg().arch
-
-                def get_call_back(u, v):
-                    def call_back():
-                        u.copy_(v)
-
-                    return call_back
 
                 # FIXME: only allocate when launching grad kernel
                 if v.requires_grad and v.grad is None:
@@ -768,26 +775,30 @@ def _recursive_set_args(
                         )
                     if not v.grad.is_contiguous():
                         raise ValueError(
-                            "Non contiguous gradient tensors are not supported, please call tensor.grad.contiguous() before passing it into gstaichi kernel."
+                            "Non contiguous gradient tensors are not supported, please call tensor.grad.contiguous() "
+                            "before passing it into gstaichi kernel."
                         )
 
-                tmp = v
-                if (str(v.device) != "cpu") and not (
-                    str(v.device).startswith("cuda") and gstaichi_arch == _ti_core.Arch.cuda
-                ):
-                    # Getting a torch CUDA tensor on GsTaichi non-cuda arch:
-                    # We just replace it with a CPU tensor and by the end of kernel execution we'll use the
-                    # callback to copy the values back to the original CUDA tensor.
-                    host_v = v.to(device="cpu", copy=True)
-                    tmp = host_v
-                    callbacks.append(get_call_back(v, host_v))
+                grad = v.grad
+                if (v.device.type != "cpu") and not (v.device.type == "cuda" and gstaichi_arch == _arch_cuda):
+                    # For a torch tensor to be passed as as input argument (in and/or out) of a taichi kernel, its
+                    # memory must be hosted either on CPU, or on CUDA if and only if GsTaichi is using CUDA backend.
+                    # We just replace it with a CPU tensor and by the end of kernel execution we'll use the callback
+                    # to copy the values back to the original tensor.
+                    v_cpu = v.to(device="cpu")
+                    v, v_orig_tc = v_cpu, v
+                    callbacks.append(partial(v_orig_tc.data.copy_, v))
+                    if grad is not None:
+                        grad_cpu = grad.to(device="cpu")
+                        grad, grad_orig = grad_cpu, grad
+                        callbacks.append(partial(grad_orig.data.copy_, grad))
 
                 launch_ctx.set_arg_external_array_with_shape(
                     indices,
-                    int(tmp.data_ptr()),
-                    tmp.element_size() * tmp.nelement(),
+                    int(v.data_ptr()),
+                    v.element_size() * v.nelement(),
                     array_shape,
-                    int(v.grad.data_ptr()) if v.grad is not None else 0,
+                    int(grad.data_ptr()) if grad is not None else 0,
                 )
             else:
                 raise GsTaichiRuntimeTypeError(
@@ -797,7 +808,7 @@ def _recursive_set_args(
             raise GsTaichiRuntimeTypeError(f"Argument {needed_arg_type} cannot be converted into required type {v}")
         return 1
     if issubclass(needed_arg_basetype, MatrixType):
-        cast_func = None
+        cast_func: Callable[[Any], int | float] | None = None
         if needed_arg_type.dtype in primitive_types.real_types:
             cast_func = cast_float
         elif needed_arg_type.dtype in primitive_types.integer_types:
@@ -832,7 +843,7 @@ def _recursive_set_args(
         return 0
     if needed_arg_basetype is sparse_matrix_builder:
         # Pass only the base pointer of the ti.types.sparse_matrix_builder() argument
-        launch_ctx.set_arg_uint(indices, v._get_ndarray_addr())
+        launch_ctx_buffer[_UINT].append((indices, v._get_ndarray_addr()))
         return 1
     if needed_arg_basetype is texture_type.TextureType and isinstance(v, Texture):
         launch_ctx.set_arg_texture(indices, v.tex)
@@ -898,7 +909,7 @@ class Kernel:
 
     def extract_arguments(self) -> None:
         sig = inspect.signature(self.func)
-        if sig.return_annotation not in (inspect._empty, None):
+        if sig.return_annotation not in {inspect._empty, None}:
             self.return_type = sig.return_annotation
             if (
                 isinstance(self.return_type, (types.GenericAlias, typing._GenericAlias))  # type: ignore
@@ -1082,10 +1093,8 @@ class Kernel:
 
         actual_argument_slot = 0
         launch_ctx = t_kernel.make_launch_context()
-        exceed_max_arg_num = False
-        set_later_list = []
-        callbacks = []
-        buffers = []
+        launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]] = defaultdict(list)
+        callbacks: list[Callable[[], None]] = []
 
         template_num = 0
         i_out = 0
@@ -1097,25 +1106,35 @@ class Kernel:
                 continue
             i_out += _recursive_set_args(
                 launch_ctx,
-                actual_argument_slot,
-                exceed_max_arg_num,
-                set_later_list,
+                launch_ctx_buffer,
                 needed_,
                 type(val),
                 val,
                 (i_out - template_num,),
+                actual_argument_slot,
                 callbacks,
-                buffers,
             )
 
-        for i, (set_arg_func, params) in enumerate(set_later_list):
-            set_arg_func((len(args) - template_num + i,), *params)
-
-        if exceed_max_arg_num:
-            raise GsTaichiRuntimeError(
-                f"The number of elements in kernel arguments is too big! Do not exceed {MAX_ARG_NUM} on "
-                f"{_ti_core.arch_name(impl.current_cfg().arch)} backend."
-            )
+        # All arguments to context in batches to mitigate overhead of calling Python bindings repeatedly.
+        # This is essential because calling any pybind11 function is adding ~180ns penalty no matter what.
+        # Note that we are allowed to do this because GsTaichi Launch Kernel context is storing the input
+        # arguments in an unordered list. The actual runtime (gfx, llvm...) will later query this context
+        # in correct order.
+        if launch_ctx_args := launch_ctx_buffer.get(_FLOAT):
+            indices, vec = zip(*launch_ctx_args)
+            launch_ctx.set_arg_float(tuple([index for index, in indices]), vec)  # type: ignore
+        if launch_ctx_args := launch_ctx_buffer.get(_INT):
+            indices, vec = zip(*launch_ctx_args)
+            launch_ctx.set_arg_int(tuple([index for index, in indices]), vec)
+        if launch_ctx_args := launch_ctx_buffer.get(_UINT):
+            indices, vec = zip(*launch_ctx_args)
+            launch_ctx.set_arg_uint(tuple([index for index, in indices]), vec)
+        if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY):
+            indices, arrs = zip(*launch_ctx_args)
+            launch_ctx.set_arg_ndarray(tuple([index for index, in indices]), arrs)
+        if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY_WITH_GRAD):
+            indices, arrs, arrs_grad = zip(*launch_ctx_args)
+            launch_ctx.set_arg_ndarray_with_grad(tuple([index for index, in indices]), arrs, arrs_grad)  # type: ignore
 
         try:
             runtime = impl.get_runtime()
@@ -1166,34 +1185,29 @@ class Kernel:
                 raise e
             raise e from None
 
-        ret = None
-        ret_dt = self.return_type
-        has_ret = ret_dt is not None
-
-        if has_ret or self.has_print:
-            runtime_ops.sync()
-
-        if has_ret:
-            ret = []
-            for i, ret_type in enumerate(ret_dt):
-                ret.append(self.construct_kernel_ret(launch_ctx, ret_type, (i,)))
-            if len(ret_dt) == 1:
-                ret = ret[0]
         for c in callbacks:
             c()
 
-        return ret
+        return_type = self.return_type
+        if return_type or self.has_print:
+            runtime_ops.sync()
 
-    def construct_kernel_ret(self, launch_ctx: KernelLaunchContext, ret_type: Any, index: tuple[int, ...] = ()):
+        if not return_type:
+            return None
+        if len(return_type) == 1:
+            return self.construct_kernel_ret(launch_ctx, return_type[0], (0,))
+        return tuple([self.construct_kernel_ret(launch_ctx, ret_type, (i,)) for i, ret_type in enumerate(return_type)])
+
+    def construct_kernel_ret(self, launch_ctx: KernelLaunchContext, ret_type: Any, indices: tuple[int, ...]):
         if isinstance(ret_type, CompoundType):
-            return ret_type.from_kernel_struct_ret(launch_ctx, index)
+            return ret_type.from_kernel_struct_ret(launch_ctx, indices)
         if ret_type in primitive_types.integer_types:
             if is_signed(cook_dtype(ret_type)):
-                return launch_ctx.get_struct_ret_int(index)
-            return launch_ctx.get_struct_ret_uint(index)
+                return launch_ctx.get_struct_ret_int(indices)
+            return launch_ctx.get_struct_ret_uint(indices)
         if ret_type in primitive_types.real_types:
-            return launch_ctx.get_struct_ret_float(index)
-        raise GsTaichiRuntimeTypeError(f"Invalid return type on index={index}")
+            return launch_ctx.get_struct_ret_float(indices)
+        raise GsTaichiRuntimeTypeError(f"Invalid return type on index={indices}")
 
     def ensure_compiled(self, *args: tuple[Any, ...]) -> tuple[Callable, int, AutodiffMode]:
         try:
@@ -1294,7 +1308,7 @@ def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool 
         # owning the kernel, which is not known until the kernel is accessed.
         #
         # See also: _BoundedDifferentiableMethod, data_oriented.
-        @functools.wraps(_func)
+        @wraps(_func)
         def wrapped_classkernel(*args, **kwargs):
             # If we reach here (we should never), it means the class is not decorated
             # with @ti.data_oriented, otherwise getattr would have intercepted the call.
@@ -1305,7 +1319,7 @@ def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool 
         wrapped = GsTaichiCallable(_func, wrapped_classkernel)
     else:
 
-        @functools.wraps(_func)
+        @wraps(_func)
         def wrapped_func(*args, **kwargs):
             try:
                 return primal(*args, **kwargs)
@@ -1381,7 +1395,7 @@ def kernel(_fn: Callable[..., typing.Any] | None = None, *, pure: bool | None = 
                 "`pure` parameter is intended to be removed in 4.0.0"
             )
 
-        functools.update_wrapper(wrapped, fn)
+        update_wrapper(wrapped, fn)
         return cast(F, wrapped)
 
     if _fn is None:

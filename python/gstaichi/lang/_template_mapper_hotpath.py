@@ -168,7 +168,19 @@ def _extract_arg(raise_on_templated_floats: bool, arg: Any, annotation: Annotati
     # Inlining `dataclasses.is_dataclass` and `dataclasess.fields`, which are very slow due to extra runtime checks
     annotation_fields = getattr(annotation, _FIELDS, None)
     if annotation_fields is not None:
-        return tuple(
+        # Some dataclasses may be declared as "frozen", which means that changing pointers of fields is not allowed.
+        # This property is sufficient to guarantee that its taichi "key" will never change and therefore can be stored
+        # as a static attribute, much like its hash which is computed once and for all during instantiation.
+        # Instead of strictly requiring being frozen, we only require the dataclass to be hashable. Any frozen dataclass
+        # is hashable, but a user and enforce a dataclass to be consider frozen for a user perspective without being
+        # truly frozen by specifying 'unsafe_hash=True'. If a user is doing this on purpose, it makes sense to honor it.
+        is_frozen = annotation.__hash__ is not None
+        if is_frozen:
+            try:
+                return annotation._key
+            except AttributeError:
+                pass
+        key = tuple(
             [
                 _extract_arg(
                     raise_on_templated_floats,
@@ -180,6 +192,9 @@ def _extract_arg(raise_on_templated_floats: bool, arg: Any, annotation: Annotati
                 if field._field_type is _FIELD
             ]
         )
+        if is_frozen:
+            annotation._key = key
+        return key
     if annotation_type is texture_type.TextureType:
         if arg_type is not Texture:
             raise GsTaichiRuntimeTypeError(f"Argument {arg_name} must be a texture, got {type(arg)}")
