@@ -12,6 +12,8 @@ import time
 import types
 import typing
 import warnings
+# Must import 'ReferenceType' directly instead of the entire module to avoid attribute lookup overhead.
+from weakref import ReferenceType
 from collections import defaultdict
 from dataclasses import (
     _FIELD,  # type: ignore[reportAttributeAccessIssue]
@@ -649,6 +651,13 @@ class KernelBatchedArgType(IntEnum):
 _FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = KernelBatchedArgType
 
 
+def _destroy_callback(kernel_ref: ReferenceType["Kernel"], ref: ReferenceType):
+    kernel = kernel_ref()
+    if kernel:
+        kernel._launch_ctx_cache.clear()
+        kernel._prog_weakref = None
+
+
 def _recursive_set_args(
     launch_ctx: KernelLaunchContext,
     launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]],
@@ -724,8 +733,12 @@ def _recursive_set_args(
             is_launch_ctx_cacheable &= is_launch_ctx_cacheable_
         return idx, is_launch_ctx_cacheable
     if needed_arg_basetype is ndarray_type.NdarrayType and isinstance(v, Ndarray):
-        v_primal = v.arr
-        v_grad = v.grad.arr if v.grad else None
+        # Note that the clearing callback will only be called once despite being registered once per tracked objects,
+        # because all the weakrefs get deallocated right away, and their respective callback vanishes with them, without
+        # even getting a chance to get called. This means that registring the clearing callback systematically do not
+        # incur any cumulative runtime penalty, while ensuring full memory safety.
+        v_primal = ReferenceType(v.arr, lambda ref: launch_ctx_buffer.clear())
+        v_grad = ReferenceType(v.grad.arr, lambda ref: launch_ctx_buffer.clear()) if v.grad else None
         if v_grad is None:
             launch_ctx_buffer[_TI_ARRAY].append((indices, v_primal))
         else:
@@ -905,6 +918,9 @@ class Kernel:
 
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
         self.fe_ll_cache_observations: FeLlCacheObservations = FeLlCacheObservations()
+
+        self._launch_ctx_cache: dict[int, DefaultDict[KernelBatchedArgType, list[tuple]]] = {}
+        self._prog_weakref: ReferenceType | None = None
 
     def ast_builder(self) -> ASTBuilder:
         assert self.kernel_cpp is not None
@@ -1102,10 +1118,12 @@ class Kernel:
     def launch_kernel(self, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
         assert len(args) == len(self.arg_metas), f"{len(self.arg_metas)} arguments needed but {len(args)} provided"
 
-        actual_argument_slot = 0
-        launch_ctx = t_kernel.make_launch_context()
-        launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]] = defaultdict(list)
-        callbacks: list[Callable[[], None]] = []
+        # Keep track of taichi runtime to automatically clear cache if destroyed
+        if self._prog_weakref is None:
+            prog = impl.get_runtime().prog
+            self._prog_weakref = ReferenceType(prog, partial(_destroy_callback, ReferenceType(self)))
+        else:
+            prog = self._prog_weakref()
 
         # Here, we are tracking whether a launch context buffer can be cached.
         # The point of caching the launch context buffer is allowing skipping recursive processing of all the input
@@ -1125,27 +1143,44 @@ class Kernel:
         # collected will invalidate the entire entry. Moreover, the entire cache registry is bound to the lifetime of
         # the taichi prog itself, which means that calling `ti.reset()` will automatically clear the cache. Note that
         # the cache stores wear references to pointers, so it does not hold alife any allocated memory.
-        is_launch_ctx_cacheable = True
-        template_num = 0
-        i_out = 0
-        for i_in, val in enumerate(args):
-            needed_ = self.arg_metas[i_in].annotation
-            if needed_ is template or type(needed_) is template:
-                template_num += 1
-                i_out += 1
-                continue
-            num_args_, is_launch_ctx_cacheable_ = _recursive_set_args(
-                launch_ctx,
-                launch_ctx_buffer,
-                needed_,
-                type(val),
-                val,
-                (i_out - template_num,),
-                actual_argument_slot,
-                callbacks,
-            )
-            i_out += num_args_
-            is_launch_ctx_cacheable &= is_launch_ctx_cacheable_
+        callbacks: list[Callable[[], None]] = []
+        launch_ctx = t_kernel.make_launch_context()
+        args_hash: int | None = None
+        launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]] | None = None
+        try:
+            args_hash = hash(args)
+            launch_ctx_buffer = self._launch_ctx_cache[args_hash]
+        except (TypeError, KeyError):
+            pass
+        if not launch_ctx_buffer:  # Empty or none
+            launch_ctx_buffer = defaultdict(list)
+
+            actual_argument_slot = 0
+            is_launch_ctx_cacheable = True
+            template_num = 0
+            i_out = 0
+            for i_in, val in enumerate(args):
+                needed_ = self.arg_metas[i_in].annotation
+                if needed_ is template or type(needed_) is template:
+                    template_num += 1
+                    i_out += 1
+                    continue
+                num_args_, is_launch_ctx_cacheable_ = _recursive_set_args(
+                    launch_ctx,
+                    launch_ctx_buffer,
+                    needed_,
+                    type(val),
+                    val,
+                    (i_out - template_num,),
+                    actual_argument_slot,
+                    callbacks,
+                )
+                i_out += num_args_
+                is_launch_ctx_cacheable &= is_launch_ctx_cacheable_
+
+            if is_launch_ctx_cacheable and args_hash is not None:
+                # TODO: It some rare occurrences, arguments may be cache friendly but not hashable. Ignoring for now...
+                self._launch_ctx_cache[args_hash] = launch_ctx_buffer
 
         # All arguments to context in batches to mitigate overhead of calling Python bindings repeatedly.
         # This is essential because calling any pybind11 function is adding ~180ns penalty no matter what.
@@ -1154,23 +1189,23 @@ class Kernel:
         # in correct order.
         if launch_ctx_args := launch_ctx_buffer.get(_FLOAT):
             indices, vec = zip(*launch_ctx_args)
-            launch_ctx.set_args_float(tuple([index for index, in indices]), vec)  # type: ignore
+            launch_ctx.set_args_float([index for index, in indices], vec)
         if launch_ctx_args := launch_ctx_buffer.get(_INT):
             indices, vec = zip(*launch_ctx_args)
-            launch_ctx.set_args_int(tuple([index for index, in indices]), vec)
+            launch_ctx.set_args_int([index for index, in indices], vec)
         if launch_ctx_args := launch_ctx_buffer.get(_UINT):
             indices, vec = zip(*launch_ctx_args)
-            launch_ctx.set_args_uint(tuple([index for index, in indices]), vec)
+            launch_ctx.set_args_uint([index for index, in indices], vec)
         if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY):
-            indices, arrs = zip(*launch_ctx_args)
-            launch_ctx.set_args_ndarray(tuple([index for index, in indices]), arrs)  # type: ignore
+            indices, refs = zip(*launch_ctx_args)
+            launch_ctx.set_args_ndarray([index for index, in indices], [ref() for ref in refs])
         if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY_WITH_GRAD):
-            indices, arrs, arrs_grad = zip(*launch_ctx_args)
-            launch_ctx.set_args_ndarray_with_grad(tuple([index for index, in indices]), arrs, arrs_grad)  # type: ignore
+            indices, refs, refs_grad = zip(*launch_ctx_args)
+            launch_ctx.set_args_ndarray_with_grad(
+                [index for index, in indices], [ref() for ref in refs], [ref() for ref in refs_grad]
+            )
 
         try:
-            runtime = impl.get_runtime()
-            prog = runtime.prog
             if not compiled_kernel_data:
                 compile_result: CompileResult = prog.compile_kernel(prog.config(), prog.get_device_caps(), t_kernel)
                 if os.environ.get("TI_DUMP_KERNEL_CHECKSUMS", "0") == "1":
