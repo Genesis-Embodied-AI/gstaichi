@@ -981,9 +981,16 @@
     <span class="n">callbacks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="n">Any</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Returns the number of kernel args set e.g. templates don&#39;t set kernel args, so returns 0</span>
-<span class="sd">    a single ndarray is 1 kernel arg, so returns 1</span>
-<span class="sd">    a struct of 3 ndarrays would set 3 kernel args, so return 3</span>
+<span class="sd">    This function processes all the input python-side arguments of a given kernel so as to add them to the current</span>
+<span class="sd">    launch context of a given kernel. Apart from a few exceptions, no call is made to the launch context directly,</span>
+<span class="sd">    but rather accumulated in a buffer to be called all at once in a later stage. This avoid accumulating pybind11</span>
+<span class="sd">    overhead for every single argument.</span>
+
+<span class="sd">    Returns the number of underlying kernel args being set for a given Python arg, and whether the launch context</span>
+<span class="sd">    buffer can be cached (see &#39;launch_kernel&#39; for details).</span>
+
+<span class="sd">    Note that templates don&#39;t set kernel args, and a single scalar, an external array (numpy or torch) or a taichi</span>
+<span class="sd">    ndarray all set 1 kernel arg. Similarlty, a struct of N ndarrays would set N kernel args.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">actual_argument_slot</span> <span class="o">&gt;=</span> <span class="n">MAX_ARG_NUM</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">GsTaichiRuntimeError</span><span class="p">(</span>
@@ -1425,7 +1432,7 @@
         <span class="c1"># The point of caching the launch context buffer is allowing skipping recursive processing of all the input</span>
         <span class="c1"># arguments one-by-one, which is adding a significant overhead, without changing anything in regards of the</span>
         <span class="c1"># function calls to the launch context that must be made for a given kernel.</span>
-        <span class="c1"># You can understand this as resolving that static part of the entire control flow of &#39;_recursive_set_args&#39;</span>
+        <span class="c1"># You can understand this as resolving the static part of the entire control flow of &#39;_recursive_set_args&#39;</span>
         <span class="c1"># for a given set of arguments, which is (mostly surely uniquely) characterized by its hash, gathering all</span>
         <span class="c1"># the instructions that cannot be evaluated statically and packing them in a buffer without evaluating them at</span>
         <span class="c1"># this point. This buffer is then cached once and for all and evaluated every time the exact same set of input</span>
@@ -1433,11 +1440,12 @@
         <span class="c1"># without caching. In this particular case, the function calls corresponds to adding arguments to the current</span>
         <span class="c1"># context for this kernel call.</span>
         <span class="c1"># A launch context buffer is considered cache-friendly if and only if no direct call to the launch context</span>
-        <span class="c1"># where made preemptively during the recursive processing of the arguments, and all of leaves of the arguments</span>
-        <span class="c1"># are pointers, the address of these pointers cannot change, and the set of leaves is fixed.</span>
+        <span class="c1"># where made preemptively during the recursive processing of the arguments, all of leaves of the arguments are</span>
+        <span class="c1"># pointers, the address of these pointers cannot change, and the set of leaves is fixed.</span>
         <span class="c1"># The lifetime of a cache entry is bound to the lifetime of any of its input arguments: the first being garbage</span>
         <span class="c1"># collected will invalidate the entire entry. Moreover, the entire cache registry is bound to the lifetime of</span>
-        <span class="c1"># the taichi prog itself, which means that calling `ti.reset()` will automatically clear the cache.</span>
+        <span class="c1"># the taichi prog itself, which means that calling `ti.reset()` will automatically clear the cache. Note that</span>
+        <span class="c1"># the cache stores wear references to pointers, so it does not hold alife any allocated memory.</span>
         <span class="n">is_launch_ctx_cacheable</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="n">template_num</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">i_out</span> <span class="o">=</span> <span class="mi">0</span>
