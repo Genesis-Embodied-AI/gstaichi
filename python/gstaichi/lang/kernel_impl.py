@@ -12,6 +12,7 @@ import time
 import types
 import typing
 import warnings
+import weakref
 from collections import defaultdict
 from dataclasses import (
     _FIELD,  # type: ignore[reportAttributeAccessIssue]
@@ -649,6 +650,13 @@ class KernelBatchedArgType(IntEnum):
 _FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = KernelBatchedArgType
 
 
+def _destroy_callback(kernel_ref: weakref.ReferenceType["Kernel"], ref: weakref.ReferenceType):
+    kernel = kernel_ref()
+    if kernel:
+        kernel._launch_ctx_cache.clear()
+        kernel._prog_weakref = None
+
+
 def _recursive_set_args(
     launch_ctx: KernelLaunchContext,
     launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]],
@@ -899,6 +907,9 @@ class Kernel:
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
         self.fe_ll_cache_observations: FeLlCacheObservations = FeLlCacheObservations()
 
+        self._launch_ctx_cache: dict[int, DefaultDict[KernelBatchedArgType, list[tuple]]] = {}
+        self._prog_weakref: weakref.ReferenceType | None = None
+
     def ast_builder(self) -> ASTBuilder:
         assert self.kernel_cpp is not None
         return self.kernel_cpp.ast_builder()
@@ -1095,32 +1106,49 @@ class Kernel:
     def launch_kernel(self, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
         assert len(args) == len(self.arg_metas), f"{len(self.arg_metas)} arguments needed but {len(args)} provided"
 
-        actual_argument_slot = 0
-        launch_ctx = t_kernel.make_launch_context()
-        launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]] = defaultdict(list)
-        callbacks: list[Callable[[], None]] = []
+        # Keep track of taichi runtime to automatically clear cache if destroyed
+        if self._prog_weakref is None:
+            self._prog_weakref = weakref.ref(impl.get_runtime().prog, partial(_destroy_callback, weakref.ref(self)))
 
-        is_launch_ctx_cacheable = True
-        template_num = 0
-        i_out = 0
-        for i_in, val in enumerate(args):
-            needed_ = self.arg_metas[i_in].annotation
-            if needed_ is template or type(needed_) is template:
-                template_num += 1
-                i_out += 1
-                continue
-            num_args_, is_launch_ctx_cacheable_ = _recursive_set_args(
-                launch_ctx,
-                launch_ctx_buffer,
-                needed_,
-                type(val),
-                val,
-                (i_out - template_num,),
-                actual_argument_slot,
-                callbacks,
-            )
-            i_out += num_args_
-            is_launch_ctx_cacheable &= is_launch_ctx_cacheable_
+        callbacks: list[Callable[[], None]] = []
+        launch_ctx = t_kernel.make_launch_context()
+        args_hash: int | None = None
+        launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]] | None = None
+        try:
+            args_hash = hash(args)
+            launch_ctx_buffer = self._launch_ctx_cache[args_hash]
+        except (TypeError, KeyError):
+            pass
+
+        if launch_ctx_buffer is None:
+            launch_ctx_buffer = defaultdict(list)
+
+            actual_argument_slot = 0
+            is_launch_ctx_cacheable = True
+            template_num = 0
+            i_out = 0
+            for i_in, val in enumerate(args):
+                needed_ = self.arg_metas[i_in].annotation
+                if needed_ is template or type(needed_) is template:
+                    template_num += 1
+                    i_out += 1
+                    continue
+                num_args_, is_launch_ctx_cacheable_ = _recursive_set_args(
+                    launch_ctx,
+                    launch_ctx_buffer,
+                    needed_,
+                    type(val),
+                    val,
+                    (i_out - template_num,),
+                    actual_argument_slot,
+                    callbacks,
+                )
+                i_out += num_args_
+                is_launch_ctx_cacheable &= is_launch_ctx_cacheable_
+
+            if is_launch_ctx_cacheable and args_hash is not None:
+                # TODO: It some rare occurrences, arguments may be cache friendly but not hashable. Ignoring for now...
+                self._launch_ctx_cache[args_hash] = launch_ctx_buffer
 
         # All arguments to context in batches to mitigate overhead of calling Python bindings repeatedly.
         # This is essential because calling any pybind11 function is adding ~180ns penalty no matter what.
