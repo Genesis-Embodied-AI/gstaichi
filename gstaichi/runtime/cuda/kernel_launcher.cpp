@@ -187,8 +187,8 @@ class ArgsManager {
     std::cout << "hashing " << parameters.size() << " parameters by address" << std::endl;
     for (const auto &kv : parameters) {
       // Hash the address of kv.second
-      // std::cout << " param " << kv.second
       auto addr = reinterpret_cast<uintptr_t>(&kv.second);
+      std::cout << "  - kv.second " << kv.second << " &kv.second " << (void *)addr << std::endl;
       seed ^=
           std::hash<uintptr_t>{}(addr) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
     }
