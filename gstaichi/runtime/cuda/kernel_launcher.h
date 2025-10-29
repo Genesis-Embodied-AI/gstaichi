@@ -6,14 +6,14 @@
 namespace gstaichi::lang {
 namespace cuda {
 
+struct KernelLauncherContext {
+  JITModule *jit_module{nullptr};
+  std::vector<std::pair<std::vector<int>, Callable::Parameter>> parameters;
+  std::vector<OffloadedTask> offloaded_tasks;
+};
+
 class KernelLauncher : public LLVM::KernelLauncher {
   using Base = LLVM::KernelLauncher;
-
-  struct Context {
-    JITModule *jit_module{nullptr};
-    std::vector<std::pair<std::vector<int>, Callable::Parameter>> parameters;
-    std::vector<OffloadedTask> offloaded_tasks;
-  };
 
  public:
   using Base::Base;
@@ -23,8 +23,8 @@ class KernelLauncher : public LLVM::KernelLauncher {
       const LLVM::CompiledKernelData &compiled) override;
 
  private:
-  bool on_cuda_device(void *ptr);
-  std::vector<Context> contexts_;
+  // bool on_cuda_device(void *ptr);
+  std::vector<KernelLauncherContext> contexts_;
 };
 
 }  // namespace cuda
