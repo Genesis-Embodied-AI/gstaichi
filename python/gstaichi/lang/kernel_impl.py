@@ -658,7 +658,7 @@ def _recursive_set_args(
     indices: tuple[int, ...],
     actual_argument_slot: int,
     callbacks: list[Callable[[], Any]],
-) -> int:
+) -> tuple[int, bool]:
     """
     Returns the number of kernel args set e.g. templates don't set kernel args, so returns 0
     a single ndarray is 1 kernel arg, so returns 1
@@ -679,7 +679,7 @@ def _recursive_set_args(
         if not isinstance(v, (float, int, np.floating, np.integer)):
             raise GsTaichiRuntimeTypeError.get(indices, needed_arg_type.to_string(), provided_arg_type)
         launch_ctx_buffer[_FLOAT].append((indices, float(v)))
-        return 1
+        return 1, False
     if needed_arg_type_id in primitive_types.integer_type_ids:
         if not isinstance(v, (int, np.integer)):
             raise GsTaichiRuntimeTypeError.get(indices, needed_arg_type.to_string(), provided_arg_type)
@@ -687,11 +687,13 @@ def _recursive_set_args(
             launch_ctx_buffer[_INT].append((indices, int(v)))
         else:
             launch_ctx_buffer[_UINT].append((indices, int(v)))
-        return 1
+        return 1, False
     needed_arg_fields = getattr(needed_arg_type, _FIELDS, None)
     if needed_arg_fields is not None:
         if provided_arg_type is not needed_arg_type:
             raise GsTaichiRuntimeError("needed", needed_arg_type, "!= provided", provided_arg_type)
+        # A dataclass must be frozen to be compatible with caching
+        is_launch_ctx_cacheable = needed_arg_type.__hash__ is not None
         idx = 0
         offset = indices[0]
         for field in needed_arg_fields.values():
@@ -701,7 +703,7 @@ def _recursive_set_args(
             field_type = field.type
             assert not isinstance(field_type, str)
             field_value = getattr(v, field.name)
-            idx += _recursive_set_args(
+            num_args_, is_launch_ctx_cacheable_ = _recursive_set_args(
                 launch_ctx,
                 launch_ctx_buffer,
                 field_type,
@@ -711,7 +713,9 @@ def _recursive_set_args(
                 actual_argument_slot,
                 callbacks,
             )
-        return idx
+            idx += num_args_
+            is_launch_ctx_cacheable &= is_launch_ctx_cacheable_
+        return idx, is_launch_ctx_cacheable
     if needed_arg_basetype is ndarray_type.NdarrayType and isinstance(v, Ndarray):
         v_primal = v.arr
         v_grad = v.grad.arr if v.grad else None
@@ -719,7 +723,7 @@ def _recursive_set_args(
             launch_ctx_buffer[_TI_ARRAY].append((indices, v_primal))
         else:
             launch_ctx_buffer[_TI_ARRAY_WITH_GRAD].append((indices, v_primal, v_grad))
-        return 1
+        return 1, True
     if needed_arg_basetype is ndarray_type.NdarrayType:
         # v is things like torch Tensor and numpy array
         # Not adding type for this, since adds additional dependencies
@@ -806,7 +810,7 @@ def _recursive_set_args(
                 )
         else:
             raise GsTaichiRuntimeTypeError(f"Argument {needed_arg_type} cannot be converted into required type {v}")
-        return 1
+        return 1, False
     if issubclass(needed_arg_basetype, MatrixType):
         cast_func: Callable[[Any], int | float] | None = None
         if needed_arg_type.dtype in primitive_types.real_types:
@@ -828,7 +832,7 @@ def _recursive_set_args(
 
         v = needed_arg_type(*v)
         needed_arg_type.set_kernel_struct_args(v, launch_ctx, indices)
-        return 1
+        return 1, False
     if needed_arg_basetype is StructType:
         # Unclear how to make the following pass typing checks StructType implements __instancecheck__,
         # which should be a classmethod, but is currently an instance method.
@@ -838,19 +842,19 @@ def _recursive_set_args(
                 f"Argument {provided_arg_type} cannot be converted into required type {needed_arg_type}"
             )
         needed_arg_type.set_kernel_struct_args(v, launch_ctx, indices)
-        return 1
+        return 1, False
     if needed_arg_type is template or needed_arg_basetype is template:
-        return 0
+        return 0, True
     if needed_arg_basetype is sparse_matrix_builder:
         # Pass only the base pointer of the ti.types.sparse_matrix_builder() argument
         launch_ctx_buffer[_UINT].append((indices, v._get_ndarray_addr()))
-        return 1
+        return 1, True
     if needed_arg_basetype is texture_type.TextureType and isinstance(v, Texture):
         launch_ctx.set_arg_texture(indices, v.tex)
-        return 1
+        return 1, False
     if needed_arg_basetype is texture_type.RWTextureType and isinstance(v, Texture):
         launch_ctx.set_arg_rw_texture(indices, v.tex)
-        return 1
+        return 1, False
     raise ValueError(f"Argument type mismatch. Expecting {needed_arg_type}, got {type(v)}.")
 
 
@@ -1096,6 +1100,7 @@ class Kernel:
         launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]] = defaultdict(list)
         callbacks: list[Callable[[], None]] = []
 
+        is_launch_ctx_cacheable = True
         template_num = 0
         i_out = 0
         for i_in, val in enumerate(args):
@@ -1104,7 +1109,7 @@ class Kernel:
                 template_num += 1
                 i_out += 1
                 continue
-            i_out += _recursive_set_args(
+            num_args_, is_launch_ctx_cacheable_ = _recursive_set_args(
                 launch_ctx,
                 launch_ctx_buffer,
                 needed_,
@@ -1114,6 +1119,8 @@ class Kernel:
                 actual_argument_slot,
                 callbacks,
             )
+            i_out += num_args_
+            is_launch_ctx_cacheable &= is_launch_ctx_cacheable_
 
         # All arguments to context in batches to mitigate overhead of calling Python bindings repeatedly.
         # This is essential because calling any pybind11 function is adding ~180ns penalty no matter what.
