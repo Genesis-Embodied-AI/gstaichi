@@ -31,6 +31,14 @@ LaunchContextBuilder::LaunchContextBuilder(CallableBase *kernel)
   ctx_->arg_buffer = arg_buffer_.get();
 }
 
+void LaunchContextBuilder::copy(const LaunchContextBuilder &other) {
+  TI_ASSERT(kernel_ == other.kernel_);
+  std::memcpy(arg_buffer_.get(), other.arg_buffer_.get(), kernel_->args_size);
+  array_runtime_sizes = other.array_runtime_sizes;
+  device_allocation_type = other.device_allocation_type;
+  array_ptrs = other.array_ptrs;
+}
+
 void LaunchContextBuilder::set_arg_float(const std::vector<int> &arg_id,
                                          float64 d) {
   auto dt = kernel_->args_type->get_element_type(arg_id);
