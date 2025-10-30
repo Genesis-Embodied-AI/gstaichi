@@ -1157,6 +1157,7 @@ class Kernel:
             )
             i_out += num_args_
             is_launch_ctx_cacheable &= is_launch_ctx_cacheable_
+        print("total num args", i_out)
 
         # All arguments to context in batches to mitigate overhead of calling Python bindings repeatedly.
         # This is essential because calling any pybind11 function is adding ~180ns penalty no matter what.
