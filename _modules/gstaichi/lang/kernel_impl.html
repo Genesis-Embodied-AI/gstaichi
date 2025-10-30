@@ -335,7 +335,10 @@
 
 <span class="c1"># Must import &#39;partial&#39; directly instead of the entire module to avoid attribute lookup overhead.</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span><span class="p">,</span> <span class="n">update_wrapper</span><span class="p">,</span> <span class="n">wraps</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">DefaultDict</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">overload</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">DefaultDict</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeAlias</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">overload</span>
+
+<span class="c1"># Must import &#39;ReferenceType&#39; directly instead of the entire module to avoid attribute lookup overhead.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">weakref</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReferenceType</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
@@ -371,6 +374,7 @@
     <span class="n">handle_exception_from_cpp</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.expr</span><span class="w"> </span><span class="kn">import</span> <span class="n">Expr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.impl</span><span class="w"> </span><span class="kn">import</span> <span class="n">Program</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.kernel_arguments</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArgMetadata</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.matrix</span><span class="w"> </span><span class="kn">import</span> <span class="n">MatrixType</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.shell</span><span class="w"> </span><span class="kn">import</span> <span class="n">_shell_pop_print</span>
@@ -970,6 +974,17 @@
 <span class="n">_FLOAT</span><span class="p">,</span> <span class="n">_INT</span><span class="p">,</span> <span class="n">_UINT</span><span class="p">,</span> <span class="n">_TI_ARRAY</span><span class="p">,</span> <span class="n">_TI_ARRAY_WITH_GRAD</span> <span class="o">=</span> <span class="n">KernelBatchedArgType</span>
 
 
+<span class="n">ArgsHash</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="nb">int</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_destroy_callback</span><span class="p">(</span><span class="n">kernel_ref</span><span class="p">:</span> <span class="n">ReferenceType</span><span class="p">[</span><span class="s2">&quot;Kernel&quot;</span><span class="p">],</span> <span class="n">ref</span><span class="p">:</span> <span class="n">ReferenceType</span><span class="p">):</span>
+    <span class="n">maybe_kernel</span> <span class="o">=</span> <span class="n">kernel_ref</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">maybe_kernel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">maybe_kernel</span><span class="o">.</span><span class="n">_launch_ctx_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">maybe_kernel</span><span class="o">.</span><span class="n">_launch_ctx_cache_tracker</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">maybe_kernel</span><span class="o">.</span><span class="n">_prog_weakref</span> <span class="o">=</span> <span class="kc">None</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_recursive_set_args</span><span class="p">(</span>
     <span class="n">launch_ctx</span><span class="p">:</span> <span class="n">KernelLaunchContext</span><span class="p">,</span>
     <span class="n">launch_ctx_buffer</span><span class="p">:</span> <span class="n">DefaultDict</span><span class="p">[</span><span class="n">KernelBatchedArgType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]],</span>
@@ -1227,6 +1242,17 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">src_ll_cache_observations</span><span class="p">:</span> <span class="n">SrcLlCacheObservations</span> <span class="o">=</span> <span class="n">SrcLlCacheObservations</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fe_ll_cache_observations</span><span class="p">:</span> <span class="n">FeLlCacheObservations</span> <span class="o">=</span> <span class="n">FeLlCacheObservations</span><span class="p">()</span>
 
+        <span class="c1"># The cache key corresponds to the hash of the (packed) python-side input arguments of the kernel.</span>
+        <span class="c1"># * &#39;_launch_ctx_cache&#39; is storing a backup of the launch context BEFORE ever calling the kernel.</span>
+        <span class="c1"># * &#39;_launch_ctx_cache_tracker&#39; is used for bounding the lifetime of a cache entry to its corresponding set of</span>
+        <span class="c1">#   input arguments. Internally, this is done by wrapping all Taichi ndarrays as weak reference.</span>
+        <span class="c1"># * &#39;_prog_weakref&#39;is used for bounding the lifetime of the entire cache to the Taichi programm managing all</span>
+        <span class="c1">#   the launch context being stored in cache.</span>
+        <span class="c1"># See &#39;launch_kernel&#39; for details regarding the intended use of caching.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_launch_ctx_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ArgsHash</span><span class="p">,</span> <span class="n">KernelLaunchContext</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_launch_ctx_cache_tracker</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ArgsHash</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReferenceType</span><span class="p">[</span><span class="n">Ndarray</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prog_weakref</span><span class="p">:</span> <span class="n">ReferenceType</span><span class="p">[</span><span class="n">Program</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">ast_builder</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ASTBuilder</span><span class="p">:</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel_cpp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel_cpp</span><span class="o">.</span><span class="n">ast_builder</span><span class="p">()</span>
@@ -1423,10 +1449,16 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">launch_kernel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t_kernel</span><span class="p">:</span> <span class="n">KernelCxx</span><span class="p">,</span> <span class="n">compiled_kernel_data</span><span class="p">:</span> <span class="n">CompiledKernelData</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">)</span><span class="si">}</span><span class="s2"> arguments needed but </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="si">}</span><span class="s2"> provided&quot;</span>
 
-        <span class="n">actual_argument_slot</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">launch_ctx</span> <span class="o">=</span> <span class="n">t_kernel</span><span class="o">.</span><span class="n">make_launch_context</span><span class="p">()</span>
-        <span class="n">launch_ctx_buffer</span><span class="p">:</span> <span class="n">DefaultDict</span><span class="p">[</span><span class="n">KernelBatchedArgType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-        <span class="n">callbacks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># Keep track of taichi runtime to automatically clear cache if destroyed</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prog_weakref</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">prog</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">prog</span>
+            <span class="k">assert</span> <span class="n">prog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_prog_weakref</span> <span class="o">=</span> <span class="n">ReferenceType</span><span class="p">(</span><span class="n">prog</span><span class="p">,</span> <span class="n">partial</span><span class="p">(</span><span class="n">_destroy_callback</span><span class="p">,</span> <span class="n">ReferenceType</span><span class="p">(</span><span class="bp">self</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Since we already store a weak reference to taichi program, it is much faster to use it rather than</span>
+            <span class="c1"># paying the overhead of calling pybind11 functions (~200ns vs 5ns).</span>
+            <span class="n">prog</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prog_weakref</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">prog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
         <span class="c1"># Here, we are tracking whether a launch context buffer can be cached.</span>
         <span class="c1"># The point of caching the launch context buffer is allowing skipping recursive processing of all the input</span>
@@ -1446,52 +1478,89 @@
         <span class="c1"># collected will invalidate the entire entry. Moreover, the entire cache registry is bound to the lifetime of</span>
         <span class="c1"># the taichi prog itself, which means that calling `ti.reset()` will automatically clear the cache. Note that</span>
         <span class="c1"># the cache stores wear references to pointers, so it does not hold alife any allocated memory.</span>
-        <span class="n">is_launch_ctx_cacheable</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="n">template_num</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">i_out</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">for</span> <span class="n">i_in</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
-            <span class="n">needed_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">[</span><span class="n">i_in</span><span class="p">]</span><span class="o">.</span><span class="n">annotation</span>
-            <span class="k">if</span> <span class="n">needed_</span> <span class="ow">is</span> <span class="n">template</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">needed_</span><span class="p">)</span> <span class="ow">is</span> <span class="n">template</span><span class="p">:</span>
-                <span class="n">template_num</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">i_out</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="k">continue</span>
-            <span class="n">num_args_</span><span class="p">,</span> <span class="n">is_launch_ctx_cacheable_</span> <span class="o">=</span> <span class="n">_recursive_set_args</span><span class="p">(</span>
-                <span class="n">launch_ctx</span><span class="p">,</span>
-                <span class="n">launch_ctx_buffer</span><span class="p">,</span>
-                <span class="n">needed_</span><span class="p">,</span>
-                <span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">),</span>
-                <span class="n">val</span><span class="p">,</span>
-                <span class="p">(</span><span class="n">i_out</span> <span class="o">-</span> <span class="n">template_num</span><span class="p">,),</span>
-                <span class="n">actual_argument_slot</span><span class="p">,</span>
-                <span class="n">callbacks</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">i_out</span> <span class="o">+=</span> <span class="n">num_args_</span>
-            <span class="n">is_launch_ctx_cacheable</span> <span class="o">&amp;=</span> <span class="n">is_launch_ctx_cacheable_</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">launch_ctx</span> <span class="o">=</span> <span class="n">t_kernel</span><span class="o">.</span><span class="n">make_launch_context</span><span class="p">()</span>
+        <span class="n">launch_ctx_cache</span><span class="p">:</span> <span class="n">KernelLaunchContext</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">launch_ctx_cache_tracker</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReferenceType</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">args_hash</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">args_hash</span> <span class="o">=</span> <span class="nb">hash</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+            <span class="n">launch_ctx_cache_tracker</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_launch_ctx_cache_tracker</span><span class="p">[</span><span class="n">args_hash</span><span class="p">]</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">):</span>
+            <span class="k">pass</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">launch_ctx_cache_tracker</span><span class="p">:</span>  <span class="c1"># Empty or none</span>
+            <span class="n">launch_ctx_buffer</span><span class="p">:</span> <span class="n">DefaultDict</span><span class="p">[</span><span class="n">KernelBatchedArgType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
 
-        <span class="c1"># All arguments to context in batches to mitigate overhead of calling Python bindings repeatedly.</span>
-        <span class="c1"># This is essential because calling any pybind11 function is adding ~180ns penalty no matter what.</span>
-        <span class="c1"># Note that we are allowed to do this because GsTaichi Launch Kernel context is storing the input</span>
-        <span class="c1"># arguments in an unordered list. The actual runtime (gfx, llvm...) will later query this context</span>
-        <span class="c1"># in correct order.</span>
-        <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_FLOAT</span><span class="p">):</span>
-            <span class="n">indices</span><span class="p">,</span> <span class="n">vec</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">)</span>
-            <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_args_float</span><span class="p">(</span><span class="nb">tuple</span><span class="p">([</span><span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]),</span> <span class="n">vec</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
-        <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_INT</span><span class="p">):</span>
-            <span class="n">indices</span><span class="p">,</span> <span class="n">vec</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">)</span>
-            <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_args_int</span><span class="p">(</span><span class="nb">tuple</span><span class="p">([</span><span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]),</span> <span class="n">vec</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_UINT</span><span class="p">):</span>
-            <span class="n">indices</span><span class="p">,</span> <span class="n">vec</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">)</span>
-            <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_args_uint</span><span class="p">(</span><span class="nb">tuple</span><span class="p">([</span><span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]),</span> <span class="n">vec</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_TI_ARRAY</span><span class="p">):</span>
-            <span class="n">indices</span><span class="p">,</span> <span class="n">arrs</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">)</span>
-            <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_args_ndarray</span><span class="p">(</span><span class="nb">tuple</span><span class="p">([</span><span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]),</span> <span class="n">arrs</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
-        <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_TI_ARRAY_WITH_GRAD</span><span class="p">):</span>
-            <span class="n">indices</span><span class="p">,</span> <span class="n">arrs</span><span class="p">,</span> <span class="n">arrs_grad</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">)</span>
-            <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_args_ndarray_with_grad</span><span class="p">(</span><span class="nb">tuple</span><span class="p">([</span><span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]),</span> <span class="n">arrs</span><span class="p">,</span> <span class="n">arrs_grad</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+            <span class="n">actual_argument_slot</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">is_launch_ctx_cacheable</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">template_num</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">i_out</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">i_in</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+                <span class="n">needed_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">[</span><span class="n">i_in</span><span class="p">]</span><span class="o">.</span><span class="n">annotation</span>
+                <span class="k">if</span> <span class="n">needed_</span> <span class="ow">is</span> <span class="n">template</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">needed_</span><span class="p">)</span> <span class="ow">is</span> <span class="n">template</span><span class="p">:</span>
+                    <span class="n">template_num</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">i_out</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">continue</span>
+                <span class="n">num_args_</span><span class="p">,</span> <span class="n">is_launch_ctx_cacheable_</span> <span class="o">=</span> <span class="n">_recursive_set_args</span><span class="p">(</span>
+                    <span class="n">launch_ctx</span><span class="p">,</span>
+                    <span class="n">launch_ctx_buffer</span><span class="p">,</span>
+                    <span class="n">needed_</span><span class="p">,</span>
+                    <span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">),</span>
+                    <span class="n">val</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">i_out</span> <span class="o">-</span> <span class="n">template_num</span><span class="p">,),</span>
+                    <span class="n">actual_argument_slot</span><span class="p">,</span>
+                    <span class="n">callbacks</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">i_out</span> <span class="o">+=</span> <span class="n">num_args_</span>
+                <span class="n">is_launch_ctx_cacheable</span> <span class="o">&amp;=</span> <span class="n">is_launch_ctx_cacheable_</span>
+
+            <span class="c1"># All arguments to context in batches to mitigate overhead of calling Python bindings repeatedly.</span>
+            <span class="c1"># This is essential because calling any pybind11 function is adding ~180ns penalty no matter what.</span>
+            <span class="c1"># Note that we are allowed to do this because GsTaichi Launch Kernel context is storing the input</span>
+            <span class="c1"># arguments in an unordered list. The actual runtime (gfx, llvm...) will later query this context</span>
+            <span class="c1"># in correct order.</span>
+            <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_FLOAT</span><span class="p">):</span>
+                <span class="n">indices</span><span class="p">,</span> <span class="n">vec</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">)</span>
+                <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_args_float</span><span class="p">([</span><span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">],</span> <span class="n">vec</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+            <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_INT</span><span class="p">):</span>
+                <span class="n">indices</span><span class="p">,</span> <span class="n">vec</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">)</span>
+                <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_args_int</span><span class="p">([</span><span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">],</span> <span class="n">vec</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+            <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_UINT</span><span class="p">):</span>
+                <span class="n">indices</span><span class="p">,</span> <span class="n">vec</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">)</span>
+                <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_args_uint</span><span class="p">([</span><span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">],</span> <span class="n">vec</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+            <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_TI_ARRAY</span><span class="p">):</span>
+                <span class="n">indices</span><span class="p">,</span> <span class="n">arrs</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">)</span>
+                <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_args_ndarray</span><span class="p">([</span><span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">],</span> <span class="n">arrs</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+            <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_TI_ARRAY_WITH_GRAD</span><span class="p">):</span>
+                <span class="n">indices</span><span class="p">,</span> <span class="n">arrs</span><span class="p">,</span> <span class="n">arrs_grad</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">)</span>
+                <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_args_ndarray_with_grad</span><span class="p">([</span><span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">],</span> <span class="n">arrs</span><span class="p">,</span> <span class="n">arrs_grad</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+
+            <span class="k">if</span> <span class="n">is_launch_ctx_cacheable</span> <span class="ow">and</span> <span class="n">args_hash</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># TODO: It some rare occurrences, arguments can be cached yet not hashable. Ignoring for now...</span>
+                <span class="n">launch_ctx_cache</span> <span class="o">=</span> <span class="n">t_kernel</span><span class="o">.</span><span class="n">make_launch_context</span><span class="p">()</span>
+                <span class="n">launch_ctx_cache</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">launch_ctx</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_launch_ctx_cache</span><span class="p">[</span><span class="n">args_hash</span><span class="p">]</span> <span class="o">=</span> <span class="n">launch_ctx_cache</span>
+
+                <span class="c1"># Note that the clearing callback will only be called once despite being registered for each tracked</span>
+                <span class="c1"># objects, because all the weakrefs get deallocated right away, and their respective callback</span>
+                <span class="c1"># vanishes with them, without even getting a chance to get called. This means that registring the</span>
+                <span class="c1"># clearing callback systematically does not incur any cumulative runtime penalty yet ensures full</span>
+                <span class="c1"># memory safety.</span>
+                <span class="n">launch_ctx_cache_tracker_</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReferenceType</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">clear_callback</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">ref</span><span class="p">:</span> <span class="n">launch_ctx_cache_tracker_</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_TI_ARRAY</span><span class="p">):</span>
+                    <span class="n">_</span><span class="p">,</span> <span class="n">arrs</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">)</span>
+                    <span class="n">launch_ctx_cache_tracker_</span> <span class="o">+=</span> <span class="p">[</span><span class="n">ReferenceType</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">clear_callback</span><span class="p">)</span> <span class="k">for</span> <span class="n">arr</span> <span class="ow">in</span> <span class="n">arrs</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_TI_ARRAY_WITH_GRAD</span><span class="p">):</span>
+                    <span class="n">_</span><span class="p">,</span> <span class="n">arrs</span><span class="p">,</span> <span class="n">arrs_grad</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">)</span>
+                    <span class="n">launch_ctx_cache_tracker_</span> <span class="o">+=</span> <span class="p">[</span><span class="n">ReferenceType</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">clear_callback</span><span class="p">)</span> <span class="k">for</span> <span class="n">arr</span> <span class="ow">in</span> <span class="n">arrs</span><span class="p">]</span>
+                    <span class="n">launch_ctx_cache_tracker_</span> <span class="o">+=</span> <span class="p">[</span><span class="n">ReferenceType</span><span class="p">(</span><span class="n">arr_grad</span><span class="p">,</span> <span class="n">clear_callback</span><span class="p">)</span> <span class="k">for</span> <span class="n">arr_grad</span> <span class="ow">in</span> <span class="n">arrs_grad</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_launch_ctx_cache_tracker</span><span class="p">[</span><span class="n">args_hash</span><span class="p">]</span> <span class="o">=</span> <span class="n">launch_ctx_cache_tracker_</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">args_hash</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="n">launch_ctx</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_launch_ctx_cache</span><span class="p">[</span><span class="n">args_hash</span><span class="p">])</span>
 
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">runtime</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span>
-            <span class="n">prog</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">prog</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">compiled_kernel_data</span><span class="p">:</span>
                 <span class="n">compile_result</span><span class="p">:</span> <span class="n">CompileResult</span> <span class="o">=</span> <span class="n">prog</span><span class="o">.</span><span class="n">compile_kernel</span><span class="p">(</span><span class="n">prog</span><span class="o">.</span><span class="n">config</span><span class="p">(),</span> <span class="n">prog</span><span class="o">.</span><span class="n">get_device_caps</span><span class="p">(),</span> <span class="n">t_kernel</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;TI_DUMP_KERNEL_CHECKSUMS&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span><span class="p">:</span>
