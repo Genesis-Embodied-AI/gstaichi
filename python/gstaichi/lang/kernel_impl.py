@@ -653,7 +653,7 @@ class KernelBatchedArgType(IntEnum):
 _FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = KernelBatchedArgType
 
 
-Hash: TypeAlias = int
+ArgsHash: TypeAlias = int
 
 
 def _destroy_callback(kernel_ref: ReferenceType["Kernel"], ref: ReferenceType):
@@ -928,8 +928,8 @@ class Kernel:
         # * '_prog_weakref'is used for bounding the lifetime of the entire cache to the Taichi programm managing all
         #   the launch context being stored in cache.
         # See 'launch_kernel' for details regarding the intended use of caching.
-        self._launch_ctx_cache: dict[Hash, KernelLaunchContext] = {}
-        self._launch_ctx_cache_tracker: dict[Hash, list[ReferenceType[Ndarray]]] = {}
+        self._launch_ctx_cache: dict[ArgsHash, KernelLaunchContext] = {}
+        self._launch_ctx_cache_tracker: dict[ArgsHash, list[ReferenceType[Ndarray]]] = {}
         self._prog_weakref: ReferenceType[Program] | None = None
 
     def ast_builder(self) -> ASTBuilder:
