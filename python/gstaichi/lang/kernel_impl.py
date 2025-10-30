@@ -1085,16 +1085,16 @@ class Kernel:
                     )
                 struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
                 print("struct locals for", self.func.__name__, len(struct_locals))
-                if self.func.__name__ == 'func_narrow_phase_convex_vs_convex':
-                    for struct_local in sorted(struct_locals):
-                        print(struct_local)
-                    print("")
-                    struct_locals_l = list(struct_locals)
-                    import random
-                    random.shuffle(struct_locals_l)
-                    for struct_local in struct_locals_l[:5]:
-                        print(struct_local)
-                    print("")
+                # if self.func.__name__ == 'func_narrow_phase_convex_vs_convex':
+                #     for struct_local in sorted(struct_locals):
+                #         print(struct_local)
+                #     print("")
+                #     struct_locals_l = list(struct_locals)
+                #     import random
+                #     random.shuffle(struct_locals_l)
+                #     for struct_local in struct_locals_l[:5]:
+                #         print(struct_local)
+                #     print("")
                 tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
                 ctx.only_parse_function_def = self.compiled_kernel_data_by_key.get(key) is not None
                 transform_tree(tree, ctx)
@@ -1157,7 +1157,7 @@ class Kernel:
             )
             i_out += num_args_
             is_launch_ctx_cacheable &= is_launch_ctx_cacheable_
-        print("total num args", i_out)
+        print("total num args", self.func.__name__, i_out)
 
         # All arguments to context in batches to mitigate overhead of calling Python bindings repeatedly.
         # This is essential because calling any pybind11 function is adding ~180ns penalty no matter what.
