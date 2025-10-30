@@ -25,6 +25,13 @@ class LaunchContextBuilder {
   LaunchContextBuilder(const LaunchContextBuilder &) = delete;
   LaunchContextBuilder &operator=(const LaunchContextBuilder &) = delete;
 
+  // Copy all the arguments already added to an existing launcher context.
+  // The input context must be associated with the exactly same kernel, and
+  // the current context must be fresh new, without any variable already added.
+  // This method is useful to speed up calling repeatedly a given kernel with
+  // the exact same input arguments.
+  void copy(const LaunchContextBuilder &other);
+
   void set_arg_float(const std::vector<int> &arg_id, float64 d);
   // Bulk processing of multiple scalar float arguments at the same time.
   // This is mainly useful to mitigate pybind11 function call overhead.
