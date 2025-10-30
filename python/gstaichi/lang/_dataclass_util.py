@@ -25,7 +25,6 @@ def create_flat_name(basename: str, child_name: str) -> str:
     with __ti_, and given this constraint, the names we create will not conflict with user-generated
     names.
     """
-    full_name = f"{basename}__ti_{child_name}"
-    if not full_name.startswith("__ti_"):
-        full_name = f"__ti_{full_name}"
-    return full_name
+    if basename.startswith("__ti_"):
+        return f"{basename}__ti_{child_name}"
+    return f"__ti_{basename}__ti_{child_name}"

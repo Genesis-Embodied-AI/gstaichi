@@ -635,8 +635,11 @@ void export_lang(py::module &m) {
 
   py::class_<LaunchContextBuilder>(m, "KernelLaunchContext")
       .def("set_arg_int", &LaunchContextBuilder::set_arg_int)
+      .def("set_args_int", &LaunchContextBuilder::set_args_int)
       .def("set_arg_uint", &LaunchContextBuilder::set_arg_uint)
+      .def("set_args_uint", &LaunchContextBuilder::set_args_uint)
       .def("set_arg_float", &LaunchContextBuilder::set_arg_float)
+      .def("set_args_float", &LaunchContextBuilder::set_args_float)
       .def("set_struct_arg_int", &LaunchContextBuilder::set_struct_arg<int64>)
       .def("set_struct_arg_uint", &LaunchContextBuilder::set_struct_arg<uint64>)
       .def("set_struct_arg_float",
@@ -644,8 +647,11 @@ void export_lang(py::module &m) {
       .def("set_arg_external_array_with_shape",
            &LaunchContextBuilder::set_arg_external_array_with_shape)
       .def("set_arg_ndarray", &LaunchContextBuilder::set_arg_ndarray)
+      .def("set_args_ndarray", &LaunchContextBuilder::set_args_ndarray)
       .def("set_arg_ndarray_with_grad",
            &LaunchContextBuilder::set_arg_ndarray_with_grad)
+      .def("set_args_ndarray_with_grad",
+           &LaunchContextBuilder::set_args_ndarray_with_grad)
       .def("set_arg_texture", &LaunchContextBuilder::set_arg_texture)
       .def("set_arg_rw_texture", &LaunchContextBuilder::set_arg_rw_texture)
       .def("get_struct_ret_int", &LaunchContextBuilder::get_struct_ret_int)
