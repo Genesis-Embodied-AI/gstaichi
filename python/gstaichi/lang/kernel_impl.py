@@ -917,6 +917,8 @@ class Kernel:
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
         self.fe_ll_cache_observations: FeLlCacheObservations = FeLlCacheObservations()
 
+        # The cache key corresponds to the hash of the (packed) python-side input arguments of the kernel.
+        # See 'launch_kernel' for details regarding the intended use of caching.
         self._launch_ctx_cache: dict[int, KernelLaunchContext] = {}
         self._launch_ctx_cache_tracker: dict[int, list[ReferenceType]] = {}
         self._prog_weakref: ReferenceType | None = None
@@ -1122,6 +1124,8 @@ class Kernel:
             prog = impl.get_runtime().prog
             self._prog_weakref = ReferenceType(prog, partial(_destroy_callback, ReferenceType(self)))
         else:
+            # Since we already store a weak reference to taichi program, it is much faster to use it rather than
+            # paying the overhead of calling pybind11 functions (~200ns vs 5ns).
             prog = self._prog_weakref()
         assert prog is not None
 
