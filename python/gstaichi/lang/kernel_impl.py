@@ -23,7 +23,7 @@ from enum import IntEnum
 
 # Must import 'partial' directly instead of the entire module to avoid attribute lookup overhead.
 from functools import partial, update_wrapper, wraps
-from typing import Any, Callable, DefaultDict, Type, TypeVar, cast, overload
+from typing import Any, Callable, DefaultDict, Type, TypeAlias, TypeVar, cast, overload
 
 # Must import 'ReferenceType' directly instead of the entire module to avoid attribute lookup overhead.
 from weakref import ReferenceType
@@ -62,6 +62,7 @@ from gstaichi.lang.exception import (
     handle_exception_from_cpp,
 )
 from gstaichi.lang.expr import Expr
+from gstaichi.lang.impl import Program
 from gstaichi.lang.kernel_arguments import ArgMetadata
 from gstaichi.lang.matrix import MatrixType
 from gstaichi.lang.shell import _shell_pop_print
@@ -652,6 +653,9 @@ class KernelBatchedArgType(IntEnum):
 _FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = KernelBatchedArgType
 
 
+Hash: TypeAlias = int
+
+
 def _destroy_callback(kernel_ref: ReferenceType["Kernel"], ref: ReferenceType):
     maybe_kernel = kernel_ref()
     if maybe_kernel is not None:
@@ -918,10 +922,15 @@ class Kernel:
         self.fe_ll_cache_observations: FeLlCacheObservations = FeLlCacheObservations()
 
         # The cache key corresponds to the hash of the (packed) python-side input arguments of the kernel.
+        # * '_launch_ctx_cache' is storing a backup of the launch context BEFORE ever calling the kernel.
+        # * '_launch_ctx_cache_tracker' is used for bounding the lifetime of a cache entry to its corresponding set of
+        #   input arguments. Internally, this is done by wrapping all Taichi ndarrays as weak reference.
+        # * '_prog_weakref'is used for bounding the lifetime of the entire cache to the Taichi programm managing all
+        #   the launch context being stored in cache.
         # See 'launch_kernel' for details regarding the intended use of caching.
-        self._launch_ctx_cache: dict[int, KernelLaunchContext] = {}
-        self._launch_ctx_cache_tracker: dict[int, list[ReferenceType]] = {}
-        self._prog_weakref: ReferenceType | None = None
+        self._launch_ctx_cache: dict[Hash, KernelLaunchContext] = {}
+        self._launch_ctx_cache_tracker: dict[Hash, list[ReferenceType[Ndarray]]] = {}
+        self._prog_weakref: ReferenceType[Program] | None = None
 
     def ast_builder(self) -> ASTBuilder:
         assert self.kernel_cpp is not None
@@ -1122,6 +1131,7 @@ class Kernel:
         # Keep track of taichi runtime to automatically clear cache if destroyed
         if self._prog_weakref is None:
             prog = impl.get_runtime().prog
+            assert prog is not None
             self._prog_weakref = ReferenceType(prog, partial(_destroy_callback, ReferenceType(self)))
         else:
             # Since we already store a weak reference to taichi program, it is much faster to use it rather than
