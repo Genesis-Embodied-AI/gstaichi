@@ -140,7 +140,7 @@ class FlattenAttributeNameTransformer(ast.NodeTransformer):
         return None
 
 
-def unpack_ast_struct_expressions(tree: ast.Module, struct_locals: set[str]) -> ast.Module:
+def unpack_ast_struct_expressions(tree: ast.Module, struct_locals: set[str], used_py_dataclass_parameters: set[str] | None) -> ast.Module:
     """
     Transform nodes in AST, to flatten access to struct members
 
@@ -186,6 +186,8 @@ def unpack_ast_struct_expressions(tree: ast.Module, struct_locals: set[str]) -> 
     # __ti_my_struct_ab__ti_struct_cd__ti_struct_ef__ti_f
     Name(id='__ti_my_struct_ab__ti_struct_cd__ti_struct_ef__ti_f', ctx=Load()
     """
+    if used_py_dataclass_parameters:
+        struct_locals = used_py_dataclass_parameters
     transformer = FlattenAttributeNameTransformer(struct_locals=struct_locals)
     new_tree = transformer.visit(tree)
     ast.fix_missing_locations(new_tree)
