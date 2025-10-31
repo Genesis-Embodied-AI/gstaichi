@@ -1118,6 +1118,7 @@ class Kernel:
                 self.runtime.inside_kernel = False
                 self.runtime._current_kernel = None
                 self.runtime._compiling_callable = None
+                self.currently_compiling_materialize_key = None
 
         gstaichi_kernel = impl.get_runtime().prog.create_kernel(gstaichi_ast_generator, kernel_name, self.autodiff_mode)
         assert key not in self.materialized_kernels
