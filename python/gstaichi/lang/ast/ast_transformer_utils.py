@@ -195,6 +195,7 @@ class ASTTransformerContext:
         is_real_function: bool,
         autodiff_mode: AutodiffMode,
         raise_on_templated_floats: bool,
+        used_py_dataclass_parameters: set[str],
     ):
         from gstaichi import extension  # pylint: disable=import-outside-toplevel
 
@@ -233,6 +234,8 @@ class ASTTransformerContext:
         self.autodiff_mode = autodiff_mode
         self.loop_depth: int = 0
         self.raise_on_templated_floats = raise_on_templated_floats
+        self.used_py_dataclass_parameters = used_py_dataclass_parameters
+        self.expanding_dataclass_call_parameters: bool = False
 
         self.adstack_enabled: bool = (
             _ti_core.is_extension_supported(

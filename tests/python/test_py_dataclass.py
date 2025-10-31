@@ -1,3 +1,4 @@
+import dataclasses
 import gc
 from dataclasses import dataclass
 from typing import Any
@@ -864,3 +865,44 @@ def test_ndarray_struct_multiple_child_structs_field():
     assert d[0] == 55
     assert e[0] == 66
     assert f[0] == 77
+
+
+@test_utils.test()
+def test_print_used_leaves():
+    @dataclasses.dataclass
+    class MyDataclass:
+        used1: ti.types.NDArray[ti.i32, 1]
+        used2: ti.types.NDArray[ti.i32, 1]
+        used3: ti.types.NDArray[ti.i32, 1]
+        # used2: ti.types.NDArray[ti.i32, 1]
+        not_used: ti.types.NDArray[ti.i32, 1]
+
+    @ti.func
+    def f1(md: MyDataclass) -> None:
+        md.used3[0] = 123
+
+    @ti.kernel
+    def k1(md: MyDataclass, trigger_static: ti.Template) -> None:
+        md.used1[0] = 123
+        print(md.used2[0])
+        f1(md)
+        if ti.static(trigger_static):
+            print('yes')
+
+
+    u1 = ti.ndarray(ti.i32, (10,))
+    u2 = ti.ndarray(ti.i32, (10,))
+    u3 = ti.ndarray(ti.i32, (10,))
+    nu1 = ti.ndarray(ti.i32, (10,))
+    md = MyDataclass(used1=u1, used2=u2, used3=u3, not_used=nu1)
+
+    print("")
+    print("calling k1 with md")
+    trigger_static = False
+    k1(md, False)
+
+    print("")
+    print("calling k1 with trigger static")
+    trigger_static = True
+    # md2 = MyDataclass(used1=u1, used2=u2, used3=u3, not_used=nu1)
+    k1(md, True)
