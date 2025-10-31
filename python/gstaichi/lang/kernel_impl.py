@@ -992,6 +992,7 @@ class Kernel:
     def materialize(self, key: CompiledKernelKeyType | None, args: tuple[Any, ...], arg_features=None):
         if key is None:
             key = (self.func, 0, self.autodiff_mode)
+        print("materialize for key", key)
         self.runtime.materialize()
         self.fast_checksum = None
 
@@ -1095,7 +1096,7 @@ class Kernel:
                     )
                 struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
                 print("struct locals for", self.func.__name__, len(struct_locals))
-                # if self.func.__name__ == 'func_narrow_phase_convex_vs_convex':
+                # if self.func.__name__ == 'add_equality_constraints':
                 #     for struct_local in sorted(struct_locals):
                 #         print(struct_local)
                 #     print("")
@@ -1117,9 +1118,11 @@ class Kernel:
                 self.runtime.inside_kernel = False
                 self.runtime._current_kernel = None
                 self.runtime._compiling_callable = None
+                self.currently_compiling_materialize_key = None
 
         gstaichi_kernel = impl.get_runtime().prog.create_kernel(gstaichi_ast_generator, kernel_name, self.autodiff_mode)
         assert key not in self.materialized_kernels
+        print("storing materialized kernel for key", key)
         self.materialized_kernels[key] = gstaichi_kernel
 
     def launch_kernel(self, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:

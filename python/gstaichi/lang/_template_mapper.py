@@ -36,6 +36,7 @@ class TemplateMapper:
             raise TypeError(f"{self.num_args} argument(s) needed but {len(args)} provided.")
 
         key = self.extract(raise_on_templated_floats, args)
+        print("key", key)
         try:
             return self.mapping[key], key
         except KeyError:
