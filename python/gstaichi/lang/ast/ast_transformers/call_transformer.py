@@ -270,12 +270,14 @@ class CallTransformer:
             added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(node.keywords)
 
             # create variables for the now-expanded dataclass members
+            ctx.expanding_dataclass_call_parameters = True
             for arg in added_args:
                 assert not hasattr(arg, "ptr")
                 build_stmt(ctx, arg)
             for arg in added_keywords:
                 assert not hasattr(arg, "ptr")
                 build_stmt(ctx, arg)
+            ctx.expanding_dataclass_call_parameters = False
 
         # if any arg violates pure, then node also violates pure
         for arg in node.args:

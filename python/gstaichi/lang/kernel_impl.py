@@ -332,7 +332,9 @@ def _get_tree_and_ctx(
 
     raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
 
-    return tree, ASTTransformerContext(
+    args_instance_key = current_kernel.currently_compiling_materialize_key
+    assert args_instance_key is not None
+    ctx = ASTTransformerContext(
         excluded_parameters=excluded_parameters,
         is_kernel=is_kernel,
         is_pure=is_pure,
@@ -349,7 +351,9 @@ def _get_tree_and_ctx(
         is_real_function=is_real_function,
         autodiff_mode=autodiff_mode,
         raise_on_templated_floats=raise_on_templated_floats,
+        used_py_dataclass_parameters=current_kernel.used_py_dataclass_leaves_by_key[args_instance_key]
     )
+    return tree, ctx
 
 
 def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
@@ -902,6 +906,8 @@ class Kernel:
         self.kernel_function_info: FunctionSourceInfo | None = None
         self.compiled_kernel_data_by_key: dict[CompiledKernelKeyType, CompiledKernelData] = {}
         self._last_compiled_kernel_data: CompiledKernelData | None = None  # for dev/debug
+        self.used_py_dataclass_leaves_by_key: dict[CompiledKernelKeyType, set[str]] = defaultdict(set)
+        self.currently_compiling_materialize_key: CompiledKernelKeyType | None = None
 
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
         self.fe_ll_cache_observations: FeLlCacheObservations = FeLlCacheObservations()
@@ -917,6 +923,8 @@ class Kernel:
         self._last_compiled_kernel_data = None
         self.src_ll_cache_observations = SrcLlCacheObservations()
         self.fe_ll_cache_observations = FeLlCacheObservations()
+        self.used_py_dataclass_leaves_by_key = {}
+        self.currently_compiling_materialize_key = None
 
     def extract_arguments(self) -> None:
         sig = inspect.signature(self.func)
@@ -989,6 +997,8 @@ class Kernel:
 
         if key in self.materialized_kernels:
             return
+
+        self.currently_compiling_materialize_key = key
 
         if self.runtime.src_ll_cache and self.gstaichi_callable and self.gstaichi_callable.is_pure:
             kernel_source_info, _src = get_source_info_and_src(self.func)
@@ -1101,6 +1111,8 @@ class Kernel:
                 if not ctx.is_real_function and not ctx.only_parse_function_def:
                     if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
                         raise GsTaichiSyntaxError("Kernel has a return type but does not have a return statement")
+                used_py_dataclass_parameters = self.used_py_dataclass_leaves_by_key[key]
+                print("used kernel paramaters", len(used_py_dataclass_parameters), used_py_dataclass_parameters)
             finally:
                 self.runtime.inside_kernel = False
                 self.runtime._current_kernel = None
@@ -1157,7 +1169,6 @@ class Kernel:
             )
             i_out += num_args_
             is_launch_ctx_cacheable &= is_launch_ctx_cacheable_
-        print("total num args", self.func.__name__, i_out)
 
         # All arguments to context in batches to mitigate overhead of calling Python bindings repeatedly.
         # This is essential because calling any pybind11 function is adding ~180ns penalty no matter what.
