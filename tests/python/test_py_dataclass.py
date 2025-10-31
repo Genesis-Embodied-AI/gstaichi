@@ -922,11 +922,17 @@ def test_print_used_leaves():
 @test_utils.test()
 def test_prune_used_leaves():
     @dataclasses.dataclass
+    class Nested1:
+        n1: ti.types.NDArray[ti.i32, 1]
+        n1u: ti.types.NDArray[ti.i32, 1]
+
+    @dataclasses.dataclass
     class MyDataclass1:
         used1: ti.types.NDArray[ti.i32, 1]
         used2: ti.types.NDArray[ti.i32, 1]
         used3: ti.types.NDArray[ti.i32, 1]
         not_used: ti.types.NDArray[ti.i32, 1]
+        nested1: Nested1
 
     @dataclasses.dataclass
     class MyDataclass2:
@@ -939,6 +945,7 @@ def test_prune_used_leaves():
     def f1(md1: MyDataclass1, md2: MyDataclass2) -> None:
         md1.used3[0] = 123
         md2.used1[5] = 555
+        md1.nested1.n1[0] = 777
 
     @ti.kernel
     def k1(md1: MyDataclass1, md2: MyDataclass2, trigger_static: ti.Template) -> None:
@@ -953,8 +960,11 @@ def test_prune_used_leaves():
     u1 = ti.ndarray(ti.i32, (10,))
     u2 = ti.ndarray(ti.i32, (10,))
     u3 = ti.ndarray(ti.i32, (10,))
+    n1 = ti.ndarray(ti.i32, (10,))
     nu1 = ti.ndarray(ti.i32, (10,))
-    md1 = MyDataclass1(used1=u1, used2=u2, used3=u3, not_used=nu1)
+    n1u = ti.ndarray(ti.i32, (10,))
+    nested1 = Nested1(n1=n1, n1u=n1u)
+    md1 = MyDataclass1(used1=u1, used2=u2, used3=u3, not_used=nu1, nested1=nested1)
 
     u1b = ti.ndarray(ti.i32, (10,))
     u2b = ti.ndarray(ti.i32, (10,))
@@ -971,6 +981,7 @@ def test_prune_used_leaves():
     assert u1[1] == 333
     assert u1[2] == 0
     assert u1b[5] == 555
+    assert n1u[0] == 777
 
     print("")
     print("calling k1 with trigger static")
@@ -980,9 +991,11 @@ def test_prune_used_leaves():
     u3[0] = 0
     u2[0] = 333
     u1b[5] = 0
+    n1u[0] == 0
     k1(md1, md2, True)
     assert u1[0] == 222
     assert u3[0] == 123
     assert u1[1] == 333
     assert u1[2] == 444
     assert u1b[5] == 555
+    assert n1u[0] == 777
