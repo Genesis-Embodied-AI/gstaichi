@@ -293,6 +293,7 @@ def _populate_global_vars_for_templates(
 def _get_tree_and_ctx(
     self: "Func | Kernel",
     args: tuple[Any, ...],
+    used_py_dataclass_parameters_enforcing: set[str] | None,
     excluded_parameters=(),
     is_kernel: bool = True,
     arg_features=None,
@@ -351,7 +352,8 @@ def _get_tree_and_ctx(
         is_real_function=is_real_function,
         autodiff_mode=autodiff_mode,
         raise_on_templated_floats=raise_on_templated_floats,
-        used_py_dataclass_parameters=current_kernel.used_py_dataclass_leaves_by_key[args_instance_key]
+        used_py_dataclass_parameters_collecting=current_kernel.used_py_dataclass_leaves_by_key[args_instance_key],
+        used_py_dataclass_parameters_enforcing=used_py_dataclass_parameters_enforcing,
     )
     return tree, ctx
 
@@ -461,6 +463,7 @@ class Func:
             args=args,
             ast_builder=current_kernel.ast_builder(),
             is_real_function=self.is_real_function,
+            used_py_dataclass_parameters_enforcing=None,
         )
 
         struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
@@ -522,7 +525,8 @@ class Func:
 
     def do_compile(self, key: FunctionKey, args: tuple[Any, ...], arg_features: tuple[Any, ...]) -> None:
         tree, ctx = _get_tree_and_ctx(
-            self, is_kernel=False, args=args, arg_features=arg_features, is_real_function=self.is_real_function
+            self, is_kernel=False, args=args, arg_features=arg_features, is_real_function=self.is_real_function,
+            used_py_dataclass_parameters_enforcing=None,
         )
         fn = impl.get_runtime().prog.create_function(key)
 
@@ -654,6 +658,8 @@ _FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = KernelBatchedArgType
 
 
 def _recursive_set_args(
+    used_py_dataclass_parameters: set[str],
+    py_dataclass_basename: str,
     launch_ctx: KernelLaunchContext,
     launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]],
     needed_arg_type: Type,
@@ -708,13 +714,19 @@ def _recursive_set_args(
         idx = 0
         offset = indices[0]
         for field in needed_arg_fields.values():
+            field_full_name = f"{py_dataclass_basename}.{field.name}"
+            print("field full name", field_full_name)
             if field._field_type is not _FIELD:
+                continue
+            if field_full_name not in used_py_dataclass_parameters:
                 continue
             # Storing attribute in a temporary to avoid repeated attribute lookup (~20ns penalty)
             field_type = field.type
             assert not isinstance(field_type, str)
             field_value = getattr(v, field.name)
             num_args_, is_launch_ctx_cacheable_ = _recursive_set_args(
+                used_py_dataclass_parameters,
+                py_dataclass_basename + f".{field.name}",
                 launch_ctx,
                 launch_ctx_buffer,
                 field_type,
@@ -767,6 +779,7 @@ def _recursive_set_args(
                     "Non contiguous numpy arrays are not supported, please call np.ascontiguousarray(arr) "
                     "before passing it into gstaichi kernel."
                 )
+            print("launch_ctx.set_arg_external_array_with_shape indices", indices)
             launch_ctx.set_arg_external_array_with_shape(indices, int(v.ctypes.data), v.nbytes, array_shape, 0)
         elif has_pytorch():
             import torch  # pylint: disable=C0415
@@ -996,10 +1009,10 @@ class Kernel:
         self.runtime.materialize()
         self.fast_checksum = None
 
+        self.currently_compiling_materialize_key = key
+
         if key in self.materialized_kernels:
             return
-
-        self.currently_compiling_materialize_key = key
 
         if self.runtime.src_ll_cache and self.gstaichi_callable and self.gstaichi_callable.is_pure:
             kernel_source_info, _src = get_source_info_and_src(self.func)
@@ -1039,6 +1052,7 @@ class Kernel:
                 excluded_parameters=self.template_slot_locations,
                 arg_features=arg_features,
                 current_kernel=self,
+                used_py_dataclass_parameters_enforcing=used_py_dataclass_parameters,
             )
 
             if self.autodiff_mode != AutodiffMode.NONE:
@@ -1122,7 +1136,7 @@ class Kernel:
                 assert key not in self.materialized_kernels
                 print("storing materialized kernel for key", key)
                 self.materialized_kernels[key] = gstaichi_kernel
-        self.currently_compiling_materialize_key = None
+        # self.currently_compiling_materialize_key = None
         # if self.func.__name__ == "add_equality_constraints":
         #     asdfsadf
 
@@ -1155,13 +1169,21 @@ class Kernel:
         is_launch_ctx_cacheable = True
         template_num = 0
         i_out = 0
+        assert self.currently_compiling_materialize_key
+        used_py_dataclass_parameters = self.used_py_dataclass_leaves_by_key[self.currently_compiling_materialize_key]
+        used_py_dataclass_parameters_dotted = set([p.replace("__ti_", ".")[1:] for p in used_py_dataclass_parameters])
+        print("used_py_dataclass_parameters_dotted", used_py_dataclass_parameters_dotted)
         for i_in, val in enumerate(args):
+            print("i_in", i_in, val, type(val))
             needed_ = self.arg_metas[i_in].annotation
             if needed_ is template or type(needed_) is template:
                 template_num += 1
                 i_out += 1
                 continue
+            print("used_py_dataclass_parameters", used_py_dataclass_parameters)
             num_args_, is_launch_ctx_cacheable_ = _recursive_set_args(
+                used_py_dataclass_parameters_dotted,
+                self.arg_metas[i_in].name,
                 launch_ctx,
                 launch_ctx_buffer,
                 needed_,
@@ -1171,6 +1193,7 @@ class Kernel:
                 actual_argument_slot,
                 callbacks,
             )
+            print("num_args_", num_args_)
             i_out += num_args_
             is_launch_ctx_cacheable &= is_launch_ctx_cacheable_
 
@@ -1190,6 +1213,7 @@ class Kernel:
             launch_ctx.set_args_uint(tuple([index for index, in indices]), vec)
         if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY):
             indices, arrs = zip(*launch_ctx_args)
+            print("launch_ctx.set_args_ndarray indices", indices)
             launch_ctx.set_args_ndarray(tuple([index for index, in indices]), arrs)  # type: ignore
         if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY_WITH_GRAD):
             indices, arrs, arrs_grad = zip(*launch_ctx_args)
@@ -1246,6 +1270,8 @@ class Kernel:
 
         for c in callbacks:
             c()
+
+        self.currently_compiling_materialize_key = None
 
         return_type = self.return_type
         if return_type or self.has_print:
