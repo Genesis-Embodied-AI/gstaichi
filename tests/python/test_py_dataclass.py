@@ -874,7 +874,6 @@ def test_print_used_leaves():
         used1: ti.types.NDArray[ti.i32, 1]
         used2: ti.types.NDArray[ti.i32, 1]
         used3: ti.types.NDArray[ti.i32, 1]
-        # used2: ti.types.NDArray[ti.i32, 1]
         not_used: ti.types.NDArray[ti.i32, 1]
 
     @ti.func
@@ -904,5 +903,4 @@ def test_print_used_leaves():
     print("")
     print("calling k1 with trigger static")
     trigger_static = True
-    # md2 = MyDataclass(used1=u1, used2=u2, used3=u3, not_used=nu1)
     k1(md, True)
