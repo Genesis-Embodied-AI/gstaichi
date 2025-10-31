@@ -359,8 +359,10 @@ def _get_tree_and_ctx(
 
 
 def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
+    print("_process_args() is_func", is_func)
     if is_func:
         self.arg_metas = _kernel_impl_dataclass.expand_func_arguments(self.arg_metas)
+        print("self.arg_metas", self.arg_metas, len(self.arg_metas))
 
     fused_args: list[Any] = [arg_meta.default for arg_meta in self.arg_metas]
     len_args = len(args)
@@ -413,7 +415,7 @@ def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], k
         for i, arg in enumerate(self.arg_metas):
             msg_l.append(f"  {i} {arg}")
         raise GsTaichiSyntaxError("\n".join(msg_l))
-
+    print("end of _process_args len(fused_args)", len(fused_args))
     return tuple(fused_args)
 
 
@@ -1046,6 +1048,10 @@ class Kernel:
 
         used_py_dataclass_parameters: set[str] | None = None
         for _pass in range(2):
+            print("")
+            print("==================================")
+            print("pass", _pass)
+            print("")
             tree, ctx = _get_tree_and_ctx(
                 self,
                 args=args,

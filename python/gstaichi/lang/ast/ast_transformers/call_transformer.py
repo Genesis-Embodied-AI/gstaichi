@@ -332,7 +332,8 @@ class CallTransformer:
 
         CallTransformer._warn_if_is_external_func(ctx, node)
         try:
-            # print("calling func...")
+            print("calling func ", func.__name__, "... args", args, "keywords", keywords)
+            # prin
             node.ptr = func(*args, **keywords)
             # print("... after calling func")
         except TypeError as e:
