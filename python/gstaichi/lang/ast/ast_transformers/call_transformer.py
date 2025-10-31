@@ -166,7 +166,7 @@ class CallTransformer:
         return args
 
     @staticmethod
-    def _expand_Call_dataclass_args(args: tuple[ast.stmt, ...]) -> tuple[tuple[ast.stmt, ...], tuple[ast.stmt, ...]]:
+    def _expand_Call_dataclass_args(ctx: ASTTransformerContext, args: tuple[ast.stmt, ...]) -> tuple[tuple[ast.stmt, ...], tuple[ast.stmt, ...]]:
         """
         We require that each node has a .ptr attribute added to it, that contains
         the associated Python object
@@ -182,6 +182,8 @@ class CallTransformer:
                         child_name = create_flat_name(arg.id, field.name)
                     except Exception as e:
                         raise RuntimeError(f"Exception whilst processing {field.name} in {type(dataclass_type)}") from e
+                    if ctx.used_py_dataclass_parameters_enforcing and child_name not in ctx.used_py_dataclass_parameters_enforcing:
+                        continue
                     load_ctx = ast.Load()
                     arg_node = ast.Name(
                         id=child_name,
@@ -193,7 +195,7 @@ class CallTransformer:
                     )
                     if dataclasses.is_dataclass(field.type):
                         arg_node.ptr = field.type
-                        _added_args, _args_new = CallTransformer._expand_Call_dataclass_args((arg_node,))
+                        _added_args, _args_new = CallTransformer._expand_Call_dataclass_args(ctx, (arg_node,))
                         args_new.extend(_args_new)
                         added_args.extend(_added_args)
                     else:
@@ -266,7 +268,7 @@ class CallTransformer:
             build_stmts(ctx, node.args)
             build_stmts(ctx, node.keywords)
 
-            added_args, node.args = CallTransformer._expand_Call_dataclass_args(node.args)
+            added_args, node.args = CallTransformer._expand_Call_dataclass_args(ctx, node.args)
             added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(node.keywords)
 
             # create variables for the now-expanded dataclass members

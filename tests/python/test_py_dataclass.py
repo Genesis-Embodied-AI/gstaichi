@@ -882,11 +882,12 @@ def test_print_used_leaves():
 
     @ti.kernel
     def k1(md: MyDataclass, trigger_static: ti.Template) -> None:
-        md.used1[0] = 123
-        print(md.used2[0])
+        md.used1[0] = 222
+        md.used1[1] = md.used2[0]
+        # print(md.used2[0])
         f1(md)
         if ti.static(trigger_static):
-            print('yes')
+            md.used1[2] = 444
 
 
     u1 = ti.ndarray(ti.i32, (10,))
@@ -897,10 +898,91 @@ def test_print_used_leaves():
 
     print("")
     print("calling k1 with md")
-    trigger_static = False
+    u2[0] = 333
     k1(md, False)
+    assert u1[0] == 222
+    assert u3[0] == 123
+    assert u1[1] == 333
+    assert u1[2] == 0
 
     print("")
     print("calling k1 with trigger static")
-    trigger_static = True
+    u1[0] = 0
+    u1[1] = 0
+    u1[2] = 0
+    u3[0] = 0
+    u2[0] = 333
     k1(md, True)
+    assert u1[0] == 222
+    assert u3[0] == 123
+    assert u1[1] == 333
+    assert u1[2] == 444
+
+
+@test_utils.test()
+def test_prune_used_leaves():
+    @dataclasses.dataclass
+    class MyDataclass1:
+        used1: ti.types.NDArray[ti.i32, 1]
+        used2: ti.types.NDArray[ti.i32, 1]
+        used3: ti.types.NDArray[ti.i32, 1]
+        not_used: ti.types.NDArray[ti.i32, 1]
+
+    @dataclasses.dataclass
+    class MyDataclass2:
+        used1: ti.types.NDArray[ti.i32, 1]
+        used2: ti.types.NDArray[ti.i32, 1]
+        used3: ti.types.NDArray[ti.i32, 1]
+        not_used: ti.types.NDArray[ti.i32, 1]
+
+    @ti.func
+    def f1(md1: MyDataclass1, md2: MyDataclass2) -> None:
+        md1.used3[0] = 123
+        md2.used1[5] = 555
+
+    @ti.kernel
+    def k1(md1: MyDataclass1, md2: MyDataclass2, trigger_static: ti.Template) -> None:
+        md1.used1[0] = 222
+        md1.used1[1] = md1.used2[0]
+        # print(md.used2[0])
+        f1(md1, md2)
+        if ti.static(trigger_static):
+            md1.used1[2] = 444
+
+
+    u1 = ti.ndarray(ti.i32, (10,))
+    u2 = ti.ndarray(ti.i32, (10,))
+    u3 = ti.ndarray(ti.i32, (10,))
+    nu1 = ti.ndarray(ti.i32, (10,))
+    md1 = MyDataclass1(used1=u1, used2=u2, used3=u3, not_used=nu1)
+
+    u1b = ti.ndarray(ti.i32, (10,))
+    u2b = ti.ndarray(ti.i32, (10,))
+    u3b = ti.ndarray(ti.i32, (10,))
+    nu1b = ti.ndarray(ti.i32, (10,))
+    md2 = MyDataclass2(used1=u1b, used2=u2b, used3=u3b, not_used=nu1b)
+
+    print("")
+    print("calling k1 with md")
+    u2[0] = 333
+    k1(md1, md2, False)
+    assert u1[0] == 222
+    assert u3[0] == 123
+    assert u1[1] == 333
+    assert u1[2] == 0
+    assert u1b[5] == 555
+
+    print("")
+    print("calling k1 with trigger static")
+    u1[0] = 0
+    u1[1] = 0
+    u1[2] = 0
+    u3[0] = 0
+    u2[0] = 333
+    u1b[5] = 0
+    k1(md1, md2, True)
+    assert u1[0] == 222
+    assert u3[0] == 123
+    assert u1[1] == 333
+    assert u1[2] == 444
+    assert u1b[5] == 555
