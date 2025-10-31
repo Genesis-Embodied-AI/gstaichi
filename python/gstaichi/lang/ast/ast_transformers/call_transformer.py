@@ -182,6 +182,11 @@ class CallTransformer:
                         child_name = create_flat_name(arg.id, field.name)
                     except Exception as e:
                         raise RuntimeError(f"Exception whilst processing {field.name} in {type(dataclass_type)}") from e
+                    print("_expand_Call_dataclass_args child_name", child_name, end="")
+                    if ctx.used_py_dataclass_parameters_enforcing and child_name not in ctx.used_py_dataclass_parameters_enforcing:
+                        print(" ❌")
+                        continue
+                    print(" ✅")
                     load_ctx = ast.Load()
                     arg_node = ast.Name(
                         id=child_name,

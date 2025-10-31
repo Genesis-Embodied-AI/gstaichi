@@ -361,7 +361,14 @@ def _get_tree_and_ctx(
 def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
     print("_process_args() is_func", is_func)
     if is_func:
-        self.arg_metas = _kernel_impl_dataclass.expand_func_arguments(self.arg_metas)
+        assert isinstance(self, Func)
+        current_kernel = self.current_kernel
+        assert current_kernel is not None
+        currently_compiling_materialize_key = current_kernel.currently_compiling_materialize_key
+        assert currently_compiling_materialize_key is not None
+        self.arg_metas = _kernel_impl_dataclass.expand_func_arguments(
+            current_kernel.used_py_dataclass_leaves_by_key[currently_compiling_materialize_key],
+            self.arg_metas)
         print("self.arg_metas", self.arg_metas, len(self.arg_metas))
 
     fused_args: list[Any] = [arg_meta.default for arg_meta in self.arg_metas]
@@ -444,6 +451,9 @@ class Func:
         self.current_kernel: Kernel | None = None
 
     def __call__(self: "Func", *args, **kwargs) -> Any:
+        print("Func.__call__", self.func.__name__)
+        print("impl.get_runtime().current_kernel", impl.get_runtime().current_kernel)
+        self.current_kernel = impl.get_runtime().current_kernel
         args = _process_args(self, is_func=True, args=args, kwargs=kwargs)
 
         if not impl.inside_kernel():
@@ -451,7 +461,6 @@ class Func:
                 raise GsTaichiSyntaxError("GsTaichi functions cannot be called from Python-scope.")
             return self.func(*args)
 
-        self.current_kernel = impl.get_runtime().current_kernel
         if self.is_real_function:
             if self.current_kernel.autodiff_mode != AutodiffMode.NONE:
                 self.current_kernel = None
@@ -476,6 +485,7 @@ class Func:
         tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
         ret = transform_tree(tree, ctx)
         self.current_kernel = None
+        print('end of Func.__call__')
         if not self.is_real_function:
             if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
                 raise GsTaichiSyntaxError("Function has a return type but does not have a return statement")
