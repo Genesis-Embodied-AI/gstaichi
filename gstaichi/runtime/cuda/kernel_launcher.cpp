@@ -12,6 +12,18 @@ bool KernelLauncher::on_cuda_device(void *ptr) {
   return ret_code == CUDA_SUCCESS && attr_val == CU_MEMORYTYPE_DEVICE;
 }
 
+__attribute__((noinline)) void synchronize_before_launch() {
+  volatile int dummy = 0;
+  CUDADriver::get_instance().stream_synchronize(nullptr);
+  dummy++;
+}
+
+__attribute__((noinline)) void synchronize_after_launch() {
+  volatile int dummy = 0;
+  CUDADriver::get_instance().stream_synchronize(nullptr);
+  dummy++;
+}
+
 void KernelLauncher::launch_llvm_kernel(Handle handle,
                                         LaunchContextBuilder &ctx) {
   TI_ASSERT(handle.get_launch_id() < contexts_.size());
@@ -143,8 +155,11 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
   for (auto task : offloaded_tasks) {
     TI_TRACE("Launching kernel {}<<<{}, {}>>>", task.name, task.grid_dim,
              task.block_dim);
+    synchronize_before_launch();
     cuda_module->launch(task.name, task.grid_dim, task.block_dim, 0,
                         {&ctx.get_context()}, {});
+
+    synchronize_after_launch();
   }
   if (ctx.arg_buffer_size > 0) {
     CUDADriver::get_instance().mem_free_async(device_arg_buffer, nullptr);

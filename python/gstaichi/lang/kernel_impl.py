@@ -923,7 +923,7 @@ class Kernel:
         self._last_compiled_kernel_data = None
         self.src_ll_cache_observations = SrcLlCacheObservations()
         self.fe_ll_cache_observations = FeLlCacheObservations()
-        self.used_py_dataclass_leaves_by_key = {}
+        self.used_py_dataclass_leaves_by_key = defaultdict(set)
         self.currently_compiling_materialize_key = None
 
     def extract_arguments(self) -> None:
