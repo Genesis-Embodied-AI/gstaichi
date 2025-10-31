@@ -1065,16 +1065,25 @@ class Kernel:
 
         used_py_dataclass_parameters: set[str] | None = None
         for _pass in range(2):
+            used_py_dataclass_leaves_by_key_enforcing = None
             if _pass == 1:
                 assert used_py_dataclass_parameters is not None
-                self.used_py_dataclass_leaves_by_key_enforcing[key] = used_py_dataclass_parameters
+                used_py_dataclass_leaves_by_key_enforcing = set()
+                for param in used_py_dataclass_parameters:
+                    split_param = param.split("__ti_")
+                    for i in range(len(split_param), 0, -1):
+                        joined = "__ti_".join(split_param[:i])
+                        if joined in used_py_dataclass_leaves_by_key_enforcing:
+                            break
+                        used_py_dataclass_leaves_by_key_enforcing.add(joined)
+                self.used_py_dataclass_leaves_by_key_enforcing[key] = used_py_dataclass_leaves_by_key_enforcing
             tree, ctx = _get_tree_and_ctx(
                 self,
                 args=args,
                 excluded_parameters=self.template_slot_locations,
                 arg_features=arg_features,
                 current_kernel=self,
-                used_py_dataclass_parameters_enforcing=used_py_dataclass_parameters,
+                used_py_dataclass_parameters_enforcing=used_py_dataclass_leaves_by_key_enforcing,
             )
 
             if self.autodiff_mode != AutodiffMode.NONE:
@@ -1186,8 +1195,8 @@ class Kernel:
         template_num = 0
         i_out = 0
         assert self.currently_compiling_materialize_key
-        used_py_dataclass_parameters = self.used_py_dataclass_leaves_by_key_collecting[self.currently_compiling_materialize_key]
-        used_py_dataclass_parameters_dotted = set([p.replace("__ti_", ".")[1:] for p in used_py_dataclass_parameters])
+        used_py_dataclass_parameters_enforcing = self.used_py_dataclass_leaves_by_key_enforcing[self.currently_compiling_materialize_key]
+        used_py_dataclass_parameters_enforcing_dotted = set([p.replace("__ti_", ".")[1:] for p in used_py_dataclass_parameters_enforcing])
         for i_in, val in enumerate(args):
             needed_ = self.arg_metas[i_in].annotation
             if needed_ is template or type(needed_) is template:
@@ -1195,7 +1204,7 @@ class Kernel:
                 i_out += 1
                 continue
             num_args_, is_launch_ctx_cacheable_ = _recursive_set_args(
-                used_py_dataclass_parameters_dotted,
+                used_py_dataclass_parameters_enforcing_dotted,
                 self.arg_metas[i_in].name,
                 launch_ctx,
                 launch_ctx_buffer,
