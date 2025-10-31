@@ -882,11 +882,12 @@ def test_print_used_leaves():
 
     @ti.kernel
     def k1(md: MyDataclass, trigger_static: ti.Template) -> None:
-        md.used1[0] = 123
-        print(md.used2[0])
+        md.used1[0] = 222
+        md.used1[1] = md.used2[0]
+        # print(md.used2[0])
         f1(md)
         if ti.static(trigger_static):
-            print('yes')
+            md.used1[2] = 444
 
 
     u1 = ti.ndarray(ti.i32, (10,))
@@ -897,10 +898,22 @@ def test_print_used_leaves():
 
     print("")
     print("calling k1 with md")
-    trigger_static = False
+    u2[0] = 333
     k1(md, False)
+    assert u1[0] == 222
+    assert u3[0] == 123
+    assert u1[1] == 333
+    assert u1[2] == 0
 
     print("")
     print("calling k1 with trigger static")
-    trigger_static = True
+    u1[0] = 0
+    u1[1] = 0
+    u1[2] = 0
+    u3[0] = 0
+    u2[0] = 333
     k1(md, True)
+    assert u1[0] == 222
+    assert u3[0] == 123
+    assert u1[1] == 333
+    assert u1[2] == 444
