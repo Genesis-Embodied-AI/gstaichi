@@ -992,7 +992,7 @@ class Kernel:
     def materialize(self, key: CompiledKernelKeyType | None, args: tuple[Any, ...], arg_features=None):
         if key is None:
             key = (self.func, 0, self.autodiff_mode)
-        print("materialize for key", key)
+        print("materialize()")
         self.runtime.materialize()
         self.fast_checksum = None
 
@@ -1114,6 +1114,9 @@ class Kernel:
                         raise GsTaichiSyntaxError("Kernel has a return type but does not have a return statement")
                 used_py_dataclass_parameters = self.used_py_dataclass_leaves_by_key[key]
                 print("used kernel paramaters", len(used_py_dataclass_parameters), used_py_dataclass_parameters)
+                if self.func.__name__ == "_kernel_narrow_phase":
+                    asdfsadf
+                # asdfasdf
             finally:
                 self.runtime.inside_kernel = False
                 self.runtime._current_kernel = None
