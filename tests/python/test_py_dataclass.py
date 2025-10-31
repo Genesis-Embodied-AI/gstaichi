@@ -945,6 +945,8 @@ def test_prune_used_leaves():
     def f1(md1: MyDataclass1, md2: MyDataclass2) -> None:
         md1.used3[0] = 123
         md2.used1[5] = 555
+        md2.used2[5] = 444
+        md2.used3[5] = 333
         md1.nested1.n1[0] = 777
 
     @ti.kernel
@@ -981,7 +983,7 @@ def test_prune_used_leaves():
     assert u1[1] == 333
     assert u1[2] == 0
     assert u1b[5] == 555
-    assert n1u[0] == 777
+    assert n1[0] == 777
 
     print("")
     print("calling k1 with trigger static")
@@ -991,11 +993,11 @@ def test_prune_used_leaves():
     u3[0] = 0
     u2[0] = 333
     u1b[5] = 0
-    n1u[0] == 0
+    n1[0] == 0
     k1(md1, md2, True)
     assert u1[0] == 222
     assert u3[0] == 123
     assert u1[1] == 333
     assert u1[2] == 444
     assert u1b[5] == 555
-    assert n1u[0] == 777
+    assert n1[0] == 777

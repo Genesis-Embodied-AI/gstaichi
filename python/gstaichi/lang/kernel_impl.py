@@ -737,11 +737,14 @@ def _recursive_set_args(
         offset = indices[0]
         for field in needed_arg_fields.values():
             field_full_name = f"{py_dataclass_basename}.{field.name}"
-            print("field full name", field_full_name)
+            print("field full name", field_full_name, end='')
             if field._field_type is not _FIELD:
+                print(' ❌')
                 continue
             if field_full_name not in used_py_dataclass_parameters:
+                print(' ❌')
                 continue
+            print(' ✅')
             # Storing attribute in a temporary to avoid repeated attribute lookup (~20ns penalty)
             field_type = field.type
             assert not isinstance(field_type, str)
@@ -1078,16 +1081,27 @@ class Kernel:
             print("==================================")
             print("pass", _pass)
             print("")
+            used_py_dataclass_leaves_by_key_enforcing = None
             if _pass == 1:
                 assert used_py_dataclass_parameters is not None
-                self.used_py_dataclass_leaves_by_key_enforcing[key] = used_py_dataclass_parameters
+                used_py_dataclass_leaves_by_key_enforcing = set()
+                for param in used_py_dataclass_parameters:
+                    split_param = param.split("__ti_")
+                    for i in range(len(split_param), 0, -1):
+                        joined = "__ti_".join(split_param[:i])
+                        print("joined", joined)
+                        if joined in used_py_dataclass_leaves_by_key_enforcing:
+                            break
+                        used_py_dataclass_leaves_by_key_enforcing.add(joined)
+                print("used_py_dataclass_leaves_by_key_enforcing", used_py_dataclass_leaves_by_key_enforcing)
+                self.used_py_dataclass_leaves_by_key_enforcing[key] = used_py_dataclass_leaves_by_key_enforcing
             tree, ctx = _get_tree_and_ctx(
                 self,
                 args=args,
                 excluded_parameters=self.template_slot_locations,
                 arg_features=arg_features,
                 current_kernel=self,
-                used_py_dataclass_parameters_enforcing=used_py_dataclass_parameters,
+                used_py_dataclass_parameters_enforcing=used_py_dataclass_leaves_by_key_enforcing,
             )
 
             if self.autodiff_mode != AutodiffMode.NONE:
@@ -1205,9 +1219,9 @@ class Kernel:
         template_num = 0
         i_out = 0
         assert self.currently_compiling_materialize_key
-        used_py_dataclass_parameters = self.used_py_dataclass_leaves_by_key_collecting[self.currently_compiling_materialize_key]
-        used_py_dataclass_parameters_dotted = set([p.replace("__ti_", ".")[1:] for p in used_py_dataclass_parameters])
-        print("used_py_dataclass_parameters_dotted", used_py_dataclass_parameters_dotted)
+        used_py_dataclass_parameters_enforcing = self.used_py_dataclass_leaves_by_key_enforcing[self.currently_compiling_materialize_key]
+        used_py_dataclass_parameters_enforcing_dotted = set([p.replace("__ti_", ".")[1:] for p in used_py_dataclass_parameters_enforcing])
+        print("used_py_dataclass_parameters_enforcing_dotted", used_py_dataclass_parameters_enforcing_dotted)
         for i_in, val in enumerate(args):
             print("i_in", i_in, val, type(val))
             needed_ = self.arg_metas[i_in].annotation
@@ -1215,9 +1229,9 @@ class Kernel:
                 template_num += 1
                 i_out += 1
                 continue
-            print("used_py_dataclass_parameters", used_py_dataclass_parameters)
+            # print("used_py_dataclass_parameters", used_py_dataclass_parameters)
             num_args_, is_launch_ctx_cacheable_ = _recursive_set_args(
-                used_py_dataclass_parameters_dotted,
+                used_py_dataclass_parameters_enforcing_dotted,
                 self.arg_metas[i_in].name,
                 launch_ctx,
                 launch_ctx_buffer,

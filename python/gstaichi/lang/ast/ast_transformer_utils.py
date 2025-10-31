@@ -317,13 +317,18 @@ class ASTTransformerContext:
             )
 
     def get_var_by_name(self, name: str) -> tuple[bool, Any, str | None]:
+        # print("get_var_by_name")
         for s in reversed(self.local_scopes):
+            # if len(s) > 0:
+            #     print(" - local scope keys", s.keys())
             if name in s:
                 val = s[name]
                 return False, val, None
 
         reason = None
         violates_pure, found_name = False, False
+        # print(" - template var keys", self.template_vars.keys())
+        # print(" - global_vars keys", self.global_vars.keys())
         if name in self.template_vars:
             var = self.template_vars[name]
             if self.raise_on_templated_floats and isinstance(var, float):

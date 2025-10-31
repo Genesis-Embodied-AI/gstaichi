@@ -94,6 +94,7 @@ class FunctionDefTransformer:
         argument_type: Any,
         this_arg_features: tuple[Any, ...],
     ) -> None:
+        print("_transform_kernel_arg ctx.used_py_dataclass_parameters_enforcing", ctx.used_py_dataclass_parameters_enforcing)
         if dataclasses.is_dataclass(argument_type):
             ctx.create_variable(argument_name, argument_type)
             for field_idx, field in enumerate(dataclasses.fields(argument_type)):
