@@ -359,29 +359,31 @@ def _get_tree_and_ctx(
 
 
 def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
-    print("_process_args() is_func", is_func)
+    print("_process_args() is_func", is_func, "args", args, len(args), "kwargs", kwargs, len(kwargs))
     if is_func:
         assert isinstance(self, Func)
         current_kernel = self.current_kernel
         assert current_kernel is not None
         currently_compiling_materialize_key = current_kernel.currently_compiling_materialize_key
         assert currently_compiling_materialize_key is not None
-        self.arg_metas = _kernel_impl_dataclass.expand_func_arguments(
+        self.arg_metas_expanded = _kernel_impl_dataclass.expand_func_arguments(
             current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(currently_compiling_materialize_key),
             self.arg_metas)
-        print("self.arg_metas", self.arg_metas, len(self.arg_metas))
+        print("self.arg_metas_expanded", self.arg_metas_expanded, len(self.arg_metas_expanded))
+    else:
+        self.arg_metas_expanded = list(self.arg_metas)
 
-    fused_args: list[Any] = [arg_meta.default for arg_meta in self.arg_metas]
+    fused_args: list[Any] = [arg_meta.default for arg_meta in self.arg_metas_expanded]
     len_args = len(args)
 
     if len_args > len(fused_args):
         arg_str = ", ".join(map(str, args))
-        expected_str = ", ".join(f"{arg.name} : {arg.annotation}" for arg in self.arg_metas)
+        expected_str = ", ".join(f"{arg.name} : {arg.annotation}" for arg in self.arg_metas_expanded)
         msg_l = []
         msg_l.append(f"Too many arguments. Expected ({expected_str}), got ({arg_str}).")
         for i in range(len_args):
-            if i < len(self.arg_metas):
-                msg_l.append(f" - {i} arg meta: {self.arg_metas[i].name} arg type: {type(args[i])}")
+            if i < len(self.arg_metas_expanded):
+                msg_l.append(f" - {i} arg meta: {self.arg_metas_expanded[i].name} arg type: {type(args[i])}")
             else:
                 msg_l.append(f" - {i} arg meta: <out of arg metas> arg type: {type(args[i])}")
         msg_l.append(f"In function: {self.func}")
@@ -391,7 +393,7 @@ def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], k
         fused_args[i] = arg
 
     for key, value in kwargs.items():
-        for i, arg in enumerate(self.arg_metas):
+        for i, arg in enumerate(self.arg_metas_expanded):
             if key == arg.name:
                 if i < len_args:
                     raise GsTaichiSyntaxError(f"Multiple values for argument '{key}'.")
@@ -403,11 +405,11 @@ def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], k
     missing_parameters = []
     for i, arg in enumerate(fused_args):
         if arg is inspect.Parameter.empty:
-            if self.arg_metas[i].annotation is inspect._empty:
-                missing_parameters.append(f"Parameter `{self.arg_metas[i].name}` missing.")
+            if self.arg_metas_expanded[i].annotation is inspect._empty:
+                missing_parameters.append(f"Parameter `{self.arg_metas_expanded[i].name}` missing.")
             else:
                 missing_parameters.append(
-                    f"Parameter `{self.arg_metas[i].name} : {self.arg_metas[i].annotation}` missing."
+                    f"Parameter `{self.arg_metas_expanded[i].name} : {self.arg_metas_expanded[i].annotation}` missing."
                 )
     if len(missing_parameters) > 0:
         msg_l = []
@@ -419,7 +421,7 @@ def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], k
         for i, arg in enumerate(fused_args):
             msg_l.append(f"  {i} {arg}")
         msg_l.append("arg metas:")
-        for i, arg in enumerate(self.arg_metas):
+        for i, arg in enumerate(self.arg_metas_expanded):
             msg_l.append(f"  {i} {arg}")
         raise GsTaichiSyntaxError("\n".join(msg_l))
     print("end of _process_args len(fused_args)", len(fused_args))
@@ -438,6 +440,7 @@ class Func:
         self.pyfunc = _pyfunc
         self.is_real_function = is_real_function
         self.arg_metas: list[ArgMetadata] = []
+        self.arg_metas_expanded: list[ArgMetadata] = []
         self.orig_arguments: list[ArgMetadata] = []
         self.return_type: tuple[Type, ...] | None = None
         self.extract_arguments()
@@ -917,6 +920,8 @@ class Kernel:
         self.autodiff_mode = autodiff_mode
         self.grad: "Kernel | None" = None
         self.arg_metas: list[ArgMetadata] = []
+        # after py dataclass expansion
+        self.arg_metas_expanded: list[ArgMetadata] = []
         self.return_type = None
         self.classkernel = _classkernel
         self.extract_arguments()

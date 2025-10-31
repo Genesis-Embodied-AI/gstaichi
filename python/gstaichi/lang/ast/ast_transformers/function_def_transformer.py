@@ -173,6 +173,7 @@ class FunctionDefTransformer:
         argument_type: Any,
         data: Any,
     ) -> None:
+        print("_transform_func_arg argument_name", argument_name, "argument_type", argument_type, "data", data, type(data))
         # Template arguments are passed by reference.
         if isinstance(argument_type, annotations.template):
             ctx.create_variable(argument_name, data)
@@ -194,6 +195,7 @@ class FunctionDefTransformer:
                     field.type.check_matched(data_child.get_type(), field.name)
                     ctx.create_variable(flat_name, data_child)
                 elif dataclasses.is_dataclass(data_child):
+                    print("is dataclass", data_child, type(data_child), "so calling recurisvey _transform_func_arg")
                     FunctionDefTransformer._transform_func_arg(
                         ctx,
                         flat_name,
@@ -261,13 +263,16 @@ class FunctionDefTransformer:
 
     @staticmethod
     def _transform_as_func(ctx: ASTTransformerContext, node: ast.FunctionDef, args: ast.arguments) -> None:
+        print("_transform_as_func args", ast.dump(args))
+        # print("_transform_as_func args types", [type(arg) for arg in args])
         # pylint: disable=import-outside-toplevel
         from gstaichi.lang.kernel_impl import Func
 
         assert isinstance(ctx.func, Func)
         assert ctx.argument_data is not None
         for data_i, data in enumerate(ctx.argument_data):
-            argument = ctx.func.arg_metas[data_i]
+            argument = ctx.func.arg_metas_expanded[data_i]
+            print("data_i", data_i, "data", data, type(data))
             FunctionDefTransformer._transform_func_arg(ctx, argument.name, argument.annotation, data)
 
         # deal with dataclasses
