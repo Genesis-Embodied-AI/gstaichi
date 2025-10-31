@@ -352,7 +352,7 @@ def _get_tree_and_ctx(
         is_real_function=is_real_function,
         autodiff_mode=autodiff_mode,
         raise_on_templated_floats=raise_on_templated_floats,
-        used_py_dataclass_parameters_collecting=current_kernel.used_py_dataclass_leaves_by_key[args_instance_key],
+        used_py_dataclass_parameters_collecting=current_kernel.used_py_dataclass_leaves_by_key_collecting[args_instance_key],
         used_py_dataclass_parameters_enforcing=used_py_dataclass_parameters_enforcing,
     )
     return tree, ctx
@@ -367,7 +367,7 @@ def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], k
         currently_compiling_materialize_key = current_kernel.currently_compiling_materialize_key
         assert currently_compiling_materialize_key is not None
         self.arg_metas = _kernel_impl_dataclass.expand_func_arguments(
-            current_kernel.used_py_dataclass_leaves_by_key[currently_compiling_materialize_key],
+            current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(currently_compiling_materialize_key),
             self.arg_metas)
         print("self.arg_metas", self.arg_metas, len(self.arg_metas))
 
@@ -471,13 +471,16 @@ class Func:
                 self.do_compile(key=key, args=args, arg_features=arg_features)
             self.current_kernel = None
             return self.func_call_rvalue(key=key, args=args)
+        current_args_key = self.current_kernel.currently_compiling_materialize_key
+        assert current_args_key is not None
+        used_by_dataclass_parameters_enforcing = self.current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(current_args_key)
         tree, ctx = _get_tree_and_ctx(
             self,
             is_kernel=False,
             args=args,
             ast_builder=self.current_kernel.ast_builder(),
             is_real_function=self.is_real_function,
-            used_py_dataclass_parameters_enforcing=None,
+            used_py_dataclass_parameters_enforcing=used_by_dataclass_parameters_enforcing,
         )
 
         struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
@@ -935,7 +938,10 @@ class Kernel:
         self.kernel_function_info: FunctionSourceInfo | None = None
         self.compiled_kernel_data_by_key: dict[CompiledKernelKeyType, CompiledKernelData] = {}
         self._last_compiled_kernel_data: CompiledKernelData | None = None  # for dev/debug
-        self.used_py_dataclass_leaves_by_key: dict[CompiledKernelKeyType, set[str]] = defaultdict(set)
+        # for collecting, we'll grab an empty set if it doesnt exist
+        self.used_py_dataclass_leaves_by_key_collecting: dict[CompiledKernelKeyType, set[str]] = defaultdict(set)
+        # however, for enforcing, we want None if it doesn't exist (we'll use .get() instead of [] )
+        self.used_py_dataclass_leaves_by_key_enforcing: dict[CompiledKernelKeyType, set[str]] = {}
         self.currently_compiling_materialize_key: CompiledKernelKeyType | None = None
 
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
@@ -952,7 +958,8 @@ class Kernel:
         self._last_compiled_kernel_data = None
         self.src_ll_cache_observations = SrcLlCacheObservations()
         self.fe_ll_cache_observations = FeLlCacheObservations()
-        self.used_py_dataclass_leaves_by_key = defaultdict(set)
+        self.used_py_dataclass_leaves_by_key_collecting = defaultdict(set)
+        self.used_py_dataclass_leaves_by_key_enforcing = {}
         self.currently_compiling_materialize_key = None
 
     def extract_arguments(self) -> None:
@@ -1066,6 +1073,9 @@ class Kernel:
             print("==================================")
             print("pass", _pass)
             print("")
+            if _pass == 1:
+                assert used_py_dataclass_parameters is not None
+                self.used_py_dataclass_leaves_by_key_enforcing[key] = used_py_dataclass_parameters
             tree, ctx = _get_tree_and_ctx(
                 self,
                 args=args,
@@ -1141,7 +1151,7 @@ class Kernel:
                     if not ctx.is_real_function and not ctx.only_parse_function_def:
                         if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
                             raise GsTaichiSyntaxError("Kernel has a return type but does not have a return statement")
-                    used_py_dataclass_parameters = self.used_py_dataclass_leaves_by_key[key]
+                    used_py_dataclass_parameters = self.used_py_dataclass_leaves_by_key_collecting[key]
                     print("used kernel paramaters", len(used_py_dataclass_parameters), used_py_dataclass_parameters)
                     # if self.func.__name__ == "add_equality_constraints":
                     #     asdfsadf
@@ -1190,7 +1200,7 @@ class Kernel:
         template_num = 0
         i_out = 0
         assert self.currently_compiling_materialize_key
-        used_py_dataclass_parameters = self.used_py_dataclass_leaves_by_key[self.currently_compiling_materialize_key]
+        used_py_dataclass_parameters = self.used_py_dataclass_leaves_by_key_collecting[self.currently_compiling_materialize_key]
         used_py_dataclass_parameters_dotted = set([p.replace("__ti_", ".")[1:] for p in used_py_dataclass_parameters])
         print("used_py_dataclass_parameters_dotted", used_py_dataclass_parameters_dotted)
         for i_in, val in enumerate(args):
