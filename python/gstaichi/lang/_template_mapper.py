@@ -38,10 +38,10 @@ class TemplateMapper:
         key = self.extract(raise_on_templated_floats, args)
         # print("key", key)
         try:
-            print("lookup args instance => ", self.mapping[key])
+            # print("lookup args instance => ", self.mapping[key])
             return self.mapping[key], key
         except KeyError:
             count = len(self.mapping)
             self.mapping[key] = count
-            print("lookup args instance => ", self.mapping[key])
+            # print("lookup args instance => ", self.mapping[key])
             return count, key

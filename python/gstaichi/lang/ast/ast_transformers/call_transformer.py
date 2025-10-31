@@ -270,7 +270,7 @@ class CallTransformer:
             added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(node.keywords)
 
             # create variables for the now-expanded dataclass members
-            print(">>> build_Call building expanded dataclass members")
+            # print(">>> build_Call building expanded dataclass members")
             ctx.expanding_dataclass_call_parameters = True
             for arg in added_args:
                 assert not hasattr(arg, "ptr")
@@ -279,7 +279,7 @@ class CallTransformer:
                 assert not hasattr(arg, "ptr")
                 build_stmt(ctx, arg)
             ctx.expanding_dataclass_call_parameters = False
-            print("<<< build_Call finishing building stmts")
+            # print("<<< build_Call finishing building stmts")
 
         # if any arg violates pure, then node also violates pure
         for arg in node.args:
@@ -332,9 +332,9 @@ class CallTransformer:
 
         CallTransformer._warn_if_is_external_func(ctx, node)
         try:
-            print("calling func...")
+            # print("calling func...")
             node.ptr = func(*args, **keywords)
-            print("... after calling func")
+            # print("... after calling func")
         except TypeError as e:
             module = inspect.getmodule(func)
             error_msg = re.sub(r"\bExpr\b", "GsTaichi Expression", str(e))
