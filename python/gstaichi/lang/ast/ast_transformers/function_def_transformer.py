@@ -181,6 +181,11 @@ class FunctionDefTransformer:
         if dataclasses.is_dataclass(argument_type):
             for field in dataclasses.fields(argument_type):
                 flat_name = create_flat_name(argument_name, field.name)
+                print("_transform_func_arg", flat_name, end="")
+                if ctx.used_py_dataclass_parameters_enforcing and flat_name not in ctx.used_py_dataclass_parameters_enforcing:
+                    print(" ❌")
+                    continue
+                print(" ✅")
                 data_child = getattr(data, field.name)
                 if isinstance(
                     data_child,
