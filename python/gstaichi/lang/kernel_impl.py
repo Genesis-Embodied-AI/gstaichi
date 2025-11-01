@@ -1241,7 +1241,8 @@ class Kernel:
 
         try:
             if not compiled_kernel_data:
-                compile_result: CompileResult = prog.compile_kernel(prog.config(), prog.get_device_caps(), t_kernel)
+                prog_config, prog_device_cap = prog.config(), prog.get_device_caps()
+                compile_result: CompileResult = prog.compile_kernel(prog_config, prog_device_cap, t_kernel)
                 if os.environ.get("TI_DUMP_KERNEL_CHECKSUMS", "0") == "1":
                     debug_dump_path = pathlib.Path(impl.current_cfg().debug_dump_path)
                     checksums_file_path = debug_dump_path / "checksums.csv"
@@ -1273,8 +1274,8 @@ class Kernel:
                     prog.store_fast_cache(
                         self.fast_checksum,
                         self.kernel_cpp,
-                        prog.config(),
-                        prog.get_device_caps(),
+                        prog_config,
+                        prog_device_cap,
                         compiled_kernel_data,
                     )
                     self.src_ll_cache_observations.cache_stored = True
@@ -1563,15 +1564,18 @@ def data_oriented(cls):
     Returns:
         The decorated class.
     """
+    getattribute_orig = cls.__getattribute__
 
     def _getattr(self, item):
+        nonlocal getattribute_orig
+
         method = cls.__dict__.get(item)
         method_type = type(method)
         is_property = method_type is property
         if is_property:
             x = method.fget
         else:
-            x = super(cls, self).__getattribute__(item)
+            x = getattribute_orig(self, item)
         if hasattr(x, "_is_wrapped_kernel"):
             if inspect.ismethod(x):
                 wrapped = x.__func__
