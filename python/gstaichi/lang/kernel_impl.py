@@ -1241,7 +1241,10 @@ class Kernel:
 
         try:
             if not compiled_kernel_data:
-                prog_config, prog_device_cap = prog.config(), prog.get_device_caps()
+                # Store Taichi program config and device cap for efficiency because they are used at multiple places
+                prog_config = prog.config()
+                prog_device_cap = prog.get_device_caps()
+
                 compile_result: CompileResult = prog.compile_kernel(prog_config, prog_device_cap, t_kernel)
                 if os.environ.get("TI_DUMP_KERNEL_CHECKSUMS", "0") == "1":
                     debug_dump_path = pathlib.Path(impl.current_cfg().debug_dump_path)
@@ -1564,6 +1567,11 @@ def data_oriented(cls):
     Returns:
         The decorated class.
     """
+    # Backup the original attribute getter before overwriting it.
+    # Note that this is faster, and more rigorous, to use this pattern over calling the parent method, ie
+    # `super(cls, self).__getattribute__`. Faster because it avoid relying on MRO at runtime, more rigorous
+    # because calling the parent method will by-pass the method `__getattribute__` that may already be
+    # overloaded by the original class.
     getattribute_orig = cls.__getattribute__
 
     def _getattr(self, item):
