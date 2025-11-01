@@ -731,10 +731,10 @@ def _recursive_set_args(
         idx = 0
         offset = indices[0]
         for field in needed_arg_fields.values():
-            field_name = field.name
-            field_full_name = f"{py_dataclass_basename}.{field_name}"
             if field._field_type is not _FIELD:
                 continue
+            field_name = field.name
+            field_full_name = py_dataclass_basename + "." + field_name
             if field_full_name not in used_py_dataclass_parameters:
                 continue
             # Storing attribute in a temporary to avoid repeated attribute lookup (~20ns penalty)
