@@ -31,8 +31,7 @@ def test_src_ll_cache1(tmp_path: pathlib.Path) -> None:
 
     ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
 
-    @ti.pure
-    @ti.kernel
+    @ti.kernel(fastcache=True)
     def has_pure() -> None:
         pass
 
