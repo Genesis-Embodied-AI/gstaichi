@@ -212,7 +212,7 @@ class CallTransformer:
         return tuple(added_args), tuple(args_new)
 
     @staticmethod
-    def _expand_Call_dataclass_kwargs(kwargs: list[ast.keyword]) -> tuple[list[ast.keyword], list[ast.keyword]]:
+    def _expand_Call_dataclass_kwargs(ctx: ASTTransformerContext, kwargs: list[ast.keyword]) -> tuple[list[ast.keyword], list[ast.keyword]]:
         """
         We require that each node has a .ptr attribute added to it, that contains
         the associated Python object
@@ -226,6 +226,11 @@ class CallTransformer:
                 for field in dataclasses.fields(dataclass_type):
                     src_name = create_flat_name(kwarg.value.id, field.name)
                     child_name = create_flat_name(kwarg.arg, field.name)
+                    print("_expand_Call_dataclass_args child_name", child_name, end="")
+                    if ctx.used_py_dataclass_parameters_enforcing and child_name not in ctx.used_py_dataclass_parameters_enforcing:
+                        print(" ❌")
+                        continue
+                    print(" ✅")
                     load_ctx = ast.Load()
                     src_node = ast.Name(
                         id=src_name,
@@ -246,7 +251,7 @@ class CallTransformer:
                     )
                     if dataclasses.is_dataclass(field.type):
                         kwarg_node.ptr = {child_name: field.type}
-                        _added_kwargs, _kwargs_new = CallTransformer._expand_Call_dataclass_kwargs([kwarg_node])
+                        _added_kwargs, _kwargs_new = CallTransformer._expand_Call_dataclass_kwargs(ctx, [kwarg_node])
                         kwargs_new.extend(_kwargs_new)
                         added_kwargs.extend(_added_kwargs)
                     else:
@@ -264,7 +269,7 @@ class CallTransformer:
         """
         print("")
         print("-------------------------------------")
-        print(node.func.id + "()")
+        print(ast.dump(node)[:80])
         print("")
         if get_decorator(ctx, node) in ["static", "static_assert"]:
             with ctx.static_scope_guard():
@@ -284,7 +289,7 @@ class CallTransformer:
             for arg in node.args:
                 print(" - arg", ast.dump(arg)[:80])
             added_args, node.args = CallTransformer._expand_Call_dataclass_args(ctx, node.args)
-            added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(node.keywords)
+            added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(ctx, node.keywords)
             print("<<< build_Call finished expanding")
 
             # create variables for the now-expanded dataclass members

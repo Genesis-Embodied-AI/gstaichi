@@ -1030,13 +1030,13 @@ def test_prune_used_leaves2():
 
     @ti.func
     def f1(i_b, md1: MyDataclass1, md2: MyDataclass2) -> None:
-        f2(i_b, md1, md2)
+        f2(i_b, md1=md1, md2=md2)
 
     @ti.kernel
     def k1(envs_idx: ti.types.NDArray[ti.i32, 1], md1: MyDataclass1, md2: MyDataclass2) -> None:
         for i_b_ in range(envs_idx.shape[0]):
             i_b = envs_idx[i_b_]
-            f1(i_b, md1, md2)
+            f1(i_b, md1=md1, md2=md2)
 
     envs_idx = ti.ndarray(ti.i32, (10,))
 
@@ -1054,7 +1054,7 @@ def test_prune_used_leaves2():
 
     print("")
     print("calling k1 with md")
-    k1(envs_idx, md1, md2)
+    k1(envs_idx, md1=md1, md2=md2)
     assert u1[0] == 111
     assert u2[0] == 222
     assert u3[0] == 123
