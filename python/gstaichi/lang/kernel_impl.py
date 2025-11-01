@@ -939,6 +939,7 @@ class Kernel:
         self.used_py_dataclass_leaves_by_key_collecting: dict[CompiledKernelKeyType, set[str]] = defaultdict(set)
         # however, for enforcing, we want None if it doesn't exist (we'll use .get() instead of [] )
         self.used_py_dataclass_leaves_by_key_enforcing: dict[CompiledKernelKeyType, set[str]] = {}
+        self.used_py_dataclass_leaves_by_key_enforcing_dotted: dict[CompiledKernelKeyType, set[str]] = {}
         self.currently_compiling_materialize_key: CompiledKernelKeyType | None = None
 
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
@@ -957,6 +958,7 @@ class Kernel:
         self.fe_ll_cache_observations = FeLlCacheObservations()
         self.used_py_dataclass_leaves_by_key_collecting = defaultdict(set)
         self.used_py_dataclass_leaves_by_key_enforcing = {}
+        self.used_py_dataclass_leaves_by_key_enforcing_dotted = {}
         self.currently_compiling_materialize_key = None
 
     def extract_arguments(self) -> None:
@@ -1077,6 +1079,7 @@ class Kernel:
                             break
                         used_py_dataclass_leaves_by_key_enforcing.add(joined)
                 self.used_py_dataclass_leaves_by_key_enforcing[key] = used_py_dataclass_leaves_by_key_enforcing
+                self.used_py_dataclass_leaves_by_key_enforcing_dotted[key] = set([p.replace("__ti_", ".")[1:] for p in used_py_dataclass_leaves_by_key_enforcing])
             tree, ctx = _get_tree_and_ctx(
                 self,
                 args=args,
@@ -1195,8 +1198,7 @@ class Kernel:
         template_num = 0
         i_out = 0
         assert self.currently_compiling_materialize_key
-        used_py_dataclass_parameters_enforcing = self.used_py_dataclass_leaves_by_key_enforcing[self.currently_compiling_materialize_key]
-        used_py_dataclass_parameters_enforcing_dotted = set([p.replace("__ti_", ".")[1:] for p in used_py_dataclass_parameters_enforcing])
+        used_py_dataclass_parameters_enforcing_dotted = self.used_py_dataclass_leaves_by_key_enforcing_dotted[self.currently_compiling_materialize_key]
         for i_in, val in enumerate(args):
             needed_ = self.arg_metas[i_in].annotation
             if needed_ is template or type(needed_) is template:
