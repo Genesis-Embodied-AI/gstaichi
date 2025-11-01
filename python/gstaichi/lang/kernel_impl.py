@@ -81,7 +81,6 @@ from gstaichi.types.utils import is_signed
 
 from .._test_tools import warnings_helper
 
-
 MAX_ARG_NUM = 512
 
 
@@ -356,7 +355,9 @@ def _get_tree_and_ctx(
         is_real_function=is_real_function,
         autodiff_mode=autodiff_mode,
         raise_on_templated_floats=raise_on_templated_floats,
-        used_py_dataclass_parameters_collecting=current_kernel.used_py_dataclass_leaves_by_key_collecting[args_instance_key],
+        used_py_dataclass_parameters_collecting=current_kernel.used_py_dataclass_leaves_by_key_collecting[
+            args_instance_key
+        ],
         used_py_dataclass_parameters_enforcing=used_py_dataclass_parameters_enforcing,
     )
     return tree, ctx
@@ -371,7 +372,8 @@ def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], k
         assert currently_compiling_materialize_key is not None
         self.arg_metas_expanded = _kernel_impl_dataclass.expand_func_arguments(
             current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(currently_compiling_materialize_key),
-            self.arg_metas)
+            self.arg_metas,
+        )
     else:
         self.arg_metas_expanded = list(self.arg_metas)
 
@@ -476,7 +478,9 @@ class Func:
             return self.func_call_rvalue(key=key, args=args)
         current_args_key = self.current_kernel.currently_compiling_materialize_key
         assert current_args_key is not None
-        used_by_dataclass_parameters_enforcing = self.current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(current_args_key)
+        used_by_dataclass_parameters_enforcing = self.current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(
+            current_args_key
+        )
         tree, ctx = _get_tree_and_ctx(
             self,
             is_kernel=False,
@@ -546,7 +550,11 @@ class Func:
 
     def do_compile(self, key: FunctionKey, args: tuple[Any, ...], arg_features: tuple[Any, ...]) -> None:
         tree, ctx = _get_tree_and_ctx(
-            self, is_kernel=False, args=args, arg_features=arg_features, is_real_function=self.is_real_function,
+            self,
+            is_kernel=False,
+            args=args,
+            arg_features=arg_features,
+            is_real_function=self.is_real_function,
             used_py_dataclass_parameters_enforcing=None,
         )
         fn = impl.get_runtime().prog.create_function(key)
@@ -1086,7 +1094,9 @@ class Kernel:
                 if self.compiled_kernel_data_by_key[key]:
                     self.src_ll_cache_observations.cache_loaded = True
                     self.used_py_dataclass_leaves_by_key_enforcing[key] = used_py_dataclass_parameters
-                    self.used_py_dataclass_leaves_by_key_enforcing_dotted[key] = set([tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_parameters])
+                    self.used_py_dataclass_leaves_by_key_enforcing_dotted[key] = set(
+                        [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_parameters]
+                    )
         elif self.gstaichi_callable and not self.gstaichi_callable.is_pure and self.runtime.print_non_pure:
             # The bit in caps should not be modified without updating corresponding test
             # freetext can be freely modified.
@@ -1112,7 +1122,9 @@ class Kernel:
                             break
                         used_py_dataclass_leaves_by_key_enforcing.add(joined)
                 self.used_py_dataclass_leaves_by_key_enforcing[key] = used_py_dataclass_leaves_by_key_enforcing
-                self.used_py_dataclass_leaves_by_key_enforcing_dotted[key] = set([tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_leaves_by_key_enforcing])
+                self.used_py_dataclass_leaves_by_key_enforcing_dotted[key] = set(
+                    [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_leaves_by_key_enforcing]
+                )
             tree, ctx = _get_tree_and_ctx(
                 self,
                 args=args,
@@ -1193,7 +1205,9 @@ class Kernel:
                     self.runtime._current_kernel = None
                     self.runtime._compiling_callable = None
 
-            gstaichi_kernel = impl.get_runtime().prog.create_kernel(gstaichi_ast_generator, kernel_name, self.autodiff_mode)
+            gstaichi_kernel = impl.get_runtime().prog.create_kernel(
+                gstaichi_ast_generator, kernel_name, self.autodiff_mode
+            )
             if _pass == 1:
                 assert key not in self.materialized_kernels
                 self.materialized_kernels[key] = gstaichi_kernel
@@ -1247,7 +1261,9 @@ class Kernel:
             template_num = 0
             i_out = 0
             assert self.currently_compiling_materialize_key
-            used_py_dataclass_parameters_enforcing_dotted = self.used_py_dataclass_leaves_by_key_enforcing_dotted[self.currently_compiling_materialize_key]
+            used_py_dataclass_parameters_enforcing_dotted = self.used_py_dataclass_leaves_by_key_enforcing_dotted[
+                self.currently_compiling_materialize_key
+            ]
             for i_in, val in enumerate(args):
                 needed_ = self.arg_metas[i_in].annotation
                 if needed_ is template or type(needed_) is template:
@@ -1348,7 +1364,8 @@ class Kernel:
                     src_hasher.store(
                         self.fast_checksum,
                         self.visited_functions,
-                        self.used_py_dataclass_leaves_by_key_enforcing[self.currently_compiling_materialize_key])
+                        self.used_py_dataclass_leaves_by_key_enforcing[self.currently_compiling_materialize_key],
+                    )
                     prog.store_fast_cache(
                         self.fast_checksum,
                         self.kernel_cpp,

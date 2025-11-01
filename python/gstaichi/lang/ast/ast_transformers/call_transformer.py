@@ -166,7 +166,9 @@ class CallTransformer:
         return args
 
     @staticmethod
-    def _expand_Call_dataclass_args(ctx: ASTTransformerContext, args: tuple[ast.stmt, ...]) -> tuple[tuple[ast.stmt, ...], tuple[ast.stmt, ...]]:
+    def _expand_Call_dataclass_args(
+        ctx: ASTTransformerContext, args: tuple[ast.stmt, ...]
+    ) -> tuple[tuple[ast.stmt, ...], tuple[ast.stmt, ...]]:
         """
         We require that each node has a .ptr attribute added to it, that contains
         the associated Python object
@@ -182,7 +184,10 @@ class CallTransformer:
                         child_name = create_flat_name(arg.id, field.name)
                     except Exception as e:
                         raise RuntimeError(f"Exception whilst processing {field.name} in {type(dataclass_type)}") from e
-                    if ctx.used_py_dataclass_parameters_enforcing and child_name not in ctx.used_py_dataclass_parameters_enforcing:
+                    if (
+                        ctx.used_py_dataclass_parameters_enforcing
+                        and child_name not in ctx.used_py_dataclass_parameters_enforcing
+                    ):
                         continue
                     load_ctx = ast.Load()
                     arg_node = ast.Name(
@@ -206,7 +211,9 @@ class CallTransformer:
         return tuple(added_args), tuple(args_new)
 
     @staticmethod
-    def _expand_Call_dataclass_kwargs(ctx: ASTTransformerContext, kwargs: list[ast.keyword]) -> tuple[list[ast.keyword], list[ast.keyword]]:
+    def _expand_Call_dataclass_kwargs(
+        ctx: ASTTransformerContext, kwargs: list[ast.keyword]
+    ) -> tuple[list[ast.keyword], list[ast.keyword]]:
         """
         We require that each node has a .ptr attribute added to it, that contains
         the associated Python object
@@ -220,7 +227,10 @@ class CallTransformer:
                 for field in dataclasses.fields(dataclass_type):
                     src_name = create_flat_name(kwarg.value.id, field.name)
                     child_name = create_flat_name(kwarg.arg, field.name)
-                    if ctx.used_py_dataclass_parameters_enforcing and child_name not in ctx.used_py_dataclass_parameters_enforcing:
+                    if (
+                        ctx.used_py_dataclass_parameters_enforcing
+                        and child_name not in ctx.used_py_dataclass_parameters_enforcing
+                    ):
                         continue
                     load_ctx = ast.Load()
                     src_node = ast.Name(

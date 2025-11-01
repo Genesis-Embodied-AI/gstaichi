@@ -49,9 +49,7 @@ class CacheValue(BaseModel):
 
 
 def store(
-    cache_key: str,
-    function_source_infos: Iterable[FunctionSourceInfo],
-    used_py_dataclass_leaves: set[str]
+    cache_key: str, function_source_infos: Iterable[FunctionSourceInfo], used_py_dataclass_leaves: set[str]
 ) -> None:
     """
     Note that unlike other caches, this cache is not going to store the actual value we want.
@@ -70,7 +68,10 @@ def store(
         return
     cache = PythonSideCache()
     hashed_function_source_infos = function_hasher.hash_functions(function_source_infos)
-    cache_value_obj = CacheValue(hashed_function_source_infos=list(hashed_function_source_infos), used_py_dataclass_leaves=used_py_dataclass_leaves)
+    cache_value_obj = CacheValue(
+        hashed_function_source_infos=list(hashed_function_source_infos),
+        used_py_dataclass_leaves=used_py_dataclass_leaves,
+    )
     cache.store(cache_key, cache_value_obj.model_dump_json())
 
 

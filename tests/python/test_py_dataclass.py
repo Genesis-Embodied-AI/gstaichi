@@ -890,7 +890,6 @@ def test_print_used_leaves():
         if ti.static(trigger_static):
             md.used1[2] = 444
 
-
     u1 = ti.ndarray(ti.i32, (10,))
     u2 = ti.ndarray(ti.i32, (10,))
     u3 = ti.ndarray(ti.i32, (10,))
@@ -954,7 +953,6 @@ def test_prune_used_leaves1():
         f1(md1, md2)
         if ti.static(trigger_static):
             md1.used1[2] = 444
-
 
     u1 = ti.ndarray(ti.i32, (10,))
     u2 = ti.ndarray(ti.i32, (10,))
@@ -1058,6 +1056,7 @@ def test_prune_used_leaves_fastcache1(tmp_path: Path):
     arch_name = ti.lang.impl.current_cfg().arch.name
     for _it in range(3):
         ti.init(arch=getattr(ti, arch_name), offline_cache_file_path=str(tmp_path), offline_cache=True)
+
         @dataclasses.dataclass
         class Nested1:
             n1: ti.types.NDArray[ti.i32, 1]
@@ -1094,7 +1093,6 @@ def test_prune_used_leaves_fastcache1(tmp_path: Path):
             f1(md1, md2)
             if ti.static(trigger_static):
                 md1.used1[2] = 444
-
 
         u1 = ti.ndarray(ti.i32, (10,))
         u2 = ti.ndarray(ti.i32, (10,))
@@ -1140,6 +1138,7 @@ def test_prune_used_leaves_fastcache2(tmp_path: Path):
     arch_name = ti.lang.impl.current_cfg().arch.name
     for _it in range(3):
         ti.init(arch=getattr(ti, arch_name), offline_cache_file_path=str(tmp_path), offline_cache=True)
+
         @dataclasses.dataclass
         class MyDataclass1:
             used1: ti.types.NDArray[ti.i32, 1]
