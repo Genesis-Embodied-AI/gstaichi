@@ -1,6 +1,7 @@
 import dataclasses
 import gc
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -896,8 +897,6 @@ def test_print_used_leaves():
     nu1 = ti.ndarray(ti.i32, (10,))
     md = MyDataclass(used1=u1, used2=u2, used3=u3, not_used=nu1)
 
-    print("")
-    print("calling k1 with md")
     u2[0] = 333
     k1(md, False)
     assert u1[0] == 222
@@ -905,8 +904,6 @@ def test_print_used_leaves():
     assert u1[1] == 333
     assert u1[2] == 0
 
-    print("")
-    print("calling k1 with trigger static")
     u1[0] = 0
     u1[1] = 0
     u1[2] = 0
@@ -974,8 +971,6 @@ def test_prune_used_leaves1():
     nu1b = ti.ndarray(ti.i32, (10,))
     md2 = MyDataclass2(used1=u1b, used2=u2b, used3=u3b, not_used=nu1b)
 
-    print("")
-    print("calling k1 with md")
     u2[0] = 333
     k1(md1, md2, False)
     assert u1[0] == 222
@@ -985,8 +980,6 @@ def test_prune_used_leaves1():
     assert u1b[5] == 555
     assert n1[0] == 777
 
-    print("")
-    print("calling k1 with trigger static")
     u1[0] = 0
     u1[1] = 0
     u1[2] = 0
@@ -1052,8 +1045,6 @@ def test_prune_used_leaves2():
     nu1b = ti.ndarray(ti.i32, (10,))
     md2 = MyDataclass2(used1=u1b, used2=u2b, used3=u3b, not_used=nu1b)
 
-    print("")
-    print("calling k1 with md")
     k1(envs_idx, md1=md1, md2=md2)
     assert u1[0] == 111
     assert u2[0] == 222
@@ -1062,18 +1053,144 @@ def test_prune_used_leaves2():
     assert u2b[0] == 444
     assert u3b[0] == 333
 
-    # print("")
-    # print("calling again")
-    # u1[0] = 0
-    # u2[0] = 0
-    # u3[0] = 0
-    # u1b[0] = 0
-    # u2b[0] = 0
-    # u3b[0] = 0
-    # k1(envs_idx, md1, md2)
-    # assert u1[0] == 111
-    # assert u2[0] == 222
-    # assert u3[0] == 123
-    # assert u1b[0] == 555
-    # assert u2b[0] == 444
-    # assert u3b[0] == 333
+
+def test_prune_used_leaves_fastcache1(tmp_path: Path):
+    arch_name = ti.lang.impl.current_cfg().arch.name
+    for _it in range(3):
+        ti.init(arch=getattr(ti, arch_name), offline_cache_file_path=str(tmp_path), offline_cache=True)
+        @dataclasses.dataclass
+        class Nested1:
+            n1: ti.types.NDArray[ti.i32, 1]
+            n1u: ti.types.NDArray[ti.i32, 1]
+
+        @dataclasses.dataclass
+        class MyDataclass1:
+            used1: ti.types.NDArray[ti.i32, 1]
+            used2: ti.types.NDArray[ti.i32, 1]
+            used3: ti.types.NDArray[ti.i32, 1]
+            not_used: ti.types.NDArray[ti.i32, 1]
+            nested1: Nested1
+
+        @dataclasses.dataclass
+        class MyDataclass2:
+            used1: ti.types.NDArray[ti.i32, 1]
+            used2: ti.types.NDArray[ti.i32, 1]
+            used3: ti.types.NDArray[ti.i32, 1]
+            not_used: ti.types.NDArray[ti.i32, 1]
+
+        @ti.func
+        def f1(md1: MyDataclass1, md2: MyDataclass2) -> None:
+            md1.used3[0] = 123
+            md2.used1[5] = 555
+            md2.used2[5] = 444
+            md2.used3[5] = 333
+            md1.nested1.n1[0] = 777
+
+        @ti.kernel(fastcache=True)
+        def k1(md1: MyDataclass1, md2: MyDataclass2, trigger_static: ti.Template) -> None:
+            md1.used1[0] = 222
+            md1.used1[1] = md1.used2[0]
+            # print(md.used2[0])
+            f1(md1, md2)
+            if ti.static(trigger_static):
+                md1.used1[2] = 444
+
+
+        u1 = ti.ndarray(ti.i32, (10,))
+        u2 = ti.ndarray(ti.i32, (10,))
+        u3 = ti.ndarray(ti.i32, (10,))
+        n1 = ti.ndarray(ti.i32, (10,))
+        nu1 = ti.ndarray(ti.i32, (10,))
+        n1u = ti.ndarray(ti.i32, (10,))
+        nested1 = Nested1(n1=n1, n1u=n1u)
+        md1 = MyDataclass1(used1=u1, used2=u2, used3=u3, not_used=nu1, nested1=nested1)
+
+        u1b = ti.ndarray(ti.i32, (10,))
+        u2b = ti.ndarray(ti.i32, (10,))
+        u3b = ti.ndarray(ti.i32, (10,))
+        nu1b = ti.ndarray(ti.i32, (10,))
+        md2 = MyDataclass2(used1=u1b, used2=u2b, used3=u3b, not_used=nu1b)
+
+        u2[0] = 333
+        k1(md1, md2, False)
+        assert u1[0] == 222
+        assert u3[0] == 123
+        assert u1[1] == 333
+        assert u1[2] == 0
+        assert u1b[5] == 555
+        assert n1[0] == 777
+
+        u1[0] = 0
+        u1[1] = 0
+        u1[2] = 0
+        u3[0] = 0
+        u2[0] = 333
+        u1b[5] = 0
+        n1[0] == 0
+        k1(md1, md2, True)
+        assert u1[0] == 222
+        assert u3[0] == 123
+        assert u1[1] == 333
+        assert u1[2] == 444
+        assert u1b[5] == 555
+        assert n1[0] == 777
+
+
+def test_prune_used_leaves_fastcache2(tmp_path: Path):
+    arch_name = ti.lang.impl.current_cfg().arch.name
+    for _it in range(3):
+        ti.init(arch=getattr(ti, arch_name), offline_cache_file_path=str(tmp_path), offline_cache=True)
+        @dataclasses.dataclass
+        class MyDataclass1:
+            used1: ti.types.NDArray[ti.i32, 1]
+            used2: ti.types.NDArray[ti.i32, 1]
+            used3: ti.types.NDArray[ti.i32, 1]
+            not_used: ti.types.NDArray[ti.i32, 1]
+
+        @dataclasses.dataclass
+        class MyDataclass2:
+            used1: ti.types.NDArray[ti.i32, 1]
+            used2: ti.types.NDArray[ti.i32, 1]
+            used3: ti.types.NDArray[ti.i32, 1]
+            not_used: ti.types.NDArray[ti.i32, 1]
+
+        @ti.func
+        def f2(i_b, md1: MyDataclass1, md2: MyDataclass2) -> None:
+            md1.used1[0] = 111
+            md1.used2[0] = 222
+            md1.used3[0] = 123
+            md2.used1[0] = 555
+            md2.used2[0] = 444
+            md2.used3[0] = 333
+
+        @ti.func
+        def f1(i_b, md1: MyDataclass1, md2: MyDataclass2) -> None:
+            f2(i_b, md1=md1, md2=md2)
+
+        @ti.kernel(fastcache=True)
+        def k1(envs_idx: ti.types.NDArray[ti.i32, 1], md1: MyDataclass1, md2: MyDataclass2) -> None:
+            for i_b_ in range(envs_idx.shape[0]):
+                i_b = envs_idx[i_b_]
+                f1(i_b, md1=md1, md2=md2)
+
+        envs_idx = ti.ndarray(ti.i32, (10,))
+
+        u1 = ti.ndarray(ti.i32, (10,))
+        u2 = ti.ndarray(ti.i32, (10,))
+        u3 = ti.ndarray(ti.i32, (10,))
+        nu1 = ti.ndarray(ti.i32, (10,))
+        md1 = MyDataclass1(used1=u1, used2=u2, used3=u3, not_used=nu1)
+
+        u1b = ti.ndarray(ti.i32, (10,))
+        u2b = ti.ndarray(ti.i32, (10,))
+        u3b = ti.ndarray(ti.i32, (10,))
+        nu1b = ti.ndarray(ti.i32, (10,))
+        md2 = MyDataclass2(used1=u1b, used2=u2b, used3=u3b, not_used=nu1b)
+
+        k1(envs_idx, md1=md1, md2=md2)
+        assert u1[0] == 111
+        assert u2[0] == 222
+        assert u3[0] == 123
+        assert u1b[0] == 555
+        assert u2b[0] == 444
+        assert u3b[0] == 333
