@@ -731,7 +731,8 @@ def _recursive_set_args(
         idx = 0
         offset = indices[0]
         for field in needed_arg_fields.values():
-            field_full_name = f"{py_dataclass_basename}.{field.name}"
+            field_name = field.name
+            field_full_name = f"{py_dataclass_basename}.{field_name}"
             if field._field_type is not _FIELD:
                 continue
             if field_full_name not in used_py_dataclass_parameters:
@@ -739,7 +740,7 @@ def _recursive_set_args(
             # Storing attribute in a temporary to avoid repeated attribute lookup (~20ns penalty)
             field_type = field.type
             assert not isinstance(field_type, str)
-            field_value = getattr(v, field.name)
+            field_value = getattr(v, field_name)
             num_args_, is_launch_ctx_cacheable_ = _recursive_set_args(
                 used_py_dataclass_parameters,
                 py_dataclass_basename + f".{field.name}",
