@@ -743,7 +743,7 @@ def _recursive_set_args(
             field_value = getattr(v, field_name)
             num_args_, is_launch_ctx_cacheable_ = _recursive_set_args(
                 used_py_dataclass_parameters,
-                py_dataclass_basename + f".{field.name}",
+                field_full_name,
                 launch_ctx,
                 launch_ctx_buffer,
                 field_type,
