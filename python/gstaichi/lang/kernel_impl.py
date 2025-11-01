@@ -358,6 +358,7 @@ def _get_tree_and_ctx(
 
 
 def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
+    print("_process_args() is_func", is_func, "args", [type(arg).__qualname__ for arg in args], len(args), "kwargs", kwargs, len(kwargs))
     if is_func:
         assert isinstance(self, Func)
         current_kernel = self.current_kernel
@@ -367,6 +368,8 @@ def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], k
         self.arg_metas_expanded = _kernel_impl_dataclass.expand_func_arguments(
             current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(currently_compiling_materialize_key),
             self.arg_metas)
+        # print("self.arg_metas_expanded", self.arg_metas_expanded, len(self.arg_metas_expanded))
+        print("self.arg_metas_expanded", len(self.arg_metas_expanded))
     else:
         self.arg_metas_expanded = list(self.arg_metas)
 
@@ -421,7 +424,7 @@ def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], k
         for i, arg in enumerate(self.arg_metas_expanded):
             msg_l.append(f"  {i} {arg}")
         raise GsTaichiSyntaxError("\n".join(msg_l))
-
+    print("end of _process_args len(fused_args)", len(fused_args))
     return tuple(fused_args)
 
 
@@ -451,6 +454,8 @@ class Func:
         self.current_kernel: Kernel | None = None
 
     def __call__(self: "Func", *args, **kwargs) -> Any:
+        print("Func.__call__", self.func.__name__)
+        print("impl.get_runtime().current_kernel", impl.get_runtime().current_kernel)
         self.current_kernel = impl.get_runtime().current_kernel
         args = _process_args(self, is_func=True, args=args, kwargs=kwargs)
 
@@ -486,6 +491,7 @@ class Func:
         tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
         ret = transform_tree(tree, ctx)
         self.current_kernel = None
+        print('end of Func.__call__')
         if not self.is_real_function:
             if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
                 raise GsTaichiSyntaxError("Function has a return type but does not have a return statement")
@@ -697,6 +703,7 @@ def _recursive_set_args(
     Note that templates don't set kernel args, and a single scalar, an external array (numpy or torch) or a taichi
     ndarray all set 1 kernel arg. Similarlty, a struct of N ndarrays would set N kernel args.
     """
+    print("used_py_dataclass_parameters", used_py_dataclass_parameters)
     if actual_argument_slot >= MAX_ARG_NUM:
         raise GsTaichiRuntimeError(
             f"The number of elements in kernel arguments is too big! Do not exceed {MAX_ARG_NUM} on "
@@ -731,11 +738,15 @@ def _recursive_set_args(
         offset = indices[0]
         for field in needed_arg_fields.values():
             if field._field_type is not _FIELD:
+                print(' ❌')
                 continue
             field_name = field.name
             field_full_name = py_dataclass_basename + (field_name,)
+            print("- recursive set args field", field_full_name, end='')
             if field_full_name not in used_py_dataclass_parameters:
+                print(' ❌')
                 continue
+            print(' ✅')
             # Storing attribute in a temporary to avoid repeated attribute lookup (~20ns penalty)
             field_type = field.type
             assert not isinstance(field_type, str)
@@ -795,6 +806,7 @@ def _recursive_set_args(
                     "Non contiguous numpy arrays are not supported, please call np.ascontiguousarray(arr) "
                     "before passing it into gstaichi kernel."
                 )
+            print("launch_ctx.set_arg_external_array_with_shape indices", indices)
             launch_ctx.set_arg_external_array_with_shape(indices, int(v.ctypes.data), v.nbytes, array_shape, 0)
         elif has_pytorch():
             import torch  # pylint: disable=C0415
@@ -1033,20 +1045,24 @@ class Kernel:
         self.currently_compiling_materialize_key = key
 
         if key in self.materialized_kernels:
+            print("key in materialized kernels")
             return
 
+        used_py_dataclass_parameters: set[str] | None = None
+
         if self.runtime.src_ll_cache and self.gstaichi_callable and self.gstaichi_callable.is_pure:
+            print("trying to load from fastcache")
             kernel_source_info, _src = get_source_info_and_src(self.func)
             self.fast_checksum = src_hasher.create_cache_key(
                 self.raise_on_templated_floats, kernel_source_info, args, self.arg_metas
             )
-            _used_py_dataclass_fields: set[str] | None = None
+            # used_py_dataclass_parameters: set[str] | None = None
             if self.fast_checksum:
                 self.src_ll_cache_observations.cache_key_generated = True
-                _used_py_dataclass_fields = src_hasher.load(self.fast_checksum)
-            print("materialize _used_by_dataclass_fields", _used_py_dataclass_fields)
+                used_py_dataclass_parameters = src_hasher.load(self.fast_checksum)
+            print("materialize _used_by_dataclass_fields", used_py_dataclass_parameters)
             # if self.fast_checksum and src_hasher.validate_cache_key(self.fast_checksum):
-            if _used_py_dataclass_fields is not None:
+            if used_py_dataclass_parameters is not None:
                 self.src_ll_cache_observations.cache_validated = True
                 prog = impl.get_runtime().prog
                 assert self.fast_checksum is not None
@@ -1057,9 +1073,10 @@ class Kernel:
                     prog.get_device_caps(),
                 )
                 if self.compiled_kernel_data_by_key[key]:
+                    print("loaded cache ok key", key, "used fields", used_py_dataclass_parameters)
                     self.src_ll_cache_observations.cache_loaded = True
-                    self.used_py_dataclass_leaves_by_key_enforcing[key] = _used_py_dataclass_fields
-                    self.used_py_dataclass_leaves_by_key_enforcing_dotted[key] = set([tuple(p.split("__ti_")[1:]) for p in _used_py_dataclass_fields])
+                    self.used_py_dataclass_leaves_by_key_enforcing[key] = used_py_dataclass_parameters
+                    self.used_py_dataclass_leaves_by_key_enforcing_dotted[key] = set([tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_parameters])
         elif self.gstaichi_callable and not self.gstaichi_callable.is_pure and self.runtime.print_non_pure:
             # The bit in caps should not be modified without updating corresponding test
             # freetext can be freely modified.
@@ -1071,8 +1088,9 @@ class Kernel:
         kernel_name = f"{self.func.__name__}_c{self.kernel_counter}_{key[1]}"
         _logging.trace(f"Materializing kernel {kernel_name} in {self.autodiff_mode}...")
 
-        used_py_dataclass_parameters: set[str] | None = None
-        for _pass in range(2):
+        range_begin = 0 if used_py_dataclass_parameters is None else 1
+        for _pass in range(range_begin, 2):
+            print("running pass", _pass)
             used_py_dataclass_leaves_by_key_enforcing = None
             if _pass == 1:
                 assert used_py_dataclass_parameters is not None
@@ -1152,6 +1170,7 @@ class Kernel:
                         )
                     if not used_py_dataclass_parameters:
                         struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
+                        print("struct locals for", self.func.__name__, len(struct_locals))
                     else:
                         struct_locals = used_py_dataclass_parameters
                     tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
@@ -1161,6 +1180,10 @@ class Kernel:
                         if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
                             raise GsTaichiSyntaxError("Kernel has a return type but does not have a return statement")
                     used_py_dataclass_parameters = self.used_py_dataclass_leaves_by_key_collecting[key]
+                    print("used kernel paramaters", len(used_py_dataclass_parameters), used_py_dataclass_parameters)
+                    # if self.func.__name__ == "add_equality_constraints":
+                    #     asdfsadf
+                    # asdfasdf
                 finally:
                     self.runtime.inside_kernel = False
                     self.runtime._current_kernel = None
@@ -1169,6 +1192,7 @@ class Kernel:
             gstaichi_kernel = impl.get_runtime().prog.create_kernel(gstaichi_ast_generator, kernel_name, self.autodiff_mode)
             if _pass == 1:
                 assert key not in self.materialized_kernels
+                print("storing materialized kernel for key", key)
                 self.materialized_kernels[key] = gstaichi_kernel
 
     def launch_kernel(self, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
