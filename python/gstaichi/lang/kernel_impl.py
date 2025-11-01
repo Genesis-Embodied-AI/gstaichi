@@ -1186,8 +1186,8 @@ class Kernel:
                 print("storing materialized kernel for key", key)
                 self.materialized_kernels[key] = gstaichi_kernel
         # self.currently_compiling_materialize_key = None
-        if self.func.__name__ == "kernel_forward_kinematics_links_geoms":
-            asdfsadf
+        # if self.func.__name__ == "kernel_forward_kinematics_links_geoms":
+        #     asdfsadf
 
     def launch_kernel(self, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
         assert len(args) == len(self.arg_metas), f"{len(self.arg_metas)} arguments needed but {len(args)} provided"
