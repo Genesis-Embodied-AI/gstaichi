@@ -359,7 +359,7 @@ def _get_tree_and_ctx(
 
 
 def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
-    print("_process_args() is_func", is_func, "args", args, len(args), "kwargs", kwargs, len(kwargs))
+    print("_process_args() is_func", is_func, "args", [type(arg).__qualname__ for arg in args], len(args), "kwargs", kwargs, len(kwargs))
     if is_func:
         assert isinstance(self, Func)
         current_kernel = self.current_kernel
@@ -369,7 +369,8 @@ def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], k
         self.arg_metas_expanded = _kernel_impl_dataclass.expand_func_arguments(
             current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(currently_compiling_materialize_key),
             self.arg_metas)
-        print("self.arg_metas_expanded", self.arg_metas_expanded, len(self.arg_metas_expanded))
+        # print("self.arg_metas_expanded", self.arg_metas_expanded, len(self.arg_metas_expanded))
+        print("self.arg_metas_expanded", len(self.arg_metas_expanded))
     else:
         self.arg_metas_expanded = list(self.arg_metas)
 
@@ -737,7 +738,7 @@ def _recursive_set_args(
         offset = indices[0]
         for field in needed_arg_fields.values():
             field_full_name = f"{py_dataclass_basename}.{field.name}"
-            print("field full name", field_full_name, end='')
+            print("- recursive set args field", field_full_name, end='')
             if field._field_type is not _FIELD:
                 print(' ❌')
                 continue
@@ -1089,7 +1090,6 @@ class Kernel:
                     split_param = param.split("__ti_")
                     for i in range(len(split_param), 0, -1):
                         joined = "__ti_".join(split_param[:i])
-                        print("joined", joined)
                         if joined in used_py_dataclass_leaves_by_key_enforcing:
                             break
                         used_py_dataclass_leaves_by_key_enforcing.add(joined)
@@ -1186,8 +1186,8 @@ class Kernel:
                 print("storing materialized kernel for key", key)
                 self.materialized_kernels[key] = gstaichi_kernel
         # self.currently_compiling_materialize_key = None
-        # if self.func.__name__ == "add_equality_constraints":
-        #     asdfsadf
+        if self.func.__name__ == "kernel_forward_kinematics_links_geoms":
+            asdfsadf
 
     def launch_kernel(self, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
         assert len(args) == len(self.arg_metas), f"{len(self.arg_metas)} arguments needed but {len(args)} provided"
@@ -1223,7 +1223,8 @@ class Kernel:
         used_py_dataclass_parameters_enforcing_dotted = set([p.replace("__ti_", ".")[1:] for p in used_py_dataclass_parameters_enforcing])
         print("used_py_dataclass_parameters_enforcing_dotted", used_py_dataclass_parameters_enforcing_dotted)
         for i_in, val in enumerate(args):
-            print("i_in", i_in, val, type(val))
+            # print("i_in", i_in, val, type(val))
+            print("i_in", i_in, type(val))
             needed_ = self.arg_metas[i_in].annotation
             if needed_ is template or type(needed_) is template:
                 template_num += 1

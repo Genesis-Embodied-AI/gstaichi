@@ -34,8 +34,8 @@ class Builder:
     def __call__(self, ctx: "ASTTransformerContext", node: ast.AST):
         method_name = "build_" + node.__class__.__name__
         method = getattr(self, method_name, None)
-        # indent = "  " * len(ctx.local_scopes)
-        # print(indent, method_name)
+        indent = "  " * len(ctx.local_scopes)
+        print(indent, ast.dump(node)[:100])
         try:
             if method is None:
                 error_msg = f'Unsupported node "{node.__class__.__name__}"'

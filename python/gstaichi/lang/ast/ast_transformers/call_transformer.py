@@ -174,6 +174,7 @@ class CallTransformer:
         args_new = []
         added_args = []
         for arg in args:
+            print("_expand_Call_dataclass_args arg", ast.dump(arg)[:80])
             val = arg.ptr
             if dataclasses.is_dataclass(val):
                 dataclass_type = val
@@ -205,6 +206,8 @@ class CallTransformer:
                         args_new.append(arg_node)
                         added_args.append(arg_node)
             else:
+                # arg_name = arg.id
+                # if ctx.used_py_dataclass_parameters_enforcing is None or not arg_name.startswith("__ti_") or arg_name in ctx.used_py_dataclass_parameters_enforcing:
                 args_new.append(arg)
         return tuple(added_args), tuple(args_new)
 
@@ -259,23 +262,33 @@ class CallTransformer:
         example ast:
         Call(func=Name(id='f2', ctx=Load()), args=[Name(id='my_struct_ab', ctx=Load())], keywords=[])
         """
+        print("")
+        print("-------------------------------------")
+        print(node.func.id + "()")
+        print("")
         if get_decorator(ctx, node) in ["static", "static_assert"]:
             with ctx.static_scope_guard():
                 build_stmt(ctx, node.func)
                 build_stmts(ctx, node.args)
                 build_stmts(ctx, node.keywords)
         else:
+            print(">>> build_Call building stmts")
             build_stmt(ctx, node.func)
             # creates variable for the dataclass itself (as well as other variables,
             # not related to dataclasses). Necessary for calling further child functions
             build_stmts(ctx, node.args)
             build_stmts(ctx, node.keywords)
+            print("<<< build_Call finished building stmts")
 
+            print(">>> build_Call expanding dataclass args")
+            for arg in node.args:
+                print(" - arg", ast.dump(arg)[:80])
             added_args, node.args = CallTransformer._expand_Call_dataclass_args(ctx, node.args)
             added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(node.keywords)
+            print("<<< build_Call finished expanding")
 
             # create variables for the now-expanded dataclass members
-            # print(">>> build_Call building expanded dataclass members")
+            print(">>> build_Call building expanded dataclass members")
             ctx.expanding_dataclass_call_parameters = True
             for arg in added_args:
                 assert not hasattr(arg, "ptr")
@@ -284,7 +297,7 @@ class CallTransformer:
                 assert not hasattr(arg, "ptr")
                 build_stmt(ctx, arg)
             ctx.expanding_dataclass_call_parameters = False
-            # print("<<< build_Call finishing building stmts")
+            print("<<< build_Call finishing building stmts")
 
         # if any arg violates pure, then node also violates pure
         for arg in node.args:
@@ -337,7 +350,7 @@ class CallTransformer:
 
         CallTransformer._warn_if_is_external_func(ctx, node)
         try:
-            print("calling func ", func.__name__, "... args", args, "keywords", keywords)
+            print("calling func ", func.__name__, "... args", [type(arg).__qualname__ for arg in args], len(args), "keywords", keywords, len(keywords))
             # prin
             node.ptr = func(*args, **keywords)
             # print("... after calling func")

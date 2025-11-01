@@ -94,11 +94,11 @@ def expand_func_arguments(used_py_dataclasses_parameters_enforcing: set[str] | N
     expanded_arguments = []
     print("expand_func_arguments used_py_dataclasses_parameters_enforcing", used_py_dataclasses_parameters_enforcing)
     for i, argument in enumerate(arguments):
-        print("expand_func_arguments i", i, "argument", argument, type(argument), "argumet.annotation", argument.annotation, type(argument.annotation))
+        print("expand_func_arguments i", i, argument.name)
         if dataclasses.is_dataclass(argument.annotation):
             for field in dataclasses.fields(argument.annotation):
                 child_name = create_flat_name(argument.name, field.name)
-                print("expand_func_arguments child_name", child_name)
+                print("expand_func_arguments child_name", child_name, end="")
                 if used_py_dataclasses_parameters_enforcing is not None and child_name not in used_py_dataclasses_parameters_enforcing:
                     print(" ❌")
                     continue
@@ -119,9 +119,10 @@ def expand_func_arguments(used_py_dataclasses_parameters_enforcing: set[str] | N
                     expanded_arguments.append(new_argument)
         else:
             if not argument.name.startswith("__ti_") or used_py_dataclasses_parameters_enforcing is None or argument.name in used_py_dataclasses_parameters_enforcing:
-                print("expand_func_arguments directly adding", argument)
+                print("expand_func_arguments directly adding", argument.name)
                 expanded_arguments.append(argument)
-    print("expand_func_arguments expanded", expanded_arguments, len(expanded_arguments))
+    # print("expand_func_arguments expanded", expanded_arguments, len(expanded_arguments))
+    print("expand_func_arguments expanded", len(expanded_arguments))
     return expanded_arguments
 
 

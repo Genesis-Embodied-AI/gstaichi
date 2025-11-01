@@ -75,7 +75,7 @@ def boundary_type_cast_warning(expression: Expr) -> None:
 class ASTTransformer(Builder):
     @staticmethod
     def build_Name(ctx: ASTTransformerContext, node: ast.Name):
-        print("build Name", ast.dump(node))
+        # print("build Name", ast.dump(node))
         if node.id.startswith("__ti_") and not ctx.expanding_dataclass_call_parameters:
             # print("id(ctx)", id(ctx))
             ctx.used_py_dataclass_parameters_collecting.add(node.id)
@@ -626,7 +626,7 @@ class ASTTransformer(Builder):
         # whether it is a method of Dynamic SNode and build the expression if it is by calling
         # build_attribute_if_is_dynamic_snode_method. If we find that it is not a method of Dynamic SNode,
         # we continue to process it as a normal attribute node.
-        print("build Name", ast.dump(node))
+        # print("build Attribute", ast.dump(node))
         from gstaichi import math as ti_math  # pylint: disable=import-outside-toplevel
 
         try:

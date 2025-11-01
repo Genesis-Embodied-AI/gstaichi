@@ -2,7 +2,7 @@
 
 import ast
 import dataclasses
-from typing import Any, Callable
+from typing import Any, Callable, Type
 
 from gstaichi._lib.core.gstaichi_python import (
     BoundaryMode,
@@ -94,16 +94,16 @@ class FunctionDefTransformer:
         argument_type: Any,
         this_arg_features: tuple[Any, ...],
     ) -> None:
-        print("_transform_kernel_arg ctx.used_py_dataclass_parameters_enforcing", ctx.used_py_dataclass_parameters_enforcing)
+        # print("_transform_kernel_arg ctx.used_py_dataclass_parameters_enforcing", ctx.used_py_dataclass_parameters_enforcing)
         if dataclasses.is_dataclass(argument_type):
             ctx.create_variable(argument_name, argument_type)
             for field_idx, field in enumerate(dataclasses.fields(argument_type)):
                 flat_name = create_flat_name(argument_name, field.name)
                 print("function_def_transformer._transform_kernel_arg flat_name", flat_name, end='')
                 if ctx.used_py_dataclass_parameters_enforcing and flat_name not in ctx.used_py_dataclass_parameters_enforcing:
-                    print("...skipped ❌")
+                    print(" ❌")
                     continue
-                print("...accepted ✅")
+                print(" ✅")
                 # if a field is a dataclass, then feed back into process_kernel_arg recursively
                 if dataclasses.is_dataclass(field.type):
                     FunctionDefTransformer._transform_kernel_arg(
@@ -113,7 +113,7 @@ class FunctionDefTransformer:
                         this_arg_features[field_idx],
                     )
                 else:
-                    print("FunctionDefTransformer._decl_and_create_variable", flat_name)
+                    # print("FunctionDefTransformer._decl_and_create_variable", flat_name)
                     result, obj = FunctionDefTransformer._decl_and_create_variable(
                         ctx,
                         field.type,
@@ -171,10 +171,10 @@ class FunctionDefTransformer:
     def _transform_func_arg(
         ctx: ASTTransformerContext,
         argument_name: str,
-        argument_type: Any,
+        argument_type: Type,
         data: Any,
     ) -> None:
-        print("_transform_func_arg argument_name", argument_name, "argument_type", argument_type, "data", data, type(data))
+        print("  _transform_func_arg", argument_name, "argument_type", argument_type.__class__.__qualname__, "data", type(data).__qualname__)
         # Template arguments are passed by reference.
         if isinstance(argument_type, annotations.template):
             ctx.create_variable(argument_name, data)
@@ -264,16 +264,17 @@ class FunctionDefTransformer:
 
     @staticmethod
     def _transform_as_func(ctx: ASTTransformerContext, node: ast.FunctionDef, args: ast.arguments) -> None:
-        print("_transform_as_func args", ast.dump(args))
+        print("_transform_as_func args", [arg.arg for arg in args.args])
         # print("_transform_as_func args types", [type(arg) for arg in args])
         # pylint: disable=import-outside-toplevel
         from gstaichi.lang.kernel_impl import Func
 
         assert isinstance(ctx.func, Func)
         assert ctx.argument_data is not None
+        print('enumerate ctx.argument_data:')
         for data_i, data in enumerate(ctx.argument_data):
             argument = ctx.func.arg_metas_expanded[data_i]
-            print("data_i", data_i, "data", data, type(data))
+            print("- data_i", data_i, type(data).__qualname__)
             FunctionDefTransformer._transform_func_arg(ctx, argument.name, argument.annotation, data)
 
         # deal with dataclasses
