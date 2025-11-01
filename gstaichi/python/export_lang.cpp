@@ -634,6 +634,7 @@ void export_lang(py::module &m) {
           py::return_value_policy::reference);
 
   py::class_<LaunchContextBuilder>(m, "KernelLaunchContext")
+      .def("copy", &LaunchContextBuilder::copy)
       .def("set_arg_int", &LaunchContextBuilder::set_arg_int)
       .def("set_args_int", &LaunchContextBuilder::set_args_int)
       .def("set_arg_uint", &LaunchContextBuilder::set_arg_uint)
