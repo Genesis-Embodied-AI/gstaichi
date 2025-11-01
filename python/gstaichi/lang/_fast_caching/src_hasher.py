@@ -62,7 +62,7 @@ def store(
         - ie the list of function source infos
 
     Update! We are now going to store parameter pruning infomation, which is:
-    - used_py_dataclass_leaves_by_key_enforcing: dict[CompiledKernelKeyType, set[str]]
+    - used_py_dataclass_leaves: set[str]
     """
     if not cache_key:
         return
