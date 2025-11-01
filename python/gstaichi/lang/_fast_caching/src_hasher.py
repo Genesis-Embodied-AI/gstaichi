@@ -9,6 +9,7 @@ from gstaichi import _logging
 
 from .._wrap_inspect import FunctionSourceInfo
 from ..kernel_arguments import ArgMetadata
+from ..kernel_impl_types import CompiledKernelKeyType
 from . import args_hasher, config_hasher, function_hasher
 from .fast_caching_types import HashedFunctionSourceInfo
 from .hash_utils import hash_iterable_strings
@@ -39,15 +40,20 @@ def create_cache_key(
         return None
     kernel_hash = function_hasher.hash_kernel(kernel_source_info)
     config_hash = config_hasher.hash_compile_config()
-    cache_key = hash_iterable_strings((kernel_hash, args_hash, config_hash))
+    cache_key = hash_iterable_strings((kernel_hash, args_hash, config_hash, "pruned"))
     return cache_key
 
 
 class CacheValue(BaseModel):
     hashed_function_source_infos: list[HashedFunctionSourceInfo]
+    used_py_dataclass_leaves: set[str]
 
 
-def store(cache_key: str, function_source_infos: Iterable[FunctionSourceInfo]) -> None:
+def store(
+    cache_key: str,
+    function_source_infos: Iterable[FunctionSourceInfo],
+    used_py_dataclass_leaves: set[str]
+) -> None:
     """
     Note that unlike other caches, this cache is not going to store the actual value we want.
     This cache is only used for verification that our cache key is valid. Big picture:
@@ -57,37 +63,42 @@ def store(cache_key: str, function_source_infos: Iterable[FunctionSourceInfo]) -
         - i.e. is our cache key still valid?
     - the python side cache contains information we will use to verify that our cache key is valid
         - ie the list of function source infos
+
+    Update! We are now going to store parameter pruning infomation, which is:
+    - used_py_dataclass_leaves_by_key_enforcing: dict[CompiledKernelKeyType, set[str]]
     """
     if not cache_key:
         return
     cache = PythonSideCache()
     hashed_function_source_infos = function_hasher.hash_functions(function_source_infos)
-    cache_value_obj = CacheValue(hashed_function_source_infos=list(hashed_function_source_infos))
-    cache.store(cache_key, cache_value_obj.json())
+    cache_value_obj = CacheValue(hashed_function_source_infos=list(hashed_function_source_infos), used_py_dataclass_leaves=used_py_dataclass_leaves)
+    cache.store(cache_key, cache_value_obj.model_dump_json())
 
 
-def _try_load(cache_key: str) -> Sequence[HashedFunctionSourceInfo] | None:
+def _try_load(cache_key: str) -> tuple[Sequence[HashedFunctionSourceInfo], set[str]] | tuple[None, None]:
     cache = PythonSideCache()
     maybe_cache_value_json = cache.try_load(cache_key)
     if maybe_cache_value_json is None:
-        return None
+        return None, None
     try:
-        cache_value_obj = CacheValue.parse_raw(maybe_cache_value_json)
+        cache_value_obj = CacheValue.model_validate_json(maybe_cache_value_json)
     except (pydantic.ValidationError, json.JSONDecodeError, UnicodeDecodeError) as e:
         warnings.warn(f"Failed to parse cache file {e}")
-        return None
-    return cache_value_obj.hashed_function_source_infos
+        return None, None
+    return cache_value_obj.hashed_function_source_infos, cache_value_obj.used_py_dataclass_leaves
 
 
-def validate_cache_key(cache_key: str) -> bool:
+def load(cache_key: str) -> set[str] | None:
     """
     loads function source infos from cache, if available
     checks the hashes against the current source code
     """
-    maybe_hashed_function_source_infos = _try_load(cache_key)
-    if not maybe_hashed_function_source_infos:
-        return False
-    return function_hasher.validate_hashed_function_infos(maybe_hashed_function_source_infos)
+    maybe_hashed_function_source_infos, used_py_dataclass_leaves = _try_load(cache_key)
+    if maybe_hashed_function_source_infos is None or used_py_dataclass_leaves is None:
+        return None
+    if function_hasher.validate_hashed_function_infos(maybe_hashed_function_source_infos):
+        return used_py_dataclass_leaves
+    return None
 
 
 def dump_stats() -> None:

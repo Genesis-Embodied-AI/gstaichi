@@ -74,10 +74,9 @@ from gstaichi.types import (
 from gstaichi.types.compound_types import CompoundType
 from gstaichi.types.enums import AutodiffMode, Layout
 from gstaichi.types.utils import is_signed
+from .kernel_impl_types import CompiledKernelKeyType
 
 from .._test_tools import warnings_helper
-
-CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
 
 
 MAX_ARG_NUM = 512
@@ -1041,11 +1040,16 @@ class Kernel:
             self.fast_checksum = src_hasher.create_cache_key(
                 self.raise_on_templated_floats, kernel_source_info, args, self.arg_metas
             )
+            _used_py_dataclass_fields: set[str] | None = None
             if self.fast_checksum:
                 self.src_ll_cache_observations.cache_key_generated = True
-            if self.fast_checksum and src_hasher.validate_cache_key(self.fast_checksum):
+                _used_py_dataclass_fields = src_hasher.load(self.fast_checksum)
+            print("materialize _used_by_dataclass_fields", _used_py_dataclass_fields)
+            # if self.fast_checksum and src_hasher.validate_cache_key(self.fast_checksum):
+            if _used_py_dataclass_fields is not None:
                 self.src_ll_cache_observations.cache_validated = True
                 prog = impl.get_runtime().prog
+                assert self.fast_checksum is not None
                 self.compiled_kernel_data_by_key[key] = prog.load_fast_cache(
                     self.fast_checksum,
                     self.func.__name__,
@@ -1054,6 +1058,8 @@ class Kernel:
                 )
                 if self.compiled_kernel_data_by_key[key]:
                     self.src_ll_cache_observations.cache_loaded = True
+                    self.used_py_dataclass_leaves_by_key_enforcing[key] = _used_py_dataclass_fields
+                    self.used_py_dataclass_leaves_by_key_enforcing_dotted[key] = set([tuple(p.split("__ti_")[1:]) for p in _used_py_dataclass_fields])
         elif self.gstaichi_callable and not self.gstaichi_callable.is_pure and self.runtime.print_non_pure:
             # The bit in caps should not be modified without updating corresponding test
             # freetext can be freely modified.
@@ -1270,7 +1276,11 @@ class Kernel:
                 if compile_result.cache_hit:
                     self.fe_ll_cache_observations.cache_hit = True
                 if self.fast_checksum:
-                    src_hasher.store(self.fast_checksum, self.visited_functions)
+                    print("self.used_py_dataclass_leaves_by_key_enforcing[self.currently_compiling_materialize_key]", self.used_py_dataclass_leaves_by_key_enforcing[self.currently_compiling_materialize_key])
+                    src_hasher.store(
+                        self.fast_checksum,
+                        self.visited_functions,
+                        self.used_py_dataclass_leaves_by_key_enforcing[self.currently_compiling_materialize_key])
                     prog.store_fast_cache(
                         self.fast_checksum,
                         self.kernel_cpp,
