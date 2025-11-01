@@ -1038,9 +1038,8 @@ class Kernel:
 
         if self.runtime.src_ll_cache and self.gstaichi_callable and self.gstaichi_callable.is_pure:
             kernel_source_info, _src = get_source_info_and_src(self.func)
-            raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
             self.fast_checksum = src_hasher.create_cache_key(
-                raise_on_templated_floats, kernel_source_info, args, self.arg_metas
+                self.raise_on_templated_floats, kernel_source_info, args, self.arg_metas
             )
             if self.fast_checksum:
                 self.src_ll_cache_observations.cache_key_generated = True
@@ -1319,7 +1318,7 @@ class Kernel:
 
     def ensure_compiled(self, *args: tuple[Any, ...]) -> tuple[Callable, int, AutodiffMode]:
         try:
-            instance_id, arg_features = self.mapper.lookup(impl.current_cfg().raise_on_templated_floats, args)
+            instance_id, arg_features = self.mapper.lookup(self.raise_on_templated_floats, args)
         except Exception as e:
             raise type(e)(f"exception while trying to ensure compiled {self.func}:\n{e}") from e
         key = (self.func, instance_id, self.autodiff_mode)
@@ -1330,6 +1329,8 @@ class Kernel:
     # Thus this part needs to be fast. (i.e. < 3us on a 4 GHz x64 CPU)
     @_shell_pop_print
     def __call__(self, *args, **kwargs) -> Any:
+        self.raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
+
         args = _process_args(self, is_func=False, args=args, kwargs=kwargs)
 
         # Transform the primal kernel to forward mode grad kernel
