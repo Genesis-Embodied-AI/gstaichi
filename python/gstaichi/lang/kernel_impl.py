@@ -675,8 +675,8 @@ _FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = KernelBatchedArgType
 
 
 def _recursive_set_args(
-    used_py_dataclass_parameters: set[str],
-    py_dataclass_basename: str,
+    used_py_dataclass_parameters: set[tuple[str, ...]],
+    py_dataclass_basename: tuple[str, ...],
     launch_ctx: KernelLaunchContext,
     launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]],
     needed_arg_type: Type,
@@ -734,7 +734,7 @@ def _recursive_set_args(
             if field._field_type is not _FIELD:
                 continue
             field_name = field.name
-            field_full_name = py_dataclass_basename + "." + field_name
+            field_full_name = (*py_dataclass_basename, field_name)
             if field_full_name not in used_py_dataclass_parameters:
                 continue
             # Storing attribute in a temporary to avoid repeated attribute lookup (~20ns penalty)
@@ -743,7 +743,7 @@ def _recursive_set_args(
             field_value = getattr(v, field_name)
             num_args_, is_launch_ctx_cacheable_ = _recursive_set_args(
                 used_py_dataclass_parameters,
-                py_dataclass_basename + f".{field.name}",
+                field_full_name,
                 launch_ctx,
                 launch_ctx_buffer,
                 field_type,
@@ -940,7 +940,7 @@ class Kernel:
         self.used_py_dataclass_leaves_by_key_collecting: dict[CompiledKernelKeyType, set[str]] = defaultdict(set)
         # however, for enforcing, we want None if it doesn't exist (we'll use .get() instead of [] )
         self.used_py_dataclass_leaves_by_key_enforcing: dict[CompiledKernelKeyType, set[str]] = {}
-        self.used_py_dataclass_leaves_by_key_enforcing_dotted: dict[CompiledKernelKeyType, set[str]] = {}
+        self.used_py_dataclass_leaves_by_key_enforcing_dotted: dict[CompiledKernelKeyType, set[tuple[str, ...]]] = {}
         self.currently_compiling_materialize_key: CompiledKernelKeyType | None = None
 
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
@@ -1079,7 +1079,7 @@ class Kernel:
                             break
                         used_py_dataclass_leaves_by_key_enforcing.add(joined)
                 self.used_py_dataclass_leaves_by_key_enforcing[key] = used_py_dataclass_leaves_by_key_enforcing
-                self.used_py_dataclass_leaves_by_key_enforcing_dotted[key] = set([p.replace("__ti_", ".")[1:] for p in used_py_dataclass_leaves_by_key_enforcing])
+                self.used_py_dataclass_leaves_by_key_enforcing_dotted[key] = set([tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_leaves_by_key_enforcing])
             tree, ctx = _get_tree_and_ctx(
                 self,
                 args=args,
@@ -1207,7 +1207,7 @@ class Kernel:
                 continue
             num_args_, is_launch_ctx_cacheable_ = _recursive_set_args(
                 used_py_dataclass_parameters_enforcing_dotted,
-                self.arg_metas[i_in].name,
+                (self.arg_metas[i_in].name,),
                 launch_ctx,
                 launch_ctx_buffer,
                 needed_,
