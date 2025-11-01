@@ -920,7 +920,7 @@ def test_print_used_leaves():
 
 
 @test_utils.test()
-def test_prune_used_leaves():
+def test_prune_used_leaves1():
     @dataclasses.dataclass
     class Nested1:
         n1: ti.types.NDArray[ti.i32, 1]
@@ -1001,3 +1001,79 @@ def test_prune_used_leaves():
     assert u1[2] == 444
     assert u1b[5] == 555
     assert n1[0] == 777
+
+
+@test_utils.test()
+def test_prune_used_leaves2():
+    @dataclasses.dataclass
+    class MyDataclass1:
+        used1: ti.types.NDArray[ti.i32, 1]
+        used2: ti.types.NDArray[ti.i32, 1]
+        used3: ti.types.NDArray[ti.i32, 1]
+        not_used: ti.types.NDArray[ti.i32, 1]
+
+    @dataclasses.dataclass
+    class MyDataclass2:
+        used1: ti.types.NDArray[ti.i32, 1]
+        used2: ti.types.NDArray[ti.i32, 1]
+        used3: ti.types.NDArray[ti.i32, 1]
+        not_used: ti.types.NDArray[ti.i32, 1]
+
+    @ti.func
+    def f2(i_b, md1: MyDataclass1, md2: MyDataclass2) -> None:
+        md1.used1[0] = 111
+        md1.used2[0] = 222
+        md1.used3[0] = 123
+        md2.used1[0] = 555
+        md2.used2[0] = 444
+        md2.used3[0] = 333
+
+    @ti.func
+    def f1(i_b, md1: MyDataclass1, md2: MyDataclass2) -> None:
+        f2(i_b, md1=md1, md2=md2)
+
+    @ti.kernel
+    def k1(envs_idx: ti.types.NDArray[ti.i32, 1], md1: MyDataclass1, md2: MyDataclass2) -> None:
+        for i_b_ in range(envs_idx.shape[0]):
+            i_b = envs_idx[i_b_]
+            f1(i_b, md1=md1, md2=md2)
+
+    envs_idx = ti.ndarray(ti.i32, (10,))
+
+    u1 = ti.ndarray(ti.i32, (10,))
+    u2 = ti.ndarray(ti.i32, (10,))
+    u3 = ti.ndarray(ti.i32, (10,))
+    nu1 = ti.ndarray(ti.i32, (10,))
+    md1 = MyDataclass1(used1=u1, used2=u2, used3=u3, not_used=nu1)
+
+    u1b = ti.ndarray(ti.i32, (10,))
+    u2b = ti.ndarray(ti.i32, (10,))
+    u3b = ti.ndarray(ti.i32, (10,))
+    nu1b = ti.ndarray(ti.i32, (10,))
+    md2 = MyDataclass2(used1=u1b, used2=u2b, used3=u3b, not_used=nu1b)
+
+    print("")
+    print("calling k1 with md")
+    k1(envs_idx, md1=md1, md2=md2)
+    assert u1[0] == 111
+    assert u2[0] == 222
+    assert u3[0] == 123
+    assert u1b[0] == 555
+    assert u2b[0] == 444
+    assert u3b[0] == 333
+
+    # print("")
+    # print("calling again")
+    # u1[0] = 0
+    # u2[0] = 0
+    # u3[0] = 0
+    # u1b[0] = 0
+    # u2b[0] = 0
+    # u3b[0] = 0
+    # k1(envs_idx, md1, md2)
+    # assert u1[0] == 111
+    # assert u2[0] == 222
+    # assert u3[0] == 123
+    # assert u1b[0] == 555
+    # assert u2b[0] == 444
+    # assert u3b[0] == 333
