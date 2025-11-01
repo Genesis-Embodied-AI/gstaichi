@@ -1146,7 +1146,6 @@ class Kernel:
                         )
                     if not used_py_dataclass_parameters:
                         struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
-                        # print("struct locals for", self.func.__name__, len(struct_locals))
                     else:
                         struct_locals = used_py_dataclass_parameters
                     tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
@@ -1156,8 +1155,6 @@ class Kernel:
                         if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
                             raise GsTaichiSyntaxError("Kernel has a return type but does not have a return statement")
                     used_py_dataclass_parameters = self.used_py_dataclass_leaves_by_key_collecting[key]
-                    # print("=============================================================")
-                    # print("used kernel paramaters for", self.func.__name__, len(used_py_dataclass_parameters), used_py_dataclass_parameters)
                 finally:
                     self.runtime.inside_kernel = False
                     self.runtime._current_kernel = None
