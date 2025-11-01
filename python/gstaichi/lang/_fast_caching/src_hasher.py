@@ -9,7 +9,6 @@ from gstaichi import _logging
 
 from .._wrap_inspect import FunctionSourceInfo
 from ..kernel_arguments import ArgMetadata
-from ..kernel_impl_types import CompiledKernelKeyType
 from . import args_hasher, config_hasher, function_hasher
 from .fast_caching_types import HashedFunctionSourceInfo
 from .hash_utils import hash_iterable_strings

@@ -74,7 +74,6 @@ from gstaichi.types import (
 from gstaichi.types.compound_types import CompoundType
 from gstaichi.types.enums import AutodiffMode, Layout
 from gstaichi.types.utils import is_signed
-from .kernel_impl_types import CompiledKernelKeyType
 
 from .._test_tools import warnings_helper
 
@@ -83,6 +82,8 @@ MAX_ARG_NUM = 512
 
 
 _arch_cuda = _ti_core.Arch.cuda
+
+CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
 
 
 class GsTaichiCallable:
