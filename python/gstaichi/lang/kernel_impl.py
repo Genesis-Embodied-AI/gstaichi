@@ -460,9 +460,7 @@ class Func:
         self.current_kernel: Kernel | None = None
 
     def __call__(self: "Func", *args, **kwargs) -> Any:
-        print("impl.inside_kernel()", impl.inside_kernel(), "self.pyfunc", self.pyfunc)
         self.current_kernel = impl.get_runtime().current_kernel if impl.inside_kernel() else None
-        # if impl.inside_kernel():
         args = _process_args(self, is_func=True, is_pyfunc=self.pyfunc, args=args, kwargs=kwargs)
 
         if not impl.inside_kernel():
@@ -471,7 +469,6 @@ class Func:
             return self.func(*args)
 
         assert self.current_kernel is not None
-        # self.current_kernel = impl.get_runtime().current_kernel
 
         if self.is_real_function:
             if self.current_kernel.autodiff_mode != AutodiffMode.NONE:
