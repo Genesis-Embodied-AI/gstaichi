@@ -875,11 +875,14 @@ def test_print_used_leaves():
         used1: ti.types.NDArray[ti.i32, 1]
         used2: ti.types.NDArray[ti.i32, 1]
         used3: ti.types.NDArray[ti.i32, 1]
+        an_int: ti.i32
+        not_used_int: ti.i32
         not_used: ti.types.NDArray[ti.i32, 1]
 
     @ti.func
     def f1(md: MyDataclass) -> None:
         md.used3[0] = 123
+        md.used3[1] = md.an_int
 
     @ti.kernel
     def k1(md: MyDataclass, trigger_static: ti.Template) -> None:
@@ -894,7 +897,7 @@ def test_print_used_leaves():
     u2 = ti.ndarray(ti.i32, (10,))
     u3 = ti.ndarray(ti.i32, (10,))
     nu1 = ti.ndarray(ti.i32, (10,))
-    md = MyDataclass(used1=u1, used2=u2, used3=u3, not_used=nu1)
+    md = MyDataclass(used1=u1, used2=u2, used3=u3, not_used=nu1, an_int=555, not_used_int=888)
 
     u2[0] = 333
     k1(md, False)
@@ -902,6 +905,9 @@ def test_print_used_leaves():
     assert u3[0] == 123
     assert u1[1] == 333
     assert u1[2] == 0
+    kernel_args_count_by_type = k1._primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type["ndarray"] == 3
+    assert kernel_args_count_by_type["int"] == 1
 
     u1[0] = 0
     u1[1] = 0
@@ -913,6 +919,9 @@ def test_print_used_leaves():
     assert u3[0] == 123
     assert u1[1] == 333
     assert u1[2] == 444
+    kernel_args_count_by_type = k1._primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type["ndarray"] == 3
+    assert kernel_args_count_by_type["int"] == 1
 
 
 @test_utils.test()
@@ -1118,6 +1127,9 @@ def test_prune_used_leaves_fastcache1(tmp_path: Path):
         assert u1[2] == 0
         assert u1b[5] == 555
         assert n1[0] == 777
+        kernel_args_count_by_type = k1._primal.launch_stats.kernel_args_count_by_type
+        assert kernel_args_count_by_type["ndarray"] == 7
+        assert kernel_args_count_by_type["int"] == 0
 
         u1[0] = 0
         u1[1] = 0
@@ -1133,6 +1145,9 @@ def test_prune_used_leaves_fastcache1(tmp_path: Path):
         assert u1[2] == 444
         assert u1b[5] == 555
         assert n1[0] == 777
+        kernel_args_count_by_type = k1._primal.launch_stats.kernel_args_count_by_type
+        assert kernel_args_count_by_type["ndarray"] == 7
+        assert kernel_args_count_by_type["int"] == 0
 
 
 @test_utils.test()
@@ -1147,6 +1162,7 @@ def test_prune_used_leaves_fastcache2(tmp_path: Path):
             used2: ti.types.NDArray[ti.i32, 1]
             used3: ti.types.NDArray[ti.i32, 1]
             not_used: ti.types.NDArray[ti.i32, 1]
+            not_used2: ti.types.NDArray[ti.i32, 1]
 
         @dataclasses.dataclass
         class MyDataclass2:
@@ -1154,6 +1170,7 @@ def test_prune_used_leaves_fastcache2(tmp_path: Path):
             used2: ti.types.NDArray[ti.i32, 1]
             used3: ti.types.NDArray[ti.i32, 1]
             not_used: ti.types.NDArray[ti.i32, 1]
+            not_used2: ti.types.NDArray[ti.i32, 1]
 
         @ti.func
         def f2(i_b, md1: MyDataclass1, md2: MyDataclass2) -> None:
@@ -1180,13 +1197,15 @@ def test_prune_used_leaves_fastcache2(tmp_path: Path):
         u2 = ti.ndarray(ti.i32, (10,))
         u3 = ti.ndarray(ti.i32, (10,))
         nu1 = ti.ndarray(ti.i32, (10,))
-        md1 = MyDataclass1(used1=u1, used2=u2, used3=u3, not_used=nu1)
+        nu2 = ti.ndarray(ti.i32, (10,))
+        md1 = MyDataclass1(used1=u1, used2=u2, used3=u3, not_used=nu1, not_used2=nu2)
 
         u1b = ti.ndarray(ti.i32, (10,))
         u2b = ti.ndarray(ti.i32, (10,))
         u3b = ti.ndarray(ti.i32, (10,))
         nu1b = ti.ndarray(ti.i32, (10,))
-        md2 = MyDataclass2(used1=u1b, used2=u2b, used3=u3b, not_used=nu1b)
+        nu2b = ti.ndarray(ti.i32, (10,))
+        md2 = MyDataclass2(used1=u1b, used2=u2b, used3=u3b, not_used=nu1b, not_used2=nu2b)
 
         k1(envs_idx, md1=md1, md2=md2)
         assert u1[0] == 111
@@ -1195,3 +1214,7 @@ def test_prune_used_leaves_fastcache2(tmp_path: Path):
         assert u1b[0] == 555
         assert u2b[0] == 444
         assert u3b[0] == 333
+
+        kernel_args_count_by_type = k1._primal.launch_stats.kernel_args_count_by_type
+        assert kernel_args_count_by_type["ndarray"] == 7  # remember to add 1 for envs_idx
+        assert kernel_args_count_by_type["int"] == 0

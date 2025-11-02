@@ -669,6 +669,11 @@ class FeLlCacheObservations:
     cache_hit: bool = False
 
 
+@dataclass
+class LaunchStats:
+    kernel_args_count_by_type: dict[str, int]
+
+
 def cast_float(x: float | np.floating | np.integer | int) -> float:
     if not isinstance(x, (int, float, np.integer, np.floating)):
         raise ValueError(f"Invalid argument type '{type(x)}")
@@ -1297,21 +1302,28 @@ class Kernel:
             # Note that we are allowed to do this because GsTaichi Launch Kernel context is storing the input
             # arguments in an unordered list. The actual runtime (gfx, llvm...) will later query this context
             # in correct order.
+            kernel_args_count_by_type = defaultdict(int)
+            self.launch_stats = LaunchStats(kernel_args_count_by_type=kernel_args_count_by_type)
             if launch_ctx_args := launch_ctx_buffer.get(_FLOAT):
                 indices, vec = zip(*launch_ctx_args)
+                kernel_args_count_by_type["float"] = len(indices)
                 launch_ctx.set_args_float([index for index, in indices], vec)  # type: ignore
             if launch_ctx_args := launch_ctx_buffer.get(_INT):
                 indices, vec = zip(*launch_ctx_args)
                 launch_ctx.set_args_int([index for index, in indices], vec)  # type: ignore
+                kernel_args_count_by_type["int"] = len(indices)
             if launch_ctx_args := launch_ctx_buffer.get(_UINT):
                 indices, vec = zip(*launch_ctx_args)
                 launch_ctx.set_args_uint([index for index, in indices], vec)  # type: ignore
+                kernel_args_count_by_type["uint"] = len(indices)
             if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY):
                 indices, arrs = zip(*launch_ctx_args)
                 launch_ctx.set_args_ndarray([index for index, in indices], arrs)  # type: ignore
+                kernel_args_count_by_type["ndarray"] = len(indices)
             if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY_WITH_GRAD):
                 indices, arrs, arrs_grad = zip(*launch_ctx_args)
                 launch_ctx.set_args_ndarray_with_grad([index for index, in indices], arrs, arrs_grad)  # type: ignore
+                kernel_args_count_by_type["ndarray_with_grad"] = len(indices)
 
             if is_launch_ctx_cacheable and args_hash is not None:
                 # TODO: It some rare occurrences, arguments can be cached yet not hashable. Ignoring for now...
