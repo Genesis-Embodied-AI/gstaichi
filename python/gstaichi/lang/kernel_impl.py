@@ -363,7 +363,9 @@ def _get_tree_and_ctx(
     return tree, ctx
 
 
-def _process_args(self: "Func | Kernel", is_pyfunc: bool, is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
+def _process_args(
+    self: "Func | Kernel", is_pyfunc: bool, is_func: bool, args: tuple[Any, ...], kwargs
+) -> tuple[Any, ...]:
     if is_func and not is_pyfunc:
         assert isinstance(self, Func)
         current_kernel = self.current_kernel

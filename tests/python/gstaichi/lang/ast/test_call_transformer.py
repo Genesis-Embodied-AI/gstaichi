@@ -1,10 +1,10 @@
 import ast
 import dataclasses
 
-from gstaichi.lang.ast.ast_transformer_utils import ASTTransformerContext
 import pytest
 
 import gstaichi as ti
+from gstaichi.lang.ast.ast_transformer_utils import ASTTransformerContext
 from gstaichi.lang.ast.ast_transformers.call_transformer import CallTransformer
 
 from tests import test_utils
@@ -76,9 +76,11 @@ def test_expand_Call_dataclass_args(args_in: tuple[ast.stmt, ...], expected_args
         arg.end_lineno = 2
         arg.col_offset = 1
         arg.end_col_offset = 2
+
     class MockContext(ASTTransformerContext):
         def __init__(self):
             self.used_py_dataclass_parameters_enforcing = {}
+
     ctx = MockContext()
     args_added, args_out = CallTransformer._expand_Call_dataclass_args(ctx, args_in)
     assert len(args_out) > 0
