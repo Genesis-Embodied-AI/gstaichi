@@ -867,7 +867,7 @@ def test_ndarray_struct_multiple_child_structs_field():
 
 
 @test_utils.test()
-def test_template_mapper_cache_no_collision(monkeypatch):
+def test_template_mapper_cache(monkeypatch):
     # Mock '_extract_arg' to track the number of (recursive) calls
     counter = 0
     _extract_arg_orig = ti.lang._template_mapper_hotpath._extract_arg
@@ -879,76 +879,41 @@ def test_template_mapper_cache_no_collision(monkeypatch):
 
     monkeypatch.setattr("gstaichi.lang._template_mapper_hotpath._extract_arg", _extract_arg)
 
-    @dataclass(frozen=True)
-    class MyStruct:
-        value: ti.types.ndarray()
-        placeholder: ti.i32
+    for use_slots in (False, True):
+        @dataclass(frozen=True, slots=use_slots)
+        class MyStruct:
+            value: ti.types.ndarray()
+            placeholder: ti.i32
 
-    @ti.kernel
-    def my_kernel(my_struct_1d: MyStruct, my_struct_2d: MyStruct) -> None:
-        for i in ti.ndrange(my_struct_1d.value.shape[0]):
-            my_struct_1d.value[i] += 1
-        for i, j in ti.ndrange(my_struct_2d.value.shape[0], my_struct_2d.value.shape[1]):
-            my_struct_2d.value[i, j] += 1
+        @ti.kernel
+        def my_kernel(my_struct_1d: MyStruct, my_struct_2d: MyStruct) -> None:
+            for i in ti.ndrange(my_struct_1d.value.shape[0]):
+                my_struct_1d.value[i] += 1
+            for i, j in ti.ndrange(my_struct_2d.value.shape[0], my_struct_2d.value.shape[1]):
+                my_struct_2d.value[i, j] += 1
 
-    num_fields = len(fields(MyStruct))
-    value = ti.ndarray(ti.i32, shape=(1,))
-    value.fill(0)
-    placeholder = 0
-    my_struct_1d = MyStruct(value=value, placeholder=placeholder)
-    value = ti.ndarray(ti.f32, shape=(1, 2))
-    value.fill(0.0)
-    my_struct_2d = MyStruct(value=value, placeholder=placeholder)
+        num_fields = len(fields(MyStruct))
+        value = ti.ndarray(ti.i32, shape=(1,))
+        value.fill(0)
+        placeholder = 0
+        my_struct_1d = MyStruct(value=value, placeholder=placeholder)
+        value = ti.ndarray(ti.f32, shape=(1, 2))
+        value.fill(0.0)
+        my_struct_2d = MyStruct(value=value, placeholder=placeholder)
 
-    my_kernel(my_struct_1d, my_struct_2d)
-    assert counter == 2 * num_fields
-    assert my_struct_1d.value[0] == 1
-    assert my_struct_2d.value[0, 0] == 1.0
-    assert my_struct_2d.value[0, 1] == 1.0
-    my_kernel(my_struct_1d, my_struct_2d)
-    assert counter == 2 * num_fields
-    assert my_struct_1d.value[0] == 2
-    assert my_struct_2d.value[0, 0] == 2.0
-    assert my_struct_2d.value[0, 1] == 2.0
-
-
-@test_utils.test()
-def test_template_mapper_cache_ignore_slots(monkeypatch):
-    # Mock '_extract_arg' to track the number of (recursive) calls
-    counter = 0
-    _extract_arg_orig = ti.lang._template_mapper_hotpath._extract_arg
-
-    def _extract_arg(*args, **kwargs):
-        nonlocal counter
-        counter += 1
-        return _extract_arg_orig(*args, **kwargs)
-
-    monkeypatch.setattr("gstaichi.lang._template_mapper_hotpath._extract_arg", _extract_arg)
-
-    @dataclass(frozen=True, slots=True)
-    class MyStruct:
-        value_1: ti.types.ndarray()
-        value_2: ti.types.ndarray()
-
-    @ti.kernel
-    def my_kernel(my_struct: MyStruct) -> None:
-        for I in ti.grouped(ti.ndrange(*my_struct.value_1.shape)):
-            my_struct.value_1[I] += 1
-        for I in ti.grouped(ti.ndrange(*my_struct.value_2.shape)):
-            my_struct.value_2[I] += 2
-
-    num_fields = len(fields(MyStruct))
-    value_1 = ti.ndarray(ti.i32, shape=(1,))
-    value_1.fill(0)
-    value_2 = ti.ndarray(ti.i32, shape=(1,))
-    value_2.fill(0)
-    my_struct = MyStruct(value_1=value_1, value_2=value_2)
-
-    my_kernel(my_struct)
-    assert my_struct.value_1[0] == 1
-    assert my_struct.value_2[0] == 2
-    assert counter == num_fields
-    my_kernel(my_struct)
-    assert my_struct.value_1[0] == 2
-    assert my_struct.value_2[0] == 4
-    assert counter == 2 * num_fields
+        counter = 0
+        my_kernel(my_struct_1d, my_struct_2d)
+        assert counter == 2 * num_fields
+        assert my_struct_1d.value[0] == 1
+        assert my_struct_2d.value[0, 0] == 1.0
+        assert my_struct_2d.value[0, 1] == 1.0
+        counter = 0
+        my_kernel(my_struct_1d, my_struct_2d)
+        if use_slots:
+            # template mapper caching mechanism is disabled for dataclasses that enable slots
+            assert counter == 2 * num_fields
+        else:
+            assert counter == 0
+        assert my_struct_1d.value[0] == 2
+        assert my_struct_2d.value[0, 0] == 2.0
+        assert my_struct_2d.value[0, 1] == 2.0
