@@ -888,7 +888,6 @@ def test_print_used_leaves():
     def k1(md: MyDataclass, trigger_static: ti.Template) -> None:
         md.used1[0] = 222
         md.used1[1] = md.used2[0]
-        # print(md.used2[0])
         f1(md)
         if ti.static(trigger_static):
             md.used1[2] = 444
@@ -958,7 +957,6 @@ def test_prune_used_leaves1():
     def k1(md1: MyDataclass1, md2: MyDataclass2, trigger_static: ti.Template) -> None:
         md1.used1[0] = 222
         md1.used1[1] = md1.used2[0]
-        # print(md.used2[0])
         f1(md1, md2)
         if ti.static(trigger_static):
             md1.used1[2] = 444
@@ -1099,7 +1097,6 @@ def test_prune_used_leaves_fastcache1(tmp_path: Path):
         def k1(md1: MyDataclass1, md2: MyDataclass2, trigger_static: ti.Template) -> None:
             md1.used1[0] = 222
             md1.used1[1] = md1.used2[0]
-            # print(md.used2[0])
             f1(md1, md2)
             if ti.static(trigger_static):
                 md1.used1[2] = 444
