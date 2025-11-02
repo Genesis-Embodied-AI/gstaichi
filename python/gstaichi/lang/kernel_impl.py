@@ -363,8 +363,8 @@ def _get_tree_and_ctx(
     return tree, ctx
 
 
-def _process_args(self: "Func | Kernel", is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
-    if is_func:
+def _process_args(self: "Func | Kernel", is_pyfunc: bool, is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
+    if is_func and not is_pyfunc:
         assert isinstance(self, Func)
         current_kernel = self.current_kernel
         assert current_kernel is not None
@@ -458,13 +458,18 @@ class Func:
         self.current_kernel: Kernel | None = None
 
     def __call__(self: "Func", *args, **kwargs) -> Any:
-        self.current_kernel = impl.get_runtime().current_kernel
-        args = _process_args(self, is_func=True, args=args, kwargs=kwargs)
+        print("impl.inside_kernel()", impl.inside_kernel(), "self.pyfunc", self.pyfunc)
+        self.current_kernel = impl.get_runtime().current_kernel if impl.inside_kernel() else None
+        # if impl.inside_kernel():
+        args = _process_args(self, is_func=True, is_pyfunc=self.pyfunc, args=args, kwargs=kwargs)
 
         if not impl.inside_kernel():
             if not self.pyfunc:
                 raise GsTaichiSyntaxError("GsTaichi functions cannot be called from Python-scope.")
             return self.func(*args)
+
+        assert self.current_kernel is not None
+        # self.current_kernel = impl.get_runtime().current_kernel
 
         if self.is_real_function:
             if self.current_kernel.autodiff_mode != AutodiffMode.NONE:
@@ -1423,7 +1428,7 @@ class Kernel:
     def __call__(self, *args, **kwargs) -> Any:
         self.raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
 
-        args = _process_args(self, is_func=False, args=args, kwargs=kwargs)
+        args = _process_args(self, is_func=False, is_pyfunc=False, args=args, kwargs=kwargs)
 
         # Transform the primal kernel to forward mode grad kernel
         # then recover to primal when exiting the forward mode manager
