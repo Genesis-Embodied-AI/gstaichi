@@ -867,10 +867,7 @@ def test_ndarray_struct_multiple_child_structs_field():
 
 
 @test_utils.test()
-def test_template_mapper_cache():
-    gc.collect()
-    gc.collect()
-
+def test_template_mapper_cache_no_collision():
     @dataclass(frozen=True)
     class MyStruct:
         value: ti.types.ndarray()
@@ -891,5 +888,26 @@ def test_template_mapper_cache():
 
     my_kernel(my_struct_1d, my_struct_2d)
     assert my_struct_1d.value[0] == 1
-    assert abs(my_struct_2d.value[0, 0] - 1.0) < 1e-9
-    assert abs(my_struct_2d.value[0, 1] - 1.0) < 1e-9
+    assert my_struct_2d.value[0, 0] == 1.0
+    assert my_struct_2d.value[0, 1] == 1.0
+
+
+@test_utils.test()
+def test_template_mapper_cache_ignore_slots():
+    @dataclass(frozen=True, slots=True)
+    class MyStruct:
+        value: ti.types.ndarray()
+
+    @ti.kernel
+    def my_kernel(my_struct: MyStruct) -> None:
+        for i in ti.ndrange(my_struct.value.shape[0]):
+            my_struct.value[i] += 1
+
+    value = ti.ndarray(ti.i32, shape=(1,))
+    value.fill(0)
+    my_struct = MyStruct(value=value)
+
+    my_kernel(my_struct)
+    assert my_struct.value[0] == 1
+    my_kernel(my_struct)
+    assert my_struct.value[0] == 2
