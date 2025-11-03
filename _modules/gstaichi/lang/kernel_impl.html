@@ -1697,6 +1697,7 @@
                 <span class="k">if</span> <span class="n">compile_result</span><span class="o">.</span><span class="n">cache_hit</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">fe_ll_cache_observations</span><span class="o">.</span><span class="n">cache_hit</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">:</span>
+                    <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
                     <span class="n">src_hasher</span><span class="o">.</span><span class="n">store</span><span class="p">(</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">,</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">visited_functions</span><span class="p">,</span>
