@@ -1270,6 +1270,7 @@ def test_prune_used_leaves_fastcache2(tmp_path: Path):
         assert kernel_args_count_by_type["int"] == 0
 
 
+@test_utils.test()
 def test_prune_used_leaves_fastcache_no_used(tmp_path: Path):
     arch_name = ti.lang.impl.current_cfg().arch.name
     for _it in range(3):
