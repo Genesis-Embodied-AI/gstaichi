@@ -344,6 +344,7 @@ def test_dimension_error():
 @test_utils.test()
 def test_generators_forbidden_in_range():
     ndrange = (n for n in range(10))
+
     @ti.kernel
     def populate():
         for I in ti.grouped(ti.ndrange(*ndrange)):
@@ -356,6 +357,7 @@ def test_generators_forbidden_in_range():
 @test_utils.test()
 def test_tuples_ok_in_range():
     ndrange = tuple(n for n in range(10))
+
     @ti.kernel
     def populate():
         for I in ti.grouped(ti.ndrange(*ndrange)):

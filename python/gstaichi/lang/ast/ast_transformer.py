@@ -8,7 +8,7 @@ import itertools
 import math
 import warnings
 from ast import unparse
-from typing import Any, Sequence, Type, Generator
+from typing import Any, Generator, Sequence, Type
 
 import numpy as np
 
