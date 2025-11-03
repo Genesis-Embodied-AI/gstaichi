@@ -32,7 +32,8 @@ def bls_test_template(dim, N, bs, stencil, block_dim=None, scatter=False, benchm
         create_block().dense(index, bs).place(y)
         create_block().dense(index, bs).place(y2)
 
-    ndrange = ((bs[i] * 2, N - bs[i] * 2) for i in range(dim))
+    def get_ndrange():
+        return ((bs[i] * 2, N - bs[i] * 2) for i in range(dim))
 
     if block_dim is None:
         block_dim = 1
@@ -41,7 +42,7 @@ def bls_test_template(dim, N, bs, stencil, block_dim=None, scatter=False, benchm
 
     @ti.kernel
     def populate():
-        for I in ti.grouped(ti.ndrange(*ndrange)):
+        for I in ti.grouped(ti.ndrange(*get_ndrange())):
             s = 0
             for i in ti.static(range(dim)):
                 s += I[i] ** (i + 1)
@@ -66,9 +67,20 @@ def bls_test_template(dim, N, bs, stencil, block_dim=None, scatter=False, benchm
                     s = s + x[I + ti.Vector(offset)]
                 y[I] = s
 
+    print("dim", dim)
+    # print("ndrange", ndrange, "list(ndragne)", list(ndrange))
+    print("ndrange", get_ndrange())
+    print("list(ndrange)", list(get_ndrange()))
+    print("list(ndrange)", list(get_ndrange()))
+    print("list(ndrange)", list(get_ndrange()))
+    print("x.shape",  x.shape, type(x))
+    print("y.shape", y.shape, type(y))
+    print("calling populate()...")
     populate()
+    print("after populate()")
 
     if benchmark:
+        print("is benchmark")
         for i in range(benchmark):
             x.snode.parent().deactivate_all()
             if not scatter:
@@ -78,7 +90,9 @@ def bls_test_template(dim, N, bs, stencil, block_dim=None, scatter=False, benchm
             apply(False, y2)
             apply(True, y)
     else:
+        print("simply test")
         # Simply test
+        print("apply false y2", y2, type(y2))
         apply(False, y2)
         apply(True, y)
 
