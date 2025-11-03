@@ -1376,6 +1376,7 @@ class Kernel:
                 if compile_result.cache_hit:
                     self.fe_ll_cache_observations.cache_hit = True
                 if self.fast_checksum:
+                    assert self.currently_compiling_materialize_key is not None
                     src_hasher.store(
                         self.fast_checksum,
                         self.visited_functions,
