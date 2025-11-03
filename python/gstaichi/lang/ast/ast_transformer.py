@@ -8,7 +8,7 @@ import itertools
 import math
 import warnings
 from ast import unparse
-from typing import Any, Sequence, Type
+from typing import Any, Sequence, Type, Generator
 
 import numpy as np
 
@@ -88,6 +88,8 @@ class ASTTransformer(Builder):
                     warnings.warn(message)
                 else:
                     raise exception.GsTaichiCompilationError(message)
+        if isinstance(node.ptr, Generator):
+            raise ValueError("Cannot use generator inside kernels or functions")
         return node.ptr
 
     @staticmethod
