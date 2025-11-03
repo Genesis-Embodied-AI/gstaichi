@@ -1669,7 +1669,11 @@
 
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">compiled_kernel_data</span><span class="p">:</span>
-                <span class="n">compile_result</span><span class="p">:</span> <span class="n">CompileResult</span> <span class="o">=</span> <span class="n">prog</span><span class="o">.</span><span class="n">compile_kernel</span><span class="p">(</span><span class="n">prog</span><span class="o">.</span><span class="n">config</span><span class="p">(),</span> <span class="n">prog</span><span class="o">.</span><span class="n">get_device_caps</span><span class="p">(),</span> <span class="n">t_kernel</span><span class="p">)</span>
+                <span class="c1"># Store Taichi program config and device cap for efficiency because they are used at multiple places</span>
+                <span class="n">prog_config</span> <span class="o">=</span> <span class="n">prog</span><span class="o">.</span><span class="n">config</span><span class="p">()</span>
+                <span class="n">prog_device_cap</span> <span class="o">=</span> <span class="n">prog</span><span class="o">.</span><span class="n">get_device_caps</span><span class="p">()</span>
+
+                <span class="n">compile_result</span><span class="p">:</span> <span class="n">CompileResult</span> <span class="o">=</span> <span class="n">prog</span><span class="o">.</span><span class="n">compile_kernel</span><span class="p">(</span><span class="n">prog_config</span><span class="p">,</span> <span class="n">prog_device_cap</span><span class="p">,</span> <span class="n">t_kernel</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;TI_DUMP_KERNEL_CHECKSUMS&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span><span class="p">:</span>
                     <span class="n">debug_dump_path</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span><span class="o">.</span><span class="n">debug_dump_path</span><span class="p">)</span>
                     <span class="n">checksums_file_path</span> <span class="o">=</span> <span class="n">debug_dump_path</span> <span class="o">/</span> <span class="s2">&quot;checksums.csv&quot;</span>
@@ -1706,8 +1710,8 @@
                     <span class="n">prog</span><span class="o">.</span><span class="n">store_fast_cache</span><span class="p">(</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">,</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">kernel_cpp</span><span class="p">,</span>
-                        <span class="n">prog</span><span class="o">.</span><span class="n">config</span><span class="p">(),</span>
-                        <span class="n">prog</span><span class="o">.</span><span class="n">get_device_caps</span><span class="p">(),</span>
+                        <span class="n">prog_config</span><span class="p">,</span>
+                        <span class="n">prog_device_cap</span><span class="p">,</span>
                         <span class="n">compiled_kernel_data</span><span class="p">,</span>
                     <span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">src_ll_cache_observations</span><span class="o">.</span><span class="n">cache_stored</span> <span class="o">=</span> <span class="kc">True</span>
@@ -2005,15 +2009,23 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        The decorated class.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Backup the original attribute getter before overwriting it.</span>
+    <span class="c1"># Note that this is faster, and more rigorous, to use this pattern over calling the parent method, ie</span>
+    <span class="c1"># `super(cls, self).__getattribute__`. Faster because it avoid relying on MRO at runtime, more rigorous</span>
+    <span class="c1"># because calling the parent method will by-pass the method `__getattribute__` that may already be</span>
+    <span class="c1"># overloaded by the original class.</span>
+    <span class="n">getattribute_orig</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="fm">__getattribute__</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="k">nonlocal</span> <span class="n">getattribute_orig</span>
+
         <span class="n">method</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
         <span class="n">method_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
         <span class="n">is_property</span> <span class="o">=</span> <span class="n">method_type</span> <span class="ow">is</span> <span class="nb">property</span>
         <span class="k">if</span> <span class="n">is_property</span><span class="p">:</span>
             <span class="n">x</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">fget</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">getattribute_orig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">&quot;_is_wrapped_kernel&quot;</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">ismethod</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
                 <span class="n">wrapped</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="vm">__func__</span>
