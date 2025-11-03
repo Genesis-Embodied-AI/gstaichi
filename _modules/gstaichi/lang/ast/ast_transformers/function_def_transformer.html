@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gstaichi.lang.ast.ast_transformers.function_def_transformer &#8212; GsTaichi 3.3.0 documentation</title>
+    <title>gstaichi.lang.ast.ast_transformers.function_def_transformer &#8212; GsTaichi 3.2.2 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../../../_static/documentation_options.js?v=3eb8911e"></script>
+    <script src="../../../../../_static/documentation_options.js?v=dcedd534"></script>
     <script src="../../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -59,7 +59,7 @@
     <link rel="search" title="Search" href="../../../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="3.3.0" />
+  <meta name="docsearch:version" content="3.2.2" />
   </head>
   
   
@@ -121,7 +121,7 @@
   
   
   
-    <p class="title logo__title">GsTaichi 3.3.0 documentation</p>
+    <p class="title logo__title">GsTaichi 3.2.2 documentation</p>
   
 </a></div>
     
@@ -412,11 +412,6 @@
             <span class="n">ctx</span><span class="o">.</span><span class="n">create_variable</span><span class="p">(</span><span class="n">argument_name</span><span class="p">,</span> <span class="n">argument_type</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">field_idx</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dataclasses</span><span class="o">.</span><span class="n">fields</span><span class="p">(</span><span class="n">argument_type</span><span class="p">)):</span>
                 <span class="n">flat_name</span> <span class="o">=</span> <span class="n">create_flat_name</span><span class="p">(</span><span class="n">argument_name</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-                <span class="k">if</span> <span class="p">(</span>
-                    <span class="n">ctx</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_enforcing</span>
-                    <span class="ow">and</span> <span class="n">flat_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_enforcing</span>
-                <span class="p">):</span>
-                    <span class="k">continue</span>
                 <span class="c1"># if a field is a dataclass, then feed back into process_kernel_arg recursively</span>
                 <span class="k">if</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">is_dataclass</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">type</span><span class="p">):</span>
                     <span class="n">FunctionDefTransformer</span><span class="o">.</span><span class="n">_transform_kernel_arg</span><span class="p">(</span>
@@ -579,7 +574,7 @@
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">Func</span><span class="p">)</span>
         <span class="k">assert</span> <span class="n">ctx</span><span class="o">.</span><span class="n">argument_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">for</span> <span class="n">data_i</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">argument_data</span><span class="p">):</span>
-            <span class="n">argument</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">arg_metas_expanded</span><span class="p">[</span><span class="n">data_i</span><span class="p">]</span>
+            <span class="n">argument</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">[</span><span class="n">data_i</span><span class="p">]</span>
             <span class="n">FunctionDefTransformer</span><span class="o">.</span><span class="n">_transform_func_arg</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">argument</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">argument</span><span class="o">.</span><span class="n">annotation</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
 
         <span class="c1"># deal with dataclasses</span>
