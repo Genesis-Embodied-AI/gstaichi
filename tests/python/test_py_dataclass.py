@@ -1216,3 +1216,50 @@ def test_prune_used_leaves_fastcache2(tmp_path: Path):
         assert u1b[0] == 555
         assert u2b[0] == 444
         assert u3b[0] == 333
+
+
+def test_prune_used_leaves_fastcache_no_used(tmp_path: Path):
+    arch_name = ti.lang.impl.current_cfg().arch.name
+    if True:
+    # for _it in range(3):
+        print("")
+        print("***********************")
+        # print("_it", _it)
+        ti.init(arch=getattr(ti, arch_name), offline_cache_file_path=str(tmp_path), offline_cache=True)
+        @dataclasses.dataclass
+        class MyDataclass1:
+            not_used1: ti.types.NDArray[ti.i32, 1]
+            not_used2: ti.types.NDArray[ti.i32, 1]
+
+        @dataclasses.dataclass
+        class MyDataclass2:
+            not_used1: ti.types.NDArray[ti.i32, 1]
+            not_used2: ti.types.NDArray[ti.i32, 1]
+
+        @ti.func
+        def f2(i_b, md1: MyDataclass1, md2: MyDataclass2) -> None:
+            pass
+
+        @ti.func
+        def f1(i_b, md1: MyDataclass1, md2: MyDataclass2) -> None:
+            f2(i_b, md1, md2=md2)
+
+        @ti.kernel(fastcache=True)
+        def k1(envs_idx: ti.types.NDArray[ti.i32, 1], md1: MyDataclass1, md2: MyDataclass2) -> None:
+            for i_b_ in range(envs_idx.shape[0]):
+                i_b = envs_idx[i_b_]
+                f1(i_b, md1, md2=md2)
+
+        envs_idx = ti.ndarray(ti.i32, (10,))
+
+        nu1 = ti.ndarray(ti.i32, (10,))
+        nu2 = ti.ndarray(ti.i32, (10,))
+        md1 = MyDataclass1(not_used1=nu1, not_used2=nu2)
+
+        nu1b = ti.ndarray(ti.i32, (10,))
+        nu2b = ti.ndarray(ti.i32, (10,))
+        md2 = MyDataclass2(not_used1=nu1b, not_used2=nu2b)
+
+        print("")
+        print("calling k1")
+        k1(envs_idx, md1, md2=md2)
