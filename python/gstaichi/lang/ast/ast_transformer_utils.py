@@ -43,6 +43,7 @@ class Builder:
             info = ctx.get_pos_info(node) if isinstance(node, (ast.stmt, ast.expr)) else ""
             with impl.get_runtime().src_info_guard(info):
                 res = method(ctx, node)
+                print(indent, f"(finished {node.__class__.__name__})")
                 if not hasattr(node, "violates_pure"):
                     # assume False until proven otherwise
                     node.violates_pure = False

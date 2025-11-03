@@ -98,8 +98,14 @@ class FunctionDefTransformer:
             ctx.create_variable(argument_name, argument_type)
             for field_idx, field in enumerate(dataclasses.fields(argument_type)):
                 flat_name = create_flat_name(argument_name, field.name)
-                if ctx.used_py_dataclass_parameters_enforcing and flat_name not in ctx.used_py_dataclass_parameters_enforcing:
+                print("_transform_kernel_arg flat_name", flat_name, end="")
+                if (
+                    ctx.used_py_dataclass_parameters_enforcing is not None
+                    and flat_name not in ctx.used_py_dataclass_parameters_enforcing
+                ):
+                    print(" ❌")
                     continue
+                print(" ✅")
                 # if a field is a dataclass, then feed back into process_kernel_arg recursively
                 if dataclasses.is_dataclass(field.type):
                     FunctionDefTransformer._transform_kernel_arg(
@@ -123,6 +129,7 @@ class FunctionDefTransformer:
                         obj = decl_type_func(*type_args)
                         ctx.create_variable(flat_name, obj)
         else:
+            print("creating variable directly ", argument_name)
             result, obj = FunctionDefTransformer._decl_and_create_variable(
                 ctx,
                 argument_type,
