@@ -339,3 +339,26 @@ def test_dimension_error():
                 pass
 
         func()
+
+
+@test_utils.test()
+def test_generators_forbidden_in_range():
+    ndrange = (n for n in range(10))
+    @ti.kernel
+    def populate():
+        for I in ti.grouped(ti.ndrange(*ndrange)):
+            pass
+
+    with pytest.raises(ValueError):
+        populate()
+
+
+@test_utils.test()
+def test_tuples_ok_in_range():
+    ndrange = tuple(n for n in range(10))
+    @ti.kernel
+    def populate():
+        for I in ti.grouped(ti.ndrange(*ndrange)):
+            pass
+
+    populate()
