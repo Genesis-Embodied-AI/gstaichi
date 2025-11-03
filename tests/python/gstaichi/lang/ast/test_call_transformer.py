@@ -79,7 +79,7 @@ def test_expand_Call_dataclass_args(args_in: tuple[ast.stmt, ...], expected_args
 
     class MockContext(ASTTransformerContext):
         def __init__(self):
-            self.used_py_dataclass_parameters_enforcing = {}
+            self.used_py_dataclass_parameters_enforcing = None
 
     ctx = MockContext()
     args_added, args_out = CallTransformer._expand_Call_dataclass_args(ctx, args_in)
