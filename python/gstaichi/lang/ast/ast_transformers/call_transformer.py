@@ -184,7 +184,10 @@ class CallTransformer:
                         child_name = create_flat_name(arg.id, field.name)
                     except Exception as e:
                         raise RuntimeError(f"Exception whilst processing {field.name} in {type(dataclass_type)}") from e
-                    if ctx.used_py_dataclass_parameters_enforcing is not None and child_name not in ctx.used_py_dataclass_parameters_enforcing:
+                    if (
+                        ctx.used_py_dataclass_parameters_enforcing is not None
+                        and child_name not in ctx.used_py_dataclass_parameters_enforcing
+                    ):
                         continue
                     load_ctx = ast.Load()
                     arg_node = ast.Name(
@@ -224,7 +227,10 @@ class CallTransformer:
                 for field in dataclasses.fields(dataclass_type):
                     src_name = create_flat_name(kwarg.value.id, field.name)
                     child_name = create_flat_name(kwarg.arg, field.name)
-                    if ctx.used_py_dataclass_parameters_enforcing is not None and child_name not in ctx.used_py_dataclass_parameters_enforcing:
+                    if (
+                        ctx.used_py_dataclass_parameters_enforcing is not None
+                        and child_name not in ctx.used_py_dataclass_parameters_enforcing
+                    ):
                         continue
                     load_ctx = ast.Load()
                     src_node = ast.Name(

@@ -1274,6 +1274,7 @@ def test_prune_used_leaves_fastcache_no_used(tmp_path: Path):
     arch_name = ti.lang.impl.current_cfg().arch.name
     for _it in range(3):
         ti.init(arch=getattr(ti, arch_name), offline_cache_file_path=str(tmp_path), offline_cache=True)
+
         @dataclasses.dataclass
         class MyDataclass1:
             not_used1: ti.types.NDArray[ti.i32, 1]
