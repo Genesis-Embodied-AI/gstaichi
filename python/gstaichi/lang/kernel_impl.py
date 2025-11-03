@@ -1089,7 +1089,6 @@ class Kernel:
             if self.fast_checksum:
                 self.src_ll_cache_observations.cache_key_generated = True
                 used_py_dataclass_parameters = src_hasher.load(self.fast_checksum)
-            # if self.fast_checksum and src_hasher.validate_cache_key(self.fast_checksum):
             if used_py_dataclass_parameters is not None:
                 self.src_ll_cache_observations.cache_validated = True
                 prog = impl.get_runtime().prog
