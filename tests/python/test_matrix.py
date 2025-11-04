@@ -1,5 +1,6 @@
 import math
 import operator
+import os
 import sys
 
 import numpy as np
@@ -1266,6 +1267,9 @@ def test_matrix_arithmatics():
     gdb_trigger=False,
 )
 def test_matrix_oob():
+    if os.uname()[4] == "aarch64":
+        pytest.skip(reason="Crashes on arm64")
+
     @ti.kernel
     def access_vec(i: ti.i32):
         x = ti.Vector([1, 0])
