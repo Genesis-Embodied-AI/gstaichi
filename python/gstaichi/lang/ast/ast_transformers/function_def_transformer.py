@@ -43,8 +43,10 @@ class FunctionDefTransformer:
         if not isinstance(annotation, primitive_types.RefType):
             ctx.kernel_args.append(name)
         if annotation == annotations.template or isinstance(annotation, annotations.template):
+            if name in ctx.template_vars:
+                return True, ctx.template_vars[name]
             assert ctx.global_vars is not None
-            return True, ctx.global_vars[name]
+            return True, ctx.global_vars.get(name)
         if isinstance(annotation, annotations.sparse_matrix_builder):
             return False, (
                 kernel_arguments.decl_sparse_matrix,
@@ -58,7 +60,7 @@ class FunctionDefTransformer:
             raw_element_type: DataTypeCxx
             ndim: int
             needs_grad: bool
-            boundary: BoundaryMode
+            boundary: int
             raw_element_type, ndim, needs_grad, boundary = this_arg_features
             return False, (
                 kernel_arguments.decl_ndarray_arg,
@@ -67,7 +69,7 @@ class FunctionDefTransformer:
                     ndim,
                     full_name,
                     needs_grad,
-                    boundary,
+                    BoundaryMode(boundary),
                 ),
             )
         if isinstance(annotation, texture_type.TextureType):

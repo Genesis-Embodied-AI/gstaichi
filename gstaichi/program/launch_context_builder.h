@@ -25,11 +25,33 @@ class LaunchContextBuilder {
   LaunchContextBuilder(const LaunchContextBuilder &) = delete;
   LaunchContextBuilder &operator=(const LaunchContextBuilder &) = delete;
 
+  // Copy all the arguments already added to an existing launcher context.
+  // The input context must be associated with the exactly same kernel, and
+  // the current context must be fresh new, without any variable already added.
+  // This method is useful to speed up calling repeatedly a given kernel with
+  // the exact same input arguments.
+  void copy(const LaunchContextBuilder &other);
+
   void set_arg_float(const std::vector<int> &arg_id, float64 d);
+  // Bulk processing of multiple scalar float arguments at the same time.
+  // This is mainly useful to mitigate pybind11 function call overhead.
+  // In this context, 'args_id' is a vector gathering the position of each
+  // of these scalar arguments in the corresponding kernel. As a result, the
+  // length 'args_id' and 'vec' must be equal.
+  void set_args_float(const std::vector<int> &args_id,
+                      const std::vector<float64> &vec);
 
   // Created signed and unsigned version for argument range check of pybind
   void set_arg_int(const std::vector<int> &arg_id, int64 d);
+  // Bulk processing of multiple scalar int arguments at the same time.
+  // See 'set_arg_float' documentation for details.
+  void set_args_int(const std::vector<int> &args_id,
+                    const std::vector<int64> &vec);
+  // Bulk processing of multiple scalar uint arguments at the same time.
+  // See 'set_arg_float' documentation for details.
   void set_arg_uint(const std::vector<int> &arg_id, uint64 d);
+  void set_args_uint(const std::vector<int> &args_id,
+                     const std::vector<uint64> &vec);
 
   void set_array_runtime_size(const std::vector<int> &i, uint64 size);
 
@@ -74,9 +96,20 @@ class LaunchContextBuilder {
                             const std::vector<int> &shape,
                             intptr_t devalloc_ptr_grad = 0);
   void set_arg_ndarray(const std::vector<int> &arg_id, const Ndarray &arr);
+  // Bulk processing of multiple individual Taichi NDarray arguments (without
+  // any associated gradient) at the same time.
+  // See 'set_arg_float' for details.
+  void set_args_ndarray(const std::vector<int> &args_id,
+                        const std::vector<Ndarray *> &arrs);
   void set_arg_ndarray_with_grad(const std::vector<int> &arg_id,
                                  const Ndarray &arr,
                                  const Ndarray &arr_grad);
+  // Bulk processing of multiple individual Taichi NDarray arguments (along
+  // with associated gradient) at the same time.
+  // See 'set_arg_float' for details.
+  void set_args_ndarray_with_grad(const std::vector<int> &args_id,
+                                  const std::vector<Ndarray *> &arrs,
+                                  const std::vector<Ndarray *> &arrs_grad);
 
   void set_arg_texture_impl(const std::vector<int> &arg_id, intptr_t alloc_ptr);
   void set_arg_texture(const std::vector<int> &arg_id, const Texture &tex);

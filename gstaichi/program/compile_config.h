@@ -15,6 +15,7 @@ struct CompileConfig {
   int opt_level;
   int external_optimization_level;
   int max_vector_width;
+  bool raise_on_templated_floats{false};
   bool print_preprocessed_ir;
   bool print_ir;
   bool print_accessor_ir;
@@ -50,6 +51,7 @@ struct CompileConfig {
   bool cpu_block_dim_adaptive;
   int default_gpu_block_dim;
   int gpu_max_reg;
+  bool ad_stack_experimental_enabled{false};
   int ad_stack_size{0};  // 0 = adaptive
   // The default size when the GsTaichi compiler is unable to automatically
   // determine the autodiff stack size.
@@ -60,12 +62,13 @@ struct CompileConfig {
   int cpu_max_num_threads;
   int random_seed;
 
-  // LLVM backend options:
+  // Debugging options:
   bool print_struct_llvm_ir;
   bool print_kernel_llvm_ir;
   bool print_kernel_llvm_ir_optimized;
   bool print_kernel_asm;
   bool print_kernel_amdgcn;
+  std::string debug_dump_path;
 
   // CUDA/AMDGPU backend options:
   float64 device_memory_GB;

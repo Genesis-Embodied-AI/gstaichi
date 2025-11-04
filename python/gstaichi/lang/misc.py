@@ -7,6 +7,7 @@ from copy import deepcopy as _deepcopy
 
 from gstaichi import _logging, _snode
 from gstaichi._lib import core as _ti_core
+from gstaichi._lib.core.gstaichi_python import Extension
 from gstaichi.lang import impl
 from gstaichi.lang.expr import Expr
 from gstaichi.lang.impl import axes, get_runtime
@@ -332,6 +333,7 @@ def init(
             * ``print_ir`` (bool): Prints the CHI IR of the GsTaichi kernels.
             *``offline_cache`` (bool): Enables offline cache of the compiled kernels. Default to True. When this is enabled GsTaichi will cache compiled kernel on your local disk to accelerate future calls.
             *``random_seed`` (int): Sets the seed of the random generator. The default is 0.
+            *``debug_dump_path`` (str): used as the base path for TI_DUMP_KERNEL_CHECKSUMS and similar
     """
     # FIXME(https://github.com/taichi-dev/gstaichi/issues/4811): save the current working directory since it may be
     # changed by the Vulkan backend initialization on OS X.
@@ -742,6 +744,18 @@ def get_host_arch_list():
     return [_ti_core.host_arch()]
 
 
+def is_extension_enabled(ext: Extension) -> bool:
+    """
+    Directly returns whether extension is enabled, without needing to
+    pass in current architecture. Also takes into account config, in the case
+    of adstack
+    """
+    arch = impl.current_cfg().arch
+    if ext == extension.adstack:
+        return is_extension_supported(arch, ext) and impl.current_cfg().ad_stack_experimental_enabled
+    return is_extension_supported(arch, ext)
+
+
 __all__ = [
     "i",
     "ij",
@@ -778,4 +792,5 @@ __all__ = [
     "no_activate",
     "reset",
     "mesh_patch_idx",
+    "is_extension_enabled",
 ]

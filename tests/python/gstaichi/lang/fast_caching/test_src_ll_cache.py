@@ -9,6 +9,7 @@ import pytest
 import gstaichi as ti
 import gstaichi.lang
 from gstaichi._test_tools import ti_init_same_arch
+from gstaichi.lang.kernel_impl import SrcLlCacheObservations
 
 from tests import test_utils
 
@@ -57,6 +58,63 @@ def test_src_ll_cache1(tmp_path: pathlib.Path) -> None:
     assert has_pure._primal.src_ll_cache_observations.cache_key_generated
     assert has_pure._primal.src_ll_cache_observations.cache_validated
     assert has_pure._primal.src_ll_cache_observations.cache_loaded
+    if gstaichi.lang.impl.current_cfg().arch in [ti.cpu, ti.cuda]:
+        assert has_pure._primal._last_compiled_kernel_data._debug_dump_to_string() == last_compiled_kernel_data_str
+
+
+@test_utils.test()
+def test_src_ll_cache_with_corruption(tmp_path: pathlib.Path) -> None:
+    ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
+
+    @ti.pure
+    @ti.kernel
+    def has_pure() -> None:
+        pass
+
+    has_pure()
+    assert has_pure._primal is not None
+    assert has_pure._primal.src_ll_cache_observations.cache_key_generated
+    assert not has_pure._primal.src_ll_cache_observations.cache_validated
+    assert not has_pure._primal.src_ll_cache_observations.cache_loaded
+    assert has_pure._primal.src_ll_cache_observations.cache_stored
+    assert has_pure._primal._last_compiled_kernel_data is not None
+
+    # reset observations
+    has_pure._primal.src_ll_cache_observations = SrcLlCacheObservations()
+    assert not has_pure._primal.src_ll_cache_observations.cache_key_generated
+
+    last_compiled_kernel_data_str = None
+    if gstaichi.lang.impl.current_cfg().arch in [ti.cpu, ti.cuda]:
+        # we only support _last_compiled_kernel_data on cpu and cuda
+        # and it only changes anything on cuda anyway, because it affects the PTX
+        # cache
+        last_compiled_kernel_data_str = has_pure._primal._last_compiled_kernel_data._debug_dump_to_string()
+        assert last_compiled_kernel_data_str is not None and last_compiled_kernel_data_str != ""
+
+    ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
+    # corrupt the cache files
+    for file in tmp_path.glob("python_side_cache/*"):
+        print("file", file)
+        with open(file, "wb") as f:
+            f.write(b"\x00\x0a\xe2\xff\xfe\x80\x99JUNK")
+        os.system(f"hexdump -C {file}")
+
+    # check cache doesnt crash
+    has_pure()
+    assert has_pure._primal.src_ll_cache_observations.cache_key_generated
+    assert not has_pure._primal.src_ll_cache_observations.cache_validated
+    assert not has_pure._primal.src_ll_cache_observations.cache_loaded
+    has_pure._primal.src_ll_cache_observations = SrcLlCacheObservations()
+    if gstaichi.lang.impl.current_cfg().arch in [ti.cpu, ti.cuda]:
+        assert has_pure._primal._last_compiled_kernel_data._debug_dump_to_string() == last_compiled_kernel_data_str
+
+    # check cache works again
+    ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
+    has_pure()
+    assert has_pure._primal.src_ll_cache_observations.cache_key_generated
+    assert has_pure._primal.src_ll_cache_observations.cache_validated
+    assert has_pure._primal.src_ll_cache_observations.cache_loaded
+    has_pure._primal.src_ll_cache_observations = SrcLlCacheObservations()
     if gstaichi.lang.impl.current_cfg().arch in [ti.cpu, ti.cuda]:
         assert has_pure._primal._last_compiled_kernel_data._debug_dump_to_string() == last_compiled_kernel_data_str
 
@@ -259,8 +317,9 @@ def src_ll_cache_has_return_child(args: list[str]) -> None:
 @pytest.mark.parametrize("src_ll_cache", [False, True])
 @test_utils.test()
 def test_src_ll_cache_has_return(tmp_path: pathlib.Path, src_ll_cache: bool, return_something: bool) -> None:
+    assert ti.lang is not None
     arch = ti.lang.impl.current_cfg().arch.name
-    env = os.environ
+    env = dict(os.environ)
     env["PYTHONPATH"] = "."
     # need to test what happens when loading from fast cache, so run several runs
     # - first iteration stores to cache
@@ -291,7 +350,84 @@ def test_src_ll_cache_has_return(tmp_path: pathlib.Path, src_ll_cache: bool, ret
         assert proc.returncode == RET_SUCCESS
 
 
-# The following lines are critical for the tests to work. If they are missing, the test will
+@test_utils.test()
+def test_src_ll_cache_self_arg_checked(tmp_path: pathlib.Path) -> None:
+    """
+    Check that modifiying primtiive values in a data oriented object does result
+    in the kernel correctly recompiling to reflect those new values, even with pure on.
+    """
+    ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
+
+    @ti.data_oriented
+    class MyDataOrientedChild:
+        def __init__(self) -> None:
+            self.b = 10
+
+    @ti.data_oriented
+    class MyDataOriented:
+        def __init__(self) -> None:
+            self.a = 3
+            self.child = MyDataOrientedChild()
+
+        @ti.pure
+        @ti.kernel
+        def k1(self) -> tuple[ti.i32, ti.i32]:
+            return self.a, self.child.b
+
+    my_do = MyDataOriented()
+
+    # weirdly, if I don't use the name to get the arch, then on Mac github CI, the value of
+    # arch can change during the below execcution 🤔
+    # TODO: figure out why this is happening, and/or remove arch from python config object (replace
+    # with arch_name and arch_idx for example)
+    arch = getattr(ti, ti.lang.impl.current_cfg().arch.name)
+
+    # need to initialize up front, in order that config hash doesn't change when we re-init later
+    ti.reset()
+    ti.init(arch=arch, offline_cache_file_path=str(tmp_path), offline_cache=True)
+    my_do.a = 5
+    my_do.child.b = 20
+    assert tuple(my_do.k1()) == (5, 20)
+    assert my_do.k1._primal.src_ll_cache_observations.cache_key_generated
+    assert not my_do.k1._primal.src_ll_cache_observations.cache_validated
+
+    ti.reset()
+    ti.init(arch=arch, offline_cache_file_path=str(tmp_path), offline_cache=True)
+    my_do.a = 5
+    assert tuple(my_do.k1()) == (5, 20)
+    assert my_do.k1._primal.src_ll_cache_observations.cache_key_generated
+    assert my_do.k1._primal.src_ll_cache_observations.cache_validated
+
+    ti.reset()
+    ti.init(arch=arch, offline_cache_file_path=str(tmp_path), offline_cache=True)
+    my_do.a = 7
+    assert tuple(my_do.k1()) == (7, 20)
+    assert my_do.k1._primal.src_ll_cache_observations.cache_key_generated
+    assert not my_do.k1._primal.src_ll_cache_observations.cache_validated
+
+    ti.reset()
+    ti.init(arch=arch, offline_cache_file_path=str(tmp_path), offline_cache=True)
+    my_do.a = 7
+    assert tuple(my_do.k1()) == (7, 20)
+    assert my_do.k1._primal.src_ll_cache_observations.cache_key_generated
+    assert my_do.k1._primal.src_ll_cache_observations.cache_validated
+
+    ti.reset()
+    ti.init(arch=arch, offline_cache_file_path=str(tmp_path), offline_cache=True)
+    my_do.child.b = 30
+    assert tuple(my_do.k1()) == (7, 30)
+    assert my_do.k1._primal.src_ll_cache_observations.cache_key_generated
+    assert not my_do.k1._primal.src_ll_cache_observations.cache_validated
+
+    ti.reset()
+    ti.init(arch=arch, offline_cache_file_path=str(tmp_path), offline_cache=True)
+    my_do.child.b = 30
+    assert tuple(my_do.k1()) == (7, 30)
+    assert my_do.k1._primal.src_ll_cache_observations.cache_key_generated
+    assert my_do.k1._primal.src_ll_cache_observations.cache_validated
+
+
+# The following lines are critical for subprocess-using tests to work. If they are missing, the tests will
 # incorrectly pass, without doing anything.
 if __name__ == "__main__":
     globals()[sys.argv[1]](sys.argv[2:])

@@ -12,7 +12,6 @@
 #include "pybind11/pybind11.h"
 #include "pybind11/eigen.h"
 #include "pybind11/numpy.h"
-#include "fp16.h"
 
 #include "gstaichi/ir/expression_ops.h"
 #include "gstaichi/ir/frontend_ir.h"
@@ -157,6 +156,8 @@ void export_lang(py::module &m) {
       .def(py::init<>())
       .def_readwrite("arch", &CompileConfig::arch)
       .def_readwrite("opt_level", &CompileConfig::opt_level)
+      .def_readwrite("raise_on_templated_floats",
+                     &CompileConfig::raise_on_templated_floats)
       .def_readwrite("print_ir", &CompileConfig::print_ir)
       .def_readwrite("print_preprocessed_ir",
                      &CompileConfig::print_preprocessed_ir)
@@ -174,6 +175,7 @@ void export_lang(py::module &m) {
                      &CompileConfig::print_kernel_llvm_ir_optimized)
       .def_readwrite("print_kernel_asm", &CompileConfig::print_kernel_asm)
       .def_readwrite("print_kernel_amdgcn", &CompileConfig::print_kernel_amdgcn)
+      .def_readwrite("debug_dump_path", &CompileConfig::debug_dump_path)
       .def_readwrite("simplify_before_lower_access",
                      &CompileConfig::simplify_before_lower_access)
       .def_readwrite("simplify_after_lower_access",
@@ -210,6 +212,8 @@ void export_lang(py::module &m) {
       .def_readwrite("fast_math", &CompileConfig::fast_math)
       .def_readwrite("advanced_optimization",
                      &CompileConfig::advanced_optimization)
+      .def_readwrite("ad_stack_experimental_enabled",
+                     &CompileConfig::ad_stack_experimental_enabled)
       .def_readwrite("ad_stack_size", &CompileConfig::ad_stack_size)
       .def_readwrite("flatten_if", &CompileConfig::flatten_if)
       .def_readwrite("make_thread_local", &CompileConfig::make_thread_local)
@@ -488,7 +492,8 @@ void export_lang(py::module &m) {
           [](const CompileResult &self) -> const CompiledKernelData & {
             return self.compiled_kernel_data;
           })
-      .def_readonly("cache_hit", &CompileResult::cache_hit);
+      .def_readonly("cache_hit", &CompileResult::cache_hit)
+      .def_readonly("cache_key", &CompileResult::cache_key);
 
   py::class_<Axis>(m, "Axis").def(py::init<int>());
   py::class_<SNode>(m, "SNodeCxx")
@@ -610,6 +615,7 @@ void export_lang(py::module &m) {
              // TODO(#2193): Also apply to @ti.func?
              self->no_activate.push_back(snode);
            })
+      .def("to_string", &Kernel::to_string)
       .def("insert_scalar_param", &Kernel::insert_scalar_param)
       .def("insert_arr_param", &Kernel::insert_arr_param)
       .def("insert_ndarray_param", &Kernel::insert_ndarray_param)
@@ -628,9 +634,13 @@ void export_lang(py::module &m) {
           py::return_value_policy::reference);
 
   py::class_<LaunchContextBuilder>(m, "KernelLaunchContext")
+      .def("copy", &LaunchContextBuilder::copy)
       .def("set_arg_int", &LaunchContextBuilder::set_arg_int)
+      .def("set_args_int", &LaunchContextBuilder::set_args_int)
       .def("set_arg_uint", &LaunchContextBuilder::set_arg_uint)
+      .def("set_args_uint", &LaunchContextBuilder::set_args_uint)
       .def("set_arg_float", &LaunchContextBuilder::set_arg_float)
+      .def("set_args_float", &LaunchContextBuilder::set_args_float)
       .def("set_struct_arg_int", &LaunchContextBuilder::set_struct_arg<int64>)
       .def("set_struct_arg_uint", &LaunchContextBuilder::set_struct_arg<uint64>)
       .def("set_struct_arg_float",
@@ -638,8 +648,11 @@ void export_lang(py::module &m) {
       .def("set_arg_external_array_with_shape",
            &LaunchContextBuilder::set_arg_external_array_with_shape)
       .def("set_arg_ndarray", &LaunchContextBuilder::set_arg_ndarray)
+      .def("set_args_ndarray", &LaunchContextBuilder::set_args_ndarray)
       .def("set_arg_ndarray_with_grad",
            &LaunchContextBuilder::set_arg_ndarray_with_grad)
+      .def("set_args_ndarray_with_grad",
+           &LaunchContextBuilder::set_args_ndarray_with_grad)
       .def("set_arg_texture", &LaunchContextBuilder::set_arg_texture)
       .def("set_arg_rw_texture", &LaunchContextBuilder::set_arg_rw_texture)
       .def("get_struct_ret_int", &LaunchContextBuilder::get_struct_ret_int)

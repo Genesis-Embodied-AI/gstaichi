@@ -136,3 +136,94 @@ def test_pure_kernel_parameter() -> None:
     some_class.da5(a)
     assert not some_class.da5._primal.src_ll_cache_observations.cache_key_generated
     assert a[0] == 15
+
+
+@test_utils.test()
+def test_fastcache_kernel_parameter() -> None:
+    arch = ti.lang.impl.current_cfg().arch
+    ti.init(arch=arch, offline_cache=False, src_ll_cache=True)
+
+    @ti.pure
+    @ti.kernel
+    def k1(a: ti.types.NDArray) -> None:
+        a[0] = 1
+
+    @ti.kernel(fastcache=True)
+    def k2(a: ti.types.NDArray) -> None:
+        a[0] = 2
+
+    @ti.kernel
+    def k3(a: ti.types.NDArray) -> None:
+        a[0] = 3
+
+    @ti.kernel(fastcache=False)
+    def k4(a: ti.types.NDArray) -> None:
+        a[0] = 4
+
+    @ti.kernel()
+    def k5(a: ti.types.NDArray) -> None:
+        a[0] = 5
+
+    @ti.data_oriented
+    class SomeClass:
+        def __init__(self) -> None: ...
+
+        @ti.kernel
+        def da1(self, a: ti.types.NDArray) -> None:
+            a[0] = 11
+
+        @ti.pure
+        @ti.kernel
+        def da2(self, a: ti.types.NDArray) -> None:
+            a[0] = 12
+
+        @ti.kernel(fastcache=True)
+        def da3(self, a: ti.types.NDArray) -> None:
+            a[0] = 13
+
+        @ti.kernel(fastcache=False)
+        def da4(self, a: ti.types.NDArray) -> None:
+            a[0] = 14
+
+        @ti.kernel()
+        def da5(self, a: ti.types.NDArray) -> None:
+            a[0] = 15
+
+    a = ti.ndarray(ti.i32, (10,))
+    k1(a)
+    assert k1._primal.src_ll_cache_observations.cache_key_generated
+    assert a[0] == 1
+    k2(a)
+    assert k2._primal.src_ll_cache_observations.cache_key_generated
+    assert a[0] == 2
+    k3(a)
+    assert not k3._primal.src_ll_cache_observations.cache_key_generated
+    assert a[0] == 3
+    k4(a)
+    assert not k4._primal.src_ll_cache_observations.cache_key_generated
+    assert a[0] == 4
+    k5(a)
+    assert not k4._primal.src_ll_cache_observations.cache_key_generated
+    assert a[0] == 5
+
+    some_class = SomeClass()
+
+    some_class.da1(a)
+    assert not some_class.da1._primal.src_ll_cache_observations.cache_key_generated
+    assert a[0] == 11
+
+    some_class.da2(a)
+    assert some_class.da2._primal.src_ll_cache_observations.cache_key_generated
+    assert a[0] == 12
+
+    some_class.da3(a)
+    assert some_class.da3._primal.src_ll_cache_observations.cache_key_generated
+    assert a[0] == 13
+
+    some_class.da4(a)
+    assert not some_class.da4._primal.src_ll_cache_observations.cache_key_generated
+    assert a[0] == 14
+
+    some_class.da5(a)
+    assert not some_class.da5._primal.src_ll_cache_observations.cache_key_generated
+    assert a[0] == 15
