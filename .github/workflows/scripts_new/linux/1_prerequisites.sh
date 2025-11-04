@@ -16,6 +16,9 @@ chmod +x ${LLVM_DIR}/bin/*
 clang --version
 which clang
 
+python -c 'import sys; print("sys.platform", sys.platform)'
+python -c 'import os; print("os.uname()[4]", os.uname()[4])'
+
 git submodule
 git submodule update --init --recursive
 sudo apt update

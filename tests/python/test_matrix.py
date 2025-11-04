@@ -1267,7 +1267,7 @@ def test_matrix_arithmatics():
     gdb_trigger=False,
 )
 def test_matrix_oob():
-    if sys.platform == "linux" and os.uname()[4] == "aarch64":
+    if sys.platform == "linux" and os.uname()[4] in ["aarch64", "arm64"]:
         pytest.skip(reason="Crashes on linux arm64")
 
     @ti.kernel
