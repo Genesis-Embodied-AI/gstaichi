@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 
 import gstaichi as ti
@@ -16,6 +18,9 @@ def test_cpu_debug_snode_reader():
 
 @test_utils.test(require=ti.extension.assertion, debug=True, gdb_trigger=False)
 def test_cpu_debug_snode_writer_out_of_bound():
+    if sys.platform == "linux" and os.uname()[4] == "aarch64":
+        pytest.skip(reason="Crashes on linux arm64")
+
     x = ti.field(ti.f32, shape=3)
 
     with pytest.raises(AssertionError):
