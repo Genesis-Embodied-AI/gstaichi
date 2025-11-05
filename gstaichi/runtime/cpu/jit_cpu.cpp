@@ -131,7 +131,7 @@ class JITSessionCPU : public JITSession {
         mangle_(es_, this->dl_),
         module_counter_(0),
         memory_manager_(nullptr) {
-#if defined(__linux__) && defined(__aarch64__)
+#if !(defined(__APPLE__) && defined(__aarch64__))
     // On ELF-based targets LLVM's ORC JIT expects the object layer to claim
     // responsibility for every symbol emitted by the module. Without this the
     // resolver may encounter symbols that were not pre-registered in the
