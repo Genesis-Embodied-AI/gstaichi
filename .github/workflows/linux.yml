@@ -12,6 +12,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Developing directly on ubuntu arm not supported currently.
+        # Need to dev inside a manylinux container, when developing using linux arm.
         OS: ['ubuntu-22.04']
     name: Linux Build
     runs-on: ${{ matrix.OS }}
