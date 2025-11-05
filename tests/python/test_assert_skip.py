@@ -15,6 +15,11 @@ if sys.platform != "linux" or os.uname()[4] not in ["arm64", "aarch64"]:
 
 @test_utils.test()
 def test_assert_ignored():
+    """
+    On linux arm, assert is just a `nop` currently (otherwise it crashes). This test checks that:
+    - assert doesn't cause a crash
+    - that the test expression is still executed
+    """
     a = ti.field(ti.i32, shape=())
 
     @ti.func
