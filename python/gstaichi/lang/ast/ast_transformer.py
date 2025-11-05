@@ -1335,6 +1335,7 @@ class ASTTransformer(Builder):
     @staticmethod
     def build_Assert(ctx: ASTTransformerContext, node: ast.Assert) -> None:
         if sys.platform == "linux" and os.uname()[4] in ["arm64", "aarch64"]:
+            build_stmt(ctx, node.test)
             warnings.warn("Assert not supported on linux arm64 currently")
             return None
         extra_args = []
