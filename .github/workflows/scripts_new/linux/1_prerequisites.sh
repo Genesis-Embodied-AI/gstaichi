@@ -16,8 +16,7 @@ chmod +x ${LLVM_DIR}/bin/*
 clang --version
 which clang
 
-python -c 'import sys; print("sys.platform", sys.platform)'
-python -c 'import os; print("os.uname()[4]", os.uname()[4])'
+python -c 'import platform; u = platform.uname(); print("u.system", u.system, "u.machine", u.machine)'
 
 git submodule
 git submodule update --init --recursive
