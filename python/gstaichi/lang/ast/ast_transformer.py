@@ -6,6 +6,7 @@ import dataclasses
 import enum
 import itertools
 import math
+import platform
 import warnings
 from ast import unparse
 from typing import Any, Sequence, Type
