@@ -1,6 +1,6 @@
 import math
 import operator
-import os
+import platform
 import sys
 
 import numpy as np
@@ -23,6 +23,8 @@ test_matrix_arrays = [
 
 vector_operation_types = [operator.add, operator.sub]
 test_vector_arrays = [np.array([42, 42]), np.array([24, 24]), np.array([83, 12])]
+
+u = platform.uname()
 
 
 @test_utils.test(arch=get_host_arch_list())
@@ -1260,6 +1262,7 @@ def test_matrix_arithmatics():
     ).all()
 
 
+@pytest.mark.skipif(u.system == "linux" and u.machine in ("arm64", "aarch64"), reason="crashes on linux aarch64")
 @test_utils.test(
     require=ti.extension.assertion,
     debug=True,
@@ -1267,9 +1270,6 @@ def test_matrix_arithmatics():
     gdb_trigger=False,
 )
 def test_matrix_oob():
-    if sys.platform == "linux" and os.uname()[4] in ["aarch64", "arm64"]:
-        pytest.skip(reason="Crashes on linux arm64")
-
     @ti.kernel
     def access_vec(i: ti.i32):
         x = ti.Vector([1, 0])

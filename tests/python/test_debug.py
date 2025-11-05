@@ -1,11 +1,12 @@
-import os
-import sys
+import platform
 
 import pytest
 
 import gstaichi as ti
 
 from tests import test_utils
+
+u = platform.uname()
 
 
 def test_cpu_debug_snode_reader():
@@ -17,11 +18,12 @@ def test_cpu_debug_snode_reader():
     assert x[None] == 10.0
 
 
+@pytest.mark.skipif(
+    u.system == "linux" and u.machine in ("arm64", "aarch64"),
+    reason="assert not currently supported on linux arm64 or aarch64",
+)
 @test_utils.test(require=ti.extension.assertion, debug=True, gdb_trigger=False)
 def test_cpu_debug_snode_writer_out_of_bound():
-    if sys.platform == "linux" and os.uname()[4] in ["aarch64", "arm64"]:
-        pytest.skip(reason="Crashes on linux arm64")
-
     x = ti.field(ti.f32, shape=3)
 
     with pytest.raises(AssertionError):

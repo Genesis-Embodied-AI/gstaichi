@@ -1,5 +1,4 @@
-import os
-import sys
+import platform
 
 import pytest
 
@@ -8,7 +7,8 @@ from gstaichi.lang.misc import get_host_arch_list
 
 from tests import test_utils
 
-if sys.platform == "linux" and os.uname()[4] in ["arm64", "aarch64"]:
+u = platform.uname()
+if u.system == "linux" and u.machine in ("arm64", "aarch64"):
     pytest.skip("assert not currently supported on linux arm64 or aarch64", allow_module_level=True)
 
 
