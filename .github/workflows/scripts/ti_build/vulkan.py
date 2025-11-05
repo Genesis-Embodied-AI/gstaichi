@@ -19,9 +19,7 @@ def setup_vulkan():
     u = platform.uname()
     match (u.system, u.machine):
         case ("Linux", "x86_64"):
-            url = (
-                f"https://sdk.lunarg.com/sdk/download/{VULKAN_VERSION}/linux/vulkansdk-linux-x86_64-{VULKAN_VERSION}.tar.xz"
-            )
+            url = f"https://sdk.lunarg.com/sdk/download/{VULKAN_VERSION}/linux/vulkansdk-linux-x86_64-{VULKAN_VERSION}.tar.xz"
             prefix = get_cache_home() / f"vulkan-{VULKAN_VERSION}"
 
             download_dep(url, prefix, strip=1)
@@ -43,7 +41,9 @@ def setup_vulkan():
         # case ("Darwin", "arm64"):
         # case ("Darwin", "x86_64"):
         case ("Windows", "AMD64"):
-            url = f"https://sdk.lunarg.com/sdk/download/{VULKAN_VERSION}/windows/VulkanSDK-{VULKAN_VERSION}-Installer.exe"
+            url = (
+                f"https://sdk.lunarg.com/sdk/download/{VULKAN_VERSION}/windows/VulkanSDK-{VULKAN_VERSION}-Installer.exe"
+            )
             prefix = get_cache_home() / "vulkan-{VULKAN_VERSION}"
             download_dep(
                 url,
