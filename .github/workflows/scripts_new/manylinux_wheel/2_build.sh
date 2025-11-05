@@ -3,11 +3,7 @@
 set -ex
 
 PLATFORM=$(uname -m)
-if [ "$PLATFORM" = "x86_64" ]; then
-    PLATFORM="x86_64"
-elif [ "$PLATFORM" = "aarch64" ]; then
-    PLATFORM="aarch64"
-else
+if [[ ! "$PLATFORM" =~ ^(x86_64|aarch64)$ ]]; then
     echo "Unsupported architecture: $PLATFORM"
     exit 1
 fi
