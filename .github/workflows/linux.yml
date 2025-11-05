@@ -15,7 +15,7 @@ jobs:
         # Developing directly on ubuntu arm not supported currently.
         # Need to dev inside a manylinux container, when developing using linux arm.
         OS: ['ubuntu-22.04']
-    name: Linux Build
+    name: Linux ${{ matrix.OS }} Build
     runs-on: ${{ matrix.OS }}
     steps:
       - uses: actions/checkout@v4
