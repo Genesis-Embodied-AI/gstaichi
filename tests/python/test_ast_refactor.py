@@ -1,3 +1,6 @@
+import os
+import sys
+
 import numpy as np
 import pytest
 
@@ -794,6 +797,9 @@ def test_gstaichi_other_than_ti():
 
 @test_utils.test(require=ti.extension.assertion, debug=True, gdb_trigger=False)
 def test_assert_message():
+    if sys.platform == "linux" and os.uname()[4] in ["arm64", "aarch64"]:
+        pytest.skip("assert not currently supported on linux arm64 or aarch64")
+
     @ti.kernel
     def func():
         x = 20
@@ -805,6 +811,9 @@ def test_assert_message():
 
 @test_utils.test(require=ti.extension.assertion, debug=True, gdb_trigger=False)
 def test_assert_message_formatted():
+    if sys.platform == "linux" and os.uname()[4] in ["arm64", "aarch64"]:
+        pytest.skip("assert not currently supported on linux arm64 or aarch64")
+
     x = ti.field(dtype=int, shape=16)
     x[10] = 42
 

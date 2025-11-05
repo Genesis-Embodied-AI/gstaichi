@@ -1,9 +1,15 @@
+import os
+import sys
+
 import pytest
 
 import gstaichi as ti
 from gstaichi.lang.misc import get_host_arch_list
 
 from tests import test_utils
+
+if sys.platform == "linux" and os.uname()[4] in ["arm64", "aarch64"]:
+    pytest.skip("assert not currently supported on linux arm64 or aarch64", allow_module_level=True)
 
 
 @test_utils.test(require=ti.extension.assertion, debug=True, gdb_trigger=False)

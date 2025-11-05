@@ -1319,13 +1319,14 @@ def test_matrix_oob():
 @pytest.mark.parametrize("shape", [(8,), (6, 12)])
 @pytest.mark.parametrize("offset", [None, 0, -4, 4])
 @pytest.mark.parametrize("m, n", [(3, 4)])
-@test_utils.test(arch=get_host_arch_list())
+@test_utils.test(arch=get_host_arch_list(), debug=True)
 def test_matrix_from_numpy_with_offset(dtype, shape, offset, m, n):
     import numpy as np
 
     x = ti.Matrix.field(
         dtype=dtype, m=m, n=n, shape=shape, offset=[offset] * len(shape) if offset is not None else None
     )
+
     # use the corresponding dtype for the numpy array.
     numpy_dtypes = {
         ti.i32: np.int32,
@@ -1340,7 +1341,13 @@ def test_matrix_from_numpy_with_offset(dtype, shape, offset, m, n):
     @ti.kernel
     def func():
         for I in ti.grouped(x):
-            assert all(abs(I - 1.0) < 1e-6)
+            pass
+            # TODO: figure out the the purpose this assert (or of this test)
+            # with debug off (as before) the failing assert is ignored
+            # with debug on, it fires on all platforms
+            # I suspect debug should be on
+            # but this assert is clearly broken
+            # assert all(abs(I - 1.0) < 1e-6)
 
     func()
 
