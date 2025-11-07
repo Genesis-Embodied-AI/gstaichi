@@ -87,7 +87,9 @@ def extract_struct_locals_from_context(ctx: ASTTransformerContext) -> set[str]:
     return struct_locals
 
 
-def expand_func_arguments(arguments: list[ArgMetadata]) -> list[ArgMetadata]:
+def expand_func_arguments(
+    used_py_dataclasses_parameters_enforcing: set[str] | None, arguments: list[ArgMetadata]
+) -> list[ArgMetadata]:
     """
     Used to expand arguments for @ti.func
     """
@@ -96,13 +98,18 @@ def expand_func_arguments(arguments: list[ArgMetadata]) -> list[ArgMetadata]:
         if dataclasses.is_dataclass(argument.annotation):
             for field in dataclasses.fields(argument.annotation):
                 child_name = create_flat_name(argument.name, field.name)
+                if (
+                    used_py_dataclasses_parameters_enforcing is not None
+                    and child_name not in used_py_dataclasses_parameters_enforcing
+                ):
+                    continue
                 if dataclasses.is_dataclass(field.type):
                     new_arg = ArgMetadata(
                         annotation=field.type,
                         name=child_name,
                         default=argument.default,
                     )
-                    child_args = expand_func_arguments([new_arg])
+                    child_args = expand_func_arguments(used_py_dataclasses_parameters_enforcing, [new_arg])
                     expanded_arguments += child_args
                 else:
                     new_argument = ArgMetadata(
@@ -111,7 +118,12 @@ def expand_func_arguments(arguments: list[ArgMetadata]) -> list[ArgMetadata]:
                     )
                     expanded_arguments.append(new_argument)
         else:
-            expanded_arguments.append(argument)
+            if (
+                not argument.name.startswith("__ti_")
+                or used_py_dataclasses_parameters_enforcing is None
+                or argument.name in used_py_dataclasses_parameters_enforcing
+            ):
+                expanded_arguments.append(argument)
     return expanded_arguments
 
 

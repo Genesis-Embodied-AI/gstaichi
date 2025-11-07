@@ -32,7 +32,7 @@ def bls_test_template(dim, N, bs, stencil, block_dim=None, scatter=False, benchm
         create_block().dense(index, bs).place(y)
         create_block().dense(index, bs).place(y2)
 
-    ndrange = ((bs[i] * 2, N - bs[i] * 2) for i in range(dim))
+    ndrange = tuple((bs[i] * 2, N - bs[i] * 2) for i in range(dim))
 
     if block_dim is None:
         block_dim = 1
@@ -65,8 +65,6 @@ def bls_test_template(dim, N, bs, stencil, block_dim=None, scatter=False, benchm
                 for offset in ti.static(stencil):
                     s = s + x[I + ti.Vector(offset)]
                 y[I] = s
-
-    populate()
 
     if benchmark:
         for i in range(benchmark):
