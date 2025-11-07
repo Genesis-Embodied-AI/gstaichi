@@ -6,6 +6,7 @@ import dataclasses
 import enum
 import itertools
 import math
+import platform
 import warnings
 from ast import unparse
 from typing import Any, Sequence, Type
@@ -1332,6 +1333,11 @@ class ASTTransformer(Builder):
 
     @staticmethod
     def build_Assert(ctx: ASTTransformerContext, node: ast.Assert) -> None:
+        u = platform.uname()
+        if u.system == "linux" and u.machine in ("arm64", "aarch64"):
+            build_stmt(ctx, node.test)
+            warnings.warn("Assert not supported on linux arm64 currently")
+            return None
         extra_args = []
         if node.msg is not None:
             if ASTTransformer._is_string_mod_args(node.msg):

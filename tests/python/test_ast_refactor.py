@@ -1,3 +1,5 @@
+import platform
+
 import numpy as np
 import pytest
 
@@ -6,6 +8,8 @@ from gstaichi.lang import impl
 from gstaichi.lang.util import has_pytorch
 
 from tests import test_utils
+
+u = platform.uname()
 
 
 @test_utils.test()
@@ -792,6 +796,10 @@ def test_gstaichi_other_than_ti():
         assert foo(i) == fib[i]
 
 
+@pytest.mark.skipif(
+    u.system == "linux" and u.machine in ("arm64", "aarch64"),
+    reason="assert not currently supported on linux arm64 or aarch64",
+)
 @test_utils.test(require=ti.extension.assertion, debug=True, gdb_trigger=False)
 def test_assert_message():
     @ti.kernel
@@ -803,6 +811,10 @@ def test_assert_message():
         func()
 
 
+@pytest.mark.skipif(
+    u.system == "linux" and u.machine in ("arm64", "aarch64"),
+    reason="assert not currently supported on linux arm64 or aarch64",
+)
 @test_utils.test(require=ti.extension.assertion, debug=True, gdb_trigger=False)
 def test_assert_message_formatted():
     x = ti.field(dtype=int, shape=16)

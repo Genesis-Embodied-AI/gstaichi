@@ -1,5 +1,5 @@
 import gc
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from typing import Any
 
 import pytest
@@ -864,3 +864,56 @@ def test_ndarray_struct_multiple_child_structs_field():
     assert d[0] == 55
     assert e[0] == 66
     assert f[0] == 77
+
+
+@pytest.mark.parametrize("use_slots", [False, True])
+@test_utils.test()
+def test_template_mapper_cache(use_slots, monkeypatch):
+    # Mock '_extract_arg' to track the number of (recursive) calls
+    counter = 0
+    _extract_arg_orig = ti.lang._template_mapper_hotpath._extract_arg
+
+    def _extract_arg(*args, **kwargs):
+        nonlocal counter
+        counter += 1
+        return _extract_arg_orig(*args, **kwargs)
+
+    monkeypatch.setattr("gstaichi.lang._template_mapper_hotpath._extract_arg", _extract_arg)
+
+    @dataclass(frozen=True, slots=use_slots)
+    class MyStruct:
+        value: ti.types.ndarray()
+        placeholder: ti.i32
+
+    @ti.kernel
+    def my_kernel(my_struct_1d: MyStruct, my_struct_2d: MyStruct) -> None:
+        for i in ti.ndrange(my_struct_1d.value.shape[0]):
+            my_struct_1d.value[i] += 1
+        for i, j in ti.ndrange(my_struct_2d.value.shape[0], my_struct_2d.value.shape[1]):
+            my_struct_2d.value[i, j] += 1
+
+    num_fields = len(fields(MyStruct))
+    value = ti.ndarray(ti.i32, shape=(1,))
+    value.fill(0)
+    placeholder = 0
+    my_struct_1d = MyStruct(value=value, placeholder=placeholder)
+    value = ti.ndarray(ti.f32, shape=(1, 2))
+    value.fill(0.0)
+    my_struct_2d = MyStruct(value=value, placeholder=placeholder)
+
+    my_kernel(my_struct_1d, my_struct_2d)
+    assert counter == 2 * num_fields
+    assert my_struct_1d.value[0] == 1
+    assert my_struct_2d.value[0, 0] == 1.0
+    assert my_struct_2d.value[0, 1] == 1.0
+
+    counter = 0
+    my_kernel(my_struct_1d, my_struct_2d)
+    if use_slots:
+        # template mapper caching mechanism is disabled for dataclasses that enable slots
+        assert counter == 2 * num_fields
+    else:
+        assert counter == 0
+    assert my_struct_1d.value[0] == 2
+    assert my_struct_2d.value[0, 0] == 2.0
+    assert my_struct_2d.value[0, 1] == 2.0

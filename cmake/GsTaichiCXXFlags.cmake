@@ -138,6 +138,11 @@ else()
 endif()
 set(HOST_ARCH ${ARCH} CACHE INTERNAL "Host arch")
 
+if (LINUX AND CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+    set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS} -latomic")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -latomic")
+endif()
+
 if (USE_STDCPP)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 endif()

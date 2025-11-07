@@ -172,12 +172,16 @@ def _extract_arg(raise_on_templated_floats: bool, arg: Any, annotation: Annotati
         # This property is sufficient to guarantee that its taichi "key" will never change and therefore can be stored
         # as a static attribute, much like its hash which is computed once and for all during instantiation.
         # Instead of strictly requiring being frozen, we only require the dataclass to be hashable. Any frozen dataclass
-        # is hashable, but a user and enforce a dataclass to be consider frozen for a user perspective without being
+        # is hashable, but a user can enforce a dataclass to be consider frozen for a user perspective without being
         # truly frozen by specifying 'unsafe_hash=True'. If a user is doing this on purpose, it makes sense to honor it.
         is_frozen = annotation.__hash__ is not None
         if is_frozen:
             try:
-                return annotation._key
+                # Note that it is necessary to store the key at instance-level instead of class-level because because
+                # multiple instances of the same class may have different memory layout (although unusual).
+                # One limitation is that storing '_key' is then impossible for dataclasses enforcing 'slots=True',
+                # but this not the default option and almost never used in practice because of other limitations.
+                return arg._key
             except AttributeError:
                 pass
         key = tuple(
@@ -193,7 +197,11 @@ def _extract_arg(raise_on_templated_floats: bool, arg: Any, annotation: Annotati
             ]
         )
         if is_frozen:
-            annotation._key = key
+            try:
+                object.__setattr__(arg, "_key", key)
+            except AttributeError:
+                # Impossible to store _key at instance-level if 'slots=True'. It will be recomputed systematically.
+                pass
         return key
     if annotation_type is texture_type.TextureType:
         if arg_type is not Texture:
