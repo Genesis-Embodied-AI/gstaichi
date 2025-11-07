@@ -15,7 +15,7 @@
 namespace gstaichi::lang {
 
 static std::vector<std::uint8_t> get_offline_cache_key_of_parameter_list(
-    const std::vector<CallableBase::Parameter> &parameter_list) {
+    const std::vector<Parameter> &parameter_list) {
   BinaryOutputSerializer serializer;
   serializer.initialize();
   serializer(parameter_list);
