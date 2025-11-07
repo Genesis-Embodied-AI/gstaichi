@@ -1,3 +1,4 @@
+import warnings
 import weakref
 from dataclasses import dataclass
 from typing import Any
@@ -82,15 +83,29 @@ class TemplateMapper:
         needs_grad = any([isinstance(arg, tuple) and len(arg) >= 3 and arg[2] for arg in args])
         if not needs_grad:
             ok_to_cache = True
-            if any(isinstance(arg, tuple) for arg in args):
-                ok_to_cache = False
-            if ok_to_cache:
-                for _id, arg in zip(fast_key, args):
-                    arg_type = type(arg)
-                    if arg_type in primitive_types:
-                        verif_info = VerificationInfo(is_weak_ref=False, value=arg)
-                    else:
+            # if any(isinstance(arg, tuple) for arg in args):
+            #     ok_to_cache = False
+            # if ok_to_cache:
+            _verif_info_by_id = {}
+            for _id, arg in zip(fast_key, args):
+                arg_type = type(arg)
+                if arg_type in primitive_types:
+                    verif_info = VerificationInfo(is_weak_ref=False, value=arg)
+                else:
+                    try:
                         verif_info = VerificationInfo(is_weak_ref=True, ref=weakref.ref(arg))
+                    except TypeError:
+                        # Object doesn't support weak references (e.g., slots without __weakref__)
+                        # Cannot cache reliably without weak references
+                        warnings.warn(
+                            f"Cannot use python-side caching of kernel arguments for {arg_type}. "
+                            "If it uses slots consider adding __weakref__ slot"
+                        )
+                        ok_to_cache = False
+                        break
+                _verif_info_by_id[_id] = verif_info
+            if ok_to_cache:
+                for _id, verif_info in _verif_info_by_id.items():
                     self._verif_info_by_id[_id] = verif_info
                 self._fast_weak_map[fast_key] = res
         return res
