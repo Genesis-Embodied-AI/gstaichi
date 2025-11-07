@@ -1,6 +1,7 @@
-from typing import Any
 import weakref
 from dataclasses import dataclass
+from typing import Any
+
 import numpy as np
 
 from gstaichi.lang.kernel_arguments import ArgMetadata
@@ -41,7 +42,9 @@ class TemplateMapper:
         self.num_args: int = len(arguments)
         self.template_slot_locations: list[int] = template_slot_locations
         self.mapping: dict[tuple[Any, ...], int] = {}
-        self._fast_weak_map: dict[tuple[int, ...], tuple[int, tuple[Any, ...]]] = {}  # dict from tuple of ids of objects to the lookup result
+        self._fast_weak_map: dict[tuple[int, ...], tuple[int, tuple[Any, ...]]] = (
+            {}
+        )  # dict from tuple of ids of objects to the lookup result
         # dict from id to verification info, so we can check the id still refers to the same object
         self._verif_info_by_id: dict[int, VerificationInfo] = {}
 
@@ -85,15 +88,9 @@ class TemplateMapper:
                 for _id, arg in zip(fast_key, args):
                     arg_type = type(arg)
                     if arg_type in primitive_types:
-                        verif_info = VerificationInfo(
-                            is_weak_ref=False,
-                            value=arg
-                        )
+                        verif_info = VerificationInfo(is_weak_ref=False, value=arg)
                     else:
-                        verif_info = VerificationInfo(
-                            is_weak_ref=True,
-                            ref=weakref.ref(arg)
-                        )
+                        verif_info = VerificationInfo(is_weak_ref=True, ref=weakref.ref(arg))
                     self._verif_info_by_id[_id] = verif_info
                 self._fast_weak_map[fast_key] = res
         return res
