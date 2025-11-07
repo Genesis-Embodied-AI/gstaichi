@@ -634,56 +634,25 @@ void export_lang(py::module &m) {
           py::return_value_policy::reference);
 
   py::class_<LaunchContextBuilder>(m, "KernelLaunchContext")
+      .def("copy", &LaunchContextBuilder::copy)
       .def("set_arg_int", &LaunchContextBuilder::set_arg_int)
-      .def("set_arg_int",
-           [](LaunchContextBuilder *launch_ctx, const std::vector<int> &arg_ids,
-              const std::vector<int64> &vec) {
-             for (int i = 0; i < arg_ids.size(); ++i)
-               launch_ctx->set_arg_int({arg_ids[i]}, vec[i]);
-           })
+      .def("set_args_int", &LaunchContextBuilder::set_args_int)
       .def("set_arg_uint", &LaunchContextBuilder::set_arg_uint)
-      .def("set_arg_uint",
-           [](LaunchContextBuilder *launch_ctx, const std::vector<int> &arg_ids,
-              const std::vector<uint64> &vec) {
-             for (int i = 0; i < arg_ids.size(); ++i)
-               launch_ctx->set_arg_uint({arg_ids[i]}, vec[i]);
-           })
+      .def("set_args_uint", &LaunchContextBuilder::set_args_uint)
       .def("set_arg_float", &LaunchContextBuilder::set_arg_float)
-      .def("set_arg_float",
-           [](LaunchContextBuilder *launch_ctx, const std::vector<int> &arg_ids,
-              const std::vector<float> &vec) {
-             for (int i = 0; i < arg_ids.size(); ++i)
-               launch_ctx->set_arg_float({arg_ids[i]}, vec[i]);
-           })
+      .def("set_args_float", &LaunchContextBuilder::set_args_float)
       .def("set_struct_arg_int", &LaunchContextBuilder::set_struct_arg<int64>)
       .def("set_struct_arg_uint", &LaunchContextBuilder::set_struct_arg<uint64>)
       .def("set_struct_arg_float",
            &LaunchContextBuilder::set_struct_arg<double>)
       .def("set_arg_external_array_with_shape",
            &LaunchContextBuilder::set_arg_external_array_with_shape)
-      .def("set_arg_external_array_with_shape",
-           [](LaunchContextBuilder *launch_ctx, const std::vector<int> &arg_ids,
-              const std::vector<Ndarray *> &arrs) {
-             for (int i = 0; i < arg_ids.size(); ++i)
-               launch_ctx->set_arg_ndarray({arg_ids[i]}, *arrs[i]);
-           })
       .def("set_arg_ndarray", &LaunchContextBuilder::set_arg_ndarray)
-      .def("set_arg_ndarray",
-           [](LaunchContextBuilder *launch_ctx, const std::vector<int> &arg_ids,
-              const std::vector<Ndarray *> &arrs) {
-             for (int i = 0; i < arg_ids.size(); ++i)
-               launch_ctx->set_arg_ndarray({arg_ids[i]}, *arrs[i]);
-           })
+      .def("set_args_ndarray", &LaunchContextBuilder::set_args_ndarray)
       .def("set_arg_ndarray_with_grad",
            &LaunchContextBuilder::set_arg_ndarray_with_grad)
-      .def("set_arg_ndarray_with_grad",
-           [](LaunchContextBuilder *launch_ctx, const std::vector<int> &arg_ids,
-              const std::vector<Ndarray *> &arrs,
-              const std::vector<Ndarray *> &arrs_grad) {
-             for (int i = 0; i < arg_ids.size(); ++i)
-               launch_ctx->set_arg_ndarray_with_grad({arg_ids[i]}, *arrs[i],
-                                                     *arrs_grad[i]);
-           })
+      .def("set_args_ndarray_with_grad",
+           &LaunchContextBuilder::set_args_ndarray_with_grad)
       .def("set_arg_texture", &LaunchContextBuilder::set_arg_texture)
       .def("set_arg_rw_texture", &LaunchContextBuilder::set_arg_rw_texture)
       .def("get_struct_ret_int", &LaunchContextBuilder::get_struct_ret_int)

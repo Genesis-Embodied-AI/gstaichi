@@ -23,7 +23,10 @@ from enum import IntEnum
 
 # Must import 'partial' directly instead of the entire module to avoid attribute lookup overhead.
 from functools import partial, update_wrapper, wraps
-from typing import Any, Callable, DefaultDict, Type, TypeVar, cast, overload
+from typing import Any, Callable, DefaultDict, Type, TypeAlias, TypeVar, cast, overload
+
+# Must import 'ReferenceType' directly instead of the entire module to avoid attribute lookup overhead.
+from weakref import ReferenceType
 
 import numpy as np
 
@@ -59,6 +62,7 @@ from gstaichi.lang.exception import (
     handle_exception_from_cpp,
 )
 from gstaichi.lang.expr import Expr
+from gstaichi.lang.impl import Program
 from gstaichi.lang.kernel_arguments import ArgMetadata
 from gstaichi.lang.matrix import MatrixType
 from gstaichi.lang.shell import _shell_pop_print
@@ -649,6 +653,17 @@ class KernelBatchedArgType(IntEnum):
 _FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = KernelBatchedArgType
 
 
+ArgsHash: TypeAlias = int
+
+
+def _destroy_callback(kernel_ref: ReferenceType["Kernel"], ref: ReferenceType):
+    maybe_kernel = kernel_ref()
+    if maybe_kernel is not None:
+        maybe_kernel._launch_ctx_cache.clear()
+        maybe_kernel._launch_ctx_cache_tracker.clear()
+        maybe_kernel._prog_weakref = None
+
+
 def _recursive_set_args(
     launch_ctx: KernelLaunchContext,
     launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]],
@@ -658,11 +673,18 @@ def _recursive_set_args(
     indices: tuple[int, ...],
     actual_argument_slot: int,
     callbacks: list[Callable[[], Any]],
-) -> int:
+) -> tuple[int, bool]:
     """
-    Returns the number of kernel args set e.g. templates don't set kernel args, so returns 0
-    a single ndarray is 1 kernel arg, so returns 1
-    a struct of 3 ndarrays would set 3 kernel args, so return 3
+    This function processes all the input python-side arguments of a given kernel so as to add them to the current
+    launch context of a given kernel. Apart from a few exceptions, no call is made to the launch context directly,
+    but rather accumulated in a buffer to be called all at once in a later stage. This avoid accumulating pybind11
+    overhead for every single argument.
+
+    Returns the number of underlying kernel args being set for a given Python arg, and whether the launch context
+    buffer can be cached (see 'launch_kernel' for details).
+
+    Note that templates don't set kernel args, and a single scalar, an external array (numpy or torch) or a taichi
+    ndarray all set 1 kernel arg. Similarlty, a struct of N ndarrays would set N kernel args.
     """
     if actual_argument_slot >= MAX_ARG_NUM:
         raise GsTaichiRuntimeError(
@@ -679,7 +701,7 @@ def _recursive_set_args(
         if not isinstance(v, (float, int, np.floating, np.integer)):
             raise GsTaichiRuntimeTypeError.get(indices, needed_arg_type.to_string(), provided_arg_type)
         launch_ctx_buffer[_FLOAT].append((indices, float(v)))
-        return 1
+        return 1, False
     if needed_arg_type_id in primitive_types.integer_type_ids:
         if not isinstance(v, (int, np.integer)):
             raise GsTaichiRuntimeTypeError.get(indices, needed_arg_type.to_string(), provided_arg_type)
@@ -687,11 +709,13 @@ def _recursive_set_args(
             launch_ctx_buffer[_INT].append((indices, int(v)))
         else:
             launch_ctx_buffer[_UINT].append((indices, int(v)))
-        return 1
+        return 1, False
     needed_arg_fields = getattr(needed_arg_type, _FIELDS, None)
     if needed_arg_fields is not None:
         if provided_arg_type is not needed_arg_type:
             raise GsTaichiRuntimeError("needed", needed_arg_type, "!= provided", provided_arg_type)
+        # A dataclass must be frozen to be compatible with caching
+        is_launch_ctx_cacheable = needed_arg_type.__hash__ is not None
         idx = 0
         offset = indices[0]
         for field in needed_arg_fields.values():
@@ -701,7 +725,7 @@ def _recursive_set_args(
             field_type = field.type
             assert not isinstance(field_type, str)
             field_value = getattr(v, field.name)
-            idx += _recursive_set_args(
+            num_args_, is_launch_ctx_cacheable_ = _recursive_set_args(
                 launch_ctx,
                 launch_ctx_buffer,
                 field_type,
@@ -711,7 +735,9 @@ def _recursive_set_args(
                 actual_argument_slot,
                 callbacks,
             )
-        return idx
+            idx += num_args_
+            is_launch_ctx_cacheable &= is_launch_ctx_cacheable_
+        return idx, is_launch_ctx_cacheable
     if needed_arg_basetype is ndarray_type.NdarrayType and isinstance(v, Ndarray):
         v_primal = v.arr
         v_grad = v.grad.arr if v.grad else None
@@ -719,7 +745,7 @@ def _recursive_set_args(
             launch_ctx_buffer[_TI_ARRAY].append((indices, v_primal))
         else:
             launch_ctx_buffer[_TI_ARRAY_WITH_GRAD].append((indices, v_primal, v_grad))
-        return 1
+        return 1, True
     if needed_arg_basetype is ndarray_type.NdarrayType:
         # v is things like torch Tensor and numpy array
         # Not adding type for this, since adds additional dependencies
@@ -806,7 +832,7 @@ def _recursive_set_args(
                 )
         else:
             raise GsTaichiRuntimeTypeError(f"Argument {needed_arg_type} cannot be converted into required type {v}")
-        return 1
+        return 1, False
     if issubclass(needed_arg_basetype, MatrixType):
         cast_func: Callable[[Any], int | float] | None = None
         if needed_arg_type.dtype in primitive_types.real_types:
@@ -828,7 +854,7 @@ def _recursive_set_args(
 
         v = needed_arg_type(*v)
         needed_arg_type.set_kernel_struct_args(v, launch_ctx, indices)
-        return 1
+        return 1, False
     if needed_arg_basetype is StructType:
         # Unclear how to make the following pass typing checks StructType implements __instancecheck__,
         # which should be a classmethod, but is currently an instance method.
@@ -838,19 +864,19 @@ def _recursive_set_args(
                 f"Argument {provided_arg_type} cannot be converted into required type {needed_arg_type}"
             )
         needed_arg_type.set_kernel_struct_args(v, launch_ctx, indices)
-        return 1
+        return 1, False
     if needed_arg_type is template or needed_arg_basetype is template:
-        return 0
+        return 0, True
     if needed_arg_basetype is sparse_matrix_builder:
         # Pass only the base pointer of the ti.types.sparse_matrix_builder() argument
         launch_ctx_buffer[_UINT].append((indices, v._get_ndarray_addr()))
-        return 1
+        return 1, True
     if needed_arg_basetype is texture_type.TextureType and isinstance(v, Texture):
         launch_ctx.set_arg_texture(indices, v.tex)
-        return 1
+        return 1, False
     if needed_arg_basetype is texture_type.RWTextureType and isinstance(v, Texture):
         launch_ctx.set_arg_rw_texture(indices, v.tex)
-        return 1
+        return 1, False
     raise ValueError(f"Argument type mismatch. Expecting {needed_arg_type}, got {type(v)}.")
 
 
@@ -894,6 +920,17 @@ class Kernel:
 
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
         self.fe_ll_cache_observations: FeLlCacheObservations = FeLlCacheObservations()
+
+        # The cache key corresponds to the hash of the (packed) python-side input arguments of the kernel.
+        # * '_launch_ctx_cache' is storing a backup of the launch context BEFORE ever calling the kernel.
+        # * '_launch_ctx_cache_tracker' is used for bounding the lifetime of a cache entry to its corresponding set of
+        #   input arguments. Internally, this is done by wrapping all Taichi ndarrays as weak reference.
+        # * '_prog_weakref'is used for bounding the lifetime of the entire cache to the Taichi programm managing all
+        #   the launch context being stored in cache.
+        # See 'launch_kernel' for details regarding the intended use of caching.
+        self._launch_ctx_cache: dict[ArgsHash, KernelLaunchContext] = {}
+        self._launch_ctx_cache_tracker: dict[ArgsHash, list[ReferenceType[Ndarray]]] = {}
+        self._prog_weakref: ReferenceType[Program] | None = None
 
     def ast_builder(self) -> ASTBuilder:
         assert self.kernel_cpp is not None
@@ -1091,56 +1128,124 @@ class Kernel:
     def launch_kernel(self, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
         assert len(args) == len(self.arg_metas), f"{len(self.arg_metas)} arguments needed but {len(args)} provided"
 
-        actual_argument_slot = 0
-        launch_ctx = t_kernel.make_launch_context()
-        launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]] = defaultdict(list)
+        # Keep track of taichi runtime to automatically clear cache if destroyed
+        if self._prog_weakref is None:
+            prog = impl.get_runtime().prog
+            assert prog is not None
+            self._prog_weakref = ReferenceType(prog, partial(_destroy_callback, ReferenceType(self)))
+        else:
+            # Since we already store a weak reference to taichi program, it is much faster to use it rather than
+            # paying the overhead of calling pybind11 functions (~200ns vs 5ns).
+            prog = self._prog_weakref()
+        assert prog is not None
+
+        # Here, we are tracking whether a launch context buffer can be cached.
+        # The point of caching the launch context buffer is allowing skipping recursive processing of all the input
+        # arguments one-by-one, which is adding a significant overhead, without changing anything in regards of the
+        # function calls to the launch context that must be made for a given kernel.
+        # You can understand this as resolving the static part of the entire control flow of '_recursive_set_args'
+        # for a given set of arguments, which is (mostly surely uniquely) characterized by its hash, gathering all
+        # the instructions that cannot be evaluated statically and packing them in a buffer without evaluating them at
+        # this point. This buffer is then cached once and for all and evaluated every time the exact same set of input
+        # argument is passed. This means that, ultimately, it will result in the exact same function calls with or
+        # without caching. In this particular case, the function calls corresponds to adding arguments to the current
+        # context for this kernel call.
+        # A launch context buffer is considered cache-friendly if and only if no direct call to the launch context
+        # where made preemptively during the recursive processing of the arguments, all of leaves of the arguments are
+        # pointers, the address of these pointers cannot change, and the set of leaves is fixed.
+        # The lifetime of a cache entry is bound to the lifetime of any of its input arguments: the first being garbage
+        # collected will invalidate the entire entry. Moreover, the entire cache registry is bound to the lifetime of
+        # the taichi prog itself, which means that calling `ti.reset()` will automatically clear the cache. Note that
+        # the cache stores wear references to pointers, so it does not hold alife any allocated memory.
         callbacks: list[Callable[[], None]] = []
+        launch_ctx = t_kernel.make_launch_context()
+        launch_ctx_cache: KernelLaunchContext | None = None
+        launch_ctx_cache_tracker: list[ReferenceType] | None = None
+        args_hash: int | None = None
+        try:
+            args_hash = hash(args)
+            launch_ctx_cache_tracker = self._launch_ctx_cache_tracker[args_hash]
+        except (TypeError, KeyError):
+            pass
+        if not launch_ctx_cache_tracker:  # Empty or none
+            launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]] = defaultdict(list)
 
-        template_num = 0
-        i_out = 0
-        for i_in, val in enumerate(args):
-            needed_ = self.arg_metas[i_in].annotation
-            if needed_ is template or type(needed_) is template:
-                template_num += 1
-                i_out += 1
-                continue
-            i_out += _recursive_set_args(
-                launch_ctx,
-                launch_ctx_buffer,
-                needed_,
-                type(val),
-                val,
-                (i_out - template_num,),
-                actual_argument_slot,
-                callbacks,
-            )
+            actual_argument_slot = 0
+            is_launch_ctx_cacheable = True
+            template_num = 0
+            i_out = 0
+            for i_in, val in enumerate(args):
+                needed_ = self.arg_metas[i_in].annotation
+                if needed_ is template or type(needed_) is template:
+                    template_num += 1
+                    i_out += 1
+                    continue
+                num_args_, is_launch_ctx_cacheable_ = _recursive_set_args(
+                    launch_ctx,
+                    launch_ctx_buffer,
+                    needed_,
+                    type(val),
+                    val,
+                    (i_out - template_num,),
+                    actual_argument_slot,
+                    callbacks,
+                )
+                i_out += num_args_
+                is_launch_ctx_cacheable &= is_launch_ctx_cacheable_
 
-        # All arguments to context in batches to mitigate overhead of calling Python bindings repeatedly.
-        # This is essential because calling any pybind11 function is adding ~180ns penalty no matter what.
-        # Note that we are allowed to do this because GsTaichi Launch Kernel context is storing the input
-        # arguments in an unordered list. The actual runtime (gfx, llvm...) will later query this context
-        # in correct order.
-        if launch_ctx_args := launch_ctx_buffer.get(_FLOAT):
-            indices, vec = zip(*launch_ctx_args)
-            launch_ctx.set_arg_float(tuple([index for index, in indices]), vec)  # type: ignore
-        if launch_ctx_args := launch_ctx_buffer.get(_INT):
-            indices, vec = zip(*launch_ctx_args)
-            launch_ctx.set_arg_int(tuple([index for index, in indices]), vec)
-        if launch_ctx_args := launch_ctx_buffer.get(_UINT):
-            indices, vec = zip(*launch_ctx_args)
-            launch_ctx.set_arg_uint(tuple([index for index, in indices]), vec)
-        if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY):
-            indices, arrs = zip(*launch_ctx_args)
-            launch_ctx.set_arg_ndarray(tuple([index for index, in indices]), arrs)
-        if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY_WITH_GRAD):
-            indices, arrs, arrs_grad = zip(*launch_ctx_args)
-            launch_ctx.set_arg_ndarray_with_grad(tuple([index for index, in indices]), arrs, arrs_grad)  # type: ignore
+            # All arguments to context in batches to mitigate overhead of calling Python bindings repeatedly.
+            # This is essential because calling any pybind11 function is adding ~180ns penalty no matter what.
+            # Note that we are allowed to do this because GsTaichi Launch Kernel context is storing the input
+            # arguments in an unordered list. The actual runtime (gfx, llvm...) will later query this context
+            # in correct order.
+            if launch_ctx_args := launch_ctx_buffer.get(_FLOAT):
+                indices, vec = zip(*launch_ctx_args)
+                launch_ctx.set_args_float([index for index, in indices], vec)  # type: ignore
+            if launch_ctx_args := launch_ctx_buffer.get(_INT):
+                indices, vec = zip(*launch_ctx_args)
+                launch_ctx.set_args_int([index for index, in indices], vec)  # type: ignore
+            if launch_ctx_args := launch_ctx_buffer.get(_UINT):
+                indices, vec = zip(*launch_ctx_args)
+                launch_ctx.set_args_uint([index for index, in indices], vec)  # type: ignore
+            if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY):
+                indices, arrs = zip(*launch_ctx_args)
+                launch_ctx.set_args_ndarray([index for index, in indices], arrs)  # type: ignore
+            if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY_WITH_GRAD):
+                indices, arrs, arrs_grad = zip(*launch_ctx_args)
+                launch_ctx.set_args_ndarray_with_grad([index for index, in indices], arrs, arrs_grad)  # type: ignore
+
+            if is_launch_ctx_cacheable and args_hash is not None:
+                # TODO: It some rare occurrences, arguments can be cached yet not hashable. Ignoring for now...
+                launch_ctx_cache = t_kernel.make_launch_context()
+                launch_ctx_cache.copy(launch_ctx)
+                self._launch_ctx_cache[args_hash] = launch_ctx_cache
+
+                # Note that the clearing callback will only be called once despite being registered for each tracked
+                # objects, because all the weakrefs get deallocated right away, and their respective callback
+                # vanishes with them, without even getting a chance to get called. This means that registring the
+                # clearing callback systematically does not incur any cumulative runtime penalty yet ensures full
+                # memory safety.
+                launch_ctx_cache_tracker_: list[ReferenceType] = []
+                clear_callback = lambda ref: launch_ctx_cache_tracker_.clear()
+                if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY):
+                    _, arrs = zip(*launch_ctx_args)
+                    launch_ctx_cache_tracker_ += [ReferenceType(arr, clear_callback) for arr in arrs]
+                if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY_WITH_GRAD):
+                    _, arrs, arrs_grad = zip(*launch_ctx_args)
+                    launch_ctx_cache_tracker_ += [ReferenceType(arr, clear_callback) for arr in arrs]
+                    launch_ctx_cache_tracker_ += [ReferenceType(arr_grad, clear_callback) for arr_grad in arrs_grad]
+                self._launch_ctx_cache_tracker[args_hash] = launch_ctx_cache_tracker_
+        else:
+            assert args_hash is not None
+            launch_ctx.copy(self._launch_ctx_cache[args_hash])
 
         try:
-            runtime = impl.get_runtime()
-            prog = runtime.prog
             if not compiled_kernel_data:
-                compile_result: CompileResult = prog.compile_kernel(prog.config(), prog.get_device_caps(), t_kernel)
+                # Store Taichi program config and device cap for efficiency because they are used at multiple places
+                prog_config = prog.config()
+                prog_device_cap = prog.get_device_caps()
+
+                compile_result: CompileResult = prog.compile_kernel(prog_config, prog_device_cap, t_kernel)
                 if os.environ.get("TI_DUMP_KERNEL_CHECKSUMS", "0") == "1":
                     debug_dump_path = pathlib.Path(impl.current_cfg().debug_dump_path)
                     checksums_file_path = debug_dump_path / "checksums.csv"
@@ -1172,8 +1277,8 @@ class Kernel:
                     prog.store_fast_cache(
                         self.fast_checksum,
                         self.kernel_cpp,
-                        prog.config(),
-                        prog.get_device_caps(),
+                        prog_config,
+                        prog_device_cap,
                         compiled_kernel_data,
                     )
                     self.src_ll_cache_observations.cache_stored = True
@@ -1462,15 +1567,23 @@ def data_oriented(cls):
     Returns:
         The decorated class.
     """
+    # Backup the original attribute getter before overwriting it.
+    # Note that this is faster, and more rigorous, to use this pattern over calling the parent method, ie
+    # `super(cls, self).__getattribute__`. Faster because it avoid relying on MRO at runtime, more rigorous
+    # because calling the parent method will by-pass the method `__getattribute__` that may already be
+    # overloaded by the original class.
+    getattribute_orig = cls.__getattribute__
 
     def _getattr(self, item):
+        nonlocal getattribute_orig
+
         method = cls.__dict__.get(item)
         method_type = type(method)
         is_property = method_type is property
         if is_property:
             x = method.fget
         else:
-            x = super(cls, self).__getattribute__(item)
+            x = getattribute_orig(self, item)
         if hasattr(x, "_is_wrapped_kernel"):
             if inspect.ismethod(x):
                 wrapped = x.__func__
