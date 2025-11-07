@@ -1254,15 +1254,16 @@ class Kernel:
         # the cache stores wear references to pointers, so it does not hold alife any allocated memory.
         callbacks: list[Callable[[], None]] = []
         launch_ctx = t_kernel.make_launch_context()
-        launch_ctx_cache: KernelLaunchContext | None = None
-        launch_ctx_cache_tracker: list[ReferenceType] | None = None
+        # launch_ctx_cache: KernelLaunchContext | None = None
+        # launch_ctx_cache_tracker: list[ReferenceType] | None = None
         args_hash: int | None = None
-        try:
-            args_hash = hash(args)
-            launch_ctx_cache_tracker = self._launch_ctx_cache_tracker[args_hash]
-        except (TypeError, KeyError):
-            pass
-        if not launch_ctx_cache_tracker:  # Empty or none
+        # try:
+        #     args_hash = hash(args)
+        #     launch_ctx_cache_tracker = self._launch_ctx_cache_tracker[args_hash]
+        # except (TypeError, KeyError):
+        #     pass
+        # if not launch_ctx_cache_tracker:  # Empty or none
+        if True:
             launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]] = defaultdict(list)
             actual_argument_slot = 0
             is_launch_ctx_cacheable = True
@@ -1321,30 +1322,30 @@ class Kernel:
                 launch_ctx.set_args_ndarray_with_grad([index for index, in indices], arrs, arrs_grad)  # type: ignore
                 kernel_args_count_by_type["ndarray_with_grad"] = len(indices)
 
-            if is_launch_ctx_cacheable and args_hash is not None:
-                # TODO: It some rare occurrences, arguments can be cached yet not hashable. Ignoring for now...
-                launch_ctx_cache = t_kernel.make_launch_context()
-                launch_ctx_cache.copy(launch_ctx)
-                self._launch_ctx_cache[args_hash] = launch_ctx_cache
+        #     if is_launch_ctx_cacheable and args_hash is not None:
+        #         # TODO: It some rare occurrences, arguments can be cached yet not hashable. Ignoring for now...
+        #         launch_ctx_cache = t_kernel.make_launch_context()
+        #         launch_ctx_cache.copy(launch_ctx)
+        #         self._launch_ctx_cache[args_hash] = launch_ctx_cache
 
-                # Note that the clearing callback will only be called once despite being registered for each tracked
-                # objects, because all the weakrefs get deallocated right away, and their respective callback
-                # vanishes with them, without even getting a chance to get called. This means that registring the
-                # clearing callback systematically does not incur any cumulative runtime penalty yet ensures full
-                # memory safety.
-                launch_ctx_cache_tracker_: list[ReferenceType] = []
-                clear_callback = lambda ref: launch_ctx_cache_tracker_.clear()
-                if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY):
-                    _, arrs = zip(*launch_ctx_args)
-                    launch_ctx_cache_tracker_ += [ReferenceType(arr, clear_callback) for arr in arrs]
-                if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY_WITH_GRAD):
-                    _, arrs, arrs_grad = zip(*launch_ctx_args)
-                    launch_ctx_cache_tracker_ += [ReferenceType(arr, clear_callback) for arr in arrs]
-                    launch_ctx_cache_tracker_ += [ReferenceType(arr_grad, clear_callback) for arr_grad in arrs_grad]
-                self._launch_ctx_cache_tracker[args_hash] = launch_ctx_cache_tracker_
-        else:
-            assert args_hash is not None
-            launch_ctx.copy(self._launch_ctx_cache[args_hash])
+        #         # Note that the clearing callback will only be called once despite being registered for each tracked
+        #         # objects, because all the weakrefs get deallocated right away, and their respective callback
+        #         # vanishes with them, without even getting a chance to get called. This means that registring the
+        #         # clearing callback systematically does not incur any cumulative runtime penalty yet ensures full
+        #         # memory safety.
+        #         launch_ctx_cache_tracker_: list[ReferenceType] = []
+        #         clear_callback = lambda ref: launch_ctx_cache_tracker_.clear()
+        #         if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY):
+        #             _, arrs = zip(*launch_ctx_args)
+        #             launch_ctx_cache_tracker_ += [ReferenceType(arr, clear_callback) for arr in arrs]
+        #         if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY_WITH_GRAD):
+        #             _, arrs, arrs_grad = zip(*launch_ctx_args)
+        #             launch_ctx_cache_tracker_ += [ReferenceType(arr, clear_callback) for arr in arrs]
+        #             launch_ctx_cache_tracker_ += [ReferenceType(arr_grad, clear_callback) for arr_grad in arrs_grad]
+        #         self._launch_ctx_cache_tracker[args_hash] = launch_ctx_cache_tracker_
+        # else:
+        #     assert args_hash is not None
+        #     launch_ctx.copy(self._launch_ctx_cache[args_hash])
 
         try:
             if not compiled_kernel_data:
