@@ -64,11 +64,11 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
         continue;
       }
 
-      std::vector<int> data_ptr_idx = key;
-      data_ptr_idx.push_back(TypeFactory::DATA_PTR_POS_IN_NDARRAY);
+      std::pair<int, int> data_ptr_idx{key[0],
+                                       TypeFactory::DATA_PTR_POS_IN_NDARRAY};
+      std::pair<int, int> grad_ptr_idx{key[0],
+                                       TypeFactory::DATA_PTR_POS_IN_NDARRAY};
       auto data_ptr = ctx.array_ptrs[data_ptr_idx];
-      std::vector<int> grad_ptr_idx = key;
-      grad_ptr_idx.push_back(TypeFactory::GRAD_PTR_POS_IN_NDARRAY);
 
       auto grad_ptr = ctx.array_ptrs[grad_ptr_idx];
       if (ctx.device_allocation_type[key] ==
