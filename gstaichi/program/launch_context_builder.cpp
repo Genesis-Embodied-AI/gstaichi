@@ -260,11 +260,10 @@ void LaunchContextBuilder::set_arg_external_array_with_shape(
 
   TI_ASSERT_INFO(shape.size() <= gstaichi_max_num_indices,
                  "External array cannot have > {max_num_indices} indices");
-  array_ptrs[concatenate_vector<int>(
-      arg_id, {TypeFactory::DATA_PTR_POS_IN_NDARRAY})] = (void *)ptr;
+  array_ptrs[{arg_id[0], TypeFactory::DATA_PTR_POS_IN_NDARRAY}] = (void *)ptr;
   if (grad_ptr != 0) {
-    array_ptrs[concatenate_vector<int>(
-        arg_id, {TypeFactory::GRAD_PTR_POS_IN_NDARRAY})] = (void *)grad_ptr;
+    array_ptrs[{arg_id[0], TypeFactory::GRAD_PTR_POS_IN_NDARRAY}] =
+        (void *)grad_ptr;
   }
   set_array_runtime_size(arg_id, size);
   set_array_device_allocation_type(arg_id, DevAllocType::kNone);
@@ -332,50 +331,16 @@ void LaunchContextBuilder::set_args_ndarray_with_grad(
   }
 }
 
-void LaunchContextBuilder::set_arg_texture(const std::vector<int> &arg_id,
-                                           const Texture &tex) {
-  intptr_t ptr = tex.get_device_allocation_ptr_as_int();
-  set_arg_texture_impl(arg_id, ptr);
-}
-
-void LaunchContextBuilder::set_arg_rw_texture(const std::vector<int> &arg_id,
-                                              const Texture &tex) {
-  intptr_t ptr = tex.get_device_allocation_ptr_as_int();
-  set_arg_rw_texture_impl(arg_id, ptr, tex.get_size());
-}
-
-RuntimeContext &LaunchContextBuilder::get_context() {
-  return *ctx_;
-}
-
-void LaunchContextBuilder::set_arg_texture_impl(const std::vector<int> &arg_id,
-                                                intptr_t alloc_ptr) {
-  array_ptrs[arg_id] = (void *)alloc_ptr;
-  set_array_device_allocation_type(arg_id, DevAllocType::kTexture);
-}
-
-void LaunchContextBuilder::set_arg_rw_texture_impl(
-    const std::vector<int> &arg_id,
-    intptr_t alloc_ptr,
-    const std::array<int, 3> &shape) {
-  array_ptrs[arg_id] = (void *)alloc_ptr;
-  set_array_device_allocation_type(arg_id, DevAllocType::kRWTexture);
-  TI_ASSERT(shape.size() <= gstaichi_max_num_indices);
-  for (int i = 0; i < shape.size(); i++) {
-    set_struct_arg(concatenate_vector<int>(arg_id, {0, i}), shape[i]);
-  }
-}
-
 void LaunchContextBuilder::set_arg_ndarray_impl(const std::vector<int> &arg_id,
                                                 intptr_t devalloc_ptr,
                                                 const std::vector<int> &shape,
                                                 intptr_t devalloc_ptr_grad) {
+  TI_ASSERT(arg_id.size() == 1);
   // Set array ptr
-  array_ptrs[concatenate_vector<int>(
-      arg_id, {TypeFactory::DATA_PTR_POS_IN_NDARRAY})] = (void *)devalloc_ptr;
+  array_ptrs[{arg_id[0], TypeFactory::DATA_PTR_POS_IN_NDARRAY}] =
+      (void *)devalloc_ptr;
   if (devalloc_ptr_grad != 0) {
-    array_ptrs[concatenate_vector<int>(
-        arg_id, {TypeFactory::GRAD_PTR_POS_IN_NDARRAY})] =
+    array_ptrs[{arg_id[0], TypeFactory::GRAD_PTR_POS_IN_NDARRAY}] =
         (void *)devalloc_ptr_grad;
   }
   // Set device allocation type and runtime size
@@ -461,6 +426,10 @@ TypedConstant LaunchContextBuilder::fetch_ret_impl(int offset, const Type *dt) {
     default:
       TI_NOT_IMPLEMENTED
   }
+}
+
+RuntimeContext &LaunchContextBuilder::get_context() {
+  return *ctx_;
 }
 
 }  // namespace gstaichi::lang

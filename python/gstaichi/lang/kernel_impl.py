@@ -921,12 +921,6 @@ def _recursive_set_args(
         # Pass only the base pointer of the ti.types.sparse_matrix_builder() argument
         launch_ctx_buffer[_UINT].append((indices, v._get_ndarray_addr()))
         return 1, True
-    if needed_arg_basetype is texture_type.TextureType and isinstance(v, Texture):
-        launch_ctx.set_arg_texture(indices, v.tex)
-        return 1, False
-    if needed_arg_basetype is texture_type.RWTextureType and isinstance(v, Texture):
-        launch_ctx.set_arg_rw_texture(indices, v.tex)
-        return 1, False
     raise ValueError(f"Argument type mismatch. Expecting {needed_arg_type}, got {type(v)}.")
 
 

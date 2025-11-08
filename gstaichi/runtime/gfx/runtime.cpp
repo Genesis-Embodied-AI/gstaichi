@@ -75,9 +75,8 @@ class HostDeviceContextBlitter {
             void *device_arr_ptr{nullptr};
             TI_ASSERT(device_->map(buffer, &device_arr_ptr) ==
                       RhiResult::success);
-            auto data_ptr_idx = indices;
-            data_ptr_idx.push_back(TypeFactory::DATA_PTR_POS_IN_NDARRAY);
-            const void *host_ptr = host_ctx_.array_ptrs[data_ptr_idx];
+            const void *host_ptr = host_ctx_.array_ptrs[{
+                indices[0], TypeFactory::DATA_PTR_POS_IN_NDARRAY}];
             std::memcpy(device_arr_ptr, host_ptr, ext_arr_size.at(indices));
             device_->unmap(buffer);
           }
@@ -92,10 +91,10 @@ class HostDeviceContextBlitter {
                 DeviceCapability::spirv_has_physical_storage_buffer)) {
           uint64_t addr =
               device_->get_memory_physical_pointer(ext_arrays.at(indices));
-          auto grad_ptr_idx = indices;
-          grad_ptr_idx.push_back(TypeFactory::GRAD_PTR_POS_IN_NDARRAY);
           host_ctx_.set_ndarray_ptrs(
-              indices, addr, (uint64)host_ctx_.array_ptrs[grad_ptr_idx]);
+              indices, addr,
+              (uint64)host_ctx_.array_ptrs[{
+                  indices[0], TypeFactory::GRAD_PTR_POS_IN_NDARRAY}]);
         }
       }
     }
@@ -142,9 +141,8 @@ class HostDeviceContextBlitter {
         if (access & uint32_t(irpass::ExternalPtrAccess::WRITE)) {
           // Only need to blit ext arrs (host array)
           readback_dev_ptrs.push_back(ext_arrays.at(indices).get_ptr(0));
-          auto data_ptr_idx = indices;
-          data_ptr_idx.push_back(TypeFactory::DATA_PTR_POS_IN_NDARRAY);
-          readback_host_ptrs.push_back(host_ctx_.array_ptrs[data_ptr_idx]);
+          readback_host_ptrs.push_back(host_ctx_.array_ptrs[{
+              indices[0], TypeFactory::DATA_PTR_POS_IN_NDARRAY}]);
           // TODO: readback grad_ptrs as well once ndarray ad is supported
           readback_sizes.push_back(ext_arr_size.at(indices));
           require_sync = true;
@@ -421,16 +419,11 @@ void GfxRuntime::launch_kernel(KernelHandle handle,
         if (host_ctx.device_allocation_type[indices] !=
             LaunchContextBuilder::DevAllocType::kNone) {
           DeviceAllocation devalloc = kDeviceNullAllocation;
-          auto data_ptr_indices = indices;
-          data_ptr_indices.push_back(TypeFactory::DATA_PTR_POS_IN_NDARRAY);
           // NDArray
-          if (host_ctx.array_ptrs.count(data_ptr_indices)) {
-            devalloc =
-                *(DeviceAllocation *)(host_ctx.array_ptrs[data_ptr_indices]);
-          }
-          // Texture
-          if (host_ctx.array_ptrs.count(indices)) {
-            devalloc = *(DeviceAllocation *)(host_ctx.array_ptrs[indices]);
+          const std::pair<int, int> key{indices[0],
+                                        TypeFactory::DATA_PTR_POS_IN_NDARRAY};
+          if (host_ctx.array_ptrs.count(key)) {
+            devalloc = *(DeviceAllocation *)(host_ctx.array_ptrs[key]);
           }
 
           if (host_ctx.device_allocation_type[indices] ==
