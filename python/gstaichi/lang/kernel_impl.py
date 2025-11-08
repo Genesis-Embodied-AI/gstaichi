@@ -1300,20 +1300,15 @@ class Kernel:
             # arguments in an unordered list. The actual runtime (gfx, llvm...) will later query this context
             # in correct order.
             if launch_ctx_args := launch_ctx_buffer.get(_FLOAT):
-                indices, vec = zip(*launch_ctx_args)
-                launch_ctx.set_args_float([index for index, in indices], vec)  # type: ignore
+                launch_ctx.set_args_float(*zip(*launch_ctx_args))  # type: ignore
             if launch_ctx_args := launch_ctx_buffer.get(_INT):
-                indices, vec = zip(*launch_ctx_args)
-                launch_ctx.set_args_int([index for index, in indices], vec)  # type: ignore
+                launch_ctx.set_args_int(*zip(*launch_ctx_args))  # type: ignore
             if launch_ctx_args := launch_ctx_buffer.get(_UINT):
-                indices, vec = zip(*launch_ctx_args)
-                launch_ctx.set_args_uint([index for index, in indices], vec)  # type: ignore
+                launch_ctx.set_args_uint(*zip(*launch_ctx_args))  # type: ignore
             if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY):
-                indices, arrs = zip(*launch_ctx_args)
-                launch_ctx.set_args_ndarray([index for index, in indices], arrs)  # type: ignore
+                launch_ctx.set_args_ndarray(*zip(*launch_ctx_args))  # type: ignore
             if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY_WITH_GRAD):
-                indices, arrs, arrs_grad = zip(*launch_ctx_args)
-                launch_ctx.set_args_ndarray_with_grad([index for index, in indices], arrs, arrs_grad)  # type: ignore
+                launch_ctx.set_args_ndarray_with_grad(*zip(*launch_ctx_args))  # type: ignore
 
             if is_launch_ctx_cacheable and args_hash is not None:
                 # TODO: It some rare occurrences, arguments can be cached yet not hashable. Ignoring for now...

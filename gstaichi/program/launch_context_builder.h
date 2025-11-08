@@ -151,9 +151,10 @@ class LaunchContextBuilder {
                      hashing::Hasher<std::vector<int>>>
       device_allocation_type;
 
-  std::
-      unordered_map<std::vector<int>, void *, hashing::Hasher<std::vector<int>>>
-          array_ptrs;
+  std::unordered_map<std::pair<int, int>,
+                     void *,
+                     hashing::Hasher<std::pair<int, int>>>
+      array_ptrs;
 };
 
 }  // namespace gstaichi::lang
