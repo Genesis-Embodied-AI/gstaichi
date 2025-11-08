@@ -695,7 +695,7 @@ class KernelBatchedArgType(IntEnum):
 _FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = KernelBatchedArgType
 
 
-ArgsHash: TypeAlias = int
+ArgsHash: TypeAlias = tuple[int, ...]
 
 
 def _destroy_callback(kernel_ref: ReferenceType["Kernel"], ref: ReferenceType):
@@ -986,7 +986,7 @@ class Kernel:
         #   the launch context being stored in cache.
         # See 'launch_kernel' for details regarding the intended use of caching.
         self._launch_ctx_cache: dict[ArgsHash, KernelLaunchContext] = {}
-        self._launch_ctx_cache_tracker: dict[ArgsHash, list[ReferenceType[Ndarray]]] = {}
+        self._launch_ctx_cache_tracker: dict[ArgsHash, list[ReferenceType]] = {}
         self._prog_weakref: ReferenceType[Program] | None = None
 
     def ast_builder(self) -> ASTBuilder:
@@ -1256,11 +1256,10 @@ class Kernel:
         launch_ctx = t_kernel.make_launch_context()
         launch_ctx_cache: KernelLaunchContext | None = None
         launch_ctx_cache_tracker: list[ReferenceType] | None = None
-        args_hash: int | None = None
+        args_hash: ArgsHash = tuple(map(id, args))
         try:
-            args_hash = hash(args)
             launch_ctx_cache_tracker = self._launch_ctx_cache_tracker[args_hash]
-        except (TypeError, KeyError):
+        except KeyError:
             pass
         if not launch_ctx_cache_tracker:  # Empty or none
             launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]] = defaultdict(list)
