@@ -26,10 +26,14 @@ def build_wheel(python: Command, pip: Command) -> None:
     extra = []
 
     cmake_args.writeback()
-    if platform.system() == "Linux":
-        extra.extend(["-p", "manylinux_2_27_x86_64"])
-    if platform.system() == "Darwin":
-        extra.extend(["-p", "macosx-11.0-arm64"])
+    u = platform.uname()
+    match (u.system, u.machine):
+        case ("Linux", "x86_64"):
+            extra.extend(["-p", "manylinux_2_27_x86_64"])
+        case ("Linux", "arm64") | ("Linux", "aarch64"):
+            extra.extend(["-p", "manylinux_2_27_aarch64"])
+        case ("Darwin", _):
+            extra.extend(["-p", "macosx-11.0-arm64"])
 
     python("setup.py", "clean")
 

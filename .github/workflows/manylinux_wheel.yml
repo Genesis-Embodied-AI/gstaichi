@@ -14,15 +14,16 @@ permissions:
 jobs:
   build_wheel:
     name: Manylinux wheel Build
-    runs-on: ubuntu-22.04
-    container: quay.io/pypa/manylinux_2_28_x86_64:latest
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.os == 'ubuntu-22.04' && 'quay.io/pypa/manylinux_2_28_x86_64:latest' || matrix.os == 'ubuntu-22.04-arm' && 'quay.io/pypa/manylinux_2_34_aarch64:latest' }}
     concurrency:
       # group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-build
-      group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-build
+      group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{matrix.os}}-build
       cancel-in-progress: ${{ github.event_name != 'release' }}
     strategy:
       matrix:
         PYTHON_CP_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
+        os: ['ubuntu-22.04', 'ubuntu-22.04-arm']
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -57,24 +58,25 @@ jobs:
           bash .github/workflows/scripts_new/manylinux_wheel/3_check.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}
+          name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}_${{matrix.os}}
           path: wheelhouse/*.whl
       - uses: actions/upload-artifact@v4
         with:
-          name: manylinux_cpptests_${{ matrix.PYTHON_CP_VERSION }}
+          name: manylinux_cpptests_${{ matrix.PYTHON_CP_VERSION }}_${{matrix.os}}
           path: build/gstaichi_cpp_tests
 
   upload_to_storage:
     name: Manylinux wheel upload
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
     needs: build_wheel
     concurrency:
       # group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-upload
-      group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-upload
+      group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{matrix.os}}-upload
       cancel-in-progress: ${{ github.event_name != 'release' }}
     strategy:
       matrix:
         PYTHON_CP_VERSION: ['cp310', 'cp311', 'cp312', 'cp313']
+        os: ['ubuntu-22.04', 'ubuntu-22.04-arm']
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -86,26 +88,26 @@ jobs:
           aws-region: us-east-1
       - uses: actions/download-artifact@v4
         with:
-          name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}
+          name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}_${{matrix.os}}
       - name: 'Upload wheel to aws s3 storage'
         run: |
           set -x
           ls -l *.whl
           mkdir -p dist
           mv *.whl dist/
-          aws s3 sync dist/ s3://genesis-ai-compiler/ci/gstaichi/${GITHUB_SHA:0:7}/${{ matrix.PYTHON_CP_VERSION }}/
+          aws s3 sync dist/ s3://genesis-ai-compiler/ci/gstaichi/${GITHUB_SHA:0:7}/${{ matrix.PYTHON_CP_VERSION }}-${{matrix.os}}/
   test_wheel:
     name: Manylinux wheel Test
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
     needs: build_wheel
     concurrency:
       # group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-test
-      group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_VERSION }}-test
+      group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_VERSION }}-${{matrix.os}}-test
       cancel-in-progress: ${{ github.event_name != 'release' }}
     strategy:
       matrix:
         PYTHON_VERSION: ['3.10', '3.11', '3.12', '3.13']
-        os: ['ubuntu-22.04']
+        os: ['ubuntu-22.04', 'ubuntu-22.04-arm']
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -122,7 +124,7 @@ jobs:
           echo "PYTHON_CP_VERSION=${cp}" >> $GITHUB_OUTPUT
       - uses: actions/download-artifact@v4
         with:
-          name: manylinux_wheel_${{ steps.set_cp_version.outputs.PYTHON_CP_VERSION }}
+          name: manylinux_wheel_${{ steps.set_cp_version.outputs.PYTHON_CP_VERSION }}_${{matrix.os}}
       - name: manylinux install wheel
         run: |
           set -x
@@ -138,13 +140,13 @@ jobs:
     needs: build_wheel
     with:
       head_ref: ${{ github.head_ref || github.ref_name }}
-      artifact_name: manylinux_wheel_cp310
+      artifact_name: manylinux_wheel_cp310_ubuntu-22.04
   pyright_linter:
     uses: ./.github/workflows/pyright_linter.yml
     needs: build_wheel
     with:
       head_ref: ${{ github.head_ref  || github.ref_name }}
-      artifact_name: manylinux_wheel_cp310
+      artifact_name: manylinux_wheel_cp310_ubuntu-22.04
   publish_pypi:
     uses: ./.github/workflows/publish_pypi.yml
     if: github.event_name == 'release'
@@ -154,19 +156,20 @@ jobs:
       contents: read
     concurrency:
       # group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{ matrix.PYTHON_CP_VERSION != 'cp310' && 'all' || github.sha }}-test
-      group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-publish-pypi
+      group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-${{ matrix.PYTHON_CP_VERSION }}-${{matrix.os}}-publish-pypi
       cancel-in-progress: true
     strategy:
       matrix:
         PYTHON_CP_VERSION: ["cp310", "cp311", "cp312", "cp313"]
+        os: ['ubuntu-22.04', 'ubuntu-22.04-arm']
       fail-fast: false
     with:
-      artifact_name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}
+      artifact_name: manylinux_wheel_${{ matrix.PYTHON_CP_VERSION }}_${{matrix.os}}
     secrets: inherit
   test_gpu:
     uses: ./.github/workflows/test_gpu.yml
     needs: build_wheel
     with:
       head_ref: ${{ github.head_ref || github.ref_name }}
-      wheel_artifact_name: manylinux_wheel_cp310
-      cpptests_artifact_name: manylinux_cpptests_cp310
+      wheel_artifact_name: manylinux_wheel_cp310_ubuntu-22.04
+      cpptests_artifact_name: manylinux_cpptests_cp310_ubuntu-22.04
