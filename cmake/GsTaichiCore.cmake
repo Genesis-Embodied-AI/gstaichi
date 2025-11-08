@@ -109,6 +109,7 @@ target_include_directories(${CORE_LIBRARY_NAME} PRIVATE external/include)
 target_include_directories(${CORE_LIBRARY_NAME} PRIVATE external/SPIRV-Tools/include)
 target_include_directories(${CORE_LIBRARY_NAME} PRIVATE external/PicoSHA2)
 target_include_directories(${CORE_LIBRARY_NAME} PRIVATE external/eigen)
+target_include_directories(${CORE_LIBRARY_NAME} PRIVATE external/dlpack/include)
 target_include_directories(${CORE_LIBRARY_NAME} PRIVATE external/FP16/include)
 
 target_link_libraries(${CORE_LIBRARY_NAME} PUBLIC ti_device_api)
@@ -317,7 +318,7 @@ if(TI_WITH_PYTHON)
         ${PROJECT_SOURCE_DIR}/external/spdlog/include
         ${PROJECT_SOURCE_DIR}/external/eigen
         ${PROJECT_SOURCE_DIR}/external/volk
-        ${PROJECT_SOURCE_DIR}/external/dlpack/include
+        # ${PROJECT_SOURCE_DIR}/external/dlpack/include
         ${PROJECT_SOURCE_DIR}/external/SPIRV-Tools/include
         ${PROJECT_SOURCE_DIR}/external/Vulkan-Headers/include
         ${PROJECT_SOURCE_DIR}/external/FP16/include

@@ -8,6 +8,8 @@
 #include <stack>
 #include <shared_mutex>
 
+// #include <pybind11/pybind11.h>
+
 #define TI_RUNTIME_HOST
 #include "gstaichi/ir/frontend_ir.h"
 #include "gstaichi/ir/ir.h"
@@ -44,11 +46,17 @@ class StructCompiler;
  * LlvmProgramImpl, MetalProgramImpl..
  */
 
+// namespace py = pybind11;
+
+struct MyData {
+    int value;
+};
+
 class TI_DLL_EXPORT Program {
  public:
   using Kernel = gstaichi::lang::Kernel;
 
-  void dump_ndarray_info(Ndarray *ndarray);
+  MyData *dump_ndarray_info(Ndarray *ndarray);
 
   uint64 *result_buffer{nullptr};  // Note that this result_buffer is used
                                    // only for runtime JIT functions (e.g.
