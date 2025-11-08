@@ -48,6 +48,8 @@ class TI_DLL_EXPORT Program {
  public:
   using Kernel = gstaichi::lang::Kernel;
 
+  void dump_ndarray_info(Ndarray *ndarray);
+
   uint64 *result_buffer{nullptr};  // Note that this result_buffer is used
                                    // only for runtime JIT functions (e.g.
                                    // `runtime_memory_allocate_aligned`)

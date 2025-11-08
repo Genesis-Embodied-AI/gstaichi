@@ -361,6 +361,7 @@ void export_lang(py::module &m) {
 
   py::class_<Program>(m, "Program")
       .def(py::init<>())
+      .def("dump_ndarray_info", &Program::dump_ndarray_info)
       .def("config", &Program::compile_config,
            py::return_value_policy::reference)
       .def("sync_kernel_profiler",

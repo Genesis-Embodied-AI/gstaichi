@@ -15,6 +15,10 @@
 #include "gstaichi/math/arithmetic.h"
 #include "gstaichi/rhi/common/host_memory_pool.h"
 
+
+#include "gstaichi/rhi/cuda/cuda_device.h"
+#include "dlpack/dlpack.h"
+
 #ifdef TI_WITH_LLVM
 #include "gstaichi/runtime/program_impls/llvm/llvm_program.h"
 #include "gstaichi/codegen/llvm/struct_llvm.h"
@@ -114,6 +118,17 @@ Program::Program(Arch desired_arch) : snode_rw_accessors_bank_(this) {
 
   TI_TRACE("Program ({}) arch={} initialized.", fmt::ptr(this),
            arch_name(config.arch));
+}
+
+void Program::dump_ndarray_info(Ndarray *ndarray) {
+  std::cout << "dump_ndarray_info" << std::endl;
+  std::cout << ndarray->read_int({0, 0}) << std::endl;
+  // int *data_ptr = reinterpret_cast<int *>(get_ndarray_data_ptr
+  
+  DeviceAllocation devalloc = ndarray->get_device_allocation();
+  // using cuda = gstaichi::lang::cuda;
+  cuda::CudaDevice *cuda_device = dynamic_cast<cuda::CudaDevice *>(devalloc.device);
+  std::cout << " not nullptr " << (cuda_device != nullptr) << std::endl;
 }
 
 TypeFactory &Program::get_type_factory() {
