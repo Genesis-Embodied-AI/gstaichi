@@ -32,8 +32,8 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
   // for data_ptr and TypeFactory::GRAD_PTR_POS_IN_NDARRAY for grad_ptr. Value
   // is [host_ptr, temporary_device_alloc]. Invariant: temp_devallocs.size() !=
   // 0 <==> transfer happened.
-  std::unordered_map<std::vector<int>, std::pair<void *, DeviceAllocation>,
-                     hashing::Hasher<std::vector<int>>>
+  std::unordered_map<std::pair<int, int>, std::pair<void *, DeviceAllocation>,
+                     hashing::Hasher<std::pair<int, int>>>
       transfers;
 
   // |device_ptrs| stores pointers on device for all arrays args, including
@@ -41,8 +41,8 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
   // device or host.
   // This is the source of truth for us to look for device pointers used in CUDA
   // kernels.
-  std::unordered_map<std::vector<int>, void *,
-                     hashing::Hasher<std::vector<int>>>
+  std::unordered_map<std::pair<int, int>, void *,
+                     hashing::Hasher<std::pair<int, int>>>
       device_ptrs;
 
   char *device_result_buffer{nullptr};
@@ -160,11 +160,9 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
     CUDADriver::get_instance().stream_synchronize(nullptr);
     for (auto itr = transfers.begin(); itr != transfers.end(); itr++) {
       auto &idx = itr->first;
-      auto arg_id = idx;
-      arg_id.pop_back();
       CUDADriver::get_instance().memcpy_device_to_host(
           itr->second.first, (void *)device_ptrs[idx],
-          ctx.array_runtime_sizes[arg_id]);
+          ctx.array_runtime_sizes[{idx.first}]);
       executor->deallocate_memory_on_device(itr->second.second);
     }
   }
