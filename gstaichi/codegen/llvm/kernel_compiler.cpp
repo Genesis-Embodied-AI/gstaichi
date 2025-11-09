@@ -38,8 +38,8 @@ KernelCompiler::CKDPtr KernelCompiler::compile(
                                        *config_.tlctx);
   data.compiled_data = codegen->compile_kernel_to_module();
   data.args.reserve(kernel_def.nested_parameters.size());
-  for (const auto &[k, v] : kernel_def.nested_parameters)
-    data.args.push_back({{k}, v});
+  for (const auto &p : kernel_def.nested_parameters)
+    data.args.push_back(p);
   data.rets = kernel_def.rets;
   data.args_type = kernel_def.args_type;
   data.args_size = kernel_def.args_size;
