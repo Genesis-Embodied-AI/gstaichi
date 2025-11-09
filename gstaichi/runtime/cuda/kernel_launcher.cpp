@@ -32,8 +32,8 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
   // for data_ptr and TypeFactory::GRAD_PTR_POS_IN_NDARRAY for grad_ptr. Value
   // is [host_ptr, temporary_device_alloc]. Invariant: temp_devallocs.size() !=
   // 0 <==> transfer happened.
-  std::unordered_map<std::pair<int, int>, std::pair<void *, DeviceAllocation>,
-                     hashing::Hasher<std::pair<int, int>>>
+  std::unordered_map<ArgArrayPtrKey, std::pair<void *, DeviceAllocation>,
+                     ArgArrayPtrKeyHasher>
       transfers;
 
   // |device_ptrs| stores pointers on device for all arrays args, including
@@ -41,9 +41,7 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
   // device or host.
   // This is the source of truth for us to look for device pointers used in CUDA
   // kernels.
-  std::unordered_map<std::pair<int, int>, void *,
-                     hashing::Hasher<std::pair<int, int>>>
-      device_ptrs;
+  std::unordered_map<ArgArrayPtrKey, void *, ArgArrayPtrKeyHasher> device_ptrs;
 
   char *device_result_buffer{nullptr};
   CUDADriver::get_instance().malloc_async(
@@ -53,10 +51,10 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
 
   for (int i = 0; i < (int)parameters.size(); i++) {
     const auto &kv = parameters[i];
-    const auto &key = kv.first;
+    const auto &arg_id = kv.first;
     const auto &parameter = kv.second;
     if (parameter.is_array) {
-      const auto arr_sz = ctx.array_runtime_sizes[key];
+      const auto arr_sz = ctx.array_runtime_sizes[arg_id];
       // Note: both numpy and PyTorch support arrays/tensors with zeros
       // in shapes, e.g., shape=(0) or shape=(100, 0, 200). This makes
       // `arr_sz` zero.
@@ -64,14 +62,12 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
         continue;
       }
 
-      std::pair<int, int> data_ptr_idx{key[0],
-                                       TypeFactory::DATA_PTR_POS_IN_NDARRAY};
-      std::pair<int, int> grad_ptr_idx{key[0],
-                                       TypeFactory::DATA_PTR_POS_IN_NDARRAY};
+      ArgArrayPtrKey data_ptr_idx{arg_id, TypeFactory::DATA_PTR_POS_IN_NDARRAY};
+      ArgArrayPtrKey grad_ptr_idx{arg_id, TypeFactory::DATA_PTR_POS_IN_NDARRAY};
       auto data_ptr = ctx.array_ptrs[data_ptr_idx];
 
       auto grad_ptr = ctx.array_ptrs[grad_ptr_idx];
-      if (ctx.device_allocation_type[key] ==
+      if (ctx.device_allocation_type[arg_id] ==
           LaunchContextBuilder::DevAllocType::kNone) {
         // External array
         // Note: assuming both data & grad are on the same device
@@ -103,7 +99,7 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
           }
         }
 
-        ctx.set_ndarray_ptrs(key, (uint64)device_ptrs[data_ptr_idx],
+        ctx.set_ndarray_ptrs(arg_id, (uint64)device_ptrs[data_ptr_idx],
                              (uint64)device_ptrs[grad_ptr_idx]);
       } else if (arr_sz > 0) {
         // Ndarray
@@ -118,7 +114,7 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
           device_ptrs[grad_ptr_idx] = nullptr;
         }
 
-        ctx.set_ndarray_ptrs(key, (uint64)device_ptrs[data_ptr_idx],
+        ctx.set_ndarray_ptrs(arg_id, (uint64)device_ptrs[data_ptr_idx],
                              (uint64)device_ptrs[grad_ptr_idx]);
       }
     }
@@ -162,7 +158,7 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
       auto &idx = itr->first;
       CUDADriver::get_instance().memcpy_device_to_host(
           itr->second.first, (void *)device_ptrs[idx],
-          ctx.array_runtime_sizes[{idx.first}]);
+          ctx.array_runtime_sizes[idx.arg_id]);
       executor->deallocate_memory_on_device(itr->second.second);
     }
   }

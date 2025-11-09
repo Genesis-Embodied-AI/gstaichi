@@ -59,7 +59,9 @@ class HostDeviceContextBlitter {
       const auto &indices = arg_kv.first;
       const auto &arg = arg_kv.second;
       if (arg.is_array) {
-        if (host_ctx_.device_allocation_type[indices] ==
+        int arg_id = indices[0];
+
+        if (host_ctx_.device_allocation_type[arg_id] ==
                 LaunchContextBuilder::DevAllocType::kNone &&
             ext_arr_size.at(indices)) {
           // Only need to blit ext arrs (host array)
@@ -75,26 +77,27 @@ class HostDeviceContextBlitter {
             void *device_arr_ptr{nullptr};
             TI_ASSERT(device_->map(buffer, &device_arr_ptr) ==
                       RhiResult::success);
-            const void *host_ptr = host_ctx_.array_ptrs[{
-                indices[0], TypeFactory::DATA_PTR_POS_IN_NDARRAY}];
+            const void *host_ptr =
+                host_ctx_
+                    .array_ptrs[{arg_id, TypeFactory::DATA_PTR_POS_IN_NDARRAY}];
             std::memcpy(device_arr_ptr, host_ptr, ext_arr_size.at(indices));
             device_->unmap(buffer);
           }
         }
         // Substitute in the device address.
 
-        if ((host_ctx_.device_allocation_type[indices] ==
+        if ((host_ctx_.device_allocation_type[arg_id] ==
                  LaunchContextBuilder::DevAllocType::kNone ||
-             host_ctx_.device_allocation_type[indices] ==
+             host_ctx_.device_allocation_type[arg_id] ==
                  LaunchContextBuilder::DevAllocType::kNdarray) &&
             device_->get_caps().get(
                 DeviceCapability::spirv_has_physical_storage_buffer)) {
           uint64_t addr =
               device_->get_memory_physical_pointer(ext_arrays.at(indices));
           host_ctx_.set_ndarray_ptrs(
-              indices, addr,
-              (uint64)host_ctx_.array_ptrs[{
-                  indices[0], TypeFactory::GRAD_PTR_POS_IN_NDARRAY}]);
+              arg_id, addr,
+              (uint64)host_ctx_
+                  .array_ptrs[{arg_id, TypeFactory::GRAD_PTR_POS_IN_NDARRAY}]);
         }
       }
     }
@@ -127,25 +130,27 @@ class HostDeviceContextBlitter {
       const auto &kv = ctx_attribs_->args()[i];
       const auto &indices = kv.first;
       const auto &arg = kv.second;
-      if (arg.is_array &&
-          host_ctx_.device_allocation_type[indices] ==
-              LaunchContextBuilder::DevAllocType::kNone &&
-          ext_arr_size.at(indices)) {
-        auto access_it = std::find_if(ctx_attribs_->arr_access.begin(),
-                                      ctx_attribs_->arr_access.end(),
-                                      [indices](const auto &pair) -> bool {
-                                        return pair.first == indices;
-                                      });
-        TI_ASSERT(access_it != ctx_attribs_->arr_access.end());
-        uint32_t access = uint32_t(access_it->second);
-        if (access & uint32_t(irpass::ExternalPtrAccess::WRITE)) {
-          // Only need to blit ext arrs (host array)
-          readback_dev_ptrs.push_back(ext_arrays.at(indices).get_ptr(0));
-          readback_host_ptrs.push_back(host_ctx_.array_ptrs[{
-              indices[0], TypeFactory::DATA_PTR_POS_IN_NDARRAY}]);
-          // TODO: readback grad_ptrs as well once ndarray ad is supported
-          readback_sizes.push_back(ext_arr_size.at(indices));
-          require_sync = true;
+      if (arg.is_array) {
+        int arg_id = indices[0];
+        if (host_ctx_.device_allocation_type[arg_id] ==
+                LaunchContextBuilder::DevAllocType::kNone &&
+            ext_arr_size.at(indices)) {
+          auto access_it = std::find_if(ctx_attribs_->arr_access.begin(),
+                                        ctx_attribs_->arr_access.end(),
+                                        [indices](const auto &pair) -> bool {
+                                          return pair.first == indices;
+                                        });
+          TI_ASSERT(access_it != ctx_attribs_->arr_access.end());
+          uint32_t access = uint32_t(access_it->second);
+          if (access & uint32_t(irpass::ExternalPtrAccess::WRITE)) {
+            // Only need to blit ext arrs (host array)
+            readback_dev_ptrs.push_back(ext_arrays.at(indices).get_ptr(0));
+            readback_host_ptrs.push_back(host_ctx_.array_ptrs[{
+                arg_id, TypeFactory::DATA_PTR_POS_IN_NDARRAY}]);
+            // TODO: readback grad_ptrs as well once ndarray ad is supported
+            readback_sizes.push_back(ext_arr_size.at(indices));
+            require_sync = true;
+          }
         }
       }
     }
@@ -416,31 +421,26 @@ void GfxRuntime::launch_kernel(KernelHandle handle,
       const auto &indices = kv.first;
       const auto &arg = kv.second;
       if (arg.is_array) {
-        if (host_ctx.device_allocation_type[indices] !=
+        int arg_id = indices[0];
+        if (host_ctx.device_allocation_type[arg_id] !=
             LaunchContextBuilder::DevAllocType::kNone) {
           DeviceAllocation devalloc = kDeviceNullAllocation;
           // NDArray
-          const std::pair<int, int> key{indices[0],
-                                        TypeFactory::DATA_PTR_POS_IN_NDARRAY};
+          const ArgArrayPtrKey key{arg_id,
+                                   TypeFactory::DATA_PTR_POS_IN_NDARRAY};
           if (host_ctx.array_ptrs.count(key)) {
             devalloc = *(DeviceAllocation *)(host_ctx.array_ptrs[key]);
           }
 
-          if (host_ctx.device_allocation_type[indices] ==
+          if (host_ctx.device_allocation_type[arg_id] ==
               LaunchContextBuilder::DevAllocType::kNdarray) {
             any_arrays[indices] = devalloc;
             ndarrays_in_use_.insert(devalloc.alloc_id);
-          } else if (host_ctx.device_allocation_type[indices] ==
-                     LaunchContextBuilder::DevAllocType::kTexture) {
-            textures[indices] = devalloc;
-          } else if (host_ctx.device_allocation_type[indices] ==
-                     LaunchContextBuilder::DevAllocType::kRWTexture) {
-            textures[indices] = devalloc;
           } else {
             TI_NOT_IMPLEMENTED;
           }
         } else {
-          ext_array_size[indices] = host_ctx.array_runtime_sizes[indices];
+          ext_array_size[indices] = host_ctx.array_runtime_sizes[arg_id];
           auto arr_access =
               ti_kernel->ti_kernel_attribs().ctx_attribs.arr_access;
           auto access_it = std::find_if(arr_access.begin(), arr_access.end(),

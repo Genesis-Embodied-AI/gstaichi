@@ -562,7 +562,7 @@ void TaskCodegen::visit(ArgLoadStmt *stmt) {
       (arg_type->is<lang::StructType>() &&
        arg_type->as<lang::StructType>()->elements().size() >= 2 &&
        arg_type->as<lang::StructType>()
-           ->get_element_type({1})
+           ->get_element_type(std::array<int, 1>{1})
            ->is<PointerType>())) {
     // Do not shift! We are indexing the buffers at byte granularity.
     // spirv::Value val =
@@ -677,7 +677,7 @@ void TaskCodegen::visit(ExternalTensorShapeAlongAxisStmt *stmt) {
 
   spirv::Value var_ptr;
   TI_ASSERT(ctx_attribs_->args_type()
-                ->get_element_type({arg_id})
+                ->get_element_type(arg_id)
                 ->is<lang::StructType>());
   std::vector<int> indices = arg_id;
   indices.push_back(TypeFactory::SHAPE_POS_IN_NDARRAY);
@@ -775,8 +775,9 @@ void TaskCodegen::visit(UnaryOpStmt *stmt) {
     std::vector<std::tuple<SType, std::string, size_t>> components;
     for (int i = 0; i < stype->elements().size(); i++) {
       components.push_back(
-          {ir_->get_primitive_type(stype->get_element_type({i})),
-           fmt::format("element{}", i), stype->get_element_offset({i})});
+          {ir_->get_primitive_type(stype->get_element_type(std::array{i})),
+           fmt::format("element{}", i),
+           stype->get_element_offset(std::array{i})});
     }
     dst_type = ir_->create_struct_type(components);
   } else {
@@ -2365,7 +2366,7 @@ void TaskCodegen::compile_ret_struct() {
     rets_struct_types_[i].id = ir2spirv_map.at(element_types[i]);
     if (i < ctx_attribs_->rets_type()->elements().size()) {
       rets_struct_types_[i].dt =
-          ctx_attribs_->rets_type()->get_element_type({i});
+          ctx_attribs_->rets_type()->get_element_type(std::array{i});
     } else {
       rets_struct_types_[i].dt = PrimitiveType::i32;
     }

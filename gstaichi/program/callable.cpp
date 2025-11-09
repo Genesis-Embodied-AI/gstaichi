@@ -86,9 +86,9 @@ std::vector<int> Callable::insert_rw_texture_param(int total_dim,
 
 std::vector<int> Callable::add_parameter(const Parameter &param) {
   parameter_list.push_back(param);
-  auto indices = std::vector<int>{(int)parameter_list.size() - 1};
-  nested_parameters[indices] = param;
-  return indices;
+  int arg_id = parameter_list.size() - 1;
+  nested_parameters[arg_id] = param;
+  return {arg_id};
 }
 
 void Callable::finalize_rets() {
