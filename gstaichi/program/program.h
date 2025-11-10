@@ -56,7 +56,7 @@ class TI_DLL_EXPORT Program {
  public:
   using Kernel = gstaichi::lang::Kernel;
 
-  MyData *dump_ndarray_info(Ndarray *ndarray);
+  // MyData *dump_ndarray_info(Ndarray *ndarray);
 
   uint64 *result_buffer{nullptr};  // Note that this result_buffer is used
                                    // only for runtime JIT functions (e.g.

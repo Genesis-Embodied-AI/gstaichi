@@ -16,8 +16,8 @@
 #include "gstaichi/rhi/common/host_memory_pool.h"
 
 
-#include "gstaichi/rhi/cuda/cuda_device.h"
-#include "dlpack/dlpack.h"
+// #include "gstaichi/rhi/cuda/cuda_device.h"
+// #include "dlpack/dlpack.h"
 
 #ifdef TI_WITH_LLVM
 #include "gstaichi/runtime/program_impls/llvm/llvm_program.h"
@@ -120,29 +120,29 @@ Program::Program(Arch desired_arch) : snode_rw_accessors_bank_(this) {
            arch_name(config.arch));
 }
 
-MyData *Program::dump_ndarray_info(Ndarray *ndarray) {
-  std::cout << "dump_ndarray_info" << std::endl;
-  std::cout << ndarray->read_int({0, 0}) << std::endl;
-  // int *data_ptr = reinterpret_cast<int *>(get_ndarray_data_ptr
+// MyData *Program::dump_ndarray_info(Ndarray *ndarray) {
+//   std::cout << "dump_ndarray_info" << std::endl;
+//   std::cout << ndarray->read_int({0, 0}) << std::endl;
+//   // int *data_ptr = reinterpret_cast<int *>(get_ndarray_data_ptr
   
-  DeviceAllocation devalloc = ndarray->get_device_allocation();
-  // using cuda = gstaichi::lang::cuda;
-  cuda::CudaDevice *cuda_device = dynamic_cast<cuda::CudaDevice *>(devalloc.device);
-  std::cout << " not nullptr " << (cuda_device != nullptr) << std::endl;
+//   DeviceAllocation devalloc = ndarray->get_device_allocation();
+//   // using cuda = gstaichi::lang::cuda;
+//   cuda::CudaDevice *cuda_device = dynamic_cast<cuda::CudaDevice *>(devalloc.device);
+//   std::cout << " not nullptr " << (cuda_device != nullptr) << std::endl;
 
-    MyData *my_data = new MyData;
-    my_data->value = 31;
+//     MyData *my_data = new MyData;
+//     my_data->value = 31;
 
-    return my_data;
+//     return my_data;
 
-    // auto deleter = [](PyObject *capsule) {
-    //     MyData *my_data = static_cast<MyData *>(PyCapsule_GetPointer(capsule, "my_data"));
-    //     delete my_data;
-    // };
+//     // auto deleter = [](PyObject *capsule) {
+//     //     MyData *my_data = static_cast<MyData *>(PyCapsule_GetPointer(capsule, "my_data"));
+//     //     delete my_data;
+//     // };
 
-    // py::capsule capsule = py::capsule(static_cast<void *>(my_data), "my_data", deleter);
-    // return capsule;
-}
+//     // py::capsule capsule = py::capsule(static_cast<void *>(my_data), "my_data", deleter);
+//     // return capsule;
+// }
 
 TypeFactory &Program::get_type_factory() {
   TI_WARN(
