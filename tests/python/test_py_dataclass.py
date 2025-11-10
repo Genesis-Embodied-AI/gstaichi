@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 
 import gstaichi as ti
+from gstaichi.lang import _KernelBatchedArgType
 
 from tests import test_utils
 
@@ -958,8 +959,8 @@ def test_print_used_leaves():
     assert u1[1] == 333
     assert u1[2] == 0
     kernel_args_count_by_type = k1._primal.launch_stats.kernel_args_count_by_type
-    assert kernel_args_count_by_type["ndarray"] == 3
-    assert kernel_args_count_by_type["int"] == 1
+    assert kernel_args_count_by_type[_KernelBatchedArgType.TI_ARRAY] == 3
+    assert kernel_args_count_by_type[_KernelBatchedArgType.INT] == 1
 
     u1[0] = 0
     u1[1] = 0
@@ -972,8 +973,8 @@ def test_print_used_leaves():
     assert u1[1] == 333
     assert u1[2] == 444
     kernel_args_count_by_type = k1._primal.launch_stats.kernel_args_count_by_type
-    assert kernel_args_count_by_type["ndarray"] == 3
-    assert kernel_args_count_by_type["int"] == 1
+    assert kernel_args_count_by_type[_KernelBatchedArgType.TI_ARRAY] == 3
+    assert kernel_args_count_by_type[_KernelBatchedArgType.INT] == 1
 
 
 @test_utils.test()
@@ -1178,8 +1179,8 @@ def test_prune_used_leaves_fastcache1(tmp_path: Path):
         assert u1b[5] == 555
         assert n1[0] == 777
         kernel_args_count_by_type = k1._primal.launch_stats.kernel_args_count_by_type
-        assert kernel_args_count_by_type["ndarray"] == 7
-        assert kernel_args_count_by_type["int"] == 0
+        assert kernel_args_count_by_type[_KernelBatchedArgType.TI_ARRAY] == 7
+        assert kernel_args_count_by_type[_KernelBatchedArgType.INT] == 0
 
         u1[0] = 0
         u1[1] = 0
@@ -1196,8 +1197,8 @@ def test_prune_used_leaves_fastcache1(tmp_path: Path):
         assert u1b[5] == 555
         assert n1[0] == 777
         kernel_args_count_by_type = k1._primal.launch_stats.kernel_args_count_by_type
-        assert kernel_args_count_by_type["ndarray"] == 7
-        assert kernel_args_count_by_type["int"] == 0
+        assert kernel_args_count_by_type[_KernelBatchedArgType.TI_ARRAY] == 7
+        assert kernel_args_count_by_type[_KernelBatchedArgType.INT] == 0
 
 
 @test_utils.test()
@@ -1266,8 +1267,9 @@ def test_prune_used_leaves_fastcache2(tmp_path: Path):
         assert u3b[0] == 333
 
         kernel_args_count_by_type = k1._primal.launch_stats.kernel_args_count_by_type
-        assert kernel_args_count_by_type["ndarray"] == 7  # remember to add 1 for envs_idx
-        assert kernel_args_count_by_type["int"] == 0
+        # remember to add 1 for envs_idx
+        assert kernel_args_count_by_type[_KernelBatchedArgType.TI_ARRAY] == 7
+        assert kernel_args_count_by_type[_KernelBatchedArgType.INT] == 0
 
 
 @test_utils.test()

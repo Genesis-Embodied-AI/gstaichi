@@ -669,11 +669,6 @@ class FeLlCacheObservations:
     cache_hit: bool = False
 
 
-@dataclass
-class LaunchStats:
-    kernel_args_count_by_type: dict[str, int]
-
-
 def cast_float(x: float | np.floating | np.integer | int) -> float:
     if not isinstance(x, (int, float, np.integer, np.floating)):
         raise ValueError(f"Invalid argument type '{type(x)}")
@@ -686,7 +681,7 @@ def cast_int(x: int | np.integer) -> int:
     return int(x)
 
 
-class KernelBatchedArgType(IntEnum):
+class _KernelBatchedArgType(IntEnum):
     FLOAT = 0
     INT = 1
     UINT = 2
@@ -695,10 +690,15 @@ class KernelBatchedArgType(IntEnum):
 
 
 # Define proxies for fast lookup
-_FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = KernelBatchedArgType
+_FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = _KernelBatchedArgType
 
 
 ArgsHash: TypeAlias = int
+
+
+@dataclass
+class LaunchStats:
+    kernel_args_count_by_type: dict[_KernelBatchedArgType, int]
 
 
 def _destroy_callback(kernel_ref: ReferenceType["Kernel"], ref: ReferenceType):
@@ -713,7 +713,7 @@ def _recursive_set_args(
     used_py_dataclass_parameters: set[tuple[str, ...]],
     py_dataclass_basename: tuple[str, ...],
     launch_ctx: KernelLaunchContext,
-    launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]],
+    launch_ctx_buffer: DefaultDict[_KernelBatchedArgType, list[tuple]],
     needed_arg_type: Type,
     provided_arg_type: Type,
     v: Any,
@@ -1266,7 +1266,7 @@ class Kernel:
         except (TypeError, KeyError):
             pass
         if not launch_ctx_cache_tracker:  # Empty or none
-            launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]] = defaultdict(list)
+            launch_ctx_buffer: DefaultDict[_KernelBatchedArgType, list[tuple]] = defaultdict(list)
             actual_argument_slot = 0
             is_launch_ctx_cacheable = True
             template_num = 0
@@ -1296,33 +1296,32 @@ class Kernel:
                 i_out += num_args_
                 is_launch_ctx_cacheable &= is_launch_ctx_cacheable_
 
+            kernel_args_count_by_type = defaultdict(int)
+            kernel_args_count_by_type.update(
+                {key: len(launch_ctx_args) for key, launch_ctx_args in launch_ctx_buffer.items()}
+            )
+            self.launch_stats = LaunchStats(kernel_args_count_by_type=kernel_args_count_by_type)
+
             # All arguments to context in batches to mitigate overhead of calling Python bindings repeatedly.
             # This is essential because calling any pybind11 function is adding ~180ns penalty no matter what.
             # Note that we are allowed to do this because GsTaichi Launch Kernel context is storing the input
             # arguments in an unordered list. The actual runtime (gfx, llvm...) will later query this context
             # in correct order.
-            kernel_args_count_by_type = defaultdict(int)
-            self.launch_stats = LaunchStats(kernel_args_count_by_type=kernel_args_count_by_type)
             if launch_ctx_args := launch_ctx_buffer.get(_FLOAT):
                 indices, vec = zip(*launch_ctx_args)
-                kernel_args_count_by_type["float"] = len(indices)
                 launch_ctx.set_args_float([index for index, in indices], vec)  # type: ignore
             if launch_ctx_args := launch_ctx_buffer.get(_INT):
                 indices, vec = zip(*launch_ctx_args)
                 launch_ctx.set_args_int([index for index, in indices], vec)  # type: ignore
-                kernel_args_count_by_type["int"] = len(indices)
             if launch_ctx_args := launch_ctx_buffer.get(_UINT):
                 indices, vec = zip(*launch_ctx_args)
                 launch_ctx.set_args_uint([index for index, in indices], vec)  # type: ignore
-                kernel_args_count_by_type["uint"] = len(indices)
             if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY):
                 indices, arrs = zip(*launch_ctx_args)
                 launch_ctx.set_args_ndarray([index for index, in indices], arrs)  # type: ignore
-                kernel_args_count_by_type["ndarray"] = len(indices)
             if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY_WITH_GRAD):
                 indices, arrs, arrs_grad = zip(*launch_ctx_args)
                 launch_ctx.set_args_ndarray_with_grad([index for index, in indices], arrs, arrs_grad)  # type: ignore
-                kernel_args_count_by_type["ndarray_with_grad"] = len(indices)
 
             if is_launch_ctx_cacheable and args_hash is not None:
                 # TODO: It some rare occurrences, arguments can be cached yet not hashable. Ignoring for now...
@@ -1726,4 +1725,4 @@ def data_oriented(cls):
     return cls
 
 
-__all__ = ["data_oriented", "func", "kernel", "pyfunc", "real_func"]
+__all__ = ["data_oriented", "func", "kernel", "pyfunc", "real_func", "_KernelBatchedArgType"]
