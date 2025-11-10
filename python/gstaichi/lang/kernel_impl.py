@@ -715,7 +715,7 @@ def _recursive_set_args(
     needed_arg_type: Type,
     provided_arg_type: Type,
     v: Any,
-    indices: tuple[int, ...],
+    index: int,
     actual_argument_slot: int,
     callbacks: list[Callable[[], Any]],
 ) -> tuple[int, bool]:
@@ -744,16 +744,16 @@ def _recursive_set_args(
     # Note: do not use sth like "needed == f32". That would be slow.
     if needed_arg_type_id in primitive_types.real_type_ids:
         if not isinstance(v, (float, int, np.floating, np.integer)):
-            raise GsTaichiRuntimeTypeError.get(indices, needed_arg_type.to_string(), provided_arg_type)
-        launch_ctx_buffer[_FLOAT].append((indices, float(v)))
+            raise GsTaichiRuntimeTypeError.get((index,), needed_arg_type.to_string(), provided_arg_type)
+        launch_ctx_buffer[_FLOAT].append((index, float(v)))
         return 1, False
     if needed_arg_type_id in primitive_types.integer_type_ids:
         if not isinstance(v, (int, np.integer)):
-            raise GsTaichiRuntimeTypeError.get(indices, needed_arg_type.to_string(), provided_arg_type)
+            raise GsTaichiRuntimeTypeError.get((index,), needed_arg_type.to_string(), provided_arg_type)
         if is_signed(cook_dtype(needed_arg_type)):
-            launch_ctx_buffer[_INT].append((indices, int(v)))
+            launch_ctx_buffer[_INT].append((index, int(v)))
         else:
-            launch_ctx_buffer[_UINT].append((indices, int(v)))
+            launch_ctx_buffer[_UINT].append((index, int(v)))
         return 1, False
     needed_arg_fields = getattr(needed_arg_type, _FIELDS, None)
     if needed_arg_fields is not None:
@@ -762,7 +762,6 @@ def _recursive_set_args(
         # A dataclass must be frozen to be compatible with caching
         is_launch_ctx_cacheable = needed_arg_type.__hash__ is not None
         idx = 0
-        offset = indices[0]
         for field in needed_arg_fields.values():
             if field._field_type is not _FIELD:
                 continue
@@ -782,7 +781,7 @@ def _recursive_set_args(
                 field_type,
                 field_type,
                 field_value,
-                (offset + idx,),
+                index + idx,
                 actual_argument_slot,
                 callbacks,
             )
@@ -793,9 +792,9 @@ def _recursive_set_args(
         v_primal = v.arr
         v_grad = v.grad.arr if v.grad else None
         if v_grad is None:
-            launch_ctx_buffer[_TI_ARRAY].append((indices, v_primal))
+            launch_ctx_buffer[_TI_ARRAY].append((index, v_primal))
         else:
-            launch_ctx_buffer[_TI_ARRAY_WITH_GRAD].append((indices, v_primal, v_grad))
+            launch_ctx_buffer[_TI_ARRAY_WITH_GRAD].append((index, v_primal, v_grad))
         return 1, True
     if needed_arg_basetype is ndarray_type.NdarrayType:
         # v is things like torch Tensor and numpy array
@@ -829,7 +828,7 @@ def _recursive_set_args(
                     "Non contiguous numpy arrays are not supported, please call np.ascontiguousarray(arr) "
                     "before passing it into gstaichi kernel."
                 )
-            launch_ctx.set_arg_external_array_with_shape(indices, int(v.ctypes.data), v.nbytes, array_shape, 0)
+            launch_ctx.set_arg_external_array_with_shape(index, int(v.ctypes.data), v.nbytes, array_shape, 0)
         elif has_pytorch():
             import torch  # pylint: disable=C0415
 
@@ -871,7 +870,7 @@ def _recursive_set_args(
                         callbacks.append(partial(grad_orig.data.copy_, grad))
 
                 launch_ctx.set_arg_external_array_with_shape(
-                    indices,
+                    index,
                     int(v.data_ptr()),
                     v.element_size() * v.nelement(),
                     array_shape,
@@ -904,7 +903,7 @@ def _recursive_set_args(
             ) from e
 
         v = needed_arg_type(*v)
-        needed_arg_type.set_kernel_struct_args(v, launch_ctx, indices)
+        needed_arg_type.set_kernel_struct_args(v, launch_ctx, (index,))
         return 1, False
     if needed_arg_basetype is StructType:
         # Unclear how to make the following pass typing checks StructType implements __instancecheck__,
@@ -914,13 +913,13 @@ def _recursive_set_args(
             raise GsTaichiRuntimeTypeError(
                 f"Argument {provided_arg_type} cannot be converted into required type {needed_arg_type}"
             )
-        needed_arg_type.set_kernel_struct_args(v, launch_ctx, indices)
+        needed_arg_type.set_kernel_struct_args(v, launch_ctx, (index,))
         return 1, False
     if needed_arg_type is template or needed_arg_basetype is template:
         return 0, True
     if needed_arg_basetype is sparse_matrix_builder:
         # Pass only the base pointer of the ti.types.sparse_matrix_builder() argument
-        launch_ctx_buffer[_UINT].append((indices, v._get_ndarray_addr()))
+        launch_ctx_buffer[_UINT].append((index, v._get_ndarray_addr()))
         return 1, True
     raise ValueError(f"Argument type mismatch. Expecting {needed_arg_type}, got {type(v)}.")
 
@@ -1281,7 +1280,7 @@ class Kernel:
                     needed_,
                     type(val),
                     val,
-                    (i_out - template_num,),
+                    i_out - template_num,
                     actual_argument_slot,
                     callbacks,
                 )

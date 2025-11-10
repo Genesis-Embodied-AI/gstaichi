@@ -39,19 +39,17 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
 
   for (int i = 0; i < (int)parameters.size(); i++) {
     const auto &kv = parameters[i];
-    const auto &key = kv.first;
+    const auto &arg_id = kv.first;
     const auto &parameter = kv.second;
     if (parameter.is_array) {
-      const auto arr_sz = ctx.array_runtime_sizes[key];
+      const auto arr_sz = ctx.array_runtime_sizes[arg_id];
       if (arr_sz == 0)
         continue;
-      std::pair<int, int> data_ptr_idx{key[0],
-                                       TypeFactory::DATA_PTR_POS_IN_NDARRAY};
-      std::pair<int, int> grad_ptr_idx{key[0],
-                                       TypeFactory::DATA_PTR_POS_IN_NDARRAY};
+      ArgArrayPtrKey data_ptr_idx{arg_id, TypeFactory::DATA_PTR_POS_IN_NDARRAY};
+      ArgArrayPtrKey grad_ptr_idx{arg_id, TypeFactory::DATA_PTR_POS_IN_NDARRAY};
       auto data_ptr = ctx.array_ptrs[data_ptr_idx];
 
-      if (ctx.device_allocation_type[key] ==
+      if (ctx.device_allocation_type[arg_id] ==
           LaunchContextBuilder::DevAllocType::kNone) {
         if (on_amdgpu_device(data_ptr)) {
           device_ptrs[data_ptr_idx] = data_ptr;
@@ -65,7 +63,7 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
           AMDGPUDriver::get_instance().memcpy_host_to_device(
               (void *)device_ptrs[data_ptr_idx], data_ptr, arr_sz);
         }
-        ctx.set_ndarray_ptrs(key, (uint64)device_ptrs[data_ptr_idx],
+        ctx.set_ndarray_ptrs(arg_id, (uint64)device_ptrs[data_ptr_idx],
                              (uint64)ctx.array_ptrs[grad_ptr_idx]);
       } else if (arr_sz > 0) {  // why use arr_sz constrain?
         // Ndarray
@@ -73,7 +71,7 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
         // Unwrapped raw ptr on device
         device_ptrs[data_ptr_idx] = executor->get_device_alloc_info_ptr(*ptr);
 
-        ctx.set_ndarray_ptrs(key, (uint64)device_ptrs[data_ptr_idx],
+        ctx.set_ndarray_ptrs(arg_id, (uint64)device_ptrs[data_ptr_idx],
                              (uint64)ctx.array_ptrs[grad_ptr_idx]);
       }
     }

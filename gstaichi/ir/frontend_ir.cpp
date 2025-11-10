@@ -1740,7 +1740,7 @@ std::vector<Expr> ASTBuilder::expand_exprs(const std::vector<Expr> &exprs) {
           auto num_elem = struct_type->elements().size();
           for (int i = 0; i < num_elem; i++) {
             indices.push_back(i);
-            auto element_type = struct_type->get_element_type({i});
+            auto element_type = struct_type->get_element_type(std::array{i});
             if (auto element_struct_type = element_type->cast<StructType>()) {
               expand_struct(expr, element_struct_type, indices);
             } else {

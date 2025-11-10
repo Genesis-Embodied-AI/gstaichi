@@ -108,10 +108,7 @@ class TI_DLL_EXPORT CallableBase {
   std::vector<Parameter> parameter_list;
   // Note: `nested_parameters` stores not only nested parameters, but also
   // those parameters in `parameter_list`.
-  std::unordered_map<std::vector<int>,
-                     Parameter,
-                     hashing::Hasher<std::vector<int>>>
-      nested_parameters;
+  std::unordered_map<int, Parameter> nested_parameters;
   std::vector<Ret> rets;
 
   const StructType *ret_type = nullptr;
