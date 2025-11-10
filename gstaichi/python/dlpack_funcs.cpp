@@ -21,13 +21,14 @@ pybind11::capsule dlpack_dump_ndarray_info(Program *program, Ndarray *ndarray) {
   cpu::CpuDevice *cpu_device = dynamic_cast<cpu::CpuDevice *>(devalloc.device);
   if(cpu_device != nullptr) {
     std::cout << "cpu_device not nullptr " << (cpu_device != nullptr) << std::endl;
+    std::cout << " dev_alloc.ptr " << devalloc.ptr << std::endl;
   }
-  #if TI_WITH_CUDA
+#if TI_WITH_CUDA
   cuda::CudaDevice *cuda_device = dynamic_cast<cuda::CudaDevice *>(devalloc.device);
   if(cuda_device != nullptr) {
     std::cout << "cuda_device not nullptr " << (cuda_device != nullptr) << std::endl;
   }
-  #endif // TI_WITH_CUDA
+#endif // TI_WITH_CUDA
 
     MyData *my_data = new MyData;
     my_data->value = 31;
