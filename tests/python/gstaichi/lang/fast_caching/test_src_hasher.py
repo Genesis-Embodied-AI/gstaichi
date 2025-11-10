@@ -120,21 +120,24 @@ def test_src_hasher_store_validate(monkeypatch: pytest.MonkeyPatch, tmp_path: pa
 
     assert cache_key is not None
 
-    assert not src_hasher.validate_cache_key(cache_key)
+    assert not src_hasher.load(cache_key)
 
-    src_hasher.store(cache_key, fileinfos)
-    assert src_hasher.validate_cache_key(cache_key)
+    some_used_vars = {"fee", "fi", "fo"}
+    src_hasher.store(cache_key, fileinfos, some_used_vars)
+    assert src_hasher.load(cache_key)
 
     setup_folder("child_diff_same.py")
-    assert src_hasher.validate_cache_key(cache_key)
+    assert src_hasher.load(cache_key)
 
     setup_folder("child_diff_diff.py")
-    assert not src_hasher.validate_cache_key(cache_key)
+    assert not src_hasher.load(cache_key)
 
     setup_folder("child_diff_same.py")
-    assert src_hasher.validate_cache_key(cache_key)
+    assert src_hasher.load(cache_key)
 
-    assert not src_hasher.validate_cache_key("abcdefg")
+    assert not src_hasher.load("abcdefg")
+
+    assert src_hasher.load(cache_key) == some_used_vars
 
 
 # Should be enough to run these on cpu I think, and anything involving
