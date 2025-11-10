@@ -36,10 +36,6 @@ DeviceAllocation GfxProgramImpl::allocate_memory_on_device(
   return alloc;
 }
 
-DeviceAllocation GfxProgramImpl::allocate_texture(const ImageParams &params) {
-  return runtime_->create_image(params);
-}
-
 void GfxProgramImpl::finalize() {
   runtime_.reset();
   device_.reset();

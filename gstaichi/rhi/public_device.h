@@ -179,28 +179,6 @@ class RHI_DLL_EXPORT ShaderResourceSet {
   virtual ShaderResourceSet &buffer(uint32_t binding,
                                     DeviceAllocation alloc) = 0;
 
-  /**
-   * Bind a read-only image resource (SRV / Texture)
-   * @params[in] binding The binding index of the resource
-   * @params[in] alloc The Device Allocation that is going to be bound
-   * @params[in] sampler_config The texture sampling configuration
-   */
-  virtual ShaderResourceSet &image(uint32_t binding,
-                                   DeviceAllocation alloc,
-                                   ImageSamplerConfig sampler_config) {
-    RHI_NOT_IMPLEMENTED;
-  }
-
-  /**
-   * Bind a RW image resource (UAV / Storage Image)
-   * @params binding The binding index of the resource
-   * @params alloc The Device Allocation that is going to be bound
-   */
-  virtual ShaderResourceSet &rw_image(uint32_t binding,
-                                      DeviceAllocation alloc,
-                                      int lod) {
-    RHI_NOT_IMPLEMENTED
-  }
 };
 
 // A set of states / resources for rasterization

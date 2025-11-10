@@ -404,9 +404,6 @@ void GfxRuntime::launch_kernel(KernelHandle handle,
   std::unordered_map<std::vector<int>, size_t,
                      hashing::Hasher<std::vector<int>>>
       ext_array_size;
-  std::unordered_map<std::vector<int>, DeviceAllocation,
-                     hashing::Hasher<std::vector<int>>>
-      textures;
 
   // Prepare context buffers & arrays
   if (ctx_blitter) {
@@ -437,12 +434,6 @@ void GfxRuntime::launch_kernel(KernelHandle handle,
               LaunchContextBuilder::DevAllocType::kNdarray) {
             any_arrays[indices] = devalloc;
             ndarrays_in_use_.insert(devalloc.alloc_id);
-          } else if (host_ctx.device_allocation_type[indices] ==
-                     LaunchContextBuilder::DevAllocType::kTexture) {
-            textures[indices] = devalloc;
-          } else if (host_ctx.device_allocation_type[indices] ==
-                     LaunchContextBuilder::DevAllocType::kRWTexture) {
-            textures[indices] = devalloc;
           } else {
             TI_NOT_IMPLEMENTED;
           }
@@ -501,17 +492,6 @@ void GfxRuntime::launch_kernel(KernelHandle handle,
         DeviceAllocation *alloc = ti_kernel->get_buffer_bind(bind.buffer);
         bindings->rw_buffer(bind.binding,
                             alloc ? *alloc : kDeviceNullAllocation);
-      }
-    }
-
-    for (auto &bind : attribs.texture_binds) {
-      DeviceAllocation texture = textures.at(bind.arg_id);
-      if (bind.is_storage) {
-        transition_image(texture, ImageLayout::shader_read_write);
-        bindings->rw_image(bind.binding, texture, 0);
-      } else {
-        transition_image(texture, ImageLayout::shader_read);
-        bindings->image(bind.binding, texture, {});
       }
     }
 

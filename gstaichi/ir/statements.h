@@ -586,7 +586,7 @@ class SNodeOpStmt : public Stmt, public ir_traits::Store {
 };
 
 // TODO: remove this
-// (penguinliong) This Stmt is used for both ND-arrays and textures. This is
+// (penguinliong) This Stmt is used for ND-arrays. This is
 // subject to change in the future.
 class ExternalTensorShapeAlongAxisStmt : public Stmt {
  public:
@@ -1685,75 +1685,6 @@ class InternalFuncStmt : public Stmt {
   }
 
   TI_STMT_DEF_FIELDS(ret_type, func_name, args, with_runtime_context);
-  TI_DEFINE_ACCEPT_AND_CLONE
-};
-
-class Texture;
-
-class TexturePtrStmt : public Stmt {
- public:
-  Stmt *arg_load_stmt{nullptr};
-  int dimensions{2};
-  bool is_storage{false};
-
-  // Optional, for storage textures
-  BufferFormat format{0};
-  int lod{0};
-
-  explicit TexturePtrStmt(Stmt *stmt,
-                          int dimensions,
-                          bool is_storage,
-                          BufferFormat format,
-                          int lod,
-                          const DebugInfo &dbg_info = DebugInfo())
-      : Stmt(dbg_info),
-        arg_load_stmt(stmt),
-        dimensions(dimensions),
-        is_storage(is_storage),
-        format(format),
-        lod(lod) {
-    TI_STMT_REG_FIELDS;
-  }
-
-  explicit TexturePtrStmt(Stmt *stmt,
-                          int dimensions,
-                          const DebugInfo &dbg_info = DebugInfo())
-      : Stmt(dbg_info),
-        arg_load_stmt(stmt),
-        dimensions(dimensions),
-        is_storage(false) {
-    TI_STMT_REG_FIELDS;
-  }
-
-  TI_STMT_DEF_FIELDS(arg_load_stmt, dimensions, is_storage, format, lod);
-  TI_DEFINE_ACCEPT_AND_CLONE
-};
-
-class TextureOpStmt : public Stmt {
- public:
-  TextureOpType op;
-  Stmt *texture_ptr;
-  std::vector<Stmt *> args;
-
-  explicit TextureOpStmt(TextureOpType op,
-                         Stmt *texture_ptr,
-                         const std::vector<Stmt *> &args,
-                         const DebugInfo &dbg_info = DebugInfo())
-      : Stmt(dbg_info), op(op), texture_ptr(texture_ptr), args(args) {
-    TI_STMT_REG_FIELDS;
-  }
-
-  /*
-  bool has_global_side_effect() const override {
-    return op == TextureOpType::kStore;
-  }
-  */
-
-  bool common_statement_eliminable() const override {
-    return op != TextureOpType::kStore;
-  }
-
-  TI_STMT_DEF_FIELDS(op, texture_ptr, args);
   TI_DEFINE_ACCEPT_AND_CLONE
 };
 

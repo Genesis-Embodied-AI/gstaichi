@@ -258,14 +258,6 @@ class LowerAST : public IRVisitor {
           shape.push_back(
               fctx.push_back<ExternalTensorShapeAlongAxisStmt>(i, arg_id));
         }
-      } else if (stmt->external_tensor.is<TexturePtrExpression>()) {
-        auto rw_texture = stmt->external_tensor.cast<TexturePtrExpression>();
-        arg_id = rw_texture->arg_id;
-        for (size_t i = 0; i < rw_texture->num_dims; ++i) {
-          shape.emplace_back(
-              fctx.push_back<ExternalTensorShapeAlongAxisStmt>(i, arg_id));
-        }
-      }
 
       Stmt *begin = fctx.push_back<ConstStmt>(TypedConstant(0));
       Stmt *end = fctx.push_back<ConstStmt>(TypedConstant(1));

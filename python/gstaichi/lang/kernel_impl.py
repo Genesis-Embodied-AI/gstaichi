@@ -44,7 +44,6 @@ from gstaichi.lang import _kernel_impl_dataclass, impl, ops, runtime_ops
 from gstaichi.lang._fast_caching import src_hasher
 from gstaichi.lang._ndarray import Ndarray
 from gstaichi.lang._template_mapper import TemplateMapper
-from gstaichi.lang._texture import Texture
 from gstaichi.lang._wrap_inspect import FunctionSourceInfo, get_source_info_and_src
 from gstaichi.lang.any_array import AnyArray
 from gstaichi.lang.ast import (
@@ -73,7 +72,6 @@ from gstaichi.types import (
     primitive_types,
     sparse_matrix_builder,
     template,
-    texture_type,
 )
 from gstaichi.types.compound_types import CompoundType
 from gstaichi.types.enums import AutodiffMode, Layout
@@ -924,12 +922,6 @@ def _recursive_set_args(
         # Pass only the base pointer of the ti.types.sparse_matrix_builder() argument
         launch_ctx_buffer[_UINT].append((indices, v._get_ndarray_addr()))
         return 1, True
-    if needed_arg_basetype is texture_type.TextureType and isinstance(v, Texture):
-        launch_ctx.set_arg_texture(indices, v.tex)
-        return 1, False
-    if needed_arg_basetype is texture_type.RWTextureType and isinstance(v, Texture):
-        launch_ctx.set_arg_rw_texture(indices, v.tex)
-        return 1, False
     raise ValueError(f"Argument type mismatch. Expecting {needed_arg_type}, got {type(v)}.")
 
 
@@ -1049,7 +1041,7 @@ class Kernel:
             else:
                 if isinstance(
                     annotation,
-                    (template, ndarray_type.NdarrayType, texture_type.TextureType, texture_type.RWTextureType),
+                    (template, ndarray_type.NdarrayType),
                 ):
                     pass
                 elif annotation is ndarray_type.NdarrayType:

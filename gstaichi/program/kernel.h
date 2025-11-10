@@ -6,7 +6,6 @@
 #include "gstaichi/rhi/arch.h"
 #include "gstaichi/program/callable.h"
 #include "gstaichi/program/ndarray.h"
-#include "gstaichi/program/texture.h"
 #include "gstaichi/program/launch_context_builder.h"
 
 namespace gstaichi::lang {

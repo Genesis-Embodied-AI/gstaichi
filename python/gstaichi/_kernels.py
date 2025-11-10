@@ -12,7 +12,7 @@ from gstaichi.lang.misc import loop_config
 from gstaichi.lang.simt import block, warp
 from gstaichi.lang.snode import deactivate
 from gstaichi.math import vec3
-from gstaichi.types import ndarray_type, texture_type, vector
+from gstaichi.types import ndarray_type, vector
 from gstaichi.types.annotations import template
 from gstaichi.types.enums import Format
 from gstaichi.types.primitive_types import f16, f32, f64, i32, u8
@@ -272,27 +272,6 @@ def snode_deactivate(b: template()):
 def snode_deactivate_dynamic(b: template()):
     for I in grouped(b.parent()):
         deactivate(b, I)
-
-
-@kernel
-def load_texture_from_numpy(
-    tex: texture_type.rw_texture(num_dimensions=2, fmt=Format.rgba8, lod=0),
-    img: ndarray_type.ndarray(dtype=vec3, ndim=2),
-):
-    for i, j in img:
-        tex.store(
-            vector(2, i32)([i, j]),
-            vector(4, f32)([img[i, j][0], img[i, j][1], img[i, j][2], 0]) / 255.0,
-        )
-
-
-@kernel
-def save_texture_to_numpy(
-    tex: texture_type.rw_texture(num_dimensions=2, fmt=Format.rgba8, lod=0),
-    img: ndarray_type.ndarray(dtype=vec3, ndim=2),
-):
-    for i, j in img:
-        img[i, j] = ops.round(tex.load(vector(2, i32)([i, j])).rgb * 255)
 
 
 # Odd-even merge sort

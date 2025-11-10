@@ -73,7 +73,6 @@ enum class ValueKind {
   kStructArrayPtr,
   kVariablePtr,
   kPhysicalPtr,
-  kTexture,
   kFunction,
   kExtInst
 };
@@ -379,29 +378,6 @@ class IRBuilder {
                         uint32_t binding,
                         const std::string &name);
   Value struct_array_access(const SType &res_type, Value buffer, Value index);
-
-  Value texture_argument(int num_channels,
-                         int num_dimensions,
-                         uint32_t descriptor_set,
-                         uint32_t binding);
-
-  Value storage_image_argument(int num_channels,
-                               int num_dimensions,
-                               uint32_t descriptor_set,
-                               uint32_t binding,
-                               BufferFormat format);
-
-  Value sample_texture(Value texture_var,
-                       const std::vector<Value> &args,
-                       Value lod);
-
-  Value fetch_texel(Value texture_var,
-                    const std::vector<Value> &args,
-                    Value lod);
-
-  Value image_load(Value image_var, const std::vector<Value> &args);
-
-  void image_store(Value image_var, const std::vector<Value> &args);
 
   // Declare a new function
   // NOTE: only support void kernel function, i.e. main
