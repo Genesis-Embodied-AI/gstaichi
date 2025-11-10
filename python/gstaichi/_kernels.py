@@ -1,7 +1,6 @@
 # type: ignore
 
 from gstaichi._funcs import field_fill_gstaichi_scope
-from gstaichi._lib.utils import get_os_name
 from gstaichi.lang import ops
 from gstaichi.lang._ndrange import ndrange
 from gstaichi.lang.expr import Expr
@@ -11,10 +10,8 @@ from gstaichi.lang.kernel_impl import func, kernel
 from gstaichi.lang.misc import loop_config
 from gstaichi.lang.simt import block, warp
 from gstaichi.lang.snode import deactivate
-from gstaichi.math import vec3
-from gstaichi.types import ndarray_type, vector
+from gstaichi.types import ndarray_type
 from gstaichi.types.annotations import template
-from gstaichi.types.enums import Format
 from gstaichi.types.primitive_types import f16, f32, f64, i32, u8
 
 
@@ -73,7 +70,6 @@ def ndarray_matrix_to_ext_arr(
                         arr[I, p, q] = ndarray[I][p, q]
                     else:
                         arr[p, q, I] = ndarray[I][p, q]
-
 
 
 @kernel

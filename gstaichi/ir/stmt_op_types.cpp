@@ -147,5 +147,4 @@ std::string snode_op_type_name(SNodeOpType type) {
   }
 }
 
-
 }  // namespace gstaichi::lang

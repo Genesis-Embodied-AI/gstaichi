@@ -36,8 +36,6 @@ class FieldsBuilder:
     def __init__(self):
         from gstaichi.lang import snode
         from gstaichi.lang import impl
-        from gstaichi.lang.exception import GsTaichiRuntimeError
-        from gstaichi.lang.util import warning
 
         self.ptr: SNodeCxx = _snode_registry.create_root(impl.get_runtime().prog)
         self.root = snode.SNode(self.ptr)
@@ -53,6 +51,8 @@ class FieldsBuilder:
         Returns:
             A list of the roots of the finalized SNodeTree.
         """
+        from gstaichi.lang import impl
+        from gstaichi.lang import snode
         roots_ptr = []
         size = impl.get_runtime().prog.get_snode_tree_size()
         for i in range(size):
@@ -84,6 +84,9 @@ class FieldsBuilder:
         dimensions: Union[Sequence[int], int],
     ):
         """Same as :func:`gstaichi.lang.snode.SNode.pointer`"""
+        from gstaichi.lang import impl
+        from gstaichi.lang.exception import GsTaichiRuntimeError
+
         if not _ti_core.is_extension_supported(impl.current_cfg().arch, _ti_core.Extension.sparse):
             raise GsTaichiRuntimeError("Pointer SNode is not supported on this backend.")
         self._check_not_finalized()
@@ -101,6 +104,9 @@ class FieldsBuilder:
         chunk_size: Optional[int] = None,
     ):
         """Same as :func:`gstaichi.lang.snode.SNode.dynamic`"""
+        from gstaichi.lang import impl
+        from gstaichi.lang.exception import GsTaichiRuntimeError
+
         if not _ti_core.is_extension_supported(impl.current_cfg().arch, _ti_core.Extension.sparse):
             raise GsTaichiRuntimeError("Dynamic SNode is not supported on this backend.")
 
@@ -123,6 +129,9 @@ class FieldsBuilder:
         dimensions: Union[Sequence[int], int],
     ):
         """Same as :func:`gstaichi.lang.snode.SNode.bitmasked`"""
+        from gstaichi.lang import impl
+        from gstaichi.lang.exception import GsTaichiRuntimeError
+
         if not _ti_core.is_extension_supported(impl.current_cfg().arch, _ti_core.Extension.sparse):
             raise GsTaichiRuntimeError("Bitmasked SNode is not supported on this backend.")
         self._check_not_finalized()
@@ -188,5 +197,7 @@ class FieldsBuilder:
         )
 
     def _check_not_finalized(self):
+        from gstaichi.lang.exception import GsTaichiRuntimeError
+
         if self.finalized:
             raise GsTaichiRuntimeError("FieldsBuilder finalized")

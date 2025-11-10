@@ -178,7 +178,6 @@ class RHI_DLL_EXPORT ShaderResourceSet {
    */
   virtual ShaderResourceSet &buffer(uint32_t binding,
                                     DeviceAllocation alloc) = 0;
-
 };
 
 // A set of states / resources for rasterization
