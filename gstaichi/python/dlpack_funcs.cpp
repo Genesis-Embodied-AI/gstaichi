@@ -4,7 +4,9 @@
 
 #include "gstaichi/program/ndarray.h"
 #include "gstaichi/program/program.h"
-// #include "gstaichi/rhi/cuda/cuda_device.h"
+#if TI_WITH_CUDA
+#include "gstaichi/rhi/cuda/cuda_device.h"
+#endif  // TI_WITH_CUDA
 #include "gstaichi/rhi/cpu/cpu_device.h"
 
 namespace gstaichi {
@@ -17,11 +19,15 @@ pybind11::capsule dlpack_dump_ndarray_info(Program *program, Ndarray *ndarray) {
   DeviceAllocation devalloc = ndarray->get_device_allocation();
 
   cpu::CpuDevice *cpu_device = dynamic_cast<cpu::CpuDevice *>(devalloc.device);
-  std::cout << " not nullptr " << (cpu_device != nullptr) << std::endl;
-
-  // using cuda = gstaichi::lang::cuda;
-  // cuda::CudaDevice *cuda_device = dynamic_cast<cuda::CudaDevice *>(devalloc.device);
-  // std::cout << " not nullptr " << (cuda_device != nullptr) << std::endl;
+  if(cpu_device != nullptr) {
+    std::cout << "cpu_device not nullptr " << (cpu_device != nullptr) << std::endl;
+  }
+  #if TI_WITH_CUDA
+  cuda::CudaDevice *cuda_device = dynamic_cast<cuda::CudaDevice *>(devalloc.device);
+  if(cuda_device != nullptr) {
+    std::cout << "cuda_device not nullptr " << (cuda_device != nullptr) << std::endl;
+  }
+  #endif // TI_WITH_CUDA
 
     MyData *my_data = new MyData;
     my_data->value = 31;
