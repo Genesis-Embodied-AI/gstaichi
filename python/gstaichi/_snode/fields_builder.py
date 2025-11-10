@@ -53,6 +53,7 @@ class FieldsBuilder:
         """
         from gstaichi.lang import impl
         from gstaichi.lang import snode
+
         roots_ptr = []
         size = impl.get_runtime().prog.get_snode_tree_size()
         for i in range(size):
