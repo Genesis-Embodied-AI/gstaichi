@@ -75,58 +75,6 @@ def ndarray_matrix_to_ext_arr(
                         arr[p, q, I] = ndarray[I][p, q]
 
 
-@kernel
-def vector_to_fast_image(img: template(), out: ndarray_type.ndarray()):
-    static_assert(len(img.shape) == 2)
-    offset = static(img.snode.ptr.offset if len(img.snode.ptr.offset) != 0 else [0, 0])
-    i_offset = static(offset[0])
-    j_offset = static(offset[1])
-    # FIXME: Why is ``for i, j in img:`` slower than:
-    for i, j in ndrange(*img.shape):
-        r, g, b = 0, 0, 0
-        color = img[i + i_offset, (img.shape[1] + j_offset) - 1 - j]
-        if static(img.dtype in [f16, f32, f64]):
-            r, g, b = ops.min(255, ops.max(0, int(color * 255)))[:3]  # type: ignore
-        else:
-            static_assert(img.dtype == u8)
-            r, g, b = color[:3]
-
-        idx = j * img.shape[0] + i
-        # We use i32 for |out| since Metal doesn't support u8 types
-        if static(get_os_name() != "osx"):
-            out[idx] = (r << 16) + (g << 8) + b
-        else:
-            # What's -16777216?
-            #
-            # On Mac, we need to set the alpha channel to 0xff. Since Mac's GUI
-            # is big-endian, the color is stored in ABGR order, and we need to
-            # add 0xff000000, which is -16777216 in I32's legit range. (Albeit
-            # the clarity, adding 0xff000000 doesn't work.)
-            alpha = -16777216
-            out[idx] = (b << 16) + (g << 8) + r + alpha
-
-
-@kernel
-def tensor_to_image(tensor: template(), arr: ndarray_type.ndarray()):
-    # default value of offset is [], replace it with [0] * len
-    offset = static(tensor.snode.ptr.offset if len(tensor.snode.ptr.offset) != 0 else [0] * len(tensor.shape))
-    for I in grouped(tensor):
-        t = ops.cast(tensor[I], f32)
-        arr[I - offset, 0] = t
-        arr[I - offset, 1] = t
-        arr[I - offset, 2] = t
-
-
-@kernel
-def vector_to_image(mat: template(), arr: ndarray_type.ndarray()):
-    # default value of offset is [], replace it with [0] * len
-    offset = static(mat.snode.ptr.offset if len(mat.snode.ptr.offset) != 0 else [0] * len(mat.shape))
-    for I in grouped(mat):
-        for p in static(range(mat.n)):
-            arr[I - offset, p] = ops.cast(mat[I][p], f32)
-            if static(mat.n <= 2):
-                arr[I - offset, 2] = 0
-
 
 @kernel
 def tensor_to_tensor(tensor: template(), other: template()):

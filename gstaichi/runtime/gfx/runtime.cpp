@@ -556,40 +556,6 @@ void GfxRuntime::buffer_copy(DevicePtr dst, DevicePtr src, size_t size) {
   current_cmdlist_->buffer_barrier(dst);
 }
 
-void GfxRuntime::copy_image(DeviceAllocation dst,
-                            DeviceAllocation src,
-                            const ImageCopyParams &params) {
-  ensure_current_cmdlist();
-  transition_image(dst, ImageLayout::transfer_dst);
-  transition_image(src, ImageLayout::transfer_src);
-  current_cmdlist_->copy_image(dst, src, ImageLayout::transfer_dst,
-                               ImageLayout::transfer_src, params);
-  transition_image(dst, ImageLayout::transfer_src);
-}
-
-DeviceAllocation GfxRuntime::create_image(const ImageParams &params) {
-  GraphicsDevice *gfx_device = dynamic_cast<GraphicsDevice *>(device_);
-  TI_ERROR_IF(gfx_device == nullptr,
-              "Image can only be created on a graphics device");
-  DeviceAllocation image = gfx_device->create_image(params);
-  track_image(image, ImageLayout::undefined);
-  last_image_layouts_.at(image.alloc_id) = params.initial_layout;
-  return image;
-}
-
-void GfxRuntime::track_image(DeviceAllocation image, ImageLayout layout) {
-  last_image_layouts_[image.alloc_id] = layout;
-}
-void GfxRuntime::untrack_image(DeviceAllocation image) {
-  last_image_layouts_.erase(image.alloc_id);
-}
-void GfxRuntime::transition_image(DeviceAllocation image, ImageLayout layout) {
-  ImageLayout &last_layout = last_image_layouts_.at(image.alloc_id);
-  ensure_current_cmdlist();
-  current_cmdlist_->image_transition(image, last_layout, layout);
-  last_layout = layout;
-}
-
 void GfxRuntime::synchronize() {
   flush();
   device_->wait_idle();
@@ -726,7 +692,6 @@ void GfxRuntime::enqueue_compute_op_lambda(
   for (const auto &ref : image_refs) {
     TI_ASSERT(last_image_layouts_.find(ref.image.alloc_id) !=
               last_image_layouts_.end());
-    transition_image(ref.image, ref.initial_layout);
   }
 
   ensure_current_cmdlist();

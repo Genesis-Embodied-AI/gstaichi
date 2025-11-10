@@ -258,6 +258,7 @@ class LowerAST : public IRVisitor {
           shape.push_back(
               fctx.push_back<ExternalTensorShapeAlongAxisStmt>(i, arg_id));
         }
+      }
 
       Stmt *begin = fctx.push_back<ConstStmt>(TypedConstant(0));
       Stmt *end = fctx.push_back<ConstStmt>(TypedConstant(1));

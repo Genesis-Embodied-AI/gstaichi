@@ -160,7 +160,6 @@ class KernelContextAttributes {
               is_array,
               element_shape,
               field_dim,
-              format,
               ptype);
   };
 
@@ -180,7 +179,6 @@ class KernelContextAttributes {
               is_array,
               element_shape,
               field_dim,
-              format,
               ptype);
   };
 
@@ -199,7 +197,6 @@ class KernelContextAttributes {
               is_array,
               element_shape,
               field_dim,
-              format,
               ptype);
   };
 
