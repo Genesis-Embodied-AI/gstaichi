@@ -23,7 +23,6 @@
 
 DEFINE_METAL_ID_TYPE(MTLDevice);
 DEFINE_METAL_ID_TYPE(MTLBuffer);
-DEFINE_METAL_ID_TYPE(MTLTexture);
 DEFINE_METAL_ID_TYPE(MTLSamplerState);
 DEFINE_METAL_ID_TYPE(MTLLibrary);
 DEFINE_METAL_ID_TYPE(MTLFunction);
@@ -89,36 +88,6 @@ struct MetalMemory : public rhi_impl::NonAssignable {
   MTLBuffer_id mtl_buffer_;
   bool can_map_{false};
   bool dont_destroy_{false};
-};
-
-struct MetalImage : public rhi_impl::NonAssignable {
- public:
-  // `mtl_texture` should be already retained.
-  explicit MetalImage(MTLTexture_id mtl_texture);
-  ~MetalImage();
-
-  void dont_destroy();
-
-  MTLTexture_id mtl_texture() const;
-
- private:
-  MTLTexture_id mtl_texture_;
-  bool dont_destroy_{false};
-};
-
-struct MetalSampler : public rhi_impl::NonAssignable {
- public:
-  // `mtl_texture` should be already retained.
-  explicit MetalSampler(MTLSamplerState_id mtl_sampler_state);
-  ~MetalSampler();
-
-  // No copy constructor
-  MetalSampler(MetalSampler &other) = delete;
-
-  MTLSamplerState_id mtl_sampler_state() const;
-
- private:
-  MTLSamplerState_id mtl_sampler_state_;
 };
 
 struct MetalRenderPassTargetDetails {
@@ -253,24 +222,18 @@ class MetalPipeline final : public Pipeline, public rhi_impl::NonAssignable {
 };
 
 enum class MetalShaderResourceType {
-  buffer,
-  texture,
+  buffer
 };
 struct MetalShaderBufferResource {
   MTLBuffer_id buffer;
   size_t offset;
   size_t size;
 };
-struct MetalShaderTextureResource {
-  MTLTexture_id texture;
-  bool is_sampled;
-};
 struct MetalShaderResource {
   MetalShaderResourceType ty;
   uint32_t binding;
   union {
     MetalShaderBufferResource buffer;
-    MetalShaderTextureResource texture;
   };
 };
 class MetalShaderResourceSet final : public ShaderResourceSet {
@@ -423,8 +386,6 @@ class MetalCommandList final : public CommandList {
   MetalRenderPassTargetDetails current_renderpass_details_;
   ViewportBounds current_viewport_;
   std::vector<std::array<float, 4>> clear_colors_;
-  std::vector<MTLTexture_id> render_targets_;
-  MTLTexture_id depth_target_;
 
   // For renderpass resuming, track whether a renderpass has been started
   // Used to override LoadAction, to prevent uninteded clearing when resuming
@@ -491,8 +452,6 @@ class MetalSurface final : public Surface {
   uint32_t width_{0};
   uint32_t height_{0};
 
-  MTLTexture_id current_swap_chain_texture_;
-  std::unordered_map<MTLTexture_id, DeviceAllocation> swapchain_images_;
   CAMetalDrawable_id current_drawable_;
 
   MetalDevice *device_{nullptr};
@@ -527,15 +486,8 @@ class MetalDevice final : public GraphicsDevice {
   DeviceAllocation import_mtl_buffer(MTLBuffer_id buffer);
   void dealloc_memory(DeviceAllocation handle) override;
 
-  DeviceAllocation create_image(const ImageParams &params) override;
-  DeviceAllocation import_mtl_texture(MTLTexture_id texture);
-  void destroy_image(DeviceAllocation handle) override;
-
   const MetalMemory &get_memory(DeviceAllocationId alloc_id) const;
   MetalMemory &get_memory(DeviceAllocationId alloc_id);
-
-  const MetalImage &get_image(DeviceAllocationId alloc_id) const;
-  MetalImage &get_image(DeviceAllocationId alloc_id);
 
   RhiResult map_range(DevicePtr ptr, uint64_t size, void **mapped_ptr) override;
   RhiResult map(DeviceAllocation alloc, void **mapped_ptr) override;

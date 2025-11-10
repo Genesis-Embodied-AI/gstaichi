@@ -90,34 +90,9 @@ class VulkanResourceSet : public ShaderResourceSet {
     }
   };
 
-  struct Image {
-    vkapi::IVkImageView view{nullptr};
-
-    bool operator==(const Image &rhs) const {
-      return view == rhs.view;
-    }
-
-    bool operator!=(const Image &rhs) const {
-      return view != rhs.view;
-    }
-  };
-
-  struct Texture {
-    vkapi::IVkImageView view{nullptr};
-    vkapi::IVkSampler sampler{nullptr};
-
-    bool operator==(const Texture &rhs) const {
-      return view == rhs.view && sampler == rhs.sampler;
-    }
-
-    bool operator!=(const Texture &rhs) const {
-      return !(*this == rhs);
-    }
-  };
-
   struct Binding {
     VkDescriptorType type{VK_DESCRIPTOR_TYPE_MAX_ENUM};
-    std::variant<Buffer, Image, Texture> res{Buffer()};
+    std::variant<Buffer> res{Buffer()};
 
     bool operator==(const Binding &other) const {
       return other.type == type && other.res == res;
@@ -134,12 +109,6 @@ class VulkanResourceSet : public ShaderResourceSet {
         rhi_impl::hash_combine(hash, (void *)buf->buffer.get());
         rhi_impl::hash_combine(hash, size_t(buf->offset));
         rhi_impl::hash_combine(hash, size_t(buf->size));
-      } else if (const Image *img = std::get_if<Image>(&res)) {
-        rhi_impl::hash_combine(hash, (void *)img->view.get());
-      } else if (const Texture *tex = std::get_if<Texture>(&res)) {
-        rhi_impl::hash_combine(hash, (void *)tex->view.get());
-        rhi_impl::hash_combine(hash, (void *)tex->sampler.get());
-      }
       return hash;
     }
   };

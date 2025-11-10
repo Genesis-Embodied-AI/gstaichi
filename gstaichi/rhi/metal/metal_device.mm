@@ -34,25 +34,6 @@ RhiResult MetalMemory::mapped_ptr(void **mapped_ptr) const {
   }
 }
 
-MetalImage::MetalImage(MTLTexture_id mtl_texture) : mtl_texture_(mtl_texture) {}
-MetalImage::~MetalImage() {
-  if (!dont_destroy_) {
-    [mtl_texture_ release];
-  }
-}
-
-void MetalImage::dont_destroy() { dont_destroy_ = true; }
-
-MTLTexture_id MetalImage::mtl_texture() const { return mtl_texture_; }
-
-MetalSampler::MetalSampler(MTLSamplerState_id mtl_sampler_state)
-    : mtl_sampler_state_(mtl_sampler_state) {}
-MetalSampler::~MetalSampler() { [mtl_sampler_state_ release]; }
-
-MTLSamplerState_id MetalSampler::mtl_sampler_state() const {
-  return mtl_sampler_state_;
-}
-
 MetalRasterLibraries::MetalRasterLibraries() : vertex(nil), fragment(nil) {}
 
 MetalRasterFunctions::MetalRasterFunctions() : vertex(nil), fragment(nil) {}
@@ -305,38 +286,6 @@ ShaderResourceSet &MetalShaderResourceSet::rw_buffer(uint32_t binding,
   return *this;
 }
 
-ShaderResourceSet &
-MetalShaderResourceSet::image(uint32_t binding, DeviceAllocation alloc,
-                              ImageSamplerConfig sampler_config) {
-  RHI_ASSERT(alloc.device == (Device *)device_);
-  const MetalImage &image = device_->get_image(alloc.alloc_id);
-
-  MetalShaderResource rsc{};
-  rsc.ty = MetalShaderResourceType::texture;
-  rsc.binding = binding;
-  rsc.texture.texture = image.mtl_texture();
-  rsc.texture.is_sampled = true;
-  resources_.push_back(std::move(rsc));
-
-  return *this;
-}
-
-ShaderResourceSet &MetalShaderResourceSet::rw_image(uint32_t binding,
-                                                    DeviceAllocation alloc,
-                                                    int lod) {
-  RHI_ASSERT(alloc.device == (Device *)device_);
-  const MetalImage &image = device_->get_image(alloc.alloc_id);
-
-  MetalShaderResource rsc{};
-  rsc.ty = MetalShaderResourceType::texture;
-  rsc.binding = binding;
-  rsc.texture.texture = image.mtl_texture();
-  rsc.texture.is_sampled = false;
-  resources_.push_back(std::move(rsc));
-
-  return *this;
-}
-
 RasterResources &MetalRasterResources::vertex_buffer(DevicePtr ptr,
                                                      uint32_t binding) {
   MTLBuffer_id buffer = (ptr != kDeviceNullPtr)
@@ -500,15 +449,6 @@ RhiResult MetalCommandList::dispatch(uint32_t x, uint32_t y,
                    atIndex:resource.binding];
         break;
       }
-      case MetalShaderResourceType::texture: {
-        [encoder setTexture:resource.texture.texture atIndex:resource.binding];
-        if (resource.texture.is_sampled) {
-          [encoder
-              setSamplerState:device_->get_default_sampler().mtl_sampler_state()
-                      atIndex:resource.binding];
-        }
-        break;
-      }
       default:
         RHI_ASSERT(false);
       }
@@ -607,31 +547,6 @@ void MetalCommandList::bind_mtl_shader_resources(
         [rce setFragmentBuffer:resource.buffer.buffer
                         offset:resource.buffer.offset
                        atIndex:msl_frag_index_pair.first];
-      }
-      break;
-    }
-    case MetalShaderResourceType::texture: {
-      if (is_used_in_vertex) {
-        [rce setVertexTexture:resource.texture.texture
-                      atIndex:msl_vert_index_pair.first];
-      }
-      if (is_used_in_fragment) {
-        [rce setFragmentTexture:resource.texture.texture
-                        atIndex:msl_frag_index_pair.first];
-      }
-      if (resource.texture.is_sampled) {
-        if (is_used_in_vertex) {
-          RHI_ASSERT(msl_vert_index_pair.second != -1);
-          [rce setVertexSamplerState:device_->get_default_sampler()
-                                         .mtl_sampler_state()
-                             atIndex:msl_vert_index_pair.second];
-        }
-        if (is_used_in_fragment) {
-          RHI_ASSERT(msl_frag_index_pair.second != -1);
-          [rce setFragmentSamplerState:device_->get_default_sampler()
-                                           .mtl_sampler_state()
-                               atIndex:msl_frag_index_pair.second];
-        }
       }
       break;
     }
@@ -851,120 +766,6 @@ struct MetalBufferImageCopyDesc {
   NSUInteger image_mip_level;
   MTLOrigin image_origin;
 };
-inline void
-buffer_image_copy_params_to_mtl(const BufferImageCopyParams &params,
-                                uint32_t buffer_offset, MTLTexture_id tex,
-                                MetalBufferImageCopyDesc *out_params) {
-  out_params->buffer_offset = buffer_offset;
-  uint32_t buff_width = params.buffer_row_length;
-  if (buff_width == 0)
-    buff_width = params.image_extent.x;
-  uint32_t buff_height = params.buffer_image_height;
-  if (buff_height == 0)
-    buff_height = params.image_extent.y;
-
-  // Only correct for ordinary and packed pixel formats, not for compressed
-  // formats.
-  out_params->bytes_per_row = buff_width * mtlformat2size(tex.pixelFormat);
-  out_params->bytes_per_image = buff_height * out_params->bytes_per_row;
-  if (tex.textureType == MTLTextureType3D)
-    out_params->bytes_per_image = 0;
-
-  out_params->image_slice = params.image_base_layer;
-  out_params->image_mip_level = params.image_mip_level;
-  out_params->image_origin = MTLOriginMake(
-      params.image_offset.x, params.image_offset.y, params.image_offset.z);
-  out_params->source_size = MTLSizeMake(
-      params.image_extent.x, params.image_extent.y, params.image_extent.z);
-}
-
-void MetalCommandList::buffer_to_image(DeviceAllocation dst_img,
-                                       DevicePtr src_buf,
-                                       ImageLayout img_layout,
-                                       const BufferImageCopyParams &params) {
-
-  const MetalMemory &src_buffer = device_->get_memory(src_buf.alloc_id);
-  const MetalImage &dst_image = device_->get_image(dst_img.alloc_id);
-
-  MetalBufferImageCopyDesc mtl_params;
-  buffer_image_copy_params_to_mtl(params, src_buf.offset,
-                                  dst_image.mtl_texture(), &mtl_params);
-
-  @autoreleasepool {
-    MTLBlitCommandEncoder_id encoder = [cmdbuf_ blitCommandEncoder];
-    [encoder copyFromBuffer:src_buffer.mtl_buffer()
-               sourceOffset:mtl_params.buffer_offset
-          sourceBytesPerRow:mtl_params.bytes_per_row
-        sourceBytesPerImage:mtl_params.bytes_per_image
-                 sourceSize:mtl_params.source_size
-                  toTexture:dst_image.mtl_texture()
-           destinationSlice:mtl_params.image_slice
-           destinationLevel:mtl_params.image_mip_level
-          destinationOrigin:mtl_params.image_origin];
-    [encoder endEncoding];
-  }
-}
-
-void MetalCommandList::image_to_buffer(DevicePtr dst_buf,
-                                       DeviceAllocation src_img,
-                                       ImageLayout img_layout,
-                                       const BufferImageCopyParams &params) {
-
-  const MetalImage &src_image = device_->get_image(src_img.alloc_id);
-  const MetalMemory &dst_buffer = device_->get_memory(dst_buf.alloc_id);
-
-  MetalBufferImageCopyDesc mtl_params;
-  buffer_image_copy_params_to_mtl(params, dst_buf.offset,
-                                  src_image.mtl_texture(), &mtl_params);
-
-  @autoreleasepool {
-    MTLBlitCommandEncoder_id encoder = [cmdbuf_ blitCommandEncoder];
-    [encoder copyFromTexture:src_image.mtl_texture()
-                     sourceSlice:mtl_params.image_slice
-                     sourceLevel:mtl_params.image_mip_level
-                    sourceOrigin:mtl_params.image_origin
-                      sourceSize:mtl_params.source_size
-                        toBuffer:dst_buffer.mtl_buffer()
-               destinationOffset:mtl_params.buffer_offset
-          destinationBytesPerRow:mtl_params.bytes_per_row
-        destinationBytesPerImage:mtl_params.bytes_per_image];
-    [encoder endEncoding];
-  }
-}
-
-void MetalCommandList::copy_image(DeviceAllocation dst_img,
-                                  DeviceAllocation src_img,
-                                  ImageLayout dst_img_layout,
-                                  ImageLayout src_img_layout,
-                                  const ImageCopyParams &params) {
-
-  const MetalImage &src_image = device_->get_image(src_img.alloc_id);
-  const MetalImage &dst_image = device_->get_image(dst_img.alloc_id);
-
-  @autoreleasepool {
-    MTLBlitCommandEncoder_id encoder = [cmdbuf_ blitCommandEncoder];
-    [encoder
-          copyFromTexture:src_image.mtl_texture()
-              sourceSlice:0
-              sourceLevel:0
-             sourceOrigin:MTLOriginMake(0, 0, 0)
-               sourceSize:MTLSizeMake(params.width, params.height, params.depth)
-                toTexture:dst_image.mtl_texture()
-         destinationSlice:0
-         destinationLevel:0
-        destinationOrigin:MTLOriginMake(0, 0, 0)];
-    [encoder endEncoding];
-  }
-}
-
-void MetalCommandList::blit_image(DeviceAllocation dst_img,
-                                  DeviceAllocation src_img,
-                                  ImageLayout dst_img_layout,
-                                  ImageLayout src_img_layout,
-                                  const ImageCopyParams &params) {
-  copy_image(dst_img, src_img, dst_img_layout, src_img_layout, params);
-}
-
 MTLCommandBuffer_id MetalCommandList::finalize() { return cmdbuf_; }
 
 MetalStream::MetalStream(const MetalDevice &device,
@@ -1118,32 +919,6 @@ void MetalSurface::destroy_swap_chain() {
   swapchain_images_.clear();
 }
 
-StreamSemaphore MetalSurface::acquire_next_image() {
-  current_drawable_ = [layer_ nextDrawable];
-  current_swap_chain_texture_ = current_drawable_.texture;
-
-  if (swapchain_images_.count(current_swap_chain_texture_) == 0) {
-    swapchain_images_[current_swap_chain_texture_] =
-        device_->import_mtl_texture(current_drawable_.texture);
-    RHI_ASSERT(swapchain_images_.size() <=
-               50); // In case something goes wrong on Metal side, prevent this
-                    // map of images from growing each frame unbounded.
-  }
-  return nullptr;
-}
-
-DeviceAllocation MetalSurface::get_target_image() {
-  return swapchain_images_.at(current_swap_chain_texture_);
-}
-
-void MetalSurface::present_image(
-    const std::vector<StreamSemaphore> &wait_semaphores) {
-
-  [current_drawable_ present];
-
-  device_->wait_idle();
-}
-
 std::pair<uint32_t, uint32_t> MetalSurface::get_size() {
   return std::make_pair(width_, height_);
 }
@@ -1231,45 +1006,6 @@ DeviceAllocation MetalDevice::import_mtl_buffer(MTLBuffer_id buffer) {
 void MetalDevice::dealloc_memory(DeviceAllocation handle) {
   RHI_ASSERT(handle.device == this);
   memory_allocs_.release(&get_memory(handle.alloc_id));
-}
-
-DeviceAllocation MetalDevice::create_image(const ImageParams &params) {
-  if (params.export_sharing) {
-    RHI_LOG_ERROR("export sharing is not available in metal");
-  }
-
-  MTLTextureDescriptor *desc = [MTLTextureDescriptor new];
-  desc.width = params.x;
-  desc.height = params.y;
-  desc.depth = params.z;
-  desc.arrayLength = 1;
-  desc.pixelFormat = format2mtl(params.format);
-  desc.textureType = dimension2mtl(params.dimension);
-  desc.usage = usage2mtl(params.usage);
-
-  MTLTexture_id mtl_texture = [mtl_device_ newTextureWithDescriptor:desc];
-
-  [desc release];
-
-  MetalImage &alloc = image_allocs_.acquire(mtl_texture);
-
-  DeviceAllocation out{};
-  out.device = this;
-  out.alloc_id = reinterpret_cast<uint64_t>(&alloc);
-  return out;
-}
-DeviceAllocation MetalDevice::import_mtl_texture(MTLTexture_id texture) {
-  MetalImage &alloc = image_allocs_.acquire(texture);
-  alloc.dont_destroy();
-
-  DeviceAllocation out{};
-  out.device = this;
-  out.alloc_id = reinterpret_cast<uint64_t>(&alloc);
-  return out;
-}
-void MetalDevice::destroy_image(DeviceAllocation handle) {
-  RHI_ASSERT(handle.device == this);
-  image_allocs_.release(&get_image(handle.alloc_id));
 }
 
 const MetalMemory &MetalDevice::get_memory(DeviceAllocationId alloc_id) const {

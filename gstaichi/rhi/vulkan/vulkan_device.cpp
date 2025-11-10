@@ -80,65 +80,6 @@ RhiReturn<BufferFormat> buffer_format_vk_to_ti(VkFormat f) {
   return {RhiResult::success, buffer_format_map.backend2rhi.at(f)};
 }
 
-const BidirMap<ImageLayout, VkImageLayout> image_layout_map = {
-    {ImageLayout::undefined, VK_IMAGE_LAYOUT_UNDEFINED},
-    {ImageLayout::shader_read, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL},
-    {ImageLayout::shader_write, VK_IMAGE_LAYOUT_GENERAL},
-    {ImageLayout::shader_read_write, VK_IMAGE_LAYOUT_GENERAL},
-    {ImageLayout::color_attachment, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
-    {ImageLayout::color_attachment_read,
-     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
-    {ImageLayout::depth_attachment, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL},
-    {ImageLayout::depth_attachment_read,
-     VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL},
-    {ImageLayout::transfer_dst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL},
-    {ImageLayout::transfer_src, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL},
-    {ImageLayout::present_src, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR}};
-
-VkImageLayout image_layout_ti_to_vk(ImageLayout layout) {
-  if (!image_layout_map.exists(layout)) {
-    RHI_LOG_ERROR("ImageLayout cannot be mapped to vk");
-    return VK_IMAGE_LAYOUT_UNDEFINED;
-  }
-  return image_layout_map.at(layout);
-}
-
-const BidirMap<BlendOp, VkBlendOp> blend_op_map = {
-    {BlendOp::add, VK_BLEND_OP_ADD},
-    {BlendOp::subtract, VK_BLEND_OP_SUBTRACT},
-    {BlendOp::reverse_subtract, VK_BLEND_OP_REVERSE_SUBTRACT},
-    {BlendOp::min, VK_BLEND_OP_MIN},
-    {BlendOp::max, VK_BLEND_OP_MAX}};
-
-RhiReturn<VkBlendOp> blend_op_ti_to_vk(BlendOp op) {
-  if (!blend_op_map.exists(op)) {
-    RHI_LOG_ERROR("BlendOp cannot be mapped to vk");
-    return {RhiResult::not_supported, VK_BLEND_OP_ADD};
-  }
-  return {RhiResult::success, blend_op_map.at(op)};
-}
-
-const BidirMap<BlendFactor, VkBlendFactor> blend_factor_map = {
-    {BlendFactor::zero, VK_BLEND_FACTOR_ZERO},
-    {BlendFactor::one, VK_BLEND_FACTOR_ONE},
-    {BlendFactor::src_color, VK_BLEND_FACTOR_SRC_COLOR},
-    {BlendFactor::one_minus_src_color, VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR},
-    {BlendFactor::dst_color, VK_BLEND_FACTOR_DST_COLOR},
-    {BlendFactor::one_minus_dst_color, VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR},
-    {BlendFactor::src_alpha, VK_BLEND_FACTOR_SRC_ALPHA},
-    {BlendFactor::one_minus_src_alpha, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA},
-    {BlendFactor::dst_alpha, VK_BLEND_FACTOR_DST_ALPHA},
-    {BlendFactor::one_minus_dst_alpha, VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA},
-};
-
-RhiReturn<VkBlendFactor> blend_factor_ti_to_vk(BlendFactor factor) {
-  if (!blend_factor_map.exists(factor)) {
-    RHI_LOG_ERROR("BlendFactor cannot be mapped to vk");
-    return {RhiResult::not_supported, VK_BLEND_FACTOR_ONE};
-  }
-  return {RhiResult::success, blend_factor_map.at(factor)};
-}
-
 VulkanPipelineCache::VulkanPipelineCache(VulkanDevice *device,
                                          size_t initial_size,
                                          const void *initial_data)
@@ -671,53 +612,6 @@ ShaderResourceSet &VulkanResourceSet::buffer(uint32_t binding,
 ShaderResourceSet &VulkanResourceSet::buffer(uint32_t binding,
                                              DeviceAllocation alloc) {
   return buffer(binding, alloc.get_ptr(0), VK_WHOLE_SIZE);
-}
-
-ShaderResourceSet &VulkanResourceSet::image(uint32_t binding,
-                                            DeviceAllocation alloc,
-                                            ImageSamplerConfig sampler_config) {
-  dirty_ = true;
-
-  vkapi::IVkSampler sampler = nullptr;
-  vkapi::IVkImageView view = nullptr;
-
-  if (alloc != kDeviceNullAllocation) {
-    VkSamplerCreateInfo sampler_info{};
-    sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    sampler_info.magFilter = VK_FILTER_LINEAR;
-    sampler_info.minFilter = VK_FILTER_LINEAR;
-    sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_info.anisotropyEnable = VK_FALSE;
-    sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-    sampler_info.unnormalizedCoordinates = VK_FALSE;
-    sampler_info.compareEnable = VK_FALSE;
-    sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
-    sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-
-    sampler = vkapi::create_sampler(device_->vk_device(), sampler_info);
-    view = device_->get_vk_imageview(alloc);
-  }
-
-  bindings_[binding] = {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                        Texture{view, sampler}};
-
-  return *this;
-}
-
-ShaderResourceSet &VulkanResourceSet::rw_image(uint32_t binding,
-                                               DeviceAllocation alloc,
-                                               int lod) {
-  dirty_ = true;
-
-  vkapi::IVkImageView view = (alloc != kDeviceNullAllocation)
-                                 ? device_->get_vk_lod_imageview(alloc, lod)
-                                 : nullptr;
-
-  bindings_[binding] = {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, Image{view}};
-
-  return *this;
 }
 
 RhiReturn<vkapi::IVkDescriptorSet> VulkanResourceSet::finalize() {
