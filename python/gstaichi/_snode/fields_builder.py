@@ -34,8 +34,7 @@ class FieldsBuilder:
     """
 
     def __init__(self):
-        from gstaichi.lang import snode
-        from gstaichi.lang import impl
+        from gstaichi.lang import impl, snode  # pylint: disable=import-outside-toplevel
 
         self.ptr: SNodeCxx = _snode_registry.create_root(impl.get_runtime().prog)
         self.root = snode.SNode(self.ptr)
@@ -51,8 +50,7 @@ class FieldsBuilder:
         Returns:
             A list of the roots of the finalized SNodeTree.
         """
-        from gstaichi.lang import impl
-        from gstaichi.lang import snode
+        from gstaichi.lang import impl, snode  # pylint: disable=import-outside-toplevel
 
         roots_ptr = []
         size = impl.get_runtime().prog.get_snode_tree_size()
@@ -85,8 +83,8 @@ class FieldsBuilder:
         dimensions: Union[Sequence[int], int],
     ):
         """Same as :func:`gstaichi.lang.snode.SNode.pointer`"""
-        from gstaichi.lang import impl
-        from gstaichi.lang.exception import GsTaichiRuntimeError
+        from gstaichi.lang import impl  # noqa pylint: disable=import-outside-toplevel
+        from gstaichi.lang.exception import GsTaichiRuntimeError  # pylint: disable=import-outside-toplevel
 
         if not _ti_core.is_extension_supported(impl.current_cfg().arch, _ti_core.Extension.sparse):
             raise GsTaichiRuntimeError("Pointer SNode is not supported on this backend.")
@@ -105,8 +103,8 @@ class FieldsBuilder:
         chunk_size: Optional[int] = None,
     ):
         """Same as :func:`gstaichi.lang.snode.SNode.dynamic`"""
-        from gstaichi.lang import impl
-        from gstaichi.lang.exception import GsTaichiRuntimeError
+        from gstaichi.lang import impl  # noqa pylint: disable=import-outside-toplevel
+        from gstaichi.lang.exception import GsTaichiRuntimeError  # pylint: disable=import-outside-toplevel
 
         if not _ti_core.is_extension_supported(impl.current_cfg().arch, _ti_core.Extension.sparse):
             raise GsTaichiRuntimeError("Dynamic SNode is not supported on this backend.")
@@ -130,8 +128,8 @@ class FieldsBuilder:
         dimensions: Union[Sequence[int], int],
     ):
         """Same as :func:`gstaichi.lang.snode.SNode.bitmasked`"""
-        from gstaichi.lang import impl
-        from gstaichi.lang.exception import GsTaichiRuntimeError
+        from gstaichi.lang import impl  # noqa pylint: disable=import-outside-toplevel
+        from gstaichi.lang.exception import GsTaichiRuntimeError  # pylint: disable=import-outside-toplevel
 
         if not _ti_core.is_extension_supported(impl.current_cfg().arch, _ti_core.Extension.sparse):
             raise GsTaichiRuntimeError("Bitmasked SNode is not supported on this backend.")
@@ -184,8 +182,8 @@ class FieldsBuilder:
         return self._finalize(raise_warning, compile_only=False)
 
     def _finalize(self, raise_warning, compile_only) -> "SNodeTree":
-        from gstaichi._snode.snode_tree import SNodeTree
-        from gstaichi.lang import impl
+        from gstaichi._snode.snode_tree import SNodeTree  # noqa pylint: disable=import-outside-toplevel
+        from gstaichi.lang import impl  # pylint: disable=import-outside-toplevel
 
         self._check_not_finalized()
         if self.empty and raise_warning:
@@ -198,7 +196,7 @@ class FieldsBuilder:
         )
 
     def _check_not_finalized(self):
-        from gstaichi.lang.exception import GsTaichiRuntimeError
+        from gstaichi.lang.exception import GsTaichiRuntimeError  # noqa pylint: disable=import-outside-toplevel
 
         if self.finalized:
             raise GsTaichiRuntimeError("FieldsBuilder finalized")

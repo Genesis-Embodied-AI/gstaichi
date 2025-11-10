@@ -1,6 +1,6 @@
 # type: ignore
 
-from gstaichi._funcs import field_fill_gstaichi_scope
+from gstaichi._funcs import field_fill_gstaichi_scope  # noqa
 from gstaichi.lang import ops
 from gstaichi.lang._ndrange import ndrange
 from gstaichi.lang.expr import Expr
@@ -12,7 +12,7 @@ from gstaichi.lang.simt import block, warp
 from gstaichi.lang.snode import deactivate
 from gstaichi.types import ndarray_type
 from gstaichi.types.annotations import template
-from gstaichi.types.primitive_types import f16, f32, f64, i32, u8
+from gstaichi.types.primitive_types import f16, f32, f64, i32, u8  # noqa pylint: disable=unused-import
 
 
 # A set of helper (meta)functions
