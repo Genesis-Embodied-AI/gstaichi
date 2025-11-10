@@ -13,7 +13,7 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
   ctx.get_context().runtime = executor->get_llvm_runtime();
   // For gstaichi ndarrays, context.array_ptrs saves pointer to its
   // |DeviceAllocation|, CPU backend actually want to use the raw ptr here.
-  const auto &parameters = launcher_ctx.parameters;
+  const auto &parameters = *launcher_ctx.parameters;
   for (int i = 0; i < (int)parameters.size(); i++) {
     const auto &kv = parameters[i];
     const auto &arg_id = kv.first;
@@ -59,7 +59,6 @@ KernelLauncher::Handle KernelLauncher::register_llvm_kernel(
     auto *executor = get_runtime_executor();
 
     auto data = compiled.get_internal_data().compiled_data.clone();
-    auto parameters = compiled.get_internal_data().args;
     auto *jit_module = executor->create_jit_module(std::move(data.module));
 
     // Construct task_funcs
@@ -74,7 +73,7 @@ KernelLauncher::Handle KernelLauncher::register_llvm_kernel(
     }
 
     // Populate ctx
-    ctx.parameters = std::move(parameters);
+    ctx.parameters = &compiled.get_internal_data().args;
     ctx.task_funcs = std::move(task_funcs);
 
     compiled.set_handle(handle);
