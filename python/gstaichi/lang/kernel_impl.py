@@ -367,11 +367,14 @@ def _process_args(
     self: "Func | Kernel", is_pyfunc: bool, is_func: bool, args: tuple[Any, ...], kwargs
 ) -> tuple[Any, ...]:
     if is_func and not is_pyfunc:
-        assert isinstance(self, Func)
+        if typing.TYPE_CHECKING:
+            assert isinstance(self, Func)
         current_kernel = self.current_kernel
-        assert current_kernel is not None
+        if typing.TYPE_CHECKING:
+            assert current_kernel is not None
         currently_compiling_materialize_key = current_kernel.currently_compiling_materialize_key
-        assert currently_compiling_materialize_key is not None
+        if typing.TYPE_CHECKING:
+            assert currently_compiling_materialize_key is not None
         self.arg_metas_expanded = _kernel_impl_dataclass.expand_func_arguments(
             current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(currently_compiling_materialize_key),
             self.arg_metas,
