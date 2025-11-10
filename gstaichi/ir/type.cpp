@@ -193,16 +193,19 @@ std::string StructType::to_string() const {
 
 template <std::size_t N>
 size_t StructType::get_element_offset(const std::array<int, N> &indices) const {
-  const Type *type_now = this;
-  size_t offset = 0;
-  for (auto ind : indices) {
-    if (auto tensor_type = type_now->cast<TensorType>()) {
-      TI_ASSERT(ind < tensor_type->get_num_elements())
+  int ind = indices[0];
+  size_t offset = elements_[ind].offset;
+  const Type *type_now = elements_[ind].type;
+  for (int i = 1; i < indices.size(); i++) {
+    ind = indices[i];
+    if (auto struct_type = type_now->cast<StructType>()) {
+      offset += struct_type->elements_[ind].offset;
+      type_now = struct_type->elements_[ind].type;
+    } else {
+      auto tensor_type = type_now->as<TensorType>();
+      TI_ASSERT(ind < tensor_type->get_num_elements());
       offset += tensor_type->get_element_offset(ind);
       type_now = tensor_type->get_element_type();
-    } else {
-      offset += type_now->as<StructType>()->elements_[ind].offset;
-      type_now = type_now->as<StructType>()->elements_[ind].type;
     }
   }
   return offset;

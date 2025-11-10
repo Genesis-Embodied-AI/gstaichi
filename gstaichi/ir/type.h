@@ -20,6 +20,10 @@ enum class TypeKind : int {
 #undef PER_TYPE_KIND
 };
 
+#define PER_TYPE_KIND(x) class x##Type;
+#include "gstaichi/inc/type_kind.inc.h"
+#undef PER_TYPE_KIND
+
 class TI_DLL_EXPORT Type {
  public:
   explicit Type(TypeKind type_kind) : type_kind(type_kind) {
@@ -34,17 +38,47 @@ class TI_DLL_EXPORT Type {
 
   template <typename T>
   const T *cast() const {
-    return dynamic_cast<const T *>(this);
+    if constexpr (std::is_same_v<typename std::remove_cv<T>::type, Type>) {
+      return this;
+    }
+    switch (static_cast<int>(type_kind)) {
+#define PER_TYPE_KIND(x)                                                       \
+  case static_cast<int>(TypeKind::x):                                          \
+    if constexpr (std::is_same_v<typename std::remove_cv<T>::type, x##Type>) { \
+      return static_cast<const T *>(this);                                     \
+    } else {                                                                   \
+      return nullptr;                                                          \
+    }
+#include "gstaichi/inc/type_kind.inc.h"
+#undef PER_TYPE_KIND
+      default:
+        return nullptr;
+    }
   }
 
   template <typename T>
   T *cast() {
-    return dynamic_cast<T *>(this);
+    if constexpr (std::is_same_v<typename std::remove_cv<T>::type, Type>) {
+      return this;
+    }
+    switch (static_cast<int>(type_kind)) {
+#define PER_TYPE_KIND(x)                                                       \
+  case static_cast<int>(TypeKind::x):                                          \
+    if constexpr (std::is_same_v<typename std::remove_cv<T>::type, x##Type>) { \
+      return static_cast<T *>(this);                                           \
+    } else {                                                                   \
+      return nullptr;                                                          \
+    }
+#include "gstaichi/inc/type_kind.inc.h"
+#undef PER_TYPE_KIND
+      default:
+        return nullptr;
+    }
   }
 
   template <typename T>
   T *as() {
-    auto p = dynamic_cast<T *>(this);
+    auto p = cast<T>();
     TI_ASSERT_INFO(p != nullptr, "Cannot treat {} as {}", this->to_string(),
                    typeid(T).name());
     return p;
@@ -52,7 +86,7 @@ class TI_DLL_EXPORT Type {
 
   template <typename T>
   const T *as() const {
-    auto p = dynamic_cast<const T *>(this);
+    auto p = cast<T>();
     TI_ASSERT_INFO(p != nullptr, "Cannot treat {} as {}", this->to_string(),
                    typeid(T).name());
     return p;
