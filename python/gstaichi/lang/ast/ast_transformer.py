@@ -90,7 +90,7 @@ class ASTTransformer(Builder):
                 else:
                     raise exception.GsTaichiCompilationError(message)
         if isinstance(node.ptr, Generator):
-            raise ValueError("Cannot use generator inside kernels or functions")
+            raise ValueError("Cannot store generators in variables, inside kernels or functions")
         return node.ptr
 
     @staticmethod
