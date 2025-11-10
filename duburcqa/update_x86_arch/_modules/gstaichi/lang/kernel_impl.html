@@ -393,13 +393,12 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.._test_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">warnings_helper</span>
 
-<span class="n">CompiledKernelKeyType</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">AutodiffMode</span><span class="p">]</span>
-
-
 <span class="n">MAX_ARG_NUM</span> <span class="o">=</span> <span class="mi">512</span>
 
 
 <span class="n">_arch_cuda</span> <span class="o">=</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">Arch</span><span class="o">.</span><span class="n">cuda</span>
+
+<span class="n">CompiledKernelKeyType</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">AutodiffMode</span><span class="p">]</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">GsTaichiCallable</span><span class="p">:</span>
@@ -618,6 +617,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_get_tree_and_ctx</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">:</span> <span class="s2">&quot;Func | Kernel&quot;</span><span class="p">,</span>
     <span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="n">used_py_dataclass_parameters_enforcing</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">excluded_parameters</span><span class="o">=</span><span class="p">(),</span>
     <span class="n">is_kernel</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">arg_features</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -657,7 +657,9 @@
 
     <span class="n">raise_on_templated_floats</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span><span class="o">.</span><span class="n">raise_on_templated_floats</span>
 
-    <span class="k">return</span> <span class="n">tree</span><span class="p">,</span> <span class="n">ASTTransformerContext</span><span class="p">(</span>
+    <span class="n">args_instance_key</span> <span class="o">=</span> <span class="n">current_kernel</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span>
+    <span class="k">assert</span> <span class="n">args_instance_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="n">ctx</span> <span class="o">=</span> <span class="n">ASTTransformerContext</span><span class="p">(</span>
         <span class="n">excluded_parameters</span><span class="o">=</span><span class="n">excluded_parameters</span><span class="p">,</span>
         <span class="n">is_kernel</span><span class="o">=</span><span class="n">is_kernel</span><span class="p">,</span>
         <span class="n">is_pure</span><span class="o">=</span><span class="n">is_pure</span><span class="p">,</span>
@@ -674,24 +676,44 @@
         <span class="n">is_real_function</span><span class="o">=</span><span class="n">is_real_function</span><span class="p">,</span>
         <span class="n">autodiff_mode</span><span class="o">=</span><span class="n">autodiff_mode</span><span class="p">,</span>
         <span class="n">raise_on_templated_floats</span><span class="o">=</span><span class="n">raise_on_templated_floats</span><span class="p">,</span>
+        <span class="n">used_py_dataclass_parameters_collecting</span><span class="o">=</span><span class="n">current_kernel</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_collecting</span><span class="p">[</span>
+            <span class="n">args_instance_key</span>
+        <span class="p">],</span>
+        <span class="n">used_py_dataclass_parameters_enforcing</span><span class="o">=</span><span class="n">used_py_dataclass_parameters_enforcing</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="k">return</span> <span class="n">tree</span><span class="p">,</span> <span class="n">ctx</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_process_args</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="s2">&quot;Func | Kernel&quot;</span><span class="p">,</span> <span class="n">is_func</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-    <span class="k">if</span> <span class="n">is_func</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span> <span class="o">=</span> <span class="n">_kernel_impl_dataclass</span><span class="o">.</span><span class="n">expand_func_arguments</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_process_args</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">:</span> <span class="s2">&quot;Func | Kernel&quot;</span><span class="p">,</span> <span class="n">is_pyfunc</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">is_func</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">kwargs</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">is_func</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_pyfunc</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">typing</span><span class="o">.</span><span class="n">TYPE_CHECKING</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Func</span><span class="p">)</span>
+        <span class="n">current_kernel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span>
+        <span class="k">if</span> <span class="n">typing</span><span class="o">.</span><span class="n">TYPE_CHECKING</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">current_kernel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">currently_compiling_materialize_key</span> <span class="o">=</span> <span class="n">current_kernel</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span>
+        <span class="k">if</span> <span class="n">typing</span><span class="o">.</span><span class="n">TYPE_CHECKING</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">currently_compiling_materialize_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas_expanded</span> <span class="o">=</span> <span class="n">_kernel_impl_dataclass</span><span class="o">.</span><span class="n">expand_func_arguments</span><span class="p">(</span>
+            <span class="n">current_kernel</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">currently_compiling_materialize_key</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas_expanded</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">)</span>
 
-    <span class="n">fused_args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">arg_meta</span><span class="o">.</span><span class="n">default</span> <span class="k">for</span> <span class="n">arg_meta</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">]</span>
+    <span class="n">fused_args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">arg_meta</span><span class="o">.</span><span class="n">default</span> <span class="k">for</span> <span class="n">arg_meta</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas_expanded</span><span class="p">]</span>
     <span class="n">len_args</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">len_args</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">fused_args</span><span class="p">):</span>
         <span class="n">arg_str</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">args</span><span class="p">))</span>
-        <span class="n">expected_str</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">arg</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> : </span><span class="si">{</span><span class="n">arg</span><span class="o">.</span><span class="n">annotation</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">)</span>
+        <span class="n">expected_str</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">arg</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> : </span><span class="si">{</span><span class="n">arg</span><span class="o">.</span><span class="n">annotation</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas_expanded</span><span class="p">)</span>
         <span class="n">msg_l</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">msg_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Too many arguments. Expected (</span><span class="si">{</span><span class="n">expected_str</span><span class="si">}</span><span class="s2">), got (</span><span class="si">{</span><span class="n">arg_str</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">len_args</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">):</span>
-                <span class="n">msg_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> arg meta: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> arg type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas_expanded</span><span class="p">):</span>
+                <span class="n">msg_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> arg meta: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas_expanded</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> arg type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">msg_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> arg meta: &lt;out of arg metas&gt; arg type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">msg_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;In function: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -701,7 +723,7 @@
         <span class="n">fused_args</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg</span>
 
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas_expanded</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="n">arg</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">len_args</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Multiple values for argument &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
@@ -713,11 +735,11 @@
     <span class="n">missing_parameters</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fused_args</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">arg</span> <span class="ow">is</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">annotation</span> <span class="ow">is</span> <span class="n">inspect</span><span class="o">.</span><span class="n">_empty</span><span class="p">:</span>
-                <span class="n">missing_parameters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">` missing.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas_expanded</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">annotation</span> <span class="ow">is</span> <span class="n">inspect</span><span class="o">.</span><span class="n">_empty</span><span class="p">:</span>
+                <span class="n">missing_parameters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas_expanded</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">` missing.&quot;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">missing_parameters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Parameter `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">annotation</span><span class="si">}</span><span class="s2">` missing.&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Parameter `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas_expanded</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas_expanded</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">annotation</span><span class="si">}</span><span class="s2">` missing.&quot;</span>
                 <span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing_parameters</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">msg_l</span> <span class="o">=</span> <span class="p">[]</span>
@@ -729,7 +751,7 @@
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fused_args</span><span class="p">):</span>
             <span class="n">msg_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">arg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">msg_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;arg metas:&quot;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas_expanded</span><span class="p">):</span>
             <span class="n">msg_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">arg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">msg_l</span><span class="p">))</span>
 
@@ -748,6 +770,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">pyfunc</span> <span class="o">=</span> <span class="n">_pyfunc</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">is_real_function</span> <span class="o">=</span> <span class="n">is_real_function</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArgMetadata</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas_expanded</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArgMetadata</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">orig_arguments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArgMetadata</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">extract_arguments</span><span class="p">()</span>
@@ -758,36 +781,48 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">mapper</span> <span class="o">=</span> <span class="n">TemplateMapper</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">template_slot_locations</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gstaichi_functions</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># The |Function| class in C++</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">has_print</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span><span class="p">:</span> <span class="n">Kernel</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="s2">&quot;Func&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="n">args</span> <span class="o">=</span> <span class="n">_process_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_func</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">current_kernel</span> <span class="k">if</span> <span class="n">impl</span><span class="o">.</span><span class="n">inside_kernel</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">_process_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_func</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_pyfunc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pyfunc</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">impl</span><span class="o">.</span><span class="n">inside_kernel</span><span class="p">():</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyfunc</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="s2">&quot;GsTaichi functions cannot be called from Python-scope.&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
 
-        <span class="n">current_kernel</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">current_kernel</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_real_function</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">current_kernel</span><span class="o">.</span><span class="n">autodiff_mode</span> <span class="o">!=</span> <span class="n">AutodiffMode</span><span class="o">.</span><span class="n">NONE</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span><span class="o">.</span><span class="n">autodiff_mode</span> <span class="o">!=</span> <span class="n">AutodiffMode</span><span class="o">.</span><span class="n">NONE</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span> <span class="o">=</span> <span class="kc">None</span>
                 <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="s2">&quot;Real function in gradient kernels unsupported.&quot;</span><span class="p">)</span>
             <span class="n">instance_id</span><span class="p">,</span> <span class="n">arg_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapper</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span><span class="o">.</span><span class="n">raise_on_templated_floats</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
             <span class="n">key</span> <span class="o">=</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">FunctionKey</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">func_id</span><span class="p">,</span> <span class="n">instance_id</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">instance_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">compiled</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">do_compile</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">arg_features</span><span class="o">=</span><span class="n">arg_features</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">func_call_rvalue</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">current_args_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span>
+        <span class="k">assert</span> <span class="n">current_args_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">used_by_dataclass_parameters_enforcing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="n">current_args_key</span>
+        <span class="p">)</span>
         <span class="n">tree</span><span class="p">,</span> <span class="n">ctx</span> <span class="o">=</span> <span class="n">_get_tree_and_ctx</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
             <span class="n">is_kernel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
-            <span class="n">ast_builder</span><span class="o">=</span><span class="n">current_kernel</span><span class="o">.</span><span class="n">ast_builder</span><span class="p">(),</span>
+            <span class="n">ast_builder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span><span class="o">.</span><span class="n">ast_builder</span><span class="p">(),</span>
             <span class="n">is_real_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">is_real_function</span><span class="p">,</span>
+            <span class="n">used_py_dataclass_parameters_enforcing</span><span class="o">=</span><span class="n">used_by_dataclass_parameters_enforcing</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="n">struct_locals</span> <span class="o">=</span> <span class="n">_kernel_impl_dataclass</span><span class="o">.</span><span class="n">extract_struct_locals_from_context</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
 
         <span class="n">tree</span> <span class="o">=</span> <span class="n">_kernel_impl_dataclass</span><span class="o">.</span><span class="n">unpack_ast_struct_expressions</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">struct_locals</span><span class="o">=</span><span class="n">struct_locals</span><span class="p">)</span>
         <span class="n">ret</span> <span class="o">=</span> <span class="n">transform_tree</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_real_function</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span> <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">returned</span> <span class="o">!=</span> <span class="n">ReturnStatus</span><span class="o">.</span><span class="n">ReturnedValue</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="s2">&quot;Function has a return type but does not have a return statement&quot;</span><span class="p">)</span>
@@ -843,7 +878,12 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">do_compile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">FunctionKey</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">arg_features</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">tree</span><span class="p">,</span> <span class="n">ctx</span> <span class="o">=</span> <span class="n">_get_tree_and_ctx</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="n">is_kernel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">arg_features</span><span class="o">=</span><span class="n">arg_features</span><span class="p">,</span> <span class="n">is_real_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">is_real_function</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">is_kernel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+            <span class="n">arg_features</span><span class="o">=</span><span class="n">arg_features</span><span class="p">,</span>
+            <span class="n">is_real_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">is_real_function</span><span class="p">,</span>
+            <span class="n">used_py_dataclass_parameters_enforcing</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">fn</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">prog</span><span class="o">.</span><span class="n">create_function</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
 
@@ -962,7 +1002,7 @@
     <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">KernelBatchedArgType</span><span class="p">(</span><span class="n">IntEnum</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_KernelBatchedArgType</span><span class="p">(</span><span class="n">IntEnum</span><span class="p">):</span>
     <span class="n">FLOAT</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">INT</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">UINT</span> <span class="o">=</span> <span class="mi">2</span>
@@ -971,10 +1011,15 @@
 
 
 <span class="c1"># Define proxies for fast lookup</span>
-<span class="n">_FLOAT</span><span class="p">,</span> <span class="n">_INT</span><span class="p">,</span> <span class="n">_UINT</span><span class="p">,</span> <span class="n">_TI_ARRAY</span><span class="p">,</span> <span class="n">_TI_ARRAY_WITH_GRAD</span> <span class="o">=</span> <span class="n">KernelBatchedArgType</span>
+<span class="n">_FLOAT</span><span class="p">,</span> <span class="n">_INT</span><span class="p">,</span> <span class="n">_UINT</span><span class="p">,</span> <span class="n">_TI_ARRAY</span><span class="p">,</span> <span class="n">_TI_ARRAY_WITH_GRAD</span> <span class="o">=</span> <span class="n">_KernelBatchedArgType</span>
 
 
 <span class="n">ArgsHash</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="nb">int</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LaunchStats</span><span class="p">:</span>
+    <span class="n">kernel_args_count_by_type</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">_KernelBatchedArgType</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_destroy_callback</span><span class="p">(</span><span class="n">kernel_ref</span><span class="p">:</span> <span class="n">ReferenceType</span><span class="p">[</span><span class="s2">&quot;Kernel&quot;</span><span class="p">],</span> <span class="n">ref</span><span class="p">:</span> <span class="n">ReferenceType</span><span class="p">):</span>
@@ -986,8 +1031,10 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_recursive_set_args</span><span class="p">(</span>
+    <span class="n">used_py_dataclass_parameters</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]],</span>
+    <span class="n">py_dataclass_basename</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
     <span class="n">launch_ctx</span><span class="p">:</span> <span class="n">KernelLaunchContext</span><span class="p">,</span>
-    <span class="n">launch_ctx_buffer</span><span class="p">:</span> <span class="n">DefaultDict</span><span class="p">[</span><span class="n">KernelBatchedArgType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]],</span>
+    <span class="n">launch_ctx_buffer</span><span class="p">:</span> <span class="n">DefaultDict</span><span class="p">[</span><span class="n">_KernelBatchedArgType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]],</span>
     <span class="n">needed_arg_type</span><span class="p">:</span> <span class="n">Type</span><span class="p">,</span>
     <span class="n">provided_arg_type</span><span class="p">:</span> <span class="n">Type</span><span class="p">,</span>
     <span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
@@ -1042,11 +1089,17 @@
         <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">needed_arg_fields</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">_field_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_FIELD</span><span class="p">:</span>
                 <span class="k">continue</span>
+            <span class="n">field_name</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span>
+            <span class="n">field_full_name</span> <span class="o">=</span> <span class="n">py_dataclass_basename</span> <span class="o">+</span> <span class="p">(</span><span class="n">field_name</span><span class="p">,)</span>
+            <span class="k">if</span> <span class="n">field_full_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">used_py_dataclass_parameters</span><span class="p">:</span>
+                <span class="k">continue</span>
             <span class="c1"># Storing attribute in a temporary to avoid repeated attribute lookup (~20ns penalty)</span>
             <span class="n">field_type</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">type</span>
             <span class="k">assert</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">field_type</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-            <span class="n">field_value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">field_value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)</span>
             <span class="n">num_args_</span><span class="p">,</span> <span class="n">is_launch_ctx_cacheable_</span> <span class="o">=</span> <span class="n">_recursive_set_args</span><span class="p">(</span>
+                <span class="n">used_py_dataclass_parameters</span><span class="p">,</span>
+                <span class="n">field_full_name</span><span class="p">,</span>
                 <span class="n">launch_ctx</span><span class="p">,</span>
                 <span class="n">launch_ctx_buffer</span><span class="p">,</span>
                 <span class="n">field_type</span><span class="p">,</span>
@@ -1217,6 +1270,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">autodiff_mode</span> <span class="o">=</span> <span class="n">autodiff_mode</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">grad</span><span class="p">:</span> <span class="s2">&quot;Kernel | None&quot;</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArgMetadata</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas_expanded</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArgMetadata</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">classkernel</span> <span class="o">=</span> <span class="n">_classkernel</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">extract_arguments</span><span class="p">()</span>
@@ -1238,6 +1292,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">kernel_function_info</span><span class="p">:</span> <span class="n">FunctionSourceInfo</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">compiled_kernel_data_by_key</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CompiledKernelKeyType</span><span class="p">,</span> <span class="n">CompiledKernelData</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_last_compiled_kernel_data</span><span class="p">:</span> <span class="n">CompiledKernelData</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># for dev/debug</span>
+        <span class="c1"># for collecting, we&#39;ll grab an empty set if it doesnt exist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_collecting</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CompiledKernelKeyType</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+        <span class="c1"># however, for enforcing, we want None if it doesn&#39;t exist (we&#39;ll use .get() instead of [] )</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CompiledKernelKeyType</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing_dotted</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CompiledKernelKeyType</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span><span class="p">:</span> <span class="n">CompiledKernelKeyType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">src_ll_cache_observations</span><span class="p">:</span> <span class="n">SrcLlCacheObservations</span> <span class="o">=</span> <span class="n">SrcLlCacheObservations</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fe_ll_cache_observations</span><span class="p">:</span> <span class="n">FeLlCacheObservations</span> <span class="o">=</span> <span class="n">FeLlCacheObservations</span><span class="p">()</span>
@@ -1264,6 +1324,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_last_compiled_kernel_data</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">src_ll_cache_observations</span> <span class="o">=</span> <span class="n">SrcLlCacheObservations</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fe_ll_cache_observations</span> <span class="o">=</span> <span class="n">FeLlCacheObservations</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_collecting</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing_dotted</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">extract_arguments</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
@@ -1334,20 +1398,25 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">materialize</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span> <span class="o">=</span> <span class="kc">None</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span> <span class="o">=</span> <span class="n">key</span>
+
         <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">materialized_kernels</span><span class="p">:</span>
             <span class="k">return</span>
 
+        <span class="n">used_py_dataclass_parameters</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">src_ll_cache</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">gstaichi_callable</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">gstaichi_callable</span><span class="o">.</span><span class="n">is_pure</span><span class="p">:</span>
             <span class="n">kernel_source_info</span><span class="p">,</span> <span class="n">_src</span> <span class="o">=</span> <span class="n">get_source_info_and_src</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
-            <span class="n">raise_on_templated_floats</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span><span class="o">.</span><span class="n">raise_on_templated_floats</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span> <span class="o">=</span> <span class="n">src_hasher</span><span class="o">.</span><span class="n">create_cache_key</span><span class="p">(</span>
-                <span class="n">raise_on_templated_floats</span><span class="p">,</span> <span class="n">kernel_source_info</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">raise_on_templated_floats</span><span class="p">,</span> <span class="n">kernel_source_info</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">src_ll_cache_observations</span><span class="o">.</span><span class="n">cache_key_generated</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span> <span class="ow">and</span> <span class="n">src_hasher</span><span class="o">.</span><span class="n">validate_cache_key</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">):</span>
+                <span class="n">used_py_dataclass_parameters</span> <span class="o">=</span> <span class="n">src_hasher</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">used_py_dataclass_parameters</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">src_ll_cache_observations</span><span class="o">.</span><span class="n">cache_validated</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="n">prog</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">prog</span>
+                <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">compiled_kernel_data_by_key</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">prog</span><span class="o">.</span><span class="n">load_fast_cache</span><span class="p">(</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
@@ -1356,6 +1425,10 @@
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">compiled_kernel_data_by_key</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">src_ll_cache_observations</span><span class="o">.</span><span class="n">cache_loaded</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">used_py_dataclass_parameters</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing_dotted</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+                        <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;__ti_&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:])</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">used_py_dataclass_parameters</span><span class="p">]</span>
+                    <span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">gstaichi_callable</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">gstaichi_callable</span><span class="o">.</span><span class="n">is_pure</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">print_non_pure</span><span class="p">:</span>
             <span class="c1"># The bit in caps should not be modified without updating corresponding test</span>
             <span class="c1"># freetext can be freely modified.</span>
@@ -1367,84 +1440,109 @@
         <span class="n">kernel_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_c</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_counter</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="n">_logging</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Materializing kernel </span><span class="si">{</span><span class="n">kernel_name</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">autodiff_mode</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
 
-        <span class="n">tree</span><span class="p">,</span> <span class="n">ctx</span> <span class="o">=</span> <span class="n">_get_tree_and_ctx</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span>
-            <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
-            <span class="n">excluded_parameters</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">template_slot_locations</span><span class="p">,</span>
-            <span class="n">arg_features</span><span class="o">=</span><span class="n">arg_features</span><span class="p">,</span>
-            <span class="n">current_kernel</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">autodiff_mode</span> <span class="o">!=</span> <span class="n">AutodiffMode</span><span class="o">.</span><span class="n">NONE</span><span class="p">:</span>
-            <span class="n">KernelSimplicityASTChecker</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">visit</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
-
-        <span class="c1"># Do not change the name of &#39;gstaichi_ast_generator&#39;</span>
-        <span class="c1"># The warning system needs this identifier to remove unnecessary messages</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">gstaichi_ast_generator</span><span class="p">(</span><span class="n">kernel_cxx</span><span class="p">:</span> <span class="n">KernelCxx</span><span class="p">):</span>
-            <span class="k">nonlocal</span> <span class="n">tree</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">inside_kernel</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span>
-                    <span class="s2">&quot;Kernels cannot call other kernels. I.e., nested kernels are not allowed. &quot;</span>
-                    <span class="s2">&quot;Please check if you have direct/indirect invocation of kernels within kernels. &quot;</span>
-                    <span class="s2">&quot;Note that some methods provided by the GsTaichi standard library may invoke kernels, &quot;</span>
-                    <span class="s2">&quot;and please move their invocations to Python-scope.&quot;</span>
+        <span class="n">range_begin</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">used_py_dataclass_parameters</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">_pass</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">range_begin</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="n">used_py_dataclass_leaves_by_key_enforcing</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">_pass</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="n">used_py_dataclass_parameters</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="n">used_py_dataclass_leaves_by_key_enforcing</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">used_py_dataclass_parameters</span><span class="p">:</span>
+                    <span class="n">split_param</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;__ti_&quot;</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">split_param</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                        <span class="n">joined</span> <span class="o">=</span> <span class="s2">&quot;__ti_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">split_param</span><span class="p">[:</span><span class="n">i</span><span class="p">])</span>
+                        <span class="k">if</span> <span class="n">joined</span> <span class="ow">in</span> <span class="n">used_py_dataclass_leaves_by_key_enforcing</span><span class="p">:</span>
+                            <span class="k">break</span>
+                        <span class="n">used_py_dataclass_leaves_by_key_enforcing</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">joined</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">used_py_dataclass_leaves_by_key_enforcing</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing_dotted</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+                    <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;__ti_&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:])</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">used_py_dataclass_leaves_by_key_enforcing</span><span class="p">]</span>
                 <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">kernel_cpp</span> <span class="o">=</span> <span class="n">kernel_cxx</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">inside_kernel</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">_current_kernel</span> <span class="o">=</span> <span class="bp">self</span>
-            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">_compiling_callable</span> <span class="ow">is</span> <span class="kc">None</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">_compiling_callable</span> <span class="o">=</span> <span class="n">kernel_cxx</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span> <span class="o">=</span> <span class="n">kernel_cxx</span><span class="o">.</span><span class="n">ast_builder</span><span class="p">()</span>
+            <span class="n">tree</span><span class="p">,</span> <span class="n">ctx</span> <span class="o">=</span> <span class="n">_get_tree_and_ctx</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+                <span class="n">excluded_parameters</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">template_slot_locations</span><span class="p">,</span>
+                <span class="n">arg_features</span><span class="o">=</span><span class="n">arg_features</span><span class="p">,</span>
+                <span class="n">current_kernel</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">used_py_dataclass_parameters_enforcing</span><span class="o">=</span><span class="n">used_py_dataclass_leaves_by_key_enforcing</span><span class="p">,</span>
+            <span class="p">)</span>
 
-                <span class="k">def</span><span class="w"> </span><span class="nf">ast_to_dict</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">AST</span> <span class="o">|</span> <span class="nb">list</span> <span class="o">|</span> <span class="n">primitive_types</span><span class="o">.</span><span class="n">_python_primitive_types</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">AST</span><span class="p">):</span>
-                        <span class="n">fields</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">ast_to_dict</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">iter_fields</span><span class="p">(</span><span class="n">node</span><span class="p">)}</span>
-                        <span class="k">return</span> <span class="p">{</span>
-                            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">node</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
-                            <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="n">fields</span><span class="p">,</span>
-                            <span class="s2">&quot;lineno&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;lineno&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-                            <span class="s2">&quot;col_offset&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;col_offset&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-                        <span class="p">}</span>
-                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-                        <span class="k">return</span> <span class="p">[</span><span class="n">ast_to_dict</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">node</span><span class="p">]</span>
-                    <span class="k">return</span> <span class="n">node</span>  <span class="c1"># Basic types (str, int, None, etc.)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">autodiff_mode</span> <span class="o">!=</span> <span class="n">AutodiffMode</span><span class="o">.</span><span class="n">NONE</span><span class="p">:</span>
+                <span class="n">KernelSimplicityASTChecker</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">visit</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
 
-                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;TI_DUMP_AST&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span><span class="p">:</span>
-                    <span class="n">target_dir</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/tmp/ast&quot;</span><span class="p">)</span>
-                    <span class="n">target_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-                    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-                    <span class="n">ast_str</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-                    <span class="n">output_file</span> <span class="o">=</span> <span class="n">target_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">kernel_name</span><span class="si">}</span><span class="s2">_ast.txt&quot;</span>
-                    <span class="n">output_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">ast_str</span><span class="p">)</span>
-                    <span class="n">elapsed_txt</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
-
-                    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-                    <span class="n">json_str</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">ast_to_dict</span><span class="p">(</span><span class="n">tree</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-                    <span class="n">output_file</span> <span class="o">=</span> <span class="n">target_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">kernel_name</span><span class="si">}</span><span class="s2">_ast.json&quot;</span>
-                    <span class="n">output_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json_str</span><span class="p">)</span>
-                    <span class="n">elapsed_json</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
-
-                    <span class="n">output_file</span> <span class="o">=</span> <span class="n">target_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">kernel_name</span><span class="si">}</span><span class="s2">_gen_time.json&quot;</span>
-                    <span class="n">output_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
-                        <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">&quot;elapsed_txt&quot;</span><span class="p">:</span> <span class="n">elapsed_txt</span><span class="p">,</span> <span class="s2">&quot;elapsed_json&quot;</span><span class="p">:</span> <span class="n">elapsed_json</span><span class="p">},</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+            <span class="c1"># Do not change the name of &#39;gstaichi_ast_generator&#39;</span>
+            <span class="c1"># The warning system needs this identifier to remove unnecessary messages</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">gstaichi_ast_generator</span><span class="p">(</span><span class="n">kernel_cxx</span><span class="p">:</span> <span class="n">KernelCxx</span><span class="p">):</span>
+                <span class="k">nonlocal</span> <span class="n">tree</span><span class="p">,</span> <span class="n">used_py_dataclass_parameters</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">inside_kernel</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span>
+                        <span class="s2">&quot;Kernels cannot call other kernels. I.e., nested kernels are not allowed. &quot;</span>
+                        <span class="s2">&quot;Please check if you have direct/indirect invocation of kernels within kernels. &quot;</span>
+                        <span class="s2">&quot;Note that some methods provided by the GsTaichi standard library may invoke kernels, &quot;</span>
+                        <span class="s2">&quot;and please move their invocations to Python-scope.&quot;</span>
                     <span class="p">)</span>
-                <span class="n">struct_locals</span> <span class="o">=</span> <span class="n">_kernel_impl_dataclass</span><span class="o">.</span><span class="n">extract_struct_locals_from_context</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
-                <span class="n">tree</span> <span class="o">=</span> <span class="n">_kernel_impl_dataclass</span><span class="o">.</span><span class="n">unpack_ast_struct_expressions</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">struct_locals</span><span class="o">=</span><span class="n">struct_locals</span><span class="p">)</span>
-                <span class="n">ctx</span><span class="o">.</span><span class="n">only_parse_function_def</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compiled_kernel_data_by_key</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                <span class="n">transform_tree</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">ctx</span><span class="o">.</span><span class="n">is_real_function</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ctx</span><span class="o">.</span><span class="n">only_parse_function_def</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span> <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">returned</span> <span class="o">!=</span> <span class="n">ReturnStatus</span><span class="o">.</span><span class="n">ReturnedValue</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="s2">&quot;Kernel has a return type but does not have a return statement&quot;</span><span class="p">)</span>
-            <span class="k">finally</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">inside_kernel</span> <span class="o">=</span> <span class="kc">False</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">_current_kernel</span> <span class="o">=</span> <span class="kc">None</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">_compiling_callable</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">kernel_cpp</span> <span class="o">=</span> <span class="n">kernel_cxx</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">inside_kernel</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">_current_kernel</span> <span class="o">=</span> <span class="bp">self</span>
+                <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">_compiling_callable</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">_compiling_callable</span> <span class="o">=</span> <span class="n">kernel_cxx</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span> <span class="o">=</span> <span class="n">kernel_cxx</span><span class="o">.</span><span class="n">ast_builder</span><span class="p">()</span>
 
-        <span class="n">gstaichi_kernel</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">prog</span><span class="o">.</span><span class="n">create_kernel</span><span class="p">(</span><span class="n">gstaichi_ast_generator</span><span class="p">,</span> <span class="n">kernel_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">autodiff_mode</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">materialized_kernels</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">materialized_kernels</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">gstaichi_kernel</span>
+                    <span class="k">def</span><span class="w"> </span><span class="nf">ast_to_dict</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">AST</span> <span class="o">|</span> <span class="nb">list</span> <span class="o">|</span> <span class="n">primitive_types</span><span class="o">.</span><span class="n">_python_primitive_types</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">AST</span><span class="p">):</span>
+                            <span class="n">fields</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">ast_to_dict</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">iter_fields</span><span class="p">(</span><span class="n">node</span><span class="p">)}</span>
+                            <span class="k">return</span> <span class="p">{</span>
+                                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">node</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                                <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="n">fields</span><span class="p">,</span>
+                                <span class="s2">&quot;lineno&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;lineno&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                                <span class="s2">&quot;col_offset&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;col_offset&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                            <span class="p">}</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                            <span class="k">return</span> <span class="p">[</span><span class="n">ast_to_dict</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">node</span><span class="p">]</span>
+                        <span class="k">return</span> <span class="n">node</span>  <span class="c1"># Basic types (str, int, None, etc.)</span>
+
+                    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;TI_DUMP_AST&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span> <span class="ow">and</span> <span class="n">_pass</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">target_dir</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/tmp/ast&quot;</span><span class="p">)</span>
+                        <span class="n">target_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+                        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                        <span class="n">ast_str</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+                        <span class="n">output_file</span> <span class="o">=</span> <span class="n">target_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">kernel_name</span><span class="si">}</span><span class="s2">_ast_.txt&quot;</span>
+                        <span class="n">output_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">ast_str</span><span class="p">)</span>
+                        <span class="n">elapsed_txt</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+
+                        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                        <span class="n">json_str</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">ast_to_dict</span><span class="p">(</span><span class="n">tree</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+                        <span class="n">output_file</span> <span class="o">=</span> <span class="n">target_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">kernel_name</span><span class="si">}</span><span class="s2">_ast.json&quot;</span>
+                        <span class="n">output_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json_str</span><span class="p">)</span>
+                        <span class="n">elapsed_json</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+
+                        <span class="n">output_file</span> <span class="o">=</span> <span class="n">target_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">kernel_name</span><span class="si">}</span><span class="s2">_gen_time.json&quot;</span>
+                        <span class="n">output_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
+                            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">&quot;elapsed_txt&quot;</span><span class="p">:</span> <span class="n">elapsed_txt</span><span class="p">,</span> <span class="s2">&quot;elapsed_json&quot;</span><span class="p">:</span> <span class="n">elapsed_json</span><span class="p">},</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+                        <span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">used_py_dataclass_parameters</span><span class="p">:</span>
+                        <span class="n">struct_locals</span> <span class="o">=</span> <span class="n">_kernel_impl_dataclass</span><span class="o">.</span><span class="n">extract_struct_locals_from_context</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">struct_locals</span> <span class="o">=</span> <span class="n">used_py_dataclass_parameters</span>
+                    <span class="n">tree</span> <span class="o">=</span> <span class="n">_kernel_impl_dataclass</span><span class="o">.</span><span class="n">unpack_ast_struct_expressions</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">struct_locals</span><span class="o">=</span><span class="n">struct_locals</span><span class="p">)</span>
+                    <span class="n">ctx</span><span class="o">.</span><span class="n">only_parse_function_def</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compiled_kernel_data_by_key</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="n">transform_tree</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">ctx</span><span class="o">.</span><span class="n">is_real_function</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ctx</span><span class="o">.</span><span class="n">only_parse_function_def</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span> <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">returned</span> <span class="o">!=</span> <span class="n">ReturnStatus</span><span class="o">.</span><span class="n">ReturnedValue</span><span class="p">:</span>
+                            <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="s2">&quot;Kernel has a return type but does not have a return statement&quot;</span><span class="p">)</span>
+                    <span class="n">used_py_dataclass_parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_collecting</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                <span class="k">finally</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">inside_kernel</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">_current_kernel</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">_compiling_callable</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="n">gstaichi_kernel</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">prog</span><span class="o">.</span><span class="n">create_kernel</span><span class="p">(</span>
+                <span class="n">gstaichi_ast_generator</span><span class="p">,</span> <span class="n">kernel_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">autodiff_mode</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">_pass</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">materialized_kernels</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">materialized_kernels</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">gstaichi_kernel</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">launch_kernel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t_kernel</span><span class="p">:</span> <span class="n">KernelCxx</span><span class="p">,</span> <span class="n">compiled_kernel_data</span><span class="p">:</span> <span class="n">CompiledKernelData</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">)</span><span class="si">}</span><span class="s2"> arguments needed but </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="si">}</span><span class="s2"> provided&quot;</span>
@@ -1489,12 +1587,15 @@
         <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">):</span>
             <span class="k">pass</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">launch_ctx_cache_tracker</span><span class="p">:</span>  <span class="c1"># Empty or none</span>
-            <span class="n">launch_ctx_buffer</span><span class="p">:</span> <span class="n">DefaultDict</span><span class="p">[</span><span class="n">KernelBatchedArgType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-
+            <span class="n">launch_ctx_buffer</span><span class="p">:</span> <span class="n">DefaultDict</span><span class="p">[</span><span class="n">_KernelBatchedArgType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
             <span class="n">actual_argument_slot</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">is_launch_ctx_cacheable</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="n">template_num</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">i_out</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span>
+            <span class="n">used_py_dataclass_parameters_enforcing_dotted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing_dotted</span><span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span>
+            <span class="p">]</span>
             <span class="k">for</span> <span class="n">i_in</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
                 <span class="n">needed_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">[</span><span class="n">i_in</span><span class="p">]</span><span class="o">.</span><span class="n">annotation</span>
                 <span class="k">if</span> <span class="n">needed_</span> <span class="ow">is</span> <span class="n">template</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">needed_</span><span class="p">)</span> <span class="ow">is</span> <span class="n">template</span><span class="p">:</span>
@@ -1502,6 +1603,8 @@
                     <span class="n">i_out</span> <span class="o">+=</span> <span class="mi">1</span>
                     <span class="k">continue</span>
                 <span class="n">num_args_</span><span class="p">,</span> <span class="n">is_launch_ctx_cacheable_</span> <span class="o">=</span> <span class="n">_recursive_set_args</span><span class="p">(</span>
+                    <span class="n">used_py_dataclass_parameters_enforcing_dotted</span><span class="p">,</span>
+                    <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">[</span><span class="n">i_in</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">,),</span>
                     <span class="n">launch_ctx</span><span class="p">,</span>
                     <span class="n">launch_ctx_buffer</span><span class="p">,</span>
                     <span class="n">needed_</span><span class="p">,</span>
@@ -1513,6 +1616,12 @@
                 <span class="p">)</span>
                 <span class="n">i_out</span> <span class="o">+=</span> <span class="n">num_args_</span>
                 <span class="n">is_launch_ctx_cacheable</span> <span class="o">&amp;=</span> <span class="n">is_launch_ctx_cacheable_</span>
+
+            <span class="n">kernel_args_count_by_type</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+            <span class="n">kernel_args_count_by_type</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">launch_ctx_args</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">launch_ctx_args</span> <span class="ow">in</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">launch_stats</span> <span class="o">=</span> <span class="n">LaunchStats</span><span class="p">(</span><span class="n">kernel_args_count_by_type</span><span class="o">=</span><span class="n">kernel_args_count_by_type</span><span class="p">)</span>
 
             <span class="c1"># All arguments to context in batches to mitigate overhead of calling Python bindings repeatedly.</span>
             <span class="c1"># This is essential because calling any pybind11 function is adding ~180ns penalty no matter what.</span>
@@ -1594,7 +1703,12 @@
                 <span class="k">if</span> <span class="n">compile_result</span><span class="o">.</span><span class="n">cache_hit</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">fe_ll_cache_observations</span><span class="o">.</span><span class="n">cache_hit</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">:</span>
-                    <span class="n">src_hasher</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">visited_functions</span><span class="p">)</span>
+                    <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="n">src_hasher</span><span class="o">.</span><span class="n">store</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">visited_functions</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span><span class="p">],</span>
+                    <span class="p">)</span>
                     <span class="n">prog</span><span class="o">.</span><span class="n">store_fast_cache</span><span class="p">(</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">,</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">kernel_cpp</span><span class="p">,</span>
@@ -1613,6 +1727,8 @@
 
         <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">callbacks</span><span class="p">:</span>
             <span class="n">c</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span>
         <span class="k">if</span> <span class="n">return_type</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_print</span><span class="p">:</span>
@@ -1637,7 +1753,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">ensure_compiled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">AutodiffMode</span><span class="p">]:</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">instance_id</span><span class="p">,</span> <span class="n">arg_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapper</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span><span class="o">.</span><span class="n">raise_on_templated_floats</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+            <span class="n">instance_id</span><span class="p">,</span> <span class="n">arg_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapper</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raise_on_templated_floats</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">raise</span> <span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)(</span><span class="sa">f</span><span class="s2">&quot;exception while trying to ensure compiled </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="si">}</span><span class="s2">:</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">instance_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">autodiff_mode</span><span class="p">)</span>
@@ -1648,7 +1764,9 @@
     <span class="c1"># Thus this part needs to be fast. (i.e. &lt; 3us on a 4 GHz x64 CPU)</span>
     <span class="nd">@_shell_pop_print</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="n">args</span> <span class="o">=</span> <span class="n">_process_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_func</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raise_on_templated_floats</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span><span class="o">.</span><span class="n">raise_on_templated_floats</span>
+
+        <span class="n">args</span> <span class="o">=</span> <span class="n">_process_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_func</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_pyfunc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="c1"># Transform the primal kernel to forward mode grad kernel</span>
         <span class="c1"># then recover to primal when exiting the forward mode manager</span>
@@ -1934,7 +2052,7 @@
 
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;data_oriented&quot;</span><span class="p">,</span> <span class="s2">&quot;func&quot;</span><span class="p">,</span> <span class="s2">&quot;kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;pyfunc&quot;</span><span class="p">,</span> <span class="s2">&quot;real_func&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;data_oriented&quot;</span><span class="p">,</span> <span class="s2">&quot;func&quot;</span><span class="p">,</span> <span class="s2">&quot;kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;pyfunc&quot;</span><span class="p">,</span> <span class="s2">&quot;real_func&quot;</span><span class="p">,</span> <span class="s2">&quot;_KernelBatchedArgType&quot;</span><span class="p">]</span>
 </pre></div>
 
                 </article>
