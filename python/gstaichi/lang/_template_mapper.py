@@ -3,6 +3,7 @@ from typing import Any, TypeAlias
 from weakref import ReferenceType
 
 from gstaichi.lang import impl
+from gstaichi.lang.impl import Program
 from gstaichi.lang.kernel_arguments import ArgMetadata
 
 from ._template_mapper_hotpath import _extract_arg
