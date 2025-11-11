@@ -59,4 +59,4 @@ def test_refuses_ineligible_arch() -> None:
         return tt
     with pytest.raises(RuntimeError):
         t = create_tensor((3, 2), ti.i32)
-        assert t[0, 0]
+        t[0, 0]
