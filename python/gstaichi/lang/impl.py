@@ -472,17 +472,19 @@ class PyGsTaichi:
             )
 
     def _check_gradient_field_not_placed(self, gradient_type):
-        not_placed = set()
-        gradient_vars = []
         if gradient_type == "grad":
             gradient_vars = self.grad_vars
         elif gradient_type == "dual":
             gradient_vars = self.dual_vars
+        else:
+            return
+
+        not_placed = set()
         for _var in gradient_vars:
             if _var.ptr.snode() is None:
                 not_placed.add(self._get_tb(_var))
 
-        if len(not_placed):
+        if not_placed:
             bar = "=" * 44 + "\n"
             raise RuntimeError(
                 f"These field(s) requrie `needs_{gradient_type}=True`, however their {gradient_type} field(s) are not placed:\n{bar}"
