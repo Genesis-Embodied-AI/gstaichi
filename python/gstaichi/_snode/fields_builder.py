@@ -4,9 +4,9 @@ from typing import Any, Optional, Sequence, Union
 
 from gstaichi._lib import core as _ti_core
 from gstaichi._lib.core.gstaichi_python import SNodeCxx
+from gstaichi._snode.snode_tree import SNodeTree
 from gstaichi.lang import impl, snode
 from gstaichi.lang.exception import GsTaichiRuntimeError
-from gstaichi._snode.snode_tree import SNodeTree
 
 
 _snode_registry = _ti_core.SNodeRegistry()
