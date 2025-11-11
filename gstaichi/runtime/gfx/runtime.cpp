@@ -92,12 +92,12 @@ class HostDeviceContextBlitter {
                  LaunchContextBuilder::DevAllocType::kNdarray) &&
             device_->get_caps().get(
                 DeviceCapability::spirv_has_physical_storage_buffer)) {
+          ArgArrayPtrKey grad_ptr_idx{arg_id,
+                                      TypeFactory::GRAD_PTR_POS_IN_NDARRAY};
           uint64_t addr =
               device_->get_memory_physical_pointer(ext_arrays.at(indices));
           host_ctx_.set_ndarray_ptrs(
-              arg_id, addr,
-              (uint64)host_ctx_
-                  .array_ptrs[{arg_id, TypeFactory::GRAD_PTR_POS_IN_NDARRAY}]);
+              arg_id, addr, (uint64)host_ctx_.array_ptrs[grad_ptr_idx]);
         }
       }
     }

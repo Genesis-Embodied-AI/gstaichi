@@ -63,10 +63,10 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
       }
 
       ArgArrayPtrKey data_ptr_idx{arg_id, TypeFactory::DATA_PTR_POS_IN_NDARRAY};
-      ArgArrayPtrKey grad_ptr_idx{arg_id, TypeFactory::DATA_PTR_POS_IN_NDARRAY};
+      ArgArrayPtrKey grad_ptr_idx{arg_id, TypeFactory::GRAD_PTR_POS_IN_NDARRAY};
       auto data_ptr = ctx.array_ptrs[data_ptr_idx];
-
       auto grad_ptr = ctx.array_ptrs[grad_ptr_idx];
+
       if (ctx.device_allocation_type[arg_id] ==
           LaunchContextBuilder::DevAllocType::kNone) {
         // External array
