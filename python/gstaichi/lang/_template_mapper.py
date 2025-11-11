@@ -65,7 +65,7 @@ class TemplateMapper:
         assert prog is not None
 
         mapping_cache_tracker: list[ReferenceType] | None = None
-        args_hash: ArgsHash = tuple(map(id, args))
+        args_hash: ArgsHash = tuple([id(arg) for arg in args])
         try:
             mapping_cache_tracker = self._mapping_cache_tracker[args_hash]
         except KeyError:
