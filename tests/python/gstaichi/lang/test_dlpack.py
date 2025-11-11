@@ -108,3 +108,18 @@ def test_dlpack_ndarray_mat2x3():
     assert tt[0, 0, 1, 1] == 2
     assert tt[0, 0, 1, 2] == 20
     assert tt[0, 1, 1, 1] == 10
+
+
+@test_utils.test(arch=dlpack_arch)
+def test_dlpack_ndarray_2_arrays():
+    """
+    Just in case we need to handle offset
+    """
+    a = ti.ndarray(ti.i32, (100,))
+    b = ti.ndarray(ti.i32, (100,))
+    a[0] = 123
+    b[0] = 222
+    a_t = ti_to_torch(a)
+    b_t = ti_to_torch(b)
+    assert a_t[0] == 123
+    assert b_t[0] == 222
