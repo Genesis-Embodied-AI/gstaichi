@@ -42,11 +42,6 @@ pybind11::capsule dlpack_dump_ndarray_info(Program *program, Ndarray *ndarray) {
   }
 #endif // TI_WITH_CUDA
 
-    MyData *my_data = new MyData;
-    my_data->value = 31;
-
-    // return my_data;
-
     std::vector<int> ndarray_shape = ndarray->shape;
     int ndim = ndarray_shape.size();
     std::cout << "ndim " << ndim << std::endl;
@@ -65,7 +60,6 @@ pybind11::capsule dlpack_dump_ndarray_info(Program *program, Ndarray *ndarray) {
         strides[i] = strides[i + 1] * shape[i + 1];
     }
 
-    // DLManagedTensorVersioned *managed_tensor = new DLManagedTensorVersioned;
     DLManagedTensor *managed_tensor = new DLManagedTensor();
 
     DLTensor &dl_tensor = managed_tensor->dl_tensor;
@@ -80,23 +74,15 @@ pybind11::capsule dlpack_dump_ndarray_info(Program *program, Ndarray *ndarray) {
 
     std::cout << " device type " << device_type << " " << managed_tensor->dl_tensor.device.device_type <<std::endl;
 
-    // managed_tensor->dl_tensor = dl_tensor;
     managed_tensor->manager_ctx = ndarray;
     managed_tensor->deleter = [](DLManagedTensor *self) {
-        // MyData *my_data = static_cast<MyData *>(self->manager_ctx);
-        // delete my_data;
         delete[] self->dl_tensor.shape;
         delete[] self->dl_tensor.strides;
         delete self;
     };
     auto deleter = [](PyObject *capsule) {
-        // MyData *my_data = static_cast<MyData *>(PyCapsule_GetPointer(capsule, "my_data"));
-        // delete my_data;
     };
 
-    // ndarray->inc_ref();
-
-    // pybind11::capsule capsule = pybind11::capsule(static_cast<void *>(my_data), "my_data", deleter);
     pybind11::capsule capsule = pybind11::capsule(static_cast<void *>(managed_tensor), "dltensor", deleter);
     return capsule;
 }
