@@ -82,6 +82,13 @@ from .._test_tools import warnings_helper
 MAX_ARG_NUM = 512
 
 
+# Define proxies for fast lookup
+_NONE, _VALIDATION, _FORWARD, _REVERSE = (
+    AutodiffMode.NONE,
+    AutodiffMode.VALIDATION,
+    AutodiffMode.FORWARD,
+    AutodiffMode.REVERSE,
+)
 _arch_cuda = _ti_core.Arch.cuda
 
 CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
@@ -472,7 +479,7 @@ class Func:
         assert self.current_kernel is not None
 
         if self.is_real_function:
-            if self.current_kernel.autodiff_mode != AutodiffMode.NONE:
+            if self.current_kernel.autodiff_mode != _NONE:
                 self.current_kernel = None
                 raise GsTaichiSyntaxError("Real function in gradient kernels unsupported.")
             instance_id, arg_features = self.mapper.lookup(impl.current_cfg().raise_on_templated_floats, args)
@@ -1136,7 +1143,7 @@ class Kernel:
                 used_py_dataclass_parameters_enforcing=used_py_dataclass_leaves_by_key_enforcing,
             )
 
-            if self.autodiff_mode != AutodiffMode.NONE:
+            if self.autodiff_mode != _NONE:
                 KernelSimplicityASTChecker(self.func).visit(tree)
 
             # Do not change the name of 'gstaichi_ast_generator'
@@ -1435,9 +1442,9 @@ class Kernel:
         # Transform the primal kernel to forward mode grad kernel
         # then recover to primal when exiting the forward mode manager
         if self.runtime.fwd_mode_manager and not self.runtime.grad_replaced:
-            # TODO: if we would like to compute 2nd-order derivatives by forward-on-reverse in a nested context manager fashion,
-            # i.e., a `Tape` nested in the `FwdMode`, we can transform the kernels with `mode_original == AutodiffMode.REVERSE` only,
-            # to avoid duplicate computation for 1st-order derivatives
+            # TODO: if we would like to compute 2nd-order derivatives by forward-on-reverse in a nested context manager
+            # fashion, i.e., a `Tape` nested in the `FwdMode`, we can transform the kernels with
+            # `mode_original == AutodiffMode.REVERSE` only, to avoid duplicate computation for 1st-order derivatives.
             self.runtime.fwd_mode_manager.insert(self)
 
         # Both the class kernels and the plain-function kernels are unified now.
@@ -1445,14 +1452,10 @@ class Kernel:
         # gradient. For class kernels, args[0] is always the kernel owner.
 
         # No need to capture grad kernels because they are already bound with their primal kernels
-        if (
-            self.autodiff_mode in (AutodiffMode.NONE, AutodiffMode.VALIDATION)
-            and self.runtime.target_tape
-            and not self.runtime.grad_replaced
-        ):
+        if self.autodiff_mode in (_NONE, _VALIDATION) and self.runtime.target_tape and not self.runtime.grad_replaced:
             self.runtime.target_tape.insert(self, args)
 
-        if self.autodiff_mode != AutodiffMode.NONE and impl.current_cfg().opt_level == 0:
+        if self.autodiff_mode != _NONE and impl.current_cfg().opt_level == 0:
             _logging.warn("""opt_level = 1 is enforced to enable gradient computation.""")
             impl.current_cfg().opt_level = 1
         key = self.ensure_compiled(*args)
@@ -1502,8 +1505,8 @@ def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool 
 
     if verbose:
         print(f"kernel={_func.__name__} is_classkernel={is_classkernel}")
-    primal = Kernel(_func, autodiff_mode=AutodiffMode.NONE, _classkernel=is_classkernel)
-    adjoint = Kernel(_func, autodiff_mode=AutodiffMode.REVERSE, _classkernel=is_classkernel)
+    primal = Kernel(_func, autodiff_mode=_NONE, _classkernel=is_classkernel)
+    adjoint = Kernel(_func, autodiff_mode=_REVERSE, _classkernel=is_classkernel)
     # Having |primal| contains |grad| makes the tape work.
     primal.grad = adjoint
 
