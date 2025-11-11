@@ -22,7 +22,7 @@ std::string TaskAttributes::buffers_name(BufferInfo b) {
     return "GlobalTmps";
   }
   if (b.type == BufferType::Root) {
-    return std::string("Root: ") + fmt::format("{}", fmt::join(b.root_id, "_"));
+    return std::string("Root: ") + std::to_string(b.root_id);
   }
   TI_ERROR("unrecognized buffer type");
 }

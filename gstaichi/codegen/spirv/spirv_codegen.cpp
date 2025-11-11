@@ -40,8 +40,7 @@ std::string buffer_instance_name(BufferInfo b) {
   // https://www.khronos.org/opengl/wiki/Interface_Block_(GLSL)#Syntax
   switch (b.type) {
     case BufferType::Root:
-      return std::string(kRootBufferName) + "_" +
-             fmt::format("{}", fmt::join(b.root_id, "_"));
+      return std::string(kRootBufferName) + "_" + std::to_string(b.root_id);
     case BufferType::GlobalTmps:
       return kGlobalTmpsBufferName;
     case BufferType::Args:
@@ -51,8 +50,7 @@ std::string buffer_instance_name(BufferInfo b) {
     case BufferType::ListGen:
       return kListgenBufferName;
     case BufferType::ExtArr:
-      return std::string(kExtArrBufferName) + "_" +
-             fmt::format("{}", fmt::join(b.root_id, "_"));
+      return std::string(kExtArrBufferName) + "_" + std::to_string(b.root_id);
     default:
       TI_NOT_IMPLEMENTED;
       break;
@@ -754,7 +752,8 @@ void TaskCodegen::visit(ExternalPtrStmt *stmt) {
   }
 
   if (ctx_attribs_->arg_at(arg_id).is_array) {
-    ptr_to_buffers_[stmt] = {BufferType::ExtArr, arg_id};
+    TI_ASSERT(arg_id.size() == 1);
+    ptr_to_buffers_[stmt] = {BufferType::ExtArr, arg_id[0]};
   } else {
     ptr_to_buffers_[stmt] = BufferType::Args;
   }

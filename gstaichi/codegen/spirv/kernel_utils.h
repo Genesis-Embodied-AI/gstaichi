@@ -24,7 +24,7 @@ struct TaskAttributes {
 
   struct BufferInfo {
     BufferType type;
-    std::vector<int> root_id{-1};  // only used if type==Root or type==ExtArr
+    int root_id{-1};  // only used if type==Root or type==ExtArr
 
     BufferInfo() = default;
 
@@ -33,10 +33,6 @@ struct TaskAttributes {
     }
 
     BufferInfo(BufferType buffer_type, int root_buffer_id)
-        : type(buffer_type), root_id({root_buffer_id}) {
-    }
-
-    BufferInfo(BufferType buffer_type, const std::vector<int> &root_buffer_id)
         : type(buffer_type), root_id(root_buffer_id) {
     }
 
@@ -60,8 +56,7 @@ struct TaskAttributes {
       using std::string;
 
       size_t hash_result = hash<BufferType>()(buf.type);
-      for (const int &element : buf.root_id)
-        hash_result ^= element;
+      hash_result ^= buf.root_id;
       return hash_result;
     }
   };
