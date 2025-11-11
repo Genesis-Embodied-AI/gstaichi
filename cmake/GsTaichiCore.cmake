@@ -109,7 +109,6 @@ target_include_directories(${CORE_LIBRARY_NAME} PRIVATE external/include)
 target_include_directories(${CORE_LIBRARY_NAME} PRIVATE external/SPIRV-Tools/include)
 target_include_directories(${CORE_LIBRARY_NAME} PRIVATE external/PicoSHA2)
 target_include_directories(${CORE_LIBRARY_NAME} PRIVATE external/eigen)
-# target_include_directories(${CORE_LIBRARY_NAME} PRIVATE external/dlpack/include)
 target_include_directories(${CORE_LIBRARY_NAME} PRIVATE external/FP16/include)
 
 target_link_libraries(${CORE_LIBRARY_NAME} PUBLIC ti_device_api)
