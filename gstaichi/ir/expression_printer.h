@@ -40,16 +40,6 @@ class ExpressionHumanFriendlyPrinter : public ExpressionPrinter {
                      fmt::join(expr->arg_id, ", "), data_type_name(expr->dt)));
   }
 
-  void visit(TexturePtrExpression *expr) override {
-    emit(fmt::format("(Texture *)(arg[{}])", fmt::join(expr->arg_id, ", ")));
-  }
-
-  void visit(TextureOpExpression *expr) override {
-    emit(fmt::format("texture_{}(", texture_op_type_name(expr->op)));
-    visit(expr->args);
-    emit(")");
-  }
-
   void visit(RandExpression *expr) override {
     emit(fmt::format("rand<{}>()", data_type_name(expr->dt)));
   }

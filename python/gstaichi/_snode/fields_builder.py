@@ -7,7 +7,6 @@ from gstaichi._lib.core.gstaichi_python import SNodeCxx
 from gstaichi._snode.snode_tree import SNodeTree
 from gstaichi.lang import impl, snode
 from gstaichi.lang.exception import GsTaichiRuntimeError
-from gstaichi.lang.util import warning
 
 _snode_registry = _ti_core.SNodeRegistry()
 

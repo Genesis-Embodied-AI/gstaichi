@@ -22,7 +22,7 @@ std::string TaskAttributes::buffers_name(BufferInfo b) {
     return "GlobalTmps";
   }
   if (b.type == BufferType::Root) {
-    return std::string("Root: ") + fmt::format("{}", fmt::join(b.root_id, "_"));
+    return std::string("Root: ") + std::to_string(b.root_id);
   }
   TI_ERROR("unrecognized buffer type");
 }
@@ -56,7 +56,7 @@ KernelContextAttributes::KernelContextAttributes(
   // TODO: We should be able to limit Kernel args and rets to be primitive types
   // as well but let's leave that as a followup up PR.
   for (const auto &kv : kernel.nested_parameters) {
-    const auto &k = kv.first;
+    const auto &k = std::vector<int>{kv.first};
     const auto &ka = kv.second;
     ArgAttributes aa;
     aa.name = ka.name;
@@ -65,7 +65,7 @@ KernelContextAttributes::KernelContextAttributes(
     if (ka.is_array && ka.get_dtype()->is<StructType>()) {
       auto struct_type = ka.get_dtype()->as<StructType>();
       aa.dtype = DataType(struct_type->get_element_type(
-                              {TypeFactory::DATA_PTR_POS_IN_NDARRAY}))
+                              std::array{TypeFactory::DATA_PTR_POS_IN_NDARRAY}))
                      .ptr_removed()
                      ->as<PrimitiveType>()
                      ->type;

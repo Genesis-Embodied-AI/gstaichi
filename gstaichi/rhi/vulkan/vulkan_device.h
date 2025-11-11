@@ -212,10 +212,10 @@ class VulkanResourceSet : public ShaderResourceSet {
   ShaderResourceSet &buffer(uint32_t binding, DeviceAllocation alloc) final;
   ShaderResourceSet &image(uint32_t binding,
                            DeviceAllocation alloc,
-                           ImageSamplerConfig sampler_config) final;
+                           ImageSamplerConfig sampler_config);
   ShaderResourceSet &rw_image(uint32_t binding,
                               DeviceAllocation alloc,
-                              int lod) final;
+                              int lod);
 
   rhi_impl::RhiReturn<vkapi::IVkDescriptorSet> finalize();
 

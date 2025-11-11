@@ -35,7 +35,6 @@ from typing import Any, Callable, Union
 from gstaichi._lib import core as _ti_core
 from gstaichi.lang._dataclass_util import create_flat_name
 from gstaichi.lang._ndarray import Ndarray
-from gstaichi.lang._texture import Texture
 from gstaichi.lang.any_array import AnyArray
 from gstaichi.lang.exception import GsTaichiRuntimeTypeError
 from gstaichi.lang.expr import Expr
@@ -47,7 +46,6 @@ from gstaichi.types import (
     primitive_types,
     sparse_matrix_builder,
     template,
-    texture_type,
 )
 from gstaichi.types.enums import AutodiffMode
 
@@ -56,8 +54,6 @@ CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
 
 AnnotationType = Union[
     template,
-    "texture_type.TextureType",
-    "texture_type.RWTextureType",
     ndarray_type.NdarrayType,
     sparse_matrix_builder,
     Any,
@@ -203,29 +199,6 @@ def _extract_arg(raise_on_templated_floats: bool, arg: Any, annotation: Annotati
                 # Impossible to store _key at instance-level if 'slots=True'. It will be recomputed systematically.
                 pass
         return key
-    if annotation_type is texture_type.TextureType:
-        if arg_type is not Texture:
-            raise GsTaichiRuntimeTypeError(f"Argument {arg_name} must be a texture, got {type(arg)}")
-        if arg.num_dims != annotation.num_dimensions:
-            raise GsTaichiRuntimeTypeError(
-                f"TextureType dimension mismatch for argument {arg_name}: expected {annotation.num_dimensions}, "
-                f"got {arg.num_dims}"
-            )
-        return (arg.num_dims,)
-    if annotation_type is texture_type.RWTextureType:
-        if arg_type is not Texture:
-            raise GsTaichiRuntimeTypeError(f"Argument {arg_name} must be a texture, got {type(arg)}")
-        if arg.num_dims != annotation.num_dimensions:
-            raise GsTaichiRuntimeTypeError(
-                f"RWTextureType dimension mismatch for argument {arg_name}: expected {annotation.num_dimensions}, "
-                f"got {arg.num_dims}"
-            )
-        if arg.fmt != annotation.fmt:
-            raise GsTaichiRuntimeTypeError(
-                f"RWTextureType format mismatch for argument {arg_name}: expected {annotation.fmt}, got {arg.fmt}"
-            )
-        # (penguinliong) '0' is the assumed LOD level. We currently don't support mip-mapping.
-        return arg.num_dims, arg.fmt, 0
     if annotation_type is sparse_matrix_builder:
         return arg.dtype
     # Use '#' as a placeholder because other kinds of arguments are not involved in template instantiation

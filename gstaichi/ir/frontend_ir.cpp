@@ -178,17 +178,6 @@ void ArgLoadExpression::flatten(FlattenContext *ctx) {
   stmt = ctx->back_stmt();
 }
 
-void TexturePtrExpression::type_check(const CompileConfig *config) {
-}
-
-void TexturePtrExpression::flatten(FlattenContext *ctx) {
-  ctx->push_back<ArgLoadStmt>(arg_id, PrimitiveType::f32, /*is_ptr=*/true,
-                              /*create_load=*/true, dbg_info);
-  ctx->push_back<TexturePtrStmt>(ctx->back_stmt(), num_dims, is_storage, format,
-                                 lod, dbg_info);
-  stmt = ctx->back_stmt();
-}
-
 void RandExpression::type_check(const CompileConfig *) {
   if (!(dt->is<PrimitiveType>() && dt != PrimitiveType::unknown)) {
     ErrorEmitter(
@@ -1174,112 +1163,6 @@ void SNodeOpExpression::flatten(FlattenContext *ctx) {
   stmt = ctx->back_stmt();
 }
 
-TextureOpExpression::TextureOpExpression(TextureOpType op,
-                                         Expr texture_ptr,
-                                         const ExprGroup &args,
-                                         const DebugInfo &dbg_info)
-    : Expression(dbg_info), op(op), texture_ptr(texture_ptr), args(args) {
-}
-
-void TextureOpExpression::type_check(const CompileConfig *config) {
-  TI_ASSERT(texture_ptr.is<TexturePtrExpression>());
-  auto ptr = texture_ptr.cast<TexturePtrExpression>();
-  if (op == TextureOpType::kSampleLod) {
-    // UV, Lod
-    if (args.size() != ptr->num_dims + 1) {
-      ErrorEmitter(GsTaichiTypeError(), this,
-                   fmt::format("Invalid number of args for sample_lod Texture "
-                               "op with a {}-dimension texture",
-                               ptr->num_dims));
-    }
-    for (int i = 0; i < ptr->num_dims; i++) {
-      TI_ASSERT_TYPE_CHECKED(args[i]);
-      auto arg_type = args[i].get_rvalue_type();
-      if (arg_type != PrimitiveType::f32) {
-        ErrorEmitter(
-            GsTaichiTypeError(), this,
-            fmt::format("Invalid type for texture sample_lod: '{}', all "
-                        "arguments must be f32",
-                        arg_type->to_string()));
-      }
-    }
-  } else if (op == TextureOpType::kFetchTexel) {
-    // index, int LOD
-    TI_ASSERT_INFO(args.size() == ptr->num_dims + 1,
-                   "Invalid number of args for fetch_texel Texture op with a "
-                   "{}-dimension texture",
-                   ptr->num_dims);
-    for (int i = 0; i < ptr->num_dims; i++) {
-      TI_ASSERT_TYPE_CHECKED(args[i]);
-      auto arg_type = args[i].get_rvalue_type();
-      if (arg_type != PrimitiveType::i32) {
-        ErrorEmitter(
-            GsTaichiTypeError(), this,
-            fmt::format("Invalid type for texture fetch_texel: '{}', all "
-                        "arguments must be i32",
-                        arg_type->to_string()));
-      }
-    }
-  } else if (op == TextureOpType::kLoad) {
-    // index
-    TI_ASSERT_INFO(args.size() == ptr->num_dims,
-                   "Invalid number of args for load Texture op with a "
-                   "{}-dimension texture",
-                   ptr->num_dims);
-    for (int i = 0; i < ptr->num_dims; i++) {
-      TI_ASSERT_TYPE_CHECKED(args[i]);
-      auto arg_type = args[i].get_rvalue_type();
-      if (arg_type != PrimitiveType::i32) {
-        ErrorEmitter(GsTaichiTypeError(), this,
-                     fmt::format("Invalid type for texture load: '{}', all "
-                                 "arguments must be i32",
-                                 arg_type->to_string()));
-      }
-    }
-  } else if (op == TextureOpType::kStore) {
-    // index, value
-    TI_ASSERT_INFO(args.size() == ptr->num_dims + 4,
-                   "Invalid number of args for store Texture op with a "
-                   "{}-dimension texture",
-                   ptr->num_dims);
-    for (int i = 0; i < ptr->num_dims; i++) {
-      TI_ASSERT_TYPE_CHECKED(args[i]);
-      auto arg_type = args[i].get_rvalue_type();
-      if (arg_type != PrimitiveType::i32) {
-        ErrorEmitter(GsTaichiTypeError(), this,
-                     fmt::format("Invalid type for texture load: '{}', index "
-                                 "arguments must be i32",
-                                 arg_type->to_string()));
-      }
-    }
-    for (int i = ptr->num_dims; i < ptr->num_dims + 4; i++) {
-      TI_ASSERT_TYPE_CHECKED(args[i]);
-      auto arg_type = args[i].get_rvalue_type();
-      if (arg_type != PrimitiveType::f32) {
-        ErrorEmitter(GsTaichiTypeError(), this,
-                     fmt::format("Invalid type for texture load: '{}', value "
-                                 "arguments must be f32",
-                                 arg_type->to_string()));
-      }
-    }
-  } else {
-    TI_ERROR("Invalid TextureOpType");
-  }
-  ret_type =
-      TypeFactory::get_instance().get_pointer_type(PrimitiveType::f32,
-                                                   /*is_bit_pointer=*/false);
-}
-
-void TextureOpExpression::flatten(FlattenContext *ctx) {
-  auto texture_ptr_stmt = flatten_rvalue(texture_ptr, ctx);
-  std::vector<Stmt *> arg_stmts;
-  for (Expr &arg : args.exprs) {
-    arg_stmts.push_back(flatten_rvalue(arg, ctx));
-  }
-  ctx->push_back<TextureOpStmt>(op, texture_ptr_stmt, arg_stmts, dbg_info);
-  stmt = ctx->back_stmt();
-}
-
 void ConstExpression::type_check(const CompileConfig *) {
   if (!(val.dt->is<PrimitiveType>() && val.dt != PrimitiveType::unknown)) {
     ErrorEmitter(GsTaichiTypeError(), this,
@@ -1295,7 +1178,7 @@ void ConstExpression::flatten(FlattenContext *ctx) {
 }
 
 void ExternalTensorShapeAlongAxisExpression::type_check(const CompileConfig *) {
-  if (!(ptr.is<ExternalTensorExpression>() || ptr.is<TexturePtrExpression>())) {
+  if (!(ptr.is<ExternalTensorExpression>())) {
     ErrorEmitter(
         GsTaichiTypeError(), this,
         fmt::format(
@@ -1857,7 +1740,7 @@ std::vector<Expr> ASTBuilder::expand_exprs(const std::vector<Expr> &exprs) {
           auto num_elem = struct_type->elements().size();
           for (int i = 0; i < num_elem; i++) {
             indices.push_back(i);
-            auto element_type = struct_type->get_element_type({i});
+            auto element_type = struct_type->get_element_type(std::array{i});
             if (auto element_struct_type = element_type->cast<StructType>()) {
               expand_struct(expr, element_struct_type, indices);
             } else {
@@ -1920,16 +1803,6 @@ void ASTBuilder::create_scope(std::unique_ptr<Block> &list, LoopType tp) {
 void ASTBuilder::pop_scope() {
   stack_.pop_back();
   loop_state_stack_.pop_back();
-}
-
-Expr ASTBuilder::make_texture_op_expr(const TextureOpType &op,
-                                      const Expr &texture_ptr,
-                                      const ExprGroup &args,
-                                      const DebugInfo &dbg_info) {
-  ExprGroup expanded_args;
-  expanded_args.exprs = this->expand_exprs(args.exprs);
-  return Expr::make<TextureOpExpression>(op, texture_ptr, expanded_args,
-                                         dbg_info);
 }
 
 Stmt *flatten_lvalue(Expr expr, Expression::FlattenContext *ctx) {

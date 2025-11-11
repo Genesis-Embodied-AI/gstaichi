@@ -84,7 +84,6 @@ user_api[ti] = [
     "GsTaichiSyntaxError",
     "GsTaichiTypeError",
     "Template",
-    "Texture",
     "Vector",
     "VectorNdarray",
     "WARN",
@@ -363,7 +362,6 @@ user_api[ti.MatrixNdarray] = [
     "to_numpy",
 ]
 user_api[ti.Ndarray] = ["copy_from", "element_shape", "fill", "get_type", "to_dlpack"]
-user_api[ti.Texture] = ["from_field", "from_image", "from_ndarray", "to_image"]
 user_api[ti.SNode] = [
     "bitmasked",
     "deactivate_all",
