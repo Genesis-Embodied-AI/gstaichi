@@ -11,7 +11,10 @@
 
 namespace gstaichi {
 namespace lang {
-pybind11::capsule ndarray_to_dlpack(Program *program, Ndarray *ndarray) {
+pybind11::capsule ndarray_to_dlpack(Program *program, pybind11::object owner, Ndarray *ndarray) {
+  auto *owner_holder = new pybind11::object(owner);
+  new pybind11::object(owner);
+
   DeviceAllocation devalloc = ndarray->get_device_allocation();
 
   void *raw_ptr = nullptr;
@@ -93,8 +96,10 @@ pybind11::capsule ndarray_to_dlpack(Program *program, Ndarray *ndarray) {
     dl_tensor.strides = strides;
     dl_tensor.byte_offset = 0;
 
-    managed_tensor->manager_ctx = ndarray;
+    managed_tensor->manager_ctx = static_cast<void *>(owner_holder);
     managed_tensor->deleter = [](DLManagedTensor *self) {
+        auto *owner = reinterpret_cast<pybind11::object *>(self->manager_ctx);
+        delete owner;  // DECREFs the Python object
         delete[] self->dl_tensor.shape;
         delete[] self->dl_tensor.strides;
         delete self;

@@ -268,7 +268,7 @@ class ScalarNdarray(Ndarray):
         self.element_type = dtype
 
     def to_dlpack(self):
-        return impl.get_runtime().prog.ndarray_to_dlpack(self.arr)
+        return impl.get_runtime().prog.ndarray_to_dlpack(self, self.arr)
 
     def __del__(self):
         if impl is not None and impl.get_runtime is not None and impl.get_runtime() is not None:

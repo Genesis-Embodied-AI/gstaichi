@@ -364,8 +364,8 @@ void export_lang(py::module &m) {
   py::class_<Program>(m, "Program")
       .def(py::init<>())
       .def("ndarray_to_dlpack",
-        [](Program *program, Ndarray *ndarray) {
-          return ndarray_to_dlpack(program, ndarray);
+        [](Program *program, pybind11::object owner, Ndarray *ndarray) {
+          return ndarray_to_dlpack(program, owner, ndarray);
         })
       .def("config", &Program::compile_config,
            py::return_value_policy::reference)
