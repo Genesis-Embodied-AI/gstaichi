@@ -21,13 +21,22 @@ pybind11::capsule dlpack_dump_ndarray_info(Program *program, Ndarray *ndarray) {
   cpu::CpuDevice *cpu_device = dynamic_cast<cpu::CpuDevice *>(devalloc.device);
   if(cpu_device != nullptr) {
     std::cout << "cpu_device not nullptr " << (cpu_device != nullptr) << std::endl;
-    std::cout << " dev_alloc.ptr " << devalloc.ptr << std::endl;
+    // std::cout << " dev_alloc.ptr " << devalloc.ptr << std::endl;
+    cpu::CpuDevice::AllocInfo alloc_info = cpu_device->get_alloc_info(devalloc);
+    auto raw_ptr = alloc_info.ptr;
+    std::cout << " dev_alloc.ptr " << raw_ptr << std::endl;
+    std::cout << ((int *)raw_ptr)[0] << std::endl;
+    std::cout << ((int *)raw_ptr)[1] << std::endl;
+    std::cout << ((int *)raw_ptr)[3] << std::endl;
   }
 #if TI_WITH_CUDA
   cuda::CudaDevice *cuda_device = dynamic_cast<cuda::CudaDevice *>(devalloc.device);
   if(cuda_device != nullptr) {
     std::cout << "cuda_device not nullptr " << (cuda_device != nullptr) << std::endl;
   }
+  cuda::CudaDevice::AllocInfo alloc_info = cuda_device->get_alloc_info(devalloc);
+  auto raw_ptr = alloc_info.ptr;
+  std::cout << " dev_alloc.ptr " << raw_ptr << std::endl;
 #endif // TI_WITH_CUDA
 
     MyData *my_data = new MyData;
