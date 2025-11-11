@@ -8,8 +8,6 @@
 #include <stack>
 #include <shared_mutex>
 
-// #include <pybind11/pybind11.h>
-
 #define TI_RUNTIME_HOST
 #include "gstaichi/ir/frontend_ir.h"
 #include "gstaichi/ir/ir.h"
@@ -45,12 +43,6 @@ class StructCompiler;
  * - Otherwise please add it to a backend-specific ProgramImpl, e.g.
  * LlvmProgramImpl, MetalProgramImpl..
  */
-
-// namespace py = pybind11;
-
-struct MyData {
-    int value;
-};
 
 class TI_DLL_EXPORT Program {
  public:
