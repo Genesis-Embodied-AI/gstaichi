@@ -142,5 +142,6 @@ exclude = [
 select = ["I", "F401"]  # Enable import ordering checks, and unused import checks
 
 [tool.ruff.lint.isort]
-known-local-folder = ["taichi", "tests", ".github"]
+known-local-folder = ["tests", ".github"]
+known-first-party = ["gstaichi"]
 known-third-party = ["pytest"]

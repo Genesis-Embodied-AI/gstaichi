@@ -4,7 +4,7 @@ from math import sqrt
 
 from gstaichi.lang import misc
 from gstaichi.lang.exception import GsTaichiRuntimeError, GsTaichiTypeError
-from gstaichi.lang.impl import fields_builder, field, grouped
+from gstaichi.lang.impl import field, fields_builder, grouped
 from gstaichi.lang.kernel_impl import data_oriented, kernel
 from gstaichi.types import primitive_types, template
 

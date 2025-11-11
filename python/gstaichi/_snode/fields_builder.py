@@ -8,7 +8,6 @@ from gstaichi._snode.snode_tree import SNodeTree
 from gstaichi.lang import impl, snode
 from gstaichi.lang.exception import GsTaichiRuntimeError
 
-
 _snode_registry = _ti_core.SNodeRegistry()
 
 _Axis = _ti_core.Axis
