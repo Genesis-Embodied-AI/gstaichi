@@ -1039,10 +1039,7 @@ class Kernel:
                 else:
                     raise GsTaichiSyntaxError("GsTaichi kernels parameters must be type annotated")
             else:
-                if isinstance(
-                    annotation,
-                    (template, ndarray_type.NdarrayType),
-                ):
+                if isinstance(annotation, (template, ndarray_type.NdarrayType)):
                     pass
                 elif annotation is ndarray_type.NdarrayType:
                     # convert from ti.types.NDArray into ti.types.NDArray()

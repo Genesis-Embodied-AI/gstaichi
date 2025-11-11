@@ -139,7 +139,7 @@ def begin_frontend_struct_for(ast_builder, group, loop_range):
             'use "for I in ti.grouped(x)" to group all indices into a single vector I?'
         )
     dbg_info = _ti_core.DebugInfo(get_runtime().get_current_src_info())
-    if isinstance(loop_range, (AnyArray)):
+    if isinstance(loop_range, AnyArray):
         ast_builder.begin_frontend_struct_for_on_external_tensor(group, loop_range._loop_range(), dbg_info)
     else:
         ast_builder.begin_frontend_struct_for_on_snode(group, loop_range._loop_range(), dbg_info)
