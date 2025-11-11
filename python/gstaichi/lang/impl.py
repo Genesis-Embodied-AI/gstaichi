@@ -628,7 +628,7 @@ _root_fb = _UninitializedRootFieldsBuilder()
 
 def deactivate_all_snodes():
     """Recursively deactivate all SNodes."""
-    for root_fb in FieldsBuilder._finalized_roots():
+    for root_fb in fields_builder.FieldsBuilder._finalized_roots():
         root_fb.deactivate_all()
 
 
@@ -638,19 +638,19 @@ class _Root:
     @staticmethod
     def parent(n=1):
         """Same as :func:`gstaichi.SNode.parent`"""
-        assert isinstance(_root_fb, FieldsBuilder)
+        assert isinstance(_root_fb, fields_builder.FieldsBuilder)
         return _root_fb.root.parent(n)
 
     @staticmethod
     def _loop_range():
         """Same as :func:`gstaichi.SNode.loop_range`"""
-        assert isinstance(_root_fb, FieldsBuilder)
+        assert isinstance(_root_fb, fields_builder.FieldsBuilder)
         return _root_fb.root._loop_range()
 
     @staticmethod
     def _get_children():
         """Same as :func:`gstaichi.SNode.get_children`"""
-        assert isinstance(_root_fb, FieldsBuilder)
+        assert isinstance(_root_fb, fields_builder.FieldsBuilder)
         return _root_fb.root._get_children()
 
     # TODO: Record all of the SNodeTrees that finalized under 'ti.root'
@@ -662,12 +662,12 @@ class _Root:
     @property
     def shape(self):
         """Same as :func:`gstaichi.SNode.shape`"""
-        assert isinstance(_root_fb, FieldsBuilder)
+        assert isinstance(_root_fb, fields_builder.FieldsBuilder)
         return _root_fb.root.shape
 
     @property
     def _id(self):
-        assert isinstance(_root_fb, FieldsBuilder)
+        assert isinstance(_root_fb, fields_builder.FieldsBuilder)
         return _root_fb.root._id
 
     def __getattr__(self, item):
