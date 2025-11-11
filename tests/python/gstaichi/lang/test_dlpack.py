@@ -15,9 +15,8 @@ import torch
         ((3, 2), [(0, 0), (2, 1), (1, 1)]),
         ((3, 1, 2), [(2, 0, 1), (0, 0, 1)]),
     ]
-    # "shape", [(3,), (3, 2), (3, 1, 2)]
 )
-def test_ndarray_dlpack(dtype, shape: tuple[int], poses: list[tuple[int, ...]]) -> None:
+def test_ndarray_dlpack_types(dtype, shape: tuple[int], poses: list[tuple[int, ...]]) -> None:
     ndarray = ti.ndarray(dtype, shape)
     for i, pos in enumerate(poses):
         ndarray[pos] = i * 10 + 10
@@ -35,3 +34,14 @@ def test_ndarray_dlpack(dtype, shape: tuple[int], poses: list[tuple[int, ...]]) 
     for i, pos in enumerate(poses):
         assert tt[pos] == ndarray[pos]
         assert tt[pos] != 0
+
+
+@test_utils.test()
+def test_ndarray_dlpack_mem_stays_alloced() -> None:
+    def create_tensor(shape, dtype):
+        nd = ti.ndarray(dtype, shape)
+        tt = torch.utils.dlpack.from_dlpack(nd.to_dlpack())
+        return tt
+    t = create_tensor((3, 2), ti.i32)
+    # will crash if memory already deleted
+    assert t[0, 0] == 0
