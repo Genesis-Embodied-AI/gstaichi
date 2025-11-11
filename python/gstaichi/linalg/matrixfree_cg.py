@@ -4,7 +4,7 @@ from math import sqrt
 
 from gstaichi.lang import misc
 from gstaichi.lang.exception import GsTaichiRuntimeError, GsTaichiTypeError
-from gstaichi.lang.impl import FieldsBuilder, field, grouped
+from gstaichi.lang.impl import fields_builder, field, grouped
 from gstaichi.lang.kernel_impl import data_oriented, kernel
 from gstaichi.types import primitive_types, template
 
@@ -47,7 +47,7 @@ def MatrixFreeCG(A, b, x, tol=1e-6, maxiter=5000, quiet=True):
         raise GsTaichiRuntimeError(f"Dimension mismatch b.shape{b.shape} != x.shape{x.shape}.")
 
     size = b.shape
-    vector_fields_builder = FieldsBuilder()
+    vector_fields_builder = fields_builder.FieldsBuilder()
     p = field(dtype=solver_dtype)
     r = field(dtype=solver_dtype)
     Ap = field(dtype=solver_dtype)
@@ -63,7 +63,7 @@ def MatrixFreeCG(A, b, x, tol=1e-6, maxiter=5000, quiet=True):
     vector_fields_builder.dense(axes, size).place(p, r, Ap, Ax)
     vector_fields_snode_tree = vector_fields_builder.finalize()
 
-    scalar_builder = FieldsBuilder()
+    scalar_builder = fields_builder.FieldsBuilder()
     alpha = field(dtype=solver_dtype)
     beta = field(dtype=solver_dtype)
     scalar_builder.place(alpha, beta)
@@ -168,7 +168,7 @@ def MatrixFreeBICGSTAB(A, b, x, tol=1e-6, maxiter=5000, quiet=True):
         raise GsTaichiRuntimeError(f"Dimension mismatch b.shape{b.shape} != x.shape{x.shape}.")
 
     size = b.shape
-    vector_fields_builder = FieldsBuilder()
+    vector_fields_builder = fields_builder.FieldsBuilder()
     p = field(dtype=solver_dtype)
     p_hat = field(dtype=solver_dtype)
     r = field(dtype=solver_dtype)
@@ -190,7 +190,7 @@ def MatrixFreeBICGSTAB(A, b, x, tol=1e-6, maxiter=5000, quiet=True):
     vector_fields_builder.dense(axes, size).place(p, p_hat, r, r_tld, s, s_hat, t, Ap, Ax, Ashat)
     vector_fields_snode_tree = vector_fields_builder.finalize()
 
-    scalar_builder = FieldsBuilder()
+    scalar_builder = fields_builder.FieldsBuilder()
     alpha = field(dtype=solver_dtype)
     beta = field(dtype=solver_dtype)
     omega = field(dtype=solver_dtype)

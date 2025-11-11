@@ -12,7 +12,7 @@ from gstaichi._lib.core.gstaichi_python import (
     KernelCxx,
     Program,
 )
-from gstaichi._snode.fields_builder import FieldsBuilder
+from gstaichi._snode import fields_builder
 from gstaichi.lang._ndarray import ScalarNdarray
 from gstaichi.lang._ndrange import GroupedNDRange, _Ndrange
 from gstaichi.lang.any_array import AnyArray
@@ -450,7 +450,7 @@ class PyGsTaichi:
 
         root.finalize(raise_warning=not is_first_call)
         global _root_fb
-        _root_fb = FieldsBuilder()
+        _root_fb = fields_builder.FieldsBuilder()
 
     @staticmethod
     def _get_tb(_var):
