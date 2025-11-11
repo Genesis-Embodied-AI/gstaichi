@@ -38,9 +38,24 @@ class TI_DLL_EXPORT Type {
 
   template <typename T>
   const T *cast() const {
+    // Note that `Type` is a concrete type, not to be confused with placeholder
+    // `x##Type` that we be replaced by the preprocessor. More specifically,
+    // `Type` is the base type of all the derived types that are listed in
+    // "gstaichi/inc/type_kind.inc.h", e.g. `PrimitiveType`, `PointerType`,
+    // `StructType` or `TensorType`. All these derived types can be implicitly
+    // upcasted in their base type `Type`, so calling this method is
+    // superfluous. Still, this method is supposed to mimic the behavior of
+    // `dynamic_cast`, so this special case must be handled separately.
     if constexpr (std::is_same_v<typename std::remove_cv<T>::type, Type>) {
       return this;
     }
+
+    // This switch-case mechanism determines at runtime the correct branch based
+    // on the true derived type of the current instance. On its side, the inner
+    // branch is statically resolved at compile-time to either return downcasted
+    // `this` if the branch corresponds to requested type specified by the user,
+    // nullptr otherwise. This allows for mimicking the behavior of
+    // `dynamic_cast` without paying the cost and lack of portability of RTTI.
     switch (static_cast<int>(type_kind)) {
 #define PER_TYPE_KIND(x)                                                       \
   case static_cast<int>(TypeKind::x):                                          \
