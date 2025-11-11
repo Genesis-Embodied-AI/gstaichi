@@ -13,7 +13,7 @@ namespace gstaichi {
 namespace lang {
 pybind11::capsule dlpack_dump_ndarray_info(Program *program, Ndarray *ndarray) {
     std::cout << "dump_ndarray_info" << std::endl;
-  std::cout << ndarray->read_int({0, 0}) << std::endl;
+  // std::cout << ndarray->read_int({0, 0}) << std::endl;
   // int *data_ptr = reinterpret_cast<int *>(get_ndarray_data_ptr
   
   DeviceAllocation devalloc = ndarray->get_device_allocation();
@@ -60,14 +60,38 @@ pybind11::capsule dlpack_dump_ndarray_info(Program *program, Ndarray *ndarray) {
         strides[i] = strides[i + 1] * shape[i + 1];
     }
 
+    DataType ndarray_data_type = ndarray->get_element_data_type();
+    uint8_t data_type_code = kDLInt;
+    
+    uint8_t element_bits = 32;
+    PrimitiveTypeID type_id = ndarray_data_type->as<PrimitiveType>()->type;
+    std::cout << "got type id " << static_cast<int>(type_id) << std::endl;
+    switch(type_id) {
+        case PrimitiveTypeID::i32: {
+            data_type_code = static_cast<uint8_t>(kDLInt);
+            element_bits = 32;
+            std::cout << "data type i32" << std::endl;
+            break;
+        }
+        case PrimitiveTypeID::f32: {
+            data_type_code = static_cast<uint8_t>(kDLFloat);
+            element_bits = 32;
+            std::cout << "data type f32" << std::endl;
+            break;
+        }
+        default: {
+            TI_ERROR("unsupported ndarray data type for dlpack");
+        }
+    }
+
     DLManagedTensor *managed_tensor = new DLManagedTensor();
 
     DLTensor &dl_tensor = managed_tensor->dl_tensor;
     dl_tensor.data = raw_ptr;
     dl_tensor.device.device_type = device_type;
     dl_tensor.device.device_id = 0;
-    dl_tensor.ndim = 2;
-    dl_tensor.dtype = DLDataType{kDLInt, 32, 1};
+    dl_tensor.ndim = ndim;
+    dl_tensor.dtype = DLDataType{data_type_code, element_bits, 1};
     dl_tensor.shape = shape;
     dl_tensor.strides = strides;
     dl_tensor.byte_offset = 0;
