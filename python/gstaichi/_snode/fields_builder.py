@@ -172,13 +172,12 @@ class FieldsBuilder:
             raise_warning (bool): Raise warning or not."""
         return self._finalize(raise_warning, compile_only=False)
 
-    def _finalize(self, raise_warning, compile_only) -> "SNodeTree":
+    def _finalize(self, raise_warning, compile_only) -> SNodeTree:
         self._check_not_finalized()
         if self.empty and raise_warning:
             warning("Finalizing an empty FieldsBuilder!")
         self.finalized = True
         impl.get_runtime().finalize_fields_builder(self)
-
         return SNodeTree(
             _ti_core.finalize_snode_tree(_snode_registry, self.ptr, impl.get_runtime()._prog, compile_only)
         )
