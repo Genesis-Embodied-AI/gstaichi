@@ -26,6 +26,7 @@ pybind11::capsule dlpack_dump_ndarray_info(Program *program, Ndarray *ndarray) {
     // std::cout << " dev_alloc.ptr " << devalloc.ptr << std::endl;
     cpu::CpuDevice::AllocInfo alloc_info = cpu_device->get_alloc_info(devalloc);
     raw_ptr = alloc_info.ptr;
+    // std::cout << "alloc size " << alloc_info.size << std::endl;
     // std::cout << " dev_alloc.ptr " << raw_ptr << std::endl;
     // std::cout << ((int *)raw_ptr)[0] << std::endl;
     // std::cout << ((int *)raw_ptr)[1] << std::endl;
@@ -89,6 +90,12 @@ pybind11::capsule dlpack_dump_ndarray_info(Program *program, Ndarray *ndarray) {
             data_type_code = static_cast<uint8_t>(kDLFloat);
             element_bits = 64;
             // std::cout << "data type f64" << std::endl;
+            break;
+        }
+        case PrimitiveTypeID::u1: {
+            data_type_code = static_cast<uint8_t>(kDLBool);
+            element_bits = 8;
+            // std::cout << "data type u1" << std::endl;
             break;
         }
         default: {
