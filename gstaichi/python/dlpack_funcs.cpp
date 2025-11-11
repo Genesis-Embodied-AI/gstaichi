@@ -33,11 +33,6 @@ pybind11::capsule ndarray_to_dlpack(Program *program, Ndarray *ndarray) {
 
     std::vector<int> ndarray_shape = ndarray->total_shape();
     int ndim = ndarray_shape.size();
-    // std::vector<int> ndarray_element_shape = ndarray->get_element_shape();
-    // std::cout << "element ndim " << ndarray_element_shape.size() << std::endl;
-    // for (int i = 0; i < ndarray_element_shape.size(); i++) {
-    //     std::cout << " element shape[" << i << "] " << ndarray_element_shape[i] << std::endl;
-    // }
 
     int64_t *shape = new int64_t[ndim];
     for(int i = 0; i < ndim; i++) {
