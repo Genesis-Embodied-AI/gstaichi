@@ -25,8 +25,6 @@ Functions
    gstaichi.lang.kernel_arguments.decl_struct_arg
    gstaichi.lang.kernel_arguments.decl_sparse_matrix
    gstaichi.lang.kernel_arguments.decl_ndarray_arg
-   gstaichi.lang.kernel_arguments.decl_texture_arg
-   gstaichi.lang.kernel_arguments.decl_rw_texture_arg
    gstaichi.lang.kernel_arguments.decl_ret
 
 
@@ -83,10 +81,6 @@ Module Contents
 .. py:function:: decl_sparse_matrix(dtype, name)
 
 .. py:function:: decl_ndarray_arg(element_type: gstaichi._lib.core.gstaichi_python.DataTypeCxx, ndim: int, name: str, needs_grad: bool, boundary: gstaichi._lib.core.gstaichi_python.BoundaryMode) -> gstaichi.lang.any_array.AnyArray
-
-.. py:function:: decl_texture_arg(num_dimensions, name)
-
-.. py:function:: decl_rw_texture_arg(num_dimensions, buffer_format, lod, name)
 
 .. py:function:: decl_ret(dtype)
 
