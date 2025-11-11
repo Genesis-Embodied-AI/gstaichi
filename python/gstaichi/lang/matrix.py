@@ -1640,6 +1640,9 @@ class MatrixNdarray(Ndarray):
             dbg_info=ti_python_core.DebugInfo(get_traceback()),
         )
 
+    def to_dlpack(self):
+        return impl.get_runtime().prog.ndarray_to_dlpack(self.arr)
+
     @property
     def element_shape(self):
         """Returns the shape of each element (a 2D matrix) in this ndarray.
@@ -1753,6 +1756,9 @@ class VectorNdarray(Ndarray):
             zero_fill=True,
             dbg_info=ti_python_core.DebugInfo(get_traceback()),
         )
+
+    def to_dlpack(self):
+        return impl.get_runtime().prog.ndarray_to_dlpack(self.arr)
 
     @property
     def element_shape(self):

@@ -12,42 +12,31 @@
 namespace gstaichi {
 namespace lang {
 pybind11::capsule ndarray_to_dlpack(Program *program, Ndarray *ndarray) {
-    // std::cout << "dump_ndarray_info" << std::endl;
-  // std::cout << ndarray->read_int({0, 0}) << std::endl;
-  // int *data_ptr = reinterpret_cast<int *>(get_ndarray_data_ptr
-  
   DeviceAllocation devalloc = ndarray->get_device_allocation();
 
-  cpu::CpuDevice *cpu_device = dynamic_cast<cpu::CpuDevice *>(devalloc.device);
   void *raw_ptr = nullptr;
   DLDeviceType device_type = DLDeviceType::kDLCPU;
+
+  cpu::CpuDevice *cpu_device = dynamic_cast<cpu::CpuDevice *>(devalloc.device);
   if(cpu_device != nullptr) {
-    // std::cout << "cpu_device not nullptr " << (cpu_device != nullptr) << std::endl;
-    // std::cout << " dev_alloc.ptr " << devalloc.ptr << std::endl;
     cpu::CpuDevice::AllocInfo alloc_info = cpu_device->get_alloc_info(devalloc);
     raw_ptr = alloc_info.ptr;
-    // std::cout << "alloc size " << alloc_info.size << std::endl;
-    // std::cout << " dev_alloc.ptr " << raw_ptr << std::endl;
-    // std::cout << ((int *)raw_ptr)[0] << std::endl;
-    // std::cout << ((int *)raw_ptr)[1] << std::endl;
-    // std::cout << ((int *)raw_ptr)[3] << std::endl;
   }
 #if TI_WITH_CUDA
   cuda::CudaDevice *cuda_device = dynamic_cast<cuda::CudaDevice *>(devalloc.device);
   if(cuda_device != nullptr) {
-    // std::cout << "cuda_device not nullptr " << (cuda_device != nullptr) << std::endl;
     cuda::CudaDevice::AllocInfo alloc_info = cuda_device->get_alloc_info(devalloc);
     raw_ptr = alloc_info.ptr;
     device_type = DLDeviceType::kDLCUDA;
-    // std::cout << " dev_alloc.ptr " << raw_ptr << std::endl;
   }
 #endif // TI_WITH_CUDA
 
-    std::vector<int> ndarray_shape = ndarray->shape;
+    std::vector<int> ndarray_shape = ndarray->total_shape();
     int ndim = ndarray_shape.size();
-    // std::cout << "ndim " << ndim << std::endl;
-    // for (int i = 0; i < ndarray_shape.size(); i++) {
-    //     std::cout << " shape[" << i << "] " << ndarray_shape[i] << std::endl;
+    // std::vector<int> ndarray_element_shape = ndarray->get_element_shape();
+    // std::cout << "element ndim " << ndarray_element_shape.size() << std::endl;
+    // for (int i = 0; i < ndarray_element_shape.size(); i++) {
+    //     std::cout << " element shape[" << i << "] " << ndarray_element_shape[i] << std::endl;
     // }
 
     int64_t *shape = new int64_t[ndim];
@@ -66,36 +55,30 @@ pybind11::capsule ndarray_to_dlpack(Program *program, Ndarray *ndarray) {
     
     uint8_t element_bits = 32;
     PrimitiveTypeID type_id = ndarray_data_type->as<PrimitiveType>()->type;
-    // std::cout << "got type id " << static_cast<int>(type_id) << std::endl;
     switch(type_id) {
         case PrimitiveTypeID::i32: {
             data_type_code = static_cast<uint8_t>(kDLInt);
             element_bits = 32;
-            // std::cout << "data type i32" << std::endl;
             break;
         }
         case PrimitiveTypeID::i64: {
             data_type_code = static_cast<uint8_t>(kDLInt);
             element_bits = 64;
-            // std::cout << "data type i64" << std::endl;
             break;
         }
         case PrimitiveTypeID::f32: {
             data_type_code = static_cast<uint8_t>(kDLFloat);
             element_bits = 32;
-            // std::cout << "data type f32" << std::endl;
             break;
         }
         case PrimitiveTypeID::f64: {
             data_type_code = static_cast<uint8_t>(kDLFloat);
             element_bits = 64;
-            // std::cout << "data type f64" << std::endl;
             break;
         }
         case PrimitiveTypeID::u1: {
             data_type_code = static_cast<uint8_t>(kDLBool);
             element_bits = 8;
-            // std::cout << "data type u1" << std::endl;
             break;
         }
         default: {
@@ -114,8 +97,6 @@ pybind11::capsule ndarray_to_dlpack(Program *program, Ndarray *ndarray) {
     dl_tensor.shape = shape;
     dl_tensor.strides = strides;
     dl_tensor.byte_offset = 0;
-
-    // std::cout << " device type " << device_type << " " << managed_tensor->dl_tensor.device.device_type <<std::endl;
 
     managed_tensor->manager_ctx = ndarray;
     managed_tensor->deleter = [](DLManagedTensor *self) {
