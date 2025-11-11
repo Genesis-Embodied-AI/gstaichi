@@ -47,12 +47,23 @@ pybind11::capsule dlpack_dump_ndarray_info(Program *program, Ndarray *ndarray) {
 
     // return my_data;
 
-    int64_t *shape = new int64_t[2];
-    shape[0] = 10;
-    shape[1] = 3;
-    int64_t *strides = new int64_t[2];
-    strides[0] = 3;
-    strides[1] = 1;
+    std::vector<int> ndarray_shape = ndarray->shape;
+    int ndim = ndarray_shape.size();
+    std::cout << "ndim " << ndim << std::endl;
+    for (int i = 0; i < ndarray_shape.size(); i++) {
+        std::cout << " shape[" << i << "] " << ndarray_shape[i] << std::endl;
+    }
+
+    int64_t *shape = new int64_t[ndim];
+    for(int i = 0; i < ndim; i++) {
+        shape[i] = ndarray_shape[i];
+    }
+
+    int64_t *strides = new int64_t[ndim];
+    strides[ndim - 1] = 1;
+    for(int i = ndim - 2; i >=0; i--) {
+        strides[i] = strides[i + 1] * shape[i + 1];
+    }
 
     // DLManagedTensorVersioned *managed_tensor = new DLManagedTensorVersioned;
     DLManagedTensor *managed_tensor = new DLManagedTensor();
