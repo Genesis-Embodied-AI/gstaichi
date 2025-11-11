@@ -384,7 +384,6 @@
     <span class="n">primitive_types</span><span class="p">,</span>
     <span class="n">sparse_matrix_builder</span><span class="p">,</span>
     <span class="n">template</span><span class="p">,</span>
-    <span class="n">texture_type</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.types.compound_types</span><span class="w"> </span><span class="kn">import</span> <span class="n">CompoundType</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.types.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutodiffMode</span><span class="p">,</span> <span class="n">Layout</span>
@@ -1362,7 +1361,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
                     <span class="n">annotation</span><span class="p">,</span>
-                    <span class="p">(</span><span class="n">template</span><span class="p">,</span> <span class="n">ndarray_type</span><span class="o">.</span><span class="n">NdarrayType</span><span class="p">,</span> <span class="n">texture_type</span><span class="o">.</span><span class="n">TextureType</span><span class="p">,</span> <span class="n">texture_type</span><span class="o">.</span><span class="n">RWTextureType</span><span class="p">),</span>
+                    <span class="p">(</span><span class="n">template</span><span class="p">,</span> <span class="n">ndarray_type</span><span class="o">.</span><span class="n">NdarrayType</span><span class="p">),</span>
                 <span class="p">):</span>
                     <span class="k">pass</span>
                 <span class="k">elif</span> <span class="n">annotation</span> <span class="ow">is</span> <span class="n">ndarray_type</span><span class="o">.</span><span class="n">NdarrayType</span><span class="p">:</span>

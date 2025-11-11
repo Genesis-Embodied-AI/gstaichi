@@ -321,7 +321,6 @@
     <span class="n">DataTypeCxx</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang</span><span class="w"> </span><span class="kn">import</span> <span class="n">impl</span><span class="p">,</span> <span class="n">ops</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang._texture</span><span class="w"> </span><span class="kn">import</span> <span class="n">RWTextureAccessor</span><span class="p">,</span> <span class="n">TextureSampler</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.any_array</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnyArray</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.expr</span><span class="w"> </span><span class="kn">import</span> <span class="n">Expr</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.matrix</span><span class="w"> </span><span class="kn">import</span> <span class="n">MatrixType</span>
@@ -495,28 +494,6 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AnyArray</span><span class="p">:</span>
     <span class="n">arg_id</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">compiling_callable</span><span class="o">.</span><span class="n">insert_ndarray_param</span><span class="p">(</span><span class="n">element_type</span><span class="p">,</span> <span class="n">ndim</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">needs_grad</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">AnyArray</span><span class="p">(</span><span class="n">_ti_core</span><span class="o">.</span><span class="n">make_external_tensor_expr</span><span class="p">(</span><span class="n">element_type</span><span class="p">,</span> <span class="n">ndim</span><span class="p">,</span> <span class="n">arg_id</span><span class="p">,</span> <span class="n">needs_grad</span><span class="p">,</span> <span class="n">boundary</span><span class="p">))</span></div>
-
-
-
-<div class="viewcode-block" id="decl_texture_arg">
-<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel_arguments/index.html#gstaichi.lang.kernel_arguments.decl_texture_arg">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">decl_texture_arg</span><span class="p">(</span><span class="n">num_dimensions</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-    <span class="c1"># FIXME: texture_arg doesn&#39;t have element_shape so better separate them</span>
-    <span class="n">arg_id</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">compiling_callable</span><span class="o">.</span><span class="n">insert_texture_param</span><span class="p">(</span><span class="n">num_dimensions</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-    <span class="n">dbg_info</span> <span class="o">=</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">DebugInfo</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">get_current_src_info</span><span class="p">())</span>
-    <span class="k">return</span> <span class="n">TextureSampler</span><span class="p">(</span><span class="n">_ti_core</span><span class="o">.</span><span class="n">make_texture_ptr_expr</span><span class="p">(</span><span class="n">arg_id</span><span class="p">,</span> <span class="n">num_dimensions</span><span class="p">,</span> <span class="n">dbg_info</span><span class="p">),</span> <span class="n">num_dimensions</span><span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="decl_rw_texture_arg">
-<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel_arguments/index.html#gstaichi.lang.kernel_arguments.decl_rw_texture_arg">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">decl_rw_texture_arg</span><span class="p">(</span><span class="n">num_dimensions</span><span class="p">,</span> <span class="n">buffer_format</span><span class="p">,</span> <span class="n">lod</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-    <span class="c1"># FIXME: texture_arg doesn&#39;t have element_shape so better separate them</span>
-    <span class="n">arg_id</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">compiling_callable</span><span class="o">.</span><span class="n">insert_rw_texture_param</span><span class="p">(</span><span class="n">num_dimensions</span><span class="p">,</span> <span class="n">buffer_format</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-    <span class="n">dbg_info</span> <span class="o">=</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">DebugInfo</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">get_current_src_info</span><span class="p">())</span>
-    <span class="k">return</span> <span class="n">RWTextureAccessor</span><span class="p">(</span>
-        <span class="n">_ti_core</span><span class="o">.</span><span class="n">make_rw_texture_ptr_expr</span><span class="p">(</span><span class="n">arg_id</span><span class="p">,</span> <span class="n">num_dimensions</span><span class="p">,</span> <span class="n">buffer_format</span><span class="p">,</span> <span class="n">lod</span><span class="p">,</span> <span class="n">dbg_info</span><span class="p">),</span> <span class="n">num_dimensions</span>
-    <span class="p">)</span></div>
 
 
 

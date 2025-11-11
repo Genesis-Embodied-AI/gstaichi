@@ -339,7 +339,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.matrix</span><span class="w"> </span><span class="kn">import</span> <span class="n">MatrixType</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.struct</span><span class="w"> </span><span class="kn">import</span> <span class="n">StructType</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_gstaichi_type</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span><span class="p">,</span> <span class="n">ndarray_type</span><span class="p">,</span> <span class="n">primitive_types</span><span class="p">,</span> <span class="n">texture_type</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span><span class="p">,</span> <span class="n">ndarray_type</span><span class="p">,</span> <span class="n">primitive_types</span>
 
 
 <div class="viewcode-block" id="FunctionDefTransformer">
@@ -385,15 +385,6 @@
                     <span class="n">needs_grad</span><span class="p">,</span>
                     <span class="n">BoundaryMode</span><span class="p">(</span><span class="n">boundary</span><span class="p">),</span>
                 <span class="p">),</span>
-            <span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">texture_type</span><span class="o">.</span><span class="n">TextureType</span><span class="p">):</span>
-            <span class="k">assert</span> <span class="n">this_arg_features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="p">(</span><span class="n">kernel_arguments</span><span class="o">.</span><span class="n">decl_texture_arg</span><span class="p">,</span> <span class="p">(</span><span class="n">this_arg_features</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">full_name</span><span class="p">))</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">texture_type</span><span class="o">.</span><span class="n">RWTextureType</span><span class="p">):</span>
-            <span class="k">assert</span> <span class="n">this_arg_features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="p">(</span>
-                <span class="n">kernel_arguments</span><span class="o">.</span><span class="n">decl_rw_texture_arg</span><span class="p">,</span>
-                <span class="p">(</span><span class="n">this_arg_features</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">this_arg_features</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">this_arg_features</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">full_name</span><span class="p">),</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">MatrixType</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">kernel_arguments</span><span class="o">.</span><span class="n">decl_matrix_arg</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>

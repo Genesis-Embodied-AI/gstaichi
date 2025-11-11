@@ -27,7 +27,6 @@ Submodules
    /autoapi/gstaichi/types/ndarray_type/index
    /autoapi/gstaichi/types/primitive_types/index
    /autoapi/gstaichi/types/quant/index
-   /autoapi/gstaichi/types/texture_type/index
    /autoapi/gstaichi/types/utils/index
 
 
