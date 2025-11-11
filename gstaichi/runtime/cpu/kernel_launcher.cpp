@@ -16,34 +16,29 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
   const auto &parameters = launcher_ctx.parameters;
   for (int i = 0; i < (int)parameters.size(); i++) {
     const auto &kv = parameters[i];
-    const auto &key = kv.first;
+    const auto &arg_id = kv.first;
     const auto &parameter = kv.second;
-    std::vector<int> data_ptr_idx = key;
-    data_ptr_idx.push_back(TypeFactory::DATA_PTR_POS_IN_NDARRAY);
-    std::vector<int> grad_ptr_idx = key;
-    grad_ptr_idx.push_back(TypeFactory::GRAD_PTR_POS_IN_NDARRAY);
+    if (parameter.is_array) {
+      void *data_ptr =
+          ctx.array_ptrs[{arg_id, TypeFactory::DATA_PTR_POS_IN_NDARRAY}];
+      void *grad_ptr =
+          ctx.array_ptrs[{arg_id, TypeFactory::GRAD_PTR_POS_IN_NDARRAY}];
 
-    if (parameter.is_array && ctx.device_allocation_type[key] ==
-                                  LaunchContextBuilder::DevAllocType::kNone) {
-      ctx.set_ndarray_ptrs(key, (uint64)ctx.array_ptrs[data_ptr_idx],
-                           (uint64)ctx.array_ptrs[grad_ptr_idx]);
-    }
-    if (parameter.is_array &&
-        ctx.device_allocation_type[key] !=
-            LaunchContextBuilder::DevAllocType::kNone &&
-        ctx.array_runtime_sizes[key] > 0) {
-      DeviceAllocation *ptr =
-          static_cast<DeviceAllocation *>(ctx.array_ptrs[data_ptr_idx]);
-      uint64 host_ptr = (uint64)executor->get_device_alloc_info_ptr(*ptr);
-      ctx.set_array_device_allocation_type(
-          key, LaunchContextBuilder::DevAllocType::kNone);
-
-      auto grad_ptr = ctx.array_ptrs[grad_ptr_idx];
-      uint64 host_ptr_grad =
-          grad_ptr == nullptr ? 0
-                              : (uint64)executor->get_device_alloc_info_ptr(
-                                    *static_cast<DeviceAllocation *>(grad_ptr));
-      ctx.set_ndarray_ptrs(key, host_ptr, host_ptr_grad);
+      if (ctx.device_allocation_type[arg_id] ==
+          LaunchContextBuilder::DevAllocType::kNone) {
+        ctx.set_ndarray_ptrs(arg_id, (uint64)data_ptr, (uint64)grad_ptr);
+      } else if (ctx.array_runtime_sizes[arg_id] > 0) {
+        uint64 host_ptr = (uint64)executor->get_device_alloc_info_ptr(
+            *static_cast<DeviceAllocation *>(data_ptr));
+        ctx.set_array_device_allocation_type(
+            arg_id, LaunchContextBuilder::DevAllocType::kNone);
+        uint64 host_ptr_grad =
+            grad_ptr == nullptr
+                ? 0
+                : (uint64)executor->get_device_alloc_info_ptr(
+                      *static_cast<DeviceAllocation *>(grad_ptr));
+        ctx.set_ndarray_ptrs(arg_id, host_ptr, host_ptr_grad);
+      }
     }
   }
   for (auto task : launcher_ctx.task_funcs) {

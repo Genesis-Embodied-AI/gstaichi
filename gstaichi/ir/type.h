@@ -332,6 +332,9 @@ class TI_DLL_EXPORT AbstractDictionaryType : public Type {
     return this;
   }
 
+  template <std::size_t N>
+  const Type *get_element_type(const std::array<int, N> &indices) const;
+
   const Type *get_element_type(const std::vector<int> &indices) const;
 
   TI_IO_DEF(elements_, layout_);
@@ -350,6 +353,9 @@ class TI_DLL_EXPORT StructType : public AbstractDictionaryType {
   }
 
   std::string to_string() const override;
+
+  template <std::size_t N>
+  size_t get_element_offset(const std::array<int, N> &indices) const;
 
   size_t get_element_offset(const std::vector<int> &indices) const;
 
