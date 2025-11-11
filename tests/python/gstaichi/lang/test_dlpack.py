@@ -1,8 +1,9 @@
 import pytest
-from tests import test_utils
-import gstaichi as ti
 import torch
 
+import gstaichi as ti
+
+from tests import test_utils
 
 dlpack_arch = [ti.cpu, ti.cuda]
 dlpack_ineligible_arch = [ti.metal, ti.vulkan]
