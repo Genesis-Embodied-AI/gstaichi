@@ -72,9 +72,9 @@ class HostDeviceContextBlitter {
             void *device_arr_ptr{nullptr};
             TI_ASSERT(device_->map(buffer, &device_arr_ptr) ==
                       RhiResult::success);
-            const void *host_ptr =
-                host_ctx_
-                    .array_ptrs[{arg_id, TypeFactory::DATA_PTR_POS_IN_NDARRAY}];
+            ArgArrayPtrKey data_ptr_idx{arg_id,
+                                        TypeFactory::DATA_PTR_POS_IN_NDARRAY};
+            const void *host_ptr = host_ctx_.array_ptrs[data_ptr_idx];
             std::memcpy(device_arr_ptr, host_ptr, ext_arr_size.at(arg_id));
             device_->unmap(buffer);
           }
@@ -87,12 +87,12 @@ class HostDeviceContextBlitter {
                  LaunchContextBuilder::DevAllocType::kNdarray) &&
             device_->get_caps().get(
                 DeviceCapability::spirv_has_physical_storage_buffer)) {
+          ArgArrayPtrKey grad_ptr_idx{arg_id,
+                                      TypeFactory::GRAD_PTR_POS_IN_NDARRAY};
           uint64_t addr =
               device_->get_memory_physical_pointer(ext_arrays.at(arg_id));
           host_ctx_.set_ndarray_ptrs(
-              arg_id, addr,
-              (uint64)host_ctx_
-                  .array_ptrs[{arg_id, TypeFactory::GRAD_PTR_POS_IN_NDARRAY}]);
+              arg_id, addr, (uint64)host_ctx_.array_ptrs[grad_ptr_idx]);
         }
       }
     }
