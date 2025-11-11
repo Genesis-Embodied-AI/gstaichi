@@ -38,6 +38,10 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
   }
 #endif  // TI_WITH_CUDA
 
+  if(raw_ptr == nullptr) {
+    TI_ERROR("Unsupported device type for DLPack conversion");
+  }
+
   std::vector<int> ndarray_shape = ndarray->total_shape();
   int ndim = ndarray_shape.size();
 

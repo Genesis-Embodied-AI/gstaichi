@@ -4,7 +4,11 @@ import gstaichi as ti
 import torch
 
 
-@test_utils.test()
+dlpack_arch = [ti.cpu, ti.cuda]
+dlpack_ineligible_arch = [ti.metal, ti.vulkan]
+
+
+@test_utils.test(arch=dlpack_arch)
 @pytest.mark.parametrize(
     "dtype", [ti.i32, ti.i64, ti.f32, ti.f64, ti.u1]
 )
@@ -36,7 +40,7 @@ def test_ndarray_dlpack_types(dtype, shape: tuple[int], poses: list[tuple[int, .
         assert tt[pos] != 0
 
 
-@test_utils.test()
+@test_utils.test(arch=dlpack_arch)
 def test_ndarray_dlpack_mem_stays_alloced() -> None:
     def create_tensor(shape, dtype):
         nd = ti.ndarray(dtype, shape)
@@ -45,3 +49,14 @@ def test_ndarray_dlpack_mem_stays_alloced() -> None:
     t = create_tensor((3, 2), ti.i32)
     # will crash if memory already deleted
     assert t[0, 0] == 0
+
+
+@test_utils.test(arch=dlpack_ineligible_arch)
+def test_refuses_ineligible_arch() -> None:
+    def create_tensor(shape, dtype):
+        nd = ti.ndarray(dtype, shape)
+        tt = torch.utils.dlpack.from_dlpack(nd.to_dlpack())
+        return tt
+    with pytest.raises(RuntimeError):
+        t = create_tensor((3, 2), ti.i32)
+        assert t[0, 0]
