@@ -948,7 +948,7 @@
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/impl/index.html#gstaichi.lang.impl.deactivate_all_snodes">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">deactivate_all_snodes</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Recursively deactivate all SNodes.&quot;&quot;&quot;</span>
-    <span class="k">for</span> <span class="n">root_fb</span> <span class="ow">in</span> <span class="n">FieldsBuilder</span><span class="o">.</span><span class="n">_finalized_roots</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">root_fb</span> <span class="ow">in</span> <span class="n">fields_builder</span><span class="o">.</span><span class="n">FieldsBuilder</span><span class="o">.</span><span class="n">_finalized_roots</span><span class="p">():</span>
         <span class="n">root_fb</span><span class="o">.</span><span class="n">deactivate_all</span><span class="p">()</span></div>
 
 
@@ -959,19 +959,19 @@
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">parent</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Same as :func:`gstaichi.SNode.parent`&quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_root_fb</span><span class="p">,</span> <span class="n">FieldsBuilder</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_root_fb</span><span class="p">,</span> <span class="n">fields_builder</span><span class="o">.</span><span class="n">FieldsBuilder</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_root_fb</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">parent</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_loop_range</span><span class="p">():</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Same as :func:`gstaichi.SNode.loop_range`&quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_root_fb</span><span class="p">,</span> <span class="n">FieldsBuilder</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_root_fb</span><span class="p">,</span> <span class="n">fields_builder</span><span class="o">.</span><span class="n">FieldsBuilder</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_root_fb</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_loop_range</span><span class="p">()</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_children</span><span class="p">():</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Same as :func:`gstaichi.SNode.get_children`&quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_root_fb</span><span class="p">,</span> <span class="n">FieldsBuilder</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_root_fb</span><span class="p">,</span> <span class="n">fields_builder</span><span class="o">.</span><span class="n">FieldsBuilder</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_root_fb</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_get_children</span><span class="p">()</span>
 
     <span class="c1"># TODO: Record all of the SNodeTrees that finalized under &#39;ti.root&#39;</span>
@@ -983,12 +983,12 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Same as :func:`gstaichi.SNode.shape`&quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_root_fb</span><span class="p">,</span> <span class="n">FieldsBuilder</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_root_fb</span><span class="p">,</span> <span class="n">fields_builder</span><span class="o">.</span><span class="n">FieldsBuilder</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_root_fb</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">shape</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_root_fb</span><span class="p">,</span> <span class="n">FieldsBuilder</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_root_fb</span><span class="p">,</span> <span class="n">fields_builder</span><span class="o">.</span><span class="n">FieldsBuilder</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_root_fb</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">_id</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
