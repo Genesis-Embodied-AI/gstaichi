@@ -340,7 +340,6 @@
 <li class="toctree-l3"><a class="reference internal" href="../../types/ndarray_type/index.html">gstaichi.types.ndarray_type</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../types/primitive_types/index.html">gstaichi.types.primitive_types</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../types/quant/index.html">gstaichi.types.quant</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../types/texture_type/index.html">gstaichi.types.texture_type</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../types/utils/index.html">gstaichi.types.utils</a></li>
 </ul>
 </details></li>
@@ -453,12 +452,6 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#gstaichi.lang.kernel_arguments.decl_ndarray_arg" title="gstaichi.lang.kernel_arguments.decl_ndarray_arg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">decl_ndarray_arg</span></code></a>(→ gstaichi.lang.any_array.AnyArray)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.kernel_arguments.decl_texture_arg" title="gstaichi.lang.kernel_arguments.decl_texture_arg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">decl_texture_arg</span></code></a>(num_dimensions, name)</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#gstaichi.lang.kernel_arguments.decl_rw_texture_arg" title="gstaichi.lang.kernel_arguments.decl_rw_texture_arg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">decl_rw_texture_arg</span></code></a>(num_dimensions, buffer_format, ...)</p></td>
-<td><p></p></td>
-</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.kernel_arguments.decl_ret" title="gstaichi.lang.kernel_arguments.decl_ret"><code class="xref py py-obj docutils literal notranslate"><span class="pre">decl_ret</span></code></a>(dtype)</p></td>
 <td><p></p></td>
 </tr>
@@ -565,16 +558,6 @@
 <dd></dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="gstaichi.lang.kernel_arguments.decl_texture_arg">
-<span class="sig-prename descclassname"><span class="pre">gstaichi.lang.kernel_arguments.</span></span><span class="sig-name descname"><span class="pre">decl_texture_arg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_dimensions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel_arguments.html#decl_texture_arg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel_arguments.decl_texture_arg" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="gstaichi.lang.kernel_arguments.decl_rw_texture_arg">
-<span class="sig-prename descclassname"><span class="pre">gstaichi.lang.kernel_arguments.</span></span><span class="sig-name descname"><span class="pre">decl_rw_texture_arg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_dimensions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_format</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lod</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel_arguments.html#decl_rw_texture_arg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel_arguments.decl_rw_texture_arg" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="gstaichi.lang.kernel_arguments.decl_ret">
 <span class="sig-prename descclassname"><span class="pre">gstaichi.lang.kernel_arguments.</span></span><span class="sig-name descname"><span class="pre">decl_ret</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel_arguments.html#decl_ret"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel_arguments.decl_ret" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
@@ -657,8 +640,6 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel_arguments.decl_struct_arg"><code class="docutils literal notranslate"><span class="pre">decl_struct_arg()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel_arguments.decl_sparse_matrix"><code class="docutils literal notranslate"><span class="pre">decl_sparse_matrix()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel_arguments.decl_ndarray_arg"><code class="docutils literal notranslate"><span class="pre">decl_ndarray_arg()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel_arguments.decl_texture_arg"><code class="docutils literal notranslate"><span class="pre">decl_texture_arg()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel_arguments.decl_rw_texture_arg"><code class="docutils literal notranslate"><span class="pre">decl_rw_texture_arg()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel_arguments.decl_ret"><code class="docutils literal notranslate"><span class="pre">decl_ret()</span></code></a></li>
 </ul>
 </li>
