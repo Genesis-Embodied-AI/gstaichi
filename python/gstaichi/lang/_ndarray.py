@@ -38,6 +38,9 @@ class Ndarray:
         # we register with runtime, in order to enable reset to work later
         impl.get_runtime().ndarrays.add(self)
 
+    def to_dlpack(self):
+        return impl.get_runtime().prog.ndarray_to_dlpack(self, self.arr)
+
     def _reset(self):
         """
         Called by runtime, when we call ti.reset()
@@ -266,9 +269,6 @@ class ScalarNdarray(Ndarray):
         )
         self.shape = tuple(self.arr.shape)
         self.element_type = dtype
-
-    def to_dlpack(self):
-        return impl.get_runtime().prog.ndarray_to_dlpack(self, self.arr)
 
     def __del__(self):
         if impl is not None and impl.get_runtime is not None and impl.get_runtime() is not None:

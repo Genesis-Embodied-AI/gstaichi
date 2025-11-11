@@ -38,7 +38,7 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
   }
 #endif  // TI_WITH_CUDA
 
-  if(raw_ptr == nullptr) {
+  if (raw_ptr == nullptr) {
     TI_ERROR("Unsupported device type for DLPack conversion");
   }
 

@@ -8,19 +8,24 @@ dlpack_arch = [ti.cpu, ti.cuda]
 dlpack_ineligible_arch = [ti.metal, ti.vulkan]
 
 
+def ti_to_torch(ti_tensor: ti.types.NDArray) -> torch.Tensor:
+    cap = ti_tensor.to_dlpack()
+    torch_tensor = torch.utils.dlpack.from_dlpack(cap)
+    return torch_tensor
+
+
 @test_utils.test(arch=dlpack_arch)
+@pytest.mark.parametrize("dtype", [ti.i32, ti.i64, ti.f32, ti.f64, ti.u1])
 @pytest.mark.parametrize(
-    "dtype", [ti.i32, ti.i64, ti.f32, ti.f64, ti.u1]
-)
-@pytest.mark.parametrize(
-    "shape,poses", [
+    "shape,poses",
+    [
         ((), [()]),
         ((3,), [(0,), (2,)]),
         ((3, 2), [(0, 0), (2, 1), (1, 1)]),
         ((3, 1, 2), [(2, 0, 1), (0, 0, 1)]),
-    ]
+    ],
 )
-def test_ndarray_dlpack_types(dtype, shape: tuple[int], poses: list[tuple[int, ...]]) -> None:
+def test_dlpack_ndarray_types(dtype, shape: tuple[int], poses: list[tuple[int, ...]]) -> None:
     ndarray = ti.ndarray(dtype, shape)
     for i, pos in enumerate(poses):
         ndarray[pos] = i * 10 + 10
@@ -32,7 +37,7 @@ def test_ndarray_dlpack_types(dtype, shape: tuple[int], poses: list[tuple[int, .
         ti.i64: torch.int64,
         ti.f32: torch.float32,
         ti.f64: torch.float64,
-        ti.u1: torch.bool
+        ti.u1: torch.bool,
     }[dtype]
     assert tt.dtype == expected_torch_type
     for i, pos in enumerate(poses):
@@ -41,11 +46,12 @@ def test_ndarray_dlpack_types(dtype, shape: tuple[int], poses: list[tuple[int, .
 
 
 @test_utils.test(arch=dlpack_arch)
-def test_ndarray_dlpack_mem_stays_alloced() -> None:
+def test_dlpack_ndarray_mem_stays_alloced() -> None:
     def create_tensor(shape, dtype):
         nd = ti.ndarray(dtype, shape)
         tt = torch.utils.dlpack.from_dlpack(nd.to_dlpack())
         return tt
+
     t = create_tensor((3, 2), ti.i32)
     # will crash if memory already deleted
     assert t[0, 0] == 0
@@ -57,6 +63,47 @@ def test_refuses_ineligible_arch() -> None:
         nd = ti.ndarray(dtype, shape)
         tt = torch.utils.dlpack.from_dlpack(nd.to_dlpack())
         return tt
+
     with pytest.raises(RuntimeError):
         t = create_tensor((3, 2), ti.i32)
         t[0, 0]
+
+
+@test_utils.test(arch=dlpack_arch)
+def test_dlpack_ndarray_vec3():
+    vec3 = ti.types.vector(3, ti.f32)
+    a = ti.ndarray(vec3, shape=(10, 3))
+    a[0, 0] = (5, 4, 3)
+    a[0, 1] = (7, 8, 9)
+    a[1, 0] = (11, 12, 13)
+    tt = ti_to_torch(a)
+    assert tuple(tt.shape) == (10, 3, 3)
+    assert tt.dtype == torch.float32
+    assert tt[0, 0, 0] == 5
+    assert tt[0, 0, 1] == 4
+    assert tt[0, 0, 2] == 3
+    assert tt[0, 1, 0] == 7
+    assert tt[0, 1, 1] == 8
+    assert tt[0, 1, 2] == 9
+    assert tt[1, 0, 0] == 11
+    assert tt[1, 0, 1] == 12
+    assert tt[1, 0, 2] == 13
+
+
+@test_utils.test(arch=dlpack_arch)
+def test_dlpack_ndarray_mat2x3():
+    vec3 = ti.types.matrix(2, 3, ti.f32)
+    a = ti.ndarray(vec3, shape=(10, 3))
+    a[0, 0] = ((5, 4, 1), (3, 2, 20))
+    a[0, 1] = ((7, 8, 21), (9, 10, 22))
+    a[1, 0] = ((11, 12, 23), (13, 14, 23))
+    tt = ti_to_torch(a)
+    assert tuple(tt.shape) == (10, 3, 2, 3)
+    assert tt.dtype == torch.float32
+    assert tt[0, 0, 0, 0] == 5
+    assert tt[0, 0, 0, 1] == 4
+    assert tt[0, 0, 0, 2] == 1
+    assert tt[0, 0, 1, 0] == 3
+    assert tt[0, 0, 1, 1] == 2
+    assert tt[0, 0, 1, 2] == 20
+    assert tt[0, 1, 1, 1] == 10
