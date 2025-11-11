@@ -11,7 +11,7 @@
 
 namespace gstaichi {
 namespace lang {
-pybind11::capsule dlpack_dump_ndarray_info(Program *program, Ndarray *ndarray) {
+pybind11::capsule ndarray_to_dlpack(Program *program, Ndarray *ndarray) {
     // std::cout << "dump_ndarray_info" << std::endl;
   // std::cout << ndarray->read_int({0, 0}) << std::endl;
   // int *data_ptr = reinterpret_cast<int *>(get_ndarray_data_ptr

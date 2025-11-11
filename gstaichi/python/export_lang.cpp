@@ -363,12 +363,9 @@ void export_lang(py::module &m) {
 
   py::class_<Program>(m, "Program")
       .def(py::init<>())
-      // .def("dump_ndarray_info", &Program::dump_ndarray_info)
-      .def("dump_ndarray_info",
+      .def("ndarray_to_dlpack",
         [](Program *program, Ndarray *ndarray) {
-          return dlpack_dump_ndarray_info(program, ndarray);
-          // MyData *data = program->dump_ndarray_info(ndarray);
-          // std::cout << "my data " << (void *)data << std::endl;
+          return ndarray_to_dlpack(program, ndarray);
         })
       .def("config", &Program::compile_config,
            py::return_value_policy::reference)
