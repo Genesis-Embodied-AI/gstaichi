@@ -75,14 +75,6 @@ struct TaskAttributes {
     TI_IO_DEF(buffer, binding);
   };
 
-  struct TextureBind {
-    std::vector<int> arg_id;
-    int binding{0};
-    bool is_storage{false};
-
-    TI_IO_DEF(arg_id, binding, is_storage);
-  };
-
   std::string name;
   std::string source_path;
   // Total number of threads to launch (i.e. threads per grid). Note that this
@@ -111,7 +103,6 @@ struct TaskAttributes {
     TI_IO_DEF(begin, end, const_begin, const_end);
   };
   std::vector<BufferBind> buffer_binds;
-  std::vector<TextureBind> texture_binds;
   // Only valid when |task_type| is range_for.
   std::optional<RangeForAttributes> range_for_attribs;
 
@@ -124,7 +115,6 @@ struct TaskAttributes {
             advisory_num_threads_per_group,
             task_type,
             buffer_binds,
-            texture_binds,
             range_for_attribs);
 };
 
@@ -161,9 +151,6 @@ class KernelContextAttributes {
     bool is_array{false};
     std::vector<int> element_shape;
     std::size_t field_dim{0};
-    // Only used with textures. Sampled textures always have unknown format;
-    // while RW textures always have a valid format.
-    BufferFormat format{BufferFormat::unknown};
     ParameterType ptype{ParameterType::kUnknown};
 
     TI_IO_DEF(name,
@@ -173,7 +160,6 @@ class KernelContextAttributes {
               is_array,
               element_shape,
               field_dim,
-              format,
               ptype);
   };
 
@@ -193,7 +179,6 @@ class KernelContextAttributes {
               is_array,
               element_shape,
               field_dim,
-              format,
               ptype);
   };
 
@@ -212,7 +197,6 @@ class KernelContextAttributes {
               is_array,
               element_shape,
               field_dim,
-              format,
               ptype);
   };
 

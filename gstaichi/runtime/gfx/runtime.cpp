@@ -404,9 +404,6 @@ void GfxRuntime::launch_kernel(KernelHandle handle,
   std::unordered_map<std::vector<int>, size_t,
                      hashing::Hasher<std::vector<int>>>
       ext_array_size;
-  std::unordered_map<std::vector<int>, DeviceAllocation,
-                     hashing::Hasher<std::vector<int>>>
-      textures;
 
   // Prepare context buffers & arrays
   if (ctx_blitter) {
@@ -437,12 +434,6 @@ void GfxRuntime::launch_kernel(KernelHandle handle,
               LaunchContextBuilder::DevAllocType::kNdarray) {
             any_arrays[indices] = devalloc;
             ndarrays_in_use_.insert(devalloc.alloc_id);
-          } else if (host_ctx.device_allocation_type[indices] ==
-                     LaunchContextBuilder::DevAllocType::kTexture) {
-            textures[indices] = devalloc;
-          } else if (host_ctx.device_allocation_type[indices] ==
-                     LaunchContextBuilder::DevAllocType::kRWTexture) {
-            textures[indices] = devalloc;
           } else {
             TI_NOT_IMPLEMENTED;
           }
@@ -501,17 +492,6 @@ void GfxRuntime::launch_kernel(KernelHandle handle,
         DeviceAllocation *alloc = ti_kernel->get_buffer_bind(bind.buffer);
         bindings->rw_buffer(bind.binding,
                             alloc ? *alloc : kDeviceNullAllocation);
-      }
-    }
-
-    for (auto &bind : attribs.texture_binds) {
-      DeviceAllocation texture = textures.at(bind.arg_id);
-      if (bind.is_storage) {
-        transition_image(texture, ImageLayout::shader_read_write);
-        bindings->rw_image(bind.binding, texture, 0);
-      } else {
-        transition_image(texture, ImageLayout::shader_read);
-        bindings->image(bind.binding, texture, {});
       }
     }
 
@@ -574,40 +554,6 @@ void GfxRuntime::buffer_copy(DevicePtr dst, DevicePtr src, size_t size) {
   current_cmdlist_->buffer_barrier(src);
   current_cmdlist_->buffer_copy(dst, src, size);
   current_cmdlist_->buffer_barrier(dst);
-}
-
-void GfxRuntime::copy_image(DeviceAllocation dst,
-                            DeviceAllocation src,
-                            const ImageCopyParams &params) {
-  ensure_current_cmdlist();
-  transition_image(dst, ImageLayout::transfer_dst);
-  transition_image(src, ImageLayout::transfer_src);
-  current_cmdlist_->copy_image(dst, src, ImageLayout::transfer_dst,
-                               ImageLayout::transfer_src, params);
-  transition_image(dst, ImageLayout::transfer_src);
-}
-
-DeviceAllocation GfxRuntime::create_image(const ImageParams &params) {
-  GraphicsDevice *gfx_device = dynamic_cast<GraphicsDevice *>(device_);
-  TI_ERROR_IF(gfx_device == nullptr,
-              "Image can only be created on a graphics device");
-  DeviceAllocation image = gfx_device->create_image(params);
-  track_image(image, ImageLayout::undefined);
-  last_image_layouts_.at(image.alloc_id) = params.initial_layout;
-  return image;
-}
-
-void GfxRuntime::track_image(DeviceAllocation image, ImageLayout layout) {
-  last_image_layouts_[image.alloc_id] = layout;
-}
-void GfxRuntime::untrack_image(DeviceAllocation image) {
-  last_image_layouts_.erase(image.alloc_id);
-}
-void GfxRuntime::transition_image(DeviceAllocation image, ImageLayout layout) {
-  ImageLayout &last_layout = last_image_layouts_.at(image.alloc_id);
-  ensure_current_cmdlist();
-  current_cmdlist_->image_transition(image, last_layout, layout);
-  last_layout = layout;
 }
 
 void GfxRuntime::synchronize() {
@@ -746,7 +692,6 @@ void GfxRuntime::enqueue_compute_op_lambda(
   for (const auto &ref : image_refs) {
     TI_ASSERT(last_image_layouts_.find(ref.image.alloc_id) !=
               last_image_layouts_.end());
-    transition_image(ref.image, ref.initial_layout);
   }
 
   ensure_current_cmdlist();

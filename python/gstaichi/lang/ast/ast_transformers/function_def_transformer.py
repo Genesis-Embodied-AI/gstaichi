@@ -27,7 +27,7 @@ from gstaichi.lang.exception import (
 from gstaichi.lang.matrix import MatrixType
 from gstaichi.lang.struct import StructType
 from gstaichi.lang.util import to_gstaichi_type
-from gstaichi.types import annotations, ndarray_type, primitive_types, texture_type
+from gstaichi.types import annotations, ndarray_type, primitive_types
 
 
 class FunctionDefTransformer:
@@ -71,15 +71,6 @@ class FunctionDefTransformer:
                     needs_grad,
                     BoundaryMode(boundary),
                 ),
-            )
-        if isinstance(annotation, texture_type.TextureType):
-            assert this_arg_features is not None
-            return False, (kernel_arguments.decl_texture_arg, (this_arg_features[0], full_name))
-        if isinstance(annotation, texture_type.RWTextureType):
-            assert this_arg_features is not None
-            return False, (
-                kernel_arguments.decl_rw_texture_arg,
-                (this_arg_features[0], this_arg_features[1], this_arg_features[2], full_name),
             )
         if isinstance(annotation, MatrixType):
             return True, kernel_arguments.decl_matrix_arg(annotation, name)

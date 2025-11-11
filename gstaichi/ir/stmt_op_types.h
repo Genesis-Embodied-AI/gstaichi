@@ -93,14 +93,4 @@ enum class SNodeOpType : int {
 
 std::string snode_op_type_name(SNodeOpType type);
 
-enum class TextureOpType : int {
-  kUndefined,
-  kSampleLod,
-  kFetchTexel,
-  kLoad,
-  kStore
-};
-
-std::string texture_op_type_name(TextureOpType type);
-
 }  // namespace gstaichi::lang

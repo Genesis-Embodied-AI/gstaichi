@@ -53,34 +53,10 @@ std::vector<int> Callable::insert_ndarray_param(const DataType &dt,
   return add_parameter(p);
 }
 
-std::vector<int> Callable::insert_texture_param(int total_dim,
-                                                const std::string &name) {
-  // FIXME: we shouldn't abuse is_array for texture parameters
-  // FIXME: using rwtexture struct type for texture parameters because C-API
-  // does not distinguish between texture and rwtexture.
-  auto *type = TypeFactory::get_instance().get_rwtexture_struct_type();
-  auto p = Parameter(type, /*is_array=*/true, 0, total_dim, std::vector<int>{});
-  p.name = name;
-  p.ptype = ParameterType::kTexture;
-  return add_parameter(p);
-}
-
 std::vector<int> Callable::insert_pointer_param(const DataType &dt,
                                                 const std::string &name) {
   auto p = Parameter(dt->get_compute_type(), /*is_array=*/true);
   p.name = name;
-  return add_parameter(p);
-}
-
-std::vector<int> Callable::insert_rw_texture_param(int total_dim,
-                                                   BufferFormat format,
-                                                   const std::string &name) {
-  // FIXME: we shouldn't abuse is_array for texture parameters
-  auto *type = TypeFactory::get_instance().get_rwtexture_struct_type();
-  auto p = Parameter(type, /*is_array=*/true, 0, total_dim, std::vector<int>{},
-                     format);
-  p.name = name;
-  p.ptype = ParameterType::kRWTexture;
   return add_parameter(p);
 }
 

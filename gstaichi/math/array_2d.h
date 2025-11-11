@@ -729,52 +729,6 @@ class ArrayND<2, T> {
     fclose(f);
     return true;
   }
-
-  explicit ArrayND(const std::string &filename) {
-    load_image(filename);
-  }
-
-  void load_image(const std::string &filename, bool linearize = true);
-
-  void set_pixel(real x, real y, const T &pixel) {
-    x *= this->res[0];
-    y *= this->res[1];
-    x -= 0.5f;
-    y -= 0.5f;
-    int int_x = (int)x;
-    int int_y = (int)y;
-    if (int_x < 0 || int_x >= this->res[0] || int_y < 0 ||
-        int_y >= this->res[1])
-      return;
-    this->operator[](int_x)[int_y] = pixel;
-  }
-
-  T sample_as_texture(real x, real y, bool interp = true) {
-    x *= this->res[0];
-    y *= this->res[1];
-    x -= 0.5f;
-    y -= 0.5f;
-    x = clamp(x, 0.0_f, this->res[0] - 1.0_f);
-    y = clamp(y, 0.0_f, this->res[1] - 1.0_f);
-    int ix = clamp(int(x), 0, this->res[0] - 2);
-    int iy = clamp(int(y), 0, this->res[1] - 2);
-    if (!interp) {
-      x = real(ix);
-      y = real(iy);
-    }
-    T x_0 = lerp(y - iy, (*this)[ix][iy], (*this)[ix][iy + 1]);
-    T x_1 = lerp(y - iy, (*this)[ix + 1][iy], (*this)[ix + 1][iy + 1]);
-    return lerp(x - ix, x_0, x_1);
-  }
-
-  void write_as_image(const std::string &filename);
-
-  void write_text(const std::string &font_fn,
-                  const std::string &content,
-                  real size,
-                  int dx,
-                  int dy,
-                  T color = T(1.0_f));
 };
 
 template <typename T>

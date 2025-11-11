@@ -1,7 +1,6 @@
 #pragma once
 #include <gstaichi/program/callable.h>
 #include "gstaichi/program/ndarray.h"
-#include "gstaichi/program/texture.h"
 #include "gstaichi/program/matrix.h"
 
 namespace gstaichi::lang {
@@ -13,8 +12,6 @@ class LaunchContextBuilder {
   enum class DevAllocType : int8_t {
     kNone = 0,
     kNdarray = 1,
-    kTexture = 2,
-    kRWTexture = 3
     // kArgPack = 4,
   };
 
@@ -110,13 +107,6 @@ class LaunchContextBuilder {
   void set_args_ndarray_with_grad(const std::vector<int> &args_id,
                                   const std::vector<Ndarray *> &arrs,
                                   const std::vector<Ndarray *> &arrs_grad);
-
-  void set_arg_texture_impl(const std::vector<int> &arg_id, intptr_t alloc_ptr);
-  void set_arg_texture(const std::vector<int> &arg_id, const Texture &tex);
-  void set_arg_rw_texture_impl(const std::vector<int> &arg_id,
-                               intptr_t alloc_ptr,
-                               const std::array<int, 3> &shape);
-  void set_arg_rw_texture(const std::vector<int> &arg_id, const Texture &tex);
 
   void set_arg_matrix(int arg_id, const Matrix &matrix);
 

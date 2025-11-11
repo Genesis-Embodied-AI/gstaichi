@@ -60,14 +60,7 @@ T gstaichi_union_cast(G g) {
   return gstaichi_union_cast_with_different_sizes<T>(g);
 }
 
-enum class ParameterType {
-  kScalar,
-  kNdarray,
-  kTexture,
-  kRWTexture,
-  kTensor,
-  kUnknown
-};
+enum class ParameterType { kScalar, kNdarray, kTensor, kUnknown };
 
 enum class ExternalArrayLayout { kAOS, kSOA, kNull };
 

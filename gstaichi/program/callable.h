@@ -58,7 +58,7 @@ class TI_DLL_EXPORT CallableBase {
                        BufferFormat format = BufferFormat::unknown,
                        bool needs_grad = false) {
       // TODO: Currently dt is only PrimitiveType or StructType for
-      // ndarray/texture/matrix
+      // ndarray/matrix
       //       We should always keep it either PrimitiveType or TensorType. In
       //       other words, `get_type_for_kernel_args` which we currently do in
       //       Python should be delayed until finalize_params.
@@ -144,13 +144,8 @@ class TI_DLL_EXPORT Callable : public CallableBase {
                                         int ndim,
                                         const std::string &name = "",
                                         bool needs_grad = false);
-  std::vector<int> insert_texture_param(int total_dim,
-                                        const std::string &name = "");
   std::vector<int> insert_pointer_param(const DataType &dt,
                                         const std::string &name = "");
-  std::vector<int> insert_rw_texture_param(int total_dim,
-                                           BufferFormat format,
-                                           const std::string &name = "");
 
   int insert_ret(const DataType &dt);
 

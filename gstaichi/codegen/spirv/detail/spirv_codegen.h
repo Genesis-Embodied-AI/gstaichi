@@ -25,8 +25,6 @@ using BufferInfo = TaskAttributes::BufferInfo;
 using BufferBind = TaskAttributes::BufferBind;
 using BufferInfoHasher = TaskAttributes::BufferInfoHasher;
 
-using TextureBind = TaskAttributes::TextureBind;
-
 class TaskCodegen : public IRVisitor {
  public:
   struct Params {
@@ -86,8 +84,6 @@ class TaskCodegen : public IRVisitor {
   void visit(UnaryOpStmt *stmt) override;
   void visit(BinaryOpStmt *bin) override;
   void visit(TernaryOpStmt *tri) override;
-  void visit(TexturePtrStmt *stmt) override;
-  void visit(TextureOpStmt *stmt) override;
   void visit(InternalFuncStmt *stmt) override;
   void visit(AtomicOpStmt *stmt) override;
   void visit(IfStmt *if_stmt) override;
@@ -110,7 +106,6 @@ class TaskCodegen : public IRVisitor {
   void compile_args_struct();
   void compile_ret_struct();
   std::vector<BufferBind> get_buffer_binds();
-  std::vector<TextureBind> get_texture_binds();
   void push_loop_control_labels(spirv::Label continue_label,
                                 spirv::Label merge_label);
   void pop_loop_control_labels();
@@ -184,7 +179,6 @@ class TaskCodegen : public IRVisitor {
                      uint32_t,
                      BufferInfoTypeTupleHasher>
       buffer_binding_map_;
-  std::vector<TextureBind> texture_binds_;
   std::vector<spirv::Value> shared_array_binds_;
   spirv::Value kernel_function_;
   spirv::Label kernel_return_label_;

@@ -44,7 +44,6 @@ from gstaichi.lang import _kernel_impl_dataclass, impl, ops, runtime_ops
 from gstaichi.lang._fast_caching import src_hasher
 from gstaichi.lang._ndarray import Ndarray
 from gstaichi.lang._template_mapper import TemplateMapper
-from gstaichi.lang._texture import Texture
 from gstaichi.lang._wrap_inspect import FunctionSourceInfo, get_source_info_and_src
 from gstaichi.lang.any_array import AnyArray
 from gstaichi.lang.ast import (
@@ -73,7 +72,6 @@ from gstaichi.types import (
     primitive_types,
     sparse_matrix_builder,
     template,
-    texture_type,
 )
 from gstaichi.types.compound_types import CompoundType
 from gstaichi.types.enums import AutodiffMode, Layout
@@ -693,7 +691,7 @@ class _KernelBatchedArgType(IntEnum):
 _FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = _KernelBatchedArgType
 
 
-ArgsHash: TypeAlias = int
+ArgsHash: TypeAlias = tuple[int, ...]
 
 
 @dataclass
@@ -924,12 +922,6 @@ def _recursive_set_args(
         # Pass only the base pointer of the ti.types.sparse_matrix_builder() argument
         launch_ctx_buffer[_UINT].append((indices, v._get_ndarray_addr()))
         return 1, True
-    if needed_arg_basetype is texture_type.TextureType and isinstance(v, Texture):
-        launch_ctx.set_arg_texture(indices, v.tex)
-        return 1, False
-    if needed_arg_basetype is texture_type.RWTextureType and isinstance(v, Texture):
-        launch_ctx.set_arg_rw_texture(indices, v.tex)
-        return 1, False
     raise ValueError(f"Argument type mismatch. Expecting {needed_arg_type}, got {type(v)}.")
 
 
@@ -989,7 +981,7 @@ class Kernel:
         #   the launch context being stored in cache.
         # See 'launch_kernel' for details regarding the intended use of caching.
         self._launch_ctx_cache: dict[ArgsHash, KernelLaunchContext] = {}
-        self._launch_ctx_cache_tracker: dict[ArgsHash, list[ReferenceType[Ndarray]]] = {}
+        self._launch_ctx_cache_tracker: dict[ArgsHash, list[ReferenceType]] = {}
         self._prog_weakref: ReferenceType[Program] | None = None
 
     def ast_builder(self) -> ASTBuilder:
@@ -1047,10 +1039,7 @@ class Kernel:
                 else:
                     raise GsTaichiSyntaxError("GsTaichi kernels parameters must be type annotated")
             else:
-                if isinstance(
-                    annotation,
-                    (template, ndarray_type.NdarrayType, texture_type.TextureType, texture_type.RWTextureType),
-                ):
+                if isinstance(annotation, (template, ndarray_type.NdarrayType)):
                     pass
                 elif annotation is ndarray_type.NdarrayType:
                     # convert from ti.types.NDArray into ti.types.NDArray()
@@ -1259,11 +1248,10 @@ class Kernel:
         launch_ctx = t_kernel.make_launch_context()
         launch_ctx_cache: KernelLaunchContext | None = None
         launch_ctx_cache_tracker: list[ReferenceType] | None = None
-        args_hash: int | None = None
+        args_hash: ArgsHash = tuple(map(id, args))
         try:
-            args_hash = hash(args)
             launch_ctx_cache_tracker = self._launch_ctx_cache_tracker[args_hash]
-        except (TypeError, KeyError):
+        except KeyError:
             pass
         if not launch_ctx_cache_tracker:  # Empty or none
             launch_ctx_buffer: DefaultDict[_KernelBatchedArgType, list[tuple]] = defaultdict(list)

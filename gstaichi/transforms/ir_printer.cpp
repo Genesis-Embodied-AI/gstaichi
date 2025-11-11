@@ -532,25 +532,6 @@ class IRPrinter : public IRVisitor {
     dbg_info_printer_(stmt);
   }
 
-  void visit(TexturePtrStmt *stmt) override {
-    print("<*Texture> {} = {}", stmt->name(), stmt->arg_load_stmt->name());
-    dbg_info_printer_(stmt);
-  }
-
-  void visit(TextureOpStmt *stmt) override {
-    std::string args_string = "";
-    for (int i = 0; i < (int)stmt->args.size(); i++) {
-      args_string += fmt::format("{}", stmt->args[i]->name());
-      if (i + 1 < (int)stmt->args.size()) {
-        args_string += ", ";
-      }
-    }
-
-    print("<struct> {} = texture_{}({})", stmt->name(),
-          texture_op_type_name(stmt->op), args_string);
-    dbg_info_printer_(stmt);
-  }
-
   void visit(FrontendReturnStmt *stmt) override {
     print("{}{} : return [{}]", stmt->type_hint(), stmt->name(),
           expr_group_to_string(stmt->values));
