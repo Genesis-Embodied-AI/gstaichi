@@ -20,6 +20,10 @@ enum class TypeKind : int {
 #undef PER_TYPE_KIND
 };
 
+#define PER_TYPE_KIND(x) class x##Type;
+#include "gstaichi/inc/type_kind.inc.h"
+#undef PER_TYPE_KIND
+
 class TI_DLL_EXPORT Type {
  public:
   explicit Type(TypeKind type_kind) : type_kind(type_kind) {
@@ -34,17 +38,62 @@ class TI_DLL_EXPORT Type {
 
   template <typename T>
   const T *cast() const {
-    return dynamic_cast<const T *>(this);
+    // Note that `Type` is a concrete type, not to be confused with placeholder
+    // `x##Type` that we be replaced by the preprocessor. More specifically,
+    // `Type` is the base type of all the derived types that are listed in
+    // "gstaichi/inc/type_kind.inc.h", e.g. `PrimitiveType`, `PointerType`,
+    // `StructType` or `TensorType`. All these derived types can be implicitly
+    // upcasted in their base type `Type`, so calling this method is
+    // superfluous. Still, this method is supposed to mimic the behavior of
+    // `dynamic_cast`, so this special case must be handled separately.
+    if constexpr (std::is_same_v<typename std::remove_cv<T>::type, Type>) {
+      return this;
+    }
+
+    // This switch-case mechanism determines at runtime the correct branch based
+    // on the true derived type of the current instance. On its side, the inner
+    // branch is statically resolved at compile-time to either return downcasted
+    // `this` if the branch corresponds to requested type specified by the user,
+    // nullptr otherwise. This allows for mimicking the behavior of
+    // `dynamic_cast` without paying the cost and lack of portability of RTTI.
+    switch (static_cast<int>(type_kind)) {
+#define PER_TYPE_KIND(x)                                                       \
+  case static_cast<int>(TypeKind::x):                                          \
+    if constexpr (std::is_same_v<typename std::remove_cv<T>::type, x##Type>) { \
+      return static_cast<const T *>(this);                                     \
+    } else {                                                                   \
+      return nullptr;                                                          \
+    }
+#include "gstaichi/inc/type_kind.inc.h"
+#undef PER_TYPE_KIND
+      default:
+        return nullptr;
+    }
   }
 
   template <typename T>
   T *cast() {
-    return dynamic_cast<T *>(this);
+    if constexpr (std::is_same_v<typename std::remove_cv<T>::type, Type>) {
+      return this;
+    }
+    switch (static_cast<int>(type_kind)) {
+#define PER_TYPE_KIND(x)                                                       \
+  case static_cast<int>(TypeKind::x):                                          \
+    if constexpr (std::is_same_v<typename std::remove_cv<T>::type, x##Type>) { \
+      return static_cast<T *>(this);                                           \
+    } else {                                                                   \
+      return nullptr;                                                          \
+    }
+#include "gstaichi/inc/type_kind.inc.h"
+#undef PER_TYPE_KIND
+      default:
+        return nullptr;
+    }
   }
 
   template <typename T>
   T *as() {
-    auto p = dynamic_cast<T *>(this);
+    auto p = cast<T>();
     TI_ASSERT_INFO(p != nullptr, "Cannot treat {} as {}", this->to_string(),
                    typeid(T).name());
     return p;
@@ -52,7 +101,7 @@ class TI_DLL_EXPORT Type {
 
   template <typename T>
   const T *as() const {
-    auto p = dynamic_cast<const T *>(this);
+    auto p = cast<T>();
     TI_ASSERT_INFO(p != nullptr, "Cannot treat {} as {}", this->to_string(),
                    typeid(T).name());
     return p;
