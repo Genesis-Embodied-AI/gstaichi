@@ -13,7 +13,6 @@ from gstaichi.types.annotations import *  # type: ignore
 from gstaichi.types.compound_types import *  # type: ignore
 from gstaichi.types.ndarray_type import *  # type: ignore
 from gstaichi.types.primitive_types import *  # type: ignore
-from gstaichi.types.texture_type import *  # type: ignore
 from gstaichi.types.utils import *  # type: ignore
 
 __all__ = ["quant"]

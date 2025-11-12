@@ -127,8 +127,9 @@ const Type *TensorType::get_type() const {
   return TypeFactory::get_instance().get_tensor_type(shape_, element_);
 }
 
+template <std::size_t N>
 const Type *AbstractDictionaryType::get_element_type(
-    const std::vector<int> &indices) const {
+    const std::array<int, N> &indices) const {
   const Type *type_now = this;
   for (auto ind : indices) {
     if (auto tensor_type = type_now->cast<TensorType>()) {
@@ -141,6 +142,40 @@ const Type *AbstractDictionaryType::get_element_type(
     }
   }
   return type_now;
+}
+
+template const Type *AbstractDictionaryType::get_element_type(
+    const std::array<int, 1> &) const;
+template const Type *AbstractDictionaryType::get_element_type(
+    const std::array<int, 2> &) const;
+template const Type *AbstractDictionaryType::get_element_type(
+    const std::array<int, 3> &) const;
+
+template <std::size_t... I>
+constexpr auto vec_to_array(const std::vector<int> &v,
+                            std::index_sequence<I...>) {
+  return std::array<int, sizeof...(I)>{v[I]...};
+}
+
+const Type *AbstractDictionaryType::get_element_type(
+    const std::vector<int> &indices) const {
+  switch (indices.size()) {
+#define CASE(N)                                                \
+  case N: {                                                    \
+    return get_element_type(                                   \
+        vec_to_array(indices, std::make_index_sequence<N>{})); \
+  }
+    CASE(1)
+    CASE(2)
+    CASE(3)
+    CASE(4)
+    CASE(5)
+    CASE(6)
+    CASE(7)
+#undef CASE
+    default:
+      TI_NOT_IMPLEMENTED
+  }
 }
 
 std::string StructType::to_string() const {
@@ -156,20 +191,51 @@ std::string StructType::to_string() const {
   return s;
 }
 
-size_t StructType::get_element_offset(const std::vector<int> &indices) const {
-  const Type *type_now = this;
-  size_t offset = 0;
-  for (auto ind : indices) {
-    if (auto tensor_type = type_now->cast<TensorType>()) {
-      TI_ASSERT(ind < tensor_type->get_num_elements())
+template <std::size_t N>
+size_t StructType::get_element_offset(const std::array<int, N> &indices) const {
+  int ind = indices[0];
+  size_t offset = elements_[ind].offset;
+  const Type *type_now = elements_[ind].type;
+  for (int i = 1; i < indices.size(); i++) {
+    ind = indices[i];
+    if (auto struct_type = type_now->cast<StructType>()) {
+      offset += struct_type->elements_[ind].offset;
+      type_now = struct_type->elements_[ind].type;
+    } else {
+      auto tensor_type = type_now->as<TensorType>();
+      TI_ASSERT(ind < tensor_type->get_num_elements());
       offset += tensor_type->get_element_offset(ind);
       type_now = tensor_type->get_element_type();
-    } else {
-      offset += type_now->as<StructType>()->elements_[ind].offset;
-      type_now = type_now->as<StructType>()->elements_[ind].type;
     }
   }
   return offset;
+}
+
+template size_t StructType::get_element_offset(
+    const std::array<int, 1> &) const;
+template size_t StructType::get_element_offset(
+    const std::array<int, 2> &) const;
+template size_t StructType::get_element_offset(
+    const std::array<int, 3> &) const;
+
+size_t StructType::get_element_offset(const std::vector<int> &indices) const {
+  switch (indices.size()) {
+#define CASE(N)                                                \
+  case N: {                                                    \
+    return get_element_offset(                                 \
+        vec_to_array(indices, std::make_index_sequence<N>{})); \
+  }
+    CASE(1)
+    CASE(2)
+    CASE(3)
+    CASE(4)
+    CASE(5)
+    CASE(6)
+    CASE(7)
+#undef CASE
+    default:
+      TI_NOT_IMPLEMENTED
+  }
 }
 
 const Type *StructType::get_type() const {

@@ -37,12 +37,6 @@ DataType Expr::get_rvalue_type() const {
     }
     return unary->ret_type;
   }
-  if (auto texture_op = cast<TextureOpExpression>()) {
-    if (texture_op->op == TextureOpType::kStore) {
-      return texture_op->ret_type.ptr_removed();
-    }
-    return texture_op->ret_type;
-  }
   return expr->ret_type;
 }
 

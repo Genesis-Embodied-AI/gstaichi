@@ -1874,7 +1874,7 @@ void TaskCodeGenLLVM::visit(ExternalPtrStmt *stmt) {
   // Index into ndarray struct
   DataType operand_dtype = stmt->base_ptr->ret_type.ptr_removed()
                                ->as<StructType>()
-                               ->get_element_type({1})
+                               ->get_element_type(std::array<int, 1>{1})
                                ->as<PointerType>()
                                ->get_pointee_type();
   auto arg_type = operand_dtype;

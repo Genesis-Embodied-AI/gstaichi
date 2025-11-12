@@ -19,7 +19,7 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
   auto launcher_ctx = contexts_[handle.get_launch_id()];
   auto *executor = get_runtime_executor();
   auto *amdgpu_module = launcher_ctx.jit_module;
-  const auto &parameters = launcher_ctx.parameters;
+  const auto &parameters = *launcher_ctx.parameters;
   const auto &offloaded_tasks = launcher_ctx.offloaded_tasks;
 
   AMDGPUContext::get_instance().make_current();
@@ -39,19 +39,18 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
 
   for (int i = 0; i < (int)parameters.size(); i++) {
     const auto &kv = parameters[i];
-    const auto &key = kv.first;
+    const auto &arg_id = kv.first;
     const auto &parameter = kv.second;
     if (parameter.is_array) {
-      const auto arr_sz = ctx.array_runtime_sizes[key];
+      const auto arr_sz = ctx.array_runtime_sizes[arg_id];
       if (arr_sz == 0)
         continue;
-      std::vector<int> data_ptr_idx = key;
-      data_ptr_idx.push_back(TypeFactory::DATA_PTR_POS_IN_NDARRAY);
-      auto data_ptr = ctx.array_ptrs[data_ptr_idx];
-      std::vector<int> grad_ptr_idx = key;
-      grad_ptr_idx.push_back(TypeFactory::GRAD_PTR_POS_IN_NDARRAY);
 
-      if (ctx.device_allocation_type[key] ==
+      ArgArrayPtrKey data_ptr_idx{arg_id, TypeFactory::DATA_PTR_POS_IN_NDARRAY};
+      ArgArrayPtrKey grad_ptr_idx{arg_id, TypeFactory::GRAD_PTR_POS_IN_NDARRAY};
+      auto data_ptr = ctx.array_ptrs[data_ptr_idx];
+
+      if (ctx.device_allocation_type[arg_id] ==
           LaunchContextBuilder::DevAllocType::kNone) {
         if (on_amdgpu_device(data_ptr)) {
           device_ptrs[data_ptr_idx] = data_ptr;
@@ -65,7 +64,7 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
           AMDGPUDriver::get_instance().memcpy_host_to_device(
               (void *)device_ptrs[data_ptr_idx], data_ptr, arr_sz);
         }
-        ctx.set_ndarray_ptrs(key, (uint64)device_ptrs[data_ptr_idx],
+        ctx.set_ndarray_ptrs(arg_id, (uint64)device_ptrs[data_ptr_idx],
                              (uint64)ctx.array_ptrs[grad_ptr_idx]);
       } else if (arr_sz > 0) {  // why use arr_sz constrain?
         // Ndarray
@@ -73,7 +72,7 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
         // Unwrapped raw ptr on device
         device_ptrs[data_ptr_idx] = executor->get_device_alloc_info_ptr(*ptr);
 
-        ctx.set_ndarray_ptrs(key, (uint64)device_ptrs[data_ptr_idx],
+        ctx.set_ndarray_ptrs(arg_id, (uint64)device_ptrs[data_ptr_idx],
                              (uint64)ctx.array_ptrs[grad_ptr_idx]);
       }
     }
@@ -146,12 +145,11 @@ KernelLauncher::Handle KernelLauncher::register_llvm_kernel(
     auto *executor = get_runtime_executor();
 
     auto data = compiled.get_internal_data().compiled_data.clone();
-    auto parameters = compiled.get_internal_data().args;
     auto *jit_module = executor->create_jit_module(std::move(data.module));
 
     // Populate ctx
     ctx.jit_module = jit_module;
-    ctx.parameters = std::move(parameters);
+    ctx.parameters = &compiled.get_internal_data().args;
     ctx.offloaded_tasks = std::move(data.tasks);
 
     compiled.set_handle(handle);

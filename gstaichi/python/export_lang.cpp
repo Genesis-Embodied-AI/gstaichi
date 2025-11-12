@@ -338,7 +338,6 @@ void export_lang(py::module &m) {
       .def("insert_expr_stmt", &ASTBuilder::insert_expr_stmt)
       .def("insert_thread_idx_expr", &ASTBuilder::insert_thread_idx_expr)
       .def("insert_patch_idx_expr", &ASTBuilder::insert_patch_idx_expr)
-      .def("make_texture_op_expr", &ASTBuilder::make_texture_op_expr)
       .def("expand_exprs", &ASTBuilder::expand_exprs)
       .def("mesh_index_conversion", &ASTBuilder::mesh_index_conversion)
       .def("expr_subscript", &ASTBuilder::expr_subscript)
@@ -461,12 +460,6 @@ void export_lang(py::module &m) {
           py::arg("zero_fill") = false, py::arg("dbg_info") = DebugInfo(),
           py::return_value_policy::reference)
       .def("delete_ndarray", &Program::delete_ndarray)
-      .def(
-          "create_texture",
-          [&](Program *program, BufferFormat fmt, const std::vector<int> &shape)
-              -> Texture * { return program->create_texture(fmt, shape); },
-          py::arg("fmt"), py::arg("shape") = py::tuple(),
-          py::return_value_policy::reference)
       .def("get_ndarray_data_ptr_as_int",
            [](Program *program, Ndarray *ndarray) {
              return program->get_ndarray_data_ptr_as_int(ndarray);
@@ -610,11 +603,6 @@ void export_lang(py::module &m) {
 #undef PER_EXTENSION
       ;
 
-  py::class_<Texture>(m, "TextureCxx")
-      .def("device_allocation_ptr", &Texture::get_device_allocation_ptr_as_int)
-      .def("from_ndarray", &Texture::from_ndarray)
-      .def("from_snode", &Texture::from_snode);
-
   py::class_<Kernel>(m, "KernelCxx")
       .def("no_activate",
            [](Kernel *self, SNode *snode) {
@@ -625,9 +613,7 @@ void export_lang(py::module &m) {
       .def("insert_scalar_param", &Kernel::insert_scalar_param)
       .def("insert_arr_param", &Kernel::insert_arr_param)
       .def("insert_ndarray_param", &Kernel::insert_ndarray_param)
-      .def("insert_texture_param", &Kernel::insert_texture_param)
       .def("insert_pointer_param", &Kernel::insert_pointer_param)
-      .def("insert_rw_texture_param", &Kernel::insert_rw_texture_param)
       .def("insert_ret", &Kernel::insert_ret)
       .def("finalize_rets", &Kernel::finalize_rets)
       .def("finalize_params", &Kernel::finalize_params)
@@ -659,8 +645,6 @@ void export_lang(py::module &m) {
            &LaunchContextBuilder::set_arg_ndarray_with_grad)
       .def("set_args_ndarray_with_grad",
            &LaunchContextBuilder::set_args_ndarray_with_grad)
-      .def("set_arg_texture", &LaunchContextBuilder::set_arg_texture)
-      .def("set_arg_rw_texture", &LaunchContextBuilder::set_arg_rw_texture)
       .def("get_struct_ret_int", &LaunchContextBuilder::get_struct_ret_int)
       .def("get_struct_ret_uint", &LaunchContextBuilder::get_struct_ret_uint)
       .def("get_struct_ret_float", &LaunchContextBuilder::get_struct_ret_float);
@@ -669,9 +653,7 @@ void export_lang(py::module &m) {
       .def("insert_scalar_param", &Function::insert_scalar_param)
       .def("insert_arr_param", &Function::insert_arr_param)
       .def("insert_ndarray_param", &Function::insert_ndarray_param)
-      .def("insert_texture_param", &Function::insert_texture_param)
       .def("insert_pointer_param", &Function::insert_pointer_param)
-      .def("insert_rw_texture_param", &Function::insert_rw_texture_param)
       .def("insert_ret", &Function::insert_ret)
       .def("set_function_body",
            py::overload_cast<const std::function<void()> &>(
@@ -912,20 +894,6 @@ void export_lang(py::module &m) {
   m.def("make_const_expr_fp",
         Expr::make<ConstExpression, const DataType &, float64>);
 
-  m.def("make_texture_ptr_expr",
-        Expr::make<TexturePtrExpression, const std::vector<int> &, int,
-                   const DebugInfo &>);
-  m.def("make_rw_texture_ptr_expr",
-        Expr::make<TexturePtrExpression, const std::vector<int> &, int,
-                   const BufferFormat &, int, const DebugInfo &>);
-
-  auto &&texture =
-      py::enum_<TextureOpType>(m, "TextureOpType", py::arithmetic());
-  for (int t = 0; t <= (int)TextureOpType::kStore; t++)
-    texture.value(texture_op_type_name(TextureOpType(t)).c_str(),
-                  TextureOpType(t));
-  texture.export_values();
-
   auto &&bin = py::enum_<BinaryOpType>(m, "BinaryOpType", py::arithmetic());
   for (int t = 0; t <= (int)BinaryOpType::undefined; t++)
     bin.value(binary_op_type_name(BinaryOpType(t)).c_str(), BinaryOpType(t));
@@ -990,8 +958,6 @@ void export_lang(py::module &m) {
   m.def("get_external_tensor_dim", [](const Expr &expr) {
     if (expr.is<ExternalTensorExpression>()) {
       return expr.cast<ExternalTensorExpression>()->ndim;
-    } else if (expr.is<TexturePtrExpression>()) {
-      return expr.cast<TexturePtrExpression>()->num_dims;
     } else {
       TI_ASSERT(false);
       return 0;
@@ -1135,8 +1101,6 @@ void export_lang(py::module &m) {
             return DataType(factory->get_struct_type(members));
           },
           py::return_value_policy::reference)
-      .def("get_rwtexture_struct_type", &TypeFactory::get_rwtexture_struct_type,
-           py::return_value_policy::reference)
       .def("get_ndarray_struct_type", &TypeFactory::get_ndarray_struct_type,
            py::arg("dt"), py::arg("ndim"), py::arg("needs_grad"),
            py::return_value_policy::reference);
