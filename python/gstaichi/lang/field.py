@@ -258,7 +258,7 @@ class ScalarField(Field):
         super().__init__([var])
 
     def to_dlpack(self):
-        return impl.get_runtime().prog.field_to_dlpack(self, self._snode.ptr, 0, 0, 0)
+        return impl.get_runtime().prog.field_to_dlpack(self._snode.ptr, 0, 0, 0)
 
     def fill(self, val):
         """Fills this scalar field with a specified value."""

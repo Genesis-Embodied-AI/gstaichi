@@ -89,7 +89,6 @@ void get_type_info(DataType dt,
 }
 
 pybind11::capsule field_to_dlpack(Program *program,
-                                  pybind11::object owner,
                                   SNode *snode,
                                   int element_ndim,
                                   int n,

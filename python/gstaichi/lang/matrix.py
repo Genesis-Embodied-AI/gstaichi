@@ -1162,7 +1162,7 @@ class MatrixField(Field):
         self.ptr = ti_python_core.expr_matrix_field([var.ptr for var in self.vars], [n, m][:ndim])
 
     def to_dlpack(self):
-        return impl.get_runtime().prog.field_to_dlpack(self, self._snode.ptr, self.ndim, self.n, self.m)
+        return impl.get_runtime().prog.field_to_dlpack(self._snode.ptr, self.ndim, self.n, self.m)
 
     def get_scalar_field(self, *indices):
         """Creates a ScalarField using a specific field member.
