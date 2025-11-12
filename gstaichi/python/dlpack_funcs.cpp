@@ -50,6 +50,46 @@ void *get_raw_ptr(Arch arch, Program *program, DeviceAllocation dev_alloc, DLDev
   return raw_ptr;
 }
 
+void get_type_info(DataType dt,
+                   uint8_t *p_data_type_code,
+                   uint8_t *p_element_bits) {
+  PrimitiveType *dt_as_primitive = dt->as<PrimitiveType>();
+  if(dt_as_primitive == nullptr) {
+    TI_ERROR("unsupported non-primitive data type for dlpack");
+  }
+  PrimitiveTypeID type_id = dt_as_primitive->type;
+  switch (type_id) {
+    case PrimitiveTypeID::i32: {
+      *p_data_type_code = static_cast<uint8_t>(kDLInt);
+      *p_element_bits = 32;
+      break;
+    }
+    case PrimitiveTypeID::i64: {
+      *p_data_type_code = static_cast<uint8_t>(kDLInt);
+      *p_element_bits = 64;
+      break;
+    }
+    case PrimitiveTypeID::f32: {
+      *p_data_type_code = static_cast<uint8_t>(kDLFloat);
+      *p_element_bits = 32;
+      break;
+    }
+    case PrimitiveTypeID::f64: {
+      *p_data_type_code = static_cast<uint8_t>(kDLFloat);
+      *p_element_bits = 64;
+      break;
+    }
+    case PrimitiveTypeID::u1: {
+      *p_data_type_code = static_cast<uint8_t>(kDLBool);
+      *p_element_bits = 8;
+      break;
+    }
+    default: {
+      TI_ERROR("unsupported ndarray data type for dlpack");
+    }
+  }
+}
+
 pybind11::capsule field_to_dlpack(Program *program,
                                     pybind11::object owner,
                                     SNode *snode) {
@@ -67,40 +107,10 @@ pybind11::capsule field_to_dlpack(Program *program,
   void *raw_ptr = get_raw_ptr(arch, program, tree_device_ptr, &device_type);
 
   DataType dt = snode->dt;
-  PrimitiveTypeID type_id = dt->as<PrimitiveType>()->type;
 
   uint8_t element_bits = 32;
   uint8_t data_type_code = kDLInt;
-  switch (type_id) {
-    case PrimitiveTypeID::i32: {
-      data_type_code = static_cast<uint8_t>(kDLInt);
-      element_bits = 32;
-      break;
-    }
-    case PrimitiveTypeID::i64: {
-      data_type_code = static_cast<uint8_t>(kDLInt);
-      element_bits = 64;
-      break;
-    }
-    case PrimitiveTypeID::f32: {
-      data_type_code = static_cast<uint8_t>(kDLFloat);
-      element_bits = 32;
-      break;
-    }
-    case PrimitiveTypeID::f64: {
-      data_type_code = static_cast<uint8_t>(kDLFloat);
-      element_bits = 64;
-      break;
-    }
-    case PrimitiveTypeID::u1: {
-      data_type_code = static_cast<uint8_t>(kDLBool);
-      element_bits = 8;
-      break;
-    }
-    default: {
-      TI_ERROR("unsupported ndarray data type for dlpack");
-    }
-  }
+  get_type_info(dt, &data_type_code, &element_bits);
 
   int ndim = snode->num_active_indices;
   int64_t *shape = nullptr;
@@ -186,39 +196,9 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
 
   DataType ndarray_data_type = ndarray->get_element_data_type();
   uint8_t data_type_code = kDLInt;
-
   uint8_t element_bits = 0;
-  PrimitiveTypeID type_id = ndarray_data_type->as<PrimitiveType>()->type;
-  switch (type_id) {
-    case PrimitiveTypeID::i32: {
-      data_type_code = static_cast<uint8_t>(kDLInt);
-      element_bits = 32;
-      break;
-    }
-    case PrimitiveTypeID::i64: {
-      data_type_code = static_cast<uint8_t>(kDLInt);
-      element_bits = 64;
-      break;
-    }
-    case PrimitiveTypeID::f32: {
-      data_type_code = static_cast<uint8_t>(kDLFloat);
-      element_bits = 32;
-      break;
-    }
-    case PrimitiveTypeID::f64: {
-      data_type_code = static_cast<uint8_t>(kDLFloat);
-      element_bits = 64;
-      break;
-    }
-    case PrimitiveTypeID::u1: {
-      data_type_code = static_cast<uint8_t>(kDLBool);
-      element_bits = 8;
-      break;
-    }
-    default: {
-      TI_ERROR("unsupported ndarray data type for dlpack");
-    }
-  }
+  // PrimitiveTypeID type_id = ndarray_data_type->as<PrimitiveType>()->type;
+  get_type_info(ndarray_data_type, &data_type_code, &element_bits);
 
   DLManagedTensor *managed_tensor = new DLManagedTensor();
 
