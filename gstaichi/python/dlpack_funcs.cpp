@@ -49,9 +49,7 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
   int64_t *shape = nullptr;
   if (ndim > 0) {
     shape = new int64_t[ndim];
-    for (int i = 0; i < ndim; i++) {
-      shape[i] = ndarray_shape[i];
-    }
+    std::copy(ndarray_shape.begin(), ndarray_shape.end(), shape);
   }
 
   int64_t *strides = nullptr;
@@ -111,7 +109,7 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
   dl_tensor.strides = strides;
   dl_tensor.byte_offset = 0;
 
-  managed_tensor->manager_ctx = static_cast<void *>(owner_holder);
+  managed_tensor->manager_ctx = owner_holder;
   managed_tensor->deleter = [](DLManagedTensor *self) {
     auto *owner = reinterpret_cast<pybind11::object *>(self->manager_ctx);
     pybind11::gil_scoped_acquire gil;
@@ -124,8 +122,8 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
   };
   auto deleter = [](PyObject *capsule) {};
 
-  pybind11::capsule capsule = pybind11::capsule(
-      static_cast<void *>(managed_tensor), "dltensor", deleter);
+  pybind11::capsule capsule =
+      pybind11::capsule(managed_tensor, "dltensor", deleter);
   return capsule;
 }
 }  // namespace lang
