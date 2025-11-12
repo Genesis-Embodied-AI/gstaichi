@@ -45,10 +45,25 @@ pybind11::capsule field_to_dlpack(Program *program,
   int field_in_tree_offset = program->get_field_in_tree_offset(tree_id, snode);
   std::cout << "field_in_tree_offset " << field_in_tree_offset << std::endl;
 
-  void *raw_ptr = nullptr;
+  int ndim = snode->num_active_indices;
+  int64_t *shape = nullptr;
+  if (ndim > 0) {
+    shape = new int64_t[ndim];
+    for(int i = 0; i < ndim; i++) {
+      int axis_shape = snode->shape_along_axis(i);
+      shape[i] = axis_shape;
+      std::cout << "  shape[" << i << "] = " << shape[i] << std::endl;
+    }
+  }
 
-  cpu::CpuDevice *cpu_device = dynamic_cast<cpu::CpuDevice *>(tree_device_ptr.device);
-  if (cpu_device != nullptr) {
+  void *raw_ptr = nullptr;
+  DLDeviceType device_type = DLDeviceType::kDLCPU;
+
+  Arch arch = program->compile_config().arch;
+  if (arch_is_cpu(arch)) {
+    cpu::CpuDevice *cpu_device = static_cast<cpu::CpuDevice *>(devalloc.device);
+  // cpu::CpuDevice *cpu_device = dynamic_cast<cpu::CpuDevice *>(tree_device_ptr.device);
+  // if (cpu_device != nullptr) {
     std::cout << "cpu device is non null" << std::endl;
     cpu::CpuDevice::AllocInfo alloc_info = cpu_device->get_alloc_info(tree_device_ptr);
     raw_ptr = alloc_info.ptr;
