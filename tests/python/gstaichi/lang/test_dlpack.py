@@ -16,6 +16,7 @@ def ti_to_torch(ti_tensor: ti.types.NDArray) -> torch.Tensor:
 
 
 @test_utils.test(arch=dlpack_arch)
+@pytest.mark.parametrize("tensor_type", [ti.ndarray, ti.field])
 @pytest.mark.parametrize("dtype", [ti.i32, ti.i64, ti.f32, ti.f64, ti.u1])
 @pytest.mark.parametrize(
     "shape,poses",
@@ -26,11 +27,11 @@ def ti_to_torch(ti_tensor: ti.types.NDArray) -> torch.Tensor:
         ((3, 1, 2), [(2, 0, 1), (0, 0, 1)]),
     ],
 )
-def test_dlpack_ndarray_types(dtype, shape: tuple[int], poses: list[tuple[int, ...]]) -> None:
-    ndarray = ti.ndarray(dtype, shape)
+def test_dlpack_ndarray_types(tensor_type, dtype, shape: tuple[int], poses: list[tuple[int, ...]]) -> None:
+    ti_tensor = tensor_type(dtype, shape)
     for i, pos in enumerate(poses):
-        ndarray[pos] = i * 10 + 10
-    dlpack = ndarray.to_dlpack()
+        ti_tensor[pos] = i * 10 + 10
+    dlpack = ti_tensor.to_dlpack()
     tt = torch.utils.dlpack.from_dlpack(dlpack)
     assert tuple(tt.shape) == shape
     expected_torch_type = {
@@ -42,26 +43,27 @@ def test_dlpack_ndarray_types(dtype, shape: tuple[int], poses: list[tuple[int, .
     }[dtype]
     assert tt.dtype == expected_torch_type
     for i, pos in enumerate(poses):
-        assert tt[pos] == ndarray[pos]
+        assert tt[pos] == ti_tensor[pos]
         assert tt[pos] != 0
 
 
 @test_utils.test(arch=dlpack_arch)
 def test_dlpack_ndarray_mem_stays_alloced() -> None:
-    def create_tensor(shape, dtype):
+    def create_ndarray(shape, dtype):
         nd = ti.ndarray(dtype, shape)
         tt = torch.utils.dlpack.from_dlpack(nd.to_dlpack())
         return tt
 
-    t = create_tensor((3, 2), ti.i32)
+    t = create_ndarray((3, 2), ti.i32)
     # will crash if memory already deleted
     assert t[0, 0] == 0
 
 
 @test_utils.test(arch=dlpack_ineligible_arch)
-def test_refuses_ineligible_arch() -> None:
+@pytest.mark.parametrize("tensor_type", [ti.ndarray, ti.field])
+def test_dlpack_refuses_ineligible_arch(tensor_type) -> None:
     def create_tensor(shape, dtype):
-        nd = ti.ndarray(dtype, shape)
+        nd = tensor_type(dtype, shape)
         tt = torch.utils.dlpack.from_dlpack(nd.to_dlpack())
         return tt
 
