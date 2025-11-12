@@ -128,3 +128,48 @@ def test_dlpack_ndarray_2_arrays(tensor_type):
     b_t = ti_to_torch(b)
     assert a_t[0] == 123
     assert b_t[0] == 222
+
+
+@test_utils.test(arch=dlpack_arch)
+def test_dlpack_field_multiple_tree_nodes():
+    """
+    each ti.sync causes the fields to be written to a new snode tree node
+    each tree node has its own memory block, so we want to test:
+    - multiple snodes within same tree node
+    - different tree nodes
+    ... just to check we aren't aliasing somehow in the to_dlpack function
+    """
+    tensor_type = ti.field
+    a = tensor_type(ti.i32, (100,))
+    b = tensor_type(ti.i32, (100,))
+    ti.sync()
+    c = tensor_type(ti.i32, (100,))
+    ti.sync()
+    d = tensor_type(ti.i32, (100,))
+    e = tensor_type(ti.i32, (100,))
+    ti.sync()
+
+    # check the tree node ids
+    assert a.snode._snode_tree_id == 0
+    assert b.snode._snode_tree_id == 0
+    assert c.snode._snode_tree_id == 1
+    assert d.snode._snode_tree_id == 2
+    assert e.snode._snode_tree_id == 2
+
+    a[0] = 123
+    b[0] = 222
+    c[0] = 333
+    d[0] = 444
+    e[0] = 555
+
+    a_t = ti_to_torch(a)
+    b_t = ti_to_torch(b)
+    c_t = ti_to_torch(c)
+    d_t = ti_to_torch(d)
+    e_t = ti_to_torch(e)
+
+    assert a_t[0] == 123
+    assert b_t[0] == 222
+    assert c_t[0] == 333
+    assert d_t[0] == 444
+    assert e_t[0] == 555
