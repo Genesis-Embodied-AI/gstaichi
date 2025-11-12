@@ -70,22 +70,22 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
                                     pybind11::object owner,
                                     Ndarray *ndarray) {
   auto *owner_holder = new pybind11::object(owner);
-  new pybind11::object(owner);
 
   DeviceAllocation devalloc = ndarray->get_device_allocation();
 
   void *raw_ptr = nullptr;
   DLDeviceType device_type = DLDeviceType::kDLCPU;
 
-  cpu::CpuDevice *cpu_device = dynamic_cast<cpu::CpuDevice *>(devalloc.device);
-  if (cpu_device != nullptr) {
+  Arch arch = program->compile_config().arch;
+  if (arch_is_cpu(arch)) {
+    cpu::CpuDevice *cpu_device = static_cast<cpu::CpuDevice *>(devalloc.device);
     cpu::CpuDevice::AllocInfo alloc_info = cpu_device->get_alloc_info(devalloc);
     raw_ptr = alloc_info.ptr;
   }
 #if TI_WITH_CUDA
-  cuda::CudaDevice *cuda_device =
-      dynamic_cast<cuda::CudaDevice *>(devalloc.device);
-  if (cuda_device != nullptr) {
+  else if (arch_is_cuda(arch)) {
+    cuda::CudaDevice *cuda_device =
+        static_cast<cuda::CudaDevice *>(devalloc.device);
     cuda::CudaDevice::AllocInfo alloc_info =
         cuda_device->get_alloc_info(devalloc);
     raw_ptr = alloc_info.ptr;
@@ -103,9 +103,7 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
   int64_t *shape = nullptr;
   if (ndim > 0) {
     shape = new int64_t[ndim];
-    for (int i = 0; i < ndim; i++) {
-      shape[i] = ndarray_shape[i];
-    }
+    std::copy(ndarray_shape.begin(), ndarray_shape.end(), shape);
   }
 
   int64_t *strides = nullptr;
@@ -120,7 +118,7 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
   DataType ndarray_data_type = ndarray->get_element_data_type();
   uint8_t data_type_code = kDLInt;
 
-  uint8_t element_bits = 32;
+  uint8_t element_bits = -1;
   PrimitiveTypeID type_id = ndarray_data_type->as<PrimitiveType>()->type;
   switch (type_id) {
     case PrimitiveTypeID::i32: {
@@ -165,7 +163,7 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
   dl_tensor.strides = strides;
   dl_tensor.byte_offset = 0;
 
-  managed_tensor->manager_ctx = static_cast<void *>(owner_holder);
+  managed_tensor->manager_ctx = owner_holder;
   managed_tensor->deleter = [](DLManagedTensor *self) {
     auto *owner = reinterpret_cast<pybind11::object *>(self->manager_ctx);
     pybind11::gil_scoped_acquire gil;
@@ -176,10 +174,10 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
     }
     delete self;
   };
-  auto deleter = [](PyObject *capsule) {};
+  auto capsule_deleter = [](PyObject *capsule) {};
 
-  pybind11::capsule capsule = pybind11::capsule(
-      static_cast<void *>(managed_tensor), "dltensor", deleter);
+  pybind11::capsule capsule =
+      pybind11::capsule(managed_tensor, "dltensor", capsule_deleter);
   return capsule;
 }
 }  // namespace lang
