@@ -22,13 +22,11 @@ void validate_arch(Arch arch) {
   }
 }
 
-void *get_raw_ptr(Arch arch, Program *program, DeviceAllocation dev_alloc, DLDeviceType *out_device_type) {
+void *get_raw_ptr(Arch arch, Program *program, DeviceAllocation dev_alloc, DLDeviceType *p_device_type) {
     void *raw_ptr = nullptr;
-  DLDeviceType device_type = DLDeviceType::kDLCPU;
-
   if (arch_is_cpu(arch)) {
     cpu::CpuDevice *cpu_device = static_cast<cpu::CpuDevice *>(dev_alloc.device);
-    device_type = DLDeviceType::kDLCPU;
+    *p_device_type = DLDeviceType::kDLCPU;
     cpu::CpuDevice::AllocInfo alloc_info = cpu_device->get_alloc_info(dev_alloc);
     raw_ptr = alloc_info.ptr;
   }
@@ -36,7 +34,7 @@ void *get_raw_ptr(Arch arch, Program *program, DeviceAllocation dev_alloc, DLDev
   else if (arch_is_cuda(arch)) {
     cuda::CudaDevice *cuda_device =
         static_cast<cuda::CudaDevice *>(dev_alloc.device);
-    device_type = DLDeviceType::kDLCUDA;
+    *p_device_type = DLDeviceType::kDLCUDA;
     cuda::CudaDevice::AllocInfo alloc_info =
         cuda_device->get_alloc_info(dev_alloc);
     raw_ptr = alloc_info.ptr;
