@@ -23,15 +23,17 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
   DLDeviceType device_type = DLDeviceType::kDLCPU;
 
   Arch arch = program->compile_config().arch;
-  if(arch_is_cpu(arch)) {
+  if (arch_is_cpu(arch)) {
     cpu::CpuDevice *cpu_device = static_cast<cpu::CpuDevice *>(devalloc.device);
     cpu::CpuDevice::AllocInfo alloc_info = cpu_device->get_alloc_info(devalloc);
     raw_ptr = alloc_info.ptr;
   }
 #if TI_WITH_CUDA
   else if (arch_is_cuda(arch)) {
-    cuda::CudaDevice *cuda_device = static_cast<cuda::CudaDevice *>(devalloc.device);
-    cuda::CudaDevice::AllocInfo alloc_info = cuda_device->get_alloc_info(devalloc);
+    cuda::CudaDevice *cuda_device =
+        static_cast<cuda::CudaDevice *>(devalloc.device);
+    cuda::CudaDevice::AllocInfo alloc_info =
+        cuda_device->get_alloc_info(devalloc);
     raw_ptr = alloc_info.ptr;
     device_type = DLDeviceType::kDLCUDA;
   }
