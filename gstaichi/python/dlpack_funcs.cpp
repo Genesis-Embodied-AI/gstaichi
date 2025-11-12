@@ -43,7 +43,6 @@ void *get_raw_ptr(Arch arch, Program *program, DeviceAllocation dev_alloc, DLDev
   }
 #endif  // TI_WITH_CUDA
 
-  std::cout << "1" << std::endl;
   if (raw_ptr == nullptr) {
     TI_ERROR("Unsupported device type for DLPack conversion");
   }
