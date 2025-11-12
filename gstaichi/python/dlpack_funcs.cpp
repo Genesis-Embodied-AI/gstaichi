@@ -63,7 +63,7 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
   DataType ndarray_data_type = ndarray->get_element_data_type();
   uint8_t data_type_code = kDLInt;
 
-  uint8_t element_bits = -1;
+  uint8_t element_bits = 0;
   PrimitiveTypeID type_id = ndarray_data_type->as<PrimitiveType>()->type;
   switch (type_id) {
     case PrimitiveTypeID::i32: {
