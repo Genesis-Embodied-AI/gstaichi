@@ -15,15 +15,68 @@ struct MyData {
 
 namespace gstaichi {
 namespace lang {
+
+void validate_arch(Arch arch) {
+  if(!arch_is_cpu(arch) && !arch_is_cuda(arch)) {
+    TI_ERROR("DLPack conversion is only supported on CPU and CUDA archs");
+  }
+}
+
+void *get_raw_ptr(Arch arch, Program *program, DeviceAllocation dev_alloc, DLDeviceType *out_device_type) {
+    void *raw_ptr = nullptr;
+  DLDeviceType device_type = DLDeviceType::kDLCPU;
+
+  if (arch_is_cpu(arch)) {
+    cpu::CpuDevice *cpu_device = static_cast<cpu::CpuDevice *>(dev_alloc.device);
+    device_type = DLDeviceType::kDLCPU;
+    cpu::CpuDevice::AllocInfo alloc_info = cpu_device->get_alloc_info(dev_alloc);
+    raw_ptr = alloc_info.ptr;
+  }
+#if TI_WITH_CUDA
+  else if (arch_is_cuda(arch)) {
+    cuda::CudaDevice *cuda_device =
+        static_cast<cuda::CudaDevice *>(dev_alloc.device);
+    device_type = DLDeviceType::kDLCUDA;
+    cuda::CudaDevice::AllocInfo alloc_info =
+        cuda_device->get_alloc_info(dev_alloc);
+    raw_ptr = alloc_info.ptr;
+  }
+#endif  // TI_WITH_CUDA
+
+  std::cout << "1" << std::endl;
+  if (raw_ptr == nullptr) {
+    TI_ERROR("Unsupported device type for DLPack conversion");
+  }
+  return raw_ptr;
+}
+
 pybind11::capsule field_to_dlpack(Program *program,
                                     pybind11::object owner,
                                     SNode *snode) {
+  std::cout << "1" << std::endl;
+  if(!snode->is_path_all_dense) {
+    TI_ERROR("Only dense fields are supported for dlpack conversion");
+  }
+
+  Arch arch = program->compile_config().arch;
+  validate_arch(arch);
+
+  // DLDeviceType device_type = DLDeviceType::kDLCPU;
+  // void *raw_ptr = get_raw_ptr(program->get_snode_tree_device_ptr(snode->get_snode_tree_id()), &device_type);
+  std::cout << "1" << std::endl;
   int tree_id = snode->get_snode_tree_id();
+  std::cout << "1" << std::endl;
+  std::cout << "program " << (void *)program << std::endl;
   DevicePtr tree_device_ptr = program->get_snode_tree_device_ptr(tree_id);
+  std::cout << "1" << std::endl;
+
+  DLDeviceType device_type = DLDeviceType::kDLCPU;
+  void *raw_ptr = get_raw_ptr(arch, program, tree_device_ptr, &device_type);
 
   DataType dt = snode->dt;
   PrimitiveTypeID type_id = dt->as<PrimitiveType>()->type;
 
+  std::cout << "1" << std::endl;
   uint8_t element_bits = 32;
   uint8_t data_type_code = kDLInt;
   switch (type_id) {
@@ -56,17 +109,23 @@ pybind11::capsule field_to_dlpack(Program *program,
       TI_ERROR("unsupported ndarray data type for dlpack");
     }
   }
+  std::cout << "1" << std::endl;
 
   int ndim = snode->num_active_indices;
+  std::cout << "1" << std::endl;
   int64_t *shape = nullptr;
   if (ndim > 0) {
     shape = new int64_t[ndim];
     for(int i = 0; i < ndim; i++) {
+      if(snode->physical_index_position[i] != i) {
+        TI_ERROR("SNode has non-sequential physical index mapping, which is not supported currently for dlpack conversion");
+      }
       int axis_shape = snode->shape_along_axis(i);
       shape[i] = axis_shape;
     }
   }
 
+  std::cout << "1" << std::endl;
   int64_t *strides = nullptr;
   if (ndim > 0) {
     strides = new int64_t[ndim];
@@ -76,27 +135,7 @@ pybind11::capsule field_to_dlpack(Program *program,
     }
   }
 
-  void *raw_ptr = nullptr;
-  DLDeviceType device_type = DLDeviceType::kDLCPU;
-
-  Arch arch = program->compile_config().arch;
-  if (arch_is_cpu(arch)) {
-    cpu::CpuDevice *cpu_device = static_cast<cpu::CpuDevice *>(tree_device_ptr.device);
-    device_type = DLDeviceType::kDLCPU;
-    cpu::CpuDevice::AllocInfo alloc_info = cpu_device->get_alloc_info(tree_device_ptr);
-    raw_ptr = alloc_info.ptr;
-  }
-#if TI_WITH_CUDA
-  else if (arch_is_cuda(arch)) {
-    cuda::CudaDevice *cuda_device =
-        static_cast<cuda::CudaDevice *>(tree_device_ptr.device);
-    device_type = DLDeviceType::kDLCUDA;
-    cuda::CudaDevice::AllocInfo alloc_info =
-        cuda_device->get_alloc_info(tree_device_ptr);
-    raw_ptr = alloc_info.ptr;
-  }
-#endif  // TI_WITH_CUDA
-
+  std::cout << "1" << std::endl;
 
   DLManagedTensor *managed_tensor = new DLManagedTensor();
 
@@ -127,29 +166,35 @@ pybind11::capsule field_to_dlpack(Program *program,
 pybind11::capsule ndarray_to_dlpack(Program *program,
                                     pybind11::object owner,
                                     Ndarray *ndarray) {
+  Arch arch = program->compile_config().arch;
+  validate_arch(arch);
+
   auto *owner_holder = new pybind11::object(owner);
 
   DeviceAllocation devalloc = ndarray->get_device_allocation();
 
-  void *raw_ptr = nullptr;
-  DLDeviceType device_type = DLDeviceType::kDLCPU;
+  // void *raw_ptr = nullptr;
+  // DLDeviceType device_type = DLDeviceType::kDLCPU;
 
-  Arch arch = program->compile_config().arch;
-  if (arch_is_cpu(arch)) {
-    cpu::CpuDevice *cpu_device = static_cast<cpu::CpuDevice *>(devalloc.device);
-    cpu::CpuDevice::AllocInfo alloc_info = cpu_device->get_alloc_info(devalloc);
-    raw_ptr = alloc_info.ptr;
-  }
-#if TI_WITH_CUDA
-  else if (arch_is_cuda(arch)) {
-    cuda::CudaDevice *cuda_device =
-        static_cast<cuda::CudaDevice *>(devalloc.device);
-    cuda::CudaDevice::AllocInfo alloc_info =
-        cuda_device->get_alloc_info(devalloc);
-    raw_ptr = alloc_info.ptr;
-    device_type = DLDeviceType::kDLCUDA;
-  }
-#endif  // TI_WITH_CUDA
+  DLDeviceType device_type = DLDeviceType::kDLCPU;
+  void *raw_ptr = get_raw_ptr(arch, program, devalloc, &device_type);
+
+//   Arch arch = program->compile_config().arch;
+//   if (arch_is_cpu(arch)) {
+//     cpu::CpuDevice *cpu_device = static_cast<cpu::CpuDevice *>(devalloc.device);
+//     cpu::CpuDevice::AllocInfo alloc_info = cpu_device->get_alloc_info(devalloc);
+//     raw_ptr = alloc_info.ptr;
+//   }
+// #if TI_WITH_CUDA
+//   else if (arch_is_cuda(arch)) {
+//     cuda::CudaDevice *cuda_device =
+//         static_cast<cuda::CudaDevice *>(devalloc.device);
+//     cuda::CudaDevice::AllocInfo alloc_info =
+//         cuda_device->get_alloc_info(devalloc);
+//     raw_ptr = alloc_info.ptr;
+//     device_type = DLDeviceType::kDLCUDA;
+//   }
+// #endif  // TI_WITH_CUDA
 
   if (raw_ptr == nullptr) {
     TI_ERROR("Unsupported device type for DLPack conversion");
