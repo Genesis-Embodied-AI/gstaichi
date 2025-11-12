@@ -104,8 +104,10 @@ pybind11::capsule field_to_dlpack(Program *program,
   int tree_id = snode->get_snode_tree_id();
   DevicePtr tree_device_ptr = program->get_snode_tree_device_ptr(tree_id);
 
+  int field_in_tree_offset = program->get_field_in_tree_offset(tree_id, snode);
+
   DLDeviceType device_type = DLDeviceType::kDLCPU;
-  void *raw_ptr = get_raw_ptr(arch, program, tree_device_ptr, &device_type);
+  void *raw_ptr = (void *)((uint64_t)get_raw_ptr(arch, program, tree_device_ptr, &device_type) + field_in_tree_offset);
 
   DataType dt = snode->dt;
 
