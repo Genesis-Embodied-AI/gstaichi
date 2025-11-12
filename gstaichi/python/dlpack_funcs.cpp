@@ -17,17 +17,22 @@ namespace gstaichi {
 namespace lang {
 
 void validate_arch(Arch arch) {
-  if(!arch_is_cpu(arch) && !arch_is_cuda(arch)) {
+  if (!arch_is_cpu(arch) && !arch_is_cuda(arch)) {
     TI_ERROR("DLPack conversion is only supported on CPU and CUDA archs");
   }
 }
 
-void *get_raw_ptr(Arch arch, Program *program, DeviceAllocation dev_alloc, DLDeviceType *p_device_type) {
-    void *raw_ptr = nullptr;
+void *get_raw_ptr(Arch arch,
+                  Program *program,
+                  DeviceAllocation dev_alloc,
+                  DLDeviceType *p_device_type) {
+  void *raw_ptr = nullptr;
   if (arch_is_cpu(arch)) {
-    cpu::CpuDevice *cpu_device = static_cast<cpu::CpuDevice *>(dev_alloc.device);
+    cpu::CpuDevice *cpu_device =
+        static_cast<cpu::CpuDevice *>(dev_alloc.device);
     *p_device_type = DLDeviceType::kDLCPU;
-    cpu::CpuDevice::AllocInfo alloc_info = cpu_device->get_alloc_info(dev_alloc);
+    cpu::CpuDevice::AllocInfo alloc_info =
+        cpu_device->get_alloc_info(dev_alloc);
     raw_ptr = alloc_info.ptr;
   }
 #if TI_WITH_CUDA
@@ -51,7 +56,7 @@ void get_type_info(DataType dt,
                    uint8_t *p_data_type_code,
                    uint8_t *p_element_bits) {
   PrimitiveType *dt_as_primitive = dt->as<PrimitiveType>();
-  if(dt_as_primitive == nullptr) {
+  if (dt_as_primitive == nullptr) {
     TI_ERROR("unsupported non-primitive data type for dlpack");
   }
   PrimitiveTypeID type_id = dt_as_primitive->type;
@@ -88,9 +93,9 @@ void get_type_info(DataType dt,
 }
 
 pybind11::capsule field_to_dlpack(Program *program,
-                                    pybind11::object owner,
-                                    SNode *snode) {
-  if(!snode->is_path_all_dense) {
+                                  pybind11::object owner,
+                                  SNode *snode) {
+  if (!snode->is_path_all_dense) {
     TI_ERROR("Only dense fields are supported for dlpack conversion");
   }
 
@@ -113,9 +118,11 @@ pybind11::capsule field_to_dlpack(Program *program,
   int64_t *shape = nullptr;
   if (ndim > 0) {
     shape = new int64_t[ndim];
-    for(int i = 0; i < ndim; i++) {
-      if(snode->physical_index_position[i] != i) {
-        TI_ERROR("SNode has non-sequential physical index mapping, which is not supported currently for dlpack conversion");
+    for (int i = 0; i < ndim; i++) {
+      if (snode->physical_index_position[i] != i) {
+        TI_ERROR(
+            "SNode has non-sequential physical index mapping, which is not "
+            "supported currently for dlpack conversion");
       }
       int axis_shape = snode->shape_along_axis(i);
       shape[i] = axis_shape;
