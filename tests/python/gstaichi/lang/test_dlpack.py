@@ -27,7 +27,7 @@ def ti_to_torch(ti_tensor: ti.types.NDArray) -> torch.Tensor:
         ((3, 1, 2), [(2, 0, 1), (0, 0, 1)]),
     ],
 )
-def test_dlpack_ndarray_types(tensor_type, dtype, shape: tuple[int], poses: list[tuple[int, ...]]) -> None:
+def test_dlpack_types(tensor_type, dtype, shape: tuple[int], poses: list[tuple[int, ...]]) -> None:
     ti_tensor = tensor_type(dtype, shape)
     for i, pos in enumerate(poses):
         ti_tensor[pos] = i * 10 + 10
@@ -49,6 +49,11 @@ def test_dlpack_ndarray_types(tensor_type, dtype, shape: tuple[int], poses: list
 
 @test_utils.test(arch=dlpack_arch)
 def test_dlpack_ndarray_mem_stays_alloced() -> None:
+    """
+    On fields, memory always stays allocated till ti.reset(), so we
+    don't need to check. Not true with ndarrays.
+    """
+
     def create_tensor(shape, dtype):
         nd = ti.ndarray(dtype, shape)
         tt = torch.utils.dlpack.from_dlpack(nd.to_dlpack())
@@ -74,7 +79,7 @@ def test_dlpack_refuses_ineligible_arch(tensor_type) -> None:
 
 @test_utils.test(arch=dlpack_arch)
 @pytest.mark.parametrize("tensor_type", [ti.ndarray, ti.field])
-def test_dlpack_ndarray_vec3(tensor_type):
+def test_dlpack_vec3(tensor_type):
     vec3 = ti.types.vector(3, ti.f32)
     a = tensor_type(vec3, shape=(10, 3))
     a[0, 0] = (5, 4, 3)
@@ -96,7 +101,7 @@ def test_dlpack_ndarray_vec3(tensor_type):
 
 @test_utils.test(arch=dlpack_arch)
 @pytest.mark.parametrize("tensor_type", [ti.ndarray, ti.field])
-def test_dlpack_ndarray_mat2x3(tensor_type):
+def test_dlpack_mat2x3(tensor_type):
     vec3 = ti.types.matrix(2, 3, ti.f32)
     a = tensor_type(vec3, shape=(10, 3))
     a[0, 0] = ((5, 4, 1), (3, 2, 20))
@@ -116,7 +121,7 @@ def test_dlpack_ndarray_mat2x3(tensor_type):
 
 @test_utils.test(arch=dlpack_arch)
 @pytest.mark.parametrize("tensor_type", [ti.ndarray, ti.field])
-def test_dlpack_ndarray_2_arrays(tensor_type):
+def test_dlpack_2_arrays(tensor_type):
     """
     Just in case we need to handle offset
     """
