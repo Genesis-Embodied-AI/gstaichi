@@ -15,7 +15,6 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
                                     pybind11::object owner,
                                     Ndarray *ndarray) {
   auto *owner_holder = new pybind11::object(owner);
-  new pybind11::object(owner);
 
   DeviceAllocation devalloc = ndarray->get_device_allocation();
 
