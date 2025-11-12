@@ -73,9 +73,10 @@ def test_dlpack_refuses_ineligible_arch(tensor_type) -> None:
 
 
 @test_utils.test(arch=dlpack_arch)
-def test_dlpack_ndarray_vec3():
+@pytest.mark.parametrize("tensor_type", [ti.ndarray, ti.field])
+def test_dlpack_ndarray_vec3(tensor_type):
     vec3 = ti.types.vector(3, ti.f32)
-    a = ti.ndarray(vec3, shape=(10, 3))
+    a = tensor_type(vec3, shape=(10, 3))
     a[0, 0] = (5, 4, 3)
     a[0, 1] = (7, 8, 9)
     a[1, 0] = (11, 12, 13)
@@ -94,9 +95,10 @@ def test_dlpack_ndarray_vec3():
 
 
 @test_utils.test(arch=dlpack_arch)
-def test_dlpack_ndarray_mat2x3():
+@pytest.mark.parametrize("tensor_type", [ti.ndarray, ti.field])
+def test_dlpack_ndarray_mat2x3(tensor_type):
     vec3 = ti.types.matrix(2, 3, ti.f32)
-    a = ti.ndarray(vec3, shape=(10, 3))
+    a = tensor_type(vec3, shape=(10, 3))
     a[0, 0] = ((5, 4, 1), (3, 2, 20))
     a[0, 1] = ((7, 8, 21), (9, 10, 22))
     a[1, 0] = ((11, 12, 23), (13, 14, 23))
@@ -113,12 +115,13 @@ def test_dlpack_ndarray_mat2x3():
 
 
 @test_utils.test(arch=dlpack_arch)
-def test_dlpack_ndarray_2_arrays():
+@pytest.mark.parametrize("tensor_type", [ti.ndarray, ti.field])
+def test_dlpack_ndarray_2_arrays(tensor_type):
     """
     Just in case we need to handle offset
     """
-    a = ti.ndarray(ti.i32, (100,))
-    b = ti.ndarray(ti.i32, (100,))
+    a = tensor_type(ti.i32, (100,))
+    b = tensor_type(ti.i32, (100,))
     a[0] = 123
     b[0] = 222
     a_t = ti_to_torch(a)
