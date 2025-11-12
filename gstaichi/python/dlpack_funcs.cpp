@@ -9,10 +9,6 @@
 #endif  // TI_WITH_CUDA
 #include "gstaichi/rhi/cpu/cpu_device.h"
 
-struct MyData {
-  int value;
-};
-
 namespace gstaichi {
 namespace lang {
 
