@@ -113,6 +113,7 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
   managed_tensor->manager_ctx = static_cast<void *>(owner_holder);
   managed_tensor->deleter = [](DLManagedTensor *self) {
     auto *owner = reinterpret_cast<pybind11::object *>(self->manager_ctx);
+    pybind11::gil_scoped_acquire gil;
     delete owner;  // DECREFs the Python object
     if (self->dl_tensor.shape != nullptr) {
       delete[] self->dl_tensor.shape;
