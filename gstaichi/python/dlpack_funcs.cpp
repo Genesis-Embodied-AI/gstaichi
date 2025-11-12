@@ -90,7 +90,10 @@ void get_type_info(DataType dt,
 
 pybind11::capsule field_to_dlpack(Program *program,
                                   pybind11::object owner,
-                                  SNode *snode) {
+                                  SNode *snode,
+                                  int element_ndim,
+                                  int n,
+                                  int m) {
   if (!snode->is_path_all_dense) {
     TI_ERROR("Only dense fields are supported for dlpack conversion");
   }
@@ -111,9 +114,10 @@ pybind11::capsule field_to_dlpack(Program *program,
   get_type_info(dt, &data_type_code, &element_bits);
 
   int ndim = snode->num_active_indices;
+  int full_ndim = ndim + element_ndim;
   int64_t *shape = nullptr;
-  if (ndim > 0) {
-    shape = new int64_t[ndim];
+  if (full_ndim > 0) {
+    shape = new int64_t[full_ndim];
     for (int i = 0; i < ndim; i++) {
       if (snode->physical_index_position[i] != i) {
         TI_ERROR(
@@ -123,13 +127,19 @@ pybind11::capsule field_to_dlpack(Program *program,
       int axis_shape = snode->shape_along_axis(i);
       shape[i] = axis_shape;
     }
+    if(element_ndim >= 1) {
+      shape[ndim] = n;
+    }
+    if(element_ndim == 2) {
+      shape[ndim + 1] = m;
+    }
   }
 
   int64_t *strides = nullptr;
-  if (ndim > 0) {
-    strides = new int64_t[ndim];
-    strides[ndim - 1] = 1;
-    for (int i = ndim - 2; i >= 0; i--) {
+  if (full_ndim > 0) {
+    strides = new int64_t[full_ndim];
+    strides[full_ndim - 1] = 1;
+    for (int i = full_ndim - 2; i >= 0; i--) {
       strides[i] = strides[i + 1] * shape[i + 1];
     }
   }
@@ -140,7 +150,7 @@ pybind11::capsule field_to_dlpack(Program *program,
   dl_tensor.data = raw_ptr;
   dl_tensor.device.device_type = device_type;
   dl_tensor.device.device_id = 0;
-  dl_tensor.ndim = ndim;
+  dl_tensor.ndim = full_ndim;
   dl_tensor.dtype = DLDataType{data_type_code, element_bits, 1};
   dl_tensor.shape = shape;
   dl_tensor.strides = strides;
