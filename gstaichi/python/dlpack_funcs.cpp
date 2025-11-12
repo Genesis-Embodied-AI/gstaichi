@@ -120,10 +120,10 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
     }
     delete self;
   };
-  auto deleter = [](PyObject *capsule) {};
+  auto capsule_deleter = [](PyObject *capsule) {};
 
   pybind11::capsule capsule =
-      pybind11::capsule(managed_tensor, "dltensor", deleter);
+      pybind11::capsule(managed_tensor, "dltensor", capsule_deleter);
   return capsule;
 }
 }  // namespace lang
