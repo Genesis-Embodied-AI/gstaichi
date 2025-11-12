@@ -18,7 +18,7 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
   auto launcher_ctx = contexts_[handle.get_launch_id()];
   auto *executor = get_runtime_executor();
   auto *cuda_module = launcher_ctx.jit_module;
-  const auto &parameters = launcher_ctx.parameters;
+  const auto &parameters = *launcher_ctx.parameters;
   const auto &offloaded_tasks = launcher_ctx.offloaded_tasks;
 
   CUDAContext::get_instance().make_current();
@@ -177,12 +177,11 @@ KernelLauncher::Handle KernelLauncher::register_llvm_kernel(
     auto *executor = get_runtime_executor();
 
     auto data = compiled.get_internal_data().compiled_data.clone();
-    auto parameters = compiled.get_internal_data().args;
     auto *jit_module = executor->create_jit_module(std::move(data.module));
 
     // Populate ctx
     ctx.jit_module = jit_module;
-    ctx.parameters = std::move(parameters);
+    ctx.parameters = &compiled.get_internal_data().args;
     ctx.offloaded_tasks = std::move(data.tasks);
 
     compiled.set_handle(handle);
