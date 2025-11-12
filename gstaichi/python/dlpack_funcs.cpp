@@ -28,9 +28,15 @@ pybind11::capsule field_to_dlpack(Program *program,
   for(int i=0; i < snode->index_offsets.size(); i++) {
     std::cout << "  index_offsets[" << i << "] = " << snode->index_offsets[i] << std::endl;
   }
-  for(int i=0; i < gstaichi_max_num_indices; i++) {
+  for(int i=0; i < snode->num_active_indices; i++) {
     std::cout << "  physical_index_position[" << i << "] = " << snode->physical_index_position[i] << std::endl;
   }
+  for(int i=0; i < snode->num_active_indices; i++) {
+    AxisExtractor &extractor = snode->extractors[i];
+    std::cout << "  extractor[" << i << "] active " << extractor.active << " num_elements_from_root " << extractor.num_elements_from_root <<
+    " shape " << extractor.shape << " acc_shape " << extractor.acc_shape << std::endl;
+  }
+
   auto deleter = [](PyObject *capsule) {};
 
   int tree_id = snode->get_snode_tree_id();
