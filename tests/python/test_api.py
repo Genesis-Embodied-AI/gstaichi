@@ -349,6 +349,7 @@ user_api[ti.MatrixField] = [
     "parent",
     "shape",
     "snode",
+    "to_dlpack",
     "to_numpy",
     "to_torch",
 ]
@@ -384,6 +385,7 @@ user_api[ti.ScalarField] = [
     "parent",
     "shape",
     "snode",
+    "to_dlpack",
     "to_numpy",
     "to_torch",
 ]
