@@ -9,8 +9,57 @@
 #endif  // TI_WITH_CUDA
 #include "gstaichi/rhi/cpu/cpu_device.h"
 
+struct MyData {
+  int value;
+};
+
 namespace gstaichi {
 namespace lang {
+pybind11::capsule field_to_dlpack(Program *program,
+                                    pybind11::object owner,
+                                    SNode *snode) {
+  // auto *owner_holder = new pybind11::object(owner);
+  // new pybind11::object(owner);
+  std::cout << "snode " << snode << " id " << snode->id << " depth " << snode->depth << " name " << snode->name << " chunk_size " << snode->chunk_size <<
+     " cell_size_bytes " << snode->cell_size_bytes << " offset_bytes_in_parent_cell " << snode->offset_bytes_in_parent_cell <<
+     " is_path_all_dense " << snode->is_path_all_dense << " index_offsets.size() " << snode->index_offsets.size() << 
+     " num_active_indices " << snode->num_active_indices << " num_cells_per_container " << snode->num_cells_per_container <<
+     " ch.size() " << snode->ch.size() << " snode_tree_id " << snode->get_snode_tree_id() << std::endl;
+  for(int i=0; i < snode->index_offsets.size(); i++) {
+    std::cout << "  index_offsets[" << i << "] = " << snode->index_offsets[i] << std::endl;
+  }
+  for(int i=0; i < gstaichi_max_num_indices; i++) {
+    std::cout << "  physical_index_position[" << i << "] = " << snode->physical_index_position[i] << std::endl;
+  }
+  auto deleter = [](PyObject *capsule) {};
+
+  int tree_id = snode->get_snode_tree_id();
+  DevicePtr tree_device_ptr = program->get_snode_tree_device_ptr(tree_id);
+  std::cout << "tree_device_ptr " << (void *)&tree_device_ptr << " offset " << tree_device_ptr.offset << std::endl;
+  int field_in_tree_offset = program->get_field_in_tree_offset(tree_id, snode);
+  std::cout << "field_in_tree_offset " << field_in_tree_offset << std::endl;
+
+  void *raw_ptr = nullptr;
+
+  cpu::CpuDevice *cpu_device = dynamic_cast<cpu::CpuDevice *>(tree_device_ptr.device);
+  if (cpu_device != nullptr) {
+    std::cout << "cpu device is non null" << std::endl;
+    cpu::CpuDevice::AllocInfo alloc_info = cpu_device->get_alloc_info(tree_device_ptr);
+    raw_ptr = alloc_info.ptr;
+    std::cout << "raw ptr " << raw_ptr << std::endl;
+
+    int *ptr_as_int = (int *)raw_ptr;
+    std::cout << "[0]" << ptr_as_int[0] << " [1] " << ptr_as_int[1] << " [2] " << ptr_as_int[2] << " [3] " << ptr_as_int[3] << std::endl;
+  }
+
+
+  MyData *my_data = new MyData();
+  my_data->value = 42;
+  pybind11::capsule capsule = pybind11::capsule(
+      static_cast<void *>(my_data), "dltensor", deleter);
+  return capsule;
+}
+
 pybind11::capsule ndarray_to_dlpack(Program *program,
                                     pybind11::object owner,
                                     Ndarray *ndarray) {
