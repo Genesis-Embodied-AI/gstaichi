@@ -107,7 +107,9 @@ pybind11::capsule field_to_dlpack(Program *program,
   int field_in_tree_offset = program->get_field_in_tree_offset(tree_id, snode);
 
   DLDeviceType device_type = DLDeviceType::kDLCPU;
-  void *raw_ptr = (void *)((uint64_t)get_raw_ptr(arch, program, tree_device_ptr, &device_type) + field_in_tree_offset);
+  void *raw_ptr = (void *)((uint64_t)get_raw_ptr(arch, program, tree_device_ptr,
+                                                 &device_type) +
+                           field_in_tree_offset);
 
   DataType dt = snode->dt;
 
@@ -129,10 +131,10 @@ pybind11::capsule field_to_dlpack(Program *program,
       int axis_shape = snode->shape_along_axis(i);
       shape[i] = axis_shape;
     }
-    if(element_ndim >= 1) {
+    if (element_ndim >= 1) {
       shape[ndim] = n;
     }
-    if(element_ndim == 2) {
+    if (element_ndim == 2) {
       shape[ndim + 1] = m;
     }
   }

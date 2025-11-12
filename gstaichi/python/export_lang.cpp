@@ -367,7 +367,8 @@ void export_lang(py::module &m) {
              return ndarray_to_dlpack(program, owner, ndarray);
            })
       .def("field_to_dlpack",
-           [](Program *program, pybind11::object owner, SNode *snode, int element_ndim, int n, int m) {
+           [](Program *program, pybind11::object owner, SNode *snode,
+              int element_ndim, int n, int m) {
              return field_to_dlpack(program, owner, snode, element_ndim, n, m);
            })
       .def("config", &Program::compile_config,
