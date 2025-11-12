@@ -49,12 +49,12 @@ def test_dlpack_ndarray_types(tensor_type, dtype, shape: tuple[int], poses: list
 
 @test_utils.test(arch=dlpack_arch)
 def test_dlpack_ndarray_mem_stays_alloced() -> None:
-    def create_ndarray(shape, dtype):
+    def create_tensor(shape, dtype):
         nd = ti.ndarray(dtype, shape)
         tt = torch.utils.dlpack.from_dlpack(nd.to_dlpack())
         return tt
 
-    t = create_ndarray((3, 2), ti.i32)
+    t = create_tensor((3, 2), ti.i32)
     # will crash if memory already deleted
     assert t[0, 0] == 0
 

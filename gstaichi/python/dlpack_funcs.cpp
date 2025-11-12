@@ -169,12 +169,9 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
   auto *owner_holder = new pybind11::object(owner);
 
   DeviceAllocation devalloc = ndarray->get_device_allocation();
+
   DLDeviceType device_type = DLDeviceType::kDLCPU;
   void *raw_ptr = get_raw_ptr(arch, program, devalloc, &device_type);
-
-  if (raw_ptr == nullptr) {
-    TI_ERROR("Unsupported device type for DLPack conversion");
-  }
 
   std::vector<int> ndarray_shape = ndarray->total_shape();
   int ndim = ndarray_shape.size();
