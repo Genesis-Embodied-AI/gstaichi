@@ -931,6 +931,8 @@ def _recursive_set_args(
     raise ValueError(f"Argument type mismatch. Expecting {needed_arg_type}, got {type(v)}.")
 
 
+g_times_by_kernel_l = defaultdict(list)
+
 class Kernel:
     counter = 0
 
@@ -1076,6 +1078,7 @@ class Kernel:
 
         if key in self.materialized_kernels:
             return
+        print(".", end="", flush=True)
 
         used_py_dataclass_parameters: set[str] | None = None
 
@@ -1458,7 +1461,13 @@ class Kernel:
         key = self.ensure_compiled(*args)
         kernel_cpp = self.materialized_kernels[key]
         compiled_kernel_data = self.compiled_kernel_data_by_key.get(key, None)
-        return self.launch_kernel(kernel_cpp, compiled_kernel_data, *args)
+        # print(self.func.__name__)
+        start = time.time()
+        res = self.launch_kernel(kernel_cpp, compiled_kernel_data, *args)
+        end = time.time()
+        elapsed = end - start
+        g_times_by_kernel_l[self.func.__name__].append(elapsed)
+        return res
 
 
 # For a GsTaichi class definition like below:
@@ -1710,4 +1719,4 @@ def data_oriented(cls):
     return cls
 
 
-__all__ = ["data_oriented", "func", "kernel", "pyfunc", "real_func", "_KernelBatchedArgType"]
+__all__ = ["data_oriented", "func", "kernel", "pyfunc", "real_func", "_KernelBatchedArgType", "g_times_by_kernel_l"]

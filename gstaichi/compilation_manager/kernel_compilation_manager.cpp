@@ -259,6 +259,7 @@ const CompiledKernelData &KernelCompilationManager::compile_and_cache_kernel(
 
   if (get_environ_config("TI_SHOW_COMPILING")) {
     TI_INFO("Compiling kernel '{}'", kernel_def.get_name());
+    std::cout << "Compiling kernel '" << kernel_def.get_name() << "'" << std::endl;
   }
   k.compiled_kernel_data = compile_kernel(compile_config, caps, kernel_def);
   // Populate `size` within the KernelCompilationManager::dump()
