@@ -1,8 +1,10 @@
 name: Windows 2025
 on:
   pull_request:
-    branches:
-      - main
+    types:
+      - opened
+      - reopened
+      - synchronize
   workflow_dispatch:
   release:
     types: [published]

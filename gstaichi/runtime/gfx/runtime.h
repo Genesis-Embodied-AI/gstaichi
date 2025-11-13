@@ -99,14 +99,6 @@ class TI_DLL_EXPORT GfxRuntime {
   void launch_kernel(KernelHandle handle, LaunchContextBuilder &host_ctx);
 
   void buffer_copy(DevicePtr dst, DevicePtr src, size_t size);
-  void copy_image(DeviceAllocation dst,
-                  DeviceAllocation src,
-                  const ImageCopyParams &params);
-
-  DeviceAllocation create_image(const ImageParams &params);
-  void track_image(DeviceAllocation image, ImageLayout layout);
-  void untrack_image(DeviceAllocation image);
-  void transition_image(DeviceAllocation image, ImageLayout layout);
 
   void synchronize();
 

@@ -7,4 +7,5 @@ $env:TI_LIB_DIR="python/gstaichi/_lib/runtime"
 Get-ChildItem -Path build -Recurse
 pip install --group test
 pip install -r requirements_test_xdist.txt
+pip install torch
 python .\tests\run_tests.py -v -r 3

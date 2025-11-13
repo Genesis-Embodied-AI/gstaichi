@@ -9,7 +9,6 @@ from gstaichi._lib.core.gstaichi_python import (
     DataTypeCxx,
 )
 from gstaichi.lang import impl, ops
-from gstaichi.lang._texture import RWTextureAccessor, TextureSampler
 from gstaichi.lang.any_array import AnyArray
 from gstaichi.lang.expr import Expr
 from gstaichi.lang.matrix import MatrixType
@@ -127,22 +126,6 @@ def decl_ndarray_arg(
 ) -> AnyArray:
     arg_id = impl.get_runtime().compiling_callable.insert_ndarray_param(element_type, ndim, name, needs_grad)
     return AnyArray(_ti_core.make_external_tensor_expr(element_type, ndim, arg_id, needs_grad, boundary))
-
-
-def decl_texture_arg(num_dimensions, name):
-    # FIXME: texture_arg doesn't have element_shape so better separate them
-    arg_id = impl.get_runtime().compiling_callable.insert_texture_param(num_dimensions, name)
-    dbg_info = _ti_core.DebugInfo(impl.get_runtime().get_current_src_info())
-    return TextureSampler(_ti_core.make_texture_ptr_expr(arg_id, num_dimensions, dbg_info), num_dimensions)
-
-
-def decl_rw_texture_arg(num_dimensions, buffer_format, lod, name):
-    # FIXME: texture_arg doesn't have element_shape so better separate them
-    arg_id = impl.get_runtime().compiling_callable.insert_rw_texture_param(num_dimensions, buffer_format, name)
-    dbg_info = _ti_core.DebugInfo(impl.get_runtime().get_current_src_info())
-    return RWTextureAccessor(
-        _ti_core.make_rw_texture_ptr_expr(arg_id, num_dimensions, buffer_format, lod, dbg_info), num_dimensions
-    )
 
 
 def decl_ret(dtype):

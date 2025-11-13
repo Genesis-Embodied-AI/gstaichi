@@ -23,15 +23,15 @@ def test_src_hasher_create_cache_key_vary_config() -> None:
     # so we are forcing it to false each initialization for now
     ti_init_same_arch(print_ir_dbg_info=False)
     kernel_info, _src = get_source_info_and_src(f1.fn)
-    cache_key_base = src_hasher.create_cache_key(kernel_info, [], [])
+    cache_key_base = src_hasher.create_cache_key(False, kernel_info, [], [])
 
     ti_init_same_arch(print_ir_dbg_info=False)
     kernel_info, _src = get_source_info_and_src(f1.fn)
-    cache_key_same = src_hasher.create_cache_key(kernel_info, [], [])
+    cache_key_same = src_hasher.create_cache_key(False, kernel_info, [], [])
 
     ti_init_same_arch(print_ir_dbg_info=False, random_seed=123)
     kernel_info, _src = get_source_info_and_src(f1.fn)
-    cache_key_diff = src_hasher.create_cache_key(kernel_info, [], [])
+    cache_key_diff = src_hasher.create_cache_key(False, kernel_info, [], [])
 
     assert cache_key_base == cache_key_same
     assert cache_key_same != cache_key_diff
@@ -45,7 +45,7 @@ def test_src_hasher_create_cache_key_vary_fn(monkeypatch, temporary_module) -> N
     def get_cache_key(name: str) -> str | None:
         mod = temporary_module(name)
         info, _src = _wrap_inspect.get_source_info_and_src(mod.f1.fn)
-        cache_key = src_hasher.create_cache_key(info, [], [])
+        cache_key = src_hasher.create_cache_key(False, info, [], [])
         return cache_key
 
     key_base = get_cache_key("f1_base")
@@ -116,25 +116,28 @@ def test_src_hasher_store_validate(monkeypatch: pytest.MonkeyPatch, tmp_path: pa
     mod = temporary_module("child_diff_test_src_hasher_store_validate")
     kernel_info = get_fileinfos([mod.f1.fn])[0]
     fileinfos = get_fileinfos([mod.f1.fn, mod.f2.fn])
-    cache_key = src_hasher.create_cache_key(kernel_info, [], [])
+    cache_key = src_hasher.create_cache_key(False, kernel_info, [], [])
 
     assert cache_key is not None
 
-    assert not src_hasher.validate_cache_key(cache_key)
+    assert not src_hasher.load(cache_key)
 
-    src_hasher.store(cache_key, fileinfos)
-    assert src_hasher.validate_cache_key(cache_key)
+    some_used_vars = {"fee", "fi", "fo"}
+    src_hasher.store(cache_key, fileinfos, some_used_vars)
+    assert src_hasher.load(cache_key)
 
     setup_folder("child_diff_same.py")
-    assert src_hasher.validate_cache_key(cache_key)
+    assert src_hasher.load(cache_key)
 
     setup_folder("child_diff_diff.py")
-    assert not src_hasher.validate_cache_key(cache_key)
+    assert not src_hasher.load(cache_key)
 
     setup_folder("child_diff_same.py")
-    assert src_hasher.validate_cache_key(cache_key)
+    assert src_hasher.load(cache_key)
 
-    assert not src_hasher.validate_cache_key("abcdefg")
+    assert not src_hasher.load("abcdefg")
+
+    assert src_hasher.load(cache_key) == some_used_vars
 
 
 # Should be enough to run these on cpu I think, and anything involving

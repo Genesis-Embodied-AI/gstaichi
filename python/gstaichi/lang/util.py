@@ -12,6 +12,7 @@ from gstaichi._logging import is_logging_effective
 from gstaichi.lang import impl
 from gstaichi.types import Template
 from gstaichi.types.primitive_types import (
+    all_types,
     f16,
     f32,
     f64,
@@ -25,6 +26,8 @@ from gstaichi.types.primitive_types import (
     u32,
     u64,
 )
+
+MAP_TYPE_IDS = {id(dtype): dtype for dtype in all_types}
 
 
 def has_pytorch():
@@ -166,7 +169,7 @@ def to_pytorch_type(dt):
 
 
 def to_gstaichi_type(dt):
-    """Convert numpy or torch data type to its counterpart in gstaichi.
+    """Convert primitive type id, numpy or torch data type to its counterpart in gstaichi.
 
     Args:
         dt (DataType): The desired data type to convert.
@@ -175,7 +178,11 @@ def to_gstaichi_type(dt):
         DataType: The counterpart data type in gstaichi.
 
     """
-    if type(dt) == _ti_core.DataTypeCxx:
+    _type = type(dt)
+    if _type is int:
+        return MAP_TYPE_IDS[dt]
+
+    if issubclass(_type, _ti_core.DataTypeCxx):
         return dt
 
     if dt == np.float32:
@@ -239,11 +246,28 @@ def to_gstaichi_type(dt):
     raise AssertionError(f"Unknown type {dt}")
 
 
-def cook_dtype(dtype):
-    if isinstance(dtype, _ti_core.DataTypeCxx):
+class DataTypeCxxWrapper(_ti_core.DataTypeCxx):
+    __slots__ = ("_hash",)
+
+    def __init__(self, dtype: _ti_core.Type):
+        super().__init__(dtype)
+        try:
+            self._hash = super().__hash__()
+        except RuntimeError:
+            # Hash may not be supported
+            pass
+
+    def __hash__(self):
+        return self._hash
+
+
+def cook_dtype(dtype: Any) -> _ti_core.DataTypeCxx:
+    # Convert Python dtype to CPP dtype
+    _type = type(dtype)
+    if issubclass(_type, _ti_core.DataTypeCxx):
         return dtype
-    if isinstance(dtype, _ti_core.Type):
-        return _ti_core.DataTypeCxx(dtype)
+    if issubclass(_type, _ti_core.Type):
+        return DataTypeCxxWrapper(dtype)
     if dtype is float:
         return impl.get_runtime().default_fp
     if dtype is int:
@@ -302,11 +326,13 @@ def get_traceback(stacklevel=1):
 
 
 def is_data_oriented(obj: Any) -> bool:
-    return getattr(obj, "_data_oriented", False)
+    # Use getattr on class instead of object to bypass custom __getattr__ method that is
+    # overwritten at instance level and very slow.
+    return getattr(type(obj), "_data_oriented", False)
 
 
 def is_ti_template(annotation: Any) -> bool:
-    return annotation == Template or isinstance(annotation, Template)
+    return annotation is Template or type(annotation) is Template
 
 
 __all__ = []

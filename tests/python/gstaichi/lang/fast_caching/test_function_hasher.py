@@ -2,6 +2,8 @@ import pathlib
 import shutil
 from typing import Callable
 
+import pytest
+
 from gstaichi.lang import _wrap_inspect
 from gstaichi.lang._fast_caching import function_hasher
 from gstaichi.lang._fast_caching.fast_caching_types import HashedFunctionSourceInfo
@@ -31,6 +33,36 @@ def test_read_file(tmp_path: pathlib.Path) -> None:
         == """1
 2
 3
+"""
+    )
+
+
+@test_utils.test()
+@pytest.mark.xfail()
+def test_read_file_with_arrows(monkeypatch, tmp_path: pathlib.Path) -> None:
+    """
+    This test doesn't actually reproduce the 0xe28094 bug with the hyphen, but anyway
+    """
+    out_filepath = tmp_path / "somefile.txt"
+    with open(out_filepath, "w") as f:
+        f.write(
+            """0
+1 →
+2 😂
+3 🙌 —
+4 🙃
+5 🔥
+"""
+        )
+    info = _wrap_inspect.FunctionSourceInfo(
+        function_name="foo", filepath=str(out_filepath), start_lineno=1, end_lineno=3
+    )
+    src = function_hasher._read_file(info)
+    assert (
+        "".join(src)
+        == """1 →
+2 😂
+3 🙌 —
 """
     )
 

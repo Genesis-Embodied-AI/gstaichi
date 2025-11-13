@@ -20,11 +20,11 @@ def test_callable_template_mapper():
         ),
         template_slot_locations=(0, 1, 2),
     )
-    assert mapper.lookup((0, 0, 0))[0] == 0
-    assert mapper.lookup((0, 1, 0))[0] == 1
-    assert mapper.lookup((0, 0, 0))[0] == 0
-    assert mapper.lookup((0, 0, 1))[0] == 2
-    assert mapper.lookup((0, 1, 0))[0] == 1
+    assert mapper.lookup(False, (0, 0, 0))[0] == 0
+    assert mapper.lookup(False, (0, 1, 0))[0] == 1
+    assert mapper.lookup(False, (0, 0, 0))[0] == 0
+    assert mapper.lookup(False, (0, 0, 1))[0] == 2
+    assert mapper.lookup(False, (0, 1, 0))[0] == 1
 
     mapper = TemplateMapper(
         (
@@ -34,11 +34,11 @@ def test_callable_template_mapper():
         ),
         (),
     )
-    assert mapper.lookup((0, 0, 0))[0] == 0
-    assert mapper.lookup((0, 1, 0))[0] == 0
-    assert mapper.lookup((0, 0, 0))[0] == 0
-    assert mapper.lookup((0, 0, 1))[0] == 0
-    assert mapper.lookup((0, 1, 0))[0] == 0
+    assert mapper.lookup(False, (0, 0, 0))[0] == 0
+    assert mapper.lookup(False, (0, 1, 0))[0] == 0
+    assert mapper.lookup(False, (0, 0, 0))[0] == 0
+    assert mapper.lookup(False, (0, 0, 1))[0] == 0
+    assert mapper.lookup(False, (0, 1, 0))[0] == 0
 
     mapper = TemplateMapper(
         (
@@ -48,9 +48,9 @@ def test_callable_template_mapper():
         ),
         (1,),
     )
-    assert mapper.lookup((0, x, 0))[0] == 0
-    assert mapper.lookup((0, y, 0))[0] == 1
-    assert mapper.lookup((0, x, 1))[0] == 0
+    assert mapper.lookup(False, (0, x, 0))[0] == 0
+    assert mapper.lookup(False, (0, y, 0))[0] == 1
+    assert mapper.lookup(False, (0, x, 1))[0] == 0
 
 
 @test_utils.test()
@@ -69,6 +69,6 @@ def test_callable_template_mapper_numpy():
     import numpy as np
 
     mapper = TemplateMapper(annotations, (0, 1, 2))
-    assert mapper.lookup((0, 0, np.ones(shape=(1, 2, 3), dtype=np.float32)))[0] == 0
-    assert mapper.lookup((0, 0, np.ones(shape=(1, 2, 4), dtype=np.float32)))[0] == 0
-    assert mapper.lookup((0, 0, np.ones(shape=(1, 2, 1), dtype=np.int32)))[0] == 1
+    assert mapper.lookup(False, (0, 0, np.ones(shape=(1, 2, 3), dtype=np.float32)))[0] == 0
+    assert mapper.lookup(False, (0, 0, np.ones(shape=(1, 2, 4), dtype=np.float32)))[0] == 0
+    assert mapper.lookup(False, (0, 0, np.ones(shape=(1, 2, 1), dtype=np.int32)))[0] == 1

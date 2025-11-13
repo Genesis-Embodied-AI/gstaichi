@@ -82,8 +82,5 @@ PER_STATEMENT(BlockLocalPtrStmt)
 // Special
 PER_STATEMENT(InternalFuncStmt)
 
-PER_STATEMENT(TexturePtrStmt)
-PER_STATEMENT(TextureOpStmt)
-
 // Quantization
 PER_STATEMENT(BitStructStoreStmt)

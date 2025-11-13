@@ -21,6 +21,7 @@ from gstaichi.lang.exception import (
 )
 from gstaichi.lang.field import Field, ScalarField, SNodeHostAccess
 from gstaichi.lang.util import (
+    DataTypeCxxWrapper,
     cook_dtype,
     get_traceback,
     gstaichi_scope,
@@ -1160,6 +1161,9 @@ class MatrixField(Field):
         self.ndim = ndim
         self.ptr = ti_python_core.expr_matrix_field([var.ptr for var in self.vars], [n, m][:ndim])
 
+    def to_dlpack(self):
+        return impl.get_runtime().prog.field_to_dlpack(self._snode.ptr, self.ndim, self.n, self.m)
+
     def get_scalar_field(self, *indices):
         """Creates a ScalarField using a specific field member.
 
@@ -1629,7 +1633,7 @@ class MatrixNdarray(Ndarray):
 
         self.layout = Layout.AOS
         self.shape = tuple(shape)
-        self.element_type = _type_factory.get_tensor_type((self.n, self.m), self.dtype)
+        self.element_type = DataTypeCxxWrapper(_type_factory.get_tensor_type((self.n, self.m), self.dtype).get_ptr())
         # TODO: we should pass in element_type, shape, layout instead.
         self.arr = impl.get_runtime().prog.create_ndarray(
             cook_dtype(self.element_type),
@@ -1744,7 +1748,7 @@ class VectorNdarray(Ndarray):
 
         self.layout = Layout.AOS
         self.shape = tuple(shape)
-        self.element_type = _type_factory.get_tensor_type((n,), self.dtype)
+        self.element_type = DataTypeCxxWrapper(_type_factory.get_tensor_type((n,), self.dtype).get_ptr())
         self.arr = impl.get_runtime().prog.create_ndarray(
             cook_dtype(self.element_type),
             shape,
