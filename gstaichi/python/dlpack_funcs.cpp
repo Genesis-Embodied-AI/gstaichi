@@ -171,8 +171,6 @@ pybind11::capsule field_to_dlpack(Program *program,
 
   int full_ndim = ndim + element_ndim;
   int64_t *shape = nullptr;
-  std::cout << "index offsets.size() " << snode->index_offsets.size()
-            << std::endl;
   if (full_ndim > 0) {
     shape = new int64_t[full_ndim];
     for (int i = 0; i < ndim; i++) {
@@ -181,15 +179,8 @@ pybind11::capsule field_to_dlpack(Program *program,
             "SNode has non-sequential physical index mapping, which is not "
             "supported currently for dlpack conversion");
       }
-      int axis_shape = snode->shape_along_axis(i);
-      std::cout << "axis_shape: " << axis_shape << " physical_index_position "
-                << snode->physical_index_position[i] << std::endl;
-      shape[i] = axis_shape;
+      shape[i] = snode->shape_along_axis(i);
       AxisExtractor axis = snode->extractors[i];
-      std::cout << "axis: " << " num_elements_from_root "
-                << axis.num_elements_from_root << " shape " << axis.shape
-                << " acc_shape " << axis.acc_shape << std::endl;
-      // std::cout << " index offset " << snode->index_offsets[i] << std::endl;
     }
     if (element_ndim >= 1) {
       shape[ndim] = n;
