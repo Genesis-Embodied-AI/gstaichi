@@ -137,6 +137,18 @@ void validate_axis_ordering(SNode *snode, int ndim) {
   }
 }
 
+int64_t *calc_strides(int64_t *shape, int full_ndim) {
+  int64_t *strides = nullptr;
+  if (full_ndim > 0) {
+    strides = new int64_t[full_ndim];
+    strides[full_ndim - 1] = 1;
+    for (int i = full_ndim - 2; i >= 0; i--) {
+      strides[i] = strides[i + 1] * shape[i + 1];
+    }
+  }
+  return strides;
+}
+
 pybind11::capsule field_to_dlpack(Program *program,
                                   SNode *snode,
                                   int element_ndim,
@@ -174,13 +186,7 @@ pybind11::capsule field_to_dlpack(Program *program,
   if (full_ndim > 0) {
     shape = new int64_t[full_ndim];
     for (int i = 0; i < ndim; i++) {
-      if (snode->physical_index_position[i] != i) {
-        TI_ERROR(
-            "SNode has non-sequential physical index mapping, which is not "
-            "supported currently for dlpack conversion");
-      }
       shape[i] = snode->shape_along_axis(i);
-      AxisExtractor axis = snode->extractors[i];
     }
     if (element_ndim >= 1) {
       shape[ndim] = n;
@@ -190,14 +196,7 @@ pybind11::capsule field_to_dlpack(Program *program,
     }
   }
 
-  int64_t *strides = nullptr;
-  if (full_ndim > 0) {
-    strides = new int64_t[full_ndim];
-    strides[full_ndim - 1] = 1;
-    for (int i = full_ndim - 2; i >= 0; i--) {
-      strides[i] = strides[i + 1] * shape[i + 1];
-    }
-  }
+  int64_t *strides = calc_strides(shape, full_ndim);
 
   DLManagedTensor *managed_tensor = new DLManagedTensor();
 
@@ -248,14 +247,7 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
     std::copy(ndarray_shape.begin(), ndarray_shape.end(), shape);
   }
 
-  int64_t *strides = nullptr;
-  if (ndim > 0) {
-    strides = new int64_t[ndim];
-    strides[ndim - 1] = 1;
-    for (int i = ndim - 2; i >= 0; i--) {
-      strides[i] = strides[i + 1] * shape[i + 1];
-    }
-  }
+  int64_t *strides = calc_strides(shape, ndim);
 
   DataType ndarray_data_type = ndarray->get_element_data_type();
   uint8_t data_type_code = kDLInt;
