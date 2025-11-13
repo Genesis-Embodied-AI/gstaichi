@@ -20,8 +20,9 @@ def setup_llvm() -> str:
     """
     u = platform.uname()
 
-    llvm_version = "15.0.7"
-    build_version = "202510071403"
+    llvm_version = "17.0.6"
+    # TODO: fill in build_version
+    build_version = ""
     release_url_template = "https://github.com/Genesis-Embodied-AI/gstaichi-sdk-builds/releases/download/llvm-{llvm_version}-{build_version}/taichi-llvm-{llvm_version}-{platform}.zip".format(
         llvm_version=llvm_version,
         build_version=build_version,

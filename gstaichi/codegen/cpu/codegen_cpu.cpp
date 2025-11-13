@@ -12,10 +12,10 @@
 #include "gstaichi/ir/analysis.h"
 #include "gstaichi/analysis/offline_cache_util.h"
 
-#include "llvm/Support/Host.h"
+#include "llvm/TargetParser/Host.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Transforms/IPO.h"
-#include "llvm/Transforms/IPO/PassManagerBuilder.h"
+// #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h"
 
@@ -289,8 +289,6 @@ void KernelCodeGenCPU::optimize_module(llvm::Module *module) {
   b.Inliner = llvm::createFunctionInliningPass(b.OptLevel, 0, false);
   b.LoopVectorize = true;
   b.SLPVectorize = true;
-
-  target_machine->adjustPassManager(b);
 
   b.populateFunctionPassManager(function_pass_manager);
   b.populateModulePassManager(module_pass_manager);
