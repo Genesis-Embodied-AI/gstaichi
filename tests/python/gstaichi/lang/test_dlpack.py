@@ -136,6 +136,17 @@ def test_dlpack_2_arrays(tensor_type):
 
 
 @test_utils.test(arch=dlpack_arch)
+def test_dlpack_non_sequenced_axes():
+    field_ikj = ti.field(ti.f32)
+    ti.root.dense(ti.i, 3).dense(ti.k, 2).dense(ti.j, 4).place(field_ikj)
+    # create the field (since we arent initializing its value in any way, which would implicilty
+    # call ti.sync())
+    ti.sync()
+    with pytest.raises(RuntimeError):
+        tt = ti_to_torch(field_ikj)
+
+
+@test_utils.test(arch=dlpack_arch)
 def test_dlpack_field_multiple_tree_nodes():
     """
     each ti.sync causes the fields to be written to a new snode tree node

@@ -89,6 +89,54 @@ std::pair<uint8_t, uint8_t> get_type_info(DataType dt) {
   return std::make_pair(data_type_code, element_bits);
 }
 
+void validate_axis_ordering(SNode *snode, int ndim) {
+  std::vector<int> memory_layout_order;
+  const SNode *current = snode;
+  while (current->parent != nullptr) {
+    current = current->parent;
+  }
+  std::vector<const SNode *> path;
+  current = snode;
+  while (current != nullptr) {
+    path.push_back(current);
+    current = current->parent;
+  }
+  std::reverse(path.begin(), path.end());  // Now path is root -> ... -> place
+
+  for (const SNode *node : path) {
+    if (node->type == SNodeType::dense) {
+      for (int phys_axis = 0; phys_axis < gstaichi_max_num_indices;
+           phys_axis++) {
+        if (node->extractors[phys_axis].active) {
+          bool was_in_parent = false;
+          if (node->parent != nullptr) {
+            was_in_parent = node->parent->extractors[phys_axis].active;
+          }
+          if (!was_in_parent) {
+            memory_layout_order.push_back(phys_axis);
+          }
+        }
+      }
+    }
+  }
+
+  bool has_non_ijk_ordering = false;
+  if (memory_layout_order.size() != ndim) {
+    has_non_ijk_ordering = true;
+  } else {
+    for (size_t i = 0; i < memory_layout_order.size(); i++) {
+      if (memory_layout_order[i] != static_cast<int>(i)) {
+        has_non_ijk_ordering = true;
+        break;
+      }
+    }
+  }
+  if (has_non_ijk_ordering) {
+    TI_ERROR(
+        "SNode must have axes in order i, j, k, ... in order to use to_dlpack")
+  }
+}
+
 pybind11::capsule field_to_dlpack(Program *program,
                                   SNode *snode,
                                   int element_ndim,
@@ -118,8 +166,13 @@ pybind11::capsule field_to_dlpack(Program *program,
   std::tie(data_type_code, element_bits) = get_type_info(dt);
 
   int ndim = snode->num_active_indices;
+
+  validate_axis_ordering(snode, ndim);
+
   int full_ndim = ndim + element_ndim;
   int64_t *shape = nullptr;
+  std::cout << "index offsets.size() " << snode->index_offsets.size()
+            << std::endl;
   if (full_ndim > 0) {
     shape = new int64_t[full_ndim];
     for (int i = 0; i < ndim; i++) {
@@ -129,7 +182,14 @@ pybind11::capsule field_to_dlpack(Program *program,
             "supported currently for dlpack conversion");
       }
       int axis_shape = snode->shape_along_axis(i);
+      std::cout << "axis_shape: " << axis_shape << " physical_index_position "
+                << snode->physical_index_position[i] << std::endl;
       shape[i] = axis_shape;
+      AxisExtractor axis = snode->extractors[i];
+      std::cout << "axis: " << " num_elements_from_root "
+                << axis.num_elements_from_root << " shape " << axis.shape
+                << " acc_shape " << axis.acc_shape << std::endl;
+      // std::cout << " index offset " << snode->index_offsets[i] << std::endl;
     }
     if (element_ndim >= 1) {
       shape[ndim] = n;
