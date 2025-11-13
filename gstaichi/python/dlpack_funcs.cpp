@@ -18,15 +18,15 @@ void validate_arch(Arch arch) {
   }
 }
 
-void *get_raw_ptr(Arch arch,
-                  Program *program,
-                  DeviceAllocation dev_alloc,
-                  DLDeviceType *p_device_type) {
+std::pair<void *, DLDeviceType> get_raw_ptr(Arch arch,
+                                            Program *program,
+                                            DeviceAllocation dev_alloc) {
   void *raw_ptr = nullptr;
+  DLDeviceType device_type = DLDeviceType::kDLCPU;
   if (arch_is_cpu(arch)) {
     cpu::CpuDevice *cpu_device =
         static_cast<cpu::CpuDevice *>(dev_alloc.device);
-    *p_device_type = DLDeviceType::kDLCPU;
+    device_type = DLDeviceType::kDLCPU;
     cpu::CpuDevice::AllocInfo alloc_info =
         cpu_device->get_alloc_info(dev_alloc);
     raw_ptr = alloc_info.ptr;
@@ -35,7 +35,7 @@ void *get_raw_ptr(Arch arch,
   else if (arch_is_cuda(arch)) {
     cuda::CudaDevice *cuda_device =
         static_cast<cuda::CudaDevice *>(dev_alloc.device);
-    *p_device_type = DLDeviceType::kDLCUDA;
+    device_type = DLDeviceType::kDLCUDA;
     cuda::CudaDevice::AllocInfo alloc_info =
         cuda_device->get_alloc_info(dev_alloc);
     raw_ptr = alloc_info.ptr;
@@ -45,47 +45,48 @@ void *get_raw_ptr(Arch arch,
   if (raw_ptr == nullptr) {
     TI_ERROR("Unsupported device type for DLPack conversion");
   }
-  return raw_ptr;
+  return std::make_pair(raw_ptr, device_type);
 }
 
-void get_type_info(DataType dt,
-                   uint8_t *p_data_type_code,
-                   uint8_t *p_element_bits) {
+std::pair<uint8_t, uint8_t> get_type_info(DataType dt) {
   PrimitiveType *dt_as_primitive = dt->as<PrimitiveType>();
   if (dt_as_primitive == nullptr) {
     TI_ERROR("unsupported non-primitive data type for dlpack");
   }
   PrimitiveTypeID type_id = dt_as_primitive->type;
+  uint8_t data_type_code = kDLInt;
+  uint8_t element_bits = 0;
   switch (type_id) {
     case PrimitiveTypeID::i32: {
-      *p_data_type_code = static_cast<uint8_t>(kDLInt);
-      *p_element_bits = 32;
+      data_type_code = static_cast<uint8_t>(kDLInt);
+      element_bits = 32;
       break;
     }
     case PrimitiveTypeID::i64: {
-      *p_data_type_code = static_cast<uint8_t>(kDLInt);
-      *p_element_bits = 64;
+      data_type_code = static_cast<uint8_t>(kDLInt);
+      element_bits = 64;
       break;
     }
     case PrimitiveTypeID::f32: {
-      *p_data_type_code = static_cast<uint8_t>(kDLFloat);
-      *p_element_bits = 32;
+      data_type_code = static_cast<uint8_t>(kDLFloat);
+      element_bits = 32;
       break;
     }
     case PrimitiveTypeID::f64: {
-      *p_data_type_code = static_cast<uint8_t>(kDLFloat);
-      *p_element_bits = 64;
+      data_type_code = static_cast<uint8_t>(kDLFloat);
+      element_bits = 64;
       break;
     }
     case PrimitiveTypeID::u1: {
-      *p_data_type_code = static_cast<uint8_t>(kDLBool);
-      *p_element_bits = 8;
+      data_type_code = static_cast<uint8_t>(kDLBool);
+      element_bits = 8;
       break;
     }
     default: {
       TI_ERROR("unsupported ndarray data type for dlpack");
     }
   }
+  return std::make_pair(data_type_code, element_bits);
 }
 
 pybind11::capsule field_to_dlpack(Program *program,
@@ -105,16 +106,16 @@ pybind11::capsule field_to_dlpack(Program *program,
 
   int field_in_tree_offset = program->get_field_in_tree_offset(tree_id, snode);
 
+  void *raw_ptr = nullptr;
   DLDeviceType device_type = DLDeviceType::kDLCPU;
-  void *raw_ptr = (void *)((uint64_t)get_raw_ptr(arch, program, tree_device_ptr,
-                                                 &device_type) +
-                           field_in_tree_offset);
+  std::tie(raw_ptr, device_type) = get_raw_ptr(arch, program, tree_device_ptr);
+  raw_ptr = (void *)((uint64_t)raw_ptr + field_in_tree_offset);
 
   DataType dt = snode->dt;
 
   uint8_t element_bits = 32;
   uint8_t data_type_code = kDLInt;
-  get_type_info(dt, &data_type_code, &element_bits);
+  std::tie(data_type_code, element_bits) = get_type_info(dt);
 
   int ndim = snode->num_active_indices;
   int full_ndim = ndim + element_ndim;
@@ -184,7 +185,8 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
   DeviceAllocation devalloc = ndarray->get_device_allocation();
 
   DLDeviceType device_type = DLDeviceType::kDLCPU;
-  void *raw_ptr = get_raw_ptr(arch, program, devalloc, &device_type);
+  void *raw_ptr = nullptr;
+  std::tie(raw_ptr, device_type) = get_raw_ptr(arch, program, devalloc);
 
   std::vector<int> ndarray_shape = ndarray->total_shape();
   int ndim = ndarray_shape.size();
@@ -207,7 +209,7 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
   DataType ndarray_data_type = ndarray->get_element_data_type();
   uint8_t data_type_code = kDLInt;
   uint8_t element_bits = 0;
-  get_type_info(ndarray_data_type, &data_type_code, &element_bits);
+  std::tie(data_type_code, element_bits) = get_type_info(ndarray_data_type);
 
   DLManagedTensor *managed_tensor = new DLManagedTensor();
 
