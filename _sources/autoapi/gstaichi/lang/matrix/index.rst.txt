@@ -674,6 +674,9 @@ Module Contents
    .. py:attribute:: ptr
 
 
+   .. py:method:: to_dlpack()
+
+
    .. py:method:: get_scalar_field(*indices)
 
       Creates a ScalarField using a specific field member.

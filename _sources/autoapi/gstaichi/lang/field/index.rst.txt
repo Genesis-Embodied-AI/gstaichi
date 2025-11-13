@@ -168,6 +168,9 @@ Module Contents
    :type var: Expr
 
 
+   .. py:method:: to_dlpack()
+
+
    .. py:method:: fill(val)
 
       Fills this scalar field with a specified value.

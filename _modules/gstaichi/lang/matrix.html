@@ -1592,6 +1592,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">ti_python_core</span><span class="o">.</span><span class="n">expr_matrix_field</span><span class="p">([</span><span class="n">var</span><span class="o">.</span><span class="n">ptr</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vars</span><span class="p">],</span> <span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="n">m</span><span class="p">][:</span><span class="n">ndim</span><span class="p">])</span></div>
 
 
+<div class="viewcode-block" id="MatrixField.to_dlpack">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/matrix/index.html#gstaichi.lang.matrix.MatrixField.to_dlpack">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dlpack</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">prog</span><span class="o">.</span><span class="n">field_to_dlpack</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_snode</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="MatrixField.get_scalar_field">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/matrix/index.html#gstaichi.lang.matrix.MatrixField.get_scalar_field">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_scalar_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">indices</span><span class="p">):</span>
