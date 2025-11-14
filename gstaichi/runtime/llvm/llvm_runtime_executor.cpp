@@ -29,6 +29,8 @@ void assert_failed_host(const char *msg) {
 void *host_allocate_aligned(HostMemoryPool *memory_pool,
                             std::size_t size,
                             std::size_t alignment) {
+  std::cout << "Host allocate aligned: size=" << size
+            << ", alignment=" << alignment << std::endl;
   return memory_pool->allocate(size, alignment);
 }
 
@@ -38,6 +40,8 @@ LlvmRuntimeExecutor::LlvmRuntimeExecutor(CompileConfig &config,
                                          KernelProfilerBase *profiler,
                                          ProgramImpl *program_impl)
     : config_(config), program_impl_(program_impl) {
+    std::cout << "Initializing LlvmRuntimeExecutor with arch "
+              << arch_name(config.arch) << std::endl;
   if (config.arch == Arch::cuda) {
 #if defined(TI_WITH_CUDA)
     if (!is_cuda_api_available()) {
@@ -49,6 +53,8 @@ LlvmRuntimeExecutor::LlvmRuntimeExecutor(CompileConfig &config,
     } else {
       // CUDA runtime created successfully
       use_device_memory_pool_ = CUDAContext::get_instance().supports_mem_pool();
+      std::cout << "Using device memory pool: "
+                << (use_device_memory_pool_ ? "Yes" : "No") << std::endl;
     }
 #else
     TI_WARN("GsTaichi is not compiled with CUDA.");
@@ -177,6 +183,7 @@ JITModule *LlvmRuntimeExecutor::create_jit_module(
 }
 
 JITModule *LlvmRuntimeExecutor::get_runtime_jit_module() {
+  // std::cout << "Getting runtime JIT module" << std::endl;
   return runtime_jit_module_;
 }
 
@@ -406,6 +413,8 @@ void LlvmRuntimeExecutor::initialize_llvm_runtime_snodes(
   }
 
   if (config_.arch == Arch::cuda && use_device_memory_pool() && !all_dense) {
+    std::cout << "Preallocating runtime memory for SNode tree " << tree_id
+              << std::endl;
     preallocate_runtime_memory();
   }
 
@@ -472,6 +481,7 @@ LlvmDevice *LlvmRuntimeExecutor::llvm_device() {
 DeviceAllocation LlvmRuntimeExecutor::allocate_memory_on_device(
     std::size_t alloc_size,
     uint64 *result_buffer) {
+  std::cout << "Allocating device memory of size " << alloc_size << " bytes" << std::endl;
   auto devalloc = llvm_device()->allocate_memory_runtime(
       {{alloc_size, /*host_write=*/false, /*host_read=*/false,
         /*export_sharing=*/false, AllocUsage::Storage},
@@ -583,6 +593,7 @@ LlvmRuntimeExecutor::~LlvmRuntimeExecutor() {
 void *LlvmRuntimeExecutor::preallocate_memory(
     std::size_t prealloc_size,
     DeviceAllocationUnique &devalloc) {
+  std::cout << "Preallocating device memory of size " << prealloc_size << " bytes" << std::endl;
   DeviceAllocation preallocated_device_buffer_alloc;
 
   Device::AllocParams preallocated_device_buffer_alloc_params;
@@ -603,6 +614,10 @@ void *LlvmRuntimeExecutor::preallocate_memory(
 void LlvmRuntimeExecutor::preallocate_runtime_memory() {
   if (preallocated_runtime_memory_allocs_ != nullptr)
     return;
+  std::cout << "Preallocating runtime memory config_.device_memory_fraction="
+            << config_.device_memory_fraction
+            << ", config_.device_memory_GB=" << config_.device_memory_GB
+            << std::endl;
 
   std::size_t total_prealloc_size = 0;
   const auto total_mem = llvm_device()->get_total_memory();
@@ -620,6 +635,7 @@ void LlvmRuntimeExecutor::preallocate_runtime_memory() {
 
   TI_TRACE("Allocating device memory {:.2f} MB",
            1.0 * total_prealloc_size / (1UL << 20));
+  std::cout << "Allocating device memory " << 1.0 * total_prealloc_size / (1UL << 20) << " MB" << std::endl;
 
   auto *const runtime_jit = get_runtime_jit_module();
   runtime_jit->call<void *, std::size_t, void *>(
@@ -632,6 +648,7 @@ void LlvmRuntimeExecutor::materialize_runtime(KernelProfilerBase *profiler,
   // Starting random state for the program calculated using the random seed.
   // The seed is multiplied by 1048391 so that two programs with different seeds
   // will not have overlapping random states in any thread.
+  std::cout << "Materializing LLVM runtime" << std::endl;
   int starting_rand_state = config_.random_seed * 1048391;
 
   // Number of random states. One per CPU/CUDA thread.
@@ -673,12 +690,20 @@ void LlvmRuntimeExecutor::materialize_runtime(KernelProfilerBase *profiler,
         /*use_preallocated_buffer=*/1);
     runtime_objects_prealloc_size =
         size_t(fetch_result<uint64_t>(0, (uint64_t *)temp_result_ptr));
+    std::cout << "Runtime objects prealloc size: "
+              << runtime_objects_prealloc_size << " bytes" << std::endl;
     temp_result_alloc.reset();
     size_t result_buffer_size = sizeof(uint64) * gstaichi_result_buffer_entries;
+    std::cout << "Result buffer size: " << result_buffer_size << " bytes"
+              << std::endl;
 
     TI_TRACE("Allocating device memory {:.2f} MB",
              1.0 * (runtime_objects_prealloc_size + result_buffer_size) /
                  (1UL << 20));
+    std::cout << "Allocating device memory "
+              << 1.0 * (runtime_objects_prealloc_size + result_buffer_size) /
+                     (1UL << 20)
+              << " MB" << std::endl;
 
     runtime_objects_prealloc_buffer = preallocate_memory(
         iroundup(runtime_objects_prealloc_size + result_buffer_size,
