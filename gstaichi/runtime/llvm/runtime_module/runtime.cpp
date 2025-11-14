@@ -909,6 +909,7 @@ Ptr LLVMRuntime::allocate_from_reserved_memory(
     std::size_t preallocated_head = (std::size_t)memory_chunk.preallocated_head;
     std::size_t preallocated_tail = (std::size_t)memory_chunk.preallocated_tail;
 
+    alignment = alignment < 1024 ? 1024 : alignment;
     auto alignment_bytes =
         alignment - 1 - (preallocated_head + alignment - 1) % alignment;
     size += alignment_bytes;
