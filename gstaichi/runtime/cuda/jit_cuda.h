@@ -1,3 +1,4 @@
+
 #include <memory>
 
 #include "llvm/ADT/StringRef.h"
@@ -13,7 +14,6 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Scalar/GVN.h"
 #include "llvm/Transforms/IPO.h"
-#include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Target/TargetMachine.h"
@@ -26,8 +26,6 @@
 #include "gstaichi/program/program.h"
 #include "gstaichi/system/timer.h"
 #include "gstaichi/util/file_sequence_writer.h"
-#include "gstaichi/runtime/cuda/ptx_cache.h"
-#include "gstaichi/program/program_impl.h"
 
 #define TI_RUNTIME_HOST
 #include "gstaichi/program/context.h"
@@ -41,18 +39,47 @@ class JITModuleCUDA : public JITModule {
   void *module_;
 
  public:
-  explicit JITModuleCUDA(void *module);
-  void *lookup_function(const std::string &name) override;
+  explicit JITModuleCUDA(void *module) : module_(module) {
+  }
+
+  void *lookup_function(const std::string &name) override {
+    // TODO: figure out why using the guard leads to wrong tests results
+    // auto context_guard = CUDAContext::get_instance().get_guard();
+    CUDAContext::get_instance().make_current();
+    void *func = nullptr;
+    auto t = Time::get_time();
+    auto err = CUDADriver::get_instance().module_get_function.call_with_warning(
+        &func, module_, name.c_str());
+    if (err) {
+      TI_ERROR("Cannot look up function {}", name);
+    }
+    t = Time::get_time() - t;
+    TI_TRACE("CUDA module_get_function {} costs {} ms", name, t * 1000);
+    TI_ASSERT(func != nullptr);
+    return func;
+  }
+
   void call(const std::string &name,
             const std::vector<void *> &arg_pointers,
-            const std::vector<int> &arg_sizes) override;
+            const std::vector<int> &arg_sizes) override {
+    launch(name, 1, 1, 0, arg_pointers, arg_sizes);
+  }
+
   void launch(const std::string &name,
               std::size_t grid_dim,
               std::size_t block_dim,
               std::size_t dynamic_shared_mem_bytes,
               const std::vector<void *> &arg_pointers,
-              const std::vector<int> &arg_sizes) override;
-  bool direct_dispatch() const override;
+              const std::vector<int> &arg_sizes) override {
+    auto func = lookup_function(name);
+    CUDAContext::get_instance().launch(func, name, arg_pointers, arg_sizes,
+                                       grid_dim, block_dim,
+                                       dynamic_shared_mem_bytes);
+  }
+
+  bool direct_dispatch() const override {
+    return false;
+  }
 };
 
 class JITSessionCUDA : public JITSession {
@@ -61,29 +88,18 @@ class JITSessionCUDA : public JITSession {
 
   JITSessionCUDA(GsTaichiLLVMContext *tlctx,
                  const CompileConfig &config,
-                 llvm::DataLayout data_layout,
-                 ProgramImpl *program_impl);
+                 llvm::DataLayout data_layout)
+      : JITSession(tlctx, config), data_layout(data_layout) {
+  }
+
   JITModule *add_module(std::unique_ptr<llvm::Module> M, int max_reg) override;
-  llvm::DataLayout get_data_layout() override;
+
+  llvm::DataLayout get_data_layout() override {
+    return data_layout;
+  }
 
  private:
-  class Finalizer : public ProgramImpl::NeedsFinalizing {
-   public:
-    explicit Finalizer(PtxCache *ptx_cache) : ptx_cache_(ptx_cache) {
-    }
-    void finalize() override {
-      ptx_cache_->dump();
-    }
-    ~Finalizer() override = default;
-
-   private:
-    PtxCache *ptx_cache_;
-  };
-
   std::string compile_module_to_ptx(std::unique_ptr<llvm::Module> &module);
-  std::unique_ptr<PtxCache> ptx_cache_;
-  ProgramImpl *program_impl_;
-  std::unique_ptr<Finalizer> finalizer_;
 };
 
 #endif
@@ -91,7 +107,6 @@ class JITSessionCUDA : public JITSession {
 std::unique_ptr<JITSession> create_llvm_jit_session_cuda(
     GsTaichiLLVMContext *tlctx,
     const CompileConfig &config,
-    Arch arch,
-    ProgramImpl *program_impl);
+    Arch arch);
 
 }  // namespace gstaichi::lang

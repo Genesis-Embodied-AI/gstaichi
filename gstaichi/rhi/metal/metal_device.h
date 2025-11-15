@@ -1,4 +1,5 @@
 #pragma once
+#include <math.h>
 #include "gstaichi/common/logging.h"
 #include "gstaichi/rhi/device.h"
 #include "gstaichi/rhi/impl_support.h"
