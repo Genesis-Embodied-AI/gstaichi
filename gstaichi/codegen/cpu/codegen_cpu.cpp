@@ -12,12 +12,15 @@
 #include "gstaichi/ir/analysis.h"
 #include "gstaichi/analysis/offline_cache_util.h"
 
-// #include "llvm/Support/Host.h"
+#include "llvm/TargetParser/Host.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Transforms/IPO.h"
 // #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h"
+#include "llvm/Passes/PassBuilder.h"
+#include "llvm/Passes/StandardInstrumentations.h"
+#include "llvm/Transforms/Scalar/LoopPassManager.h"
 
 namespace gstaichi::lang {
 
@@ -53,7 +56,7 @@ class TaskCodeGenCPU : public TaskCodeGenLLVM {
     {
       auto guard = get_function_creation_guard(
           {llvm::PointerType::get(get_runtime_type("RuntimeContext"), 0),
-           llvm::Type::getInt8PtrTy(*llvm_context),
+           llvm::PointerType::getUnqual(*llvm_context),
            tlctx->get_data_type<int>()});
 
       auto loop_var = create_entry_block_alloca(PrimitiveType::i32);
@@ -81,7 +84,7 @@ class TaskCodeGenCPU : public TaskCodeGenLLVM {
     {
       auto guard = get_function_creation_guard(
           {llvm::PointerType::get(get_runtime_type("RuntimeContext"), 0),
-           llvm::Type::getInt8PtrTy(*llvm_context),
+           llvm::PointerType::getUnqual(*llvm_context),
            tlctx->get_data_type<int>()});
 
       for (int i = 0; i < stmt->mesh_prologue->size(); i++) {
@@ -266,41 +269,66 @@ void KernelCodeGenCPU::optimize_module(llvm::Module *module) {
   options.NoZerosInBSS = false;
   options.GuaranteedTailCallOpt = false;
 
-  llvm::legacy::FunctionPassManager function_pass_manager(module);
-  llvm::legacy::PassManager module_pass_manager;
+  // llvm::legacy::FunctionPassManager function_pass_manager(module);
+  // llvm::legacy::PassManager module_pass_manager;
 
   llvm::StringRef mcpu = llvm::sys::getHostCPUName();
   std::unique_ptr<llvm::TargetMachine> target_machine(
       target->createTargetMachine(triple.str(), mcpu.str(), "", options,
                                   llvm::Reloc::PIC_, llvm::CodeModel::Small,
-                                  llvm::CodeGenOpt::Aggressive));
+                                  llvm::CodeGenOptLevel::Aggressive));
 
   TI_ERROR_UNLESS(target_machine.get(), "Could not allocate target machine!");
 
   module->setDataLayout(target_machine->createDataLayout());
 
-  module_pass_manager.add(llvm::createTargetTransformInfoWrapperPass(
-      target_machine->getTargetIRAnalysis()));
-  function_pass_manager.add(llvm::createTargetTransformInfoWrapperPass(
-      target_machine->getTargetIRAnalysis()));
+  llvm::LoopAnalysisManager lam;
+  llvm::FunctionAnalysisManager fam;
+  llvm::CGSCCAnalysisManager cgam;
+  llvm::ModuleAnalysisManager mam;
 
-  llvm::PassManagerBuilder b;
-  b.OptLevel = 3;
-  b.Inliner = llvm::createFunctionInliningPass(b.OptLevel, 0, false);
-  b.LoopVectorize = true;
-  b.SLPVectorize = true;
+  llvm::PassBuilder pb(target_machine.get());
+  pb.registerModuleAnalyses(mam);
+  pb.registerCGSCCAnalyses(cgam);
+  pb.registerFunctionAnalyses(fam);
+  pb.registerLoopAnalyses(lam);
+  pb.crossRegisterProxies(lam, fam, cgam, mam);
 
-  b.populateFunctionPassManager(function_pass_manager);
-  b.populateModulePassManager(module_pass_manager);
+  llvm::ModulePassManager mpm = pb.buildPerModuleDefaultPipeline(
+    llvm::OptimizationLevel::O3);
 
-  {
-    TI_PROFILER("llvm_function_pass");
-    function_pass_manager.doInitialization();
-    for (llvm::Module::iterator i = module->begin(); i != module->end(); i++)
-      function_pass_manager.run(*i);
+  llvm::ModulePassManager custom_passes;
+    custom_passes.addPass(llvm::createModuleToFunctionPassAdaptor(
+        llvm::LoopSimplifyPass()));
+    custom_passes.addPass(llvm::createModuleToFunctionPassAdaptor(
+        llvm::createLoopStrengthReducePass()));
+    custom_passes.addPass(llvm::createSeparateConstOffsetFromGEPPass(false));
+    custom_passes.addPass(llvm::createEarlyCSEPass(true));
 
-    function_pass_manager.doFinalization();
-  }
+  mpm.addPass(std::move(custom_passes));
+
+  // module_pass_manager.add(llvm::createTargetTransformInfoWrapperPass(
+  //     target_machine->getTargetIRAnalysis()));
+  // function_pass_manager.add(llvm::createTargetTransformInfoWrapperPass(
+  //     target_machine->getTargetIRAnalysis()));
+
+  // llvm::PassManagerBuilder b;
+  // b.OptLevel = 3;
+  // b.Inliner = llvm::createFunctionInliningPass(b.OptLevel, 0, false);
+  // b.LoopVectorize = true;
+  // b.SLPVectorize = true;
+
+  // b.populateFunctionPassManager(function_pass_manager);
+  // b.populateModulePassManager(module_pass_manager);
+
+  // {
+  //   TI_PROFILER("llvm_function_pass");
+  //   function_pass_manager.doInitialization();
+  //   for (llvm::Module::iterator i = module->begin(); i != module->end(); i++)
+  //     function_pass_manager.run(*i);
+
+  //   function_pass_manager.doFinalization();
+  // }
 
   /*
     Optimization for llvm::GetElementPointer:
@@ -310,24 +338,28 @@ void KernelCodeGenCPU::optimize_module(llvm::Module *module) {
 
     Note there's an update for "separate-const-offset-gep" in llvm-12.
   */
-  module_pass_manager.add(llvm::createLoopStrengthReducePass());
-  module_pass_manager.add(llvm::createIndVarSimplifyPass());
-  module_pass_manager.add(llvm::createSeparateConstOffsetFromGEPPass(false));
-  module_pass_manager.add(llvm::createEarlyCSEPass(true));
+  // module_pass_manager.add(llvm::createLoopStrengthReducePass());
+  // module_pass_manager.add(llvm::createIndVarSimplifyPass());
+  // module_pass_manager.add(llvm::createSeparateConstOffsetFromGEPPass(false));
+  // module_pass_manager.add(llvm::createEarlyCSEPass(true));
 
   llvm::SmallString<8> outstr;
   llvm::raw_svector_ostream ostream(outstr);
   ostream.SetUnbuffered();
   if (compile_config.print_kernel_asm) {
-    // Generate assembly code if neccesary
-    target_machine->addPassesToEmitFile(module_pass_manager, ostream, nullptr,
+    llvm::legacy::PassManager legacy_pm;
+    target_machine->addPassesToEmitFile(legacy_pm, ostream, nullptr,
                                         llvm::CGFT_AssemblyFile);
+    mpm.run(*module, mam);
+    legacy_pm.run(*module);
+  } else {
+    mpm.run(*module, mam);
   }
 
-  {
-    TI_PROFILER("llvm_module_pass");
-    module_pass_manager.run(*module);
-  }
+  // {
+  //   TI_PROFILER("llvm_module_pass");
+  //   module_pass_manager.run(*module);
+  // }
 
   if (compile_config.print_kernel_asm) {
     static FileSequenceWriter writer(
