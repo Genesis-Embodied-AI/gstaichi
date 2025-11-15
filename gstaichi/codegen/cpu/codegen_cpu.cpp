@@ -349,7 +349,7 @@ void KernelCodeGenCPU::optimize_module(llvm::Module *module) {
   if (compile_config.print_kernel_asm) {
     llvm::legacy::PassManager legacy_pm;
     target_machine->addPassesToEmitFile(legacy_pm, ostream, nullptr,
-                                        llvm::CGFT_AssemblyFile);
+                                        llvm::CodeGenFileType::AssemblyFile);
     mpm.run(*module, mam);
     legacy_pm.run(*module);
   } else {
