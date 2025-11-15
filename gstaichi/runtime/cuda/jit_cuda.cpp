@@ -300,8 +300,8 @@ std::string JITSessionCUDA::compile_module_to_ptx(
   pb.registerLoopAnalyses(lam);
   pb.crossRegisterProxies(lam, fam, cgam, mam);
 
-  llvm::ModulePassManager mpm = pb.buildPerModuleDefaultPipeline(
-    llvm::OptimizationLevel::O3);
+  llvm::ModulePassManager mpm =
+      pb.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O3);
 
   // legacy::FunctionPassManager function_pass_manager(module.get());
   // legacy::PassManager module_pass_manager;
