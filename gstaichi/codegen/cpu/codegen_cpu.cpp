@@ -15,7 +15,6 @@
 #include "llvm/TargetParser/Host.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Transforms/IPO.h"
-// #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h"
 #include "llvm/Passes/PassBuilder.h"
@@ -269,9 +268,6 @@ void KernelCodeGenCPU::optimize_module(llvm::Module *module) {
   options.NoZerosInBSS = false;
   options.GuaranteedTailCallOpt = false;
 
-  // llvm::legacy::FunctionPassManager function_pass_manager(module);
-  // llvm::legacy::PassManager module_pass_manager;
-
   llvm::StringRef mcpu = llvm::sys::getHostCPUName();
   std::unique_ptr<llvm::TargetMachine> target_machine(
       target->createTargetMachine(triple.str(), mcpu.str(), "", options,
@@ -311,52 +307,6 @@ void KernelCodeGenCPU::optimize_module(llvm::Module *module) {
     legacy_pm.run(*module);
   }
 
-  // llvm::ModulePassManager custom_passes;
-  //   custom_passes.addPass(llvm::createModuleToFunctionPassAdaptor(
-  //       llvm::LoopSimplifyPass()));
-  //   custom_passes.addPass(llvm::createModuleToFunctionPassAdaptor(
-  //       llvm::createLoopStrengthReducePass()));
-  //   custom_passes.addPass(llvm::createSeparateConstOffsetFromGEPPass(false));
-  //   custom_passes.addPass(llvm::createEarlyCSEPass(true));
-
-  // mpm.addPass(std::move(custom_passes));
-
-  // module_pass_manager.add(llvm::createTargetTransformInfoWrapperPass(
-  //     target_machine->getTargetIRAnalysis()));
-  // function_pass_manager.add(llvm::createTargetTransformInfoWrapperPass(
-  //     target_machine->getTargetIRAnalysis()));
-
-  // llvm::PassManagerBuilder b;
-  // b.OptLevel = 3;
-  // b.Inliner = llvm::createFunctionInliningPass(b.OptLevel, 0, false);
-  // b.LoopVectorize = true;
-  // b.SLPVectorize = true;
-
-  // b.populateFunctionPassManager(function_pass_manager);
-  // b.populateModulePassManager(module_pass_manager);
-
-  // {
-  //   TI_PROFILER("llvm_function_pass");
-  //   function_pass_manager.doInitialization();
-  //   for (llvm::Module::iterator i = module->begin(); i != module->end(); i++)
-  //     function_pass_manager.run(*i);
-
-  //   function_pass_manager.doFinalization();
-  // }
-
-  /*
-    Optimization for llvm::GetElementPointer:
-    https://github.com/taichi-dev/gstaichi/issues/5472 The three other passes
-    "loop-reduce", "ind-vars", "cse" serves as preprocessing for
-    "separate-const-offset-gep".
-
-    Note there's an update for "separate-const-offset-gep" in llvm-12.
-  */
-  // module_pass_manager.add(llvm::createLoopStrengthReducePass());
-  // module_pass_manager.add(llvm::createIndVarSimplifyPass());
-  // module_pass_manager.add(llvm::createSeparateConstOffsetFromGEPPass(false));
-  // module_pass_manager.add(llvm::createEarlyCSEPass(true));
-
   llvm::SmallString<8> outstr;
   llvm::raw_svector_ostream ostream(outstr);
   ostream.SetUnbuffered();
@@ -367,11 +317,6 @@ void KernelCodeGenCPU::optimize_module(llvm::Module *module) {
     mpm.run(*module, mam);
     asm_pm.run(*module);
   }
-
-  // {
-  //   TI_PROFILER("llvm_module_pass");
-  //   module_pass_manager.run(*module);
-  // }
 
   if (compile_config.print_kernel_asm) {
     static FileSequenceWriter writer(
