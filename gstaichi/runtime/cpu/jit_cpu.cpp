@@ -39,7 +39,7 @@
 #include "llvm/Transforms/IPO.h"
 
 #include "llvm/MC/TargetRegistry.h"
-// #include "llvm/Support/Host.h"
+#include "llvm/TargetParser/Host.h"
 
 #endif
 
@@ -192,7 +192,7 @@ class JITSessionCPU : public JITSession {
 #endif
     if (!symbol)
       TI_ERROR("Function \"{}\" not found", Name);
-    return (void *)(symbol->getAddress());
+    return symbol->getAddress().toPtr<void *>();
   }
 
   void *lookup_in_module(JITDylib *lib, const std::string Name) {
@@ -204,7 +204,7 @@ class JITSessionCPU : public JITSession {
 #endif
     if (!symbol)
       TI_ERROR("Function \"{}\" not found", Name);
-    return (void *)(symbol->getAddress());
+    return symbol->getAddress().toPtr<void *>();
   }
 };
 
