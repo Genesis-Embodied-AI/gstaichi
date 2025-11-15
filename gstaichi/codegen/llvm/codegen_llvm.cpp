@@ -1794,12 +1794,14 @@ void TaskCodeGenLLVM::visit(SNodeLookupStmt *stmt) {
   auto snode = stmt->snode;
   if (snode->type == SNodeType::root) {
     // FIXME: get parent_type from gstaichi instead of llvm.
-    llvm::Type *parent_ty = builder->getInt8Ty();
-    if (auto bit_cast = llvm::dyn_cast<llvm::BitCastInst>(parent)) {
-      parent_ty = bit_cast->getDestTy();
-      if (auto ptr_ty = llvm::dyn_cast<llvm::PointerType>(parent_ty))
-        parent_ty = ptr_ty->getPointerElementType();
-    }
+    // llvm::Type *parent_ty = builder->getInt8Ty();
+    // if (auto bit_cast = llvm::dyn_cast<llvm::BitCastInst>(parent)) {
+    //   parent_ty = bit_cast->getDestTy();
+    //   if (auto ptr_ty = llvm::dyn_cast<llvm::PointerType>(parent_ty))
+    //     parent_ty = ptr_ty->getPointerElementType();
+    // }
+    llvm::Type *parent_ty = StructCompilerLLVM::get_llvm_node_type(
+        module.get(), stmt->input_snode->as<SNode>());
     llvm_val[stmt] =
         builder->CreateGEP(parent_ty, parent, llvm_val[stmt->input_index]);
   } else if (snode->type == SNodeType::dense ||
