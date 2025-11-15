@@ -354,13 +354,13 @@ std::string JITSessionCUDA::compile_module_to_ptx(
   target_machine->registerPassBuilderCallbacks(PB, false);
 
   llvm::ModulePassManager MPM =
-    PB.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O3);
+      PB.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O3);
 
   {
     TI_PROFILER("llvm_module_pass");
     MPM.run(*module, MAM);
   }
-  
+
   if (llvm::verifyModule(*module, &llvm::errs())) {
     module->print(llvm::errs(), nullptr);
     TI_ERROR("LLVM Module broken");
