@@ -297,15 +297,29 @@ void KernelCodeGenCPU::optimize_module(llvm::Module *module) {
   llvm::ModulePassManager mpm = pb.buildPerModuleDefaultPipeline(
     llvm::OptimizationLevel::O3);
 
-  llvm::ModulePassManager custom_passes;
-    custom_passes.addPass(llvm::createModuleToFunctionPassAdaptor(
-        llvm::LoopSimplifyPass()));
-    custom_passes.addPass(llvm::createModuleToFunctionPassAdaptor(
-        llvm::createLoopStrengthReducePass()));
-    custom_passes.addPass(llvm::createSeparateConstOffsetFromGEPPass(false));
-    custom_passes.addPass(llvm::createEarlyCSEPass(true));
+  mpm.run(*module, mam);
 
-  mpm.addPass(std::move(custom_passes));
+  llvm::legacy::PassManager legacy_pm;
+  legacy_pm.add(llvm::createTargetTransformInfoWrapperPass(
+    target_machine->getTargetIRAnalysis()));
+  legacy_pm.add(llvm::createLoopStrengthReducePass());
+  legacy_pm.add(llvm::createSeparateConstOffsetFromGEPPass(false));
+  legacy_pm.add(llvm::createEarlyCSEPass(true));
+
+  {
+    TI_PROFILER("llvm_module_pass");
+    legacy_pm.run(*module);
+  }
+
+  // llvm::ModulePassManager custom_passes;
+  //   custom_passes.addPass(llvm::createModuleToFunctionPassAdaptor(
+  //       llvm::LoopSimplifyPass()));
+  //   custom_passes.addPass(llvm::createModuleToFunctionPassAdaptor(
+  //       llvm::createLoopStrengthReducePass()));
+  //   custom_passes.addPass(llvm::createSeparateConstOffsetFromGEPPass(false));
+  //   custom_passes.addPass(llvm::createEarlyCSEPass(true));
+
+  // mpm.addPass(std::move(custom_passes));
 
   // module_pass_manager.add(llvm::createTargetTransformInfoWrapperPass(
   //     target_machine->getTargetIRAnalysis()));
@@ -347,13 +361,11 @@ void KernelCodeGenCPU::optimize_module(llvm::Module *module) {
   llvm::raw_svector_ostream ostream(outstr);
   ostream.SetUnbuffered();
   if (compile_config.print_kernel_asm) {
-    llvm::legacy::PassManager legacy_pm;
-    target_machine->addPassesToEmitFile(legacy_pm, ostream, nullptr,
+    llvm::legacy::PassManager asm_pm;
+    target_machine->addPassesToEmitFile(asm_pm, ostream, nullptr,
                                         llvm::CodeGenFileType::AssemblyFile);
     mpm.run(*module, mam);
-    legacy_pm.run(*module);
-  } else {
-    mpm.run(*module, mam);
+    asm_pm.run(*module);
   }
 
   // {
