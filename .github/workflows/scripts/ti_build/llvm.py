@@ -7,7 +7,6 @@ import platform
 # -- third party --
 # -- own --
 from .bootstrap import get_cache_home
-from .cmake import cmake_args
 from .dep import download_dep
 from .misc import banner, get_cache_home
 
