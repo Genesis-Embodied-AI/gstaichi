@@ -279,19 +279,6 @@ std::string JITSessionCUDA::compile_module_to_ptx(
   module->setTargetTriple(triple.str());
   module->setDataLayout(target_machine->createDataLayout());
 
-  // // Set up passes
-  // llvm::SmallString<8> outstr;
-  // raw_svector_ostream ostream(outstr);
-  // ostream.SetUnbuffered();
-
-  // legacy::FunctionPassManager function_pass_manager(module.get());
-  // legacy::PassManager module_pass_manager;
-
-  // module_pass_manager.add(createTargetTransformInfoWrapperPass(
-  //     target_machine->getTargetIRAnalysis()));
-  // function_pass_manager.add(createTargetTransformInfoWrapperPass(
-  //     target_machine->getTargetIRAnalysis()));
-
   // NVidia's libdevice library uses a __nvvm_reflect to choose
   // how to handle denormalized numbers. (The pass replaces calls
   // to __nvvm_reflect with a constant via a map lookup. The inliner
@@ -324,12 +311,6 @@ std::string JITSessionCUDA::compile_module_to_ptx(
       fn.addFnAttr("unsafe-fp-math", "true");
     }
   }
-
-  // PassManagerBuilder b;
-  // b.OptLevel = 3;
-  // b.Inliner = createFunctionInliningPass(b.OptLevel, 0, false);
-  // b.LoopVectorize = false;
-  // b.SLPVectorize = false;
 
   llvm::LoopAnalysisManager LAM;
   llvm::FunctionAnalysisManager FAM;
@@ -388,53 +369,7 @@ std::string JITSessionCUDA::compile_module_to_ptx(
   TI_ERROR_IF(fail, "Failed to set up passes to emit PTX source\n");
   LPM.run(*module);
 
-  // b.populateFunctionPassManager(function_pass_manager);
-  // b.populateModulePassManager(module_pass_manager);
-  // Override default to generate verbose assembly.
-  // target_machine->Options.MCOptions.AsmVerbose = true;
-
-  // /*
-  //   Optimization for llvm::GetElementPointer:
-  //   https://github.com/taichi-dev/gstaichi/issues/5472 The three other passes
-  //   "loop-reduce", "ind-vars", "cse" serves as preprocessing for
-  //   "separate-const-offset-gep".
-
-  //   Note there's an update for "separate-const-offset-gep" in llvm-12.
-  // */
-  // module_pass_manager.add(llvm::createLoopStrengthReducePass());
-  // module_pass_manager.add(llvm::createIndVarSimplifyPass());
-  // module_pass_manager.add(llvm::createSeparateConstOffsetFromGEPPass(false));
-  // module_pass_manager.add(llvm::createEarlyCSEPass(true));
-
-  // // Ask the target to add backend passes as necessary.
-  // bool fail = target_machine->addPassesToEmitFile(
-  //     module_pass_manager, ostream, nullptr, llvm::CGFT_AssemblyFile, true);
-
-  // TI_ERROR_IF(fail, "Failed to set up passes to emit PTX source\n");
-
-  // {
-  //   TI_PROFILER("llvm_function_pass");
-  //   function_pass_manager.doInitialization();
-  //   for (llvm::Module::iterator i = module->begin(); i != module->end(); i++)
-  //     function_pass_manager.run(*i);
-
-  //   function_pass_manager.doFinalization();
-  // }
-
-  // {
-  //   TI_PROFILER("llvm_module_pass");
-  //   module_pass_manager.run(*module);
-  // }
-
-  // if (this->config_.print_kernel_llvm_ir_optimized) {
-  //   static FileSequenceWriter writer(
-  //       "gstaichi_kernel_cuda_llvm_ir_optimized_{:04d}.ll",
-  //       "optimized LLVM IR (CUDA)");
-  //   writer.write(module.get());
-  // }
-
   std::string buffer(outstr.begin(), outstr.end());
-  // Null-terminate the ptx source
   buffer.push_back(0);
   ptx_cache_->store_ptx(ptx_cache_key, buffer);
   return buffer;
