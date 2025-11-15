@@ -208,9 +208,9 @@ void StructCompilerLLVM::generate_child_accessors(SNode &snode) {
     auto inp_type =
         llvm::PointerType::get(get_llvm_element_type(module.get(), parent), 0);
 
-    auto ft =
-        llvm::FunctionType::get(llvm::PointerType::getUnqual(*llvm_ctx_),
-                                {llvm::PointerType::getUnqual(*llvm_ctx_)}, false);
+    auto ft = llvm::FunctionType::get(
+        llvm::PointerType::getUnqual(*llvm_ctx_),
+        {llvm::PointerType::getUnqual(*llvm_ctx_)}, false);
 
     auto func = create_function(ft, snode.get_ch_from_parent_func_name());
 

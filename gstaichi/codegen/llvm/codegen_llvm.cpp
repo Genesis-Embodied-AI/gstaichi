@@ -1679,8 +1679,8 @@ llvm::Value *TaskCodeGenLLVM::call(
   auto s_ptr =
       builder->CreateBitCast(s, llvm::PointerType::getUnqual(*llvm_context));
 
-  node_ptr =
-      builder->CreateBitCast(node_ptr, llvm::PointerType::getUnqual(*llvm_context));
+  node_ptr = builder->CreateBitCast(
+      node_ptr, llvm::PointerType::getUnqual(*llvm_context));
 
   std::vector<llvm::Value *> func_arguments{s_ptr, node_ptr};
 

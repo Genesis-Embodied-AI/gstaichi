@@ -294,14 +294,14 @@ void KernelCodeGenCPU::optimize_module(llvm::Module *module) {
   pb.registerLoopAnalyses(lam);
   pb.crossRegisterProxies(lam, fam, cgam, mam);
 
-  llvm::ModulePassManager mpm = pb.buildPerModuleDefaultPipeline(
-    llvm::OptimizationLevel::O3);
+  llvm::ModulePassManager mpm =
+      pb.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O3);
 
   mpm.run(*module, mam);
 
   llvm::legacy::PassManager legacy_pm;
   legacy_pm.add(llvm::createTargetTransformInfoWrapperPass(
-    target_machine->getTargetIRAnalysis()));
+      target_machine->getTargetIRAnalysis()));
   legacy_pm.add(llvm::createLoopStrengthReducePass());
   legacy_pm.add(llvm::createSeparateConstOffsetFromGEPPass(false));
   legacy_pm.add(llvm::createEarlyCSEPass(true));
