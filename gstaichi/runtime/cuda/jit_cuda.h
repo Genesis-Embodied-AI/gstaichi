@@ -21,7 +21,7 @@
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/StandardInstrumentations.h"
 #include "llvm/Analysis/LoopAnalysisManager.h"
-#include "llvm/Analysis/CGSCCAnalysisManager.h"
+// #include "llvm/Analysis/CGSCCAnalysisManager.h"
 
 #include "gstaichi/rhi/cuda/cuda_context.h"
 #include "gstaichi/rhi/cuda/cuda_driver.h"
