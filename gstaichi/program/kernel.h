@@ -6,7 +6,6 @@
 #include "gstaichi/rhi/arch.h"
 #include "gstaichi/program/callable.h"
 #include "gstaichi/program/ndarray.h"
-#include "gstaichi/program/texture.h"
 #include "gstaichi/program/launch_context_builder.h"
 
 namespace gstaichi::lang {
@@ -37,6 +36,8 @@ class TI_DLL_EXPORT Kernel : public Callable {
   bool ir_is_ast() const {
     return ir_is_ast_;
   }
+
+  std::string to_string() const;
 
   LaunchContextBuilder make_launch_context();
 

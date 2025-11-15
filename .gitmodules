@@ -60,3 +60,6 @@
 	branch = main
 [submodule "./SPIRV-Reflect"]
 	branch = main
+[submodule "external/dlpack"]
+	path = external/dlpack
+	url = https://github.com/dmlc/dlpack.git

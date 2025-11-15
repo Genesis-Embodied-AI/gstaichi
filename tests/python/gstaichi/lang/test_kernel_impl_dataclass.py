@@ -169,7 +169,7 @@ def test_unpack_ast_struct_expressions(ast_in: str, struct_locals: set[str], exp
 )
 @test_utils.test()
 def test_expand_func_arguments(in_meta: list[ArgMetadata], expected_meta: list[ArgMetadata]) -> None:
-    out_meta = _kernel_impl_dataclass.expand_func_arguments(in_meta)
+    out_meta = _kernel_impl_dataclass.expand_func_arguments(None, in_meta)
     out_names = [m.name for m in out_meta]
     expected_names = [m.name for m in expected_meta]
     assert out_names == expected_names

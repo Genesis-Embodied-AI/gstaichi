@@ -1,8 +1,10 @@
 name: Windows 2025
 on:
   pull_request:
-    branches:
-      - main
+    types:
+      - opened
+      - reopened
+      - synchronize
   workflow_dispatch:
   release:
     types: [published]
@@ -113,7 +115,7 @@ jobs:
   publish_pypi:
     uses: ./.github/workflows/publish_pypi.yml
     if: github.event_name == 'release'
-    needs: win_build
+    needs: win_test
     permissions:
       id-token: write
       contents: read

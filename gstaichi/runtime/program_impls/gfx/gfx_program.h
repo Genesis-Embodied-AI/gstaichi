@@ -45,8 +45,6 @@ class GfxProgramImpl : public ProgramImpl {
     return runtime_->used_in_kernel(id);
   }
 
-  DeviceAllocation allocate_texture(const ImageParams &params) override;
-
   Device *get_compute_device() override {
     return device_.get();
   }

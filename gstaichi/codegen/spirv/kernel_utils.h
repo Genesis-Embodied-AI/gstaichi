@@ -24,7 +24,7 @@ struct TaskAttributes {
 
   struct BufferInfo {
     BufferType type;
-    std::vector<int> root_id{-1};  // only used if type==Root or type==ExtArr
+    int root_id{-1};  // only used if type==Root or type==ExtArr
 
     BufferInfo() = default;
 
@@ -33,10 +33,6 @@ struct TaskAttributes {
     }
 
     BufferInfo(BufferType buffer_type, int root_buffer_id)
-        : type(buffer_type), root_id({root_buffer_id}) {
-    }
-
-    BufferInfo(BufferType buffer_type, const std::vector<int> &root_buffer_id)
         : type(buffer_type), root_id(root_buffer_id) {
     }
 
@@ -60,8 +56,7 @@ struct TaskAttributes {
       using std::string;
 
       size_t hash_result = hash<BufferType>()(buf.type);
-      for (const int &element : buf.root_id)
-        hash_result ^= element;
+      hash_result ^= buf.root_id;
       return hash_result;
     }
   };
@@ -73,14 +68,6 @@ struct TaskAttributes {
     std::string debug_string() const;
 
     TI_IO_DEF(buffer, binding);
-  };
-
-  struct TextureBind {
-    std::vector<int> arg_id;
-    int binding{0};
-    bool is_storage{false};
-
-    TI_IO_DEF(arg_id, binding, is_storage);
   };
 
   std::string name;
@@ -111,7 +98,6 @@ struct TaskAttributes {
     TI_IO_DEF(begin, end, const_begin, const_end);
   };
   std::vector<BufferBind> buffer_binds;
-  std::vector<TextureBind> texture_binds;
   // Only valid when |task_type| is range_for.
   std::optional<RangeForAttributes> range_for_attribs;
 
@@ -124,7 +110,6 @@ struct TaskAttributes {
             advisory_num_threads_per_group,
             task_type,
             buffer_binds,
-            texture_binds,
             range_for_attribs);
 };
 
@@ -161,9 +146,6 @@ class KernelContextAttributes {
     bool is_array{false};
     std::vector<int> element_shape;
     std::size_t field_dim{0};
-    // Only used with textures. Sampled textures always have unknown format;
-    // while RW textures always have a valid format.
-    BufferFormat format{BufferFormat::unknown};
     ParameterType ptype{ParameterType::kUnknown};
 
     TI_IO_DEF(name,
@@ -173,7 +155,6 @@ class KernelContextAttributes {
               is_array,
               element_shape,
               field_dim,
-              format,
               ptype);
   };
 
@@ -193,7 +174,6 @@ class KernelContextAttributes {
               is_array,
               element_shape,
               field_dim,
-              format,
               ptype);
   };
 
@@ -212,7 +192,6 @@ class KernelContextAttributes {
               is_array,
               element_shape,
               field_dim,
-              format,
               ptype);
   };
 

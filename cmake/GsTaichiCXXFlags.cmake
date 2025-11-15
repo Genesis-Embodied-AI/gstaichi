@@ -118,12 +118,10 @@ if ("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64" OR "${CMAKE_SYSTEM_PROCESSOR}"
     else()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTI_ARCH_x64")
         if ("arm64" IN_LIST CMAKE_OSX_ARCHITECTURES)
-            # TODO: (penguinliong) Will probably need this in a future version
-            # of Clang. Clang11 doesn't recognize this.
-            #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=apple-m1")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=apple-m1")
         else()
-            message("Setting -march=nehalem for x86_64 processors")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=nehalem")
+            message("Setting -march=x86-64-v3 for x86_64 processors")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64-v3")
         endif()
     endif()
     set(ARCH "x64")
@@ -137,6 +135,11 @@ else()
     message(FATAL_ERROR "Unknown processor type ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 set(HOST_ARCH ${ARCH} CACHE INTERNAL "Host arch")
+
+if (LINUX AND CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+    set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS} -latomic")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -latomic")
+endif()
 
 if (USE_STDCPP)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")

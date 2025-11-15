@@ -4,6 +4,7 @@ import dataclasses
 import pytest
 
 import gstaichi as ti
+from gstaichi.lang.ast.ast_transformer_utils import ASTTransformerContext
 from gstaichi.lang.ast.ast_transformers.call_transformer import CallTransformer
 
 from tests import test_utils
@@ -29,7 +30,7 @@ class MyStructEF:
     my_struct_cd: MyStructCD
 
 
-def dump_ast_list(nodes: list[ast.AST]) -> str:
+def dump_ast_list(nodes: tuple[ast.stmt, ...]) -> str:
     res_l = []
     for node in nodes:
         res_l.append(ast.dump(node, indent=2))
@@ -57,26 +58,32 @@ def dump_ast_list(nodes: list[ast.AST]) -> str:
         ),
         (
             [ast.Name(id="my_struct_ef", ctx=ast.Load(), ptr=MyStructEF)],
-            [
+            (
                 ast.Name(id="__ti_my_struct_ef__ti_e", ctx=ast.Load()),
                 ast.Name(id="__ti_my_struct_ef__ti_f", ctx=ast.Load()),
                 ast.Name(id="__ti_my_struct_ef__ti_my_struct_cd__ti_c", ctx=ast.Load()),
                 ast.Name(id="__ti_my_struct_ef__ti_my_struct_cd__ti_d", ctx=ast.Load()),
                 ast.Name(id="__ti_my_struct_ef__ti_my_struct_cd__ti_my_struct_ab__ti_a", ctx=ast.Load()),
                 ast.Name(id="__ti_my_struct_ef__ti_my_struct_cd__ti_my_struct_ab__ti_b", ctx=ast.Load()),
-            ],
+            ),
         ),
     ],
 )
 @test_utils.test()
-def test_expand_Call_dataclass_args(args_in: list[ast.AST], expected_args_out: list[ast.AST]) -> None:
+def test_expand_Call_dataclass_args(args_in: tuple[ast.stmt, ...], expected_args_out: tuple[ast.stmt, ...]) -> None:
     for arg in args_in:
         arg.lineno = 1
-        arg.endlineno = 2
+        arg.end_lineno = 2
         arg.col_offset = 1
         arg.end_col_offset = 2
-    args_out = CallTransformer._expand_Call_dataclass_args(args_in)
-    print("args_in", dump_ast_list(args_in))
-    print("args_out", dump_ast_list(args_out))
-    print("expected_args_out", dump_ast_list(expected_args_out))
+
+    class MockContext(ASTTransformerContext):
+        def __init__(self):
+            self.used_py_dataclass_parameters_enforcing = None
+
+    ctx = MockContext()
+    args_added, args_out = CallTransformer._expand_Call_dataclass_args(ctx, args_in)
+    assert len(args_out) > 0
+    assert len(args_added) > 0
     assert dump_ast_list(expected_args_out) == dump_ast_list(args_out)
+    assert dump_ast_list(expected_args_out) == dump_ast_list(args_added)

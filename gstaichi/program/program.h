@@ -248,9 +248,6 @@ class TI_DLL_EXPORT Program {
                                              uint64 *result_buffer) {
     return program_impl_->allocate_memory_on_device(alloc_size, result_buffer);
   }
-  DeviceAllocation allocate_texture(const ImageParams &params) {
-    return program_impl_->allocate_texture(params);
-  }
 
   Ndarray *create_ndarray(
       const DataType type,
@@ -272,9 +269,6 @@ class TI_DLL_EXPORT Program {
       const std::string &layout);
 
   void delete_ndarray(Ndarray *ndarray);
-
-  Texture *create_texture(BufferFormat buffer_format,
-                          const std::vector<int> &shape);
 
   intptr_t get_ndarray_data_ptr_as_int(const Ndarray *ndarray);
 
@@ -337,9 +331,8 @@ class TI_DLL_EXPORT Program {
   static std::atomic<int> num_instances_;
   bool finalized_{false};
 
-  // TODO: Move ndarrays_ and textures_ to be managed by runtime
+  // TODO: Move ndarrays_ to be managed by runtime
   std::unordered_map<void *, std::unique_ptr<Ndarray>> ndarrays_;
-  std::vector<std::unique_ptr<Texture>> textures_;
 };
 
 }  // namespace gstaichi::lang

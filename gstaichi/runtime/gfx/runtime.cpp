@@ -15,8 +15,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "fp16.h"
-
 #define TI_RUNTIME_HOST
 #include "gstaichi/program/context.h"
 #undef TI_RUNTIME_HOST
@@ -41,13 +39,8 @@ class HostDeviceContextBlitter {
   }
 
   void host_to_device(
-      const std::unordered_map<std::vector<int>,
-                               DeviceAllocation,
-                               hashing::Hasher<std::vector<int>>> &ext_arrays,
-      const std::unordered_map<std::vector<int>,
-                               size_t,
-                               hashing::Hasher<std::vector<int>>>
-          &ext_arr_size) {
+      const std::unordered_map<int, DeviceAllocation> &ext_arrays,
+      const std::unordered_map<int, size_t> &ext_arr_size) {
     if (!ctx_attribs_->has_args()) {
       return;
     }
@@ -61,9 +54,11 @@ class HostDeviceContextBlitter {
       const auto &indices = arg_kv.first;
       const auto &arg = arg_kv.second;
       if (arg.is_array) {
-        if (host_ctx_.device_allocation_type[indices] ==
+        TI_ASSERT(indices.size() == 1);
+        int arg_id = indices[0];
+        if (host_ctx_.device_allocation_type[arg_id] ==
                 LaunchContextBuilder::DevAllocType::kNone &&
-            ext_arr_size.at(indices)) {
+            ext_arr_size.at(arg_id)) {
           // Only need to blit ext arrs (host array)
           auto access_it = std::find_if(ctx_attribs_->arr_access.begin(),
                                         ctx_attribs_->arr_access.end(),
@@ -73,31 +68,31 @@ class HostDeviceContextBlitter {
           TI_ASSERT(access_it != ctx_attribs_->arr_access.end());
           uint32_t access = uint32_t(access_it->second);
           if (access & uint32_t(irpass::ExternalPtrAccess::READ)) {
-            DeviceAllocation buffer = ext_arrays.at(indices);
+            DeviceAllocation buffer = ext_arrays.at(arg_id);
             void *device_arr_ptr{nullptr};
             TI_ASSERT(device_->map(buffer, &device_arr_ptr) ==
                       RhiResult::success);
-            auto data_ptr_idx = indices;
-            data_ptr_idx.push_back(TypeFactory::DATA_PTR_POS_IN_NDARRAY);
+            ArgArrayPtrKey data_ptr_idx{arg_id,
+                                        TypeFactory::DATA_PTR_POS_IN_NDARRAY};
             const void *host_ptr = host_ctx_.array_ptrs[data_ptr_idx];
-            std::memcpy(device_arr_ptr, host_ptr, ext_arr_size.at(indices));
+            std::memcpy(device_arr_ptr, host_ptr, ext_arr_size.at(arg_id));
             device_->unmap(buffer);
           }
         }
         // Substitute in the device address.
 
-        if ((host_ctx_.device_allocation_type[indices] ==
+        if ((host_ctx_.device_allocation_type[arg_id] ==
                  LaunchContextBuilder::DevAllocType::kNone ||
-             host_ctx_.device_allocation_type[indices] ==
+             host_ctx_.device_allocation_type[arg_id] ==
                  LaunchContextBuilder::DevAllocType::kNdarray) &&
             device_->get_caps().get(
                 DeviceCapability::spirv_has_physical_storage_buffer)) {
+          ArgArrayPtrKey grad_ptr_idx{arg_id,
+                                      TypeFactory::GRAD_PTR_POS_IN_NDARRAY};
           uint64_t addr =
-              device_->get_memory_physical_pointer(ext_arrays.at(indices));
-          auto grad_ptr_idx = indices;
-          grad_ptr_idx.push_back(TypeFactory::GRAD_PTR_POS_IN_NDARRAY);
+              device_->get_memory_physical_pointer(ext_arrays.at(arg_id));
           host_ctx_.set_ndarray_ptrs(
-              indices, addr, (uint64)host_ctx_.array_ptrs[grad_ptr_idx]);
+              arg_id, addr, (uint64)host_ctx_.array_ptrs[grad_ptr_idx]);
         }
       }
     }
@@ -110,13 +105,8 @@ class HostDeviceContextBlitter {
 
   bool device_to_host(
       CommandList *cmdlist,
-      const std::unordered_map<std::vector<int>,
-                               DeviceAllocation,
-                               hashing::Hasher<std::vector<int>>> &ext_arrays,
-      const std::unordered_map<std::vector<int>,
-                               size_t,
-                               hashing::Hasher<std::vector<int>>>
-          &ext_arr_size) {
+      const std::unordered_map<int, DeviceAllocation> &ext_arrays,
+      const std::unordered_map<int, size_t> &ext_arr_size) {
     if (ctx_attribs_->empty()) {
       return false;
     }
@@ -130,26 +120,28 @@ class HostDeviceContextBlitter {
       const auto &kv = ctx_attribs_->args()[i];
       const auto &indices = kv.first;
       const auto &arg = kv.second;
-      if (arg.is_array &&
-          host_ctx_.device_allocation_type[indices] ==
-              LaunchContextBuilder::DevAllocType::kNone &&
-          ext_arr_size.at(indices)) {
-        auto access_it = std::find_if(ctx_attribs_->arr_access.begin(),
-                                      ctx_attribs_->arr_access.end(),
-                                      [indices](const auto &pair) -> bool {
-                                        return pair.first == indices;
-                                      });
-        TI_ASSERT(access_it != ctx_attribs_->arr_access.end());
-        uint32_t access = uint32_t(access_it->second);
-        if (access & uint32_t(irpass::ExternalPtrAccess::WRITE)) {
-          // Only need to blit ext arrs (host array)
-          readback_dev_ptrs.push_back(ext_arrays.at(indices).get_ptr(0));
-          auto data_ptr_idx = indices;
-          data_ptr_idx.push_back(TypeFactory::DATA_PTR_POS_IN_NDARRAY);
-          readback_host_ptrs.push_back(host_ctx_.array_ptrs[data_ptr_idx]);
-          // TODO: readback grad_ptrs as well once ndarray ad is supported
-          readback_sizes.push_back(ext_arr_size.at(indices));
-          require_sync = true;
+      if (arg.is_array) {
+        TI_ASSERT(indices.size() == 1);
+        int arg_id = indices[0];
+        if (host_ctx_.device_allocation_type[arg_id] ==
+                LaunchContextBuilder::DevAllocType::kNone &&
+            ext_arr_size.at(arg_id)) {
+          auto access_it = std::find_if(ctx_attribs_->arr_access.begin(),
+                                        ctx_attribs_->arr_access.end(),
+                                        [indices](const auto &pair) -> bool {
+                                          return pair.first == indices;
+                                        });
+          TI_ASSERT(access_it != ctx_attribs_->arr_access.end());
+          uint32_t access = uint32_t(access_it->second);
+          if (access & uint32_t(irpass::ExternalPtrAccess::WRITE)) {
+            // Only need to blit ext arrs (host array)
+            readback_dev_ptrs.push_back(ext_arrays.at(arg_id).get_ptr(0));
+            readback_host_ptrs.push_back(host_ctx_.array_ptrs[{
+                arg_id, TypeFactory::DATA_PTR_POS_IN_NDARRAY}]);
+            // TODO: readback grad_ptrs as well once ndarray ad is supported
+            readback_sizes.push_back(ext_arr_size.at(arg_id));
+            require_sync = true;
+          }
         }
       }
     }
@@ -397,18 +389,11 @@ void GfxRuntime::launch_kernel(KernelHandle handle,
       args_buffer.get(), ret_buffer.get());
 
   // `any_arrays` contain both external arrays and NDArrays
-  std::unordered_map<std::vector<int>, DeviceAllocation,
-                     hashing::Hasher<std::vector<int>>>
-      any_arrays;
+  std::unordered_map<int, DeviceAllocation> any_arrays;
   // `ext_array_size` only holds the size of external arrays (host arrays)
   // As buffer size information is only needed when it needs to be allocated
   // and transferred by the host
-  std::unordered_map<std::vector<int>, size_t,
-                     hashing::Hasher<std::vector<int>>>
-      ext_array_size;
-  std::unordered_map<std::vector<int>, DeviceAllocation,
-                     hashing::Hasher<std::vector<int>>>
-      textures;
+  std::unordered_map<int, size_t> ext_array_size;
 
   // Prepare context buffers & arrays
   if (ctx_blitter) {
@@ -420,36 +405,27 @@ void GfxRuntime::launch_kernel(KernelHandle handle,
       const auto &indices = kv.first;
       const auto &arg = kv.second;
       if (arg.is_array) {
-        if (host_ctx.device_allocation_type[indices] !=
+        TI_ASSERT(indices.size() == 1);
+        int arg_id = indices[0];
+        if (host_ctx.device_allocation_type[arg_id] !=
             LaunchContextBuilder::DevAllocType::kNone) {
           DeviceAllocation devalloc = kDeviceNullAllocation;
-          auto data_ptr_indices = indices;
-          data_ptr_indices.push_back(TypeFactory::DATA_PTR_POS_IN_NDARRAY);
           // NDArray
-          if (host_ctx.array_ptrs.count(data_ptr_indices)) {
-            devalloc =
-                *(DeviceAllocation *)(host_ctx.array_ptrs[data_ptr_indices]);
-          }
-          // Texture
-          if (host_ctx.array_ptrs.count(indices)) {
-            devalloc = *(DeviceAllocation *)(host_ctx.array_ptrs[indices]);
+          const ArgArrayPtrKey key{arg_id,
+                                   TypeFactory::DATA_PTR_POS_IN_NDARRAY};
+          if (host_ctx.array_ptrs.count(key)) {
+            devalloc = *(DeviceAllocation *)(host_ctx.array_ptrs[key]);
           }
 
-          if (host_ctx.device_allocation_type[indices] ==
+          if (host_ctx.device_allocation_type[arg_id] ==
               LaunchContextBuilder::DevAllocType::kNdarray) {
-            any_arrays[indices] = devalloc;
+            any_arrays[arg_id] = devalloc;
             ndarrays_in_use_.insert(devalloc.alloc_id);
-          } else if (host_ctx.device_allocation_type[indices] ==
-                     LaunchContextBuilder::DevAllocType::kTexture) {
-            textures[indices] = devalloc;
-          } else if (host_ctx.device_allocation_type[indices] ==
-                     LaunchContextBuilder::DevAllocType::kRWTexture) {
-            textures[indices] = devalloc;
           } else {
             TI_NOT_IMPLEMENTED;
           }
         } else {
-          ext_array_size[indices] = host_ctx.array_runtime_sizes[indices];
+          ext_array_size[arg_id] = host_ctx.array_runtime_sizes[arg_id];
           auto arr_access =
               ti_kernel->ti_kernel_attribs().ctx_attribs.arr_access;
           auto access_it = std::find_if(arr_access.begin(), arr_access.end(),
@@ -459,14 +435,14 @@ void GfxRuntime::launch_kernel(KernelHandle handle,
           TI_ASSERT(access_it != arr_access.end());
           uint32_t access = uint32_t(access_it->second);
           // Alloc ext arr
-          size_t alloc_size = std::max(size_t(32), ext_array_size.at(indices));
+          size_t alloc_size = std::max(size_t(32), ext_array_size.at(arg_id));
           bool host_write = access & uint32_t(irpass::ExternalPtrAccess::READ);
           auto [allocated, res] = device_->allocate_memory_unique(
               {alloc_size, host_write, false, /*export_sharing=*/false,
                AllocUsage::Storage});
           TI_ASSERT_INFO(res == RhiResult::success,
                          "Failed to allocate ext arr buffer");
-          any_arrays[indices] = *allocated.get();
+          any_arrays[arg_id] = *allocated.get();
           ctx_buffers_.push_back(std::move(allocated));
         }
       }
@@ -503,17 +479,6 @@ void GfxRuntime::launch_kernel(KernelHandle handle,
         DeviceAllocation *alloc = ti_kernel->get_buffer_bind(bind.buffer);
         bindings->rw_buffer(bind.binding,
                             alloc ? *alloc : kDeviceNullAllocation);
-      }
-    }
-
-    for (auto &bind : attribs.texture_binds) {
-      DeviceAllocation texture = textures.at(bind.arg_id);
-      if (bind.is_storage) {
-        transition_image(texture, ImageLayout::shader_read_write);
-        bindings->rw_image(bind.binding, texture, 0);
-      } else {
-        transition_image(texture, ImageLayout::shader_read);
-        bindings->image(bind.binding, texture, {});
       }
     }
 
@@ -576,40 +541,6 @@ void GfxRuntime::buffer_copy(DevicePtr dst, DevicePtr src, size_t size) {
   current_cmdlist_->buffer_barrier(src);
   current_cmdlist_->buffer_copy(dst, src, size);
   current_cmdlist_->buffer_barrier(dst);
-}
-
-void GfxRuntime::copy_image(DeviceAllocation dst,
-                            DeviceAllocation src,
-                            const ImageCopyParams &params) {
-  ensure_current_cmdlist();
-  transition_image(dst, ImageLayout::transfer_dst);
-  transition_image(src, ImageLayout::transfer_src);
-  current_cmdlist_->copy_image(dst, src, ImageLayout::transfer_dst,
-                               ImageLayout::transfer_src, params);
-  transition_image(dst, ImageLayout::transfer_src);
-}
-
-DeviceAllocation GfxRuntime::create_image(const ImageParams &params) {
-  GraphicsDevice *gfx_device = dynamic_cast<GraphicsDevice *>(device_);
-  TI_ERROR_IF(gfx_device == nullptr,
-              "Image can only be created on a graphics device");
-  DeviceAllocation image = gfx_device->create_image(params);
-  track_image(image, ImageLayout::undefined);
-  last_image_layouts_.at(image.alloc_id) = params.initial_layout;
-  return image;
-}
-
-void GfxRuntime::track_image(DeviceAllocation image, ImageLayout layout) {
-  last_image_layouts_[image.alloc_id] = layout;
-}
-void GfxRuntime::untrack_image(DeviceAllocation image) {
-  last_image_layouts_.erase(image.alloc_id);
-}
-void GfxRuntime::transition_image(DeviceAllocation image, ImageLayout layout) {
-  ImageLayout &last_layout = last_image_layouts_.at(image.alloc_id);
-  ensure_current_cmdlist();
-  current_cmdlist_->image_transition(image, last_layout, layout);
-  last_layout = layout;
 }
 
 void GfxRuntime::synchronize() {
@@ -748,7 +679,6 @@ void GfxRuntime::enqueue_compute_op_lambda(
   for (const auto &ref : image_refs) {
     TI_ASSERT(last_image_layouts_.find(ref.image.alloc_id) !=
               last_image_layouts_.end());
-    transition_image(ref.image, ref.initial_layout);
   }
 
   ensure_current_cmdlist();

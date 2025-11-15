@@ -317,6 +317,7 @@ if(TI_WITH_PYTHON)
         ${PROJECT_SOURCE_DIR}/external/spdlog/include
         ${PROJECT_SOURCE_DIR}/external/eigen
         ${PROJECT_SOURCE_DIR}/external/volk
+        ${PROJECT_SOURCE_DIR}/external/dlpack/include
         ${PROJECT_SOURCE_DIR}/external/SPIRV-Tools/include
         ${PROJECT_SOURCE_DIR}/external/Vulkan-Headers/include
         ${PROJECT_SOURCE_DIR}/external/FP16/include

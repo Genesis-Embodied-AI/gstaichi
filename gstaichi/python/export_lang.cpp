@@ -12,7 +12,6 @@
 #include "pybind11/pybind11.h"
 #include "pybind11/eigen.h"
 #include "pybind11/numpy.h"
-#include "fp16.h"
 
 #include "gstaichi/ir/expression_ops.h"
 #include "gstaichi/ir/frontend_ir.h"
@@ -30,6 +29,8 @@
 #include "gstaichi/ir/mesh.h"
 
 #include "gstaichi/program/kernel_profiler.h"
+
+#include "gstaichi/python/dlpack_funcs.h"
 
 #if defined(TI_WITH_CUDA)
 #include "gstaichi/rhi/cuda/cuda_context.h"
@@ -157,6 +158,8 @@ void export_lang(py::module &m) {
       .def(py::init<>())
       .def_readwrite("arch", &CompileConfig::arch)
       .def_readwrite("opt_level", &CompileConfig::opt_level)
+      .def_readwrite("raise_on_templated_floats",
+                     &CompileConfig::raise_on_templated_floats)
       .def_readwrite("print_ir", &CompileConfig::print_ir)
       .def_readwrite("print_preprocessed_ir",
                      &CompileConfig::print_preprocessed_ir)
@@ -174,6 +177,7 @@ void export_lang(py::module &m) {
                      &CompileConfig::print_kernel_llvm_ir_optimized)
       .def_readwrite("print_kernel_asm", &CompileConfig::print_kernel_asm)
       .def_readwrite("print_kernel_amdgcn", &CompileConfig::print_kernel_amdgcn)
+      .def_readwrite("debug_dump_path", &CompileConfig::debug_dump_path)
       .def_readwrite("simplify_before_lower_access",
                      &CompileConfig::simplify_before_lower_access)
       .def_readwrite("simplify_after_lower_access",
@@ -210,6 +214,8 @@ void export_lang(py::module &m) {
       .def_readwrite("fast_math", &CompileConfig::fast_math)
       .def_readwrite("advanced_optimization",
                      &CompileConfig::advanced_optimization)
+      .def_readwrite("ad_stack_experimental_enabled",
+                     &CompileConfig::ad_stack_experimental_enabled)
       .def_readwrite("ad_stack_size", &CompileConfig::ad_stack_size)
       .def_readwrite("flatten_if", &CompileConfig::flatten_if)
       .def_readwrite("make_thread_local", &CompileConfig::make_thread_local)
@@ -332,7 +338,6 @@ void export_lang(py::module &m) {
       .def("insert_expr_stmt", &ASTBuilder::insert_expr_stmt)
       .def("insert_thread_idx_expr", &ASTBuilder::insert_thread_idx_expr)
       .def("insert_patch_idx_expr", &ASTBuilder::insert_patch_idx_expr)
-      .def("make_texture_op_expr", &ASTBuilder::make_texture_op_expr)
       .def("expand_exprs", &ASTBuilder::expand_exprs)
       .def("mesh_index_conversion", &ASTBuilder::mesh_index_conversion)
       .def("expr_subscript", &ASTBuilder::expr_subscript)
@@ -357,6 +362,14 @@ void export_lang(py::module &m) {
 
   py::class_<Program>(m, "Program")
       .def(py::init<>())
+      .def("ndarray_to_dlpack",
+           [](Program *program, pybind11::object owner, Ndarray *ndarray) {
+             return ndarray_to_dlpack(program, owner, ndarray);
+           })
+      .def("field_to_dlpack",
+           [](Program *program, SNode *snode, int element_ndim, int n, int m) {
+             return field_to_dlpack(program, snode, element_ndim, n, m);
+           })
       .def("config", &Program::compile_config,
            py::return_value_policy::reference)
       .def("sync_kernel_profiler",
@@ -451,12 +464,6 @@ void export_lang(py::module &m) {
           py::arg("zero_fill") = false, py::arg("dbg_info") = DebugInfo(),
           py::return_value_policy::reference)
       .def("delete_ndarray", &Program::delete_ndarray)
-      .def(
-          "create_texture",
-          [&](Program *program, BufferFormat fmt, const std::vector<int> &shape)
-              -> Texture * { return program->create_texture(fmt, shape); },
-          py::arg("fmt"), py::arg("shape") = py::tuple(),
-          py::return_value_policy::reference)
       .def("get_ndarray_data_ptr_as_int",
            [](Program *program, Ndarray *ndarray) {
              return program->get_ndarray_data_ptr_as_int(ndarray);
@@ -488,7 +495,8 @@ void export_lang(py::module &m) {
           [](const CompileResult &self) -> const CompiledKernelData & {
             return self.compiled_kernel_data;
           })
-      .def_readonly("cache_hit", &CompileResult::cache_hit);
+      .def_readonly("cache_hit", &CompileResult::cache_hit)
+      .def_readonly("cache_key", &CompileResult::cache_key);
 
   py::class_<Axis>(m, "Axis").def(py::init<int>());
   py::class_<SNode>(m, "SNodeCxx")
@@ -599,23 +607,17 @@ void export_lang(py::module &m) {
 #undef PER_EXTENSION
       ;
 
-  py::class_<Texture>(m, "TextureCxx")
-      .def("device_allocation_ptr", &Texture::get_device_allocation_ptr_as_int)
-      .def("from_ndarray", &Texture::from_ndarray)
-      .def("from_snode", &Texture::from_snode);
-
   py::class_<Kernel>(m, "KernelCxx")
       .def("no_activate",
            [](Kernel *self, SNode *snode) {
              // TODO(#2193): Also apply to @ti.func?
              self->no_activate.push_back(snode);
            })
+      .def("to_string", &Kernel::to_string)
       .def("insert_scalar_param", &Kernel::insert_scalar_param)
       .def("insert_arr_param", &Kernel::insert_arr_param)
       .def("insert_ndarray_param", &Kernel::insert_ndarray_param)
-      .def("insert_texture_param", &Kernel::insert_texture_param)
       .def("insert_pointer_param", &Kernel::insert_pointer_param)
-      .def("insert_rw_texture_param", &Kernel::insert_rw_texture_param)
       .def("insert_ret", &Kernel::insert_ret)
       .def("finalize_rets", &Kernel::finalize_rets)
       .def("finalize_params", &Kernel::finalize_params)
@@ -628,9 +630,13 @@ void export_lang(py::module &m) {
           py::return_value_policy::reference);
 
   py::class_<LaunchContextBuilder>(m, "KernelLaunchContext")
+      .def("copy", &LaunchContextBuilder::copy)
       .def("set_arg_int", &LaunchContextBuilder::set_arg_int)
+      .def("set_args_int", &LaunchContextBuilder::set_args_int)
       .def("set_arg_uint", &LaunchContextBuilder::set_arg_uint)
+      .def("set_args_uint", &LaunchContextBuilder::set_args_uint)
       .def("set_arg_float", &LaunchContextBuilder::set_arg_float)
+      .def("set_args_float", &LaunchContextBuilder::set_args_float)
       .def("set_struct_arg_int", &LaunchContextBuilder::set_struct_arg<int64>)
       .def("set_struct_arg_uint", &LaunchContextBuilder::set_struct_arg<uint64>)
       .def("set_struct_arg_float",
@@ -638,10 +644,11 @@ void export_lang(py::module &m) {
       .def("set_arg_external_array_with_shape",
            &LaunchContextBuilder::set_arg_external_array_with_shape)
       .def("set_arg_ndarray", &LaunchContextBuilder::set_arg_ndarray)
+      .def("set_args_ndarray", &LaunchContextBuilder::set_args_ndarray)
       .def("set_arg_ndarray_with_grad",
            &LaunchContextBuilder::set_arg_ndarray_with_grad)
-      .def("set_arg_texture", &LaunchContextBuilder::set_arg_texture)
-      .def("set_arg_rw_texture", &LaunchContextBuilder::set_arg_rw_texture)
+      .def("set_args_ndarray_with_grad",
+           &LaunchContextBuilder::set_args_ndarray_with_grad)
       .def("get_struct_ret_int", &LaunchContextBuilder::get_struct_ret_int)
       .def("get_struct_ret_uint", &LaunchContextBuilder::get_struct_ret_uint)
       .def("get_struct_ret_float", &LaunchContextBuilder::get_struct_ret_float);
@@ -650,9 +657,7 @@ void export_lang(py::module &m) {
       .def("insert_scalar_param", &Function::insert_scalar_param)
       .def("insert_arr_param", &Function::insert_arr_param)
       .def("insert_ndarray_param", &Function::insert_ndarray_param)
-      .def("insert_texture_param", &Function::insert_texture_param)
       .def("insert_pointer_param", &Function::insert_pointer_param)
-      .def("insert_rw_texture_param", &Function::insert_rw_texture_param)
       .def("insert_ret", &Function::insert_ret)
       .def("set_function_body",
            py::overload_cast<const std::function<void()> &>(
@@ -893,20 +898,6 @@ void export_lang(py::module &m) {
   m.def("make_const_expr_fp",
         Expr::make<ConstExpression, const DataType &, float64>);
 
-  m.def("make_texture_ptr_expr",
-        Expr::make<TexturePtrExpression, const std::vector<int> &, int,
-                   const DebugInfo &>);
-  m.def("make_rw_texture_ptr_expr",
-        Expr::make<TexturePtrExpression, const std::vector<int> &, int,
-                   const BufferFormat &, int, const DebugInfo &>);
-
-  auto &&texture =
-      py::enum_<TextureOpType>(m, "TextureOpType", py::arithmetic());
-  for (int t = 0; t <= (int)TextureOpType::kStore; t++)
-    texture.value(texture_op_type_name(TextureOpType(t)).c_str(),
-                  TextureOpType(t));
-  texture.export_values();
-
   auto &&bin = py::enum_<BinaryOpType>(m, "BinaryOpType", py::arithmetic());
   for (int t = 0; t <= (int)BinaryOpType::undefined; t++)
     bin.value(binary_op_type_name(BinaryOpType(t)).c_str(), BinaryOpType(t));
@@ -971,8 +962,6 @@ void export_lang(py::module &m) {
   m.def("get_external_tensor_dim", [](const Expr &expr) {
     if (expr.is<ExternalTensorExpression>()) {
       return expr.cast<ExternalTensorExpression>()->ndim;
-    } else if (expr.is<TexturePtrExpression>()) {
-      return expr.cast<TexturePtrExpression>()->num_dims;
     } else {
       TI_ASSERT(false);
       return 0;
@@ -1116,8 +1105,6 @@ void export_lang(py::module &m) {
             return DataType(factory->get_struct_type(members));
           },
           py::return_value_policy::reference)
-      .def("get_rwtexture_struct_type", &TypeFactory::get_rwtexture_struct_type,
-           py::return_value_policy::reference)
       .def("get_ndarray_struct_type", &TypeFactory::get_ndarray_struct_type,
            py::arg("dt"), py::arg("ndim"), py::arg("needs_grad"),
            py::return_value_policy::reference);

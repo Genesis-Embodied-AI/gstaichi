@@ -27,7 +27,7 @@ from gstaichi.lang.exception import (
 from gstaichi.lang.matrix import MatrixType
 from gstaichi.lang.struct import StructType
 from gstaichi.lang.util import to_gstaichi_type
-from gstaichi.types import annotations, ndarray_type, primitive_types, texture_type
+from gstaichi.types import annotations, ndarray_type, primitive_types
 
 
 class FunctionDefTransformer:
@@ -43,8 +43,10 @@ class FunctionDefTransformer:
         if not isinstance(annotation, primitive_types.RefType):
             ctx.kernel_args.append(name)
         if annotation == annotations.template or isinstance(annotation, annotations.template):
+            if name in ctx.template_vars:
+                return True, ctx.template_vars[name]
             assert ctx.global_vars is not None
-            return True, ctx.global_vars[name]
+            return True, ctx.global_vars.get(name)
         if isinstance(annotation, annotations.sparse_matrix_builder):
             return False, (
                 kernel_arguments.decl_sparse_matrix,
@@ -58,7 +60,7 @@ class FunctionDefTransformer:
             raw_element_type: DataTypeCxx
             ndim: int
             needs_grad: bool
-            boundary: BoundaryMode
+            boundary: int
             raw_element_type, ndim, needs_grad, boundary = this_arg_features
             return False, (
                 kernel_arguments.decl_ndarray_arg,
@@ -67,17 +69,8 @@ class FunctionDefTransformer:
                     ndim,
                     full_name,
                     needs_grad,
-                    boundary,
+                    BoundaryMode(boundary),
                 ),
-            )
-        if isinstance(annotation, texture_type.TextureType):
-            assert this_arg_features is not None
-            return False, (kernel_arguments.decl_texture_arg, (this_arg_features[0], full_name))
-        if isinstance(annotation, texture_type.RWTextureType):
-            assert this_arg_features is not None
-            return False, (
-                kernel_arguments.decl_rw_texture_arg,
-                (this_arg_features[0], this_arg_features[1], this_arg_features[2], full_name),
             )
         if isinstance(annotation, MatrixType):
             return True, kernel_arguments.decl_matrix_arg(annotation, name)
@@ -96,6 +89,11 @@ class FunctionDefTransformer:
             ctx.create_variable(argument_name, argument_type)
             for field_idx, field in enumerate(dataclasses.fields(argument_type)):
                 flat_name = create_flat_name(argument_name, field.name)
+                if (
+                    ctx.used_py_dataclass_parameters_enforcing
+                    and flat_name not in ctx.used_py_dataclass_parameters_enforcing
+                ):
+                    continue
                 # if a field is a dataclass, then feed back into process_kernel_arg recursively
                 if dataclasses.is_dataclass(field.type):
                     FunctionDefTransformer._transform_kernel_arg(
@@ -258,7 +256,7 @@ class FunctionDefTransformer:
         assert isinstance(ctx.func, Func)
         assert ctx.argument_data is not None
         for data_i, data in enumerate(ctx.argument_data):
-            argument = ctx.func.arg_metas[data_i]
+            argument = ctx.func.arg_metas_expanded[data_i]
             FunctionDefTransformer._transform_func_arg(ctx, argument.name, argument.annotation, data)
 
         # deal with dataclasses

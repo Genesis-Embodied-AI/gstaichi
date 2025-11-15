@@ -288,11 +288,11 @@ class MetalShaderResourceSet final : public ShaderResourceSet {
 
   ShaderResourceSet &image(uint32_t binding,
                            DeviceAllocation alloc,
-                           ImageSamplerConfig sampler_config) override;
+                           ImageSamplerConfig sampler_config);
 
   ShaderResourceSet &rw_image(uint32_t binding,
                               DeviceAllocation alloc,
-                              int lod) override;
+                              int lod);
 
   inline const std::vector<MetalShaderResource> &resources() const {
     return resources_;
