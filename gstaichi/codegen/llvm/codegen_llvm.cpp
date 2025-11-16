@@ -119,7 +119,10 @@ CodeGenStmtGuard make_while_after_loop_guard(TaskCodeGenLLVM *cg) {
 
 // TaskCodeGenLLVM
 void TaskCodeGenLLVM::visit(Block *stmt_list) {
+  std::cout << "TaskCodeGenLLVM::visit(Block *stmt_list)" << std::endl;
+  irpass::print(stmt_list);
   for (auto &stmt : stmt_list->statements) {
+    std::cout << "stmt->name " << stmt->name() << std::endl;
     stmt->accept(this);
     if (returned) {
       break;
@@ -1788,6 +1791,7 @@ std::tuple<llvm::Value *, llvm::Value *> TaskCodeGenLLVM::load_bit_ptr(
 }
 
 void TaskCodeGenLLVM::visit(SNodeLookupStmt *stmt) {
+  std::cout << "SNodeLookupStmt" << std::endl;
   llvm::Value *parent = nullptr;
   parent = llvm_val[stmt->input_snode];
   TI_ASSERT(parent);
@@ -2709,6 +2713,7 @@ void TaskCodeGenLLVM::emit_to_module() {
 }
 
 LLVMCompiledTask TaskCodeGenLLVM::run_compilation() {
+  std::cout << "TaskCodeGenLLVM::run_compilation" << std::endl;
   // Final lowering
   auto offload_to_executable = [](IRNode *ir, const CompileConfig &config,
                                   const Kernel *kernel) {
@@ -2727,9 +2732,12 @@ LLVMCompiledTask TaskCodeGenLLVM::run_compilation() {
             config.make_block_local);
   };
 
+  std::cout << "offload to executable" << std::endl;
   offload_to_executable(ir, compile_config, kernel);
 
+  std::cout << "emit to module" << std::endl;
   emit_to_module();
+  std::cout << "elinate unused functions" << std::endl;
   eliminate_unused_functions();
 
   if (compile_config.arch == Arch::cuda) {
@@ -2770,6 +2778,7 @@ LLVMCompiledTask TaskCodeGenLLVM::run_compilation() {
     }
   }
 
+  std::cout << "end of run_compilation()" << std::endl;
   return {std::move(offloaded_tasks), std::move(module),
           std::move(used_tree_ids), std::move(struct_for_tls_sizes)};
 }

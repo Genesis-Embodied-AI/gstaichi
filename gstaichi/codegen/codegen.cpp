@@ -71,6 +71,7 @@ LLVMCompiledKernel KernelCodeGen::compile_kernel_to_module() {
   auto &offloads = block->statements;
   std::vector<std::unique_ptr<LLVMCompiledTask>> data(offloads.size());
   for (int i = 0; i < offloads.size(); i++) {
+    std::cout << "i " << i << " offload " << std::endl;
     auto compile_func = [&, i] {
       tlctx_.fetch_this_thread_struct_module();
       auto offload = irpass::analysis::clone(offloads[i].get());
@@ -78,7 +79,9 @@ LLVMCompiledKernel KernelCodeGen::compile_kernel_to_module() {
 
       Block blk;
       blk.insert(std::move(offload));
+      std::cout << "compiling task " << std::endl;
       auto new_data = this->compile_task(i, compile_config_, nullptr, &blk);
+      std::cout << "after compiling task " << std::endl;
       data[i] = std::make_unique<LLVMCompiledTask>(std::move(new_data));
     };
     worker.enqueue(compile_func);

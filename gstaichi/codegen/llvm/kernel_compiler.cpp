@@ -33,10 +33,13 @@ KernelCompiler::CKDPtr KernelCompiler::compile(
     const DeviceCapabilityConfig &device_caps,
     const Kernel &kernel_def,
     IRNode &chi_ir) const {
+  std::cout << "LLVM::KernelCompiler::compile()" << std::endl;
   LLVM::CompiledKernelData::InternalData data;
   auto codegen = KernelCodeGen::create(compile_config, &kernel_def, &chi_ir,
                                        *config_.tlctx);
+  std::cout << "compile_kernel_to module" << std::endl;
   data.compiled_data = codegen->compile_kernel_to_module();
+  std::cout << "after compile_kernel_to module" << std::endl;
   data.args.reserve(kernel_def.nested_parameters.size());
   for (const auto &p : kernel_def.nested_parameters)
     data.args.push_back(p);

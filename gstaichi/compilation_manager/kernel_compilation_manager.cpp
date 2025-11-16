@@ -181,7 +181,9 @@ std::unique_ptr<CompiledKernelData> KernelCompilationManager::compile_kernel(
     const DeviceCapabilityConfig &caps,
     const Kernel &kernel_def) const {
   auto &compiler = *config_.kernel_compiler;
+  std::cout << "compile to ir " << std::endl;
   auto ir = compiler.compile(compile_config, kernel_def);
+  std::cout << "compile to ckd" << std::endl;
   auto ckd = compiler.compile(compile_config, caps, kernel_def, *ir);
   TI_ASSERT(ckd->check() == CompiledKernelData::Err::kNoError);
   return ckd;

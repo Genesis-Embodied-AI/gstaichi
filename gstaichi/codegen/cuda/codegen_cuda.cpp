@@ -599,6 +599,7 @@ class TaskCodeGenCUDA : public TaskCodeGenLLVM {
 
   llvm::Value *create_intrinsic_load(llvm::Value *ptr,
                                      llvm::Type *ty) override {
+    std::cout << "create_intrinsic_load called" << std::endl;
     // The llvm.nvvm.ldg.global.* intrinsics have been removed.
     // They are replaced by a standard load from global address space 1
     // with !invariant.load metadata.

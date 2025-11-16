@@ -246,12 +246,19 @@ class IRNode {
 
   template <typename T>
   T *as() {
+    std::cout << "if.h as " << std::endl;
+    // return dynamic_cast<T *>(this);
+    if(!is<T>()) {
+      // std::cout << "type " << typename typename(T) << std::endl;
+      throw std::runtime_error("was not of type");
+    }
     TI_ASSERT(is<T>());
     return dynamic_cast<T *>(this);
   }
 
   template <typename T>
   const T *as() const {
+    std::cout << "if.h const as " << std::endl;
     TI_ASSERT(is<T>());
     return dynamic_cast<const T *>(this);
   }

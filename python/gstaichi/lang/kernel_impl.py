@@ -1255,10 +1255,10 @@ class Kernel:
         launch_ctx_cache: KernelLaunchContext | None = None
         launch_ctx_cache_tracker: list[ReferenceType] | None = None
         args_hash: ArgsHash = tuple(map(id, args))
-        try:
-            launch_ctx_cache_tracker = self._launch_ctx_cache_tracker[args_hash]
-        except KeyError:
-            pass
+        # try:
+        #     launch_ctx_cache_tracker = self._launch_ctx_cache_tracker[args_hash]
+        # except KeyError:
+        #     pass
         if not launch_ctx_cache_tracker:  # Empty or none
             launch_ctx_buffer: DefaultDict[_KernelBatchedArgType, list[tuple]] = defaultdict(list)
             actual_argument_slot = 0
@@ -1270,6 +1270,7 @@ class Kernel:
                 self.currently_compiling_materialize_key
             ]
             for i_in, val in enumerate(args):
+                print("i_in", i_in, "arg", type(val))
                 needed_ = self.arg_metas[i_in].annotation
                 if needed_ is template or type(needed_) is template:
                     template_num += 1
@@ -1302,37 +1303,43 @@ class Kernel:
             # arguments in an unordered list. The actual runtime (gfx, llvm...) will later query this context
             # in correct order.
             if launch_ctx_args := launch_ctx_buffer.get(_FLOAT):
+                print("set launch args float")
                 launch_ctx.set_args_float(*zip(*launch_ctx_args))  # type: ignore
             if launch_ctx_args := launch_ctx_buffer.get(_INT):
+                print("set launch args int")
                 launch_ctx.set_args_int(*zip(*launch_ctx_args))  # type: ignore
             if launch_ctx_args := launch_ctx_buffer.get(_UINT):
+                print("set launch args uint")
                 launch_ctx.set_args_uint(*zip(*launch_ctx_args))  # type: ignore
             if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY):
+                print("set launch args ndarray")
                 launch_ctx.set_args_ndarray(*zip(*launch_ctx_args))  # type: ignore
             if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY_WITH_GRAD):
+                print("set launch args ndarray with grad")
                 launch_ctx.set_args_ndarray_with_grad(*zip(*launch_ctx_args))  # type: ignore
 
-            if is_launch_ctx_cacheable and args_hash is not None:
-                # TODO: It some rare occurrences, arguments can be cached yet not hashable. Ignoring for now...
-                launch_ctx_cache = t_kernel.make_launch_context()
-                launch_ctx_cache.copy(launch_ctx)
-                self._launch_ctx_cache[args_hash] = launch_ctx_cache
+            # if is_launch_ctx_cacheable and args_hash is not None:
+            #     print("make launch")
+            #     # TODO: It some rare occurrences, arguments can be cached yet not hashable. Ignoring for now...
+            #     launch_ctx_cache = t_kernel.make_launch_context()
+            #     launch_ctx_cache.copy(launch_ctx)
+            #     self._launch_ctx_cache[args_hash] = launch_ctx_cache
 
-                # Note that the clearing callback will only be called once despite being registered for each tracked
-                # objects, because all the weakrefs get deallocated right away, and their respective callback
-                # vanishes with them, without even getting a chance to get called. This means that registring the
-                # clearing callback systematically does not incur any cumulative runtime penalty yet ensures full
-                # memory safety.
-                launch_ctx_cache_tracker_: list[ReferenceType] = []
-                clear_callback = lambda ref: launch_ctx_cache_tracker_.clear()
-                if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY):
-                    _, arrs = zip(*launch_ctx_args)
-                    launch_ctx_cache_tracker_ += [ReferenceType(arr, clear_callback) for arr in arrs]
-                if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY_WITH_GRAD):
-                    _, arrs, arrs_grad = zip(*launch_ctx_args)
-                    launch_ctx_cache_tracker_ += [ReferenceType(arr, clear_callback) for arr in arrs]
-                    launch_ctx_cache_tracker_ += [ReferenceType(arr_grad, clear_callback) for arr_grad in arrs_grad]
-                self._launch_ctx_cache_tracker[args_hash] = launch_ctx_cache_tracker_
+            #     # Note that the clearing callback will only be called once despite being registered for each tracked
+            #     # objects, because all the weakrefs get deallocated right away, and their respective callback
+            #     # vanishes with them, without even getting a chance to get called. This means that registring the
+            #     # clearing callback systematically does not incur any cumulative runtime penalty yet ensures full
+            #     # memory safety.
+            #     launch_ctx_cache_tracker_: list[ReferenceType] = []
+            #     clear_callback = lambda ref: launch_ctx_cache_tracker_.clear()
+            #     if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY):
+            #         _, arrs = zip(*launch_ctx_args)
+            #         launch_ctx_cache_tracker_ += [ReferenceType(arr, clear_callback) for arr in arrs]
+            #     if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY_WITH_GRAD):
+            #         _, arrs, arrs_grad = zip(*launch_ctx_args)
+            #         launch_ctx_cache_tracker_ += [ReferenceType(arr, clear_callback) for arr in arrs]
+            #         launch_ctx_cache_tracker_ += [ReferenceType(arr_grad, clear_callback) for arr_grad in arrs_grad]
+            #     self._launch_ctx_cache_tracker[args_hash] = launch_ctx_cache_tracker_
         else:
             assert args_hash is not None
             launch_ctx.copy(self._launch_ctx_cache[args_hash])
@@ -1343,7 +1350,9 @@ class Kernel:
                 prog_config = prog.config()
                 prog_device_cap = prog.get_device_caps()
 
+                print("prog.compile_kernel")
                 compile_result: CompileResult = prog.compile_kernel(prog_config, prog_device_cap, t_kernel)
+                print("after prog.compile kernel")
                 if os.environ.get("TI_DUMP_KERNEL_CHECKSUMS", "0") == "1":
                     debug_dump_path = pathlib.Path(impl.current_cfg().debug_dump_path)
                     checksums_file_path = debug_dump_path / "checksums.csv"
@@ -1370,23 +1379,25 @@ class Kernel:
                 compiled_kernel_data = compile_result.compiled_kernel_data
                 if compile_result.cache_hit:
                     self.fe_ll_cache_observations.cache_hit = True
-                if self.fast_checksum:
-                    assert self.currently_compiling_materialize_key is not None
-                    src_hasher.store(
-                        self.fast_checksum,
-                        self.visited_functions,
-                        self.used_py_dataclass_leaves_by_key_enforcing[self.currently_compiling_materialize_key],
-                    )
-                    prog.store_fast_cache(
-                        self.fast_checksum,
-                        self.kernel_cpp,
-                        prog_config,
-                        prog_device_cap,
-                        compiled_kernel_data,
-                    )
-                    self.src_ll_cache_observations.cache_stored = True
+                # if self.fast_checksum:
+                #     assert self.currently_compiling_materialize_key is not None
+                #     src_hasher.store(
+                #         self.fast_checksum,
+                #         self.visited_functions,
+                #         self.used_py_dataclass_leaves_by_key_enforcing[self.currently_compiling_materialize_key],
+                #     )
+                #     prog.store_fast_cache(
+                #         self.fast_checksum,
+                #         self.kernel_cpp,
+                #         prog_config,
+                #         prog_device_cap,
+                #         compiled_kernel_data,
+                #     )
+                #     self.src_ll_cache_observations.cache_stored = True
             self._last_compiled_kernel_data = compiled_kernel_data
+            print("prog.launch_kernel")
             prog.launch_kernel(compiled_kernel_data, launch_ctx)
+            print("after prog.launch_kernel")
         except Exception as e:
             e = handle_exception_from_cpp(e)
             if impl.get_runtime().print_full_traceback:
@@ -1458,6 +1469,7 @@ class Kernel:
         key = self.ensure_compiled(*args)
         kernel_cpp = self.materialized_kernels[key]
         compiled_kernel_data = self.compiled_kernel_data_by_key.get(key, None)
+        print("kernel_impl.kernel")
         return self.launch_kernel(kernel_cpp, compiled_kernel_data, *args)
 
 
