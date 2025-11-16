@@ -1469,7 +1469,7 @@ llvm::Value *TaskCodeGenLLVM::atomic_op_using_cas(
 
   {
     int bits = data_type_bits(type);
-    llvm::PointerType *typeIntPtr = get_integer_ptr_type(bits);
+    llvm::PointerType *typeIntPtr = llvm::PointerType::getUnqual(*llvm_context);
     llvm::IntegerType *typeIntTy = get_integer_type(bits);
 
     old_val = builder->CreateLoad(val->getType(), dest);
@@ -2650,23 +2650,6 @@ llvm::Type *TaskCodeGenLLVM::get_xlogue_function_type() {
 llvm::Type *TaskCodeGenLLVM::get_mesh_xlogue_function_type() {
   return llvm::FunctionType::get(llvm::Type::getVoidTy(*llvm_context),
                                  get_mesh_xlogue_argument_types(), false);
-}
-
-llvm::PointerType *TaskCodeGenLLVM::get_integer_ptr_type(int bits) {
-  switch (bits) {
-    case 8:
-      return llvm::PointerType::getUnqual(*llvm_context);
-    case 16:
-      return llvm::PointerType::getUnqual(*llvm_context);
-    case 32:
-      return llvm::PointerType::getUnqual(*llvm_context);
-    case 64:
-      return llvm::PointerType::getUnqual(*llvm_context);
-    default:
-      break;
-  }
-  TI_ERROR("No compatible " + std::to_string(bits) + " bits integer ptr type.");
-  return nullptr;
 }
 
 llvm::IntegerType *TaskCodeGenLLVM::get_integer_type(int bits) {
