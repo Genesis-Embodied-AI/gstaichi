@@ -314,7 +314,6 @@ void KernelCodeGenCPU::optimize_module(llvm::Module *module) {
     llvm::legacy::PassManager asm_pm;
     target_machine->addPassesToEmitFile(asm_pm, ostream, nullptr,
                                         llvm::CodeGenFileType::AssemblyFile);
-    mpm.run(*module, mam);
     asm_pm.run(*module);
   }
 
