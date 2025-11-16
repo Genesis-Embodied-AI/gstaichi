@@ -29,7 +29,9 @@ bool is_same_type(llvm::Type *a, llvm::Type *b) {
     return false;
   }
   if (a->isPointerTy()) {
-    return is_same_type(a->getPointerElementType(), b->getPointerElementType());
+    auto ptr_a = llvm::cast<llvm::PointerType>(a);
+    auto ptr_b = llvm::cast<llvm::PointerType>(b);
+    return ptr_a->getAddressSpace() == ptr_b->getAddressSpace();
   }
   if (a->isFunctionTy() != b->isFunctionTy()) {
     return false;
