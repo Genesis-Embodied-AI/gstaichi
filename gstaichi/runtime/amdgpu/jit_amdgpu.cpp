@@ -123,7 +123,6 @@ std::string JITSessionAMDGPU::compile_module_to_hsaco(
   builder.OptLevel = 3;
   builder.Inliner =
       llvm::createFunctionInliningPass(builder.OptLevel, 0, false);
-  machine->adjustPassManager(builder);
   builder.populateFunctionPassManager(function_pass_manager);
   builder.populateModulePassManager(module_pass_manager);
 
