@@ -5,8 +5,6 @@ target_sources(gstaichi_util
   PRIVATE
     bit.cpp
     file_sequence_writer.cpp
-    image_buffer.cpp
-    image_io.cpp
     lang_util.cpp
     offline_cache.cpp
     short_name.cpp
