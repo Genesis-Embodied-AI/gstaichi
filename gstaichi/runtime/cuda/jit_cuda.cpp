@@ -3,7 +3,6 @@
 #include "gstaichi/codegen/ir_dump.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Transforms/Scalar/LoopStrengthReduce.h"
-// #include "llvm/Transforms/Utils/SeparateConstOffsetFromGEP.h"
 #include "llvm/Transforms/Scalar/EarlyCSE.h"
 #include "llvm/Transforms/Scalar/IndVarSimplify.h"
 #include "llvm/Transforms/Utils.h"
@@ -303,14 +302,6 @@ std::string JITSessionCUDA::compile_module_to_ptx(
   llvm::ModulePassManager mpm =
       pb.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O3);
 
-  // legacy::FunctionPassManager function_pass_manager(module.get());
-  // legacy::PassManager module_pass_manager;
-
-  // module_pass_manager.add(createTargetTransformInfoWrapperPass(
-  //     target_machine->getTargetIRAnalysis()));
-  // function_pass_manager.add(createTargetTransformInfoWrapperPass(
-  //     target_machine->getTargetIRAnalysis()));
-
   // NVidia's libdevice library uses a __nvvm_reflect to choose
   // how to handle denormalized numbers. (The pass replaces calls
   // to __nvvm_reflect with a constant via a map lookup. The inliner
@@ -344,17 +335,6 @@ std::string JITSessionCUDA::compile_module_to_ptx(
     }
   }
 
-  // PassManagerBuilder b;
-  // b.OptLevel = 3;
-  // b.Inliner = createFunctionInliningPass(b.OptLevel, 0, false);
-  // b.LoopVectorize = false;
-  // b.SLPVectorize = false;
-
-  // target_machine->adjustPassManager(b);
-
-  // b.populateFunctionPassManager(function_pass_manager);
-  // b.populateModulePassManager(module_pass_manager);
-
   mpm.run(*module, mam);
 
   llvm::legacy::PassManager legacy_pm;
@@ -364,22 +344,9 @@ std::string JITSessionCUDA::compile_module_to_ptx(
   // Override default to generate verbose assembly.
   target_machine->Options.MCOptions.AsmVerbose = true;
 
-  /*
-    Optimization for llvm::GetElementPointer:
-    https://github.com/taichi-dev/gstaichi/issues/5472 The three other passes
-    "loop-reduce", "ind-vars", "cse" serves as preprocessing for
-    "separate-const-offset-gep".
-
-    Note there's an update for "separate-const-offset-gep" in llvm-12.
-  */
   legacy_pm.add(llvm::createLoopStrengthReducePass());
-  // legacy_pm.add(llvm::createIndVarSimplifyPass());
   legacy_pm.add(llvm::createSeparateConstOffsetFromGEPPass(false));
   legacy_pm.add(llvm::createEarlyCSEPass(true));
-  // module_pass_manager.add(llvm::createLoopStrengthReducePass());
-  // module_pass_manager.add(llvm::createIndVarSimplifyPass());
-  // module_pass_manager.add(llvm::createSeparateConstOffsetFromGEPPass(false));
-  // module_pass_manager.add(llvm::createEarlyCSEPass(true));
 
   // Ask the target to add backend passes as necessary.
   bool fail = target_machine->addPassesToEmitFile(
