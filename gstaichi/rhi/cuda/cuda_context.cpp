@@ -72,7 +72,8 @@ CUDAContext::CUDAContext()
 
   compute_capability_ = cc_major * 10 + cc_minor;
 
-  // from https://github.com/llvm/llvm-project/blob/llvmorg-18.1.8/clang/lib/Basic/Targets/NVPTX.cpp
+  // from
+  // https://github.com/llvm/llvm-project/blob/llvmorg-18.1.8/clang/lib/Basic/Targets/NVPTX.cpp
   // looks like up to 90 is ok?
   if (compute_capability_ > 90) {
     compute_capability_ = 90;
