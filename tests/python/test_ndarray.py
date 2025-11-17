@@ -1205,7 +1205,7 @@ def my_kernel({args}) -> None:
 @test_utils.test()
 def test_ndarray_del(dtype) -> None:
     def foo():
-        nd = ti.ndarray(ti.i32, (1000,))
+        nd = ti.ndarray(dtype, (1000,))
         assert nd.arr.shape != []
         return nd.arr
 
