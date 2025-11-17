@@ -717,16 +717,16 @@ llvm::Value *GsTaichiLLVMContext::get_constant(T t) {
     return t ? llvm::ConstantInt::getTrue(*ctx)
              : llvm::ConstantInt::getFalse(*ctx);
   } else if (std::is_same_v<TargetType, int32>) {
-    return llvm::ConstantInt::get(*ctx, llvm::APInt(32, t, true));
+    return llvm::ConstantInt::get(*ctx, llvm::APInt(32, (uint64_t)t, true));
   } else if (std::is_same_v<TargetType, uint32>) {
-    return llvm::ConstantInt::get(*ctx, llvm::APInt(32, t, false));
+    return llvm::ConstantInt::get(*ctx, llvm::APInt(32, (uint64_t)t, false));
   } else if (std::is_same_v<TargetType, int64>) {
     static_assert(sizeof(std::size_t) == sizeof(uint64));
-    return llvm::ConstantInt::get(*ctx, llvm::APInt(64, t, true));
+    return llvm::ConstantInt::get(*ctx, llvm::APInt(64, (uint64_t)t, true));
   } else if (std::is_same_v<TargetType, std::size_t> ||
              std::is_same_v<TargetType, uint64>) {
     static_assert(sizeof(std::size_t) == sizeof(uint64));
-    return llvm::ConstantInt::get(*ctx, llvm::APInt(64, t, false));
+    return llvm::ConstantInt::get(*ctx, llvm::APInt(64, (uint64_t)t, false));
   } else {
     TI_NOT_IMPLEMENTED
   }
