@@ -302,7 +302,7 @@ class TI_DLL_EXPORT Program {
     return program_impl_.get();
   }
 
-  size_t _debug_get_num_ndarrays() const {
+  size_t unsupported_get_num_ndarrays() const {
     return ndarrays_.size();
   }
 
