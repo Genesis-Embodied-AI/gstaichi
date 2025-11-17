@@ -847,6 +847,7 @@ class IRPrinter : public IRVisitor {
   }
 
   void visit(BitStructStoreStmt *stmt) override {
+    std::cout << "ir_printer::visit BitStructStoreStmt" << std::endl;;
     std::string ch_ids;
     std::string values;
     for (int i = 0; i < stmt->ch_ids.size(); i++) {

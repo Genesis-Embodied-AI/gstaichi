@@ -59,12 +59,15 @@ class MergeBitStructStores : public BasicStmtVisitor {
   }
 
   void visit(Block *block) override {
+    std::cout << "optimize_bit_struct_stores::visit Block" << std::endl;
     auto &statements = block->statements;
     std::unordered_map<Stmt *, std::vector<BitStructStoreStmt *>>
         ptr_to_bit_struct_stores;
     std::unordered_set<Stmt *> loaded_after_store;
     std::vector<Stmt *> statements_to_delete;
     for (int i = 0; i <= (int)statements.size(); i++) {
+      std::cout << " optimize_bit_struct_stores:: visiting statement " << i
+                << std::endl;
       // TODO: in some cases BitStructStoreStmts across container statements can
       // still be merged, similar to basic block v.s. CFG optimizations.
       if (i == statements.size() || statements[i]->is_container_statement()) {

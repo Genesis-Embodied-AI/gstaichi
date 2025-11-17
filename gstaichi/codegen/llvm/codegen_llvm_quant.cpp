@@ -144,15 +144,21 @@ llvm::Value *TaskCodeGenLLVM::quant_int_or_quant_fixed_to_bits(
 }
 
 void TaskCodeGenLLVM::visit(BitStructStoreStmt *stmt) {
+  std::cout << "codegen_llvm_quant::visit BitStructStoreStmt" << std::endl;;
+  std::cout << "get bit struct" << std::endl;;
   auto bit_struct = stmt->get_bit_struct();
+  std::cout << "get physical type" << std::endl;;
   auto physical_type = tlctx->get_data_type(bit_struct->get_physical_type());
 
   int num_non_exponent_children = 0;
+  std::cout << "iterate bit struct members" << std::endl;;
   for (int i = 0; i < bit_struct->get_num_members(); i++) {
+    std::cout << " check member " << i << std::endl;;
     if (bit_struct->get_member_exponent_users(i).empty()) {
       num_non_exponent_children++;
     }
   }
+  std::cout << 1 << std::endl;
   bool store_all_components = false;
   if (compile_config.quant_opt_atomic_demotion &&
       stmt->ch_ids.size() == num_non_exponent_children) {
@@ -160,76 +166,107 @@ void TaskCodeGenLLVM::visit(BitStructStoreStmt *stmt) {
     store_all_components = true;
   }
 
+  std::cout << 1 << std::endl;
   bool has_shared_exponent = false;
   for (auto ch_id : stmt->ch_ids) {
     if (bit_struct->get_member_owns_shared_exponent(ch_id)) {
       has_shared_exponent = true;
     }
   }
+  std::cout << 1 << std::endl;
   if (has_shared_exponent) {
     store_quant_floats_with_shared_exponents(stmt);
   }
 
+  std::cout << 1 << std::endl;
   llvm::Value *bit_struct_val = nullptr;
   for (int i = 0; i < stmt->ch_ids.size(); i++) {
+    std::cout << " process child " << i << std::endl;
+    std::cout << 2 << std::endl;
     auto ch_id = stmt->ch_ids[i];
+    std::cout << 2 << std::endl;
     auto exp = bit_struct->get_member_exponent(ch_id);
+    std::cout << 2 << std::endl;
     if (exp != -1 && bit_struct->get_member_exponent_users(exp).size() > 1) {
       // already handled in store_quant_floats_with_shared_exponents
       continue;
     }
+    std::cout << 2 << std::endl;
     auto dtype = bit_struct->get_member_type(ch_id);
+    std::cout << 2 << std::endl;
     auto val = llvm_val[stmt->values[i]];
+    std::cout << 2 << std::endl;
     if (auto qflt = dtype->cast<QuantFloatType>()) {
+      std::cout << "quant float type" << std::endl;
       // Quant float type with non-shared exponent.
       llvm::Value *digit_bits = nullptr;
       // Extract exponent and digits from compute type (assumed to be f32 for
       // now).
       TI_ASSERT(qflt->get_compute_type()->is_primitive(PrimitiveTypeID::f32));
+      std::cout << 3 << std::endl;
 
       // f32 = 1 sign bit + 8 exponent bits + 23 fraction bits
 
       auto f32_bits =
           builder->CreateBitCast(val, llvm::Type::getInt32Ty(*llvm_context));
+      std::cout << 3 << std::endl;
       // Rounding to nearest here. Note that if the digits overflows then the
       // carry-on will contribute to the exponent, which is desired.
       if (qflt->get_digit_bits() < 23) {
         f32_bits = builder->CreateAdd(
             f32_bits, tlctx->get_constant(1 << (22 - qflt->get_digit_bits())));
       }
+      std::cout << 3 << std::endl;
 
       auto exponent_bits = builder->CreateAShr(f32_bits, 23);
+      std::cout << 3 << std::endl;
       exponent_bits =
           builder->CreateAnd(exponent_bits, tlctx->get_constant((1 << 8) - 1));
+      std::cout << 3 << std::endl;
       auto value_bits = builder->CreateAShr(
           f32_bits, tlctx->get_constant(23 - qflt->get_digit_bits()));
+      std::cout << 3 << std::endl;
 
       digit_bits = builder->CreateAnd(
           value_bits, tlctx->get_constant((1 << (qflt->get_digit_bits())) - 1));
-
+      std::cout << 3 << std::endl;
+      std::cout << "get is signed " << std::endl;
       if (qflt->get_is_signed()) {
+        std::cout << 5 << std::endl;
         // extract the sign bit
+        std::cout << "f32_bits " << f32_bits << std::endl;
+        tlctx->get_constant(0x80000000u);
+        std::cout << "got constant" << std::endl;
         auto sign_bit =
             builder->CreateAnd(f32_bits, tlctx->get_constant(0x80000000u));
+        std::cout << 5 << std::endl;
         // insert the sign bit to digit bits
         digit_bits = builder->CreateOr(
             digit_bits,
             builder->CreateLShr(sign_bit, 31 - qflt->get_digit_bits()));
+        std::cout << 5 << std::endl;
       }
 
+      std::cout << 3 << std::endl;
       auto exponent_offset = get_exponent_offset(exponent_bits, qflt);
+      std::cout << 3 << std::endl;
       exponent_bits = builder->CreateSub(exponent_bits, exponent_offset);
+      std::cout << 3 << std::endl;
       exponent_bits = call("max_i32", exponent_bits, tlctx->get_constant(0));
+      std::cout << 3 << std::endl;
 
       // Compute the bit pointer of the exponent bits.
       val = builder->CreateIntCast(exponent_bits, physical_type, false);
+      std::cout << 3 << std::endl;
       val = builder->CreateShl(val, bit_struct->get_member_bit_offset(exp));
+      std::cout << 3 << std::endl;
 
       if (bit_struct_val == nullptr) {
         bit_struct_val = val;
       } else {
         bit_struct_val = builder->CreateOr(bit_struct_val, val);
       }
+      std::cout << 3 << std::endl;
       // Here we implement flush to zero (FTZ): if exponent is zero, we force
       // the digits to be zero.
       // TODO: it seems that this can be more efficiently implemented using a
@@ -237,21 +274,28 @@ void TaskCodeGenLLVM::visit(BitStructStoreStmt *stmt) {
       auto exp_non_zero =
           builder->CreateICmp(llvm::CmpInst::Predicate::ICMP_NE, exponent_bits,
                               tlctx->get_constant(0));
+      std::cout << 3 << std::endl;
       val = builder->CreateSelect(exp_non_zero, digit_bits,
                                   tlctx->get_constant(0));
+      std::cout << 3 << std::endl;
       val = builder->CreateIntCast(val, physical_type, false);
+      std::cout << 3 << std::endl;
       val = builder->CreateShl(val, bit_struct->get_member_bit_offset(ch_id));
+      std::cout << 3 << std::endl;
     } else {
       val = quant_int_or_quant_fixed_to_bits(val, dtype, physical_type);
       val = builder->CreateShl(val, bit_struct->get_member_bit_offset(ch_id));
     }
+    std::cout << 2 << std::endl;
 
     if (bit_struct_val == nullptr) {
       bit_struct_val = val;
     } else {
       bit_struct_val = builder->CreateOr(bit_struct_val, val);
     }
+    std::cout << 2 << std::endl;
   }
+  std::cout << 1 << std::endl;
   if (store_all_components && !has_shared_exponent) {
     // Store all components here.
     builder->CreateStore(bit_struct_val, llvm_val[stmt->ptr]);
@@ -283,6 +327,7 @@ void TaskCodeGenLLVM::visit(BitStructStoreStmt *stmt) {
     store_masked(llvm_val[stmt->ptr], physical_type, mask, bit_struct_val,
                  stmt->is_atomic);
   }
+  std::cout << 1 << std::endl;
 }
 
 void TaskCodeGenLLVM::store_quant_floats_with_shared_exponents(

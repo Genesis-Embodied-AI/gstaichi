@@ -675,6 +675,7 @@ void GsTaichiLLVMContext::add_struct_module(std::unique_ptr<Module> module,
 }
 template <typename T>
 llvm::Value *GsTaichiLLVMContext::get_constant(DataType dt, T t) {
+  std::cout << "Getting constant of type " << data_type_name(dt) << " with T t" << std::endl;
   auto ctx = get_this_thread_context();
   if (dt->is_primitive(PrimitiveTypeID::f32)) {
     return llvm::ConstantFP::get(*ctx, llvm::APFloat((float32)t));
@@ -707,24 +708,32 @@ template llvm::Value *GsTaichiLLVMContext::get_constant(DataType dt, float64 t);
 
 template <typename T>
 llvm::Value *GsTaichiLLVMContext::get_constant(T t) {
+  std::cout << "GsTaichiLLVMContext::get_constant(T t) called" << std::endl;
   auto ctx = get_this_thread_context();
+  std::cout << "got thread context" << std::endl;
   TI_ASSERT(ctx != nullptr);
   using TargetType = T;
   if constexpr (std::is_same_v<TargetType, float32> ||
                 std::is_same_v<TargetType, float64>) {
+    std::cout << "constantfp" << std::endl;
     return llvm::ConstantFP::get(*ctx, llvm::APFloat(t));
   } else if (std::is_same_v<TargetType, bool>) {
+    std::cout << "bool" << std::endl;
     return t ? llvm::ConstantInt::getTrue(*ctx)
              : llvm::ConstantInt::getFalse(*ctx);
   } else if (std::is_same_v<TargetType, int32>) {
+    std::cout << "in32 signed" << std::endl;
     return llvm::ConstantInt::get(*ctx, llvm::APInt(32, t, true));
   } else if (std::is_same_v<TargetType, uint32>) {
+    std::cout << "uint32" << std::endl;
     return llvm::ConstantInt::get(*ctx, llvm::APInt(32, t, false));
   } else if (std::is_same_v<TargetType, int64>) {
+    std::cout << "int64 sizet or uint64" << std::endl;
     static_assert(sizeof(std::size_t) == sizeof(uint64));
     return llvm::ConstantInt::get(*ctx, llvm::APInt(64, t, true));
   } else if (std::is_same_v<TargetType, std::size_t> ||
              std::is_same_v<TargetType, uint64>) {
+    std::cout << "int64 sizet or uint64" << std::endl;
     static_assert(sizeof(std::size_t) == sizeof(uint64));
     return llvm::ConstantInt::get(*ctx, llvm::APInt(64, t, false));
   } else {
