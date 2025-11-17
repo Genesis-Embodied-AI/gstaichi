@@ -40,10 +40,11 @@ class Ndarray:
 
     def __del__(self):
         if impl is not None and impl.get_runtime is not None and impl.get_runtime() is not None:
-            prog = impl.get_runtime()._prog
-            if prog is not None:
-                prog.delete_ndarray(self.arr)
-                self.arr = None
+            arr = getattr(self, "arr")
+            if arr is not None:
+                prog = impl.get_runtime()._prog
+                if prog is not None:
+                    prog.delete_ndarray(self.arr)
 
     def to_dlpack(self):
         return impl.get_runtime().prog.ndarray_to_dlpack(self, self.arr)
