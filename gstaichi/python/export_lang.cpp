@@ -370,8 +370,7 @@ void export_lang(py::module &m) {
            [](Program *program, SNode *snode, int element_ndim, int n, int m) {
              return field_to_dlpack(program, snode, element_ndim, n, m);
            })
-      .def("_unsupported_get_num_ndarrays",
-           &Program::unsupported_get_num_ndarrays)
+      .def("_internal_get_num_ndarrays", &Program::internal_get_num_ndarrays)
       .def("config", &Program::compile_config,
            py::return_value_policy::reference)
       .def("sync_kernel_profiler",

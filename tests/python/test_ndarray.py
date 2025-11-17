@@ -1206,7 +1206,7 @@ def my_kernel({args}) -> None:
 def test_ndarray_del(dtype) -> None:
     def foo():
         nd = ti.ndarray(dtype, (1000,))
-        assert ti.lang.impl.get_runtime().prog._unsupported_get_num_ndarrays() == 1
+        assert ti.lang.impl.get_runtime().prog._internal_get_num_ndarrays() == 1
 
     foo()
-    assert ti.lang.impl.get_runtime().prog._unsupported_get_num_ndarrays() == 0
+    assert ti.lang.impl.get_runtime().prog._internal_get_num_ndarrays() == 0
