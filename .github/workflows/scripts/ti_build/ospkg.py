@@ -15,9 +15,7 @@ from .tinysh import apt
 # -- code --
 UBUNTU_PACKAGES = {
     "git",
-    "libjpeg-dev",
     "liblz4-dev",
-    "libpng-dev",
     "libssl-dev",
     "libncurses-dev",
     "libzstd-dev",
