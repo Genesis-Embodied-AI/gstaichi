@@ -1206,9 +1206,7 @@ def my_kernel({args}) -> None:
 def test_ndarray_del(dtype) -> None:
     def foo():
         nd = ti.ndarray(dtype, (1000,))
-        assert nd.arr.shape != []
-        return nd.arr
+        assert ti.lang.impl.get_runtime().prog._debug_get_num_ndarrays() == 1
 
-    arr = foo()
-    # after deletion, the shape is now empty, so this shows the arr was deleted
-    assert arr.shape == []
+    foo()
+    assert ti.lang.impl.get_runtime().prog._debug_get_num_ndarrays() == 0
