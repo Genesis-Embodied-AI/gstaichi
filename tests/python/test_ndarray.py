@@ -1199,3 +1199,16 @@ def my_kernel({args}) -> None:
         my_kernel(*arg_objs_l)
     for i in range(num_args):
         assert arg_objs_l[i][0] == i + 1
+
+
+@pytest.mark.parametrize("dtype", [ti.i32, ti.types.vector(3, ti.f32), ti.types.matrix(2, 2, ti.f32)])
+@test_utils.test()
+def test_ndarray_del(dtype) -> None:
+    def foo():
+        nd = ti.ndarray(ti.i32, (1000,))
+        assert nd.arr.shape != []
+        return nd.arr
+
+    arr = foo()
+    # after deletion, the shape is now empty, so this shows the arr was deleted
+    assert arr.shape == []
