@@ -44,7 +44,7 @@ class Ndarray:
             if arr is not None:
                 prog = impl.get_runtime()._prog
                 if prog is not None:
-                    prog.delete_ndarray(self.arr)
+                    prog.delete_ndarray(arr)
 
     def to_dlpack(self):
         return impl.get_runtime().prog.ndarray_to_dlpack(self, self.arr)
