@@ -1671,6 +1671,7 @@ def data_oriented(cls):
     Returns:
         The decorated class.
     """
+
     def make_kernel_indirect(fun, is_property, attr_type):
         @wraps(fun)
         def _kernel_indirect(self, *args, **kwargs):
