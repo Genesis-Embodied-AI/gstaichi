@@ -1997,6 +1997,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        The decorated class.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">make_kernel_indirect</span><span class="p">(</span><span class="n">fun</span><span class="p">,</span> <span class="n">is_property</span><span class="p">,</span> <span class="n">attr_type</span><span class="p">):</span>
         <span class="nd">@wraps</span><span class="p">(</span><span class="n">fun</span><span class="p">)</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">_kernel_indirect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -2014,6 +2015,12 @@
             <span class="n">ret</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ret</span>
 
+    <span class="c1"># Iterate over all the attributes of the class to wrap kernels in a way to ensure that they will be called throw</span>
+    <span class="c1"># _BoundedDifferentiableMethod systematically, which is necessary to transparently forward the owning instance to</span>
+    <span class="c1"># the primal function and its adjoint for auto-differentiation gradient computation.</span>
+    <span class="c1"># There is a special treatment for properties, as they may actually hide kernels under the hood. In such a case,</span>
+    <span class="c1"># the underlying function is extracted, wrapped as any member function, then wrapped again as a new property.</span>
+    <span class="c1"># Note that all the other attributes can be left untouched.</span>
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">attr</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">attr_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">attr</span><span class="p">)</span>
         <span class="n">is_property</span> <span class="o">=</span> <span class="n">attr_type</span> <span class="ow">is</span> <span class="nb">property</span>
