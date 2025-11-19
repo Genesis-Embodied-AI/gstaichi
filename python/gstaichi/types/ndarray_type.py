@@ -147,6 +147,11 @@ class NdarrayType:
     def __setitem__(self, i: Any, v: Any) -> None:
         # needed for pyright
         raise NotImplementedError()
+    
+    def to_dlpack(self) -> object:
+        # needed for pyright
+        raise NotImplementedError()
+
 
 
 ndarray = NdarrayType

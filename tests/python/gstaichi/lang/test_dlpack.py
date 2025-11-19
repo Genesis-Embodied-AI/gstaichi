@@ -5,8 +5,8 @@ import gstaichi as ti
 
 from tests import test_utils
 
-dlpack_arch = [ti.cpu, ti.cuda]
-dlpack_ineligible_arch = [ti.metal, ti.vulkan]
+dlpack_arch = [ti.cpu, ti.cuda, ti.metal]
+dlpack_ineligible_arch = [ti.vulkan]
 
 
 def ti_to_torch(ti_tensor: ti.types.NDArray) -> torch.Tensor:
@@ -28,11 +28,23 @@ def ti_to_torch(ti_tensor: ti.types.NDArray) -> torch.Tensor:
     ],
 )
 def test_dlpack_types(tensor_type, dtype, shape: tuple[int], poses: list[tuple[int, ...]]) -> None:
+    ti.init(ti.metal)
+    print("dtype", dtype, "arch", ti.cfg.arch)
+    if ti.cfg.arch == ti.metal and dtype is ti.f64:
+        pytest.skip("Metal does not support f64")
     ti_tensor = tensor_type(dtype, shape)
     for i, pos in enumerate(poses):
         ti_tensor[pos] = i * 10 + 10
+    print('ti_tensor', ti_tensor)
+    if ti.cfg.arch == ti.metal and dtype is ti.u1:
+        with pytest.raises(RuntimeError):
+            dlpack = ti_tensor.to_dlpack()
+        return
+    print('calling dlpack')
     dlpack = ti_tensor.to_dlpack()
+    print('calling from dlpack')
     tt = torch.utils.dlpack.from_dlpack(dlpack)
+    print('tt', tt)
     assert tuple(tt.shape) == shape
     expected_torch_type = {
         ti.i32: torch.int32,
@@ -42,9 +54,13 @@ def test_dlpack_types(tensor_type, dtype, shape: tuple[int], poses: list[tuple[i
         ti.u1: torch.bool,
     }[dtype]
     assert tt.dtype == expected_torch_type
+    print('ti_tensor', ti_tensor)
     for i, pos in enumerate(poses):
-        assert tt[pos] == ti_tensor[pos]
-        assert tt[pos] != 0
+        print('pos', pos)
+        print('tt[pos]', tt[pos].item())
+        print('ti_tensor[pos]', ti_tensor[pos])
+        assert tt[pos].item() == ti_tensor[pos]
+        assert tt[pos].item() != 0
 
 
 @test_utils.test(arch=dlpack_arch)
@@ -85,6 +101,7 @@ def test_dlpack_vec3(tensor_type):
     a[0, 0] = (5, 4, 3)
     a[0, 1] = (7, 8, 9)
     a[1, 0] = (11, 12, 13)
+    ti.sync()
     tt = ti_to_torch(a)
     assert tuple(tt.shape) == (10, 3, 3)
     assert tt.dtype == torch.float32

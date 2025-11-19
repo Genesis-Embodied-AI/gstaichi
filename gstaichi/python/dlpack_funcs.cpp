@@ -7,14 +7,17 @@
 #if TI_WITH_CUDA
 #include "gstaichi/rhi/cuda/cuda_device.h"
 #endif  // TI_WITH_CUDA
+#if TI_WITH_METAL
+#include "gstaichi/rhi/metal/metal_device.h"
+#endif  // TI_WITH_METAL
 #include "gstaichi/rhi/cpu/cpu_device.h"
 
 namespace gstaichi {
 namespace lang {
 
 void validate_arch(Arch arch) {
-  if (!arch_is_cpu(arch) && !arch_is_cuda(arch)) {
-    TI_ERROR("DLPack conversion is only supported on CPU and CUDA archs");
+  if (!arch_is_cpu(arch) && !arch_is_cuda(arch) && !arch_is_metal(arch)) {
+    TI_ERROR("DLPack conversion is only supported on CPU, Metal or CUDA archs");
   }
 }
 
@@ -41,6 +44,22 @@ std::pair<void *, DLDeviceType> get_raw_ptr(Arch arch,
     raw_ptr = alloc_info.ptr;
   }
 #endif  // TI_WITH_CUDA
+#if TI_WITH_METAL
+  else if (arch_is_metal(arch)) {
+    metal::MetalDevice *metal_device = static_cast<metal::MetalDevice *>(dev_alloc.device);
+    device_type = DLDeviceType::kDLMetal;
+    const metal::MetalMemory &memory = metal_device->get_memory(dev_alloc.alloc_id);
+    MTLBuffer_id mtl_buffer = memory.mtl_buffer();
+    
+    // Try to get the data pointer (works for shared buffers)
+    RhiResult result = memory.mapped_ptr(&raw_ptr);
+    if (result != RhiResult::success || raw_ptr == nullptr) {
+      // For private buffers, pass the MTLBuffer object itself as an opaque handle
+      // PyTorch's Metal backend can extract the buffer from this
+      raw_ptr = reinterpret_cast<void*>(mtl_buffer);
+    }
+  }
+#endif  // TI_WITH_METAL
 
   if (raw_ptr == nullptr) {
     TI_ERROR("Unsupported device type for DLPack conversion");
@@ -78,6 +97,9 @@ std::pair<uint8_t, uint8_t> get_type_info(DataType dt) {
       break;
     }
     case PrimitiveTypeID::u1: {
+      #if TI_WITH_METAL
+      TI_ERROR("DLPack conversion for bool type is not supported on Metal");
+      #endif
       data_type_code = static_cast<uint8_t>(kDLBool);
       element_bits = 8;
       break;
