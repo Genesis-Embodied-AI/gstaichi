@@ -1688,6 +1688,12 @@ def data_oriented(cls):
             ret = property(ret)
         return ret
 
+    # Iterate over all the attributes of the class to wrap kernels in a way to ensure that they will be called throw
+    # _BoundedDifferentiableMethod systematically, which is necessary to transparently forward the owning instance to
+    # the primal function and its adjoint for auto-differentiation gradient computation.
+    # There is a special treatment for properties, as they may actually hide kernels under the hood. In such a case,
+    # the underlying function is extracted, wrapped as any member function, then wrapped again as a new property.
+    # Note that all the other attributes can be left untouched.
     for name, attr in cls.__dict__.items():
         attr_type = type(attr)
         is_property = attr_type is property
