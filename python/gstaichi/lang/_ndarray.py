@@ -38,6 +38,14 @@ class Ndarray:
         # we register with runtime, in order to enable reset to work later
         impl.get_runtime().ndarrays.add(self)
 
+    def __del__(self):
+        if impl is not None and impl.get_runtime is not None and impl.get_runtime() is not None:
+            arr = getattr(self, "arr")
+            if arr is not None:
+                prog = impl.get_runtime()._prog
+                if prog is not None:
+                    prog.delete_ndarray(arr)
+
     def to_dlpack(self):
         return impl.get_runtime().prog.ndarray_to_dlpack(self, self.arr)
 
@@ -269,12 +277,6 @@ class ScalarNdarray(Ndarray):
         )
         self.shape = tuple(self.arr.shape)
         self.element_type = dtype
-
-    def __del__(self):
-        if impl is not None and impl.get_runtime is not None and impl.get_runtime() is not None:
-            prog = impl.get_runtime()._prog
-            if prog is not None:
-                prog.delete_ndarray(self.arr)
 
     @property
     def element_shape(self):
