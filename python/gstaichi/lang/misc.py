@@ -757,6 +757,10 @@ def is_extension_enabled(ext: Extension) -> bool:
 
 
 def dump_compile_config() -> None:
+    """
+    Dumps the compile config, which can be usful for example in diagnosing fastcache issues, since
+    the fastcache cache keys depend on the compile config.
+    """
     config = impl.current_cfg()
     config_l = []
     for _k in sorted(dir(config)):
