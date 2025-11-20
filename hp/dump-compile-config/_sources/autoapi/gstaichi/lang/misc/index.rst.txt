@@ -383,3 +383,7 @@ Module Contents
 
 .. py:function:: dump_compile_config() -> None
 
+   Dumps the compile config, which can be usful for example in diagnosing fastcache issues, since
+   the fastcache cache keys depend on the compile config.
+
+

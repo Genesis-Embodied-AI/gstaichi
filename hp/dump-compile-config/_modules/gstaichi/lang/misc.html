@@ -1179,6 +1179,10 @@
 <div class="viewcode-block" id="dump_compile_config">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/misc/index.html#gstaichi.lang.misc.dump_compile_config">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">dump_compile_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Dumps the compile config, which can be usful for example in diagnosing fastcache issues, since</span>
+<span class="sd">    the fastcache cache keys depend on the compile config.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span>
     <span class="n">config_l</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">_k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">dir</span><span class="p">(</span><span class="n">config</span><span class="p">)):</span>
