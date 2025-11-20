@@ -120,6 +120,7 @@ user_api[ti] = [
     "dataclass",
     "deactivate",
     "deactivate_all_snodes",
+    "dump_compile_config",
     "eig",
     "exp",
     "experimental",

@@ -756,6 +756,21 @@ def is_extension_enabled(ext: Extension) -> bool:
     return is_extension_supported(arch, ext)
 
 
+def dump_compile_config() -> None:
+    """
+    Dumps the compile config, which can be usful for example in diagnosing fastcache issues, since
+    the fastcache cache keys depend on the compile config.
+    """
+    config = impl.current_cfg()
+    config_l = []
+    for _k in sorted(dir(config)):
+        if _k.startswith("_"):
+            continue
+        v = getattr(config, _k)
+        config_l.append(f"{_k}={v}")
+    print("\n".join(config_l))
+
+
 __all__ = [
     "i",
     "ij",
@@ -787,6 +802,7 @@ __all__ = [
     "assume_in_range",
     "block_local",
     "cache_read_only",
+    "dump_compile_config",
     "init",
     "mesh_local",
     "no_activate",
