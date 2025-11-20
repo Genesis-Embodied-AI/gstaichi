@@ -2015,9 +2015,9 @@
             <span class="n">ret</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ret</span>
 
-    <span class="c1"># Iterate over all the attributes of the class to wrap kernels in a way to ensure that they will be called throw</span>
-    <span class="c1"># _BoundedDifferentiableMethod systematically, which is necessary to transparently forward the owning instance to</span>
-    <span class="c1"># the primal function and its adjoint for auto-differentiation gradient computation.</span>
+    <span class="c1"># Iterate over all the attributes of the class to wrap kernels in a way to ensure that they will be called through</span>
+    <span class="c1"># _BoundedDifferentiableMethod systematically. This extract layer on indirection is necessary to transparently</span>
+    <span class="c1"># forward the owning instance to the primal function and its adjoint for auto-differentiation gradient computation.</span>
     <span class="c1"># There is a special treatment for properties, as they may actually hide kernels under the hood. In such a case,</span>
     <span class="c1"># the underlying function is extracted, wrapped as any member function, then wrapped again as a new property.</span>
     <span class="c1"># Note that all the other attributes can be left untouched.</span>
