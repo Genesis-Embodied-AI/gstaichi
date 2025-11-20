@@ -50,8 +50,8 @@ def test_dlpack_types(tensor_type, dtype, shape: tuple[int], poses: list[tuple[i
     }[dtype]
     assert tt.dtype == expected_torch_type
     for i, pos in enumerate(poses):
-        assert tt[pos].item() == ti_tensor[pos]
-        assert tt[pos].item() != 0
+        assert tt[pos] == ti_tensor[pos]
+        assert tt[pos] != 0
 
 
 @test_utils.test(arch=dlpack_arch)
