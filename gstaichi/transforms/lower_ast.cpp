@@ -469,7 +469,7 @@ class LowerAST : public IRVisitor {
       TI_ERROR("The {} operation is not supported on {} SNode",
                snode_op_type_name(stmt->op_type),
                snode_type_name(stmt->snode->type));
-      TI_NOT_IMPLEMENTED
+      TI_ERROR("Not supported 47");
     }
 
     stmt->parent->replace_with(stmt, std::move(fctx.stmts));

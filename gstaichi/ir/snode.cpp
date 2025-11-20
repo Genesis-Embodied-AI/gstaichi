@@ -228,8 +228,9 @@ SNode::SNode(int depth,
 }
 
 SNode::SNode(const SNode &) {
-  TI_NOT_IMPLEMENTED;  // Copying an SNode is forbidden. However we need the
-                       // definition here to make pybind11 happy.
+  TI_ERROR("Not supported 43");
+  ;  // Copying an SNode is forbidden. However we need the
+     // definition here to make pybind11 happy.
 }
 
 std::string SNode::get_node_type_name() const {

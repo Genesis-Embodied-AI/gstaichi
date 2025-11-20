@@ -31,7 +31,7 @@ class JITSession {
   // virtual void remove_module(JITModule *module) = 0;
 
   virtual void *lookup(const std::string Name) {
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 44");
   }
 
   virtual llvm::DataLayout get_data_layout() = 0;

@@ -422,7 +422,8 @@ void GfxRuntime::launch_kernel(KernelHandle handle,
             any_arrays[arg_id] = devalloc;
             ndarrays_in_use_.insert(devalloc.alloc_id);
           } else {
-            TI_NOT_IMPLEMENTED;
+            TI_ERROR("Not supported 56");
+            ;
           }
         } else {
           ext_array_size[arg_id] = host_ctx.array_runtime_sizes[arg_id];

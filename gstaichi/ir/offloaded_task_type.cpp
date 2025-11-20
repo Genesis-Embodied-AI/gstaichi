@@ -9,7 +9,7 @@ std::string offloaded_task_type_name(OffloadedTaskType tt) {
 #include "gstaichi/inc/offloaded_task_type.inc.h"
 #undef PER_TASK_TYPE
   else
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 40");
 }
 
 }  // namespace gstaichi::lang

@@ -328,7 +328,7 @@ class IRBuilder {
     } else if (is_real(stype.dt)) {
       return float_immediate_number(stype, 0);
     } else {
-      TI_NOT_IMPLEMENTED
+      TI_ERROR("Not supported 25.");
       return Value();
     }
   }

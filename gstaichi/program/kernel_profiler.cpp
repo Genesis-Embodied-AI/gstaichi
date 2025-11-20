@@ -144,13 +144,14 @@ std::unique_ptr<KernelProfilerBase> make_profiler(Arch arch, bool enable) {
 #if defined(TI_WITH_CUDA)
     return std::make_unique<KernelProfilerCUDA>(enable);
 #else
-    TI_NOT_IMPLEMENTED;
+    TI_ERROR("Not supported 66");
+    ;
 #endif
   } else if (arch == Arch::amdgpu) {
 #if defined(TI_WITH_AMDGPU)
     return std::make_unique<KernelProfilerAMDGPU>();
 #else
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 67");
 #endif
   } else {
     return std::make_unique<DefaultProfiler>();

@@ -33,7 +33,7 @@ std::string cpp_demangle(const std::string &mangled_name) {
       UnDecorateSymbolName(mangled, demangled, 1024, UNDNAME_NAME_ONLY);
   return std::string(demangled, size_t(length));
 #else
-  TI_NOT_IMPLEMENTED
+  TI_ERROR("Not supported 52");
 #endif
 }
 

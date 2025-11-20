@@ -177,13 +177,14 @@ class IRVisitor {
     }
   }
 
-#define DEFINE_VISIT(T)            \
-  virtual void visit(T *stmt) {    \
-    if (allow_undefined_visitor) { \
-      if (invoke_default_visitor)  \
-        visit((Stmt *)stmt);       \
-    } else                         \
-      TI_NOT_IMPLEMENTED;          \
+#define DEFINE_VISIT(T)             \
+  virtual void visit(T *stmt) {     \
+    if (allow_undefined_visitor) {  \
+      if (invoke_default_visitor)   \
+        visit((Stmt *)stmt);        \
+    } else                          \
+      TI_ERROR("Not supported 70"); \
+    ;                               \
   }
 
   DEFINE_VISIT(Block);
@@ -227,7 +228,7 @@ class Load {
 class IRNode {
  public:
   virtual void accept(IRVisitor *visitor) {
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 71");
   }
 
   // * For a Stmt, this returns its enclosing Block
@@ -501,7 +502,7 @@ class Stmt : public IRNode {
   std::string type();
 
   virtual std::unique_ptr<Stmt> clone() const {
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 72");
   }
 
   ~Stmt() override = default;

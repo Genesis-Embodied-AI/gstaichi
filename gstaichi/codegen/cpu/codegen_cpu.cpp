@@ -190,7 +190,7 @@ class TaskCodeGenCPU : public TaskCodeGenLLVM {
     } else if (stmt->task_type == Type::gc) {
       emit_gc(stmt);
     } else {
-      TI_NOT_IMPLEMENTED
+      TI_ERROR("Not supported 02.");
     }
     if (compile_config.kernel_profiler && arch_is_cpu(compile_config.arch)) {
       llvm::IRBuilderBase::InsertPointGuard guard(*builder);
@@ -209,7 +209,7 @@ class TaskCodeGenCPU : public TaskCodeGenLLVM {
     } else if (stmt->type == ExternalFuncCallStmt::SHARED_OBJECT) {
       TaskCodeGenLLVM::visit_call_shared_object(stmt);
     } else {
-      TI_NOT_IMPLEMENTED
+      TI_ERROR("Not supported 21.");
     }
   }
 

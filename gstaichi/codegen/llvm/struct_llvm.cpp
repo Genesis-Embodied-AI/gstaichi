@@ -115,7 +115,8 @@ void StructCompilerLLVM::generate_types(SNode &snode) {
     body_type = llvm::PointerType::getUnqual(*ctx);
   } else {
     TI_P(snode.type_name());
-    TI_NOT_IMPLEMENTED;
+    TI_ERROR("Not supported 24.");
+    ;
   }
   if (aux_type != nullptr) {
     node_type = llvm::StructType::create(*ctx, {aux_type, body_type}, "");

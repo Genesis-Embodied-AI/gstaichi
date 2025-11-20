@@ -219,11 +219,13 @@ void memcpy_vulkan_to_cuda(DevicePtr dst, DevicePtr src, uint64_t size) {
 
 #else
 void memcpy_cuda_to_vulkan(DevicePtr dst, DevicePtr src, uint64_t size) {
-  TI_NOT_IMPLEMENTED;
+  TI_ERROR("Not supported 60");
+  ;
 }
 
 void memcpy_vulkan_to_cuda(DevicePtr dst, DevicePtr src, uint64_t size) {
-  TI_NOT_IMPLEMENTED;
+  TI_ERROR("Not supported 61");
+  ;
 }
 #endif  // TI_WITH_VULKAN && TI_WITH_CUDA
 

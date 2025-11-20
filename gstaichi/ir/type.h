@@ -124,7 +124,7 @@ class TI_DLL_EXPORT Type {
   bool is_primitive(PrimitiveTypeID type) const;
 
   virtual Type *get_compute_type() {
-    TI_NOT_IMPLEMENTED;
+    TI_ERROR("Not supported X5.");
   }
 
   virtual ~Type() {
@@ -679,7 +679,7 @@ class TypedConstant {
     } else if (dt->is_primitive(PrimitiveTypeID::u64)) {
       val_u64 = value;
     } else {
-      TI_NOT_IMPLEMENTED
+      TI_ERROR("Not supported X0.");
     }
   }
 
@@ -733,7 +733,7 @@ Type::ptr_io(const T *&ptr, S &serializer, bool writing) {
 #include "gstaichi/inc/type_kind.inc.h"
 #undef PER_TYPE_KIND
       default:
-        TI_NOT_IMPLEMENTED;
+        TI_ERROR("Not supported X1.");
     }
   } else {
     TypeKind type_kind = (TypeKind)-1;
@@ -753,7 +753,7 @@ Type::ptr_io(const T *&ptr, S &serializer, bool writing) {
 #include "gstaichi/inc/type_kind.inc.h"
 #undef PER_TYPE_KIND
       default:
-        TI_NOT_IMPLEMENTED;
+        TI_ERROR("Not supported X2.");
     }
   }
 }
@@ -782,7 +782,7 @@ Type::jsonserde_ptr_io(const T *&ptr,
 #include "gstaichi/inc/type_kind.inc.h"
 #undef PER_TYPE_KIND
       default:
-        TI_NOT_IMPLEMENTED
+        TI_ERROR("Not supported X3.");
     }
 
     obj.inner["content"] = std::move(content);
@@ -806,7 +806,7 @@ Type::jsonserde_ptr_io(const T *&ptr,
 #include "gstaichi/inc/type_kind.inc.h"
 #undef PER_TYPE_KIND
       default:
-        TI_NOT_IMPLEMENTED
+        TI_ERROR("Not supported X4.");
     }
   }
 }

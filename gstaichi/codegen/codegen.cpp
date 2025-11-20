@@ -45,17 +45,17 @@ std::unique_ptr<KernelCodeGen> KernelCodeGen::create(
     return std::make_unique<KernelCodeGenCUDA>(compile_config, kernel, ir,
                                                tlctx);
 #else
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 3.");
 #endif
   } else if (arch == Arch::amdgpu) {
 #if defined(TI_WITH_AMDGPU)
     return std::make_unique<KernelCodeGenAMDGPU>(compile_config, kernel, ir,
                                                  tlctx);
 #else
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 4.");
 #endif
   } else {
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 5.");
   }
 #else
   TI_ERROR("Llvm disabled");

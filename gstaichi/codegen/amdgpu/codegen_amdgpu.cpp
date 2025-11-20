@@ -36,16 +36,18 @@ class TaskCodeGenAMDGPU : public TaskCodeGenLLVM {
 
   llvm::Value *create_print(std::string tag,
                             DataType dt,
-                            llvm::Value *value) override{TI_NOT_IMPLEMENTED}
+                            llvm::Value *value) override {
+    TI_ERROR("Not supported 7.");
+  }
 
   std::tuple<llvm::Value *, llvm::Type *> create_value_and_type(
       llvm::Value *value,
       DataType dt) {
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 8.");
   }
 
   void visit(PrintStmt *stmt) override {
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 9.");
   }
 
   void emit_extra_unary(UnaryOpStmt *stmt) override {
@@ -62,7 +64,7 @@ class TaskCodeGenAMDGPU : public TaskCodeGenLLVM {
     } else if (input_gstaichi_type->is_primitive(PrimitiveTypeID::f64)) { \
       llvm_val[stmt] = call("__ocml_" #x "_f64", input);                  \
     } else {                                                              \
-      TI_NOT_IMPLEMENTED                                                  \
+      TI_ERROR("Not supported 10.");                                      \
     }                                                                     \
   }
     if (op == UnaryOpType::abs) {
@@ -77,7 +79,7 @@ class TaskCodeGenAMDGPU : public TaskCodeGenLLVM {
         auto xor_i32 = builder->CreateXor(ashr, input);
         llvm_val[stmt] = builder->CreateSub(xor_i32, ashr, "", false, true);
       } else {
-        TI_NOT_IMPLEMENTED
+        TI_ERROR("Not supported 11.");
       }
     }  // TODO simplify the impl of sgn
     else if (op == UnaryOpType::sgn) {
@@ -201,7 +203,7 @@ class TaskCodeGenAMDGPU : public TaskCodeGenLLVM {
     UNARY_STD(sqrt)
     else {
       TI_P(unary_op_type_name(op));
-      TI_NOT_IMPLEMENTED
+      TI_ERROR("Not supported 12.");
     }
 #undef UNARY_STD
   }
@@ -272,7 +274,7 @@ class TaskCodeGenAMDGPU : public TaskCodeGenLLVM {
   }
 
   void create_offload_mesh_for(OffloadedStmt *stmt) override {
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 13.");
   }
 
   void emit_amdgpu_gc(OffloadedStmt *stmt) {
@@ -342,7 +344,7 @@ class TaskCodeGenAMDGPU : public TaskCodeGenLLVM {
   }
 
   void create_bls_buffer(OffloadedStmt *stmt) {
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 14.");
   }
 
   void visit(OffloadedStmt *stmt) override {
@@ -367,7 +369,7 @@ class TaskCodeGenAMDGPU : public TaskCodeGenLLVM {
       } else if (stmt->task_type == Type::listgen) {
         emit_list_gen(stmt);
       } else {
-        TI_NOT_IMPLEMENTED
+        TI_ERROR("Not supported 15.");
       }
       finalize_offloaded_task_function();
       // TODO
@@ -403,7 +405,7 @@ class TaskCodeGenAMDGPU : public TaskCodeGenLLVM {
     }
     current_offload = nullptr;
 #else
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 16.");
 #endif
   }
 
@@ -411,7 +413,7 @@ class TaskCodeGenAMDGPU : public TaskCodeGenLLVM {
     if (stmt->type == ExternalFuncCallStmt::BITCODE) {
       TaskCodeGenLLVM::visit_call_bitcode(stmt);
     } else {
-      TI_NOT_IMPLEMENTED
+      TI_ERROR("Not supported 17.");
     }
   }
 
@@ -440,7 +442,7 @@ class TaskCodeGenAMDGPU : public TaskCodeGenLLVM {
         llvm_val[stmt] =
             builder->CreateFPToSI(ret_, llvm::Type::getInt32Ty(*llvm_context));
       } else {
-        TI_NOT_IMPLEMENTED
+        TI_ERROR("Not supported 18.");
       }
     } else if (op == BinaryOpType::atan2) {
       if (ret_gstaichi_type->is_primitive(PrimitiveTypeID::f16)) {
@@ -450,7 +452,7 @@ class TaskCodeGenAMDGPU : public TaskCodeGenLLVM {
       } else if (ret_gstaichi_type->is_primitive(PrimitiveTypeID::f64)) {
         llvm_val[stmt] = call("__ocml_atan2_f64", {lhs, rhs});
       } else {
-        TI_NOT_IMPLEMENTED
+        TI_ERROR("Not supported 19.");
       }
     }
   }

@@ -117,7 +117,8 @@ std::unique_ptr<KernelLauncher> LlvmProgramImpl::make_kernel_launcher() {
 #endif
   }
 
-  TI_NOT_IMPLEMENTED;
+  TI_ERROR("Not supported 51");
+  ;
 }
 
 LlvmProgramImpl *get_llvm_program(Program *prog) {

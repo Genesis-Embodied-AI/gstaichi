@@ -59,13 +59,15 @@ void memcpy_cpu_to_vulkan_via_staging(DevicePtr dst,
 
 #else
 void memcpy_cpu_to_vulkan(DevicePtr dst, DevicePtr src, uint64_t size) {
-  TI_NOT_IMPLEMENTED;
+  TI_ERROR("Not supported 57");
+  ;
 }
 void memcpy_cpu_to_vulkan_via_staging(DevicePtr dst,
                                       DevicePtr stagin,
                                       DevicePtr src,
                                       uint64_t size) {
-  TI_NOT_IMPLEMENTED;
+  TI_ERROR("Not supported 57");
+  ;
 }
 #endif  // TI_WITH_VULKAN
 

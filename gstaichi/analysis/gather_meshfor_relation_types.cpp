@@ -103,7 +103,7 @@ class GatherMeshforRelationTypes : public BasicStmtVisitor {
       mesh_for->minor_relation_types.insert(
           mesh::relation_by_orders(from_order, to_order));
     } else {
-      TI_NOT_IMPLEMENTED;
+      TI_ERROR("Not supported 2.");
     }
   }
 

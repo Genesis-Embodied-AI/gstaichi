@@ -584,7 +584,8 @@ llvm::Value *TaskCodeGenLLVM::reconstruct_quant_float(
     return builder->CreateBitCast(f32_bits,
                                   llvm::Type::getFloatTy(*llvm_context));
   } else {
-    TI_NOT_IMPLEMENTED;
+    TI_ERROR("Not supported 22.");
+    ;
   }
 }
 

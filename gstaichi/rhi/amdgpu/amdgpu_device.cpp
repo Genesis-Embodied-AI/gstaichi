@@ -57,7 +57,7 @@ DeviceAllocation AmdgpuDevice::allocate_memory_runtime(
   AllocInfo info;
   info.size = gstaichi::iroundup(params.size, gstaichi_page_size);
   if (params.host_read || params.host_write) {
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 46");
   } else {
     info.ptr =
         DeviceMemoryPool::get_instance().allocate_with_cache(this, params);

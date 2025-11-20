@@ -237,7 +237,7 @@ class ScratchPads {
       }
     } else if (pads.find(snode->parent) != pads.end()) {
     } else {
-      TI_NOT_IMPLEMENTED
+      TI_ERROR("Not supported 41");
     }
   }
 

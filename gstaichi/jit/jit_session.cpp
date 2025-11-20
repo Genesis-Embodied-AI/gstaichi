@@ -41,13 +41,13 @@ std::unique_ptr<JITSession> JITSession::create(GsTaichiLLVMContext *tlctx,
 #if defined(TI_WITH_CUDA)
     return create_llvm_jit_session_cuda(tlctx, config, arch, program_impl);
 #else
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 64");
 #endif
   } else if (arch == Arch::amdgpu) {
 #ifdef TI_WITH_AMDGPU
     return create_llvm_jit_session_amdgpu(tlctx, config, arch);
 #else
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 65");
 #endif
   }
 #else

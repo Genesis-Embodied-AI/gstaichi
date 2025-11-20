@@ -64,7 +64,7 @@ class JITModule {
   virtual void call(const std::string &name,
                     const std::vector<void *> &arg_pointers,
                     const std::vector<int> &arg_sizes) {
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 62");
   }
 
   // Note: **launch** is for parallel (GPU)_kernels
@@ -86,7 +86,7 @@ class JITModule {
                       std::size_t shared_mem_bytes,
                       const std::vector<void *> &arg_pointers,
                       const std::vector<int> &arg_sizes) {
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 63");
   }
 
   virtual bool direct_dispatch() const = 0;

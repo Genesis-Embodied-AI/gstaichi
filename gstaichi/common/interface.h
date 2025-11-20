@@ -63,12 +63,14 @@ class Unit {
   }
 
   virtual std::string get_name() const {
-    TI_NOT_IMPLEMENTED;
+    TI_ERROR("Not supported 36");
+    ;
     return "";
   }
 
   virtual std::string general_action(const Config &config) {
-    TI_NOT_IMPLEMENTED;
+    TI_ERROR("Not supported 37");
+    ;
     return "";
   }
 

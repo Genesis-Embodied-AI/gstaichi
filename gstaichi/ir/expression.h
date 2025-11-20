@@ -50,7 +50,8 @@ class Expression {
   virtual void accept(ExpressionVisitor *visitor) = 0;
 
   virtual void flatten(FlattenContext *ctx) {
-    TI_NOT_IMPLEMENTED;
+    TI_ERROR("Not supported 34");
+    ;
   };
 
   virtual bool is_lvalue() const {
@@ -167,7 +168,8 @@ class ExpressionVisitor {
       if (invoke_default_visitor_)  \
         visit((Expression *)expr);  \
     } else                          \
-      TI_NOT_IMPLEMENTED;           \
+      TI_ERROR("Not supported 35"); \
+    ;                               \
   }
 
 #define PER_EXPRESSION(x) DEFINE_VISIT(x)

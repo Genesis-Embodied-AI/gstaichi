@@ -206,10 +206,12 @@ const tinyir::Type *translate_ti_primitive(tinyir::Block &ir_module,
     } else if (t == PrimitiveType::f64) {
       return ir_module.emplace_back<FloatType>(/*num_bits=*/64);
     } else {
-      TI_NOT_IMPLEMENTED;
+      TI_ERROR("Not supported 26.");
+      ;
     }
   } else {
-    TI_NOT_IMPLEMENTED;
+    TI_ERROR("Not supported 27.");
+    ;
   }
 }
 
@@ -510,7 +512,7 @@ const tinyir::Type *translate_ti_type(tinyir::Block &ir_module,
     }
     return ir_module.emplace_back<StructType>(element_types);
   }
-  TI_NOT_IMPLEMENTED
+  TI_ERROR("Not supported 28");
 }
 
 }  // namespace spirv

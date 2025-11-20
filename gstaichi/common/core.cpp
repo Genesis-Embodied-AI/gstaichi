@@ -89,7 +89,7 @@ int PID::get_pid() {
 
 int PID::get_parent_pid() {
 #if defined(TI_PLATFORM_WINDOWS)
-  TI_NOT_IMPLEMENTED
+  TI_ERROR("Not supported 29");
   return -1;
 #else
   return (int)getppid();

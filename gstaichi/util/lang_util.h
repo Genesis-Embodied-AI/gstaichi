@@ -45,7 +45,7 @@ inline std::string make_list(const std::vector<std::string> &data,
     ret += ")";
   } else if (bracket != "") {
     TI_P(bracket);
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 49");
   }
   return ret;
 }

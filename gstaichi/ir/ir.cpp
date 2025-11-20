@@ -58,7 +58,7 @@ std::unique_ptr<IRNode> IRNode::clone() {
   else if (is<Stmt>())
     new_irnode = as<Stmt>()->clone();
   else {
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 33");
   }
   return new_irnode;
 }

@@ -153,7 +153,8 @@ struct ErrorEmitter {
     } else if constexpr (std::is_base_of_v<GsTaichiError, std::decay_t<E>>) {
       throw std::move(error);
     } else {
-      TI_NOT_IMPLEMENTED;
+      TI_ERROR("Not supported 30");
+      ;
     }
   }
 };

@@ -400,7 +400,7 @@ class TypeCheck : public IRVisitor {
       }
       stmt->ret_type = ret_type;
     } else {
-      TI_NOT_IMPLEMENTED
+      TI_ERROR("Not supported 48");
     }
   }
 

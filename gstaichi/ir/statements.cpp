@@ -377,7 +377,7 @@ std::string OffloadedStmt::task_name() const {
     TI_ASSERT(snode);
     return fmt::format("gc_{}", snode->name);
   } else {
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 44");
   }
 }
 

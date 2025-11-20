@@ -1087,7 +1087,7 @@ Value IRBuilder::float_atomic(AtomicOpType op_type,
         },
         dt);
   } else {
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 38");
   }
 }
 
@@ -1100,7 +1100,7 @@ Value IRBuilder::integer_atomic(AtomicOpType op_type,
         addr_ptr, data, [&](Value lhs, Value rhs) { return mul(lhs, rhs); },
         dt);
   } else {
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 39");
   }
 }
 

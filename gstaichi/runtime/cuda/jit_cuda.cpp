@@ -390,7 +390,7 @@ std::unique_ptr<JITSession> create_llvm_jit_session_cuda(
     GsTaichiLLVMContext *tlctx,
     const CompileConfig &config,
     Arch arch const ProgramImpl *program_impl) {
-  TI_NOT_IMPLEMENTED
+  TI_ERROR("Not supported 55");
 }
 #endif
 

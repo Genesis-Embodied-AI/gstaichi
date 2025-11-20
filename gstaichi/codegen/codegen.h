@@ -63,7 +63,7 @@ class KernelCodeGen {
       const CompileConfig &config,
       std::unique_ptr<llvm::Module> &&module = nullptr,
       IRNode *block = nullptr) {
-    TI_NOT_IMPLEMENTED
+    TI_ERROR("Not supported 6.");
   }
 
  protected:

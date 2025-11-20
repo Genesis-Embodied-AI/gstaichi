@@ -1062,7 +1062,7 @@ void export_lang(py::module &m) {
 #if defined(TI_WITH_CUDA)
       return CUDAContext::get_instance().get_compute_capability();
 #else
-      TI_NOT_IMPLEMENTED
+      TI_ERROR("Not supported 45");
 #endif
     } else {
       TI_ERROR("Key {} not supported in query_int64", key);

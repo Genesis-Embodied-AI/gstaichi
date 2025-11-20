@@ -76,7 +76,8 @@ void *DeviceMemoryPool::allocate_raw_memory(std::size_t size, bool managed) {
                                                 HIP_MEM_ATTACH_GLOBAL);
   }
 #else
-  TI_NOT_IMPLEMENTED;
+  TI_ERROR("Not supported 58");
+  ;
 #endif
 
   if (ptr == nullptr) {
@@ -112,7 +113,8 @@ void DeviceMemoryPool::deallocate_raw_memory(void *ptr) {
   AMDGPUDriver::get_instance().mem_free(ptr);
   raw_memory_chunks_.erase(ptr);
 #else
-  TI_NOT_IMPLEMENTED;
+  TI_ERROR("Not supported 59");
+  ;
 #endif
 }
 

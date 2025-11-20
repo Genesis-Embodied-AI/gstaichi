@@ -66,7 +66,8 @@ int test_throw(const std::string &seq) {
     } else if (ch == 'C') {
       root = std::make_unique<NodeC>(std::move(root));
     } else {
-      TI_NOT_IMPLEMENTED;
+      TI_ERROR("Not supported 50");
+      ;
     }
   }
   try {

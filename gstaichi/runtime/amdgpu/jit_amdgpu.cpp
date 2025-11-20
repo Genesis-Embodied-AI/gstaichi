@@ -185,7 +185,7 @@ std::unique_ptr<JITSession> create_llvm_jit_session_amdgpu(
     GsTaichiLLVMContext *tlctx,
     const CompileConfig &config,
     Arch arch) {
-  TI_NOT_IMPLEMENTED
+  TI_ERROR("Not supported 54");
 }
 #endif
 

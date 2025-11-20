@@ -345,7 +345,8 @@ class TaskCodeGenLLVM : public IRVisitor, public LLVMModuleBuilder {
   virtual void create_offload_range_for(OffloadedStmt *stmt) = 0;
 
   virtual void create_offload_mesh_for(OffloadedStmt *stmt) {
-    TI_NOT_IMPLEMENTED;
+    TI_ERROR("Not supported 23.");
+    ;
   }
 
   void create_offload_struct_for(OffloadedStmt *stmt);
