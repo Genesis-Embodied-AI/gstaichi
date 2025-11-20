@@ -177,7 +177,6 @@ class GsTaichiCallable:
         self._primal: Kernel | None = None
         self._adjoint: Kernel | None = None
         self.grad: Kernel | None = None
-        self._is_staticmethod: bool = False
         self.is_pure: bool = False
         update_wrapper(self, fn)
 
@@ -191,7 +190,7 @@ class GsTaichiCallable:
 
 
 class BoundGsTaichiCallable:
-    def __init__(self, instance: Any, gstaichi_callable: "GsTaichiCallable"):
+    def __init__(self, instance: Any, gstaichi_callable: GsTaichiCallable):
         self.wrapper = gstaichi_callable.wrapper
         self.instance = instance
         self.gstaichi_callable = gstaichi_callable
@@ -205,10 +204,14 @@ class BoundGsTaichiCallable:
 
     def __setattr__(self, k: str, v: Any) -> None:
         # Note: these have to match the name of any attributes on this class.
-        if k in ("wrapper", "instance", "gstaichi_callable"):
+        if k in {"wrapper", "instance", "gstaichi_callable"}:
             object.__setattr__(self, k, v)
         else:
             setattr(self.gstaichi_callable, k, v)
+
+    def grad(self, *args, **kwargs) -> "Kernel":
+        assert self.gstaichi_callable._adjoint is not None
+        return self.gstaichi_callable._adjoint(self.instance, *args, **kwargs)
 
 
 def func(fn: Callable, is_real_function: bool = False) -> GsTaichiCallable:
@@ -962,6 +965,7 @@ class Kernel:
         # A materialized kernel is a KernelCxx object which may or may not have
         # been compiled. It generally has been converted at least as far as AST
         # and front-end IR, but not necessarily any further.
+        self._dump_kernel_checksums = os.environ.get("TI_DUMP_KERNEL_CHECKSUMS", "0") == "1"
         self.materialized_kernels: dict[CompiledKernelKeyType, KernelCxx] = {}
         self.has_print = False
         self.gstaichi_callable: GsTaichiCallable | None = None
@@ -1344,7 +1348,7 @@ class Kernel:
                 prog_device_cap = prog.get_device_caps()
 
                 compile_result: CompileResult = prog.compile_kernel(prog_config, prog_device_cap, t_kernel)
-                if os.environ.get("TI_DUMP_KERNEL_CHECKSUMS", "0") == "1":
+                if self._dump_kernel_checksums:
                     debug_dump_path = pathlib.Path(impl.current_cfg().debug_dump_path)
                     checksums_file_path = debug_dump_path / "checksums.csv"
                     kernels_dump_dir = debug_dump_path / "kernels"
@@ -1507,35 +1511,30 @@ def _kernel_impl(_func: Callable, level_of_class_stackframe: int, verbose: bool 
     # Having |primal| contains |grad| makes the tape work.
     primal.grad = adjoint
 
+    @wraps(_func)
+    def wrapped_func(*args, **kwargs):
+        try:
+            return primal(*args, **kwargs)
+        except (GsTaichiCompilationError, GsTaichiRuntimeError) as e:
+            if impl.get_runtime().print_full_traceback:
+                raise e
+            raise type(e)("\n" + str(e)) from None
+
     wrapped: GsTaichiCallable
     if is_classkernel:
-        # For class kernels, their primal/adjoint callables are constructed
-        # when the kernel is accessed via the instance inside
-        # _BoundedDifferentiableMethod.
-        # This is because we need to bind the kernel or |grad| to the instance
-        # owning the kernel, which is not known until the kernel is accessed.
-        #
+        # For class kernels, their primal/adjoint callables are constructed when the kernel is accessed via the
+        # instance inside _BoundedDifferentiableMethod.
+        # This is because we need to bind the kernel or |grad| to the instance owning the kernel, which is not known
+        # until the kernel is accessed.
         # See also: _BoundedDifferentiableMethod, data_oriented.
         @wraps(_func)
         def wrapped_classkernel(*args, **kwargs):
-            # If we reach here (we should never), it means the class is not decorated
-            # with @ti.data_oriented, otherwise getattr would have intercepted the call.
-            clsobj = type(args[0])
-            assert not hasattr(clsobj, "_data_oriented")
-            raise GsTaichiSyntaxError(f"Please decorate class {clsobj.__name__} with @ti.data_oriented")
+            if args and not getattr(args[0], "_data_oriented", False):
+                raise GsTaichiSyntaxError(f"Please decorate class {type(args[0]).__name__} with @ti.data_oriented")
+            return wrapped_func(*args, **kwargs)
 
         wrapped = GsTaichiCallable(_func, wrapped_classkernel)
     else:
-
-        @wraps(_func)
-        def wrapped_func(*args, **kwargs):
-            try:
-                return primal(*args, **kwargs)
-            except (GsTaichiCompilationError, GsTaichiRuntimeError) as e:
-                if impl.get_runtime().print_full_traceback:
-                    raise e
-                raise type(e)("\n" + str(e)) from None
-
         wrapped = GsTaichiCallable(_func, wrapped_func)
         wrapped.grad = adjoint
 
@@ -1621,16 +1620,12 @@ class _BoundedDifferentiableMethod:
         self._kernel_owner = kernel_owner
         self._primal = wrapped_kernel_func._primal
         self._adjoint = wrapped_kernel_func._adjoint
-        self._is_staticmethod = wrapped_kernel_func._is_staticmethod
         self.__name__: str | None = None
 
     def __call__(self, *args, **kwargs):
         try:
             assert self._primal is not None
-            if self._is_staticmethod:
-                return self._primal(*args, **kwargs)
             return self._primal(self._kernel_owner, *args, **kwargs)
-
         except (GsTaichiCompilationError, GsTaichiRuntimeError) as e:
             if impl.get_runtime().print_full_traceback:
                 raise e
@@ -1670,41 +1665,34 @@ def data_oriented(cls):
     Returns:
         The decorated class.
     """
-    # Backup the original attribute getter before overwriting it.
-    # Note that this is faster, and more rigorous, to use this pattern over calling the parent method, ie
-    # `super(cls, self).__getattribute__`. Faster because it avoid relying on MRO at runtime, more rigorous
-    # because calling the parent method will by-pass the method `__getattribute__` that may already be
-    # overloaded by the original class.
-    getattribute_orig = cls.__getattribute__
 
-    def _getattr(self, item):
-        nonlocal getattribute_orig
+    def make_kernel_indirect(fun, is_property):
+        @wraps(fun)
+        def _kernel_indirect(self, *args, **kwargs):
+            nonlocal fun
+            ret = _BoundedDifferentiableMethod(self, fun)
+            ret.__name__ = fun.__name__  # type: ignore
+            return ret(*args, **kwargs)
 
-        method = cls.__dict__.get(item)
-        method_type = type(method)
-        is_property = method_type is property
+        ret = GsTaichiCallable(fun, _kernel_indirect)
         if is_property:
-            x = method.fget
-        else:
-            x = getattribute_orig(self, item)
-        if hasattr(x, "_is_wrapped_kernel"):
-            if inspect.ismethod(x):
-                wrapped = x.__func__
-            else:
-                wrapped = x
-            assert isinstance(wrapped, (BoundGsTaichiCallable, GsTaichiCallable))
-            wrapped._is_staticmethod = method_type is staticmethod
-            if wrapped._is_classkernel:
-                ret = _BoundedDifferentiableMethod(self, wrapped)
-                ret.__name__ = wrapped.__name__  # type: ignore
-                if is_property:
-                    return ret()
-                return ret
-        if is_property:
-            return x(self)
-        return x
+            ret = property(ret)
+        return ret
 
-    cls.__getattribute__ = _getattr
+    # Iterate over all the attributes of the class to wrap member kernels in a way to ensure that they will be called
+    # through _BoundedDifferentiableMethod. This extra layer of indirection is necessary to transparently forward the
+    # owning instance to the primal function and its adjoint for auto-differentiation gradient computation.
+    # There is a special treatment for properties, as they may actually hide kernels under the hood. In such a case,
+    # the underlying function is extracted, wrapped as any member function, then wrapped again as a new property.
+    # Note that all the other attributes can be left untouched.
+    for name, attr in cls.__dict__.items():
+        attr_type = type(attr)
+        is_property = attr_type is property
+        fun = attr.fget if is_property else attr
+        if isinstance(fun, (BoundGsTaichiCallable, GsTaichiCallable)):
+            if fun._is_wrapped_kernel:
+                if fun._is_classkernel and attr_type is not staticmethod:
+                    setattr(cls, name, make_kernel_indirect(fun, is_property))
     cls._data_oriented = True
 
     return cls
