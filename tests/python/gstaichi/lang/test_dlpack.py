@@ -16,7 +16,6 @@ def ti_to_torch(ti_tensor: ti.types.NDArray) -> torch.Tensor:
 
 
 @test_utils.test(arch=dlpack_arch)
-@pytest.mark.parametrize("tensor_type", [ti.ndarray, ti.field])
 @pytest.mark.parametrize("dtype", [ti.i32, ti.i64, ti.f32, ti.f64, ti.u1])
 @pytest.mark.parametrize(
     "shape,poses",
@@ -27,24 +26,20 @@ def ti_to_torch(ti_tensor: ti.types.NDArray) -> torch.Tensor:
         ((3, 1, 2), [(2, 0, 1), (0, 0, 1)]),
     ],
 )
+@pytest.mark.parametrize("tensor_type", [ti.ndarray, ti.field])
 def test_dlpack_types(tensor_type, dtype, shape: tuple[int], poses: list[tuple[int, ...]]) -> None:
-    ti.init(ti.metal)
-    print("dtype", dtype, "arch", ti.cfg.arch)
     if ti.cfg.arch == ti.metal and dtype is ti.f64:
         pytest.skip("Metal does not support f64")
     ti_tensor = tensor_type(dtype, shape)
     for i, pos in enumerate(poses):
         ti_tensor[pos] = i * 10 + 10
-    print('ti_tensor', ti_tensor)
     if ti.cfg.arch == ti.metal and dtype is ti.u1:
         with pytest.raises(RuntimeError):
             dlpack = ti_tensor.to_dlpack()
         return
-    print('calling dlpack')
+    ti.sync()
     dlpack = ti_tensor.to_dlpack()
-    print('calling from dlpack')
     tt = torch.utils.dlpack.from_dlpack(dlpack)
-    print('tt', tt)
     assert tuple(tt.shape) == shape
     expected_torch_type = {
         ti.i32: torch.int32,
@@ -54,11 +49,7 @@ def test_dlpack_types(tensor_type, dtype, shape: tuple[int], poses: list[tuple[i
         ti.u1: torch.bool,
     }[dtype]
     assert tt.dtype == expected_torch_type
-    print('ti_tensor', ti_tensor)
     for i, pos in enumerate(poses):
-        print('pos', pos)
-        print('tt[pos]', tt[pos].item())
-        print('ti_tensor[pos]', ti_tensor[pos])
         assert tt[pos].item() == ti_tensor[pos]
         assert tt[pos].item() != 0
 
@@ -140,14 +131,28 @@ def test_dlpack_mat2x3(tensor_type):
 @pytest.mark.parametrize("tensor_type", [ti.ndarray, ti.field])
 def test_dlpack_2_arrays(tensor_type):
     """
-    Just in case we need to handle offset
+    Just in case we need to handle offset (which we do, for fields)
     """
     a = tensor_type(ti.i32, (100,))
     b = tensor_type(ti.i32, (100,))
     a[0] = 123
+    a[1] = 101
+    a[2] = 102
+    a[3] = 103
     b[0] = 222
-    a_t = ti_to_torch(a)
-    b_t = ti_to_torch(b)
+    ti.sync()
+
+    # first field has offset 0, so no issues on metal
+    a_cap = a.to_dlpack()
+    a_t = torch.utils.dlpack.from_dlpack(a_cap)
+
+    # second field has non-zero offset, so should throw exception on Metal
+    if tensor_type == ti.field and ti.cfg.arch == ti.metal:
+        with pytest.raises(RuntimeError):  # check doesnt seg fault...
+            b.to_dlpack()
+        return
+    b_cap = b.to_dlpack()
+    b_t = torch.utils.dlpack.from_dlpack(b_cap)
     assert a_t[0] == 123
     assert b_t[0] == 222
 
@@ -194,8 +199,15 @@ def test_dlpack_field_multiple_tree_nodes():
     c[0] = 333
     d[0] = 444
     e[0] = 555
+    ti.sync()
 
     a_t = ti_to_torch(a)
+
+    if tensor_type == ti.field and ti.cfg.arch == ti.metal:
+        with pytest.raises(RuntimeError):  # check doesnt seg fault...
+            b.to_dlpack()
+        return
+
     b_t = ti_to_torch(b)
     c_t = ti_to_torch(c)
     d_t = ti_to_torch(d)
