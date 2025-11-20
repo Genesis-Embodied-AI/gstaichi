@@ -177,7 +177,6 @@ class GsTaichiCallable:
         self._primal: Kernel | None = None
         self._adjoint: Kernel | None = None
         self.grad: Kernel | None = None
-        self._is_staticmethod: bool = False
         self.is_pure: bool = False
         update_wrapper(self, fn)
 
@@ -1621,16 +1620,12 @@ class _BoundedDifferentiableMethod:
         self._kernel_owner = kernel_owner
         self._primal = wrapped_kernel_func._primal
         self._adjoint = wrapped_kernel_func._adjoint
-        self._is_staticmethod = wrapped_kernel_func._is_staticmethod
         self.__name__: str | None = None
 
     def __call__(self, *args, **kwargs):
         try:
             assert self._primal is not None
-            if self._is_staticmethod:
-                return self._primal(*args, **kwargs)
             return self._primal(self._kernel_owner, *args, **kwargs)
-
         except (GsTaichiCompilationError, GsTaichiRuntimeError) as e:
             if impl.get_runtime().print_full_traceback:
                 raise e
@@ -1696,8 +1691,7 @@ def data_oriented(cls):
         fun = attr.fget if is_property else attr
         if isinstance(fun, (BoundGsTaichiCallable, GsTaichiCallable)):
             if fun._is_wrapped_kernel:
-                fun._is_staticmethod = attr_type is staticmethod
-                if fun._is_classkernel:
+                if fun._is_classkernel and attr_type is not staticmethod:
                     setattr(cls, name, make_kernel_indirect(fun, is_property))
     cls._data_oriented = True
 
