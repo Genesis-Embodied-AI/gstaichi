@@ -262,22 +262,22 @@ def test_hook():
 
 
 @test_utils.test()
-def test_oop_with_portery_decorator():
+def test_oop_with_property_decorator():
     @ti.data_oriented
-    class TestPortery:
+    class TestProperty:
         @property
         @ti.kernel
         def kernel_property(self) -> ti.i32:
             return 42
 
         @property
-        def raw_proterty(self):
+        def raw_property(self):
             return 3
 
-    a = TestPortery()
+    a = TestProperty()
     assert a.kernel_property == 42
 
-    assert a.raw_proterty == 3
+    assert a.raw_property == 3
 
 
 @test_utils.test()
