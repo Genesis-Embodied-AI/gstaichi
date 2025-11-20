@@ -212,8 +212,7 @@ class BoundGsTaichiCallable:
 
     def grad(self, *args, **kwargs) -> "Kernel":
         assert self.gstaichi_callable._adjoint is not None
-        fun = _BoundedDifferentiableMethod(self.instance, self)
-        return fun.grad(*args, **kwargs)
+        return self.gstaichi_callable._adjoint(self.instance, *args, **kwargs)
 
 
 def func(fn: Callable, is_real_function: bool = False) -> GsTaichiCallable:
