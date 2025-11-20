@@ -201,8 +201,7 @@ pybind11::capsule field_to_dlpack(Program *program,
       raw_ptr = (void *)((uint64_t)raw_ptr + field_in_tree_offset);
     } else {
       TI_ERROR(
-          "to_dlpack is not supported for Metal SNode fields that require "
-          "pointer arithmetic to access elements.");
+          "to_dlpack is not supported for Metal SNode fields with non-zero offset");
     }
   }
 
