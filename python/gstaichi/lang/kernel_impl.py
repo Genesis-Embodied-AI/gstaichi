@@ -1672,40 +1672,34 @@ def data_oriented(cls):
         The decorated class.
     """
 
-    def make_kernel_indirect(fun, is_property, attr_type):
+    def make_kernel_indirect(fun, is_property):
         @wraps(fun)
         def _kernel_indirect(self, *args, **kwargs):
-            nonlocal attr_type, fun
-            assert isinstance(fun, (BoundGsTaichiCallable, GsTaichiCallable))
-            fun._is_staticmethod = attr_type is staticmethod
-            if fun._is_classkernel:
-                ret = _BoundedDifferentiableMethod(self, fun)
-                ret.__name__ = fun.__name__  # type: ignore
-                return ret(*args, **kwargs)
-            return fun(*args, **kwargs)
+            nonlocal fun
+            ret = _BoundedDifferentiableMethod(self, fun)
+            ret.__name__ = fun.__name__  # type: ignore
+            return ret(*args, **kwargs)
 
         ret = GsTaichiCallable(fun, _kernel_indirect)
         if is_property:
             ret = property(ret)
         return ret
 
-    # Iterate over all the attributes of the class to wrap kernels in a way to ensure that they will be called through
-    # _BoundedDifferentiableMethod systematically. This extract layer on indirection is necessary to transparently
-    # forward the owning instance to the primal function and its adjoint for auto-differentiation gradient computation.
+    # Iterate over all the attributes of the class to wrap member kernels in a way to ensure that they will be called
+    # through _BoundedDifferentiableMethod. This extra layer of indirection is necessary to transparently forward the
+    # owning instance to the primal function and its adjoint for auto-differentiation gradient computation.
     # There is a special treatment for properties, as they may actually hide kernels under the hood. In such a case,
     # the underlying function is extracted, wrapped as any member function, then wrapped again as a new property.
     # Note that all the other attributes can be left untouched.
     for name, attr in cls.__dict__.items():
         attr_type = type(attr)
         is_property = attr_type is property
-        if is_property:
-            fun = attr.fget
-        elif callable(attr):
-            fun = attr
-        else:
-            continue
-        if getattr(fun, "_is_wrapped_kernel", False):
-            setattr(cls, name, make_kernel_indirect(fun, is_property, attr_type))
+        fun = attr.fget if is_property else attr
+        if isinstance(fun, (BoundGsTaichiCallable, GsTaichiCallable)):
+            if fun._is_wrapped_kernel:
+                fun._is_staticmethod = attr_type is staticmethod
+                if fun._is_classkernel:
+                    setattr(cls, name, make_kernel_indirect(fun, is_property))
     cls._data_oriented = True
 
     return cls
