@@ -489,7 +489,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_primal</span><span class="p">:</span> <span class="n">Kernel</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_adjoint</span><span class="p">:</span> <span class="n">Kernel</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">grad</span><span class="p">:</span> <span class="n">Kernel</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_is_staticmethod</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">is_pure</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="n">update_wrapper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">)</span>
 
@@ -503,7 +502,7 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">BoundGsTaichiCallable</span><span class="p">:</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">gstaichi_callable</span><span class="p">:</span> <span class="s2">&quot;GsTaichiCallable&quot;</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">gstaichi_callable</span><span class="p">:</span> <span class="n">GsTaichiCallable</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">wrapper</span> <span class="o">=</span> <span class="n">gstaichi_callable</span><span class="o">.</span><span class="n">wrapper</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">instance</span> <span class="o">=</span> <span class="n">instance</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gstaichi_callable</span> <span class="o">=</span> <span class="n">gstaichi_callable</span>
@@ -517,10 +516,14 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="c1"># Note: these have to match the name of any attributes on this class.</span>
-        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;wrapper&quot;</span><span class="p">,</span> <span class="s2">&quot;instance&quot;</span><span class="p">,</span> <span class="s2">&quot;gstaichi_callable&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;wrapper&quot;</span><span class="p">,</span> <span class="s2">&quot;instance&quot;</span><span class="p">,</span> <span class="s2">&quot;gstaichi_callable&quot;</span><span class="p">}:</span>
             <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gstaichi_callable</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">grad</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Kernel&quot;</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">gstaichi_callable</span><span class="o">.</span><span class="n">_adjoint</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">gstaichi_callable</span><span class="o">.</span><span class="n">_adjoint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="func">
@@ -1283,6 +1286,7 @@
         <span class="c1"># A materialized kernel is a KernelCxx object which may or may not have</span>
         <span class="c1"># been compiled. It generally has been converted at least as far as AST</span>
         <span class="c1"># and front-end IR, but not necessarily any further.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dump_kernel_checksums</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;TI_DUMP_KERNEL_CHECKSUMS&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">materialized_kernels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CompiledKernelKeyType</span><span class="p">,</span> <span class="n">KernelCxx</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">has_print</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gstaichi_callable</span><span class="p">:</span> <span class="n">GsTaichiCallable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1665,7 +1669,7 @@
                 <span class="n">prog_device_cap</span> <span class="o">=</span> <span class="n">prog</span><span class="o">.</span><span class="n">get_device_caps</span><span class="p">()</span>
 
                 <span class="n">compile_result</span><span class="p">:</span> <span class="n">CompileResult</span> <span class="o">=</span> <span class="n">prog</span><span class="o">.</span><span class="n">compile_kernel</span><span class="p">(</span><span class="n">prog_config</span><span class="p">,</span> <span class="n">prog_device_cap</span><span class="p">,</span> <span class="n">t_kernel</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;TI_DUMP_KERNEL_CHECKSUMS&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dump_kernel_checksums</span><span class="p">:</span>
                     <span class="n">debug_dump_path</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span><span class="o">.</span><span class="n">debug_dump_path</span><span class="p">)</span>
                     <span class="n">checksums_file_path</span> <span class="o">=</span> <span class="n">debug_dump_path</span> <span class="o">/</span> <span class="s2">&quot;checksums.csv&quot;</span>
                     <span class="n">kernels_dump_dir</span> <span class="o">=</span> <span class="n">debug_dump_path</span> <span class="o">/</span> <span class="s2">&quot;kernels&quot;</span>
@@ -1828,35 +1832,30 @@
     <span class="c1"># Having |primal| contains |grad| makes the tape work.</span>
     <span class="n">primal</span><span class="o">.</span><span class="n">grad</span> <span class="o">=</span> <span class="n">adjoint</span>
 
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">_func</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wrapped_func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">primal</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">GsTaichiCompilationError</span><span class="p">,</span> <span class="n">GsTaichiRuntimeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">print_full_traceback</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">e</span>
+            <span class="k">raise</span> <span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+
     <span class="n">wrapped</span><span class="p">:</span> <span class="n">GsTaichiCallable</span>
     <span class="k">if</span> <span class="n">is_classkernel</span><span class="p">:</span>
-        <span class="c1"># For class kernels, their primal/adjoint callables are constructed</span>
-        <span class="c1"># when the kernel is accessed via the instance inside</span>
-        <span class="c1"># _BoundedDifferentiableMethod.</span>
-        <span class="c1"># This is because we need to bind the kernel or |grad| to the instance</span>
-        <span class="c1"># owning the kernel, which is not known until the kernel is accessed.</span>
-        <span class="c1">#</span>
+        <span class="c1"># For class kernels, their primal/adjoint callables are constructed when the kernel is accessed via the</span>
+        <span class="c1"># instance inside _BoundedDifferentiableMethod.</span>
+        <span class="c1"># This is because we need to bind the kernel or |grad| to the instance owning the kernel, which is not known</span>
+        <span class="c1"># until the kernel is accessed.</span>
         <span class="c1"># See also: _BoundedDifferentiableMethod, data_oriented.</span>
         <span class="nd">@wraps</span><span class="p">(</span><span class="n">_func</span><span class="p">)</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">wrapped_classkernel</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-            <span class="c1"># If we reach here (we should never), it means the class is not decorated</span>
-            <span class="c1"># with @ti.data_oriented, otherwise getattr would have intercepted the call.</span>
-            <span class="n">clsobj</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="k">assert</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">clsobj</span><span class="p">,</span> <span class="s2">&quot;_data_oriented&quot;</span><span class="p">)</span>
-            <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Please decorate class </span><span class="si">{</span><span class="n">clsobj</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> with @ti.data_oriented&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">args</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;_data_oriented&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Please decorate class </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> with @ti.data_oriented&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">wrapped_func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="n">wrapped</span> <span class="o">=</span> <span class="n">GsTaichiCallable</span><span class="p">(</span><span class="n">_func</span><span class="p">,</span> <span class="n">wrapped_classkernel</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-
-        <span class="nd">@wraps</span><span class="p">(</span><span class="n">_func</span><span class="p">)</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">wrapped_func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">primal</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-            <span class="k">except</span> <span class="p">(</span><span class="n">GsTaichiCompilationError</span><span class="p">,</span> <span class="n">GsTaichiRuntimeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">print_full_traceback</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">e</span>
-                <span class="k">raise</span> <span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
-
         <span class="n">wrapped</span> <span class="o">=</span> <span class="n">GsTaichiCallable</span><span class="p">(</span><span class="n">_func</span><span class="p">,</span> <span class="n">wrapped_func</span><span class="p">)</span>
         <span class="n">wrapped</span><span class="o">.</span><span class="n">grad</span> <span class="o">=</span> <span class="n">adjoint</span>
 
@@ -1945,16 +1944,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_kernel_owner</span> <span class="o">=</span> <span class="n">kernel_owner</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_primal</span> <span class="o">=</span> <span class="n">wrapped_kernel_func</span><span class="o">.</span><span class="n">_primal</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_adjoint</span> <span class="o">=</span> <span class="n">wrapped_kernel_func</span><span class="o">.</span><span class="n">_adjoint</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_is_staticmethod</span> <span class="o">=</span> <span class="n">wrapped_kernel_func</span><span class="o">.</span><span class="n">_is_staticmethod</span>
         <span class="bp">self</span><span class="o">.</span><span class="vm">__name__</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_primal</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_staticmethod</span><span class="p">:</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_primal</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_primal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_kernel_owner</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
         <span class="k">except</span> <span class="p">(</span><span class="n">GsTaichiCompilationError</span><span class="p">,</span> <span class="n">GsTaichiRuntimeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">print_full_traceback</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">e</span>
@@ -1996,41 +1991,34 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        The decorated class.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># Backup the original attribute getter before overwriting it.</span>
-    <span class="c1"># Note that this is faster, and more rigorous, to use this pattern over calling the parent method, ie</span>
-    <span class="c1"># `super(cls, self).__getattribute__`. Faster because it avoid relying on MRO at runtime, more rigorous</span>
-    <span class="c1"># because calling the parent method will by-pass the method `__getattribute__` that may already be</span>
-    <span class="c1"># overloaded by the original class.</span>
-    <span class="n">getattribute_orig</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="fm">__getattribute__</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
-        <span class="k">nonlocal</span> <span class="n">getattribute_orig</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">make_kernel_indirect</span><span class="p">(</span><span class="n">fun</span><span class="p">,</span> <span class="n">is_property</span><span class="p">):</span>
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">fun</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_kernel_indirect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">nonlocal</span> <span class="n">fun</span>
+            <span class="n">ret</span> <span class="o">=</span> <span class="n">_BoundedDifferentiableMethod</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fun</span><span class="p">)</span>
+            <span class="n">ret</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="n">fun</span><span class="o">.</span><span class="vm">__name__</span>  <span class="c1"># type: ignore</span>
+            <span class="k">return</span> <span class="n">ret</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-        <span class="n">method</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
-        <span class="n">method_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
-        <span class="n">is_property</span> <span class="o">=</span> <span class="n">method_type</span> <span class="ow">is</span> <span class="nb">property</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">GsTaichiCallable</span><span class="p">(</span><span class="n">fun</span><span class="p">,</span> <span class="n">_kernel_indirect</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">is_property</span><span class="p">:</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">fget</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="n">getattribute_orig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">&quot;_is_wrapped_kernel&quot;</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">ismethod</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-                <span class="n">wrapped</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="vm">__func__</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">wrapped</span> <span class="o">=</span> <span class="n">x</span>
-            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">wrapped</span><span class="p">,</span> <span class="p">(</span><span class="n">BoundGsTaichiCallable</span><span class="p">,</span> <span class="n">GsTaichiCallable</span><span class="p">))</span>
-            <span class="n">wrapped</span><span class="o">.</span><span class="n">_is_staticmethod</span> <span class="o">=</span> <span class="n">method_type</span> <span class="ow">is</span> <span class="nb">staticmethod</span>
-            <span class="k">if</span> <span class="n">wrapped</span><span class="o">.</span><span class="n">_is_classkernel</span><span class="p">:</span>
-                <span class="n">ret</span> <span class="o">=</span> <span class="n">_BoundedDifferentiableMethod</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wrapped</span><span class="p">)</span>
-                <span class="n">ret</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="n">wrapped</span><span class="o">.</span><span class="vm">__name__</span>  <span class="c1"># type: ignore</span>
-                <span class="k">if</span> <span class="n">is_property</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">ret</span><span class="p">()</span>
-                <span class="k">return</span> <span class="n">ret</span>
-        <span class="k">if</span> <span class="n">is_property</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">x</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">x</span>
+            <span class="n">ret</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ret</span>
 
-    <span class="bp">cls</span><span class="o">.</span><span class="fm">__getattribute__</span> <span class="o">=</span> <span class="n">_getattr</span>
+    <span class="c1"># Iterate over all the attributes of the class to wrap member kernels in a way to ensure that they will be called</span>
+    <span class="c1"># through _BoundedDifferentiableMethod. This extra layer of indirection is necessary to transparently forward the</span>
+    <span class="c1"># owning instance to the primal function and its adjoint for auto-differentiation gradient computation.</span>
+    <span class="c1"># There is a special treatment for properties, as they may actually hide kernels under the hood. In such a case,</span>
+    <span class="c1"># the underlying function is extracted, wrapped as any member function, then wrapped again as a new property.</span>
+    <span class="c1"># Note that all the other attributes can be left untouched.</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">attr</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">attr_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">attr</span><span class="p">)</span>
+        <span class="n">is_property</span> <span class="o">=</span> <span class="n">attr_type</span> <span class="ow">is</span> <span class="nb">property</span>
+        <span class="n">fun</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">fget</span> <span class="k">if</span> <span class="n">is_property</span> <span class="k">else</span> <span class="n">attr</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fun</span><span class="p">,</span> <span class="p">(</span><span class="n">BoundGsTaichiCallable</span><span class="p">,</span> <span class="n">GsTaichiCallable</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">fun</span><span class="o">.</span><span class="n">_is_wrapped_kernel</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">fun</span><span class="o">.</span><span class="n">_is_classkernel</span> <span class="ow">and</span> <span class="n">attr_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">staticmethod</span><span class="p">:</span>
+                    <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">make_kernel_indirect</span><span class="p">(</span><span class="n">fun</span><span class="p">,</span> <span class="n">is_property</span><span class="p">))</span>
     <span class="bp">cls</span><span class="o">.</span><span class="n">_data_oriented</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">return</span> <span class="bp">cls</span></div>
