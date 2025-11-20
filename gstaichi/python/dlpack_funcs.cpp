@@ -198,7 +198,8 @@ pybind11::capsule field_to_dlpack(Program *program,
       get_raw_ptr(arch, program, tree_device_ptr);
   if (field_in_tree_offset != 0) {
     if (pointer_arithmetic_ok) {
-      raw_ptr = reinterpret_cast<void *>((uint64_t)raw_ptr + field_in_tree_offset);
+      raw_ptr =
+          reinterpret_cast<void *>((uint64_t)raw_ptr + field_in_tree_offset);
     } else {
       TI_ERROR(
           "to_dlpack is not supported for Metal SNode fields with non-zero "

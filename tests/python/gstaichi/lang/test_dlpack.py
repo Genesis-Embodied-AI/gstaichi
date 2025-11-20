@@ -34,9 +34,10 @@ def test_dlpack_types(tensor_type, dtype, shape: tuple[int], poses: list[tuple[i
     for i, pos in enumerate(poses):
         ti_tensor[pos] = i * 10 + 10
     if ti.cfg.arch == ti.metal and dtype is ti.u1:
+        # TODO: fix u1 on Metal
         with pytest.raises(RuntimeError):
             dlpack = ti_tensor.to_dlpack()
-        return
+        pytest.xfail(reason="ti.u1 doesn't work on Metal currently")
     ti.sync()
     dlpack = ti_tensor.to_dlpack()
     tt = torch.utils.dlpack.from_dlpack(dlpack)
@@ -148,9 +149,10 @@ def test_dlpack_2_arrays(tensor_type):
 
     # second field has non-zero offset, so should throw exception on Metal
     if tensor_type == ti.field and ti.cfg.arch == ti.metal:
+        # TODO: fix to_dlpack on Metal fields
         with pytest.raises(RuntimeError):  # check doesnt seg fault...
             b.to_dlpack()
-        return
+        pytest.xfail(reason="to_dlpack not currently supported on Metal fields")
     b_cap = b.to_dlpack()
     b_t = torch.utils.dlpack.from_dlpack(b_cap)
     assert a_t[0] == 123
@@ -204,9 +206,10 @@ def test_dlpack_field_multiple_tree_nodes():
     a_t = ti_to_torch(a)
 
     if tensor_type == ti.field and ti.cfg.arch == ti.metal:
+        # TODO: fix to_dlpack on Metal fields
         with pytest.raises(RuntimeError):  # check doesnt seg fault...
             b.to_dlpack()
-        return
+        pytest.xfail(reason="to_dlpack not currently supported on Metal fields")
 
     b_t = ti_to_torch(b)
     c_t = ti_to_torch(c)
