@@ -56,7 +56,7 @@ std::tuple<void *, DLDeviceType, bool> get_raw_ptr(Arch arch,
     RhiResult result = memory.mapped_ptr(&raw_ptr);
     if (result != RhiResult::success || raw_ptr == nullptr) {
       MTLBuffer_id mtl_buffer = memory.mtl_buffer();
-      raw_ptr = reinterpret_cast<void *>(mtl_buffer);
+      raw_ptr = mtl_buffer;
       pointer_arithmetic_ok = false;
     }
   }
