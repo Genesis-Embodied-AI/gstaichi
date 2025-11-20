@@ -1199,3 +1199,14 @@ def my_kernel({args}) -> None:
         my_kernel(*arg_objs_l)
     for i in range(num_args):
         assert arg_objs_l[i][0] == i + 1
+
+
+@pytest.mark.parametrize("dtype", [ti.i32, ti.types.vector(3, ti.f32), ti.types.matrix(2, 2, ti.f32)])
+@test_utils.test()
+def test_ndarray_del(dtype) -> None:
+    def foo():
+        nd = ti.ndarray(dtype, (1000,))
+        assert ti.lang.impl.get_runtime().prog._get_num_ndarrays() == 1
+
+    foo()
+    assert ti.lang.impl.get_runtime().prog._get_num_ndarrays() == 0

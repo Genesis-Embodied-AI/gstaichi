@@ -302,6 +302,10 @@ class TI_DLL_EXPORT Program {
     return program_impl_.get();
   }
 
+  size_t get_num_ndarrays() const {
+    return ndarrays_.size();
+  }
+
   // TODO(zhanlue): Move these members and corresponding interfaces to
   // ProgramImpl Ideally, Program should serve as a pure interface class and all
   // the implementations should fall inside ProgramImpl
