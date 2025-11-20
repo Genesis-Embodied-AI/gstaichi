@@ -258,6 +258,10 @@ class ScalarField(Field):
         super().__init__([var])
 
     def to_dlpack(self):
+        """
+        Note: caller is responsible for calling ti.sync() between modifying the field, and
+        reading it.
+        """
         return impl.get_runtime().prog.field_to_dlpack(self._snode.ptr, 0, 0, 0)
 
     def fill(self, val):

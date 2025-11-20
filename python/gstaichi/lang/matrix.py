@@ -1162,6 +1162,10 @@ class MatrixField(Field):
         self.ptr = ti_python_core.expr_matrix_field([var.ptr for var in self.vars], [n, m][:ndim])
 
     def to_dlpack(self):
+        """
+        Note: caller is responsible for calling ti.sync() between modifying the field, and
+        reading it.
+        """
         return impl.get_runtime().prog.field_to_dlpack(self._snode.ptr, self.ndim, self.n, self.m)
 
     def get_scalar_field(self, *indices):

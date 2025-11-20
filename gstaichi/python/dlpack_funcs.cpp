@@ -7,20 +7,24 @@
 #if TI_WITH_CUDA
 #include "gstaichi/rhi/cuda/cuda_device.h"
 #endif  // TI_WITH_CUDA
+#if TI_WITH_METAL
+#include "gstaichi/rhi/metal/metal_device.h"
+#endif  // TI_WITH_METAL
 #include "gstaichi/rhi/cpu/cpu_device.h"
 
 namespace gstaichi {
 namespace lang {
 
 void validate_arch(Arch arch) {
-  if (!arch_is_cpu(arch) && !arch_is_cuda(arch)) {
-    TI_ERROR("DLPack conversion is only supported on CPU and CUDA archs");
+  if (!arch_is_cpu(arch) && !arch_is_cuda(arch) && !arch_is_metal(arch)) {
+    TI_ERROR("DLPack conversion is only supported on CPU, Metal or CUDA archs");
   }
 }
 
-std::pair<void *, DLDeviceType> get_raw_ptr(Arch arch,
-                                            Program *program,
-                                            DeviceAllocation dev_alloc) {
+std::tuple<void *, DLDeviceType, bool> get_raw_ptr(Arch arch,
+                                                   Program *program,
+                                                   DeviceAllocation dev_alloc) {
+  bool pointer_arithmetic_ok = true;
   void *raw_ptr = nullptr;
   DLDeviceType device_type = DLDeviceType::kDLCPU;
   if (arch_is_cpu(arch)) {
@@ -41,14 +45,30 @@ std::pair<void *, DLDeviceType> get_raw_ptr(Arch arch,
     raw_ptr = alloc_info.ptr;
   }
 #endif  // TI_WITH_CUDA
+#if TI_WITH_METAL
+  else if (arch_is_metal(arch)) {
+    metal::MetalDevice *metal_device =
+        static_cast<metal::MetalDevice *>(dev_alloc.device);
+    device_type = DLDeviceType::kDLMetal;
+    const metal::MetalMemory &memory =
+        metal_device->get_memory(dev_alloc.alloc_id);
+
+    RhiResult result = memory.mapped_ptr(&raw_ptr);
+    if (result != RhiResult::success || raw_ptr == nullptr) {
+      MTLBuffer_id mtl_buffer = memory.mtl_buffer();
+      raw_ptr = mtl_buffer;
+      pointer_arithmetic_ok = false;
+    }
+  }
+#endif  // TI_WITH_METAL
 
   if (raw_ptr == nullptr) {
     TI_ERROR("Unsupported device type for DLPack conversion");
   }
-  return std::make_pair(raw_ptr, device_type);
+  return std::make_tuple(raw_ptr, device_type, pointer_arithmetic_ok);
 }
 
-std::pair<uint8_t, uint8_t> get_type_info(DataType dt) {
+std::pair<uint8_t, uint8_t> get_type_info(Arch arch, DataType dt) {
   PrimitiveType *dt_as_primitive = dt->as<PrimitiveType>();
   if (dt_as_primitive == nullptr) {
     TI_ERROR("unsupported non-primitive data type for dlpack");
@@ -78,6 +98,11 @@ std::pair<uint8_t, uint8_t> get_type_info(DataType dt) {
       break;
     }
     case PrimitiveTypeID::u1: {
+#if TI_WITH_METAL
+      if (arch_is_metal(arch)) {
+        TI_ERROR("DLPack conversion for bool type is not supported on Metal");
+      }
+#endif
       data_type_code = static_cast<uint8_t>(kDLBool);
       element_bits = 8;
       break;
@@ -168,14 +193,25 @@ pybind11::capsule field_to_dlpack(Program *program,
 
   void *raw_ptr = nullptr;
   DLDeviceType device_type = DLDeviceType::kDLCPU;
-  std::tie(raw_ptr, device_type) = get_raw_ptr(arch, program, tree_device_ptr);
-  raw_ptr = (void *)((uint64_t)raw_ptr + field_in_tree_offset);
+  bool pointer_arithmetic_ok = true;
+  std::tie(raw_ptr, device_type, pointer_arithmetic_ok) =
+      get_raw_ptr(arch, program, tree_device_ptr);
+  if (field_in_tree_offset != 0) {
+    if (pointer_arithmetic_ok) {
+      raw_ptr =
+          reinterpret_cast<void *>((uint64_t)raw_ptr + field_in_tree_offset);
+    } else {
+      TI_ERROR(
+          "to_dlpack is not supported for Metal SNode fields with non-zero "
+          "offset");
+    }
+  }
 
   DataType dt = snode->dt;
 
   uint8_t element_bits = 32;
   uint8_t data_type_code = kDLInt;
-  std::tie(data_type_code, element_bits) = get_type_info(dt);
+  std::tie(data_type_code, element_bits) = get_type_info(arch, dt);
 
   int ndim = snode->num_active_indices;
 
@@ -208,6 +244,8 @@ pybind11::capsule field_to_dlpack(Program *program,
   dl_tensor.dtype = DLDataType{data_type_code, element_bits, 1};
   dl_tensor.shape = shape;
   dl_tensor.strides = strides;
+  // FIXME: use instead of pointer arithmetic once
+  // https://github.com/pytorch/pytorch/pull/168193 merged and released.
   dl_tensor.byte_offset = 0;
 
   managed_tensor->deleter = [](DLManagedTensor *self) {
@@ -236,7 +274,9 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
 
   DLDeviceType device_type = DLDeviceType::kDLCPU;
   void *raw_ptr = nullptr;
-  std::tie(raw_ptr, device_type) = get_raw_ptr(arch, program, devalloc);
+  bool _pointer_arithmetic_ok = true;
+  std::tie(raw_ptr, device_type, _pointer_arithmetic_ok) =
+      get_raw_ptr(arch, program, devalloc);
 
   std::vector<int> ndarray_shape = ndarray->total_shape();
   int ndim = ndarray_shape.size();
@@ -252,7 +292,8 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
   DataType ndarray_data_type = ndarray->get_element_data_type();
   uint8_t data_type_code = kDLInt;
   uint8_t element_bits = 0;
-  std::tie(data_type_code, element_bits) = get_type_info(ndarray_data_type);
+  std::tie(data_type_code, element_bits) =
+      get_type_info(arch, ndarray_data_type);
 
   DLManagedTensor *managed_tensor = new DLManagedTensor();
 

@@ -148,6 +148,10 @@ class NdarrayType:
         # needed for pyright
         raise NotImplementedError()
 
+    def to_dlpack(self) -> object:
+        # needed for pyright
+        raise NotImplementedError()
+
 
 ndarray = NdarrayType
 NDArray = NdarrayType
