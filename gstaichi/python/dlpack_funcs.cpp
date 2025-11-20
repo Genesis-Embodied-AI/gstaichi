@@ -193,7 +193,6 @@ pybind11::capsule field_to_dlpack(Program *program,
   DLDeviceType device_type = DLDeviceType::kDLCPU;
   bool pointer_arithmetic_ok = true;
   std::tie(raw_ptr, device_type, pointer_arithmetic_ok) = get_raw_ptr(arch, program, tree_device_ptr);
-  std::cout << "pointer_arithmetic_ok: " << pointer_arithmetic_ok << std::endl;
   if(field_in_tree_offset != 0) {
     if(pointer_arithmetic_ok) {
       raw_ptr = (void *)((uint64_t)raw_ptr + field_in_tree_offset);
