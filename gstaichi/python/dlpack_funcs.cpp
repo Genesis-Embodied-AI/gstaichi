@@ -243,7 +243,8 @@ pybind11::capsule field_to_dlpack(Program *program,
   dl_tensor.dtype = DLDataType{data_type_code, element_bits, 1};
   dl_tensor.shape = shape;
   dl_tensor.strides = strides;
-  // note: torch doesn't yet support non-zero byte_offset
+  // FIXME: use instead of pointer arithmetic once
+  // https://github.com/pytorch/pytorch/pull/168193 merged and released.
   dl_tensor.byte_offset = 0;
 
   managed_tensor->deleter = [](DLManagedTensor *self) {
