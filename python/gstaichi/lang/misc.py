@@ -759,11 +759,11 @@ def is_extension_enabled(ext: Extension) -> bool:
 def dump_compile_config() -> None:
     config = impl.current_cfg()
     config_l = []
-    for k in sorted(dir(config)):
-        if k.startswith("_"):
+    for _k in sorted(dir(config)):
+        if _k.startswith("_"):
             continue
-        v = getattr(config, k)
-        config_l.append(f"{k}={v}")
+        v = getattr(config, _k)
+        config_l.append(f"{_k}={v}")
     print("\n".join(config_l))
 
 
