@@ -22,8 +22,8 @@ void validate_arch(Arch arch) {
 }
 
 std::tuple<void *, DLDeviceType, bool> get_raw_ptr(Arch arch,
-                                            Program *program,
-                                            DeviceAllocation dev_alloc) {
+                                                   Program *program,
+                                                   DeviceAllocation dev_alloc) {
   bool pointer_arithmetic_ok = true;
   void *raw_ptr = nullptr;
   DLDeviceType device_type = DLDeviceType::kDLCPU;
@@ -47,14 +47,16 @@ std::tuple<void *, DLDeviceType, bool> get_raw_ptr(Arch arch,
 #endif  // TI_WITH_CUDA
 #if TI_WITH_METAL
   else if (arch_is_metal(arch)) {
-    metal::MetalDevice *metal_device = static_cast<metal::MetalDevice *>(dev_alloc.device);
+    metal::MetalDevice *metal_device =
+        static_cast<metal::MetalDevice *>(dev_alloc.device);
     device_type = DLDeviceType::kDLMetal;
-    const metal::MetalMemory &memory = metal_device->get_memory(dev_alloc.alloc_id);
-    
+    const metal::MetalMemory &memory =
+        metal_device->get_memory(dev_alloc.alloc_id);
+
     RhiResult result = memory.mapped_ptr(&raw_ptr);
     if (result != RhiResult::success || raw_ptr == nullptr) {
       MTLBuffer_id mtl_buffer = memory.mtl_buffer();
-      raw_ptr = reinterpret_cast<void*>(mtl_buffer);
+      raw_ptr = reinterpret_cast<void *>(mtl_buffer);
       pointer_arithmetic_ok = false;
     }
   }
@@ -96,11 +98,11 @@ std::pair<uint8_t, uint8_t> get_type_info(Arch arch, DataType dt) {
       break;
     }
     case PrimitiveTypeID::u1: {
-      #if TI_WITH_METAL
+#if TI_WITH_METAL
       if (arch_is_metal(arch)) {
-      TI_ERROR("DLPack conversion for bool type is not supported on Metal");
+        TI_ERROR("DLPack conversion for bool type is not supported on Metal");
       }
-      #endif
+#endif
       data_type_code = static_cast<uint8_t>(kDLBool);
       element_bits = 8;
       break;
@@ -192,12 +194,15 @@ pybind11::capsule field_to_dlpack(Program *program,
   void *raw_ptr = nullptr;
   DLDeviceType device_type = DLDeviceType::kDLCPU;
   bool pointer_arithmetic_ok = true;
-  std::tie(raw_ptr, device_type, pointer_arithmetic_ok) = get_raw_ptr(arch, program, tree_device_ptr);
-  if(field_in_tree_offset != 0) {
-    if(pointer_arithmetic_ok) {
+  std::tie(raw_ptr, device_type, pointer_arithmetic_ok) =
+      get_raw_ptr(arch, program, tree_device_ptr);
+  if (field_in_tree_offset != 0) {
+    if (pointer_arithmetic_ok) {
       raw_ptr = (void *)((uint64_t)raw_ptr + field_in_tree_offset);
     } else {
-      TI_ERROR("to_dlpack is not supported for Metal SNode fields that require pointer arithmetic to access elements.");
+      TI_ERROR(
+          "to_dlpack is not supported for Metal SNode fields that require "
+          "pointer arithmetic to access elements.");
     }
   }
 
@@ -268,7 +273,8 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
   DLDeviceType device_type = DLDeviceType::kDLCPU;
   void *raw_ptr = nullptr;
   bool _pointer_arithmetic_ok = true;
-  std::tie(raw_ptr, device_type, _pointer_arithmetic_ok) = get_raw_ptr(arch, program, devalloc);
+  std::tie(raw_ptr, device_type, _pointer_arithmetic_ok) =
+      get_raw_ptr(arch, program, devalloc);
 
   std::vector<int> ndarray_shape = ndarray->total_shape();
   int ndim = ndarray_shape.size();
@@ -284,7 +290,8 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
   DataType ndarray_data_type = ndarray->get_element_data_type();
   uint8_t data_type_code = kDLInt;
   uint8_t element_bits = 0;
-  std::tie(data_type_code, element_bits) = get_type_info(arch, ndarray_data_type);
+  std::tie(data_type_code, element_bits) =
+      get_type_info(arch, ndarray_data_type);
 
   DLManagedTensor *managed_tensor = new DLManagedTensor();
 
