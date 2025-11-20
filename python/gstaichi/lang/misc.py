@@ -756,6 +756,17 @@ def is_extension_enabled(ext: Extension) -> bool:
     return is_extension_supported(arch, ext)
 
 
+def dump_compile_config() -> None:
+    config = impl.current_cfg()
+    config_l = []
+    for k in sorted(dir(config)):
+        if k.startswith("_"):
+            continue
+        v = getattr(config, k)
+        config_l.append(f"{k}={v}")
+    print("\n".join(config_l))
+
+
 __all__ = [
     "i",
     "ij",
@@ -787,6 +798,7 @@ __all__ = [
     "assume_in_range",
     "block_local",
     "cache_read_only",
+    "dump_compile_config",
     "init",
     "mesh_local",
     "no_activate",
