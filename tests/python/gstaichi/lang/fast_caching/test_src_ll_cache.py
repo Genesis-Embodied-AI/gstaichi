@@ -463,6 +463,22 @@ def f1(a: ti.types.NDArray[ti.i32, 1]) -> None:
     module_file_path = tmp_path / "module"
     module_file_path.mkdir()
     file_path = module_file_path / "foo.py"
+    # Note: it's VERY important that the first two values are different,
+    # and the last two values are the SAME
+    # We had a bug as follows:
+    # - first value => ran correclty, saved to c++ + python cache
+    # - second value => detects cache invalid, so
+    #   - compiles from fresh
+    #   - gets correct results,
+    #   - attempts to save out
+    #   - importantly, ONLY saved to python cache, not c++ cache
+    # - if the third value is differnet again, it detects the cache is invalid,
+    #   and compiles from fresh again, and it passes
+    # - however, if however the third value matches the second value:
+    #   - the cache key matches hte previous value
+    #   - the python validation passes (since we didnt change the underlying kernel in any way, sicne last time)
+    #   - however, the c++ saved kernel, in the cache, still contains the 123 kernel
+    #   - => so the assert fails, demonstrating the bug
     for val in [123, 222, 222]:
         rendered_kernels = kernels_src.format(val=val)
         file_path.write_text(rendered_kernels)
