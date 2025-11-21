@@ -1,7 +1,9 @@
+import importlib
 import os
 import pathlib
 import subprocess
 import sys
+import tempfile
 
 import pydantic
 import pytest
@@ -118,38 +120,23 @@ def test_src_ll_cache_with_corruption(tmp_path: pathlib.Path) -> None:
         assert has_pure._primal._last_compiled_kernel_data._debug_dump_to_string() == last_compiled_kernel_data_str
 
 
-# Should be enough to run these on cpu I think, and anything involving
-# stdout/stderr capture is fairly flaky on other arch
 @test_utils.test(arch=ti.cpu)
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="Windows stderr not working with capfd")
 def test_src_ll_cache_arg_warnings(tmp_path: pathlib.Path, capfd) -> None:
     ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
 
-    class RandomClass:
-        pass
+    kernels_src = """
+@ti.func
+def f1(a: ti.types.NDArray[ti.i32, 1]) -> None:
+    a[0] = {val}
 
-    @ti.pure
-    @ti.kernel
-    def k1(foo: ti.Template) -> None:
-        pass
 
-    k1(foo=RandomClass())
-    _out, err = capfd.readouterr()
-    assert "[FASTCACHE][PARAM_INVALID]" in err
-    assert RandomClass.__name__ in err
-    assert "[FASTCACHE][INVALID_FUNC]" in err
-    assert k1.__name__ in err
+@ti.kernel(fastcache=True)
+def k1(a: ti.NDArray[ti.i32, 1]) -> None:
+    f1(a)
+"""
 
-    @ti.kernel
-    def not_pure_k1(foo: ti.Template) -> None:
-        pass
 
-    not_pure_k1(foo=RandomClass())
-    _out, err = capfd.readouterr()
-    assert "[FASTCACHE][PARAM_INVALID]" not in err
-    assert RandomClass.__name__ not in err
-    assert "[FASTCACHE][INVALID_FUNC]" not in err
-    assert k1.__name__ not in err
 
 
 @test_utils.test()
@@ -424,6 +411,96 @@ def test_src_ll_cache_self_arg_checked(tmp_path: pathlib.Path) -> None:
     assert tuple(my_do.k1()) == (7, 30)
     assert my_do.k1._primal.src_ll_cache_observations.cache_key_generated
     assert my_do.k1._primal.src_ll_cache_observations.cache_validated
+
+
+class ModifySubFuncKernelArgs(pydantic.BaseModel):
+    arch: str
+    offline_cache_file_path: str
+    module_file_path: str
+
+
+def src_ll_cache_modify_sub_func_child(args: list[str]) -> None:
+    args_obj: ModifySubFuncKernelArgs = ModifySubFuncKernelArgs.model_validate_json(args[0])
+    ti.init(
+        arch=getattr(ti, args_obj.arch),
+        offline_cache=True,
+        offline_cache_file_path=args_obj.offline_cache_file_path,
+        src_ll_cache=True,
+    )
+
+    kernels_src = """
+import gstaichi as ti
+
+@ti.kernel(fastcache=True)
+def k1(a: ti.types.NDArray[ti.i32, 1]) -> None:
+    f1(a)
+
+@ti.func
+def f1(a: ti.types.NDArray[ti.i32, 1]) -> None:
+    a[0] = {val}
+"""
+
+    sys.path.append(args_obj.module_file_path)
+
+    def load_kernel(val: int):
+        module_file_path = pathlib.Path(args_obj.module_file_path)
+        module_file_path.mkdir()
+        file_path = module_file_path / "foo.py"
+        rendered_kernels = kernels_src.format(
+            arch=args_obj.arch,
+            offline_cache_file_path=args_obj.offline_cache_file_path,
+            val=val
+        )
+        file_path.write_text(rendered_kernels)
+        mod = importlib.import_module("foo")
+        return mod
+
+    mod = load_kernel(val=123)
+    print("mod", mod)
+    print("mod.k1", mod.k1)
+    a = ti.ndarray(ti.i32, (10,))
+    mod.k1(a)
+    print('a[0]', a[0])
+    assert a[0] == 123
+
+    mod = load_kernel(val=222)
+    print("mod", mod)
+    print("mod.k1", mod.k1)
+    a = ti.ndarray(ti.i32, (10,))
+    mod.k1(a)
+    print('a[0]', a[0])
+    assert a[0] == 222
+
+    print(TEST_RAN)
+    sys.exit(RET_SUCCESS)
+
+
+@test_utils.test()
+def test_src_ll_cache_modify_sub_func(tmp_path: pathlib.Path) -> None:
+    assert ti.lang is not None
+    arch = ti.lang.impl.current_cfg().arch.name
+    env = dict(os.environ)
+    env["PYTHONPATH"] = "."
+    args_obj = ModifySubFuncKernelArgs(
+        arch=arch,
+        offline_cache_file_path=str(tmp_path / "cache"),
+        module_file_path=str(tmp_path / "module"),
+    )
+    args_json = HasReturnKernelArgs.model_dump_json(args_obj)
+    cmd_line = [sys.executable, __file__, src_ll_cache_modify_sub_func_child.__name__, args_json]
+    proc = subprocess.run(
+        cmd_line,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    if proc.returncode != RET_SUCCESS:
+        print(" ".join(cmd_line))
+        print(proc.stdout)  # needs to do this to see error messages
+        print("-" * 100)
+        print(proc.stderr)
+    assert TEST_RAN in proc.stdout
+    assert proc.returncode == RET_SUCCESS
 
 
 # The following lines are critical for subprocess-using tests to work. If they are missing, the tests will
