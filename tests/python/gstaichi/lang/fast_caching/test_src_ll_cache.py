@@ -430,13 +430,11 @@ def src_ll_cache_modify_sub_func_child(args: list[str]) -> None:
         src_ll_cache=True,
     )
 
-
     sys.path.append(args_obj.module_file_path)
     mod = importlib.import_module(args_obj.module_name)
 
     a = ti.ndarray(ti.i32, (10,))
     mod.k1(a)
-    print('a[0]', a[0])
     assert a[0] == args_obj.expected_val
 
     print(TEST_RAN)
@@ -488,7 +486,6 @@ def f1(a: ti.types.NDArray[ti.i32, 1]) -> None:
             print(proc.stdout)  # needs to do this to see error messages
             print("-" * 100)
             print(proc.stderr)
-        print(proc.stdout)
 
         assert TEST_RAN in proc.stdout
         assert proc.returncode == RET_SUCCESS
