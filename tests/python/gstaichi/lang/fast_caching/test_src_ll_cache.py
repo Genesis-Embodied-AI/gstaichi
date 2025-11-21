@@ -417,6 +417,8 @@ class ModifySubFuncKernelArgs(pydantic.BaseModel):
     arch: str
     offline_cache_file_path: str
     module_file_path: str
+    module_name: str
+    expected_val: int
 
 
 def src_ll_cache_modify_sub_func_child(args: list[str]) -> None:
@@ -427,6 +429,26 @@ def src_ll_cache_modify_sub_func_child(args: list[str]) -> None:
         offline_cache_file_path=args_obj.offline_cache_file_path,
         src_ll_cache=True,
     )
+
+
+    sys.path.append(args_obj.module_file_path)
+    mod = importlib.import_module(args_obj.module_name)
+
+    a = ti.ndarray(ti.i32, (10,))
+    mod.k1(a)
+    print('a[0]', a[0])
+    assert a[0] == args_obj.expected_val
+
+    print(TEST_RAN)
+    sys.exit(RET_SUCCESS)
+
+
+@test_utils.test()
+def test_src_ll_cache_modify_sub_func(tmp_path: pathlib.Path) -> None:
+    assert ti.lang is not None
+    arch = ti.lang.impl.current_cfg().arch.name
+    env = dict(os.environ)
+    env["PYTHONPATH"] = "."
 
     kernels_src = """
 import gstaichi as ti
@@ -440,67 +462,36 @@ def f1(a: ti.types.NDArray[ti.i32, 1]) -> None:
     a[0] = {val}
 """
 
-    sys.path.append(args_obj.module_file_path)
-
-    def load_kernel(val: int):
-        module_file_path = pathlib.Path(args_obj.module_file_path)
-        module_file_path.mkdir()
-        file_path = module_file_path / "foo.py"
-        rendered_kernels = kernels_src.format(
-            arch=args_obj.arch,
-            offline_cache_file_path=args_obj.offline_cache_file_path,
-            val=val
-        )
+    module_file_path = tmp_path / "module"
+    module_file_path.mkdir()
+    file_path = module_file_path / "foo.py"
+    for val in [123, 222, 222]:
+        rendered_kernels = kernels_src.format(val=val)
         file_path.write_text(rendered_kernels)
-        mod = importlib.import_module("foo")
-        return mod
+        args_obj = ModifySubFuncKernelArgs(
+            arch=arch,
+            offline_cache_file_path=str(tmp_path / "cache"),
+            module_file_path=str(module_file_path),
+            module_name="foo",
+            expected_val=val,
+        )
+        args_json = HasReturnKernelArgs.model_dump_json(args_obj)
+        cmd_line = [sys.executable, __file__, src_ll_cache_modify_sub_func_child.__name__, args_json]
+        proc = subprocess.run(
+            cmd_line,
+            capture_output=True,
+            text=True,
+            env=env,
+        )
+        if proc.returncode != RET_SUCCESS:
+            print(" ".join(cmd_line))
+            print(proc.stdout)  # needs to do this to see error messages
+            print("-" * 100)
+            print(proc.stderr)
+        print(proc.stdout)
 
-    mod = load_kernel(val=123)
-    print("mod", mod)
-    print("mod.k1", mod.k1)
-    a = ti.ndarray(ti.i32, (10,))
-    mod.k1(a)
-    print('a[0]', a[0])
-    assert a[0] == 123
-
-    mod = load_kernel(val=222)
-    print("mod", mod)
-    print("mod.k1", mod.k1)
-    a = ti.ndarray(ti.i32, (10,))
-    mod.k1(a)
-    print('a[0]', a[0])
-    assert a[0] == 222
-
-    print(TEST_RAN)
-    sys.exit(RET_SUCCESS)
-
-
-@test_utils.test()
-def test_src_ll_cache_modify_sub_func(tmp_path: pathlib.Path) -> None:
-    assert ti.lang is not None
-    arch = ti.lang.impl.current_cfg().arch.name
-    env = dict(os.environ)
-    env["PYTHONPATH"] = "."
-    args_obj = ModifySubFuncKernelArgs(
-        arch=arch,
-        offline_cache_file_path=str(tmp_path / "cache"),
-        module_file_path=str(tmp_path / "module"),
-    )
-    args_json = HasReturnKernelArgs.model_dump_json(args_obj)
-    cmd_line = [sys.executable, __file__, src_ll_cache_modify_sub_func_child.__name__, args_json]
-    proc = subprocess.run(
-        cmd_line,
-        capture_output=True,
-        text=True,
-        env=env,
-    )
-    if proc.returncode != RET_SUCCESS:
-        print(" ".join(cmd_line))
-        print(proc.stdout)  # needs to do this to see error messages
-        print("-" * 100)
-        print(proc.stderr)
-    assert TEST_RAN in proc.stdout
-    assert proc.returncode == RET_SUCCESS
+        assert TEST_RAN in proc.stdout
+        assert proc.returncode == RET_SUCCESS
 
 
 # The following lines are critical for subprocess-using tests to work. If they are missing, the tests will
