@@ -10,8 +10,10 @@
 #include "gstaichi/codegen/compiled_kernel_data.h"
 #include "gstaichi/codegen/kernel_compiler.h"
 #include "gstaichi/program/kernel.h"
+#include "gstaichi/program/program.h"
 #include "gstaichi/program/compile_config.h"
 #include "gstaichi/util/offline_cache.h"
+#include "gstaichi/ir/ir.h"
 
 namespace gstaichi::lang {
 namespace {
@@ -59,7 +61,7 @@ class FakeCompiledKernelData : public CompiledKernelData {
 class FakeKernelCompiler : public KernelCompiler {
  public:
   IRNodePtr compile(const CompileConfig &, const Kernel &) const override {
-    return std::make_unique<IRNode>();
+    return std::make_unique<Block>();
   }
 
   CKDPtr compile(const CompileConfig &,
@@ -70,29 +72,29 @@ class FakeKernelCompiler : public KernelCompiler {
   }
 };
 
-class FakeKernel : public Kernel {
- public:
-  FakeKernel(Program *prog, const std::string &name, bool ir_is_ast = true)
-      : Kernel(*prog, nullptr, name, AutodiffMode::kNone),
-        ir_is_ast_(ir_is_ast) {
-  }
+// class FakeKernel : public Kernel {
+//  public:
+//   FakeKernel(Program *prog, const std::string &name, bool ir_is_ast = true)
+//       : Kernel(*prog, nullptr, name, AutodiffMode::kNone),
+//         ir_is_ast_(ir_is_ast) {
+//   }
 
-  bool ir_is_ast() const override {
-    return ir_is_ast_;
-  }
+//   bool ir_is_ast() const override {
+//     return ir_is_ast_;
+//   }
 
-  std::string get_cached_kernel_key() const override {
-    return cached_key_;
-  }
+//   std::string get_cached_kernel_key() const override {
+//     return cached_key_;
+//   }
 
-  void set_kernel_key_for_cache(const std::string &key) override {
-    cached_key_ = key;
-  }
+//   void set_kernel_key_for_cache(const std::string &key) override {
+//     cached_key_ = key;
+//   }
 
- private:
-  bool ir_is_ast_;
-  std::string cached_key_;
-};
+//  private:
+//   bool ir_is_ast_;
+//   std::string cached_key_;
+// };
 
 class KernelCompilationManagerTest : public ::testing::Test {
  protected:
@@ -123,7 +125,8 @@ class KernelCompilationManagerTest : public ::testing::Test {
 TEST_F(KernelCompilationManagerTest, DumpNewKernel) {
   compile_config_.offline_cache = true;
   Program prog(Arch::x64);
-  FakeKernel kernel(&prog, "test_kernel", true);
+//   Kernel kernel(&prog, "test_kernel", true);
+  Kernel kernel(prog, [] {}, "test_kernel", AutodiffMode::kNone);
 
   auto ckd = std::make_unique<FakeCompiledKernelData>("test_compiled_data");
   CompiledKernelData &ckd_ref = *ckd;
@@ -143,7 +146,7 @@ TEST_F(KernelCompilationManagerTest, DumpNewKernel) {
 TEST_F(KernelCompilationManagerTest, DumpExistingKernelPreservesData) {
   compile_config_.offline_cache = true;
   Program prog(Arch::x64);
-  FakeKernel kernel(&prog, "test_kernel", true);
+  Kernel kernel(prog, [] {}, "test_kernel", AutodiffMode::kNone);
 
   std::string checksum = "existing_kernel_key_456";
 
@@ -187,7 +190,7 @@ TEST_F(KernelCompilationManagerTest, DumpMemCacheOnlyKernel) {
   // Test that MemCache-only kernels are not written to disk
   compile_config_.offline_cache = false;  // Disable offline cache
   Program prog(Arch::x64);
-  FakeKernel kernel(&prog, "mem_only_kernel", true);
+  Kernel kernel(prog, [] {}, "mem_only_kernel", AutodiffMode::kNone);
 
   auto ckd = std::make_unique<FakeCompiledKernelData>("mem_data");
   CompiledKernelData &ckd_ref = *ckd;
@@ -207,8 +210,8 @@ TEST_F(KernelCompilationManagerTest, DumpMemCacheOnlyKernel) {
 TEST_F(KernelCompilationManagerTest, DumpMultipleKernels) {
   compile_config_.offline_cache = true;
   Program prog(Arch::x64);
-  FakeKernel kernel1(&prog, "kernel1", true);
-  FakeKernel kernel2(&prog, "kernel2", true);
+  Kernel kernel1(prog, [] {}, "kernel1", AutodiffMode::kNone);
+  Kernel kernel2(prog, [] {}, "kernel2", AutodiffMode::kNone);
 
   auto ckd1 = std::make_unique<FakeCompiledKernelData>("data1");
   auto ckd2 = std::make_unique<FakeCompiledKernelData>("data2");
