@@ -72,30 +72,6 @@ class FakeKernelCompiler : public KernelCompiler {
   }
 };
 
-// class FakeKernel : public Kernel {
-//  public:
-//   FakeKernel(Program *prog, const std::string &name, bool ir_is_ast = true)
-//       : Kernel(*prog, nullptr, name, AutodiffMode::kNone),
-//         ir_is_ast_(ir_is_ast) {
-//   }
-
-//   bool ir_is_ast() const override {
-//     return ir_is_ast_;
-//   }
-
-//   std::string get_cached_kernel_key() const override {
-//     return cached_key_;
-//   }
-
-//   void set_kernel_key_for_cache(const std::string &key) override {
-//     cached_key_ = key;
-//   }
-
-//  private:
-//   bool ir_is_ast_;
-//   std::string cached_key_;
-// };
-
 class KernelCompilationManagerTest : public ::testing::Test {
  protected:
   void SetUp() override {
@@ -125,7 +101,6 @@ class KernelCompilationManagerTest : public ::testing::Test {
 TEST_F(KernelCompilationManagerTest, DumpNewKernel) {
   compile_config_.offline_cache = true;
   Program prog(Arch::x64);
-//   Kernel kernel(&prog, "test_kernel", true);
   Kernel kernel(prog, [] {}, "test_kernel", AutodiffMode::kNone);
 
   auto ckd = std::make_unique<FakeCompiledKernelData>("test_compiled_data");
@@ -225,7 +200,6 @@ TEST_F(KernelCompilationManagerTest, DumpMultipleKernels) {
 
   mgr_->dump();
 
-  // Verify both kernels were written
   auto cache_file1 = temp_dir_ / "kernel_compilation_manager" / "key1.tic";
   auto cache_file2 = temp_dir_ / "kernel_compilation_manager" / "key2.tic";
   EXPECT_TRUE(std::filesystem::exists(cache_file1));
