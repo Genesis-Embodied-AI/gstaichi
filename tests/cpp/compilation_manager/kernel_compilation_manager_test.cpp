@@ -126,16 +126,23 @@ TEST_F(KernelCompilationManagerTest, DumpExistingKernelPreservesData) {
   std::string checksum = "existing_kernel_key_456";
 
   // First, create and dump a kernel to establish existing metadata
+  size_t old_file_size = 0;
   {
-    auto ckd1 = std::make_unique<FakeCompiledKernelData>("old_data");
+    auto ckd1 = std::make_unique<FakeCompiledKernelData>("old_data_short");
     CompiledKernelData &ckd_ref1 = *ckd1;
     mgr_->store_fast_cache(checksum, kernel, compile_config_, device_caps_,
                            ckd_ref1);
     mgr_->dump();
+
+    auto cache_file = temp_dir_ / "kernel_compilation_manager" /
+    (checksum + ".tic");
+    if (std::filesystem::exists(cache_file)) {
+      old_file_size = std::filesystem::file_size(cache_file);
+    }
   }
 
   // Now store a new version with different data
-  auto ckd2 = std::make_unique<FakeCompiledKernelData>("new_data");
+  auto ckd2 = std::make_unique<FakeCompiledKernelData>("new_data_much_longer_than_old");
   CompiledKernelData &ckd_ref2 = *ckd2;
   mgr_->store_fast_cache(checksum, kernel, compile_config_, device_caps_,
                          ckd_ref2);
@@ -145,6 +152,13 @@ TEST_F(KernelCompilationManagerTest, DumpExistingKernelPreservesData) {
   auto cache_file = temp_dir_ / "kernel_compilation_manager" /
                     (checksum + ".tic");
   EXPECT_TRUE(std::filesystem::exists(cache_file));
+
+  // Verify the file size matches what we expect
+  std::ostringstream oss;
+  auto err = ckd2->dump(oss);
+  ASSERT_EQ(err, CompiledKernelData::Err::kNoError);
+  size_t expected_size = oss.tellp();
+  EXPECT_EQ(new_file_size, expected_size);
 
   // Load and verify the data
   std::ifstream ifs(cache_file.string(), std::ios::binary);
@@ -158,7 +172,7 @@ TEST_F(KernelCompilationManagerTest, DumpExistingKernelPreservesData) {
   auto fake_loaded = dynamic_cast<FakeCompiledKernelData *>(loaded_ckd.get());
   ASSERT_NE(fake_loaded, nullptr);
   // The data should be "new_data", not "old_data"
-  EXPECT_EQ(fake_loaded->get_data(), "new_data");
+  EXPECT_EQ(fake_loaded->get_data(), "new_data_much_longer_than_old");
 }
 
 TEST_F(KernelCompilationManagerTest, DumpMemCacheOnlyKernel) {
