@@ -268,27 +268,6 @@ const CompiledKernelData &KernelCompilationManager::compile_and_cache_kernel(
   return *kernel_data.compiled_kernel_data;
 }
 
-void KernelCompilationManager::store_fast_cache(
-    const std::string &checksum,
-    const Kernel &kernel,
-    const CompileConfig &compile_config,
-    const DeviceCapabilityConfig &caps,
-    CompiledKernelData &ckd) {
-  auto cache_mode = get_cache_mode(compile_config, kernel.ir_is_ast());
-  TI_INFO_IF(cache_mode == CacheData::MemAndDiskCache,
-             "store_fast_cache Cache kernel '{}' (key='{}')", kernel.get_name(),
-             checksum);
-  TI_INFO("Store fast cache for kernel '{}' (key='{}')", kernel.get_name(),
-          checksum);
-  KernelCacheData k;
-  k.metadata.kernel_key = checksum;
-  k.metadata.created_at = k.metadata.last_used_at = std::time(nullptr);
-  k.compiled_kernel_data = ckd.clone();
-  k.metadata.size = 0;
-  k.metadata.cache_mode = cache_mode;
-  caching_kernels_[checksum] = std::move(k);
-}
-
 const CompiledKernelData *KernelCompilationManager::load_fast_cache(
     const std::string &checksum,
     const std::string &kernel_name,

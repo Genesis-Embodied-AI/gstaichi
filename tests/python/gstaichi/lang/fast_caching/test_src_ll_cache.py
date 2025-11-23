@@ -3,7 +3,6 @@ import os
 import pathlib
 import subprocess
 import sys
-import tempfile
 
 import pydantic
 import pytest
@@ -135,8 +134,6 @@ def f1(a: ti.types.NDArray[ti.i32, 1]) -> None:
 def k1(a: ti.NDArray[ti.i32, 1]) -> None:
     f1(a)
 """
-
-
 
 
 @test_utils.test()

@@ -22,8 +22,7 @@ static constexpr Arch kFakeArch = (Arch)1024;
 
 class FakeCompiledKernelData : public CompiledKernelData {
  public:
-  FakeCompiledKernelData(const std::string &data = "test_data")
-      : data_(data) {
+  FakeCompiledKernelData(const std::string &data = "test_data") : data_(data) {
   }
 
   Arch arch() const override {
@@ -110,11 +109,10 @@ TEST_F(KernelCompilationManagerTest, DumpNewKernel) {
   mgr_->store_fast_cache(checksum, kernel, compile_config_, device_caps_,
                          ckd_ref);
   mgr_->dump();
-  auto cache_file = temp_dir_ / "kernel_compilation_manager" /
-                    (checksum + ".tic");
+  auto cache_file =
+      temp_dir_ / "kernel_compilation_manager" / (checksum + ".tic");
   EXPECT_TRUE(std::filesystem::exists(cache_file));
-  auto metadata_file = temp_dir_ / "kernel_compilation_manager" /
-                       "ticache.tcb";
+  auto metadata_file = temp_dir_ / "kernel_compilation_manager" / "ticache.tcb";
   EXPECT_TRUE(std::filesystem::exists(metadata_file));
 }
 
@@ -134,23 +132,24 @@ TEST_F(KernelCompilationManagerTest, DumpExistingKernelPreservesData) {
                            ckd_ref1);
     mgr_->dump();
 
-    auto cache_file = temp_dir_ / "kernel_compilation_manager" /
-    (checksum + ".tic");
+    auto cache_file =
+        temp_dir_ / "kernel_compilation_manager" / (checksum + ".tic");
     if (std::filesystem::exists(cache_file)) {
       old_file_size = std::filesystem::file_size(cache_file);
     }
   }
 
   // Now store a new version with different data
-  auto ckd2 = std::make_unique<FakeCompiledKernelData>("new_data_much_longer_than_old");
+  auto ckd2 =
+      std::make_unique<FakeCompiledKernelData>("new_data_much_longer_than_old");
   CompiledKernelData &ckd_ref2 = *ckd2;
   mgr_->store_fast_cache(checksum, kernel, compile_config_, device_caps_,
                          ckd_ref2);
   mgr_->dump();
 
   // Verify the new data was written
-  auto cache_file = temp_dir_ / "kernel_compilation_manager" /
-                    (checksum + ".tic");
+  auto cache_file =
+      temp_dir_ / "kernel_compilation_manager" / (checksum + ".tic");
   EXPECT_TRUE(std::filesystem::exists(cache_file));
 
   // Verify the file size matches what we expect
@@ -191,8 +190,8 @@ TEST_F(KernelCompilationManagerTest, DumpMemCacheOnlyKernel) {
   mgr_->dump();
 
   // Verify the kernel data was NOT written to disk
-  auto cache_file = temp_dir_ / "kernel_compilation_manager" /
-                    (checksum + ".tic");
+  auto cache_file =
+      temp_dir_ / "kernel_compilation_manager" / (checksum + ".tic");
   EXPECT_FALSE(std::filesystem::exists(cache_file));
 }
 

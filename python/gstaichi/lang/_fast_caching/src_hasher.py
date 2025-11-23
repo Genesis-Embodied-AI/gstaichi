@@ -50,7 +50,10 @@ class CacheValue(BaseModel):
 
 
 def store(
-    frontend_cache_key: str, fast_cache_key: str, function_source_infos: Iterable[FunctionSourceInfo], used_py_dataclass_leaves: set[str]
+    frontend_cache_key: str,
+    fast_cache_key: str,
+    function_source_infos: Iterable[FunctionSourceInfo],
+    used_py_dataclass_leaves: set[str],
 ) -> None:
     """
     Note that unlike other caches, this cache is not going to store the actual value we want.
