@@ -70,7 +70,7 @@ def store(
 
     Update 2: we are going to store the cache key used by the c++ kernel cache, so that we can use that
     to retrieve the immutable cached c++ kernel later, rather than, before, we were storing the c++
-    cached kernel using the fast cache key, leading to bugs, which cached kernel file then had to be mutable.
+    cached kernel using the fast cache key, leading to bugs, when cached kernel file then had to be mutable.
     """
     if not fast_cache_key:
         return
