@@ -148,7 +148,7 @@ void KernelCompilationManager::dump() {
                   << (k.compiled_kernel_data ? "present" : "absent")
                   << std::endl;
       }
-      TI_ASSERT(!ok || iter->second.metadata.size == 0);
+      TI_ASSERT(ok);
     }
   }
   // Clear caching_kernels_
