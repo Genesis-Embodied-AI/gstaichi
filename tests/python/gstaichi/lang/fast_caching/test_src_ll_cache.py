@@ -126,6 +126,7 @@ def test_src_ll_cache_arg_warnings(tmp_path: pathlib.Path, capfd) -> None:
 
     class RandomClass:
         pass
+
     @ti.pure
     @ti.kernel
     def k1(foo: ti.Template) -> None:
