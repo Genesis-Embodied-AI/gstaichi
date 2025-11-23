@@ -280,16 +280,13 @@ const CompiledKernelData &KernelCompilationManager::compile_and_cache_kernel(
   }
   std::unique_ptr<CompiledKernelData> compiled_kernel_data = compile_kernel(compile_config, caps, kernel_def);
   CompiledKernelData &res = cache_kernel(kernel_key, compile_config, std::move(compiled_kernel_data), kernel_def);
-  std::cout << "cache kernel 6 " << kernel_key << std::endl;
   return res;
-  // return compiled_kernel_data;
 }
 
 CompiledKernelData &KernelCompilationManager::cache_kernel(const std::string &kernel_key,
                                                           const CompileConfig &compile_config,
                                                           std::unique_ptr<CompiledKernelData> compiled_kernel_data,
                                                         const Kernel &kernel_def) {
-  std::cout << "cache kernel " << kernel_key << std::endl;
   auto cache_mode = get_cache_mode(compile_config, kernel_def.ir_is_ast());
   TI_DEBUG_IF(cache_mode == CacheData::MemAndDiskCache,
               "Cache kernel '{}' (key='{}')", kernel_def.get_name(),
@@ -301,12 +298,7 @@ CompiledKernelData &KernelCompilationManager::cache_kernel(const std::string &ke
   // Populate `size` within the KernelCompilationManager::dump()
   k.metadata.size = 0;
   k.metadata.cache_mode = cache_mode;
-  std::cout << "cache kernel 2 " << kernel_key << std::endl;
-  std::cout << "cache kernel 3 " << kernel_key << std::endl;
   k.compiled_kernel_data = std::move(compiled_kernel_data);
-  std::cout << "cache kernel 4 " << kernel_key << std::endl;
-  // CompiledKernelData &res = *k.compiled_kernel_data;
-  std::cout << "cache kernel 5 " << kernel_key << std::endl;
   const auto &kernel_data = (caching_kernels_[kernel_key] = std::move(k));
   return *kernel_data.compiled_kernel_data;
 }
