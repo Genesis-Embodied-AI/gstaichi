@@ -120,7 +120,8 @@ def test_src_ll_cache_with_corruption(tmp_path: pathlib.Path) -> None:
 
 
 # Should be enough to run these on cpu I think, and anything involving
-# stdout/stderr capture is fairly flaky on other arch@test_utils.test(arch=ti.cpu)
+# stdout/stderr capture is fairly flaky on other arch
+@test_utils.test(arch=ti.cpu)
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="Windows stderr not working with capfd")
 def test_src_ll_cache_arg_warnings(tmp_path: pathlib.Path, capfd) -> None:
     ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
