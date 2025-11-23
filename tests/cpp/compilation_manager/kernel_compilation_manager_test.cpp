@@ -114,28 +114,19 @@ TEST_F(KernelCompilationManagerTest, DumpNewKernel) {
   EXPECT_TRUE(std::filesystem::exists(metadata_file));
 }
 
-TEST_F(KernelCompilationManagerTest, DumpExistingKernelThrowsException) {
+TEST_F(KernelCompilationManagerTest, CacheExistingKernelThrowsException) {
   compile_config_.offline_cache = true;
   Program prog(Arch::x64);
   Kernel kernel(prog, [] {}, "test_kernel", AutodiffMode::kNone);
 
   std::string checksum = "existing_kernel_key_456";
-
-  // First, create and dump a kernel to establish existing metadata
   {
-    auto ckd1 = std::make_unique<FakeCompiledKernelData>("old_data_short");
+    auto ckd1 = std::make_unique<FakeCompiledKernelData>("old_data");
     mgr_->cache_kernel(checksum, compile_config_, std::move(ckd1), kernel);
-    mgr_->dump();
-
-    auto cache_file =
-        temp_dir_ / "kernel_compilation_manager" / (checksum + ".tic");
   }
-
-  // Now try to cache the same kernel again - this should trigger an assertion
-  // because cache_kernel asserts that the kernel_key doesn't already exist
   auto ckd2 =
-      std::make_unique<FakeCompiledKernelData>("new_data_much_longer_than_old");
-  ASSERT_DEATH(mgr_->cache_kernel(checksum, compile_config_, std::move(ckd2), kernel), ".*");
+      std::make_unique<FakeCompiledKernelData>("new_data");
+    EXPECT_ANY_THROW(mgr_->cache_kernel(checksum, compile_config_, std::move(ckd2), kernel));
 }
 
 TEST_F(KernelCompilationManagerTest, DumpMemCacheOnlyKernel) {
