@@ -278,15 +278,18 @@ const CompiledKernelData &KernelCompilationManager::compile_and_cache_kernel(
   if (get_environ_config("TI_SHOW_COMPILING")) {
     TI_INFO("Compiling kernel '{}'", kernel_def.get_name());
   }
-  std::unique_ptr<CompiledKernelData> compiled_kernel_data = compile_kernel(compile_config, caps, kernel_def);
-  CompiledKernelData &res = cache_kernel(kernel_key, compile_config, std::move(compiled_kernel_data), kernel_def);
+  std::unique_ptr<CompiledKernelData> compiled_kernel_data =
+      compile_kernel(compile_config, caps, kernel_def);
+  CompiledKernelData &res = cache_kernel(
+      kernel_key, compile_config, std::move(compiled_kernel_data), kernel_def);
   return res;
 }
 
-CompiledKernelData &KernelCompilationManager::cache_kernel(const std::string &kernel_key,
-                                                          const CompileConfig &compile_config,
-                                                          std::unique_ptr<CompiledKernelData> compiled_kernel_data,
-                                                        const Kernel &kernel_def) {
+CompiledKernelData &KernelCompilationManager::cache_kernel(
+    const std::string &kernel_key,
+    const CompileConfig &compile_config,
+    std::unique_ptr<CompiledKernelData> compiled_kernel_data,
+    const Kernel &kernel_def) {
   auto cache_mode = get_cache_mode(compile_config, kernel_def.ir_is_ast());
   TI_DEBUG_IF(cache_mode == CacheData::MemAndDiskCache,
               "Cache kernel '{}' (key='{}')", kernel_def.get_name(),

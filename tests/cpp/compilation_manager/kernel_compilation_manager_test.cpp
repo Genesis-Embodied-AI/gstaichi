@@ -124,9 +124,9 @@ TEST_F(KernelCompilationManagerTest, CacheExistingKernelThrowsException) {
     auto ckd1 = std::make_unique<FakeCompiledKernelData>("old_data");
     mgr_->cache_kernel(checksum, compile_config_, std::move(ckd1), kernel);
   }
-  auto ckd2 =
-      std::make_unique<FakeCompiledKernelData>("new_data");
-    EXPECT_ANY_THROW(mgr_->cache_kernel(checksum, compile_config_, std::move(ckd2), kernel));
+  auto ckd2 = std::make_unique<FakeCompiledKernelData>("new_data");
+  EXPECT_ANY_THROW(
+      mgr_->cache_kernel(checksum, compile_config_, std::move(ckd2), kernel));
 }
 
 TEST_F(KernelCompilationManagerTest, DumpMemCacheOnlyKernel) {
