@@ -114,11 +114,11 @@ class TI_DLL_EXPORT Program {
 
   void dump_cache_data_to_disk();
 
-  void store_fast_cache(const std::string &checksum,
-                        const Kernel &kernel,
-                        const CompileConfig &compile_config,
-                        const DeviceCapabilityConfig &device_caps,
-                        CompiledKernelData &compiled);
+  // void store_fast_cache(const std::string &checksum,
+  //                       const Kernel &kernel,
+  //                       const CompileConfig &compile_config,
+  //                       const DeviceCapabilityConfig &device_caps,
+  //                       CompiledKernelData &compiled);
 
   const CompiledKernelData *load_fast_cache(
       const std::string &checksum,

@@ -123,14 +123,16 @@ TypeFactory &Program::get_type_factory() {
   return TypeFactory::get_instance();
 }
 
-void Program::store_fast_cache(const std::string &checksum,
-                               const Kernel &kernel,
-                               const CompileConfig &compile_config,
-                               const DeviceCapabilityConfig &device_caps,
-                               CompiledKernelData &compiled) {
-  auto &mgr = program_impl_->get_kernel_compilation_manager();
-  mgr.store_fast_cache(checksum, kernel, compile_config, device_caps, compiled);
-}
+// void Program::store_fast_cache(const std::string &checksum,
+//                                const Kernel &kernel,
+//                                const CompileConfig &compile_config,
+//                                const DeviceCapabilityConfig &device_caps,
+//                                CompiledKernelData &compiled) {
+//   auto &mgr = program_impl_->get_kernel_compilation_manager();
+//   std::cout << "Program::store_fast_cache Storing fast cache for kernel " << kernel.get_name()
+//             << " with checksum " << checksum << std::endl;
+//   mgr.store_fast_cache(checksum, kernel, compile_config, device_caps, compiled);
+// }
 
 const CompiledKernelData *Program::load_fast_cache(
     const std::string &checksum,
