@@ -43,20 +43,20 @@ class PythonSideCache:
         with open(filepath, "a"):
             os.utime(filepath, None)
 
-    def store(self, key: str, value: str) -> None:
-        filepath = self._get_filepath(key)
+    def store(self, fast_cache_key: str, value: str) -> None:
+        filepath = self._get_filepath(fast_cache_key)
         tmp_path = None
 
         target_dir = os.path.dirname(filepath)
-        fd, tmp_path = tempfile.mkstemp(dir=target_dir, prefix=f"{key}.", suffix=".tmp")
+        fd, tmp_path = tempfile.mkstemp(dir=target_dir, prefix=f"{fast_cache_key}.", suffix=".tmp")
         with os.fdopen(fd, "w") as f:
             f.write(value)
             f.flush()
             os.fsync(f.fileno())
         os.replace(tmp_path, filepath)
 
-    def try_load(self, key: str) -> str | None:
-        filepath = self._get_filepath(key)
+    def try_load(self, fast_cache_key: str) -> str | None:
+        filepath = self._get_filepath(fast_cache_key)
         if not os.path.isfile(filepath):
             return None
         try:

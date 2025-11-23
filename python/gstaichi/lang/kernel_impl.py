@@ -1377,16 +1377,10 @@ class Kernel:
                 if self.fast_checksum:
                     assert self.currently_compiling_materialize_key is not None
                     src_hasher.store(
+                        compile_result.cache_key,
                         self.fast_checksum,
                         self.visited_functions,
                         self.used_py_dataclass_leaves_by_key_enforcing[self.currently_compiling_materialize_key],
-                    )
-                    prog.store_fast_cache(
-                        self.fast_checksum,
-                        self.kernel_cpp,
-                        prog_config,
-                        prog_device_cap,
-                        compiled_kernel_data,
                     )
                     self.src_ll_cache_observations.cache_stored = True
             self._last_compiled_kernel_data = compiled_kernel_data
