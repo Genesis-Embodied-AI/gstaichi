@@ -488,6 +488,7 @@ def f1(a: ti.types.NDArray[ti.i32, 1]) -> None:
             module_file_path=str(module_file_path),
             module_name="foo",
             expected_val=val,
+            expect_loaded_from_fastcache=expect_loaded_from_fastcache,
         )
         args_json = HasReturnKernelArgs.model_dump_json(args_obj)
         cmd_line = [sys.executable, __file__, src_ll_cache_modify_sub_func_child.__name__, args_json]
