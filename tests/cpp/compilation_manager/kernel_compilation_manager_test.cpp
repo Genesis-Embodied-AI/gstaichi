@@ -103,11 +103,9 @@ TEST_F(KernelCompilationManagerTest, DumpNewKernel) {
   Kernel kernel(prog, [] {}, "test_kernel", AutodiffMode::kNone);
 
   auto ckd = std::make_unique<FakeCompiledKernelData>("test_compiled_data");
-  CompiledKernelData &ckd_ref = *ckd;
 
   std::string checksum = "test_kernel_key_123";
-  mgr_->store_fast_cache(checksum, kernel, compile_config_, device_caps_,
-                         ckd_ref);
+  mgr_->cache_kernel(checksum, compile_config_, std::move(ckd), kernel);
   mgr_->dump();
   auto cache_file =
       temp_dir_ / "kernel_compilation_manager" / (checksum + ".tic");
@@ -116,7 +114,7 @@ TEST_F(KernelCompilationManagerTest, DumpNewKernel) {
   EXPECT_TRUE(std::filesystem::exists(metadata_file));
 }
 
-TEST_F(KernelCompilationManagerTest, DumpExistingKernelPreservesData) {
+TEST_F(KernelCompilationManagerTest, DumpExistingKernelThrowsException) {
   compile_config_.offline_cache = true;
   Program prog(Arch::x64);
   Kernel kernel(prog, [] {}, "test_kernel", AutodiffMode::kNone);
@@ -124,54 +122,20 @@ TEST_F(KernelCompilationManagerTest, DumpExistingKernelPreservesData) {
   std::string checksum = "existing_kernel_key_456";
 
   // First, create and dump a kernel to establish existing metadata
-  size_t old_file_size = 0;
   {
     auto ckd1 = std::make_unique<FakeCompiledKernelData>("old_data_short");
-    CompiledKernelData &ckd_ref1 = *ckd1;
-    mgr_->store_fast_cache(checksum, kernel, compile_config_, device_caps_,
-                           ckd_ref1);
+    mgr_->cache_kernel(checksum, compile_config_, std::move(ckd1), kernel);
     mgr_->dump();
 
     auto cache_file =
         temp_dir_ / "kernel_compilation_manager" / (checksum + ".tic");
-    if (std::filesystem::exists(cache_file)) {
-      old_file_size = std::filesystem::file_size(cache_file);
-    }
   }
 
-  // Now store a new version with different data
+  // Now try to cache the same kernel again - this should trigger an assertion
+  // because cache_kernel asserts that the kernel_key doesn't already exist
   auto ckd2 =
       std::make_unique<FakeCompiledKernelData>("new_data_much_longer_than_old");
-  CompiledKernelData &ckd_ref2 = *ckd2;
-  mgr_->store_fast_cache(checksum, kernel, compile_config_, device_caps_,
-                         ckd_ref2);
-  mgr_->dump();
-
-  // Verify the new data was written
-  auto cache_file =
-      temp_dir_ / "kernel_compilation_manager" / (checksum + ".tic");
-  EXPECT_TRUE(std::filesystem::exists(cache_file));
-
-  // Verify the file size matches what we expect
-  std::ostringstream oss;
-  auto err = ckd2->dump(oss);
-  ASSERT_EQ(err, CompiledKernelData::Err::kNoError);
-  size_t expected_size = oss.tellp();
-  EXPECT_EQ(new_file_size, expected_size);
-
-  // Load and verify the data
-  std::ifstream ifs(cache_file.string(), std::ios::binary);
-  ASSERT_TRUE(ifs.is_open());
-
-  auto loaded_ckd = CompiledKernelData::load(ifs, nullptr);
-  ASSERT_NE(loaded_ckd, nullptr);
-  EXPECT_EQ(loaded_ckd->arch(), kFakeArch);
-
-  // Verify we can load it back
-  auto fake_loaded = dynamic_cast<FakeCompiledKernelData *>(loaded_ckd.get());
-  ASSERT_NE(fake_loaded, nullptr);
-  // The data should be "new_data", not "old_data"
-  EXPECT_EQ(fake_loaded->get_data(), "new_data_much_longer_than_old");
+  ASSERT_DEATH(mgr_->cache_kernel(checksum, compile_config_, std::move(ckd2), kernel), ".*");
 }
 
 TEST_F(KernelCompilationManagerTest, DumpMemCacheOnlyKernel) {
@@ -181,11 +145,9 @@ TEST_F(KernelCompilationManagerTest, DumpMemCacheOnlyKernel) {
   Kernel kernel(prog, [] {}, "mem_only_kernel", AutodiffMode::kNone);
 
   auto ckd = std::make_unique<FakeCompiledKernelData>("mem_data");
-  CompiledKernelData &ckd_ref = *ckd;
 
   std::string checksum = "mem_cache_key";
-  mgr_->store_fast_cache(checksum, kernel, compile_config_, device_caps_,
-                         ckd_ref);
+  mgr_->cache_kernel(checksum, compile_config_, std::move(ckd), kernel);
 
   mgr_->dump();
 
@@ -203,13 +165,9 @@ TEST_F(KernelCompilationManagerTest, DumpMultipleKernels) {
 
   auto ckd1 = std::make_unique<FakeCompiledKernelData>("data1");
   auto ckd2 = std::make_unique<FakeCompiledKernelData>("data2");
-  CompiledKernelData &ckd_ref1 = *ckd1;
-  CompiledKernelData &ckd_ref2 = *ckd2;
 
-  mgr_->store_fast_cache("key1", kernel1, compile_config_, device_caps_,
-                         ckd_ref1);
-  mgr_->store_fast_cache("key2", kernel2, compile_config_, device_caps_,
-                         ckd_ref2);
+  mgr_->cache_kernel("key1", compile_config_, std::move(ckd1), kernel1);
+  mgr_->cache_kernel("key2", compile_config_, std::move(ckd2), kernel2);
 
   mgr_->dump();
 
