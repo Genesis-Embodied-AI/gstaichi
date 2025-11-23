@@ -124,16 +124,29 @@ def test_src_ll_cache_with_corruption(tmp_path: pathlib.Path) -> None:
 def test_src_ll_cache_arg_warnings(tmp_path: pathlib.Path, capfd) -> None:
     ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
 
-    kernels_src = """
-@ti.func
-def f1(a: ti.types.NDArray[ti.i32, 1]) -> None:
-    a[0] = {val}
+    class RandomClass:
+        pass
+    @ti.pure
+    @ti.kernel
+    def k1(foo: ti.Template) -> None:
+        pass
+    k1(foo=RandomClass())
+    _out, err = capfd.readouterr()
+    assert "[FASTCACHE][PARAM_INVALID]" in err
+    assert RandomClass.__name__ in err
+    assert "[FASTCACHE][INVALID_FUNC]" in err
+    assert k1.__name__ in err
 
+    @ti.kernel
+    def not_pure_k1(foo: ti.Template) -> None:
+        pass
 
-@ti.kernel(fastcache=True)
-def k1(a: ti.NDArray[ti.i32, 1]) -> None:
-    f1(a)
-"""
+    not_pure_k1(foo=RandomClass())
+    _out, err = capfd.readouterr()
+    assert "[FASTCACHE][PARAM_INVALID]" not in err
+    assert RandomClass.__name__ not in err
+    assert "[FASTCACHE][INVALID_FUNC]" not in err
+    assert k1.__name__ not in err
 
 
 @test_utils.test()
