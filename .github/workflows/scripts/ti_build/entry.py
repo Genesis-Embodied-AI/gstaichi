@@ -31,7 +31,7 @@ def build_wheel(python: Command, pip: Command) -> None:
         case ("Linux", "x86_64"):
             extra.extend(["-p", "manylinux_2_27_x86_64"])
         case ("Linux", "arm64") | ("Linux", "aarch64"):
-            extra.extend(["-p", "manylinux_2_27_aarch64"])
+            extra.extend(["-p", "manylinux_2_35_aarch64"])
         case ("Darwin", _):
             extra.extend(["-p", "macosx-11.0-arm64"])
 
