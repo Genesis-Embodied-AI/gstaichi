@@ -419,6 +419,7 @@ class ModifySubFuncKernelArgs(pydantic.BaseModel):
     module_file_path: str
     module_name: str
     expected_val: int
+    expect_loaded_from_fastcache: bool
 
 
 def src_ll_cache_modify_sub_func_child(args: list[str]) -> None:
@@ -436,6 +437,7 @@ def src_ll_cache_modify_sub_func_child(args: list[str]) -> None:
     a = ti.ndarray(ti.i32, (10,))
     mod.k1(a)
     assert a[0] == args_obj.expected_val
+    assert mod.k1._primal.src_ll_cache_observations.cache_loaded == args_obj.expect_loaded_from_fastcache
 
     print(TEST_RAN)
     sys.exit(RET_SUCCESS)
@@ -479,7 +481,7 @@ def f1(a: ti.types.NDArray[ti.i32, 1]) -> None:
     #   - the python validation passes (since we didnt change the underlying kernel in any way, sicne last time)
     #   - however, the c++ saved kernel, in the cache, still contains the 123 kernel
     #   - => so the assert fails, demonstrating the bug
-    for val in [123, 222, 222]:
+    for val, expect_loaded_from_fastcache in [(123, False), (222, False), (222, True)]:
         rendered_kernels = kernels_src.format(val=val)
         file_path.write_text(rendered_kernels)
         args_obj = ModifySubFuncKernelArgs(
@@ -503,7 +505,6 @@ def f1(a: ti.types.NDArray[ti.i32, 1]) -> None:
             print(proc.stdout)  # needs to do this to see error messages
             print("-" * 100)
             print(proc.stderr)
-
         assert TEST_RAN in proc.stdout
         assert proc.returncode == RET_SUCCESS
 

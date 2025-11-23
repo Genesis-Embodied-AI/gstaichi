@@ -1082,6 +1082,7 @@ class Kernel:
             return
 
         used_py_dataclass_parameters: set[str] | None = None
+        frontend_cache_key: str | None = None
 
         if self.runtime.src_ll_cache and self.gstaichi_callable and self.gstaichi_callable.is_pure:
             kernel_source_info, _src = get_source_info_and_src(self.func)
@@ -1090,13 +1091,13 @@ class Kernel:
             )
             if self.fast_checksum:
                 self.src_ll_cache_observations.cache_key_generated = True
-                used_py_dataclass_parameters = src_hasher.load(self.fast_checksum)
-            if used_py_dataclass_parameters is not None:
+                used_py_dataclass_parameters, frontend_cache_key = src_hasher.load(self.fast_checksum)
+            if used_py_dataclass_parameters is not None and frontend_cache_key is not None:
                 self.src_ll_cache_observations.cache_validated = True
                 prog = impl.get_runtime().prog
                 assert self.fast_checksum is not None
                 self.compiled_kernel_data_by_key[key] = prog.load_fast_cache(
-                    self.fast_checksum,
+                    frontend_cache_key,
                     self.func.__name__,
                     prog.config(),
                     prog.get_device_caps(),
