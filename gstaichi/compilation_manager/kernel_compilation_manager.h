@@ -108,6 +108,11 @@ class KernelCompilationManager final {
       const DeviceCapabilityConfig &caps,
       const Kernel &kernel_def);
 
+  CompiledKernelData &cache_kernel(const std::string &kernel_key,
+                                                          const CompileConfig &compile_config,
+                                                          std::unique_ptr<CompiledKernelData> compiled_kernel_data,
+                                                        const Kernel &kernel_def);
+
   std::unique_ptr<CompiledKernelData> load_ckd(const std::string &kernel_key,
                                                Arch arch);
 

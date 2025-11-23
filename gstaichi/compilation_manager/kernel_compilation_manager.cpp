@@ -90,6 +90,8 @@ CompileResult KernelCompilationManager::load_or_compile(
 }
 
 void KernelCompilationManager::dump() {
+  std::cout << "KernelCompilationManager::dump Dumping cached kernels to disk"
+            << std::endl;
   if (caching_kernels_.empty()) {
     return;
   }
@@ -117,16 +119,35 @@ void KernelCompilationManager::dump() {
   offline_cache::load_metadata_with_checking(data, filepath);
   // Update the cached data
   for (const auto *e : updated_data_) {
+    std::cout << "Updating metadata for kernel " << e->metadata.kernel_key
+              << std::endl;
     auto iter = dataWrapperByCacheKey.find(e->metadata.kernel_key);
     if (iter != dataWrapperByCacheKey.end()) {
       iter->second.metadata.last_used_at = e->metadata.last_used_at;
     }
   }
+
+  for (auto &[_, k] : caching_kernels_) {
+    std::cout << " caching_kernels_ Cached kernel " << k.metadata.kernel_key
+              << " compiled Kernel data "
+              << (k.compiled_kernel_data ? "present" : "absent") << std::endl;
+  }
+
   // Add new data
   for (auto &[kernel_key, kernel] : caching_kernels_) {
+    std::cout << "Adding new cached kernel " << kernel_key
+              << " compiled kernel data? "
+              << (kernel.compiled_kernel_data ? "yes" : "no") << std::endl;
     if (kernel.metadata.cache_mode == CacheData::MemAndDiskCache) {
+      std::cout << " is mem and disk cache " << kernel_key << std::endl;
       auto [iter, ok] =
           dataWrapperByCacheKey.insert({kernel_key, std::move(kernel)});
+      for (auto &[_, k] : dataWrapperByCacheKey) {
+        std::cout << " Cached kernel " << k.metadata.kernel_key
+                  << " compiled Kernel data "
+                  << (k.compiled_kernel_data ? "present" : "absent")
+                  << std::endl;
+      }
       TI_ASSERT(!ok || iter->second.metadata.size == 0);
     }
   }
@@ -134,7 +155,12 @@ void KernelCompilationManager::dump() {
   caching_kernels_.clear();
   // Dump cached CompiledKernelData to disk
   for (auto &[_, k] : dataWrapperByCacheKey) {
+    std::cout << "Dumping cached kernel " << k.metadata.kernel_key
+              << " compiled Kernel data "
+              << (k.compiled_kernel_data ? "present" : "absent") << std::endl;
     if (k.compiled_kernel_data) {
+      std::cout << " to file " << make_filename(k.metadata.kernel_key)
+                << std::endl;
       auto cache_filename = make_filename(k.metadata.kernel_key);
       std::ofstream fs{cache_filename, std::ios::out | std::ios::binary};
       TI_ASSERT(fs.is_open());
@@ -143,6 +169,7 @@ void KernelCompilationManager::dump() {
         TI_ASSERT(!!fs);
         k.metadata.size = fs.tellp();
         data.size += k.metadata.size;
+        std::cout << " size " << k.metadata.size << std::endl;
       } else {
         TI_DEBUG("Dump cached CompiledKernelData(kernel_key={}) failed: {}",
                  k.metadata.kernel_key, CompiledKernelData::get_err_msg(err));
@@ -248,6 +275,21 @@ const CompiledKernelData &KernelCompilationManager::compile_and_cache_kernel(
     const CompileConfig &compile_config,
     const DeviceCapabilityConfig &caps,
     const Kernel &kernel_def) {
+  if (get_environ_config("TI_SHOW_COMPILING")) {
+    TI_INFO("Compiling kernel '{}'", kernel_def.get_name());
+  }
+  std::unique_ptr<CompiledKernelData> compiled_kernel_data = compile_kernel(compile_config, caps, kernel_def);
+  CompiledKernelData &res = cache_kernel(kernel_key, compile_config, std::move(compiled_kernel_data), kernel_def);
+  std::cout << "cache kernel 6 " << kernel_key << std::endl;
+  return res;
+  // return compiled_kernel_data;
+}
+
+CompiledKernelData &KernelCompilationManager::cache_kernel(const std::string &kernel_key,
+                                                          const CompileConfig &compile_config,
+                                                          std::unique_ptr<CompiledKernelData> compiled_kernel_data,
+                                                        const Kernel &kernel_def) {
+  std::cout << "cache kernel " << kernel_key << std::endl;
   auto cache_mode = get_cache_mode(compile_config, kernel_def.ir_is_ast());
   TI_DEBUG_IF(cache_mode == CacheData::MemAndDiskCache,
               "Cache kernel '{}' (key='{}')", kernel_def.get_name(),
@@ -256,14 +298,15 @@ const CompiledKernelData &KernelCompilationManager::compile_and_cache_kernel(
   KernelCacheData k;
   k.metadata.kernel_key = kernel_key;
   k.metadata.created_at = k.metadata.last_used_at = std::time(nullptr);
-
-  if (get_environ_config("TI_SHOW_COMPILING")) {
-    TI_INFO("Compiling kernel '{}'", kernel_def.get_name());
-  }
-  k.compiled_kernel_data = compile_kernel(compile_config, caps, kernel_def);
   // Populate `size` within the KernelCompilationManager::dump()
   k.metadata.size = 0;
   k.metadata.cache_mode = cache_mode;
+  std::cout << "cache kernel 2 " << kernel_key << std::endl;
+  std::cout << "cache kernel 3 " << kernel_key << std::endl;
+  k.compiled_kernel_data = std::move(compiled_kernel_data);
+  std::cout << "cache kernel 4 " << kernel_key << std::endl;
+  // CompiledKernelData &res = *k.compiled_kernel_data;
+  std::cout << "cache kernel 5 " << kernel_key << std::endl;
   const auto &kernel_data = (caching_kernels_[kernel_key] = std::move(k));
   return *kernel_data.compiled_kernel_data;
 }
