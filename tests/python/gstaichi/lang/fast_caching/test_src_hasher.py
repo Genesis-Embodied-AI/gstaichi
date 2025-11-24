@@ -116,28 +116,40 @@ def test_src_hasher_store_validate(monkeypatch: pytest.MonkeyPatch, tmp_path: pa
     mod = temporary_module("child_diff_test_src_hasher_store_validate")
     kernel_info = get_fileinfos([mod.f1.fn])[0]
     fileinfos = get_fileinfos([mod.f1.fn, mod.f2.fn])
-    cache_key = src_hasher.create_cache_key(False, kernel_info, [], [])
+    fast_cache_key = src_hasher.create_cache_key(False, kernel_info, [], [])
 
-    assert cache_key is not None
+    assert fast_cache_key is not None
 
-    assert not src_hasher.load(cache_key)
+    kernel_cache_key = "I'm a kernel cache key"
+
+    load_res = src_hasher.load(fast_cache_key)
+    assert load_res[0] is None and load_res[1] is None
 
     some_used_vars = {"fee", "fi", "fo"}
-    src_hasher.store(cache_key, fileinfos, some_used_vars)
-    assert src_hasher.load(cache_key)
+    src_hasher.store(kernel_cache_key, fast_cache_key, fileinfos, some_used_vars)
+
+    def assert_loaded(cache_key: str) -> None:
+        res = src_hasher.load(cache_key)
+        assert res[0] is not None and res[1] is not None
+
+    def assert_not_loaded(cache_key: str) -> None:
+        res = src_hasher.load(cache_key)
+        assert res[0] is None and res[1] is None
+
+    assert_loaded(fast_cache_key)
 
     setup_folder("child_diff_same.py")
-    assert src_hasher.load(cache_key)
+    assert_loaded(fast_cache_key)
 
     setup_folder("child_diff_diff.py")
-    assert not src_hasher.load(cache_key)
+    assert_not_loaded(fast_cache_key)
 
     setup_folder("child_diff_same.py")
-    assert src_hasher.load(cache_key)
+    assert_loaded(fast_cache_key)
 
-    assert not src_hasher.load("abcdefg")
+    assert_not_loaded("abcdefg")
 
-    assert src_hasher.load(cache_key) == some_used_vars
+    assert src_hasher.load(fast_cache_key)[0] == some_used_vars
 
 
 # Should be enough to run these on cpu I think, and anything involving

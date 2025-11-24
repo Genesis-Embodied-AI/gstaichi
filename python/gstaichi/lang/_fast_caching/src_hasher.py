@@ -44,12 +44,16 @@ def create_cache_key(
 
 
 class CacheValue(BaseModel):
+    frontend_cache_key: str
     hashed_function_source_infos: list[HashedFunctionSourceInfo]
     used_py_dataclass_leaves: set[str]
 
 
 def store(
-    cache_key: str, function_source_infos: Iterable[FunctionSourceInfo], used_py_dataclass_leaves: set[str]
+    frontend_cache_key: str,
+    fast_cache_key: str,
+    function_source_infos: Iterable[FunctionSourceInfo],
+    used_py_dataclass_leaves: set[str],
 ) -> None:
     """
     Note that unlike other caches, this cache is not going to store the actual value we want.
@@ -63,42 +67,48 @@ def store(
 
     Update! We are now going to store parameter pruning infomation, which is:
     - used_py_dataclass_leaves: set[str]
+
+    Update 2: we are going to store the cache key used by the c++ kernel cache, so that we can use that
+    to retrieve the immutable cached c++ kernel later, rather than, before, we were storing the c++
+    cached kernel using the fast cache key, leading to bugs, when cached kernel file then had to be mutable.
     """
-    if not cache_key:
+    if not fast_cache_key:
         return
+    assert frontend_cache_key is not None
     cache = PythonSideCache()
     hashed_function_source_infos = function_hasher.hash_functions(function_source_infos)
     cache_value_obj = CacheValue(
+        frontend_cache_key=frontend_cache_key,
         hashed_function_source_infos=list(hashed_function_source_infos),
         used_py_dataclass_leaves=used_py_dataclass_leaves,
     )
-    cache.store(cache_key, cache_value_obj.model_dump_json())
+    cache.store(fast_cache_key, cache_value_obj.model_dump_json())
 
 
-def _try_load(cache_key: str) -> tuple[Sequence[HashedFunctionSourceInfo], set[str]] | tuple[None, None]:
+def _try_load(cache_key: str) -> CacheValue | None:
     cache = PythonSideCache()
     maybe_cache_value_json = cache.try_load(cache_key)
     if maybe_cache_value_json is None:
-        return None, None
+        return None
     try:
         cache_value_obj = CacheValue.model_validate_json(maybe_cache_value_json)
     except (pydantic.ValidationError, json.JSONDecodeError, UnicodeDecodeError) as e:
         warnings.warn(f"Failed to parse cache file {e}")
-        return None, None
-    return cache_value_obj.hashed_function_source_infos, cache_value_obj.used_py_dataclass_leaves
+        return None
+    return cache_value_obj
 
 
-def load(cache_key: str) -> set[str] | None:
+def load(cache_key: str) -> tuple[set[str], str] | tuple[None, None]:
     """
     loads function source infos from cache, if available
     checks the hashes against the current source code
     """
-    maybe_hashed_function_source_infos, used_py_dataclass_leaves = _try_load(cache_key)
-    if maybe_hashed_function_source_infos is None or used_py_dataclass_leaves is None:
-        return None
-    if function_hasher.validate_hashed_function_infos(maybe_hashed_function_source_infos):
-        return used_py_dataclass_leaves
-    return None
+    cache_value = _try_load(cache_key)
+    if cache_value is None:
+        return None, None
+    if function_hasher.validate_hashed_function_infos(cache_value.hashed_function_source_infos):
+        return cache_value.used_py_dataclass_leaves, cache_value.frontend_cache_key
+    return None, None
 
 
 def dump_stats() -> None:

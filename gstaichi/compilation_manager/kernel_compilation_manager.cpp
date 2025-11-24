@@ -122,12 +122,13 @@ void KernelCompilationManager::dump() {
       iter->second.metadata.last_used_at = e->metadata.last_used_at;
     }
   }
+
   // Add new data
   for (auto &[kernel_key, kernel] : caching_kernels_) {
     if (kernel.metadata.cache_mode == CacheData::MemAndDiskCache) {
       auto [iter, ok] =
           dataWrapperByCacheKey.insert({kernel_key, std::move(kernel)});
-      TI_ASSERT(!ok || iter->second.metadata.size == 0);
+      TI_ASSERT(ok);
     }
   }
   // Clear caching_kernels_
@@ -248,6 +249,21 @@ const CompiledKernelData &KernelCompilationManager::compile_and_cache_kernel(
     const CompileConfig &compile_config,
     const DeviceCapabilityConfig &caps,
     const Kernel &kernel_def) {
+  if (get_environ_config("TI_SHOW_COMPILING")) {
+    TI_INFO("Compiling kernel '{}'", kernel_def.get_name());
+  }
+  std::unique_ptr<CompiledKernelData> compiled_kernel_data =
+      compile_kernel(compile_config, caps, kernel_def);
+  CompiledKernelData &res = cache_kernel(
+      kernel_key, compile_config, std::move(compiled_kernel_data), kernel_def);
+  return res;
+}
+
+CompiledKernelData &KernelCompilationManager::cache_kernel(
+    const std::string &kernel_key,
+    const CompileConfig &compile_config,
+    std::unique_ptr<CompiledKernelData> compiled_kernel_data,
+    const Kernel &kernel_def) {
   auto cache_mode = get_cache_mode(compile_config, kernel_def.ir_is_ast());
   TI_DEBUG_IF(cache_mode == CacheData::MemAndDiskCache,
               "Cache kernel '{}' (key='{}')", kernel_def.get_name(),
@@ -256,37 +272,12 @@ const CompiledKernelData &KernelCompilationManager::compile_and_cache_kernel(
   KernelCacheData k;
   k.metadata.kernel_key = kernel_key;
   k.metadata.created_at = k.metadata.last_used_at = std::time(nullptr);
-
-  if (get_environ_config("TI_SHOW_COMPILING")) {
-    TI_INFO("Compiling kernel '{}'", kernel_def.get_name());
-  }
-  k.compiled_kernel_data = compile_kernel(compile_config, caps, kernel_def);
   // Populate `size` within the KernelCompilationManager::dump()
   k.metadata.size = 0;
   k.metadata.cache_mode = cache_mode;
+  k.compiled_kernel_data = std::move(compiled_kernel_data);
   const auto &kernel_data = (caching_kernels_[kernel_key] = std::move(k));
   return *kernel_data.compiled_kernel_data;
-}
-
-void KernelCompilationManager::store_fast_cache(
-    const std::string &checksum,
-    const Kernel &kernel,
-    const CompileConfig &compile_config,
-    const DeviceCapabilityConfig &caps,
-    CompiledKernelData &ckd) {
-  auto cache_mode = get_cache_mode(compile_config, kernel.ir_is_ast());
-  TI_INFO_IF(cache_mode == CacheData::MemAndDiskCache,
-             "store_fast_cache Cache kernel '{}' (key='{}')", kernel.get_name(),
-             checksum);
-  TI_INFO("Store fast cache for kernel '{}' (key='{}')", kernel.get_name(),
-          checksum);
-  KernelCacheData k;
-  k.metadata.kernel_key = checksum;
-  k.metadata.created_at = k.metadata.last_used_at = std::time(nullptr);
-  k.compiled_kernel_data = ckd.clone();
-  k.metadata.size = 0;
-  k.metadata.cache_mode = cache_mode;
-  caching_kernels_[checksum] = std::move(k);
 }
 
 const CompiledKernelData *KernelCompilationManager::load_fast_cache(
