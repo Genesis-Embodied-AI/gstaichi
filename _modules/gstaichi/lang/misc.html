@@ -1176,6 +1176,24 @@
 
 
 
+<div class="viewcode-block" id="dump_compile_config">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/misc/index.html#gstaichi.lang.misc.dump_compile_config">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">dump_compile_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Dumps the compile config, which can be usful for example in diagnosing fastcache issues, since</span>
+<span class="sd">    the fastcache cache keys depend on the compile config.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span>
+    <span class="n">config_l</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">_k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">dir</span><span class="p">(</span><span class="n">config</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">_k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">_k</span><span class="p">)</span>
+        <span class="n">config_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_k</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config_l</span><span class="p">))</span></div>
+
+
+
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;i&quot;</span><span class="p">,</span>
     <span class="s2">&quot;ij&quot;</span><span class="p">,</span>
@@ -1207,6 +1225,7 @@
     <span class="s2">&quot;assume_in_range&quot;</span><span class="p">,</span>
     <span class="s2">&quot;block_local&quot;</span><span class="p">,</span>
     <span class="s2">&quot;cache_read_only&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;dump_compile_config&quot;</span><span class="p">,</span>
     <span class="s2">&quot;init&quot;</span><span class="p">,</span>
     <span class="s2">&quot;mesh_local&quot;</span><span class="p">,</span>
     <span class="s2">&quot;no_activate&quot;</span><span class="p">,</span>
