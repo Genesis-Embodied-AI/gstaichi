@@ -371,6 +371,9 @@ def _get_tree_and_ctx(
     return tree, ctx
 
 
+_ARG_EMPTY = inspect.Parameter.empty
+
+
 def _process_args(
     self: "Func | Kernel", is_pyfunc: bool, is_func: bool, args: tuple[Any, ...], kwargs
 ) -> tuple[Any, ...]:
@@ -390,57 +393,49 @@ def _process_args(
     else:
         self.arg_metas_expanded = list(self.arg_metas)
 
-    fused_args: list[Any] = [arg_meta.default for arg_meta in self.arg_metas_expanded]
-    len_args = len(args)
-
-    if len_args > len(fused_args):
+    num_args = len(args)
+    num_arg_metas = len(self.arg_metas_expanded)
+    if num_args > num_arg_metas:
         arg_str = ", ".join(map(str, args))
         expected_str = ", ".join(f"{arg.name} : {arg.annotation}" for arg in self.arg_metas_expanded)
         msg_l = []
         msg_l.append(f"Too many arguments. Expected ({expected_str}), got ({arg_str}).")
-        for i in range(len_args):
-            if i < len(self.arg_metas_expanded):
+        for i in range(num_args):
+            if i < num_arg_metas:
                 msg_l.append(f" - {i} arg meta: {self.arg_metas_expanded[i].name} arg type: {type(args[i])}")
             else:
                 msg_l.append(f" - {i} arg meta: <out of arg metas> arg type: {type(args[i])}")
         msg_l.append(f"In function: {self.func}")
         raise GsTaichiSyntaxError("\n".join(msg_l))
 
-    for i, arg in enumerate(args):
-        fused_args[i] = arg
-
-    for key, value in kwargs.items():
-        for i, arg in enumerate(self.arg_metas_expanded):
-            if key == arg.name:
-                if i < len_args:
-                    raise GsTaichiSyntaxError(f"Multiple values for argument '{key}'.")
+    missing_arg_metas = self.arg_metas_expanded[num_args:]
+    num_missing_args = len(missing_arg_metas)
+    fused_args: list[Any] = [*args, *[arg_meta.default for arg_meta in missing_arg_metas]]
+    if kwargs:
+        num_invalid_kwargs_args = len(kwargs)
+        for i in range(num_args, num_arg_metas):
+            arg_meta = self.arg_metas_expanded[i]
+            value = kwargs.get(arg_meta.name, _ARG_EMPTY)
+            if value is not _ARG_EMPTY:
                 fused_args[i] = value
-                break
-        else:
-            raise GsTaichiSyntaxError(f"Unexpected argument '{key}'.")
-
-    missing_parameters = []
-    for i, arg in enumerate(fused_args):
-        if arg is inspect.Parameter.empty:
-            if self.arg_metas_expanded[i].annotation is inspect._empty:
-                missing_parameters.append(f"Parameter `{self.arg_metas_expanded[i].name}` missing.")
-            else:
-                missing_parameters.append(
-                    f"Parameter `{self.arg_metas_expanded[i].name} : {self.arg_metas_expanded[i].annotation}` missing."
-                )
-    if len(missing_parameters) > 0:
-        msg_l = []
-        msg_l.append("Error: missing parameters.")
-        msg_l.extend(missing_parameters)
-        msg_l.append("")
-        msg_l.append("Debug info follows.")
-        msg_l.append("fused args:")
-        for i, arg in enumerate(fused_args):
-            msg_l.append(f"  {i} {arg}")
-        msg_l.append("arg metas:")
-        for i, arg in enumerate(self.arg_metas_expanded):
-            msg_l.append(f"  {i} {arg}")
-        raise GsTaichiSyntaxError("\n".join(msg_l))
+                num_invalid_kwargs_args -= 1
+            elif fused_args[i] is _ARG_EMPTY:
+                raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
+        if num_invalid_kwargs_args:
+            for key, value in kwargs.items():
+                for i, arg_meta in enumerate(self.arg_metas_expanded):
+                    if key == arg_meta.name:
+                        if i < num_args:
+                            raise GsTaichiSyntaxError(f"Multiple values for argument '{key}'.")
+                        break
+                else:
+                    raise GsTaichiSyntaxError(f"Unexpected argument '{key}'.")
+    elif num_missing_args:
+        for i in range(num_args, num_arg_metas):
+            arg = fused_args[i]
+            if fused_args[i] is _ARG_EMPTY:
+                arg_meta = self.arg_metas_expanded[i]
+                raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
 
     return tuple(fused_args)
 
@@ -1082,6 +1077,7 @@ class Kernel:
             return
 
         used_py_dataclass_parameters: set[str] | None = None
+        frontend_cache_key: str | None = None
 
         if self.runtime.src_ll_cache and self.gstaichi_callable and self.gstaichi_callable.is_pure:
             kernel_source_info, _src = get_source_info_and_src(self.func)
@@ -1090,13 +1086,13 @@ class Kernel:
             )
             if self.fast_checksum:
                 self.src_ll_cache_observations.cache_key_generated = True
-                used_py_dataclass_parameters = src_hasher.load(self.fast_checksum)
-            if used_py_dataclass_parameters is not None:
+                used_py_dataclass_parameters, frontend_cache_key = src_hasher.load(self.fast_checksum)
+            if used_py_dataclass_parameters is not None and frontend_cache_key is not None:
                 self.src_ll_cache_observations.cache_validated = True
                 prog = impl.get_runtime().prog
                 assert self.fast_checksum is not None
                 self.compiled_kernel_data_by_key[key] = prog.load_fast_cache(
-                    self.fast_checksum,
+                    frontend_cache_key,
                     self.func.__name__,
                     prog.config(),
                     prog.get_device_caps(),
@@ -1377,16 +1373,10 @@ class Kernel:
                 if self.fast_checksum:
                     assert self.currently_compiling_materialize_key is not None
                     src_hasher.store(
+                        compile_result.cache_key,
                         self.fast_checksum,
                         self.visited_functions,
                         self.used_py_dataclass_leaves_by_key_enforcing[self.currently_compiling_materialize_key],
-                    )
-                    prog.store_fast_cache(
-                        self.fast_checksum,
-                        self.kernel_cpp,
-                        prog_config,
-                        prog_device_cap,
-                        compiled_kernel_data,
                     )
                     self.src_ll_cache_observations.cache_stored = True
             self._last_compiled_kernel_data = compiled_kernel_data

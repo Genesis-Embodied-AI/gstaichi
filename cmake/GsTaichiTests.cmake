@@ -16,6 +16,7 @@ file(GLOB_RECURSE GSTAICHI_TESTS_SOURCE
         "tests/cpp/codegen/*.cpp"
         "tests/cpp/common/*.cpp"
         "tests/cpp/ir/*.cpp"
+        "tests/cpp/compilation_manager/*.cpp"
         "tests/cpp/program/*.cpp"
         "tests/cpp/rhi/common/*.cpp"
         "tests/cpp/struct/*.cpp"
