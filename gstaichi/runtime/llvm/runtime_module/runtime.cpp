@@ -21,6 +21,14 @@
 #include <algorithm>
 #include <type_traits>
 #include <cstring>
+#ifdef __APPLE__
+#include <alloca.h>
+#elif defined(__linux__)
+#include <alloca.h>
+#elif defined(_WIN32)
+#include <malloc.h>
+#define alloca _alloca
+#endif
 
 #include "gstaichi/inc/constants.h"
 #include "gstaichi/inc/cuda_kernel_utils.inc.h"
@@ -1486,6 +1494,11 @@ struct cpu_block_task_helper_context {
 // TODO: TLS should be directly passed to the scheduler, so that it lives
 // with the threads (instead of blocks).
 
+static inline char *aligned_alloca(size_t size, size_t alignment) {
+  char *ptr = (char *)alloca(size + alignment - 1);
+  return (char *)(((uintptr_t)ptr + alignment - 1) & ~(alignment - 1));
+}
+
 void cpu_struct_for_block_helper(void *ctx_, int thread_id, int i) {
   auto ctx = (cpu_block_task_helper_context *)(ctx_);
   int element_id = i / ctx->element_split;
@@ -1495,7 +1508,7 @@ void cpu_struct_for_block_helper(void *ctx_, int thread_id, int i) {
   int lower = e.loop_bounds[0] + part_id * part_size;
   int upper = e.loop_bounds[0] + (part_id + 1) * part_size;
   upper = std::min(upper, e.loop_bounds[1]);
-  alignas(8) char tls_buffer[ctx->tls_buffer_size];
+  char *tls_buffer = aligned_alloca(ctx->tls_buffer_size, 8);
 
   RuntimeContext this_thread_context = *ctx->context;
   this_thread_context.cpu_thread_id = thread_id;
@@ -1570,7 +1583,7 @@ void cpu_parallel_range_for_task(void *range_context,
                                  int thread_id,
                                  int task_id) {
   auto ctx = *(range_task_helper_context *)range_context;
-  alignas(8) char tls_buffer[ctx.tls_size];
+  char *tls_buffer = aligned_alloca(ctx.tls_size, 8);
   auto tls_ptr = &tls_buffer[0];
   if (ctx.prologue)
     ctx.prologue(ctx.context, tls_ptr);
@@ -1637,7 +1650,7 @@ void gpu_parallel_range_for(RuntimeContext *context,
   // TODO: find a better way to set the tls_size (maybe like struct_for
   alignas(8) char tls_buffer[64];
 #else
-  alignas(8) char tls_buffer[tls_size];
+  char *tls_buffer = aligned_alloca(tls_size, 8);
 #endif
   auto tls_ptr = &tls_buffer[0];
   if (prologue)
@@ -1664,7 +1677,7 @@ void cpu_parallel_mesh_for_task(void *range_context,
                                 int thread_id,
                                 int task_id) {
   auto ctx = *(mesh_task_helper_context *)range_context;
-  alignas(8) char tls_buffer[ctx.tls_size];
+  char *tls_buffer = aligned_alloca(ctx.tls_size, 8);
   auto tls_ptr = &tls_buffer[0];
 
   RuntimeContext this_thread_context = *ctx.context;
@@ -1721,7 +1734,7 @@ void gpu_parallel_mesh_for(RuntimeContext *context,
   // TODO: find a better way to set the tls_size (maybe like struct_for
   alignas(8) char tls_buffer[64];
 #else
-  alignas(8) char tls_buffer[tls_size];
+  char *tls_buffer = aligned_alloca(tls_size, 8);
 #endif
   auto tls_ptr = &tls_buffer[0];
   for (int idx = block_idx(); idx < num_patches; idx += grid_dim()) {
