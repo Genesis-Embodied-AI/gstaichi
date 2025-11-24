@@ -16,7 +16,7 @@
 #include "gstaichi/ir/ir.h"
 
 namespace gstaichi::lang {
-namespace {
+namespace tests {
 
 static constexpr Arch kFakeArch = (Arch)1024;
 
@@ -211,5 +211,5 @@ TEST_F(KernelCompilationManagerTest,
   EXPECT_ANY_THROW(mgr2->dump());
 }
 
-}  // namespace
+}  // namespace tests
 }  // namespace gstaichi::lang
