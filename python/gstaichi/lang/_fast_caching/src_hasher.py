@@ -5,6 +5,7 @@ from typing import Any, Iterable, Sequence
 import pydantic
 from pydantic import BaseModel
 
+import gstaichi
 from gstaichi import _logging
 
 from .._wrap_inspect import FunctionSourceInfo
@@ -39,8 +40,10 @@ def create_cache_key(
         return None
     kernel_hash = function_hasher.hash_kernel(kernel_source_info)
     config_hash = config_hasher.hash_compile_config()
+    v = gstaichi.__version__
     cache_key = hash_iterable_strings(
         (
+            f"{v[0]}.{v[1]}.{v[2]}",
             kernel_hash,
             args_hash,
             config_hash,
