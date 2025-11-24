@@ -1570,7 +1570,10 @@ void cpu_parallel_range_for_task(void *range_context,
                                  int thread_id,
                                  int task_id) {
   auto ctx = *(range_task_helper_context *)range_context;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wvla-cxx-extension"
   alignas(8) char tls_buffer[ctx.tls_size];
+#pragma clang diagnostic pop
   auto tls_ptr = &tls_buffer[0];
   if (ctx.prologue)
     ctx.prologue(ctx.context, tls_ptr);
@@ -1637,7 +1640,10 @@ void gpu_parallel_range_for(RuntimeContext *context,
   // TODO: find a better way to set the tls_size (maybe like struct_for
   alignas(8) char tls_buffer[64];
 #else
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wvla-cxx-extension"
   alignas(8) char tls_buffer[tls_size];
+#pragma clang diagnostic pop
 #endif
   auto tls_ptr = &tls_buffer[0];
   if (prologue)
@@ -1664,7 +1670,10 @@ void cpu_parallel_mesh_for_task(void *range_context,
                                 int thread_id,
                                 int task_id) {
   auto ctx = *(mesh_task_helper_context *)range_context;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wvla-cxx-extension"
   alignas(8) char tls_buffer[ctx.tls_size];
+#pragma clang diagnostic pop
   auto tls_ptr = &tls_buffer[0];
 
   RuntimeContext this_thread_context = *ctx.context;
@@ -1721,7 +1730,10 @@ void gpu_parallel_mesh_for(RuntimeContext *context,
   // TODO: find a better way to set the tls_size (maybe like struct_for
   alignas(8) char tls_buffer[64];
 #else
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wvla-cxx-extension"
   alignas(8) char tls_buffer[tls_size];
+#pragma clang diagnostic pop
 #endif
   auto tls_ptr = &tls_buffer[0];
   for (int idx = block_idx(); idx < num_patches; idx += grid_dim()) {
