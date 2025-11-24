@@ -50,6 +50,16 @@ struct CompileResult {
   std::string cache_key;
 };
 
+namespace tests {
+class KernelCompilationManagerTest;
+class KernelCompilationManagerTest_DumpNewKernel_Test;
+class KernelCompilationManagerTest_CacheExistingKernelThrowsException_Test;
+class KernelCompilationManagerTest_DumpMemCacheOnlyKernel_Test;
+class KernelCompilationManagerTest_DumpMultipleKernels_Test;
+class
+    KernelCompilationManagerTest_CacheDuplicateKernelFromDiskThrowsException_Test;
+}  // namespace tests
+
 class KernelCompilationManager final {
  public:
   static constexpr char kMetadataFilename[] = "ticache.tcb";
@@ -92,6 +102,17 @@ class KernelCompilationManager final {
       const Kernel &kernel_def);
 
  private:
+  friend class tests::KernelCompilationManagerTest;
+  // naming structure for gtest friend test cases is:
+  // [class name]_[test name]_Test
+  friend class tests::KernelCompilationManagerTest_DumpNewKernel_Test;
+  friend class tests::
+      KernelCompilationManagerTest_CacheExistingKernelThrowsException_Test;
+  friend class tests::KernelCompilationManagerTest_DumpMemCacheOnlyKernel_Test;
+  friend class tests::KernelCompilationManagerTest_DumpMultipleKernels_Test;
+  friend class tests::
+      KernelCompilationManagerTest_CacheDuplicateKernelFromDiskThrowsException_Test;
+
   std::string make_filename(const std::string &kernel_key) const;
 
   std::unique_ptr<CompiledKernelData> compile_kernel(
@@ -113,6 +134,12 @@ class KernelCompilationManager final {
       const std::string &kernel_key,
       const CompileConfig &compile_config,
       const DeviceCapabilityConfig &caps,
+      const Kernel &kernel_def);
+
+  CompiledKernelData &cache_kernel(
+      const std::string &kernel_key,
+      const CompileConfig &compile_config,
+      std::unique_ptr<CompiledKernelData> compiled_kernel_data,
       const Kernel &kernel_def);
 
   std::unique_ptr<CompiledKernelData> load_ckd(const std::string &kernel_key,
