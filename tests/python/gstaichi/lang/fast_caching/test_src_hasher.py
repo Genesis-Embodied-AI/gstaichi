@@ -1,12 +1,12 @@
-import pathlib
-import sys
-import subprocess
-import shutil
 import importlib
 import os
-import pydantic
+import pathlib
+import shutil
+import subprocess
+import sys
 from typing import Callable
 
+import pydantic
 import pytest
 
 import gstaichi as ti
