@@ -1,5 +1,10 @@
 import pathlib
+import sys
+import subprocess
 import shutil
+import importlib
+import os
+import pydantic
 from typing import Callable
 
 import pytest
@@ -11,6 +16,9 @@ from gstaichi.lang._fast_caching import function_hasher, src_hasher
 from gstaichi.lang._wrap_inspect import get_source_info_and_src
 
 from tests import test_utils
+
+TEST_RAN = "test ran"
+RET_SUCCESS = 42
 
 
 @test_utils.test()
@@ -35,27 +43,6 @@ def test_src_hasher_create_cache_key_vary_config() -> None:
 
     assert cache_key_base == cache_key_same
     assert cache_key_same != cache_key_diff
-
-
-@test_utils.test()
-def test_src_hasher_create_cache_key_vary_fn(monkeypatch, temporary_module) -> None:
-    test_files_path = "tests/python/gstaichi/lang/fast_caching/test_files"
-    monkeypatch.syspath_prepend(test_files_path)
-
-    def get_cache_key(name: str) -> str | None:
-        mod = temporary_module(name)
-        info, _src = _wrap_inspect.get_source_info_and_src(mod.f1.fn)
-        cache_key = src_hasher.create_cache_key(False, info, [], [])
-        return cache_key
-
-    key_base = get_cache_key("f1_base")
-    key_same = get_cache_key("f1_same")
-    key_diff = get_cache_key("f1_diff")
-
-    assert key_base is not None
-    assert key_base != ""
-    assert key_base == key_same
-    assert key_base != key_diff
 
 
 @test_utils.test()
@@ -195,3 +182,91 @@ def test_src_hasher_print_non_pure(tmp_path: pathlib.Path, print_non_pure: bool 
         assert not output_contains_not_pure
     else:
         assert output_contains_not_pure == print_non_pure
+
+
+class VaryKernelFuncKernelArgs(pydantic.BaseModel):
+    arch: str
+    offline_cache_file_path: str
+    module_file_path: str
+    module_name: str
+
+
+def src_hasher_vary_kernel_func_child(args: list[str]) -> None:
+    args_obj: VaryKernelFuncKernelArgs = VaryKernelFuncKernelArgs.model_validate_json(args[0])
+    ti.init(
+        arch=getattr(ti, args_obj.arch),
+        offline_cache=True,
+        offline_cache_file_path=args_obj.offline_cache_file_path,
+        src_ll_cache=True,
+    )
+    sys.path.append(args_obj.module_file_path)
+    mod = importlib.import_module(args_obj.module_name)
+    info, _src = _wrap_inspect.get_source_info_and_src(mod.f1.fn)
+    cache_key = src_hasher.create_cache_key(False, info, [], [])
+    print(f"CACHE_KEY={cache_key}")
+
+    print(TEST_RAN)
+    sys.exit(RET_SUCCESS)
+
+
+# Should be enough to run these on cpu I think, and anything involving
+# stdout/stderr capture is fairly flaky on other arch
+@test_utils.test(arch=ti.cpu)
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="Windows stderr not working with capfd")
+def test_src_hasher_vary_kernel_func(tmp_path: pathlib.Path) -> None:
+    test_files_path = pathlib.Path("tests/python/gstaichi/lang/fast_caching/test_files")
+
+    assert ti.lang is not None
+    arch = ti.lang.impl.current_cfg().arch.name
+    env = dict(os.environ)
+    env["PYTHONPATH"] = "."
+
+    module_file_path = tmp_path / "module"
+    module_file_path.mkdir()
+
+    def get_cache_key(name: str) -> str | None:
+        target_mod = "target"
+        shutil.copy(test_files_path / f"{name}.py", module_file_path / f"{target_mod}.py")
+        args_obj = VaryKernelFuncKernelArgs(
+            arch=arch,
+            offline_cache_file_path=str(tmp_path / "cache"),
+            module_file_path=str(module_file_path),
+            module_name=target_mod,
+        )
+        args_json = VaryKernelFuncKernelArgs.model_dump_json(args_obj)
+        cmd_line = [sys.executable, __file__, src_hasher_vary_kernel_func_child.__name__, args_json]
+        print("cmd_line", " ".join(cmd_line))
+        proc = subprocess.run(
+            cmd_line,
+            capture_output=True,
+            text=True,
+            env=env,
+        )
+        if proc.returncode != RET_SUCCESS:
+            print(" ".join(cmd_line))
+            print(proc.stdout)  # needs to do this to see error messages
+            print("-" * 100)
+            print(proc.stderr)
+        assert TEST_RAN in proc.stdout
+        assert proc.returncode == RET_SUCCESS
+        cache_key = None
+        for line in proc.stdout.split("\n"):
+            print("line", line)
+            if line.startswith("CACHE_KEY="):
+                cache_key = line.strip().partition("=")[2]
+        assert cache_key
+        return cache_key
+
+    key_base = get_cache_key("f1_base")
+    key_same = get_cache_key("f1_same")
+    key_diff = get_cache_key("f1_diff")
+
+    assert key_base is not None
+    assert key_base != ""
+    assert key_base == key_same
+    assert key_base != key_diff
+
+
+# The following lines are critical for subprocess-using tests to work.
+if __name__ == "__main__":
+    globals()[sys.argv[1]](sys.argv[2:])
