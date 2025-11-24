@@ -16,6 +16,17 @@ def test_kernel_keyword_args():
 
 
 @test_utils.test(debug=True)
+def test_kernel_args_missing():
+    @ti.kernel
+    def foo(a: ti.i32, b: ti.i32):
+        assert a == 1
+        assert b == 2
+
+    with pytest.raises(ti.GsTaichiSyntaxError, match="Missing argument 'b'"):
+        foo(2)
+
+
+@test_utils.test(debug=True)
 def test_kernel_keyword_args_missing():
     @ti.kernel
     def foo(a: ti.i32, b: ti.i32):
