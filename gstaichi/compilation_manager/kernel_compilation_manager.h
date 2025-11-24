@@ -94,13 +94,6 @@ class KernelCompilationManager final {
                                             const CompileConfig &compile_config,
                                             const DeviceCapabilityConfig &caps);
 
-  // ONLY public for testing
-  CompiledKernelData &cache_kernel(
-      const std::string &kernel_key,
-      const CompileConfig &compile_config,
-      std::unique_ptr<CompiledKernelData> compiled_kernel_data,
-      const Kernel &kernel_def);
-
  private:
   friend class tests::KernelCompilationManagerTest;
   // naming structure for gtest friend test cases is:
