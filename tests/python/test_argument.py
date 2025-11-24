@@ -73,10 +73,22 @@ def test_function_keyword_args():
         assert b == 2
         assert c == 4
 
+    @ti.func
+    def all_default(a=1, b=2, c=3):
+        assert a == 1
+        assert b == 2
+        assert c == 3
+
+    @ti.func
+    def do_nothing():
+        pass
+
     @ti.kernel
     def baz():
         foo(1, b=2)
         bar(b=2, a=1, c=4)
+        all_default()
+        do_nothing()
 
     baz()
 
