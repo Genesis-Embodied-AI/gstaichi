@@ -39,7 +39,16 @@ def create_cache_key(
         return None
     kernel_hash = function_hasher.hash_kernel(kernel_source_info)
     config_hash = config_hasher.hash_compile_config()
-    cache_key = hash_iterable_strings((kernel_hash, args_hash, config_hash, kernel_source_info.filepath, str(kernel_source_info.start_lineno), "pruned"))
+    cache_key = hash_iterable_strings(
+        (
+            kernel_hash,
+            args_hash,
+            config_hash,
+            kernel_source_info.filepath,
+            str(kernel_source_info.start_lineno),
+            "pruned",
+        )
+    )
     return cache_key
 
 
