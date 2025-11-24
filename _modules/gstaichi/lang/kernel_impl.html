@@ -1403,6 +1403,7 @@
             <span class="k">return</span>
 
         <span class="n">used_py_dataclass_parameters</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">frontend_cache_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">src_ll_cache</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">gstaichi_callable</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">gstaichi_callable</span><span class="o">.</span><span class="n">is_pure</span><span class="p">:</span>
             <span class="n">kernel_source_info</span><span class="p">,</span> <span class="n">_src</span> <span class="o">=</span> <span class="n">get_source_info_and_src</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
@@ -1411,13 +1412,13 @@
             <span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">src_ll_cache_observations</span><span class="o">.</span><span class="n">cache_key_generated</span> <span class="o">=</span> <span class="kc">True</span>
-                <span class="n">used_py_dataclass_parameters</span> <span class="o">=</span> <span class="n">src_hasher</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">used_py_dataclass_parameters</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">used_py_dataclass_parameters</span><span class="p">,</span> <span class="n">frontend_cache_key</span> <span class="o">=</span> <span class="n">src_hasher</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">used_py_dataclass_parameters</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">frontend_cache_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">src_ll_cache_observations</span><span class="o">.</span><span class="n">cache_validated</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="n">prog</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">prog</span>
                 <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">compiled_kernel_data_by_key</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">prog</span><span class="o">.</span><span class="n">load_fast_cache</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">,</span>
+                    <span class="n">frontend_cache_key</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
                     <span class="n">prog</span><span class="o">.</span><span class="n">config</span><span class="p">(),</span>
                     <span class="n">prog</span><span class="o">.</span><span class="n">get_device_caps</span><span class="p">(),</span>
@@ -1698,16 +1699,10 @@
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">:</span>
                     <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
                     <span class="n">src_hasher</span><span class="o">.</span><span class="n">store</span><span class="p">(</span>
+                        <span class="n">compile_result</span><span class="o">.</span><span class="n">cache_key</span><span class="p">,</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">,</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">visited_functions</span><span class="p">,</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span><span class="p">],</span>
-                    <span class="p">)</span>
-                    <span class="n">prog</span><span class="o">.</span><span class="n">store_fast_cache</span><span class="p">(</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">,</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">kernel_cpp</span><span class="p">,</span>
-                        <span class="n">prog_config</span><span class="p">,</span>
-                        <span class="n">prog_device_cap</span><span class="p">,</span>
-                        <span class="n">compiled_kernel_data</span><span class="p">,</span>
                     <span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">src_ll_cache_observations</span><span class="o">.</span><span class="n">cache_stored</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_last_compiled_kernel_data</span> <span class="o">=</span> <span class="n">compiled_kernel_data</span>
