@@ -541,9 +541,14 @@ def test_src_ll_cache_dupe_kernels(tmp_path: pathlib.Path) -> None:
 
     a = ti.ndarray(ti.i32, (10,))
     k1(a)
-    print('a[0]', a[0])
     assert a[0] == 123
     assert not k1._primal.src_ll_cache_observations.cache_loaded
+
+    ti.init(arch=getattr(ti, arch), src_ll_cache=True, offline_cache=True, offline_cache_file_path=str(tmp_path))
+    a = ti.ndarray(ti.i32, (10,))
+    k1(a)
+    assert a[0] == 123
+    assert k1._primal.src_ll_cache_observations.cache_loaded
 
     ti.init(arch=getattr(ti, arch), src_ll_cache=True, offline_cache=True, offline_cache_file_path=str(tmp_path))
 
@@ -557,8 +562,13 @@ def test_src_ll_cache_dupe_kernels(tmp_path: pathlib.Path) -> None:
 
     a = ti.ndarray(ti.i32, (10,))
     k1(a)
+    assert not k1._primal.src_ll_cache_observations.cache_loaded
+    assert a[0] == 222
+
+    ti.init(arch=getattr(ti, arch), src_ll_cache=True, offline_cache=True, offline_cache_file_path=str(tmp_path))
+    a = ti.ndarray(ti.i32, (10,))
+    k1(a)
     assert k1._primal.src_ll_cache_observations.cache_loaded
-    print('a[0]', a[0])
     assert a[0] == 222
 
 
