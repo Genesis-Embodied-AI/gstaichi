@@ -580,9 +580,6 @@ def test_src_ll_cache_dupe_kernels(tmp_path: pathlib.Path) -> None:
 class ModifyGsTaichiVersionArgs(pydantic.BaseModel):
     arch: str
     offline_cache_file_path: str
-    module_file_path: str
-    module_name: str
-    expected_val: int
     expect_loaded_from_fastcache: bool
 
 
@@ -595,13 +592,18 @@ def src_ll_cache_modify_gstaichi_version_child(args: list[str]) -> None:
         src_ll_cache=True,
     )
 
-    sys.path.append(args_obj.module_file_path)
-    mod = importlib.import_module(args_obj.module_name)
+    @ti.func
+    def f1(a: ti.types.NDArray[ti.i32, 1]) -> None:
+        a[0] = 123
+
+    @ti.kernel(fastcache=True)
+    def k1(a: ti.types.NDArray[ti.i32, 1]) -> None:
+        f1(a)
 
     a = ti.ndarray(ti.i32, (10,))
-    mod.k1(a)
-    assert a[0] == args_obj.expected_val
-    assert mod.k1._primal.src_ll_cache_observations.cache_loaded == args_obj.expect_loaded_from_fastcache
+    k1(a)
+    assert a[0] == 123
+    assert k1._primal.src_ll_cache_observations.cache_loaded == args_obj.expect_loaded_from_fastcache
 
     print(TEST_RAN)
     sys.exit(RET_SUCCESS)
@@ -614,17 +616,10 @@ def test_src_ll_cache_modify_gstaichi_version(tmp_path: pathlib.Path) -> None:
     env = dict(os.environ)
     env["PYTHONPATH"] = "."
 
-    kernels_src = """
-import gstaichi as ti
-
-@ti.kernel(fastcache=True)
-def k1(a: ti.types.NDArray[ti.i32, 1]) -> None:
-    f1(a)
-
-@ti.func
-def f1(a: ti.types.NDArray[ti.i32, 1]) -> None:
-    a[0] = {val}
-"""
+    # this should point to eg .venv_gstaichi_4_0_0/bin/python, i.e. a python
+    # in an env with an older version of gstaichi installed, such as 4.0.0
+    # (required: with some kernel changes, e.g. built against different version of llvm)
+    alt_python_exe = env["TI_TESTS_ALT_PYTHON_EXE"]
 
     module_file_path = tmp_path / "module"
     module_file_path.mkdir()

@@ -267,6 +267,111 @@ def test_src_hasher_vary_kernel_func(tmp_path: pathlib.Path) -> None:
     assert key_base != key_diff
 
 
+
+
+
+
+
+class VaryGsTaichiVersion(pydantic.BaseModel):
+    arch: str
+    offline_cache_file_path: str
+    # module_file_path: str
+    # module_name: str
+
+
+def src_hasher_vary_gstaichi_version_child(args: list[str]) -> None:
+    args_obj: VaryGsTaichiVersion = VaryGsTaichiVersion.model_validate_json(args[0])
+    ti.init(
+        arch=getattr(ti, args_obj.arch),
+        offline_cache=True,
+        offline_cache_file_path=args_obj.offline_cache_file_path,
+        src_ll_cache=True,
+    )
+
+    @ti.func
+    def f1(a: ti.types.NDArray[ti.i32, 1]) -> None:
+        a[0] = 123
+
+    @ti.kernel(fastcache=True)
+    def k1(a: ti.types.NDArray[ti.i32, 1]) -> None:
+        f1(a)
+
+    # sys.path.append(args_obj.module_file_path)
+    # mod = importlib.import_module(args_obj.module_name)
+    info, _src = _wrap_inspect.get_source_info_and_src(k1.fn)
+    cache_key = src_hasher.create_cache_key(False, info, [], [])
+    print(f"CACHE_KEY={cache_key}")
+
+    print(TEST_RAN)
+    sys.exit(RET_SUCCESS)
+
+
+# Should be enough to run these on cpu I think, and anything involving
+# stdout/stderr capture is fairly flaky on other arch
+@test_utils.test(arch=ti.cpu)
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="Windows stderr not working with capfd")
+def test_src_hasher_vary_gstaichi_version(tmp_path: pathlib.Path) -> None:
+    # test_files_path = pathlib.Path("tests/python/gstaichi/lang/fast_caching/test_files")
+
+    # this should point to eg .venv_gstaichi_4_0_0/bin/python, i.e. a python
+    # in an env with an older version of gstaichi installed, such as 4.0.0
+    # (required: with some kernel changes, e.g. built against different version of llvm)
+    alt_python_exe = os.environ["TI_TESTS_ALT_PYTHON_EXE"]
+
+    assert ti.lang is not None
+    arch = ti.lang.impl.current_cfg().arch.name
+    # env = dict(os.environ)
+    # env["PYTHONPATH"] = "."
+
+    # module_file_path = tmp_path / "module"
+    # module_file_path.mkdir()
+
+    def get_cache_key(python_exe: str) -> str | None:
+        # target_mod = "target"
+        # shutil.copy(test_files_path / f"{name}.py", module_file_path / f"{target_mod}.py")
+        args_obj = VaryGsTaichiVersion(
+            arch=arch,
+            offline_cache_file_path=str(tmp_path / "cache"),
+            # module_file_path=str(module_file_path),
+            # module_name=target_mod,
+        )
+        args_json = VaryGsTaichiVersion.model_dump_json(args_obj)
+        cmd_line = [python_exe, __file__, src_hasher_vary_gstaichi_version_child.__name__, args_json]
+        print("cmd_line", " ".join(cmd_line))
+        proc = subprocess.run(
+            cmd_line,
+            capture_output=True,
+            text=True,
+            # env=env,
+        )
+        if proc.returncode != RET_SUCCESS:
+            print(" ".join(cmd_line))
+            print(proc.stdout)  # needs to do this to see error messages
+            print("-" * 100)
+            print(proc.stderr)
+        assert TEST_RAN in proc.stdout
+        assert proc.returncode == RET_SUCCESS
+        cache_key = None
+        for line in proc.stdout.split("\n"):
+            print("line", line)
+            if line.startswith("CACHE_KEY="):
+                cache_key = line.strip().partition("=")[2]
+        assert cache_key
+        return cache_key
+
+    key_base = get_cache_key(sys.executable)
+    key_same1 = get_cache_key(sys.executable)
+    key_diff = get_cache_key(alt_python_exe)
+    key_same2 = get_cache_key(sys.executable)
+
+    assert key_base is not None
+    assert key_base != ""
+    assert key_diff != "" and key_diff is not None
+    assert key_base == key_same1
+    assert key_base == key_same2
+    assert key_base != key_diff
+
+
 # The following lines are critical for subprocess-using tests to work.
 if __name__ == "__main__":
     globals()[sys.argv[1]](sys.argv[2:])
