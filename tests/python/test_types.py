@@ -163,3 +163,18 @@ def test_uint_max(dt, val):
     fs = f.to_numpy()
     for f in fs:
         assert f == val
+
+
+@pytest.mark.parametrize("tensor_type", [ti.field, ti.ndarray])
+@test_utils.test()
+def test_types_u1(tensor_type) -> None:
+    """
+    Check u1 works. Used to be broken for metal fields.
+    """
+    poses = [0, 2, 5, 11]
+    a = tensor_type(ti.u1, (16,))
+    for pos in poses:
+        a[pos] = 1
+
+    for i in range(16):
+        assert a[i] == (1 if i in poses else 0)
