@@ -33,7 +33,7 @@ def setup_clang(as_compiler=True) -> None:
     """
     u = platform.uname()
     if u.system == "Linux":
-        for v in ("-15", "-14", "-13", "-12", "-11", "-10", ""):
+        for v in ("-20", ""):
             clang = shutil.which(f"clang{v}")
             clangpp = shutil.which(f"clang++{v}")
             if clang is not None and clangpp is not None:
