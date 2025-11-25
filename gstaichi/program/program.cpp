@@ -152,11 +152,16 @@ Kernel &Program::create_kernel(const std::function<void(Kernel *)> &body,
 CompileResult Program::compile_kernel(const CompileConfig &compile_config,
                                       const DeviceCapabilityConfig &device_caps,
                                       const Kernel &kernel_def) {
+  std::cout << "[DIAG] Program::compile_kernel: kernel=" << kernel_def.name 
+            << ", is_accessor=" << kernel_def.is_accessor 
+            << ", ir_is_ast=" << kernel_def.ir_is_ast() << std::endl;
   auto start_t = Time::get_time();
   TI_AUTO_PROF;
   auto &mgr = program_impl_->get_kernel_compilation_manager();
   CompileResult compile_result =
       mgr.load_or_compile(compile_config, device_caps, kernel_def);
+  std::cout << "[DIAG] Program::compile_kernel: compile_result.cache_hit=" 
+            << compile_result.cache_hit << std::endl;
   total_compilation_time_ += Time::get_time() - start_t;
   return compile_result;
 }
@@ -248,12 +253,14 @@ Kernel &Program::get_snode_reader(SNode *snode) {
   auto &ker = create_kernel([snode, this](Kernel *kernel) {
     ExprGroup indices;
     for (int i = 0; i < snode->num_active_indices; i++) {
+      std::cout << "ArgLoadExpression for index " << i << std::endl;
       auto argload_expr = Expr::make<ArgLoadExpression>(std::vector<int>{i},
                                                         PrimitiveType::i32);
       argload_expr->type_check(&this->compile_config());
       indices.push_back(std::move(argload_expr));
     }
     ASTBuilder &builder = kernel->context->builder();
+    std::cout << "Making FrontendReturnStmt" << std::endl;
     auto ret = Stmt::make<FrontendReturnStmt>(ExprGroup(
         builder.expr_subscript(Expr(snode_to_fields_.at(snode)), indices)));
     builder.insert(std::move(ret));

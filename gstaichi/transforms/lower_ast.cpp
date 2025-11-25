@@ -389,6 +389,7 @@ class LowerAST : public IRVisitor {
   }
 
   void visit(FrontendReturnStmt *stmt) override {
+    std::cout << "[DIAG] LowerAST::visit(FrontendReturnStmt): lowering FrontendReturnStmt" << std::endl;
     auto expr_group = stmt->values;
     auto fctx = make_flatten_ctx();
     std::vector<Stmt *> return_ele;
@@ -544,7 +545,9 @@ namespace irpass {
 
 void lower_ast(IRNode *root) {
   TI_AUTO_PROF;
+  std::cout << "[DIAG] lower_ast: called, starting LowerAST pass" << std::endl;
   LowerAST::run(root);
+  std::cout << "[DIAG] lower_ast: LowerAST pass completed" << std::endl;
 }
 
 }  // namespace irpass

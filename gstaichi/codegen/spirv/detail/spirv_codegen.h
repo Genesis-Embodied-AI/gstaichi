@@ -76,6 +76,7 @@ class TaskCodegen : public IRVisitor {
   void visit(GlobalLoadStmt *stmt) override;
   void visit(ArgLoadStmt *stmt) override;
   void visit(GetElementStmt *stmt) override;
+  void visit(FrontendReturnStmt *stmt) override;
   void visit(ReturnStmt *stmt) override;
   void visit(GlobalTemporaryStmt *stmt) override;
   void visit(ExternalTensorShapeAlongAxisStmt *stmt) override;

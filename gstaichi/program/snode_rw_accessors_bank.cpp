@@ -8,7 +8,14 @@ namespace {
 void set_kernel_args(const std::vector<int> &I,
                      int num_active_indices,
                      LaunchContextBuilder *launch_ctx) {
+  std::cout << "[DIAG] set_kernel_args: I=[";
+  for (size_t i = 0; i < I.size(); i++) {
+    std::cout << I[i];
+    if (i < I.size() - 1) std::cout << ", ";
+  }
+  std::cout << "], num_active_indices=" << num_active_indices << std::endl;
   for (int i = 0; i < num_active_indices; i++) {
+    std::cout << "[DIAG] set_kernel_args: setting arg[" << i << "] = " << I[i] << std::endl;
     launch_ctx->set_arg_int(i, I[i]);
   }
 }

@@ -13,12 +13,17 @@ KernelCompiler::KernelCompiler(Config config) : config_(std::move(config)) {
 KernelCompiler::IRNodePtr KernelCompiler::compile(
     const CompileConfig &compile_config,
     const Kernel &kernel_def) const {
+  std::cout << "[DIAG] SPIRV KernelCompiler::compile: kernel=" << kernel_def.name 
+            << ", is_accessor=" << kernel_def.is_accessor 
+            << ", ir_is_ast=" << kernel_def.ir_is_ast() << std::endl;
   auto ir = irpass::analysis::clone(kernel_def.ir.get());
+  std::cout << "[DIAG] SPIRV KernelCompiler::compile: calling compile_to_executable" << std::endl;
   irpass::compile_to_executable(ir.get(), compile_config, &kernel_def,
                                 kernel_def.autodiff_mode,
                                 /*ad_use_stack=*/false, compile_config.print_ir,
                                 /*lower_global_access=*/true,
                                 /*make_thread_local=*/false);
+  std::cout << "[DIAG] SPIRV KernelCompiler::compile: compile_to_executable completed" << std::endl;
   return ir;
 }
 

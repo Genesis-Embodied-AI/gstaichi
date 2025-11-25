@@ -53,10 +53,15 @@ void compile_to_offloads(IRNode *ir,
     }
   }
 
+  std::cout << "[DIAG] compile_to_offloads: start_from_ast=" << start_from_ast 
+            << ", kernel=" << kernel->get_name() << std::endl;
   if (start_from_ast) {
+    std::cout << "[DIAG] compile_to_offloads: calling frontend_type_check and lower_ast" << std::endl;
     irpass::frontend_type_check(ir);
     irpass::lower_ast(ir);
     print("Lowered");
+  } else {
+    std::cout << "[DIAG] compile_to_offloads: SKIPPING lower_ast (start_from_ast=false)" << std::endl;
   }
 
   if (dump_ir_env != nullptr) {
@@ -347,6 +352,8 @@ void compile_to_executable(IRNode *ir,
                            bool start_from_ast) {
   TI_AUTO_PROF;
 
+  std::cout << "[DIAG] compile_to_executable: kernel=" << (kernel ? kernel->get_name() : "null")
+            << ", start_from_ast=" << start_from_ast << std::endl;
   compile_to_offloads(ir, config, kernel, verbose, autodiff_mode, ad_use_stack,
                       start_from_ast);
 

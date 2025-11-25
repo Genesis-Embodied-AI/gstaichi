@@ -429,6 +429,12 @@ void LaunchContextBuilder::set_arg_matrix(int arg_id, const Matrix &matrix) {
 TypedConstant LaunchContextBuilder::fetch_ret(const std::vector<int> &index) {
   const Type *dt = ret_type_->get_element_type(index);
   int offset = ret_type_->get_element_offset(index);
+  std::cout << "[DIAG] fetch_ret: index=[";
+  for (size_t i = 0; i < index.size(); i++) {
+    std::cout << index[i];
+    if (i < index.size() - 1) std::cout << ", ";
+  }
+  std::cout << "], dt=" << dt->to_string() << ", offset=" << offset << std::endl;
   return fetch_ret_impl(offset, dt);
 }
 
@@ -450,6 +456,15 @@ TypedConstant LaunchContextBuilder::fetch_ret_impl(int offset, const Type *dt) {
   TI_ASSERT(dt->is<PrimitiveType>());
   auto primitive_type = dt->as<PrimitiveType>();
   char *ptr = result_buffer_.get() + offset;
+  std::cout << "[DIAG] fetch_ret_impl: offset=" << offset 
+            << ", dt=" << dt->to_string() 
+            << ", reading from result_buffer at offset " << offset << std::endl;
+  if (dt->is_primitive(PrimitiveTypeID::u1)) {
+    std::cout << "[DIAG] fetch_ret_impl: u1 type, reading as i32 (4 bytes) from offset " << offset << std::endl;
+    int32 val = *(int32 *)ptr;
+    std::cout << "[DIAG] fetch_ret_impl: read i32 value=" << val << ", converting to u1" << std::endl;
+    return TypedConstant((uint1)(val != 0));
+  }
   switch (primitive_type->type) {
 #define PER_C_TYPE(type, ctype) \
   case PrimitiveTypeID::type:   \

@@ -10,6 +10,7 @@
 #include "gstaichi/program/kernel.h"
 #include "gstaichi/ir/statements.h"
 #include "gstaichi/ir/ir.h"
+#include "gstaichi/ir/frontend_ir.h"
 #include "gstaichi/util/line_appender.h"
 #include "gstaichi/codegen/spirv/kernel_utils.h"
 #include "gstaichi/codegen/spirv/spirv_ir_builder.h"
@@ -545,6 +546,12 @@ void TaskCodegen::visit(GlobalStoreStmt *stmt) {
 
 void TaskCodegen::visit(GlobalLoadStmt *stmt) {
   auto dt = stmt->element_type();
+  
+  std::cout << "[DIAG] GlobalLoadStmt: loading dt=" << dt->to_string() << std::endl;
+  if (auto global_ptr = stmt->src->cast<GlobalPtrStmt>()) {
+    std::cout << "[DIAG] GlobalLoadStmt: from GlobalPtrStmt, snode dt=" 
+              << global_ptr->snode->dt->to_string() << std::endl;
+  }
 
   auto val = load_buffer(stmt->src, dt);
 
@@ -602,7 +609,14 @@ void TaskCodegen::visit(GetElementStmt *stmt) {
   ir_->register_value(stmt->raw_name(), val);
 }
 
+void TaskCodegen::visit(FrontendReturnStmt *stmt) {
+  std::cout << "[DIAG] TaskCodegen::visit(FrontendReturnStmt): FrontendReturnStmt reached SPIRV codegen!" << std::endl;
+  std::cout << "[DIAG] This should not happen - FrontendReturnStmt should be lowered to ReturnStmt first" << std::endl;
+  TI_NOT_IMPLEMENTED; // FrontendReturnStmt should have been lowered
+}
+
 void TaskCodegen::visit(ReturnStmt *stmt) {
+  std::cout << "[DIAG] TaskCodegen::visit(ReturnStmt): processing ReturnStmt" << std::endl;
   TI_ASSERT(ctx_attribs_->has_rets());
   // The `PrimitiveType::i32` in this function call is a placeholder.
   auto buffer_value = get_buffer_value(BufferType::Rets, PrimitiveType::i32);
@@ -610,10 +624,20 @@ void TaskCodegen::visit(ReturnStmt *stmt) {
   // `calc_indices_and_store`.
   auto store_variable = [&](int index, const std::vector<int> &indices) {
     auto dt = stmt->element_types()[index];
+    std::cout << "[DIAG] ReturnStmt::store_variable: index=" << index 
+              << ", dt=" << dt->to_string() 
+              << ", indices=[";
+    for (size_t i = 0; i < indices.size(); i++) {
+      std::cout << indices[i];
+      if (i < indices.size() - 1) std::cout << ", ";
+    }
+    std::cout << "]" << std::endl;
     auto val_type = ir_->get_primitive_type(dt);
     // Extend u1 values to i32 to be passed to the host.
-    if (dt->is_primitive(PrimitiveTypeID::u1))
+    if (dt->is_primitive(PrimitiveTypeID::u1)) {
+      std::cout << "[DIAG] ReturnStmt::store_variable: u1 detected, changing val_type to i32" << std::endl;
       val_type = ir_->i32_type();
+    }
     spirv::Value buffer_val;
     // Accessing based on `indices` using OpAccessChain.
     buffer_val = ir_->make_access_chain(ir_->get_storage_pointer_type(val_type),
@@ -621,8 +645,11 @@ void TaskCodegen::visit(ReturnStmt *stmt) {
     buffer_val.flag = ValueKind::kVariablePtr;
     spirv::Value val = ir_->query_value(stmt->values[index]->raw_name());
     // Extend u1 values to i32 to be passed to the host.
-    if (dt->is_primitive(PrimitiveTypeID::u1))
+    if (dt->is_primitive(PrimitiveTypeID::u1)) {
+      std::cout << "[DIAG] ReturnStmt::store_variable: u1 detected, converting val to i32 (0 or 1)" << std::endl;
       val = ir_->select(val, ir_->const_i32_one_, ir_->const_i32_zero_);
+    }
+    std::cout << "[DIAG] ReturnStmt::store_variable: storing value at buffer offset calculated from indices" << std::endl;
     ir_->store_variable(buffer_val, val);
   };
   // Function to traverse struct tree in depth-first order recursively to
@@ -2061,6 +2088,15 @@ void TaskCodegen::generate_struct_for_kernel(OffloadedStmt *stmt) {
 
 spirv::Value TaskCodegen::at_buffer(const Stmt *ptr, DataType dt, DataType original_dt) {
   spirv::Value ptr_val = ir_->query_value(ptr->raw_name());
+  
+  // For u1 loading as i32, multiply the pointer by 4 to convert from u1 byte offset to i32 byte offset
+  // (u1 elements are 1 byte each in pointer calculation, but stored as 4 bytes in Metal buffer)
+  if (original_dt && original_dt->is_primitive(PrimitiveTypeID::u1) && 
+      dt->is_primitive(PrimitiveTypeID::i32)) {
+    std::cout << "[DIAG] at_buffer: u1->i32 adjustment, multiplying pointer by 4" << std::endl;
+    spirv::Value four = ir_->int_immediate_number(ptr_val.stype, 4, false);
+    ptr_val = ir_->mul(ptr_val, four);
+  }
 
   if (ptr_val.stype.dt == PrimitiveType::u64) {
     spirv::Value paddr_ptr = ir_->make_value(
@@ -2100,9 +2136,12 @@ spirv::Value TaskCodegen::load_buffer(const Stmt *ptr, DataType dt) {
     // The pointer is calculated in bytes for u1 elements (1 byte each),
     // but Metal stores them as i32 (4 bytes each). The adjustment
     // (multiply by 4) will be done in at_buffer.
+    std::cout << "[DIAG] load_buffer: u1 detected, changing buffer type to i32" << std::endl;
     ti_buffer_type = PrimitiveType::i32;
   }
 
+  std::cout << "[DIAG] load_buffer: calling at_buffer with dt=" << ti_buffer_type->to_string() 
+            << ", original_dt=" << (dt->is_primitive(PrimitiveTypeID::u1) ? dt->to_string() : "null") << std::endl;
   auto buf_ptr = at_buffer(ptr, ti_buffer_type, dt->is_primitive(PrimitiveTypeID::u1) ? dt : nullptr);
   auto val_bits =
       ir_->load_variable(buf_ptr, ir_->get_primitive_type(ti_buffer_type));
