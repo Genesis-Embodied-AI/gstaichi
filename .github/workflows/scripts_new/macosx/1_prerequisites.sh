@@ -15,7 +15,7 @@ python -V
 pip install scikit-build
 pip install numpy
 
-brew install llvm@15
+brew install llvm@20
 
 git submodule
 git submodule update --init --recursive

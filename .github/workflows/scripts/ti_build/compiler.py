@@ -46,8 +46,8 @@ def setup_clang(as_compiler=True) -> None:
         print("brew_config", brew_config)
         brew_prefix = grep("HOMEBREW_PREFIX", brew_config).split()[1]
         print("brew_prefix", brew_prefix)
-        clang = join(brew_prefix, "opt", "llvm@15", "bin", "clang")
-        clangpp = join(brew_prefix, "opt", "llvm@15", "bin", "clang++")
+        clang = join(brew_prefix, "opt", "llvm@20", "bin", "clang")
+        clangpp = join(brew_prefix, "opt", "llvm@20", "bin", "clang++")
     elif (u.system, u.machine) == ("Windows", "AMD64"):
         out = get_cache_home() / "clang-14-v2"
         url = "https://github.com/taichi-dev/taichi_assets/releases/download/llvm15/clang-14.0.6-win-complete.zip"
