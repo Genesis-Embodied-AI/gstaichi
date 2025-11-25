@@ -2059,7 +2059,7 @@ void TaskCodegen::generate_struct_for_kernel(OffloadedStmt *stmt) {
   task_attribs_.buffer_binds = get_buffer_binds();
 }
 
-spirv::Value TaskCodegen::at_buffer(const Stmt *ptr, DataType dt) {
+spirv::Value TaskCodegen::at_buffer(const Stmt *ptr, DataType dt, DataType original_dt) {
   spirv::Value ptr_val = ir_->query_value(ptr->raw_name());
 
   if (ptr_val.stype.dt == PrimitiveType::u64) {
@@ -2078,6 +2078,7 @@ spirv::Value TaskCodegen::at_buffer(const Stmt *ptr, DataType dt) {
       ptr->name(), ptr->type_hint());
 
   spirv::Value buffer = get_buffer_value(ptr_to_buffers_.at(ptr), dt);
+  // Use dt (which may be i32 for u1) to calculate width for index calculation
   size_t width = ir_->get_primitive_type_size(dt);
   spirv::Value idx_val = ir_->make_value(
       spv::OpShiftRightLogical, ptr_val.stype, ptr_val,
@@ -2095,10 +2096,14 @@ spirv::Value TaskCodegen::load_buffer(const Stmt *ptr, DataType dt) {
   if (ptr_val.stype.dt == PrimitiveType::u64) {
     ti_buffer_type = dt;
   } else if (dt->is_primitive(PrimitiveTypeID::u1)) {
+    // For u1, Metal stores values as i32 (4 bytes) in the buffer.
+    // The pointer is calculated in bytes for u1 elements (1 byte each),
+    // but Metal stores them as i32 (4 bytes each). The adjustment
+    // (multiply by 4) will be done in at_buffer.
     ti_buffer_type = PrimitiveType::i32;
   }
 
-  auto buf_ptr = at_buffer(ptr, ti_buffer_type);
+  auto buf_ptr = at_buffer(ptr, ti_buffer_type, dt->is_primitive(PrimitiveTypeID::u1) ? dt : nullptr);
   auto val_bits =
       ir_->load_variable(buf_ptr, ir_->get_primitive_type(ti_buffer_type));
   if (dt->is_primitive(PrimitiveTypeID::u1))
@@ -2113,16 +2118,21 @@ void TaskCodegen::store_buffer(const Stmt *ptr, spirv::Value val) {
   spirv::Value ptr_val = ir_->query_value(ptr->raw_name());
 
   DataType ti_buffer_type = ir_->get_gstaichi_uint_type(val.stype.dt);
+  DataType original_dt = val.stype.dt;
 
   if (ptr_val.stype.dt == PrimitiveType::u64) {
     ti_buffer_type = val.stype.dt;
+    original_dt = nullptr;  // Don't adjust for u64 pointers
   } else if (val.stype.dt->is_primitive(PrimitiveTypeID::u1)) {
     ti_buffer_type = PrimitiveType::i32;
     val = ir_->make_value(spv::OpSelect, ir_->i32_type(), val,
                           ir_->const_i32_one_, ir_->const_i32_zero_);
+    // The adjustment (multiply by 4) will be done in at_buffer
+  } else {
+    original_dt = nullptr;
   }
 
-  auto buf_ptr = at_buffer(ptr, ti_buffer_type);
+  auto buf_ptr = at_buffer(ptr, ti_buffer_type, original_dt);
   auto val_bits =
       val.stype.dt == ti_buffer_type
           ? val
