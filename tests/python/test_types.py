@@ -166,13 +166,14 @@ def test_uint_max(dt, val):
 
 
 @pytest.mark.parametrize("tensor_type", [ti.field, ti.ndarray])
+@pytest.mark.parametrize("dtype", [ti.u1, ti.u8, ti.u16, ti.u32, ti.u64, ti.i8, ti.i32, ti.i16, ti.i64])
 @test_utils.test()
-def test_types_u1(tensor_type) -> None:
+def test_types_fields_and_dtypes(tensor_type, dtype) -> None:
     """
     Check u1 works. Used to be broken for metal fields.
     """
     poses = [0, 2, 5, 11]
-    a = tensor_type(ti.u1, (16,))
+    a = tensor_type(dtype, (16,))
     for pos in poses:
         a[pos] = 1
 
