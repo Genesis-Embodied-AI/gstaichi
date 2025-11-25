@@ -2064,9 +2064,8 @@ spirv::Value TaskCodegen::at_buffer(const Stmt *ptr,
                                     DataType original_dt) {
   spirv::Value ptr_val = ir_->query_value(ptr->raw_name());
 
-  // For u1 loading as i32, multiply the pointer by 4 to convert from u1 byte
-  // offset to i32 byte offset (u1 elements are 1 byte each in pointer
-  // calculation, but stored as 4 bytes in Metal buffer)
+  // For u1 loading as i32, e.g. for metal u1, multiply the pointer by 4 to
+  // convert from u1 byte offset to i32 byte offset.
   if (original_dt && original_dt->is_primitive(PrimitiveTypeID::u1) &&
       dt->is_primitive(PrimitiveTypeID::i32)) {
     spirv::Value four = ir_->int_immediate_number(ptr_val.stype, 4, false);
@@ -2131,18 +2130,16 @@ void TaskCodegen::store_buffer(const Stmt *ptr, spirv::Value val) {
   spirv::Value ptr_val = ir_->query_value(ptr->raw_name());
 
   DataType ti_buffer_type = ir_->get_gstaichi_uint_type(val.stype.dt);
-  DataType original_dt = val.stype.dt;
+  DataType original_dt = nullptr;
 
   if (ptr_val.stype.dt == PrimitiveType::u64) {
     ti_buffer_type = val.stype.dt;
-    original_dt = nullptr;  // Don't adjust for u64 pointers
   } else if (val.stype.dt->is_primitive(PrimitiveTypeID::u1)) {
     ti_buffer_type = PrimitiveType::i32;
+    original_dt = val.stype.dt;
     val = ir_->make_value(spv::OpSelect, ir_->i32_type(), val,
                           ir_->const_i32_one_, ir_->const_i32_zero_);
     // The adjustment (multiply by 4) will be done in at_buffer
-  } else {
-    original_dt = nullptr;
   }
 
   auto buf_ptr = at_buffer(ptr, ti_buffer_type, original_dt);
