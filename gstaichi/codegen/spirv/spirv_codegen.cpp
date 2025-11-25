@@ -2059,8 +2059,19 @@ void TaskCodegen::generate_struct_for_kernel(OffloadedStmt *stmt) {
   task_attribs_.buffer_binds = get_buffer_binds();
 }
 
-spirv::Value TaskCodegen::at_buffer(const Stmt *ptr, DataType dt, DataType original_dt) {
+spirv::Value TaskCodegen::at_buffer(const Stmt *ptr,
+                                    DataType dt,
+                                    DataType original_dt) {
   spirv::Value ptr_val = ir_->query_value(ptr->raw_name());
+
+  // For u1 loading as i32, multiply the pointer by 4 to convert from u1 byte
+  // offset to i32 byte offset (u1 elements are 1 byte each in pointer
+  // calculation, but stored as 4 bytes in Metal buffer)
+  if (original_dt && original_dt->is_primitive(PrimitiveTypeID::u1) &&
+      dt->is_primitive(PrimitiveTypeID::i32)) {
+    spirv::Value four = ir_->int_immediate_number(ptr_val.stype, 4, false);
+    ptr_val = ir_->mul(ptr_val, four);
+  }
 
   if (ptr_val.stype.dt == PrimitiveType::u64) {
     spirv::Value paddr_ptr = ir_->make_value(
@@ -2103,7 +2114,9 @@ spirv::Value TaskCodegen::load_buffer(const Stmt *ptr, DataType dt) {
     ti_buffer_type = PrimitiveType::i32;
   }
 
-  auto buf_ptr = at_buffer(ptr, ti_buffer_type, dt->is_primitive(PrimitiveTypeID::u1) ? dt : nullptr);
+  auto buf_ptr =
+      at_buffer(ptr, ti_buffer_type,
+                dt->is_primitive(PrimitiveTypeID::u1) ? dt : nullptr);
   auto val_bits =
       ir_->load_variable(buf_ptr, ir_->get_primitive_type(ti_buffer_type));
   if (dt->is_primitive(PrimitiveTypeID::u1))

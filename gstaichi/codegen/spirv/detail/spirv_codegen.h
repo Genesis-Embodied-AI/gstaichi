@@ -98,7 +98,9 @@ class TaskCodegen : public IRVisitor {
   void gen_array_range(Stmt *stmt);
   void generate_range_for_kernel(OffloadedStmt *stmt);
   void generate_struct_for_kernel(OffloadedStmt *stmt);
-  spirv::Value at_buffer(const Stmt *ptr, DataType dt, DataType original_dt = nullptr);
+  spirv::Value at_buffer(const Stmt *ptr,
+                         DataType dt,
+                         DataType original_dt = nullptr);
   spirv::Value load_buffer(const Stmt *ptr, DataType dt);
   void store_buffer(const Stmt *ptr, spirv::Value val);
   spirv::Value get_buffer_value(BufferInfo buffer, DataType dt);
