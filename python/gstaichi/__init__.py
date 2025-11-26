@@ -35,8 +35,6 @@ def __getattr__(attr):
     raise AttributeError(f"module '{__name__}' has no attribute '{attr}'")
 
 
-del _ti_core
-
 warn_restricted_version()
 del warn_restricted_version
 
