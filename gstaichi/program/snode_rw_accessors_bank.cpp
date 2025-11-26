@@ -1,8 +1,6 @@
 #include "gstaichi/program/snode_rw_accessors_bank.h"
 
 #include "gstaichi/program/program.h"
-#include <iostream>
-#include "gstaichi/ir/type.h"
 
 namespace gstaichi::lang {
 
@@ -108,8 +106,7 @@ uint64 SNodeRwAccessorsBank::Accessors::read_uint(const std::vector<int> &I) {
   auto &compiled_kernel_data = compile_result.compiled_kernel_data;
   prog_->launch_kernel(compiled_kernel_data, launch_ctx);
   prog_->synchronize();
-  uint64 result = launch_ctx.get_struct_ret_uint({0});
-  return result;
+  return launch_ctx.get_struct_ret_uint({0});
 }
 
 }  // namespace gstaichi::lang

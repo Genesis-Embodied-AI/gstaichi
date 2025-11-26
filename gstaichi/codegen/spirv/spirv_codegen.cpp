@@ -4,7 +4,6 @@
 #include <vector>
 #include <variant>
 #include <filesystem>
-#include <iostream>
 
 #include "gstaichi/codegen/codegen_utils.h"
 #include "gstaichi/program/program.h"
@@ -2087,10 +2086,9 @@ spirv::Value TaskCodegen::at_buffer(const Stmt *ptr,
   spirv::Value buffer = get_buffer_value(ptr_to_buffers_.at(ptr), dt);
   // Use dt (which may be i32 for u1) to calculate width for index calculation
   size_t width = ir_->get_primitive_type_size(dt);
-  size_t shift_amount = size_t(std::log2(width));
   spirv::Value idx_val = ir_->make_value(
       spv::OpShiftRightLogical, ptr_val.stype, ptr_val,
-      ir_->uint_immediate_number(ptr_val.stype, shift_amount));
+      ir_->uint_immediate_number(ptr_val.stype, size_t(std::log2(width))));
   spirv::Value ret =
       ir_->struct_array_access(ir_->get_primitive_type(dt), buffer, idx_val);
   return ret;
