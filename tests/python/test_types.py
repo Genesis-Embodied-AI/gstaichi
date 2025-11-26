@@ -251,8 +251,6 @@ def test_types_fields_and_dtypes_write_ndarray_from_kernel(tensor_type, dtype) -
         for b_ in range(1):
             for pos in ti.static(poses):
                 a[pos] = 1
-    # for pos in poses:
-    #     a[pos] = 1
 
     k1(a)
 
