@@ -1,4 +1,5 @@
 import pytest
+import numpy as np
 
 import gstaichi as ti
 from gstaichi.lang import impl
@@ -189,7 +190,43 @@ def test_types_fields_and_dtypes_kernel_write_to_numpy_consistency(tensor_type, 
 
     a_np = a.to_numpy()
 
-    ti.sync()
-
     for i in range(16):
         assert a_np[i] == (1 if i in poses else 0)
+
+
+@pytest.mark.parametrize("tensor_type", [ti.field, ti.ndarray])
+@pytest.mark.parametrize("dtype", [ti.u1, ti.u8, ti.u16, ti.u32, ti.u64, ti.i8, ti.i32, ti.i16, ti.i64])
+@test_utils.test()
+def test_types_fields_and_dtypes_kernel_to_numpy_from_numpy_consistency(tensor_type, dtype) -> None:
+    """
+    Check consistency between:
+    - from numpy
+    - to numpy
+    """
+    poses = [0, 2, 5, 11]
+
+    ti_dtype_to_np_dtype = {
+        ti.u1: np.bool_,
+        ti.u8: np.uint8,
+        ti.u16: np.uint16,
+        ti.u32: np.uint32,
+        ti.u64: np.uint64,
+        ti.i8: np.int8,
+        ti.i16: np.int16,
+        ti.i32: np.int32,
+        ti.i64: np.int64
+    }
+    np_dtype = ti_dtype_to_np_dtype[dtype]
+    
+    a_np = np.zeros(dtype=np_dtype, shape=(16,))
+
+    for pos in poses:
+        a_np[pos] = 1
+
+    a = tensor_type(dtype, (16,))
+    a.from_numpy(a_np)
+
+    b_np = a.to_numpy()
+
+    for i in range(16):
+        assert b_np[i] == (1 if i in poses else 0)
