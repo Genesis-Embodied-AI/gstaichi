@@ -12,11 +12,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: ${{ github.event_name != 'release' }}
 jobs:
-  build_mac_14_15:
+  build_mac:
     strategy:
       fail-fast: false
       matrix:
-        MAC_OS_VERSION: [15]
+        MAC_OS_VERSION: [26]
         PYTHON_VERSION: ['3.10', '3.11', '3.12', '3.13']
     name: Mac OS Build
     runs-on: macos-${{ matrix.MAC_OS_VERSION }}
@@ -48,15 +48,15 @@ jobs:
           name: mac_cpptests_${{ matrix.MAC_OS_VERSION }}_${{ steps.set_cp_version.outputs.PYTHON_CP_VERSION }}
           path: build/gstaichi_cpp_tests
   test:
-    needs: build_mac_14_15
+    needs: build_mac
     name: Test on Mac
     strategy:
       fail-fast: false
       matrix:
-        MAC_OS_VERSION: [15]
+        MAC_OS_VERSION: [26]
         PYTHON_VERSION: ['3.10', '3.11', '3.12', '3.13']
         include:
-          - MAC_OS_VERSION: 14
+          - MAC_OS_VERSION: 15
             PYTHON_VERSION: '3.10'
     runs-on: macos-${{ matrix.MAC_OS_VERSION }}
     steps:
@@ -74,11 +74,11 @@ jobs:
           echo "PYTHON_CP_VERSION=${cp}" >> $GITHUB_OUTPUT
       - uses: actions/download-artifact@v4
         with:
-          name: mac_wheel_15_${{ steps.set_cp_version.outputs.PYTHON_CP_VERSION }}
+          name: mac_wheel_26_${{ steps.set_cp_version.outputs.PYTHON_CP_VERSION }}
           path: dist
       - uses: actions/download-artifact@v4
         with:
-          name: mac_cpptests_15_${{ steps.set_cp_version.outputs.PYTHON_CP_VERSION }}
+          name: mac_cpptests_26_${{ steps.set_cp_version.outputs.PYTHON_CP_VERSION }}
           path: build
       - name: Mac OS X install
         run: |
@@ -100,7 +100,7 @@ jobs:
     strategy:
       matrix:
         PYTHON_CP_VERSION: ["cp310", "cp311", "cp312", "cp313"]
-        MAC_OS_VERSION: [15]
+        MAC_OS_VERSION: [26]
       fail-fast: false
     with:
       artifact_name: mac_wheel_${{ matrix.MAC_OS_VERSION }}_${{ matrix.PYTHON_CP_VERSION }}

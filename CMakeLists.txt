@@ -155,7 +155,7 @@ if (TI_WITH_LLVM)
       set (CLANG_EXECUTABLE ${CMAKE_CXX_COMPILER})
       message("Clang executable using host compiler ${CLANG_EXECUTABLE}")
     else()
-      find_program(CLANG_EXECUTABLE NAMES clang-15 clang-14 clang-13 clang-12 clang-11 clang-10 clang-9 clang-8 clang-7 clang)
+      find_program(CLANG_EXECUTABLE NAMES clang-20 clang)
       message("Clang executable found at ${CLANG_EXECUTABLE}")
     endif()
 
