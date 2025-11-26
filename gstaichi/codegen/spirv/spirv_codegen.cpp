@@ -2098,7 +2098,7 @@ spirv::Value TaskCodegen::load_buffer(const Stmt *ptr, DataType dt) {
   if (ptr_val.stype.dt == PrimitiveType::u64) {
     ti_buffer_type = dt;
   } else if (dt->is_primitive(PrimitiveTypeID::u1)) {
-    // For u1, Metal stores values as i32 (4 bytes) in the buffer.
+    // For u1, Metal and Vulkan stores values as i32 (4 bytes) in the buffer.
     // The pointer is calculated in bytes for u1 elements (1 byte each),
     // but Metal stores them as i32 (4 bytes each). The adjustment
     // (multiply by 4) will be done in at_buffer.
