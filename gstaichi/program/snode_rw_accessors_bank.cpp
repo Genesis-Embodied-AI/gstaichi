@@ -1,8 +1,6 @@
 #include "gstaichi/program/snode_rw_accessors_bank.h"
 
 #include "gstaichi/program/program.h"
-#include <iostream>
-#include "gstaichi/ir/type.h"
 
 namespace gstaichi::lang {
 
@@ -77,16 +75,6 @@ void SNodeRwAccessorsBank::Accessors::write_int(const std::vector<int> &I,
 // for int32 and int64
 void SNodeRwAccessorsBank::Accessors::write_uint(const std::vector<int> &I,
                                                  uint64 val) {
-  bool is_u1 = snode_->dt->is_primitive(PrimitiveTypeID::u1);
-  if (is_u1) {
-    std::cout << "[DIAG] write_uint: snode_id=" << snode_->id 
-              << ", indices=[";
-    for (size_t i = 0; i < I.size(); i++) {
-      if (i > 0) std::cout << ", ";
-      std::cout << I[i];
-    }
-    std::cout << "], val=" << val << std::endl;
-  }
   auto launch_ctx = writer_->make_launch_context();
   set_kernel_args(I, snode_->num_active_indices, &launch_ctx);
   launch_ctx.set_arg_uint(snode_->num_active_indices, val);
@@ -110,16 +98,6 @@ int64 SNodeRwAccessorsBank::Accessors::read_int(const std::vector<int> &I) {
 }
 
 uint64 SNodeRwAccessorsBank::Accessors::read_uint(const std::vector<int> &I) {
-  bool is_u1 = snode_->dt->is_primitive(PrimitiveTypeID::u1);
-  if (is_u1) {
-    std::cout << "[DIAG] read_uint: snode_id=" << snode_->id 
-              << ", indices=[";
-    for (size_t i = 0; i < I.size(); i++) {
-      if (i > 0) std::cout << ", ";
-      std::cout << I[i];
-    }
-    std::cout << "]" << std::endl;
-  }
   prog_->synchronize();
   auto launch_ctx = reader_->make_launch_context();
   set_kernel_args(I, snode_->num_active_indices, &launch_ctx);
@@ -128,11 +106,7 @@ uint64 SNodeRwAccessorsBank::Accessors::read_uint(const std::vector<int> &I) {
   auto &compiled_kernel_data = compile_result.compiled_kernel_data;
   prog_->launch_kernel(compiled_kernel_data, launch_ctx);
   prog_->synchronize();
-  uint64 result = launch_ctx.get_struct_ret_uint({0});
-  if (is_u1) {
-    std::cout << "[DIAG] read_uint: result=" << result << std::endl;
-  }
-  return result;
+  return launch_ctx.get_struct_ret_uint({0});
 }
 
 }  // namespace gstaichi::lang
