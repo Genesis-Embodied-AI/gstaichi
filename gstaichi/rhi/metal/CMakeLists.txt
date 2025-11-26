@@ -8,12 +8,6 @@ target_sources(${METAL_RHI}
     metal_device.mm
   )
 
-# Workaround for macOS 15.0 SDK SIMD math compatibility issue
-target_compile_definitions(${METAL_RHI} PRIVATE
-  __sincospif=__sincosf
-  __sincospi=__sincos
-)
-
 # TODO(#4832) some dependencies here should not be required as they
 # are build requirements of other targets.
 target_include_directories(${METAL_RHI}
