@@ -217,10 +217,10 @@ def test_types_fields_and_dtypes_kernel_from_numpy_to_numpy_consistency(tensor_t
     """
     write to numpy => from_numpy => to_numpy => check
     """
-    assert ti.cfg is not None
-    arch = ti.cfg.arch
-    if dtype == ti.u1 and arch in [ti.vulkan, ti.metal]:
-        pytest.xfail("u1 doesnt work on vulkan or metal doesn't work currently, neither on field nor ndarray")
+    # assert ti.cfg is not None
+    # arch = ti.cfg.arch
+    # if dtype == ti.u1 and arch in [ti.vulkan, ti.metal]:
+    #     pytest.xfail("u1 doesnt work on vulkan or metal doesn't work currently, neither on field nor ndarray")
 
     poses = [0, 2, 5, 11]
 
@@ -231,10 +231,15 @@ def test_types_fields_and_dtypes_kernel_from_numpy_to_numpy_consistency(tensor_t
     for pos in poses:
         a_np[pos] = 1
 
+    print('a_np', a_np)
+
     a = tensor_type(dtype, (16,))
     a.from_numpy(a_np)
 
     b_np = a.to_numpy()
+
+    for i in range(16):
+        print(f'b_np[{i}]', b_np[i])
 
     for i in range(16):
         assert b_np[i] == (1 if i in poses else 0)
