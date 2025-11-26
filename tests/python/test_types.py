@@ -175,6 +175,11 @@ def test_types_fields_and_dtypes_kernel_write_to_numpy_consistency(tensor_type, 
     - write elements in kernel
     - to numpy
     """
+    assert ti.cfg is not None
+    arch = ti.cfg.arch
+    if dtype == ti.u1 and arch in [ti.vulkan, ti.metal]:
+        pytest.xfail("u1 doesnt work on vulkan or metal doesn't work currently, neither on field nor ndarray")
+
     poses = [0, 2, 5, 11]
     a = tensor_type(dtype, (16,))
 
@@ -203,6 +208,11 @@ def test_types_fields_and_dtypes_kernel_from_numpy_to_numpy_consistency(tensor_t
     - from numpy
     - to numpy
     """
+    assert ti.cfg is not None
+    arch = ti.cfg.arch
+    if dtype == ti.u1 and arch in [ti.vulkan, ti.metal]:
+        pytest.xfail("u1 doesnt work on vulkan or metal doesn't work currently, neither on field nor ndarray")
+
     poses = [0, 2, 5, 11]
 
     ti_dtype_to_np_dtype = {
@@ -240,6 +250,11 @@ def test_types_fields_and_dtypes_np_read_write_np_consistency(tensor_type, dtype
     numpy => read from kernel => write from kernel => numpy
     check consistency
     """
+    assert ti.cfg is not None
+    arch = ti.cfg.arch
+    if dtype == ti.u1 and arch in [ti.vulkan, ti.metal]:
+        pytest.xfail("u1 doesnt work on vulkan or metal doesn't work currently, neither on field nor ndarray")
+
     poses = [0, 2, 5, 11]
 
     ti_dtype_to_np_dtype = {
