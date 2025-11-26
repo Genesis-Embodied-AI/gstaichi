@@ -172,8 +172,8 @@ def test_types_fields_and_dtypes(tensor_type, dtype) -> None:
     """
     Check u1 works. Used to be broken for metal fields.
     """
-    poses = [0, 2, 5, 11]
-    a = tensor_type(dtype, (16,))
+    poses = [0, 2, 5, 11, 17, 47, 97, 123, 201]
+    a = tensor_type(dtype, (256,))
     for pos in poses:
         a[pos] = 1
 
