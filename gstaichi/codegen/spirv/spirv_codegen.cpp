@@ -471,7 +471,6 @@ void TaskCodegen::visit(SNodeLookupStmt *stmt) {
   }
 
   spirv::Value val;
-  bool is_u1_place = sn->is_place() && sn->dt->is_primitive(PrimitiveTypeID::u1);
   if (is_root) {
     val = parent_val;  // Assert Root[0] access at first time
   } else {
@@ -483,15 +482,6 @@ void TaskCodegen::visit(SNodeLookupStmt *stmt) {
     spirv::Value stride = make_pointer(desc.cell_stride);
     spirv::Value offset = ir_->mul(input_index_val, stride);
     val = ir_->add(parent_val, offset);
-    if (is_u1_place) {
-      std::cout << "[DIAG] SNodeLookupStmt (kernel): snode_id=" << sn->id
-                << ", cell_stride=" << desc.cell_stride
-                << ", input_index_val.id=" << input_index_val.id
-                << ", stride.id=" << stride.id
-                << ", offset.id=" << offset.id
-                << ", parent_val.id=" << parent_val.id
-                << ", val.id=" << val.id << std::endl;
-    }
   }
   ir_->register_value(stmt->raw_name(), val);
 }
@@ -550,16 +540,6 @@ void TaskCodegen::visit(LoopIndexStmt *stmt) {
 
 void TaskCodegen::visit(GlobalStoreStmt *stmt) {
   spirv::Value val = ir_->query_value(stmt->val->raw_name());
-  
-  // Check if this is storing to an external array (numpy array)
-  bool is_ext_arr = ptr_to_buffers_.find(stmt->dest) != ptr_to_buffers_.end() &&
-                    ptr_to_buffers_.at(stmt->dest).type == BufferType::ExtArr;
-  bool is_u1 = val.stype.dt->is_primitive(PrimitiveTypeID::u1);
-  if (is_ext_arr && is_u1) {
-    std::cout << "[DIAG] GlobalStoreStmt (kernel): storing u1 to external array, "
-              << "dest=" << stmt->dest->raw_name() 
-              << ", val.id=" << val.id << std::endl;
-  }
 
   store_buffer(stmt->dest, val);
 }
@@ -2088,14 +2068,6 @@ spirv::Value TaskCodegen::at_buffer(const Stmt *ptr,
   // For u1, cell_stride is already 4 (from data_type_size_gfx), so the pointer
   // is already in i32 byte offsets. We don't need to multiply by 4 here.
   // The original code multiplied by 4 because cell_stride was 1, but that's been fixed.
-  bool is_u1 = original_dt && original_dt->is_primitive(PrimitiveTypeID::u1) &&
-               dt->is_primitive(PrimitiveTypeID::i32);
-  if (is_u1) {
-    std::cout << "[DIAG] at_buffer (kernel): ptr=" << ptr->raw_name() 
-              << ", ptr_val.id=" << ptr_val.id
-              << ", original_dt=u1, dt=i32, cell_stride already accounts for i32 storage"
-              << std::endl;
-  }
 
   if (ptr_val.stype.dt == PrimitiveType::u64) {
     spirv::Value paddr_ptr = ir_->make_value(
@@ -2113,23 +2085,14 @@ spirv::Value TaskCodegen::at_buffer(const Stmt *ptr,
       ptr->name(), ptr->type_hint());
 
   spirv::Value buffer = get_buffer_value(ptr_to_buffers_.at(ptr), dt);
-  // Use dt (which may be i32 for u1) to calculate width for index calculation
+  // Use dt (which may be i32 for u1, or u8 for external arrays) to calculate width for index calculation
   size_t width = ir_->get_primitive_type_size(dt);
   size_t shift_amount = size_t(std::log2(width));
-  if (is_u1) {
-    std::cout << "[DIAG] at_buffer (kernel): width=" << width << ", shift_amount=" << shift_amount << std::endl;
-  }
   spirv::Value idx_val = ir_->make_value(
       spv::OpShiftRightLogical, ptr_val.stype, ptr_val,
       ir_->uint_immediate_number(ptr_val.stype, shift_amount));
-  if (is_u1) {
-    std::cout << "[DIAG] at_buffer (kernel): idx_val.id=" << idx_val.id << std::endl;
-  }
   spirv::Value ret =
       ir_->struct_array_access(ir_->get_primitive_type(dt), buffer, idx_val);
-  if (is_u1) {
-    std::cout << "[DIAG] at_buffer (kernel): ret.id=" << ret.id << std::endl;
-  }
   return ret;
 }
 
@@ -2137,29 +2100,23 @@ spirv::Value TaskCodegen::load_buffer(const Stmt *ptr, DataType dt) {
   spirv::Value ptr_val = ir_->query_value(ptr->raw_name());
 
   DataType ti_buffer_type = ir_->get_gstaichi_uint_type(dt);
-  bool is_u1 = dt->is_primitive(PrimitiveTypeID::u1);
 
   if (ptr_val.stype.dt == PrimitiveType::u64) {
     ti_buffer_type = dt;
-  } else if (is_u1) {
+  } else if (dt->is_primitive(PrimitiveTypeID::u1)) {
     // For u1, values are stored as i32 (4 bytes) in the buffer.
     // cell_stride is already 4 (from data_type_size_gfx), so the pointer
     // calculation already accounts for i32 storage.
     ti_buffer_type = PrimitiveType::i32;
-    std::cout << "[DIAG] load_buffer (kernel): ptr=" << ptr->raw_name() 
-              << ", ptr_val.id=" << ptr_val.id
-              << ", dt=u1, converting to i32" << std::endl;
   }
 
   auto buf_ptr =
       at_buffer(ptr, ti_buffer_type,
-                is_u1 ? dt : nullptr);
+                dt->is_primitive(PrimitiveTypeID::u1) ? dt : nullptr);
   auto val_bits =
       ir_->load_variable(buf_ptr, ir_->get_primitive_type(ti_buffer_type));
-  if (is_u1) {
-    std::cout << "[DIAG] load_buffer (kernel): loaded val_bits.id=" << val_bits.id << std::endl;
+  if (dt->is_primitive(PrimitiveTypeID::u1))
     return ir_->cast(ir_->bool_type(), val_bits);
-  }
   return ti_buffer_type == dt
              ? val_bits
              : ir_->make_value(spv::OpBitcast, ir_->get_primitive_type(dt),
@@ -2172,27 +2129,14 @@ void TaskCodegen::store_buffer(const Stmt *ptr, spirv::Value val) {
   DataType ti_buffer_type = ir_->get_gstaichi_uint_type(val.stype.dt);
   DataType original_dt = nullptr;
 
-  bool is_u1 = val.stype.dt->is_primitive(PrimitiveTypeID::u1);
   bool has_buffer = ptr_to_buffers_.find(ptr) != ptr_to_buffers_.end();
   BufferType buffer_type = has_buffer ? ptr_to_buffers_.at(ptr).type : BufferType::Root;
   bool is_ext_arr = buffer_type == BufferType::ExtArr;
-  
-  if (is_u1) {
-    std::cout << "[DIAG] store_buffer: ptr=" << ptr->raw_name()
-              << ", ptr_val.stype.dt=" << (ptr_val.stype.dt == PrimitiveType::u64 ? "u64" : "other")
-              << ", has_buffer=" << has_buffer
-              << ", buffer_type=" << (int)buffer_type
-              << ", is_ext_arr=" << is_ext_arr
-              << ", val.stype.dt=u1" << std::endl;
-  }
 
   if (ptr_val.stype.dt == PrimitiveType::u64 || is_ext_arr) {
     // Physical storage buffer pointer (external arrays) or ExtArr buffer type
     // For external arrays, store u1 as u8 (1 byte), not i32 (4 bytes)
     if (val.stype.dt->is_primitive(PrimitiveTypeID::u1)) {
-      if (is_u1) {
-        std::cout << "[DIAG] store_buffer: Taking external array/u1 branch, converting to u8" << std::endl;
-      }
       ti_buffer_type = PrimitiveType::u8;
       original_dt = val.stype.dt;
       spirv::SType u8_type = ir_->get_primitive_type(PrimitiveType::u8);
@@ -2202,9 +2146,6 @@ void TaskCodegen::store_buffer(const Stmt *ptr, spirv::Value val) {
       ti_buffer_type = val.stype.dt;
     }
   } else if (val.stype.dt->is_primitive(PrimitiveTypeID::u1)) {
-    if (is_u1) {
-      std::cout << "[DIAG] store_buffer: Taking internal buffer/u1 branch, converting to i32" << std::endl;
-    }
     // For internal buffers, store u1 as i32 (4 bytes)
     ti_buffer_type = PrimitiveType::i32;
     original_dt = val.stype.dt;
@@ -2218,12 +2159,6 @@ void TaskCodegen::store_buffer(const Stmt *ptr, spirv::Value val) {
           ? val
           : ir_->make_value(spv::OpBitcast,
                             ir_->get_primitive_type(ti_buffer_type), val);
-  if (is_u1) {
-    std::cout << "[DIAG] store_buffer: final ti_buffer_type=" 
-              << (ti_buffer_type->is_primitive(PrimitiveTypeID::u8) ? "u8" :
-                  ti_buffer_type->is_primitive(PrimitiveTypeID::i32) ? "i32" : "other")
-              << ", val_bits.id=" << val_bits.id << std::endl;
-  }
   ir_->store_variable(buf_ptr, val_bits);
 }
 
