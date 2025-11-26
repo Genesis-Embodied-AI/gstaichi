@@ -1495,7 +1495,10 @@ void cpu_struct_for_block_helper(void *ctx_, int thread_id, int i) {
   int lower = e.loop_bounds[0] + part_id * part_size;
   int upper = e.loop_bounds[0] + (part_id + 1) * part_size;
   upper = std::min(upper, e.loop_bounds[1]);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wvla-cxx-extension"
   alignas(8) char tls_buffer[ctx->tls_buffer_size];
+#pragma clang diagnostic pop
 
   RuntimeContext this_thread_context = *ctx->context;
   this_thread_context.cpu_thread_id = thread_id;
