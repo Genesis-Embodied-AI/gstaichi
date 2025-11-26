@@ -1,5 +1,4 @@
 #include "gstaichi/codegen/spirv/snode_struct_compiler.h"
-#include "gstaichi/ir/type_utils.h"
 
 namespace gstaichi::lang {
 namespace spirv {

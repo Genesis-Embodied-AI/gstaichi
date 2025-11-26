@@ -4,7 +4,6 @@
 #include <vector>
 #include <variant>
 #include <filesystem>
-#include <iostream>
 
 #include "gstaichi/codegen/codegen_utils.h"
 #include "gstaichi/program/program.h"
@@ -2092,10 +2091,6 @@ spirv::Value TaskCodegen::at_buffer(const Stmt *ptr,
                                     DataType original_dt) {
   spirv::Value ptr_val = ir_->query_value(ptr->raw_name());
 
-  // For u1, cell_stride is already 4 (from data_type_size_gfx), so the pointer
-  // is already in i32 byte offsets. We don't need to multiply by 4 here.
-  // The original code multiplied by 4 because cell_stride was 1, but that's been fixed.
-
   bool has_buffer = ptr_to_buffers_.find(ptr) != ptr_to_buffers_.end();
   BufferType buffer_type = has_buffer ? ptr_to_buffers_.at(ptr).type : BufferType::Root;
   bool is_ext_arr = buffer_type == BufferType::ExtArr;
@@ -2217,11 +2212,11 @@ void TaskCodegen::store_buffer(const Stmt *ptr, spirv::Value val) {
       ti_buffer_type = val.stype.dt;
     }
   } else if (val.stype.dt->is_primitive(PrimitiveTypeID::u1)) {
-    // For internal buffers, store u1 as i32 (4 bytes)
     ti_buffer_type = PrimitiveType::i32;
     original_dt = val.stype.dt;
     val = ir_->make_value(spv::OpSelect, ir_->i32_type(), val,
                           ir_->const_i32_one_, ir_->const_i32_zero_);
+    // The adjustment (multiply by 4) will be done in at_buffer
   }
 
   auto buf_ptr = at_buffer(ptr, ti_buffer_type, original_dt);
