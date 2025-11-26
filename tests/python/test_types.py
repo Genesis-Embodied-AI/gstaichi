@@ -1,5 +1,5 @@
-import pytest
 import numpy as np
+import pytest
 
 import gstaichi as ti
 from gstaichi.lang import impl
@@ -224,10 +224,10 @@ def test_types_fields_and_dtypes_kernel_from_numpy_to_numpy_consistency(tensor_t
         ti.i8: np.int8,
         ti.i16: np.int16,
         ti.i32: np.int32,
-        ti.i64: np.int64
+        ti.i64: np.int64,
     }
     np_dtype = ti_dtype_to_np_dtype[dtype]
-    
+
     a_np = np.zeros(dtype=np_dtype, shape=(16,))
 
     for pos in poses:
@@ -266,10 +266,10 @@ def test_types_fields_and_dtypes_np_read_write_np_consistency(tensor_type, dtype
         ti.i8: np.int8,
         ti.i16: np.int16,
         ti.i32: np.int32,
-        ti.i64: np.int64
+        ti.i64: np.int64,
     }
     np_dtype = ti_dtype_to_np_dtype[dtype]
-    
+
     a_np = np.zeros(dtype=np_dtype, shape=(16,))
     a = tensor_type(dtype, (16,))
     b = tensor_type(dtype, (16,))
