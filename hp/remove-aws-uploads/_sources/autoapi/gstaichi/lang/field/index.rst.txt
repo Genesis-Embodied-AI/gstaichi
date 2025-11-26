@@ -170,6 +170,10 @@ Module Contents
 
    .. py:method:: to_dlpack()
 
+      Note: caller is responsible for calling ti.sync() between modifying the field, and
+      reading it.
+
+
 
    .. py:method:: fill(val)
 

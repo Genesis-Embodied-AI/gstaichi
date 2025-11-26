@@ -1180,7 +1180,9 @@ you can even initialize a matrix with an empty list:
 <dl class="py method">
 <dt class="sig sig-object py" id="gstaichi.lang.matrix.MatrixField.to_dlpack">
 <span class="sig-name descname"><span class="pre">to_dlpack</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/gstaichi/lang/matrix.html#MatrixField.to_dlpack"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.matrix.MatrixField.to_dlpack" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
+<dd><p>Note: caller is responsible for calling ti.sync() between modifying the field, and
+reading it.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="gstaichi.lang.matrix.MatrixField.get_scalar_field">
