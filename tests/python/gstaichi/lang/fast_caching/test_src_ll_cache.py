@@ -523,6 +523,55 @@ def f1(a: ti.types.NDArray[ti.i32, 1]) -> None:
         assert proc.returncode == RET_SUCCESS
 
 
+@test_utils.test()
+def test_src_ll_cache_dupe_kernels(tmp_path: pathlib.Path) -> None:
+    use_fast_cache = True
+    assert ti.lang is not None
+    arch = ti.lang.impl.current_cfg().arch.name
+
+    ti.init(arch=getattr(ti, arch), src_ll_cache=True, offline_cache=True, offline_cache_file_path=str(tmp_path))
+
+    @ti.func
+    def f1(a: ti.types.NDArray[ti.i32, 1]) -> None:
+        a[0] = 123
+
+    @ti.kernel(fastcache=use_fast_cache)
+    def k1(a: ti.types.NDArray[ti.i32, 1]) -> None:
+        f1(a)
+
+    a = ti.ndarray(ti.i32, (10,))
+    k1(a)
+    assert a[0] == 123
+    assert not k1._primal.src_ll_cache_observations.cache_loaded
+
+    ti.init(arch=getattr(ti, arch), src_ll_cache=True, offline_cache=True, offline_cache_file_path=str(tmp_path))
+    a = ti.ndarray(ti.i32, (10,))
+    k1(a)
+    assert a[0] == 123
+    assert k1._primal.src_ll_cache_observations.cache_loaded
+
+    ti.init(arch=getattr(ti, arch), src_ll_cache=True, offline_cache=True, offline_cache_file_path=str(tmp_path))
+
+    @ti.func
+    def f1(a: ti.types.NDArray[ti.i32, 1]) -> None:
+        a[0] = 222
+
+    @ti.kernel(fastcache=use_fast_cache)
+    def k1(a: ti.types.NDArray[ti.i32, 1]) -> None:
+        f1(a)
+
+    a = ti.ndarray(ti.i32, (10,))
+    k1(a)
+    assert not k1._primal.src_ll_cache_observations.cache_loaded
+    assert a[0] == 222
+
+    ti.init(arch=getattr(ti, arch), src_ll_cache=True, offline_cache=True, offline_cache_file_path=str(tmp_path))
+    a = ti.ndarray(ti.i32, (10,))
+    k1(a)
+    assert k1._primal.src_ll_cache_observations.cache_loaded
+    assert a[0] == 222
+
+
 # The following lines are critical for subprocess-using tests to work. If they are missing, the tests will
 # incorrectly pass, without doing anything.
 if __name__ == "__main__":
