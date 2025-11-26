@@ -297,7 +297,6 @@ def test_types_fields_and_dtypes_from_numpy_accessor_read_consistency(tensor_typ
     poses = [0, 2, 5, 11]
 
     np_dtype = _TI_DTYPE_TO_NP_DTYPE[dtype]
-
     a_np = np.zeros(dtype=np_dtype, shape=(16,))
     a = tensor_type(dtype, (16,))
 
@@ -331,3 +330,85 @@ def test_types_fields_and_dtypes_accessor_write_to_numpy_consistency(tensor_type
 
     for i in range(16):
         assert a_np[i] == (1 if i in poses else 0)
+
+
+@pytest.mark.parametrize("tensor_type", [ti.field, ti.ndarray])
+@pytest.mark.parametrize("dtype", [ti.u1, ti.u8, ti.u16, ti.u32, ti.u64, ti.i8, ti.i32, ti.i16, ti.i64])
+@pytest.mark.parametrize("std_dtype", [ti.i8, ti.i32])
+@test_utils.test()
+def test_types_fields_and_dtypes_from_numpy_kern_read(tensor_type, dtype, std_dtype) -> None:
+    """
+    write numpy => from_numpy => kernel read => kernel write to standard type => to_numpy => check
+    """
+    assert ti.cfg is not None
+    arch = ti.cfg.arch
+    if dtype == ti.u1 and arch in [ti.metal, ti.vulkan]:
+        pytest.xfail("u1 not supported on metal or vulkan")
+
+    poses = [0, 2, 5, 11]
+    N = 16
+
+    np_dtype = _TI_DTYPE_TO_NP_DTYPE[dtype]
+    a_np = np.zeros(dtype=np_dtype, shape=(N,))
+    a = tensor_type(dtype, (N,))
+    b = tensor_type(std_dtype, (N,))
+
+    for pos in poses:
+        a_np[pos] = 1
+    a.from_numpy(a_np)
+
+    TensorType = ti.types.NDArray if tensor_type == ti.ndarray else ti.Template
+
+    @ti.kernel
+    def k1(a: TensorType, b: TensorType) -> None:
+        for b_ in range(1):
+            for i in range(N):
+                b[i] = a[i]
+
+    k1(a, b)
+
+    b_np = b.to_numpy()
+
+    for i in range(N):
+        assert b_np[i] == (1 if i in poses else 0)
+
+
+@pytest.mark.parametrize("tensor_type", [ti.field, ti.ndarray])
+@pytest.mark.parametrize("dtype", [ti.u1, ti.u8, ti.u16, ti.u32, ti.u64, ti.i8, ti.i32, ti.i16, ti.i64])
+@pytest.mark.parametrize("std_dtype", [ti.i8, ti.i32])
+@test_utils.test()
+def test_types_fields_and_dtypes_kern_write_to_numpy(tensor_type, dtype, std_dtype) -> None:
+    """
+    write to std type numpy => from_numpy => std type kernel read => kernel write => to_numpy => check
+    """
+    assert ti.cfg is not None
+    arch = ti.cfg.arch
+    if dtype == ti.u1 and arch in [ti.vulkan, ti.metal]:
+        pytest.xfail("u1 doesnt work on vulkan or metal doesn't work currently, neither on field nor ndarray")
+
+    poses = [0, 2, 5, 11]
+    N = 16
+
+    np_dtype = _TI_DTYPE_TO_NP_DTYPE[dtype]
+    a_np = np.zeros(dtype=np_dtype, shape=(N,))
+    a = tensor_type(std_dtype, (N,))
+    b = tensor_type(dtype, (N,))
+
+    for pos in poses:
+        a_np[pos] = 1
+    a.from_numpy(a_np)
+
+    TensorType = ti.types.NDArray if tensor_type == ti.ndarray else ti.Template
+
+    @ti.kernel
+    def k1(a: TensorType, b: TensorType) -> None:
+        for b_ in range(1):
+            for i in range(N):
+                b[i] = a[i]
+
+    k1(a, b)
+
+    b_np = b.to_numpy()
+
+    for i in range(N):
+        assert b_np[i] == (1 if i in poses else 0)
