@@ -1,4 +1,5 @@
 #include "gstaichi/codegen/spirv/snode_struct_compiler.h"
+#include "gstaichi/ir/type_utils.h"
 
 namespace gstaichi::lang {
 namespace spirv {
@@ -68,7 +69,9 @@ class StructCompiler {
     SNodeDescriptor sn_desc;
     sn_desc.snode = sn;
     if (is_place) {
-      sn_desc.cell_stride = data_type_size(sn->dt);
+      // For graphics backends (Vulkan/Metal), u1 is stored as i32 (4 bytes)
+      // Use data_type_size_gfx to get the correct stride
+      sn_desc.cell_stride = data_type_size_gfx(sn->dt);
       sn_desc.container_stride = sn_desc.cell_stride;
     } else {
       // Sort by size, so that smaller subfields are placed first.
