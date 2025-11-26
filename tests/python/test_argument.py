@@ -16,13 +16,24 @@ def test_kernel_keyword_args():
 
 
 @test_utils.test(debug=True)
+def test_kernel_args_missing():
+    @ti.kernel
+    def foo(a: ti.i32, b: ti.i32):
+        assert a == 1
+        assert b == 2
+
+    with pytest.raises(ti.GsTaichiSyntaxError, match="Missing argument 'b'"):
+        foo(2)
+
+
+@test_utils.test(debug=True)
 def test_kernel_keyword_args_missing():
     @ti.kernel
     def foo(a: ti.i32, b: ti.i32):
         assert a == 1
         assert b == 2
 
-    with pytest.raises(ti.GsTaichiSyntaxError, match="Parameter `a : i32` missing"):
+    with pytest.raises(ti.GsTaichiSyntaxError, match="Missing argument 'a'"):
         foo(b=2)
 
 
@@ -62,10 +73,22 @@ def test_function_keyword_args():
         assert b == 2
         assert c == 4
 
+    @ti.func
+    def all_default(a=1, b=2, c=3):
+        assert a == 1
+        assert b == 2
+        assert c == 3
+
+    @ti.func
+    def do_nothing():
+        pass
+
     @ti.kernel
     def baz():
         foo(1, b=2)
         bar(b=2, a=1, c=4)
+        all_default()
+        do_nothing()
 
     baz()
 
@@ -82,7 +105,7 @@ def test_function_keyword_args_missing():
     def missing():
         foo(1, c=3)
 
-    with pytest.raises(ti.GsTaichiSyntaxError, match="Parameter `b` missing"):
+    with pytest.raises(ti.GsTaichiSyntaxError, match="Missing argument 'b'"):
         missing()
 
 
