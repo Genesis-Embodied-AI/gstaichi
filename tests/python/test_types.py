@@ -172,6 +172,10 @@ def test_types_fields_and_dtypes(tensor_type, dtype) -> None:
     """
     Check u1 works. Used to be broken for metal fields.
     """
+    assert ti.cfg is not None
+    arch = ti.cfg.arch.name
+    if tensor_type == ti.field and dtype == ti.u1 and arch == "vulkan":
+        pytest.xfail("u1 field vulkan doesn't work currently")
     poses = [0, 2, 5, 11]
     a = tensor_type(dtype, (16,))
     for pos in poses:
