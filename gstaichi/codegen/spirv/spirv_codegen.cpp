@@ -540,14 +540,39 @@ void TaskCodegen::visit(LoopIndexStmt *stmt) {
 
 void TaskCodegen::visit(GlobalStoreStmt *stmt) {
   spirv::Value val = ir_->query_value(stmt->val->raw_name());
+  
+  bool has_buffer = ptr_to_buffers_.find(stmt->dest) != ptr_to_buffers_.end();
+  BufferType buffer_type = has_buffer ? ptr_to_buffers_.at(stmt->dest).type : BufferType::Root;
+  bool is_ext_arr = buffer_type == BufferType::ExtArr;
+  bool is_u1 = val.stype.dt->is_primitive(PrimitiveTypeID::u1);
+  
+  if (is_u1 && is_ext_arr) {
+    std::cout << "[DIAG] GlobalStoreStmt: dest=" << stmt->dest->raw_name()
+              << ", val.id=" << val.id
+              << ", is_ext_arr=" << is_ext_arr << std::endl;
+  }
 
   store_buffer(stmt->dest, val);
 }
 
 void TaskCodegen::visit(GlobalLoadStmt *stmt) {
   auto dt = stmt->element_type();
+  
+  bool has_buffer = ptr_to_buffers_.find(stmt->src) != ptr_to_buffers_.end();
+  BufferType buffer_type = has_buffer ? ptr_to_buffers_.at(stmt->src).type : BufferType::Root;
+  bool is_ext_arr = buffer_type == BufferType::ExtArr;
+  bool is_u1 = dt->is_primitive(PrimitiveTypeID::u1);
+  
+  if (is_u1 && is_ext_arr) {
+    std::cout << "[DIAG] GlobalLoadStmt: src=" << stmt->src->raw_name()
+              << ", is_ext_arr=" << is_ext_arr << std::endl;
+  }
 
   auto val = load_buffer(stmt->src, dt);
+  
+  if (is_u1 && is_ext_arr) {
+    std::cout << "[DIAG] GlobalLoadStmt: loaded val.id=" << val.id << std::endl;
+  }
 
   ir_->register_value(stmt->raw_name(), val);
 }
@@ -728,11 +753,13 @@ void TaskCodegen::visit(ExternalPtrStmt *stmt) {
       linear_offset = ir_->mul(linear_offset, size_var);
       linear_offset = ir_->add(linear_offset, indices);
     }
+    // For external arrays, use the actual element size (1 byte for u1)
+    // not the graphics buffer size (4 bytes for u1)
+    size_t element_size = ir_->get_primitive_type_size(stmt->ret_type.ptr_removed());
     linear_offset = ir_->make_value(
         spv::OpShiftLeftLogical, ir_->i32_type(), linear_offset,
         ir_->int_immediate_number(ir_->i32_type(),
-                                  log2int(ir_->get_primitive_type_size(
-                                      stmt->ret_type.ptr_removed()))));
+                                  log2int(element_size)));
     if (caps_->get(DeviceCapability::spirv_has_no_integer_wrap_decoration)) {
       ir_->decorate(spv::OpDecorate, linear_offset,
                     spv::DecorationNoSignedWrap);
@@ -2069,6 +2096,10 @@ spirv::Value TaskCodegen::at_buffer(const Stmt *ptr,
   // is already in i32 byte offsets. We don't need to multiply by 4 here.
   // The original code multiplied by 4 because cell_stride was 1, but that's been fixed.
 
+  bool has_buffer = ptr_to_buffers_.find(ptr) != ptr_to_buffers_.end();
+  BufferType buffer_type = has_buffer ? ptr_to_buffers_.at(ptr).type : BufferType::Root;
+  bool is_ext_arr = buffer_type == BufferType::ExtArr;
+
   if (ptr_val.stype.dt == PrimitiveType::u64) {
     spirv::Value paddr_ptr = ir_->make_value(
         spv::OpConvertUToPtr,
@@ -2085,14 +2116,42 @@ spirv::Value TaskCodegen::at_buffer(const Stmt *ptr,
       ptr->name(), ptr->type_hint());
 
   spirv::Value buffer = get_buffer_value(ptr_to_buffers_.at(ptr), dt);
-  // Use dt (which may be i32 for u1, or u8 for external arrays) to calculate width for index calculation
-  size_t width = ir_->get_primitive_type_size(dt);
-  size_t shift_amount = size_t(std::log2(width));
-  spirv::Value idx_val = ir_->make_value(
-      spv::OpShiftRightLogical, ptr_val.stype, ptr_val,
-      ir_->uint_immediate_number(ptr_val.stype, shift_amount));
+  // For external arrays, the pointer from ExternalPtrStmt is already in bytes.
+  // For u8 (1 byte), the byte offset equals the element index, so we don't need to shift.
+  // For other types, we need to convert byte offset to element index.
+  // For external arrays, the pointer from ExternalPtrStmt is in element indices
+  // (for u1, element_size=1, so no shift was applied in ExternalPtrStmt).
+  // We use the pointer directly as the element index for the buffer access.
+  spirv::Value idx_val;
+  if (is_ext_arr) {
+    // For external arrays, pointer is already in element indices
+    idx_val = ptr_val;
+    bool is_u8 = dt->is_primitive(PrimitiveTypeID::u8);
+    bool is_i32 = dt->is_primitive(PrimitiveTypeID::i32);
+    if (is_u8 || is_i32) {
+      std::cout << "[DIAG] at_buffer: ptr=" << ptr->raw_name()
+                << ", dt=" << (is_u8 ? "u8" : is_i32 ? "i32" : "other")
+                << ", ptr_val.id=" << ptr_val.id
+                << ", using as idx_val directly" << std::endl;
+    }
+  } else {
+    // For internal buffers, convert byte offset to element index if needed
+    size_t width = ir_->get_primitive_type_size(dt);
+    size_t shift_amount = size_t(std::log2(width));
+    idx_val = ir_->make_value(
+        spv::OpShiftRightLogical, ptr_val.stype, ptr_val,
+        ir_->uint_immediate_number(ptr_val.stype, shift_amount));
+  }
   spirv::Value ret =
       ir_->struct_array_access(ir_->get_primitive_type(dt), buffer, idx_val);
+  
+  bool is_u8 = dt->is_primitive(PrimitiveTypeID::u8);
+  bool is_i32 = dt->is_primitive(PrimitiveTypeID::i32);
+  if (is_ext_arr && (is_u8 || is_i32)) {
+    std::cout << "[DIAG] at_buffer: idx_val.id=" << idx_val.id
+              << ", ret.id=" << ret.id << std::endl;
+  }
+  
   return ret;
 }
 
@@ -2100,7 +2159,7 @@ spirv::Value TaskCodegen::load_buffer(const Stmt *ptr, DataType dt) {
   spirv::Value ptr_val = ir_->query_value(ptr->raw_name());
 
   DataType ti_buffer_type = ir_->get_gstaichi_uint_type(dt);
-
+  
   if (ptr_val.stype.dt == PrimitiveType::u64) {
     ti_buffer_type = dt;
   } else if (dt->is_primitive(PrimitiveTypeID::u1)) {
@@ -2110,11 +2169,23 @@ spirv::Value TaskCodegen::load_buffer(const Stmt *ptr, DataType dt) {
     ti_buffer_type = PrimitiveType::i32;
   }
 
+  bool has_buffer = ptr_to_buffers_.find(ptr) != ptr_to_buffers_.end();
+  BufferType buffer_type = has_buffer ? ptr_to_buffers_.at(ptr).type : BufferType::Root;
+  bool is_ext_arr = buffer_type == BufferType::ExtArr;
+  
   auto buf_ptr =
       at_buffer(ptr, ti_buffer_type,
                 dt->is_primitive(PrimitiveTypeID::u1) ? dt : nullptr);
   auto val_bits =
       ir_->load_variable(buf_ptr, ir_->get_primitive_type(ti_buffer_type));
+  
+  if (is_ext_arr && dt->is_primitive(PrimitiveTypeID::u1)) {
+    std::cout << "[DIAG] load_buffer: ptr=" << ptr->raw_name()
+              << ", ti_buffer_type=" << (ti_buffer_type->is_primitive(PrimitiveTypeID::i32) ? "i32" : "other")
+              << ", val_bits.id=" << val_bits.id
+              << ", buf_ptr.id=" << buf_ptr.id << std::endl;
+  }
+  
   if (dt->is_primitive(PrimitiveTypeID::u1))
     return ir_->cast(ir_->bool_type(), val_bits);
   return ti_buffer_type == dt
@@ -2132,7 +2203,7 @@ void TaskCodegen::store_buffer(const Stmt *ptr, spirv::Value val) {
   bool has_buffer = ptr_to_buffers_.find(ptr) != ptr_to_buffers_.end();
   BufferType buffer_type = has_buffer ? ptr_to_buffers_.at(ptr).type : BufferType::Root;
   bool is_ext_arr = buffer_type == BufferType::ExtArr;
-
+  
   if (ptr_val.stype.dt == PrimitiveType::u64 || is_ext_arr) {
     // Physical storage buffer pointer (external arrays) or ExtArr buffer type
     // For external arrays, store u1 as u8 (1 byte), not i32 (4 bytes)
@@ -2159,6 +2230,14 @@ void TaskCodegen::store_buffer(const Stmt *ptr, spirv::Value val) {
           ? val
           : ir_->make_value(spv::OpBitcast,
                             ir_->get_primitive_type(ti_buffer_type), val);
+  
+  if (is_ext_arr && val.stype.dt->is_primitive(PrimitiveTypeID::u1)) {
+    std::cout << "[DIAG] store_buffer: ptr=" << ptr->raw_name()
+              << ", ti_buffer_type=" << (ti_buffer_type->is_primitive(PrimitiveTypeID::u8) ? "u8" : "other")
+              << ", val_bits.id=" << val_bits.id
+              << ", buf_ptr.id=" << buf_ptr.id << std::endl;
+  }
+  
   ir_->store_variable(buf_ptr, val_bits);
 }
 
