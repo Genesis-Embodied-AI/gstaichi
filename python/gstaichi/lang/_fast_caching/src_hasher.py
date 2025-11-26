@@ -15,8 +15,6 @@ from .fast_caching_types import HashedFunctionSourceInfo
 from .hash_utils import hash_iterable_strings
 from .python_side_cache import PythonSideCache
 
-GSTAICHI_VERSION_STR: str = gstaichi.__version_str__
-
 
 def create_cache_key(
     raise_on_templated_floats: bool,
@@ -44,7 +42,7 @@ def create_cache_key(
     config_hash = config_hasher.hash_compile_config()
     cache_key = hash_iterable_strings(
         (
-            GSTAICHI_VERSION_STR,
+            gstaichi.__version_str__,
             kernel_hash,
             args_hash,
             config_hash,
