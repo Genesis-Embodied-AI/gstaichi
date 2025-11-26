@@ -1,4 +1,12 @@
 # type: ignore
+from gstaichi._lib import core as _ti_core
+
+__version__ = (
+    _ti_core.get_version_major(),
+    _ti_core.get_version_minor(),
+    _ti_core.get_version_patch(),
+)
+__version_str__ = ".".join(map(str, __version__))
 
 from gstaichi import (
     ad,
@@ -11,7 +19,6 @@ from gstaichi import (
     types,
 )
 from gstaichi._funcs import *
-from gstaichi._lib import core as _ti_core
 from gstaichi._lib.utils import warn_restricted_version
 from gstaichi._logging import *
 from gstaichi._snode import *
@@ -27,12 +34,6 @@ def __getattr__(attr):
         return None if lang.impl.get_runtime()._prog is None else lang.impl.current_cfg()
     raise AttributeError(f"module '{__name__}' has no attribute '{attr}'")
 
-
-__version__ = (
-    _ti_core.get_version_major(),
-    _ti_core.get_version_minor(),
-    _ti_core.get_version_patch(),
-)
 
 del _ti_core
 

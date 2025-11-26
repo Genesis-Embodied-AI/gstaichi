@@ -15,7 +15,7 @@ from .fast_caching_types import HashedFunctionSourceInfo
 from .hash_utils import hash_iterable_strings
 from .python_side_cache import PythonSideCache
 
-GSTAICHI_VERSION_STR: str | None = None
+GSTAICHI_VERSION_STR: str = gstaichi.__version_str__
 
 
 def create_cache_key(
@@ -31,7 +31,6 @@ def create_cache_key(
     - kernel function (but not sub functions)
     - compilation config (which includes arch, and debug)
     """
-    global GSTAICHI_VERSION_STR
     args_hash = args_hasher.hash_args(raise_on_templated_floats, args, arg_metas)
     if args_hash is None:
         # the bit in caps at start should not be modified without modifying corresponding text
@@ -43,8 +42,6 @@ def create_cache_key(
         return None
     kernel_hash = function_hasher.hash_kernel(kernel_source_info)
     config_hash = config_hasher.hash_compile_config()
-    if not GSTAICHI_VERSION_STR:
-        GSTAICHI_VERSION_STR = ".".join(map(str, gstaichi.__version__))
     cache_key = hash_iterable_strings(
         (
             GSTAICHI_VERSION_STR,
