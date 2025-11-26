@@ -331,3 +331,28 @@ def test_types_fields_and_dtypes_from_numpy_accessor_read_consistency(tensor_typ
 
     for i in range(16):
         assert a[i] == (1 if i in poses else 0)
+
+
+@pytest.mark.parametrize("tensor_type", [ti.field, ti.ndarray])
+@pytest.mark.parametrize("dtype", [ti.u1, ti.u8, ti.u16, ti.u32, ti.u64, ti.i8, ti.i32, ti.i16, ti.i64])
+@test_utils.test()
+def test_types_fields_and_dtypes_accessor_write_to_numpy_consistency(tensor_type, dtype) -> None:
+    """
+    numpy => read from kernel => write from kernel => numpy
+    check consistency
+    """
+    assert ti.cfg is not None
+    arch = ti.cfg.arch
+    if dtype == ti.u1 and arch in [ti.vulkan, ti.metal]:
+        pytest.xfail("u1 doesnt work on vulkan or metal doesn't work currently, neither on field nor ndarray")
+
+    poses = [0, 2, 5, 11]
+
+    a = tensor_type(dtype, (16,))
+    for pos in poses:
+        a[pos] = 1
+
+    a_np = a.to_numpy()
+
+    for i in range(16):
+        assert a_np[i] == (1 if i in poses else 0)
