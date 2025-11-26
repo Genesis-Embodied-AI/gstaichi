@@ -163,3 +163,33 @@ def test_uint_max(dt, val):
     fs = f.to_numpy()
     for f in fs:
         assert f == val
+
+
+@pytest.mark.parametrize("tensor_type", [ti.field, ti.ndarray])
+@pytest.mark.parametrize("dtype", [ti.u1, ti.u8, ti.u16, ti.u32, ti.u64, ti.i8, ti.i32, ti.i16, ti.i64])
+@test_utils.test()
+def test_types_fields_and_dtypes_kernel_write_to_numpy_consistency(tensor_type, dtype) -> None:
+    """
+    Check consistency between:
+    - write elements in kernel
+    - to numpy
+    """
+    poses = [0, 2, 5, 11]
+    a = tensor_type(dtype, (16,))
+
+    TensorType = ti.types.NDArray if tensor_type == ti.ndarray else ti.Template
+
+    @ti.kernel
+    def k1(a: TensorType) -> None:
+        for b_ in range(1):
+            for pos in ti.static(poses):
+                a[pos] = 1
+
+    k1(a)
+
+    a_np = a.to_numpy()
+
+    ti.sync()
+
+    for i in range(16):
+        assert a_np[i] == (1 if i in poses else 0)
