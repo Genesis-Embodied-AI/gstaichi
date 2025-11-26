@@ -101,7 +101,7 @@ test = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Genesis-Embedded-AI/gstaichi"
+Homepage = "https://github.com/Genesis-Embodied-AI/gstaichi"
 
 [build-system]
 requires = [
