@@ -2064,10 +2064,6 @@ spirv::Value TaskCodegen::at_buffer(const Stmt *ptr,
                                     DataType original_dt) {
   spirv::Value ptr_val = ir_->query_value(ptr->raw_name());
 
-  // For u1, cell_stride is already 4 (from data_type_size_gfx), so the pointer
-  // is already in i32 byte offsets. We don't need to multiply by 4 here.
-  // The original code multiplied by 4 because cell_stride was 1, but that's been fixed.
-
   if (ptr_val.stype.dt == PrimitiveType::u64) {
     spirv::Value paddr_ptr = ir_->make_value(
         spv::OpConvertUToPtr,
