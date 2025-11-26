@@ -229,3 +229,32 @@ def test_types_fields_and_dtypes_from_numpy(tensor_type, dtype) -> None:
 
     for i in range(16):
         assert a[i] == (1 if i in poses else 0)
+
+
+@pytest.mark.parametrize("tensor_type", [ti.field, ti.ndarray])
+@pytest.mark.parametrize("dtype", [ti.u1, ti.u8, ti.u16, ti.u32, ti.u64, ti.i8, ti.i32, ti.i16, ti.i64])
+@test_utils.test()
+def test_types_fields_and_dtypes_write_ndarray_from_kernel(tensor_type, dtype) -> None:
+    """
+    Assume:
+    - can read elements correctly from tensors using accessors
+    Test:
+    - can write elements correctly to tensors from kernel
+    """
+    poses = [0, 2, 5, 11]
+    a = tensor_type(dtype, (16,))
+
+    TensorType = ti.types.NDArray if tensor_type == ti.ndarray else ti.Template
+
+    @ti.kernel
+    def k1(a: TensorType) -> None:
+        for b_ in range(1):
+            for pos in ti.static(poses):
+                a[pos] = 1
+    # for pos in poses:
+    #     a[pos] = 1
+
+    k1(a)
+
+    for i in range(16):
+        assert a[i] == (1 if i in poses else 0)
