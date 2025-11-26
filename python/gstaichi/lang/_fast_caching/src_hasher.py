@@ -44,8 +44,7 @@ def create_cache_key(
     kernel_hash = function_hasher.hash_kernel(kernel_source_info)
     config_hash = config_hasher.hash_compile_config()
     if not GSTAICHI_VERSION_STR:
-        v = gstaichi.__version__
-        GSTAICHI_VERSION_STR = f"{v[0]}.{v[1]}.{v[2]}"
+        GSTAICHI_VERSION_STR = ".".join(map(str, gstaichi.__version__))
     cache_key = hash_iterable_strings(
         (
             GSTAICHI_VERSION_STR,
