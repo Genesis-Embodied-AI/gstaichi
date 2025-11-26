@@ -184,9 +184,7 @@ def test_uint_max(dt, val):
 @test_utils.test()
 def test_types_fields_and_dtypes_kernel_write_to_numpy_consistency(tensor_type, dtype) -> None:
     """
-    Check consistency between:
-    - write elements in kernel
-    - to numpy
+    write from kernel => to_numpy => check
     """
     assert ti.cfg is not None
     arch = ti.cfg.arch
@@ -217,9 +215,7 @@ def test_types_fields_and_dtypes_kernel_write_to_numpy_consistency(tensor_type, 
 @test_utils.test()
 def test_types_fields_and_dtypes_kernel_from_numpy_to_numpy_consistency(tensor_type, dtype) -> None:
     """
-    Check consistency between:
-    - from numpy
-    - to numpy
+    write to numpy => from_numpy => to_numpy => check
     """
     assert ti.cfg is not None
     arch = ti.cfg.arch
@@ -249,7 +245,7 @@ def test_types_fields_and_dtypes_kernel_from_numpy_to_numpy_consistency(tensor_t
 @test_utils.test()
 def test_types_fields_and_dtypes_np_read_write_np_consistency(tensor_type, dtype) -> None:
     """
-    numpy => read from kernel => write from kernel => numpy
+    write to numpy => read from kernel => write from kernel => numpy => check
     check consistency
     """
     assert ti.cfg is not None
@@ -290,7 +286,7 @@ def test_types_fields_and_dtypes_np_read_write_np_consistency(tensor_type, dtype
 @test_utils.test()
 def test_types_fields_and_dtypes_from_numpy_accessor_read_consistency(tensor_type, dtype) -> None:
     """
-    numpy => read from kernel => write from kernel => numpy
+    write to numpy => from_numpy => accessor read => check
     check consistency
     """
     assert ti.cfg is not None
@@ -318,8 +314,7 @@ def test_types_fields_and_dtypes_from_numpy_accessor_read_consistency(tensor_typ
 @test_utils.test()
 def test_types_fields_and_dtypes_accessor_write_to_numpy_consistency(tensor_type, dtype) -> None:
     """
-    numpy => read from kernel => write from kernel => numpy
-    check consistency
+    accessor write => to_numpy => check
     """
     assert ti.cfg is not None
     arch = ti.cfg.arch
