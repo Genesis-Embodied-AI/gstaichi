@@ -197,7 +197,7 @@ def test_types_fields_and_dtypes_kernel_write_to_numpy_consistency(tensor_type, 
 @pytest.mark.parametrize("tensor_type", [ti.field, ti.ndarray])
 @pytest.mark.parametrize("dtype", [ti.u1, ti.u8, ti.u16, ti.u32, ti.u64, ti.i8, ti.i32, ti.i16, ti.i64])
 @test_utils.test()
-def test_types_fields_and_dtypes_kernel_to_numpy_from_numpy_consistency(tensor_type, dtype) -> None:
+def test_types_fields_and_dtypes_kernel_from_numpy_to_numpy_consistency(tensor_type, dtype) -> None:
     """
     Check consistency between:
     - from numpy
