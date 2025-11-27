@@ -7,6 +7,10 @@ import gstaichi as ti
 from tests import test_utils
 
 dlpack_arch = [ti.cpu, ti.cuda, ti.metal]
+dlpack_no_metal_arch = [
+    ti.cpu,
+    ti.cuda,
+]  # TODO: exclude metal temporarily, waiting for metal field PR ready https://github.com/pytorch/pytorch/pull/168193
 dlpack_ineligible_arch = [ti.vulkan]
 
 
@@ -224,7 +228,7 @@ def test_dlpack_field_multiple_tree_nodes():
     assert e_t[0] == 555
 
 
-@test_utils.test(arch=dlpack_arch)
+@test_utils.test(arch=dlpack_no_metal_arch)
 @pytest.mark.parametrize("tensor_type", [ti.field])
 @pytest.mark.parametrize("dtype", [ti.i32, ti.i64, ti.f32, ti.f64, ti.u1, ti.i8, ti.types.vector(3, ti.i32)])
 @pytest.mark.parametrize("shape", [3, 1, 4, 5, 7, 2])
@@ -246,7 +250,7 @@ def test_dlpack_mixed_types_memory_alignment_field(tensor_type, dtype, shape: tu
     )
 
 
-@test_utils.test(arch=dlpack_arch)
+@test_utils.test(arch=dlpack_no_metal_arch)
 def test_dlpack_multiple_mixed_types_memory_alignment_field() -> None:
 
     dtypes = [ti.i32, ti.i64, ti.f32, ti.f64, ti.u1, ti.i8, ti.types.vector(3, ti.i32)]
@@ -269,7 +273,7 @@ def test_dlpack_multiple_mixed_types_memory_alignment_field() -> None:
     )
 
 
-@test_utils.test(arch=dlpack_arch)
+@test_utils.test(arch=dlpack_no_metal_arch)
 def test_dlpack_joints_case_memory_alignment() -> None:
 
     links_is_fixed = ti.field(dtype=ti.u1, shape=(1,))
