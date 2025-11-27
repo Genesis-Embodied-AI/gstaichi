@@ -298,10 +298,6 @@ def test_tensor_consistency_kern_to_ext(dtype) -> None:
     """
     write directly to numpy array in kernel => check in numpy
     """
-    assert ti.cfg is not None
-    arch = ti.cfg.arch
-    if dtype == ti.u1 and arch in [ti.vulkan, ti.metal]:
-        pytest.xfail("u1 doesnt work on vulkan or metal doesn't work currently")
 
     poses_l = [0, 2, 5, 11]
     N = 16
