@@ -174,11 +174,6 @@ def test_tensor_consistency_from_numpy_kern_read(tensor_type, dtype, std_dtype) 
     """
     write numpy => from_numpy => kernel read => kernel write to standard type => to_numpy => check
     """
-    assert ti.cfg is not None
-    arch = ti.cfg.arch
-    if dtype == ti.u1 and arch in [ti.metal, ti.vulkan]:
-        pytest.xfail("u1 not supported on metal or vulkan")
-
     poses = [0, 2, 5, 11]
     N = 16
 
