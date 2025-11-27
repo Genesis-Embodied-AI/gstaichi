@@ -24,6 +24,7 @@ class KernelCodegen {
     Arch arch;
     DeviceCapabilityConfig caps;
     bool enable_spv_opt{true};
+    bool print_kernel_asm{false};
   };
 
   explicit KernelCodegen(const Params &params);

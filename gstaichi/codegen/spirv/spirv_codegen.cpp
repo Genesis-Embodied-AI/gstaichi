@@ -17,6 +17,7 @@
 #include "gstaichi/ir/transforms.h"
 #include "gstaichi/math/arithmetic.h"
 #include "gstaichi/codegen/ir_dump.h"
+#include "gstaichi/util/file_sequence_writer.h"
 
 #include <spirv-tools/libspirv.hpp>
 #include <spirv-tools/optimizer.hpp>
@@ -2484,6 +2485,16 @@ void KernelCodegen::run(GsTaichiKernelAttributes &kernel_attribs,
           out_file.write(spirv_asm.c_str(), spirv_asm.size());
         }
       }
+    }
+
+    if (params_.print_kernel_asm) {
+      std::vector<uint32_t> &spirv =
+          success ? optimized_spv : task_res.spirv_code;
+      std::string spirv_asm;
+      spirv_tools_->Disassemble(spirv, &spirv_asm);
+      static FileSequenceWriter writer("gstaichi_kernel_spirv_{:04d}.spirv",
+                                        "module SPIR-V");
+      writer.write(spirv_asm);
     }
 
     // Enable to dump SPIR-V assembly of kernels
