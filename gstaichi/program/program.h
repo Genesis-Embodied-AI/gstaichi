@@ -221,8 +221,11 @@ class TI_DLL_EXPORT Program {
    */
   SNode *get_snode_root(int tree_id);
 
-  size_t get_field_in_tree_offset(int tree_id, const SNode *child, bool is_memory_aligned=false) {
-    return program_impl_->get_field_in_tree_offset(tree_id, child, is_memory_aligned);
+  size_t get_field_in_tree_offset(int tree_id,
+                                  const SNode *child,
+                                  bool is_memory_aligned = false) {
+    return program_impl_->get_field_in_tree_offset(tree_id, child,
+                                                   is_memory_aligned);
   }
 
   DevicePtr get_snode_tree_device_ptr(int tree_id) {
