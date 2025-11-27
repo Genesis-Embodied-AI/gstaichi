@@ -225,17 +225,17 @@ def test_dlpack_field_multiple_tree_nodes():
 
 @test_utils.test(arch=dlpack_arch)
 @pytest.mark.parametrize("tensor_type", [ti.field])
-@pytest.mark.parametrize("dtype", [ti.i32, ti.i64, ti.f32, ti.f64, ti.u1, ti.i8])
+@pytest.mark.parametrize("dtype", [ti.i32, ti.i64, ti.f32, ti.f64, ti.u1, ti.i8, ti.types.vector(3, ti.i32)])
 @pytest.mark.parametrize("shape", [3, 1, 4, 5, 7, 2])
 def test_dlpack_mixed_types_field(tensor_type, dtype, shape: tuple[int]) -> None:
     import numpy as np
 
-    curr_field = tensor_type(dtype, shape))
-    pos = tensor_type(ti.types.vector(3, ti.i32), shape=(1,))
+    curr_field = tensor_type(dtype, shape)
+    pos = tensor_type(ti.types.vector(3, ti.i64), shape=(1,))
 
     @ti.kernel
     def kernel_update_render_fields(pos: ti.template()):
-        pos[0] = ti.Vector([1, 2, 3], dt=ti.i32)
+        pos[0] = ti.Vector([1, 2, 3], dt=ti.i64)
 
     kernel_update_render_fields(pos)
     ti.sync()
@@ -248,20 +248,19 @@ def test_dlpack_mixed_types_field(tensor_type, dtype, shape: tuple[int]) -> None
 
 @test_utils.test(arch=dlpack_arch)
 @pytest.mark.parametrize("tensor_type", [ti.field])
-@pytest.mark.parametrize("dtypes", [(ti.i32, ti.i64, ti.f32, ti.f64, ti.u1, ti.i8)])
-@pytest.mark.parametrize("shapes", [(3, 1, 4, 5, 7, 2)])
+@pytest.mark.parametrize("dtypes", [(ti.i32, ti.i64, ti.f32, ti.f64, ti.u1, ti.i8, ti.types.vector(3, ti.i32))])
+@pytest.mark.parametrize("shapes", [(3, 1, 4, 5, 7, 2, 3)])
 def test_dlpack_multiple_mixed_types_field(tensor_type, dtypes, shapes: tuple[int]) -> None:
     import numpy as np
 
     fields = []
     for dtype, shape in zip(dtypes, shapes):
         fields.append(tensor_type(dtype, shape))
-    pos = tensor_type(ti.types.vector(3, ti.i32), shape=(1,))
+    pos = tensor_type(ti.types.vector(3, ti.i64), shape=(1,))
 
     @ti.kernel
     def kernel_update_render_fields(pos: ti.template()):
-        pos[0] = ti.Vector([1, 2, 3], dt=ti.i32)
-
+        pos[0] = ti.Vector([1, 2, 3], dt=ti.i64)
     kernel_update_render_fields(pos)
     ti.sync()
 
@@ -295,6 +294,6 @@ def test_dlpack_joints_case() -> None:
     ti.sync()
 
     np.testing.assert_allclose(
-        torch.utils.dlpack.from_dlpack(joints_n_dofs.to_dlpack()), 
+        torch.utils.dlpack.from_dlpack(joints_n_dofs.to_dlpack()).cpu().numpy(), 
         joints_n_dofs.to_numpy(),
     )

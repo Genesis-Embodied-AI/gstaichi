@@ -193,17 +193,22 @@ class LlvmProgramImpl : public ProgramImpl {
 
     // The maximum cell size bytes is used to handle memory alignment for dlpack usage
     // When compute field offset, SNode doesn't take the alignment into account yet, we need to mannully handle it here
-    size_t max_cell_size_bytes = root->ch[child_id].get()->cell_size_bytes;
+    
+    // The second ->ch is to get the actual data continer
+    DataType dt = root->ch[child_id].get()->ch[0]->dt;
+    size_t max_cell_size_bytes = data_type_size(dt.get_element_type());
+    TI_DEBUG("data type {} data type size {}", dt.get_element_type().to_string(), data_type_size(dt.get_element_type()));
+
     for (int i = 0; i < child_id; ++i) {
       SNode *child = root->ch[i].get();
-      size_t child_cell_size_bytes = child->cell_size_bytes;
       if (is_memory_aligned) {
+        size_t child_cell_size_bytes = data_type_size(child->ch[0]->dt.get_element_type());
         max_cell_size_bytes = child_cell_size_bytes > max_cell_size_bytes
                                 ? child_cell_size_bytes
                                 : max_cell_size_bytes;
+        TI_DEBUG("child Snode name {} child cell size bytes: {} max_cell_size_bytes {} child num cells per container {}, data type {}, data type size {}", child->get_name(), child_cell_size_bytes, max_cell_size_bytes, child->num_cells_per_container, child->ch[0]->dt.get_element_type().to_string(), child_cell_size_bytes);
       }
-      offset += child_cell_size_bytes * child->num_cells_per_container;
-      TI_INFO("child Snode name {} child cell size bytes: {} max_cell_size_bytes {} child num cells per container {}", child->get_name(), child_cell_size_bytes, max_cell_size_bytes, child->num_cells_per_container);
+      offset += child->cell_size_bytes * child->num_cells_per_container;
     }
 
     if (is_memory_aligned) {
@@ -211,8 +216,8 @@ class LlvmProgramImpl : public ProgramImpl {
         return (x + align - 1) / align * align;
       };
       offset = align_up(offset, max_cell_size_bytes);
+      TI_DEBUG("Root name {} Parent Snode name {} max_cell_size_bytes {} Computed aligned field offset: {}", root->get_name(), dense_parent->get_name(), max_cell_size_bytes, offset);
     }
-    TI_INFO("Root name {} Parent Snode name {} max_cell_size_bytes {} Computed aligned field offset: {}", root->get_name(), dense_parent->get_name(), max_cell_size_bytes, offset);
 
     return offset;
   }
