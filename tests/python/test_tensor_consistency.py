@@ -21,7 +21,7 @@ _TI_DTYPE_TO_NP_DTYPE = {
 @pytest.mark.parametrize("tensor_type", [ti.field, ti.ndarray])
 @pytest.mark.parametrize("dtype", [ti.u1, ti.u8, ti.u16, ti.u32, ti.u64, ti.i8, ti.i32, ti.i16, ti.i64])
 @test_utils.test()
-def test_types_fields_and_dtypes_kernel_write_to_numpy_consistency(tensor_type, dtype) -> None:
+def test_tensor_consistency_kernel_write_to_numpy_consistency(tensor_type, dtype) -> None:
     """
     write from kernel => to_numpy => check
     """
@@ -52,7 +52,7 @@ def test_types_fields_and_dtypes_kernel_write_to_numpy_consistency(tensor_type, 
 @pytest.mark.parametrize("tensor_type", [ti.field, ti.ndarray])
 @pytest.mark.parametrize("dtype", [ti.u1, ti.u8, ti.u16, ti.u32, ti.u64, ti.i8, ti.i32, ti.i16, ti.i64])
 @test_utils.test()
-def test_types_fields_and_dtypes_kernel_from_numpy_to_numpy_consistency(tensor_type, dtype) -> None:
+def test_tensor_consistency_kernel_from_numpy_to_numpy_consistency(tensor_type, dtype) -> None:
     """
     write to numpy => from_numpy => to_numpy => check
     """
@@ -82,7 +82,7 @@ def test_types_fields_and_dtypes_kernel_from_numpy_to_numpy_consistency(tensor_t
 @pytest.mark.parametrize("tensor_type", [ti.field, ti.ndarray])
 @pytest.mark.parametrize("dtype", [ti.u1, ti.u8, ti.u16, ti.u32, ti.u64, ti.i8, ti.i32, ti.i16, ti.i64])
 @test_utils.test()
-def test_types_fields_and_dtypes_np_read_write_np_consistency(tensor_type, dtype) -> None:
+def test_tensor_consistency_np_read_write_np_consistency(tensor_type, dtype) -> None:
     """
     write to numpy => read from kernel => write from kernel => numpy => check
     check consistency
@@ -123,7 +123,7 @@ def test_types_fields_and_dtypes_np_read_write_np_consistency(tensor_type, dtype
 @pytest.mark.parametrize("tensor_type", [ti.field, ti.ndarray])
 @pytest.mark.parametrize("dtype", [ti.u1, ti.u8, ti.u16, ti.u32, ti.u64, ti.i8, ti.i32, ti.i16, ti.i64])
 @test_utils.test()
-def test_types_fields_and_dtypes_from_numpy_accessor_read_consistency(tensor_type, dtype) -> None:
+def test_tensor_consistency_from_numpy_accessor_read_consistency(tensor_type, dtype) -> None:
     """
     write to numpy => from_numpy => accessor read => check
     check consistency
@@ -150,7 +150,7 @@ def test_types_fields_and_dtypes_from_numpy_accessor_read_consistency(tensor_typ
 @pytest.mark.parametrize("tensor_type", [ti.field, ti.ndarray])
 @pytest.mark.parametrize("dtype", [ti.u1, ti.u8, ti.u16, ti.u32, ti.u64, ti.i8, ti.i32, ti.i16, ti.i64])
 @test_utils.test()
-def test_types_fields_and_dtypes_accessor_write_to_numpy_consistency(tensor_type, dtype) -> None:
+def test_tensor_consistency_accessor_write_to_numpy_consistency(tensor_type, dtype) -> None:
     """
     accessor write => to_numpy => check
     """
@@ -175,7 +175,7 @@ def test_types_fields_and_dtypes_accessor_write_to_numpy_consistency(tensor_type
 @pytest.mark.parametrize("dtype", [ti.u1, ti.u8, ti.u16, ti.u32, ti.u64, ti.i8, ti.i32, ti.i16, ti.i64])
 @pytest.mark.parametrize("std_dtype", [ti.i8, ti.i32])
 @test_utils.test()
-def test_types_fields_and_dtypes_from_numpy_kern_read(tensor_type, dtype, std_dtype) -> None:
+def test_tensor_consistency_from_numpy_kern_read(tensor_type, dtype, std_dtype) -> None:
     """
     write numpy => from_numpy => kernel read => kernel write to standard type => to_numpy => check
     """
@@ -216,7 +216,7 @@ def test_types_fields_and_dtypes_from_numpy_kern_read(tensor_type, dtype, std_dt
 @pytest.mark.parametrize("dtype", [ti.u1, ti.u8, ti.u16, ti.u32, ti.u64, ti.i8, ti.i32, ti.i16, ti.i64])
 @pytest.mark.parametrize("std_dtype", [ti.i8, ti.i32])
 @test_utils.test()
-def test_types_fields_and_dtypes_kern_write_to_numpy(tensor_type, dtype, std_dtype) -> None:
+def test_tensor_consistency_kern_write_to_numpy(tensor_type, dtype, std_dtype) -> None:
     """
     write to std type numpy => from_numpy => std type kernel read => kernel write => to_numpy => check
     """
@@ -255,7 +255,7 @@ def test_types_fields_and_dtypes_kern_write_to_numpy(tensor_type, dtype, std_dty
 
 @pytest.mark.parametrize("dtype", [ti.u1, ti.u8, ti.u16, ti.u32, ti.u64, ti.i8, ti.i32, ti.i16, ti.i64])
 @test_utils.test()
-def test_types_fields_and_dtypes_ext_to_kern(dtype) -> None:
+def test_tensor_consistency_ext_to_kern(dtype) -> None:
     """
     write to numpy => pass directly to kernel => test in kern
     """
@@ -294,7 +294,7 @@ def test_types_fields_and_dtypes_ext_to_kern(dtype) -> None:
 
 @pytest.mark.parametrize("dtype", [ti.u1, ti.u8, ti.u16, ti.u32, ti.u64, ti.i8, ti.i32, ti.i16, ti.i64])
 @test_utils.test()
-def test_types_fields_and_dtypes_kern_to_ext(dtype) -> None:
+def test_tensor_consistency_kern_to_ext(dtype) -> None:
     """
     write directly to numpy array in kernel => check in numpy
     """
