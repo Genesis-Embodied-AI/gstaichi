@@ -229,13 +229,12 @@ def test_dlpack_field_multiple_tree_nodes():
 
 
 @test_utils.test(arch=dlpack_no_metal_arch)
-@pytest.mark.parametrize("tensor_type", [ti.field])
 @pytest.mark.parametrize("dtype", [ti.i32, ti.i64, ti.f32, ti.f64, ti.u1, ti.i8, ti.types.vector(3, ti.i32)])
 @pytest.mark.parametrize("shape", [3, 1, 4, 5, 7, 2])
-def test_dlpack_mixed_types_memory_alignment_field(tensor_type, dtype, shape: tuple[int]) -> None:
+def test_dlpack_mixed_types_memory_alignment_field(dtype, shape: tuple[int]) -> None:
 
-    curr_field = tensor_type(dtype, shape)
-    pos = tensor_type(ti.types.vector(3, ti.i64), shape=(1,))
+    curr_field = ti.field(dtype, shape)
+    pos = ti.field(ti.types.vector(3, ti.i64), shape=(1,))
 
     @ti.kernel
     def kernel_update_render_fields(pos: ti.template()):
