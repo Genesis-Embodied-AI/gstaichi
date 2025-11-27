@@ -2128,9 +2128,9 @@ void TaskCodegen::store_buffer(const Stmt *ptr, spirv::Value val) {
   if (ptr_val.stype.dt == PrimitiveType::u64) {
     ti_buffer_type = val.stype.dt;
   } else if (val.stype.dt->is_primitive(PrimitiveTypeID::u1)) {
-    ti_buffer_type = PrimitiveType::i32;
-    val = ir_->make_value(spv::OpSelect, ir_->i32_type(), val,
-                          ir_->const_i32_one_, ir_->const_i32_zero_);
+    ti_buffer_type = PrimitiveType::i8;
+    // val = ir_->make_value(spv::OpSelect, ir_->i32_type(), val,
+    //                       ir_->const_i32_one_, ir_->const_i32_zero_);
   }
 
   auto buf_ptr = at_buffer(ptr, ti_buffer_type);
