@@ -2,6 +2,7 @@ import pytest
 import torch
 
 import gstaichi as ti
+import numpy as np
 
 from tests import test_utils
 
@@ -227,8 +228,7 @@ def test_dlpack_field_multiple_tree_nodes():
 @pytest.mark.parametrize("tensor_type", [ti.field])
 @pytest.mark.parametrize("dtype", [ti.i32, ti.i64, ti.f32, ti.f64, ti.u1, ti.i8, ti.types.vector(3, ti.i32)])
 @pytest.mark.parametrize("shape", [3, 1, 4, 5, 7, 2])
-def test_dlpack_mixed_types_field(tensor_type, dtype, shape: tuple[int]) -> None:
-    import numpy as np
+def test_dlpack_mixed_types_memory_alignment_field(tensor_type, dtype, shape: tuple[int]) -> None:
 
     curr_field = tensor_type(dtype, shape)
     pos = tensor_type(ti.types.vector(3, ti.i64), shape=(1,))
@@ -247,16 +247,14 @@ def test_dlpack_mixed_types_field(tensor_type, dtype, shape: tuple[int]) -> None
 
 
 @test_utils.test(arch=dlpack_arch)
-@pytest.mark.parametrize("tensor_type", [ti.field])
-@pytest.mark.parametrize("dtypes", [(ti.i32, ti.i64, ti.f32, ti.f64, ti.u1, ti.i8, ti.types.vector(3, ti.i32))])
-@pytest.mark.parametrize("shapes", [(3, 1, 4, 5, 7, 2, 3)])
-def test_dlpack_multiple_mixed_types_field(tensor_type, dtypes, shapes: tuple[int]) -> None:
-    import numpy as np
-
+def test_dlpack_multiple_mixed_types_memory_alignment_field() -> None:
+    
+    dtypes = [ti.i32, ti.i64, ti.f32, ti.f64, ti.u1, ti.i8, ti.types.vector(3, ti.i32)]
+    shapes = [3, 1, 4, 5, 7, 2, 3]
     fields = []
     for dtype, shape in zip(dtypes, shapes):
-        fields.append(tensor_type(dtype, shape))
-    pos = tensor_type(ti.types.vector(3, ti.i64), shape=(1,))
+        fields.append(ti.field(dtype, shape))
+    pos = ti.field(ti.types.vector(3, ti.i64), shape=(1,))
 
     @ti.kernel
     def kernel_update_render_fields(pos: ti.template()):
@@ -271,8 +269,7 @@ def test_dlpack_multiple_mixed_types_field(tensor_type, dtypes, shapes: tuple[in
 
 
 @test_utils.test(arch=dlpack_arch)
-def test_dlpack_joints_case() -> None:
-    import numpy as np
+def test_dlpack_joints_case_memory_alignment() -> None:
 
     links_is_fixed = ti.field(dtype=ti.u1, shape=(1,))
     joints_n_dofs = ti.field(dtype=ti.i32, shape=(1,))

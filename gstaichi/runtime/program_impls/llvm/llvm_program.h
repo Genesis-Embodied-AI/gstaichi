@@ -192,7 +192,7 @@ class LlvmProgramImpl : public ProgramImpl {
     int child_id = root->child_id(dense_parent);
 
     // The maximum cell size bytes is used to handle memory alignment for dlpack usage
-    // When compute field offset, SNode doesn't take the alignment into account yet, we need to mannully handle it here
+    // When compute field offset, SNode doesn't take the alignment into account yet, we need to handle it here
     
     // The second ->ch is to get the actual data continer
     DataType dt = root->ch[child_id].get()->ch[0]->dt;
@@ -206,7 +206,6 @@ class LlvmProgramImpl : public ProgramImpl {
         max_cell_size_bytes = child_cell_size_bytes > max_cell_size_bytes
                                 ? child_cell_size_bytes
                                 : max_cell_size_bytes;
-        TI_DEBUG("child Snode name {} child cell size bytes: {} max_cell_size_bytes {} child num cells per container {}, data type {}, data type size {}", child->get_name(), child_cell_size_bytes, max_cell_size_bytes, child->num_cells_per_container, child->ch[0]->dt.get_element_type().to_string(), child_cell_size_bytes);
       }
       offset += child->cell_size_bytes * child->num_cells_per_container;
     }
@@ -216,7 +215,6 @@ class LlvmProgramImpl : public ProgramImpl {
         return (x + align - 1) / align * align;
       };
       offset = align_up(offset, max_cell_size_bytes);
-      TI_DEBUG("Root name {} Parent Snode name {} max_cell_size_bytes {} Computed aligned field offset: {}", root->get_name(), dense_parent->get_name(), max_cell_size_bytes, offset);
     }
 
     return offset;
