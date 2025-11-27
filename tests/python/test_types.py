@@ -420,10 +420,10 @@ def test_types_fields_and_dtypes_ext_to_kern(dtype) -> None:
     """
     write to numpy => pass directly to kernel => test in kern
     """
-    # assert ti.cfg is not None
-    # arch = ti.cfg.arch
-    # if dtype == ti.u1 and arch in [ti.vulkan, ti.metal]:
-    #     pytest.xfail("u1 doesnt work on vulkan or metal doesn't work currently, neither on field nor ndarray")
+    assert ti.cfg is not None
+    arch = ti.cfg.arch
+    if dtype == ti.u1 and arch in [ti.vulkan, ti.metal]:
+        pytest.xfail("u1 doesnt work on vulkan or metal doesn't work currently.")
 
     poses_l = [0, 2, 5, 11]
     N = 16
