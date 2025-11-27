@@ -277,7 +277,7 @@ def test_dlpack_multiple_mixed_types_memory_alignment_field() -> None:
 
 
 @test_utils.test(arch=dlpack_arch)
-def test_dlpack_joints_case_memory_alignment() -> None:
+def test_dlpack_joints_case_memory_alignment_field() -> None:
     from gstaichi.lang import impl
 
     if impl.current_cfg().arch == ti.metal:
