@@ -210,11 +210,6 @@ def test_tensor_consistency_kern_write_to_numpy(tensor_type, dtype, std_dtype) -
     """
     write to std type numpy => from_numpy => std type kernel read => kernel write => to_numpy => check
     """
-    assert ti.cfg is not None
-    arch = ti.cfg.arch
-    if dtype == ti.u1 and arch in [ti.vulkan, ti.metal]:
-        pytest.xfail("u1 doesnt work on vulkan or metal doesn't work currently, neither on field nor ndarray")
-
     poses = [0, 2, 5, 11]
     N = 16
 
