@@ -721,24 +721,25 @@ void TaskCodegen::visit(ExternalPtrStmt *stmt) {
       // Use immediate numbers to flatten index for element shapes.
       if (i >= element_shape_index_offset &&
           i < element_shape_index_offset + element_shape.size()) {
-        std::cout << "uint immediate number " << element_shape[i - element_shape_index_offset] << std::endl;
+        std::cout << "uint immediate number "
+                  << element_shape[i - element_shape_index_offset] << std::endl;
         size_var = ir_->uint_immediate_number(
             ir_->i32_type(), element_shape[i - element_shape_index_offset]);
       } else {
-        std::cout << "size_var_names " << size_var_names[size_var_names_idx] << std::endl;
+        std::cout << "size_var_names " << size_var_names[size_var_names_idx]
+                  << std::endl;
         size_var = ir_->query_value(size_var_names[size_var_names_idx++]);
       }
       spirv::Value indices = ir_->query_value(stmt->indices[i]->raw_name());
       linear_offset = ir_->mul(linear_offset, size_var);
       linear_offset = ir_->add(linear_offset, indices);
     }
-    size_t type_size = ir_->get_primitive_type_size(
-      stmt->ret_type.ptr_removed());
+    size_t type_size =
+        ir_->get_primitive_type_size(stmt->ret_type.ptr_removed());
     std::cout << "type_size " << type_size << std::endl;
     linear_offset = ir_->make_value(
         spv::OpShiftLeftLogical, ir_->i32_type(), linear_offset,
-        ir_->int_immediate_number(ir_->i32_type(),
-                                  log2int(type_size)));
+        ir_->int_immediate_number(ir_->i32_type(), log2int(type_size)));
     if (caps_->get(DeviceCapability::spirv_has_no_integer_wrap_decoration)) {
       ir_->decorate(spv::OpDecorate, linear_offset,
                     spv::DecorationNoSignedWrap);
@@ -2099,6 +2100,7 @@ spirv::Value TaskCodegen::at_buffer(const Stmt *ptr, DataType dt) {
 }
 
 spirv::Value TaskCodegen::load_buffer(const Stmt *ptr, DataType dt) {
+  std::cout << "load buffer " << ptr->raw_name() << std::endl;
   spirv::Value ptr_val = ir_->query_value(ptr->raw_name());
 
   DataType ti_buffer_type = ir_->get_gstaichi_uint_type(dt);
@@ -2121,9 +2123,13 @@ spirv::Value TaskCodegen::load_buffer(const Stmt *ptr, DataType dt) {
 }
 
 void TaskCodegen::store_buffer(const Stmt *ptr, spirv::Value val) {
+  std::cout << "store buffer " << ptr->raw_name() << " val " << val.id
+            << std::endl;
   spirv::Value ptr_val = ir_->query_value(ptr->raw_name());
+  std::cout << "store val dt " << val.stype.dt->to_string() << std::endl;
 
   DataType ti_buffer_type = ir_->get_gstaichi_uint_type(val.stype.dt);
+  std::cout << "ti_buffer_type dt " << ti_buffer_type->to_string() << std::endl;
 
   if (ptr_val.stype.dt == PrimitiveType::u64) {
     ti_buffer_type = val.stype.dt;
@@ -2509,7 +2515,7 @@ void KernelCodegen::run(GsTaichiKernelAttributes &kernel_attribs,
       std::string spirv_asm;
       spirv_tools_->Disassemble(spirv, &spirv_asm);
       static FileSequenceWriter writer("gstaichi_kernel_spirv_{:04d}.spirv",
-                                        "module SPIR-V");
+                                       "module SPIR-V");
       writer.write(spirv_asm);
     }
 

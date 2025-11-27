@@ -352,7 +352,8 @@ SType IRBuilder::from_gstaichi_type(const DataType &dt, bool has_buffer_ptr) {
 }
 
 size_t IRBuilder::get_primitive_type_size(const DataType &dt) const {
-  std::cout << "spirv_ir_builder.cpp get_primitive_type_size dt: " << dt->to_string() << std::endl;
+  std::cout << "spirv_ir_builder.cpp get_primitive_type_size dt: "
+            << dt->to_string() << std::endl;
   if (!dt->is<PrimitiveType>()) {
     TI_ERROR("Type {} not supported.", dt->to_string());
   }
