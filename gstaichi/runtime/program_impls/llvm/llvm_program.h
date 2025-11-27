@@ -183,12 +183,15 @@ class LlvmProgramImpl : public ProgramImpl {
     runtime_exec_->check_runtime_error(result_buffer);
   }
 
-  size_t get_field_in_tree_offset(int tree_id, const SNode *child, bool is_memory_aligned=false) override {
+  size_t get_field_in_tree_offset(int tree_id,
+                                  const SNode *child,
+                                  bool is_memory_aligned = false) override {
     // FIXME: Compute the proper offset. Current method taken from GGUI code
     // Now fix the offset computation to support memory alignment ,
-    // the assumptions (That is, the parent of the snode is a dense, and the parent of that node is a root.) 
-    // from GGUI code listed in field_info.cpp still holds
-    
+    // the assumptions (That is, the parent of the snode is a dense, and the
+    // parent of that node is a root.) from GGUI code listed in field_info.cpp
+    // still holds
+
     size_t offset = 0;
 
     SNode *dense_parent = child->parent;
@@ -196,21 +199,25 @@ class LlvmProgramImpl : public ProgramImpl {
 
     int child_id = root->child_id(dense_parent);
 
-    // The maximum cell size bytes is used to handle memory alignment for dlpack usage
-    // When compute field offset, SNode doesn't take the alignment into account yet, we need to handle it here
-    
+    // The maximum cell size bytes is used to handle memory alignment for dlpack
+    // usage When compute field offset, SNode doesn't take the alignment into
+    // account yet, we need to handle it here
+
     // The second ->ch is to get the actual data continer
     DataType dt = root->ch[child_id].get()->ch[0]->dt;
     size_t max_cell_size_bytes = data_type_size(dt.get_element_type());
-    TI_DEBUG("data type {} data type size {}", dt.get_element_type().to_string(), data_type_size(dt.get_element_type()));
+    TI_DEBUG("data type {} data type size {}",
+             dt.get_element_type().to_string(),
+             data_type_size(dt.get_element_type()));
 
     for (int i = 0; i < child_id; ++i) {
       SNode *child = root->ch[i].get();
       if (is_memory_aligned) {
-        size_t child_cell_size_bytes = data_type_size(child->ch[0]->dt.get_element_type());
+        size_t child_cell_size_bytes =
+            data_type_size(child->ch[0]->dt.get_element_type());
         max_cell_size_bytes = child_cell_size_bytes > max_cell_size_bytes
-                                ? child_cell_size_bytes
-                                : max_cell_size_bytes;
+                                  ? child_cell_size_bytes
+                                  : max_cell_size_bytes;
       }
       offset += child->cell_size_bytes * child->num_cells_per_container;
     }

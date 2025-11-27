@@ -189,7 +189,8 @@ pybind11::capsule field_to_dlpack(Program *program,
   int tree_id = snode->get_snode_tree_id();
   DevicePtr tree_device_ptr = program->get_snode_tree_device_ptr(tree_id);
 
-  int field_in_tree_offset = program->get_field_in_tree_offset(tree_id, snode, /*is_memory_aligned=*/true);
+  int field_in_tree_offset = program->get_field_in_tree_offset(
+      tree_id, snode, /*is_memory_aligned=*/true);
 
   void *raw_ptr = nullptr;
   DLDeviceType device_type = DLDeviceType::kDLCPU;
