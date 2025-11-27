@@ -416,6 +416,45 @@ def test_types_fields_and_dtypes_kern_write_to_numpy(tensor_type, dtype, std_dty
 
 @pytest.mark.parametrize("dtype", [ti.u1, ti.u8, ti.u16, ti.u32, ti.u64, ti.i8, ti.i32, ti.i16, ti.i64])
 @test_utils.test()
+def test_types_fields_and_dtypes_ext_to_kern(dtype) -> None:
+    """
+    write to numpy => pass directly to kernel => test in kern
+    """
+    # assert ti.cfg is not None
+    # arch = ti.cfg.arch
+    # if dtype == ti.u1 and arch in [ti.vulkan, ti.metal]:
+    #     pytest.xfail("u1 doesnt work on vulkan or metal doesn't work currently, neither on field nor ndarray")
+
+    poses_l = [0, 2, 5, 11]
+    N = 16
+
+    np_dtype = _TI_DTYPE_TO_NP_DTYPE[dtype]
+    a_np = np.zeros(dtype=np_dtype, shape=(N,))
+    anti_poses_l = list(range(N))  # i.e positions with zeros
+    for pos in poses_l:
+        a_np[pos] = 1
+        anti_poses_l.remove(pos)
+
+    result = ti.ndarray(ti.i32, ())
+    result[()] = 1
+
+    @ti.kernel
+    def k1(a: ti.types.NDArray, result: ti.types.NDArray) -> None:
+        for b_ in range(1):
+            for pos in ti.static(poses_l):
+                if a[pos] != 1:
+                    result[()] = 0
+            for pos in ti.static(anti_poses_l):
+                if a[pos] != 0:
+                    result[()] = 0
+
+    k1(a_np, result)
+    ti.sync()
+    assert result[()] == 1
+
+
+@pytest.mark.parametrize("dtype", [ti.u1, ti.u8, ti.u16, ti.u32, ti.u64, ti.i8, ti.i32, ti.i16, ti.i64])
+@test_utils.test()
 def test_types_fields_and_dtypes_kern_to_ext(dtype) -> None:
     """
     write directly to numpy array in kernel => check in numpy
