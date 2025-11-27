@@ -9,6 +9,7 @@
 #include "gstaichi/program/program_impl.h"
 #include "gstaichi/program/parallel_executor.h"
 #include "gstaichi/util/bit.h"
+#include "gstaichi/ir/type_utils.h"
 #define TI_RUNTIME_HOST
 #include "gstaichi/program/context.h"
 #undef TI_RUNTIME_HOST
@@ -211,9 +212,6 @@ class LlvmProgramImpl : public ProgramImpl {
     }
 
     if (is_memory_aligned) {
-      auto align_up = [](size_t x, size_t align) {
-        return (x + align - 1) / align * align;
-      };
       offset = align_up(offset, max_cell_size_bytes);
     }
 
