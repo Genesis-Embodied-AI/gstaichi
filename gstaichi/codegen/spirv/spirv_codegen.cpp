@@ -691,6 +691,7 @@ void TaskCodegen::visit(ExternalTensorShapeAlongAxisStmt *stmt) {
 void TaskCodegen::visit(ExternalPtrStmt *stmt) {
   // Used mostly for transferring data between host (e.g. numpy array) and
   // device.
+  std::cout << "ExternalPtrStmt " << stmt->raw_name() << std::endl;
   spirv::Value linear_offset = ir_->int_immediate_number(ir_->i32_type(), 0);
   const auto *argload = stmt->base_ptr->as<ArgLoadStmt>();
   const auto arg_id = argload->arg_id;
@@ -714,30 +715,36 @@ void TaskCodegen::visit(ExternalPtrStmt *stmt) {
     }
     int size_var_names_idx = 0;
     for (int i = 0; i < num_indices; i++) {
+      std::cout << "index i " << i << std::endl;
       spirv::Value size_var;
       // Use immediate numbers to flatten index for element shapes.
       if (i >= element_shape_index_offset &&
           i < element_shape_index_offset + element_shape.size()) {
+        std::cout << "uint immediate number " << element_shape[i - element_shape_index_offset] << std::endl;
         size_var = ir_->uint_immediate_number(
             ir_->i32_type(), element_shape[i - element_shape_index_offset]);
       } else {
+        std::cout << "size_var_names " << size_var_names[size_var_names_idx] << std::endl;
         size_var = ir_->query_value(size_var_names[size_var_names_idx++]);
       }
       spirv::Value indices = ir_->query_value(stmt->indices[i]->raw_name());
       linear_offset = ir_->mul(linear_offset, size_var);
       linear_offset = ir_->add(linear_offset, indices);
     }
+    size_t type_size = ir_->get_primitive_type_size(
+      stmt->ret_type.ptr_removed());
+    std::cout << "type_size " << type_size << std::endl;
     linear_offset = ir_->make_value(
         spv::OpShiftLeftLogical, ir_->i32_type(), linear_offset,
         ir_->int_immediate_number(ir_->i32_type(),
-                                  log2int(ir_->get_primitive_type_size(
-                                      stmt->ret_type.ptr_removed()))));
+                                  log2int(type_size)));
     if (caps_->get(DeviceCapability::spirv_has_no_integer_wrap_decoration)) {
       ir_->decorate(spv::OpDecorate, linear_offset,
                     spv::DecorationNoSignedWrap);
     }
   }
   if (caps_->get(DeviceCapability::spirv_has_physical_storage_buffer)) {
+    std::cout << "spirv_has_physical_storage_buffer" << std::endl;
     std::vector<int> indices = arg_id;
     indices.push_back(1);
     spirv::Value addr_ptr = ir_->make_access_chain(
@@ -748,6 +755,7 @@ void TaskCodegen::visit(ExternalPtrStmt *stmt) {
         addr, ir_->make_value(spv::OpSConvert, ir_->u64_type(), linear_offset));
     ir_->register_value(stmt->raw_name(), addr);
   } else {
+    std::cout << "not spirv_has_physical_storage_buffer" << std::endl;
     ir_->register_value(stmt->raw_name(), linear_offset);
   }
 
@@ -2060,6 +2068,7 @@ void TaskCodegen::generate_struct_for_kernel(OffloadedStmt *stmt) {
 }
 
 spirv::Value TaskCodegen::at_buffer(const Stmt *ptr, DataType dt) {
+  std::cout << "at_buffer " << ptr->raw_name() << std::endl;
   spirv::Value ptr_val = ir_->query_value(ptr->raw_name());
 
   if (ptr_val.stype.dt == PrimitiveType::u64) {
@@ -2079,6 +2088,7 @@ spirv::Value TaskCodegen::at_buffer(const Stmt *ptr, DataType dt) {
 
   spirv::Value buffer = get_buffer_value(ptr_to_buffers_.at(ptr), dt);
   size_t width = ir_->get_primitive_type_size(dt);
+  std::cout << "width " << width << std::endl;
   spirv::Value idx_val = ir_->make_value(
       spv::OpShiftRightLogical, ptr_val.stype, ptr_val,
       ir_->uint_immediate_number(ptr_val.stype, size_t(std::log2(width))));
@@ -2095,7 +2105,7 @@ spirv::Value TaskCodegen::load_buffer(const Stmt *ptr, DataType dt) {
   if (ptr_val.stype.dt == PrimitiveType::u64) {
     ti_buffer_type = dt;
   } else if (dt->is_primitive(PrimitiveTypeID::u1)) {
-    ti_buffer_type = PrimitiveType::i32;
+    ti_buffer_type = PrimitiveType::u8;
   }
 
   auto buf_ptr = at_buffer(ptr, ti_buffer_type);

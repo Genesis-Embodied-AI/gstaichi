@@ -681,6 +681,7 @@ Stmt *make_matrix_field_access(Expression::FlattenContext *ctx,
 Stmt *make_ndarray_access(Expression::FlattenContext *ctx,
                           Expr var,
                           ExprGroup indices) {
+  std::cout << "make_ndarray_access" << std::endl;
   std::vector<Stmt *> index_stmts;
   for (int i = 0; i < (int)indices.size(); i++) {
     Stmt *ind = flatten_rvalue(indices.exprs[i], ctx);
@@ -690,12 +691,14 @@ Stmt *make_ndarray_access(Expression::FlattenContext *ctx,
   auto expr = var.cast<ExternalTensorExpression>();
   // FIXME: No need to make it negative since we only support AOS
   auto element_dim = -expr->dt.get_shape().size();
+  std::cout << "element_dim " << element_dim << std::endl;
   auto external_ptr_stmt = std::make_unique<ExternalPtrStmt>(
       var_stmt, index_stmts, indices.size(), expr->dt.get_shape(),
       expr->is_grad, expr->boundary);
   if (expr->ndim - element_dim == indices.size()) {
     // Indexing into an scalar element
     external_ptr_stmt->ret_type = expr->dt.ptr_removed().get_element_type();
+    std::cout << " ret type " << external_ptr_stmt->ret_type << std::endl;
   } else {
     // Indexing outer dimensions
     external_ptr_stmt->ret_type = expr->dt.ptr_removed();

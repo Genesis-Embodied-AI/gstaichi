@@ -86,21 +86,26 @@ def tensor_to_tensor(tensor: template(), other: template()):
 @kernel
 def ext_arr_to_tensor(arr: ndarray_type.ndarray(), tensor: template()):
     # default value of offset is [], replace it with [0] * len
+    print("ext_arr_to_tensor")
     offset = static(tensor.snode.ptr.offset if len(tensor.snode.ptr.offset) != 0 else [0] * len(tensor.shape))
     for I in grouped(tensor):
+        print("I", I, "tensor[I]", tensor[I], "offset", offset)
         tensor[I] = arr[I - offset]
 
 
 @kernel
 def ndarray_to_ndarray(ndarray: ndarray_type.ndarray(), other: ndarray_type.ndarray()):
+    print("ndarray_to_ndarray")
     for I in grouped(ndarray):
         ndarray[I] = other[I]
 
 
 @kernel
 def ext_arr_to_ndarray(arr: ndarray_type.ndarray(), ndarray: ndarray_type.ndarray()):
+    print("ext_arr_to_ndarray")
     for I in grouped(ndarray):
-        ndarray[I] = arr[I]
+        print("I", I, "arrI]", arr[I])
+        # ndarray[I] = arr[I]
 
 
 @kernel
