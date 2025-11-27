@@ -1,8 +1,8 @@
+import numpy as np
 import pytest
 import torch
 
 import gstaichi as ti
-import numpy as np
 
 from tests import test_utils
 
@@ -241,14 +241,14 @@ def test_dlpack_mixed_types_memory_alignment_field(tensor_type, dtype, shape: tu
     ti.sync()
 
     np.testing.assert_allclose(
-        torch.utils.dlpack.from_dlpack(pos.to_dlpack()).cpu().numpy(), 
+        torch.utils.dlpack.from_dlpack(pos.to_dlpack()).cpu().numpy(),
         pos.to_numpy(),
     )
 
 
 @test_utils.test(arch=dlpack_arch)
 def test_dlpack_multiple_mixed_types_memory_alignment_field() -> None:
-    
+
     dtypes = [ti.i32, ti.i64, ti.f32, ti.f64, ti.u1, ti.i8, ti.types.vector(3, ti.i32)]
     shapes = [3, 1, 4, 5, 7, 2, 3]
     fields = []
@@ -259,11 +259,12 @@ def test_dlpack_multiple_mixed_types_memory_alignment_field() -> None:
     @ti.kernel
     def kernel_update_render_fields(pos: ti.template()):
         pos[0] = ti.Vector([1, 2, 3], dt=ti.i64)
+
     kernel_update_render_fields(pos)
     ti.sync()
 
     np.testing.assert_allclose(
-        torch.utils.dlpack.from_dlpack(pos.to_dlpack()).cpu().numpy(), 
+        torch.utils.dlpack.from_dlpack(pos.to_dlpack()).cpu().numpy(),
         pos.to_numpy(),
     )
 
@@ -291,6 +292,6 @@ def test_dlpack_joints_case_memory_alignment() -> None:
     ti.sync()
 
     np.testing.assert_allclose(
-        torch.utils.dlpack.from_dlpack(joints_n_dofs.to_dlpack()).cpu().numpy(), 
+        torch.utils.dlpack.from_dlpack(joints_n_dofs.to_dlpack()).cpu().numpy(),
         joints_n_dofs.to_numpy(),
     )
