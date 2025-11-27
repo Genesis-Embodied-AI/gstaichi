@@ -123,11 +123,6 @@ def test_tensor_consistency_from_numpy_accessor_read_consistency(tensor_type, dt
     write to numpy => from_numpy => accessor read => check
     check consistency
     """
-    assert ti.cfg is not None
-    arch = ti.cfg.arch
-    if dtype == ti.u1 and arch in [ti.vulkan, ti.metal]:
-        pytest.xfail("u1 doesnt work on vulkan or metal doesn't work currently, neither on field nor ndarray")
-
     poses = [0, 2, 5, 11]
 
     np_dtype = _TI_DTYPE_TO_NP_DTYPE[dtype]
