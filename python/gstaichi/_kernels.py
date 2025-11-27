@@ -105,7 +105,7 @@ def ext_arr_to_ndarray(arr: ndarray_type.ndarray(), ndarray: ndarray_type.ndarra
     print("ext_arr_to_ndarray")
     for I in grouped(ndarray):
         print("I", I, "arrI]", arr[I])
-        # ndarray[I] = arr[I]
+        ndarray[I] = arr[I]
 
 
 @kernel
