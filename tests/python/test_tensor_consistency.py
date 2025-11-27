@@ -5,7 +5,6 @@ import gstaichi as ti
 
 from tests import test_utils
 
-
 _TI_DTYPE_TO_NP_DTYPE = {
     ti.u1: np.bool_,
     ti.u8: np.uint8,
