@@ -206,9 +206,6 @@ class LlvmProgramImpl : public ProgramImpl {
     // The second ->ch is to get the actual data continer
     DataType dt = root->ch[child_id].get()->ch[0]->dt;
     size_t max_cell_size_bytes = data_type_size(dt.get_element_type());
-    TI_DEBUG("data type {} data type size {}",
-             dt.get_element_type().to_string(),
-             data_type_size(dt.get_element_type()));
 
     for (int i = 0; i < child_id; ++i) {
       SNode *child = root->ch[i].get();
