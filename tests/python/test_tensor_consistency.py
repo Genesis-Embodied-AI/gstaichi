@@ -144,11 +144,6 @@ def test_tensor_consistency_accessor_write_to_numpy_consistency(tensor_type, dty
     """
     accessor write => to_numpy => check
     """
-    assert ti.cfg is not None
-    arch = ti.cfg.arch
-    if dtype == ti.u1 and arch in [ti.vulkan, ti.metal]:
-        pytest.xfail("u1 doesnt work on vulkan or metal doesn't work currently, neither on field nor ndarray")
-
     poses = [0, 2, 5, 11]
 
     a = tensor_type(dtype, (16,))
