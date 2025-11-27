@@ -182,7 +182,7 @@ class LlvmProgramImpl : public ProgramImpl {
     runtime_exec_->check_runtime_error(result_buffer);
   }
 
-  size_t get_field_in_tree_offset(int tree_id, const SNode *child) override {
+  size_t get_field_in_tree_offset(int tree_id, const SNode *child, bool is_memory_aligned=false) override {
     // FIXME: Compute the proper offset. Current method taken from GGUI code
     size_t offset = 0;
 
@@ -191,10 +191,28 @@ class LlvmProgramImpl : public ProgramImpl {
 
     int child_id = root->child_id(dense_parent);
 
+    // The maximum cell size bytes is used to handle memory alignment for dlpack usage
+    // When compute field offset, SNode doesn't take the alignment into account yet, we need to mannully handle it here
+    size_t max_cell_size_bytes = root->ch[child_id].get()->cell_size_bytes;
     for (int i = 0; i < child_id; ++i) {
       SNode *child = root->ch[i].get();
-      offset += child->cell_size_bytes * child->num_cells_per_container;
+      size_t child_cell_size_bytes = child->cell_size_bytes;
+      if (is_memory_aligned) {
+        max_cell_size_bytes = child_cell_size_bytes > max_cell_size_bytes
+                                ? child_cell_size_bytes
+                                : max_cell_size_bytes;
+      }
+      offset += child_cell_size_bytes * child->num_cells_per_container;
+      TI_INFO("child Snode name {} child cell size bytes: {} max_cell_size_bytes {} child num cells per container {}", child->get_name(), child_cell_size_bytes, max_cell_size_bytes, child->num_cells_per_container);
     }
+
+    if (is_memory_aligned) {
+      auto align_up = [](size_t x, size_t align) {
+        return (x + align - 1) / align * align;
+      };
+      offset = align_up(offset, max_cell_size_bytes);
+    }
+    TI_INFO("Root name {} Parent Snode name {} max_cell_size_bytes {} Computed aligned field offset: {}", root->get_name(), dense_parent->get_name(), max_cell_size_bytes, offset);
 
     return offset;
   }
