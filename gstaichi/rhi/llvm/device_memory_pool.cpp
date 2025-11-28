@@ -62,26 +62,27 @@ void *DeviceMemoryPool::allocate_raw_memory(std::size_t size, bool managed) {
   */
   void *ptr = nullptr;
 
-  if(arch_ == Arch::cuda) {
+  if (arch_ == Arch::cuda) {
 #if TI_WITH_CUDA
-  if (!managed) {
-    CUDADriver::get_instance().malloc(&ptr, size);
-  } else {
-    CUDADriver::get_instance().malloc_managed(&ptr, size, CU_MEM_ATTACH_GLOBAL);
-  }
+    if (!managed) {
+      CUDADriver::get_instance().malloc(&ptr, size);
+    } else {
+      CUDADriver::get_instance().malloc_managed(&ptr, size,
+                                                CU_MEM_ATTACH_GLOBAL);
+    }
 #else
     TI_NOT_IMPLEMENTED;
 #endif
-  } else if(arch_ == Arch::amdgpu) {
+  } else if (arch_ == Arch::amdgpu) {
 #if TI_WITH_AMDGPU
-  if (!managed) {
-    AMDGPUDriver::get_instance().malloc(&ptr, size);
-  } else {
-    AMDGPUDriver::get_instance().malloc_managed(&ptr, size,
-                                                HIP_MEM_ATTACH_GLOBAL);
-  }
+    if (!managed) {
+      AMDGPUDriver::get_instance().malloc(&ptr, size);
+    } else {
+      AMDGPUDriver::get_instance().malloc_managed(&ptr, size,
+                                                  HIP_MEM_ATTACH_GLOBAL);
+    }
 #else
-  TI_NOT_IMPLEMENTED;
+    TI_NOT_IMPLEMENTED;
 #endif
   } else {
     TI_NOT_IMPLEMENTED;
@@ -113,19 +114,19 @@ void DeviceMemoryPool::deallocate_raw_memory(void *ptr) {
     TI_ERROR("Memory address ({:}) is not allocated", ptr);
   }
 
-  if(arch_ == Arch::cuda) {
+  if (arch_ == Arch::cuda) {
 #if TI_WITH_CUDA
-  CUDADriver::get_instance().mem_free(ptr);
-  raw_memory_chunks_.erase(ptr);
+    CUDADriver::get_instance().mem_free(ptr);
+    raw_memory_chunks_.erase(ptr);
 #else
     TI_NOT_IMPLEMENTED;
 #endif
-  } else if(arch_ == Arch::amdgpu) {
+  } else if (arch_ == Arch::amdgpu) {
 #if TI_WITH_AMDGPU
-  AMDGPUDriver::get_instance().mem_free(ptr);
-  raw_memory_chunks_.erase(ptr);
+    AMDGPUDriver::get_instance().mem_free(ptr);
+    raw_memory_chunks_.erase(ptr);
 #else
-  TI_NOT_IMPLEMENTED;
+    TI_NOT_IMPLEMENTED;
 #endif
   } else {
     TI_NOT_IMPLEMENTED;
@@ -148,7 +149,8 @@ DeviceMemoryPool::~DeviceMemoryPool() {
 
 const size_t DeviceMemoryPool::page_size{1 << 12};  // 4 KB page size by default
 
-DeviceMemoryPool &DeviceMemoryPool::get_instance(Arch arch, bool merge_upon_release) {
+DeviceMemoryPool &DeviceMemoryPool::get_instance(Arch arch,
+                                                 bool merge_upon_release) {
   static DeviceMemoryPool *cuda_memory_pool =
       new DeviceMemoryPool(arch, merge_upon_release);
   assert(cuda_memory_pool->arch_ == arch);

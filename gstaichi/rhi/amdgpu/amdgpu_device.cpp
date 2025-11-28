@@ -22,7 +22,8 @@ AmdgpuDevice::AllocInfo AmdgpuDevice::get_alloc_info(
 RhiResult AmdgpuDevice::allocate_memory(const AllocParams &params,
                                         DeviceAllocation *out_devalloc) {
   AllocInfo info;
-  auto &mem_pool = DeviceMemoryPool::get_instance(Arch::amdgpu, false /*merge_upon_release*/);
+  auto &mem_pool = DeviceMemoryPool::get_instance(Arch::amdgpu,
+                                                  false /*merge_upon_release*/);
 
   bool managed = params.host_read || params.host_write;
   void *ptr =
@@ -58,8 +59,9 @@ DeviceAllocation AmdgpuDevice::allocate_memory_runtime(
   if (params.host_read || params.host_write) {
     TI_NOT_IMPLEMENTED
   } else {
-    info.ptr =
-        DeviceMemoryPool::get_instance(Arch::amdgpu, false /*merge_upon_release*/).allocate_with_cache(this, params);
+    info.ptr = DeviceMemoryPool::get_instance(Arch::amdgpu,
+                                              false /*merge_upon_release*/)
+                   .allocate_with_cache(this, params);
     TI_ASSERT(info.ptr != nullptr);
 
     AMDGPUDriver::get_instance().memset((void *)info.ptr, 0, info.size);
@@ -101,10 +103,11 @@ void AmdgpuDevice::dealloc_memory(DeviceAllocation handle) {
   }
   TI_ASSERT(!info.is_imported);
   if (info.use_cached) {
-    DeviceMemoryPool::get_instance(Arch::amdgpu, false /*merge_upon_release*/).release(info.size, (uint64_t *)info.ptr,
-                                             false);
+    DeviceMemoryPool::get_instance(Arch::amdgpu, false /*merge_upon_release*/)
+        .release(info.size, (uint64_t *)info.ptr, false);
   } else if (!info.use_preallocated) {
-    DeviceMemoryPool::get_instance(Arch::amdgpu, false /*merge_upon_release*/).release(info.size, info.ptr);
+    DeviceMemoryPool::get_instance(Arch::amdgpu, false /*merge_upon_release*/)
+        .release(info.size, info.ptr);
   }
   info.ptr = nullptr;
 }
