@@ -183,9 +183,7 @@ class LlvmProgramImpl : public ProgramImpl {
     runtime_exec_->check_runtime_error(result_buffer);
   }
 
-  size_t get_field_in_tree_offset(int tree_id,
-                                  const SNode *child,
-                                  bool is_memory_aligned = true) override {
+  size_t get_field_in_tree_offset(int tree_id, const SNode *child) override {
     // FIXME: Compute the proper offset. Current method taken from GGUI code
     // Now fix the offset computation to support memory alignment ,
     // the assumptions (That is, the parent of the snode is a dense, and the
@@ -199,17 +197,19 @@ class LlvmProgramImpl : public ProgramImpl {
 
     int child_id = root->child_id(dense_parent);
 
-    // SNode only store the actual bytes (i.e., 'cell_size_bytes') without
-    // considering memory alignment padding e.g., three ti.f32 and one ti.f64
-    // are allocated on same SNode tree, in SNode space, the layout is | ti.f32
-    // | ti.f32 | ti.f32 | ti.f64 | 20 bytes. However, in actual memory layout,
-    // due to alignment requirement, the layout would be like: | ti.f32 | ti.f32
-    // | ti.f32 | padding(4 bytes) | ti.f64 | = 24 bytes.
-
-    // As a result, the offset computed is mismatched to the one in actual
-    // memory layout. In use case such as dlpack, we need the offset to read
-    // data from actual memory, therefore we add the memory alignment padding
-    // back for a correct offset
+    // SNodes record only the actual byte size (cell_size_bytes) without
+    // accounting for alignment padding. For example, if three ti.f32 fields and
+    // one ti.f64 field share the same SNode tree, the SNode’s logical layout
+    // is:
+    //   | ti.f32 | ti.f32 | ti.f32 | ti.f64 | = 20 bytes.
+    // However, in real memory, alignment requirements introduce padding,
+    // producing:
+    //   | ti.f32 | ti.f32 | ti.f32 | padding (4 bytes) | ti.f64 | = 24 bytes.
+    //
+    // This causes the computed offsets to differ from the true in-memory
+    // offsets. In contexts like DLPack, where we must read data directly from
+    // physical memory, we restore the alignment padding to obtain the correct
+    // offsets.
 
     // The second `->ch` access is to reach the "data container" node:
     // root -> child (dense/container) -> placed node (which holds data).
@@ -218,19 +218,17 @@ class LlvmProgramImpl : public ProgramImpl {
 
     for (int i = 0; i < child_id; ++i) {
       SNode *child = root->ch[i].get();
-      if (is_memory_aligned) {
-        size_t child_cell_size_bytes =
-            data_type_size(child->ch[0]->dt.get_element_type());
-        max_cell_size_bytes = child_cell_size_bytes > max_cell_size_bytes
-                                  ? child_cell_size_bytes
-                                  : max_cell_size_bytes;
-      }
+
+      size_t child_cell_size_bytes =
+          data_type_size(child->ch[0]->dt.get_element_type());
+      max_cell_size_bytes = child_cell_size_bytes > max_cell_size_bytes
+                                ? child_cell_size_bytes
+                                : max_cell_size_bytes;
+
       offset += child->cell_size_bytes * child->num_cells_per_container;
     }
 
-    if (is_memory_aligned) {
-      offset = align_up(offset, max_cell_size_bytes);
-    }
+    offset = align_up(offset, max_cell_size_bytes);
 
     return offset;
   }

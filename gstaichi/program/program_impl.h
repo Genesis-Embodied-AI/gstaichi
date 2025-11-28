@@ -85,9 +85,7 @@ class ProgramImpl {
     return nullptr;
   }
 
-  virtual size_t get_field_in_tree_offset(int tree_id,
-                                          const SNode *child,
-                                          bool is_memory_aligned = true) {
+  virtual size_t get_field_in_tree_offset(int tree_id, const SNode *child) {
     return 0;
   }
 
