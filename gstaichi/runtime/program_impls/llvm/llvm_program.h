@@ -9,7 +9,6 @@
 #include "gstaichi/program/program_impl.h"
 #include "gstaichi/program/parallel_executor.h"
 #include "gstaichi/util/bit.h"
-#include "gstaichi/ir/type_utils.h"
 #define TI_RUNTIME_HOST
 #include "gstaichi/program/context.h"
 #undef TI_RUNTIME_HOST
