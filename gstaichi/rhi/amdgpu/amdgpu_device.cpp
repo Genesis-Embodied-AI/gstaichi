@@ -22,8 +22,6 @@ AmdgpuDevice::AllocInfo AmdgpuDevice::get_alloc_info(
 RhiResult AmdgpuDevice::allocate_memory(const AllocParams &params,
                                         DeviceAllocation *out_devalloc) {
   AllocInfo info;
-
-  auto &mem_pool = DeviceMemoryPool::get_instance();
   auto &mem_pool = DeviceMemoryPool::get_instance(Arch::amdgpu, false /*merge_upon_release*/);
 
   bool managed = params.host_read || params.host_write;
