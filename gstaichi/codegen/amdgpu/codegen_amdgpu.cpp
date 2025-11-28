@@ -45,7 +45,7 @@ class TaskCodeGenAMDGPU : public TaskCodeGenLLVM {
   }
 
   void visit(PrintStmt *stmt) override {
-    TI_NOT_IMPLEMENTED
+    // We'll just ignore it
   }
 
   void emit_extra_unary(UnaryOpStmt *stmt) override {
