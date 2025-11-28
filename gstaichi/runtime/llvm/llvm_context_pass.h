@@ -248,8 +248,8 @@ struct AMDGPUConvertFuncParamAddressSpacePass : public ModulePass {
       std::vector<llvm::Type *> new_func_params;
       for (auto &arg : f->args()) {
         if (arg.getType()->getTypeID() == llvm::Type::PointerTyID) {
-          // LLVM 20 uses opaque pointers, so we can directly create a pointer type
-          // with the desired address space
+          // LLVM 20 uses opaque pointers, so we can directly create a pointer
+          // type with the desired address space
           auto new_type = llvm::PointerType::get(M.getContext(), unsigned(1));
           new_func_params.push_back(new_type);
         } else {
@@ -268,7 +268,7 @@ struct AMDGPUConvertFuncParamAddressSpacePass : public ModulePass {
       new_func->setComdat(f->getComdat());
       f->getParent()->getFunctionList().insert(f->getIterator(), new_func);
       new_func->takeName(f);
-      
+
       // Move basic blocks using LLVM 20 compatible API
       std::vector<llvm::BasicBlock *> blocks_to_move;
       for (auto &bb : *f) {
@@ -279,7 +279,7 @@ struct AMDGPUConvertFuncParamAddressSpacePass : public ModulePass {
         // Use insert() with iterator instead of getBasicBlockList().push_back()
         new_func->insert(new_func->end(), bb);
       }
-      
+
       for (llvm::Function::arg_iterator I = f->arg_begin(), E = f->arg_end(),
                                         I2 = new_func->arg_begin();
            I != E; ++I, ++I2) {
@@ -287,8 +287,8 @@ struct AMDGPUConvertFuncParamAddressSpacePass : public ModulePass {
           // Find the first basic block and insert instruction using IRBuilder
           llvm::BasicBlock *front_bb = &new_func->front();
           llvm::IRBuilder<> builder(front_bb, front_bb->getFirstInsertionPt());
-          llvm::Value *addrspacecast = builder.CreateAddrSpaceCast(
-              &*I2, I->getType(), "addrspacecast");
+          llvm::Value *addrspacecast =
+              builder.CreateAddrSpaceCast(&*I2, I->getType(), "addrspacecast");
           I->replaceAllUsesWith(addrspacecast);
           I2->takeName(&*I);
         } else {

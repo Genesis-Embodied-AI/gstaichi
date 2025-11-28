@@ -66,7 +66,8 @@ std::string JITSessionAMDGPU::compile_module_to_hsaco(
 
   std::unique_ptr<llvm::TargetMachine> machine(target->createTargetMachine(
       triple_str, AMDGPUContext::get_instance().get_mcpu(), "", options,
-      llvm::Reloc::PIC_, llvm::CodeModel::Small, llvm::CodeGenOptLevel::Aggressive));
+      llvm::Reloc::PIC_, llvm::CodeModel::Small,
+      llvm::CodeGenOptLevel::Aggressive));
 
   llvm_module->setDataLayout(machine->createDataLayout());
 
@@ -94,28 +95,29 @@ std::string JITSessionAMDGPU::compile_module_to_hsaco(
             triple_str, AMDGPUContext::get_instance().get_mcpu(), "", options,
             llvm::Reloc::PIC_, llvm::CodeModel::Small,
             llvm::CodeGenOptLevel::Aggressive));
-    
+
     // Replace PassManagerBuilder with PassBuilder API
     llvm::LoopAnalysisManager lam;
     llvm::FunctionAnalysisManager fam;
     llvm::CGSCCAnalysisManager cgam;
     llvm::ModuleAnalysisManager mam;
-    
+
     llvm::PassBuilder pb(machine_gen_gcn.get());
     pb.registerModuleAnalyses(mam);
     pb.registerCGSCCAnalyses(cgam);
     pb.registerFunctionAnalyses(fam);
     pb.registerLoopAnalyses(lam);
     pb.crossRegisterProxies(lam, fam, cgam, mam);
-    
-    llvm::ModulePassManager mpm = pb.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O3);
+
+    llvm::ModulePassManager mpm =
+        pb.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O3);
     mpm.run(*module_clone, mam);
-    
+
     module_gen_gcn_pass_manager.add(llvm::createTargetTransformInfoWrapperPass(
         machine_gen_gcn->getTargetIRAnalysis()));
-    machine_gen_gcn->addPassesToEmitFile(module_gen_gcn_pass_manager,
-                                         llvm_stream_gcn, nullptr,
-                                         llvm::CodeGenFileType::AssemblyFile, true);
+    machine_gen_gcn->addPassesToEmitFile(
+        module_gen_gcn_pass_manager, llvm_stream_gcn, nullptr,
+        llvm::CodeGenFileType::AssemblyFile, true);
     module_gen_gcn_pass_manager.run(*module_clone);
     std::string gcn(gcnstr.begin(), gcnstr.end());
     static FileSequenceWriter writer("gstaichi_kernel_amdgcn_{:04d}.gcn",
@@ -140,8 +142,9 @@ std::string JITSessionAMDGPU::compile_module_to_hsaco(
   pb.registerLoopAnalyses(lam);
   pb.crossRegisterProxies(lam, fam, cgam, mam);
 
-  llvm::ModulePassManager mpm = pb.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O3);
-  
+  llvm::ModulePassManager mpm =
+      pb.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O3);
+
   // Run the new optimization pipeline
   mpm.run(*llvm_module, mam);
 
