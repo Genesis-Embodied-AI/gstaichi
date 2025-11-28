@@ -184,46 +184,15 @@ class LlvmProgramImpl : public ProgramImpl {
   }
 
   size_t get_field_in_tree_offset(int tree_id, const SNode *child) override {
+    // Accumulate the per-child offsets produced by the struct compiler so
+    // runtime queries agree with compiled accessors. Each SNode stores its
+    // offset within the parent cell in `offset_bytes_in_parent_cell`.
     size_t offset = 0;
-
-    SNode *dense_parent = child->parent;
-    SNode *root = dense_parent->parent;
-
-    int child_id = root->child_id(dense_parent);
-
-    // SNodes record only the actual byte size (cell_size_bytes) without
-    // accounting for alignment padding. For example, if three ti.f32 fields and
-    // one ti.f64 field share the same SNode tree, the SNode’s logical layout
-    // is:
-    //   | ti.f32 | ti.f32 | ti.f32 | ti.f64 | = 20 bytes.
-    // However, in real memory, alignment requirements introduce padding,
-    // producing:
-    //   | ti.f32 | ti.f32 | ti.f32 | padding (4 bytes) | ti.f64 | = 24 bytes.
-    //
-    // This causes the computed offsets to differ from the true in-memory
-    // offsets. In contexts like DLPack, where we must read data directly from
-    // physical memory, we restore the alignment padding to obtain the correct
-    // offsets.
-
-    // The second `->ch` access is to reach the "data container" node:
-    // root -> child (dense/container) -> placed node (which holds data).
-    DataType dt = root->ch[child_id].get()->ch[0]->dt;
-    size_t max_cell_size_bytes = data_type_size(dt.get_element_type());
-
-    for (int i = 0; i < child_id; ++i) {
-      SNode *child = root->ch[i].get();
-
-      size_t child_cell_size_bytes =
-          data_type_size(child->ch[0]->dt.get_element_type());
-      max_cell_size_bytes = child_cell_size_bytes > max_cell_size_bytes
-                                ? child_cell_size_bytes
-                                : max_cell_size_bytes;
-
-      offset += child->cell_size_bytes * child->num_cells_per_container;
+    for (const SNode *sn = child; sn != nullptr; sn = sn->parent) {
+      // Only add offsets for nodes that have a parent (root has no parent).
+      if (sn->parent)
+        offset += sn->offset_bytes_in_parent_cell;
     }
-
-    offset = align_up(offset, max_cell_size_bytes);
-
     return offset;
   }
 
