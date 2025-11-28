@@ -183,19 +183,15 @@ class LlvmProgramImpl : public ProgramImpl {
   }
 
   size_t get_field_in_tree_offset(int tree_id, const SNode *child) override {
-    // FIXME: Compute the proper offset. Current method taken from GGUI code
+    // Accumulate the per-child offsets produced by the struct compiler so
+    // runtime queries agree with compiled accessors. Each SNode stores its
+    // offset within the parent cell in `offset_bytes_in_parent_cell`.
     size_t offset = 0;
-
-    SNode *dense_parent = child->parent;
-    SNode *root = dense_parent->parent;
-
-    int child_id = root->child_id(dense_parent);
-
-    for (int i = 0; i < child_id; ++i) {
-      SNode *child = root->ch[i].get();
-      offset += child->cell_size_bytes * child->num_cells_per_container;
+    for (const SNode *sn = child; sn != nullptr; sn = sn->parent) {
+      // Only add offsets for nodes that have a parent (root has no parent).
+      if (sn->parent)
+        offset += sn->offset_bytes_in_parent_cell;
     }
-
     return offset;
   }
 
