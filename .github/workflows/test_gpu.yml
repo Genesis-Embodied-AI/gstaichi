@@ -33,9 +33,6 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      - name: install vulkan validation layer
-        run: |
-          sudo apt-get install -y vulkan-validationlayers
       - name: install cuda stuff
         run: |
           sudo apt-get install -y libcusolver-dev-12-8
@@ -49,11 +46,6 @@ jobs:
           mkdir -p dist
           mv *.whl dist/
           pip install dist/*.whl
-      - name: install torch and requirements_test.txt
-        run: |
-          pip install torch
-          pip install --group test
-          pip install -r requirements_test_xdist.txt
       - name: run tests
         run: |
           ls -lh
@@ -70,17 +62,11 @@ jobs:
           fetch-depth: 0
       - uses: actions/download-artifact@v4
         with:
-          name: ${{ inputs.cpptests_artifact_name }}
-      - uses: actions/download-artifact@v4
-        with:
           name: ${{ inputs.wheel_artifact_name }}
       - name: Python check
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      - name: install vulkan validation layer
-        run: |
-          sudo apt-get install -y vulkan-validationlayers
       - name: install cuda stuff
         run: |
           sudo apt-get install -y libcusolver-dev-12-8
@@ -112,9 +98,6 @@ jobs:
           fetch-depth: 0
       - uses: actions/download-artifact@v4
         with:
-          name: ${{ inputs.cpptests_artifact_name }}
-      - uses: actions/download-artifact@v4
-        with:
           name: ${{ inputs.wheel_artifact_name }}
       - name: Python check
         uses: actions/setup-python@v4
@@ -123,14 +106,6 @@ jobs:
       - name: install vulkan validation layer
         run: |
           sudo apt-get install -y vulkan-validationlayers
-      - name: install cuda stuff
-        run: |
-          # FIXME: should we install cuda stuff for vulkan tests?
-          sudo apt-get install -y libcusolver-dev-12-8
-          sudo apt-get install -y libcusparse-dev-12-8
-          ls -lhd /usr/local/cuda*
-          ls -l /usr/local/cuda/lib64/libcusolver*
-          ls -l /usr/local/cuda/lib64/libcusparse*
       - name: install gstaichi
         run: |
           set -x
