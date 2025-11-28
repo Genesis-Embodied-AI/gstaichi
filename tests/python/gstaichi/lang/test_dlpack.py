@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import torch
 
@@ -7,6 +8,14 @@ from tests import test_utils
 
 dlpack_arch = [ti.cpu, ti.cuda, ti.metal]
 dlpack_ineligible_arch = [ti.vulkan]
+
+
+@pytest.fixture
+def metal_xfail():
+    from gstaichi.lang import impl
+
+    if impl.current_cfg().arch == ti.metal:
+        pytest.xfail(reason="dlpack for field hasn't been supported on Metal backend yet.")
 
 
 def ti_to_torch(ti_tensor: ti.types.NDArray) -> torch.Tensor:
@@ -216,3 +225,75 @@ def test_dlpack_field_multiple_tree_nodes():
     assert c_t[0] == 333
     assert d_t[0] == 444
     assert e_t[0] == 555
+
+
+@test_utils.test(arch=dlpack_arch)
+@pytest.mark.parametrize("dtype", [ti.i32, ti.i64, ti.f32, ti.f64, ti.u1, ti.i8, ti.types.vector(3, ti.i32)])
+@pytest.mark.parametrize("shape", [3, 1, 4, 5, 7, 2])
+def test_dlpack_mixed_types_memory_alignment_field(dtype, shape: tuple[int], metal_xfail) -> None:
+    """
+    Note: The mixed type here means that within a single SNode tree, fields use different data types (for example, curr_cnt in ti.i32 and pos in ti.i64). This leads to memory alignment issues and mismatched SNode offsets.
+    """
+    curr_field = ti.field(dtype, shape)
+    pos = ti.field(ti.types.vector(3, ti.i64), shape=(1,))
+
+    @ti.kernel
+    def kernel_update_render_fields(pos: ti.template()):
+        pos[0] = ti.Vector([1, 2, 3], dt=ti.i64)
+
+    kernel_update_render_fields(pos)
+    ti.sync()
+
+    np.testing.assert_allclose(
+        torch.utils.dlpack.from_dlpack(pos.to_dlpack()).cpu().numpy(),
+        pos.to_numpy(),
+    )
+
+
+@test_utils.test(arch=dlpack_arch)
+def test_dlpack_multiple_mixed_types_memory_alignment_field(metal_xfail) -> None:
+    dtypes = [ti.i32, ti.i64, ti.f32, ti.f64, ti.u1, ti.i8, ti.types.vector(3, ti.i32)]
+    shapes = [3, 1, 4, 5, 7, 2, 3]
+    fields = []
+    for dtype, shape in zip(dtypes, shapes):
+        fields.append(ti.field(dtype, shape))
+    pos = ti.field(ti.types.vector(3, ti.i64), shape=(1,))
+
+    @ti.kernel
+    def kernel_update_render_fields(pos: ti.template()):
+        pos[0] = ti.Vector([1, 2, 3], dt=ti.i64)
+
+    kernel_update_render_fields(pos)
+    ti.sync()
+
+    np.testing.assert_allclose(
+        torch.utils.dlpack.from_dlpack(pos.to_dlpack()).cpu().numpy(),
+        pos.to_numpy(),
+    )
+
+
+@test_utils.test(arch=dlpack_arch)
+def test_dlpack_joints_case_memory_alignment_field(metal_xfail) -> None:
+    links_is_fixed = ti.field(dtype=ti.u1, shape=(1,))
+    joints_n_dofs = ti.field(dtype=ti.i32, shape=(1,))
+
+    @ti.kernel
+    def kernel_init_joint_fields(
+        joints_dof_start: ti.types.ndarray(),
+        joints_dof_end: ti.types.ndarray(),
+        joints_n_dofs: ti.template(),
+    ):
+        for I_j in ti.grouped(joints_n_dofs):
+            joints_n_dofs[I_j] = joints_dof_end[I_j] - joints_dof_start[I_j]
+
+    kernel_init_joint_fields(
+        joints_dof_start=np.array([0], dtype=np.int32),
+        joints_dof_end=np.array([6], dtype=np.int32),
+        joints_n_dofs=joints_n_dofs,
+    )
+    ti.sync()
+
+    np.testing.assert_allclose(
+        torch.utils.dlpack.from_dlpack(joints_n_dofs.to_dlpack()).cpu().numpy(),
+        joints_n_dofs.to_numpy(),
+    )
