@@ -184,12 +184,6 @@ class LlvmProgramImpl : public ProgramImpl {
   }
 
   size_t get_field_in_tree_offset(int tree_id, const SNode *child) override {
-    // FIXME: Compute the proper offset. Current method taken from GGUI code
-    // Now fix the offset computation to support memory alignment ,
-    // the assumptions (That is, the parent of the snode is a dense, and the
-    // parent of that node is a root.) from GGUI code listed in field_info.cpp
-    // still holds
-
     size_t offset = 0;
 
     SNode *dense_parent = child->parent;
