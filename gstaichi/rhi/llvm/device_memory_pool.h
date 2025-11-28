@@ -3,6 +3,7 @@
 #include "gstaichi/rhi/device.h"
 #include "gstaichi/rhi/llvm/llvm_device.h"
 #include "gstaichi/rhi/llvm/allocator.h"
+#include "gstaichi/rhi/arch.h"
 #include <mutex>
 #include <vector>
 #include <memory>
@@ -17,14 +18,14 @@ class TI_DLL_EXPORT DeviceMemoryPool {
   std::unique_ptr<CachingAllocator> allocator_{nullptr};
   static const size_t page_size;
 
-  static DeviceMemoryPool &get_instance(bool merge_upon_release = true);
+  static DeviceMemoryPool &get_instance(Arch arch, bool merge_upon_release = true);
 
   void *allocate_with_cache(LlvmDevice *device,
                             const LlvmDevice::LlvmRuntimeAllocParams &params);
   void *allocate(std::size_t size, std::size_t alignment, bool managed = false);
   void release(std::size_t size, void *ptr, bool release_raw = false);
   void reset();
-  explicit DeviceMemoryPool(bool merge_upon_release);
+  explicit DeviceMemoryPool(Arch arch, bool merge_upon_release);
   ~DeviceMemoryPool();
 
  protected:
@@ -37,6 +38,7 @@ class TI_DLL_EXPORT DeviceMemoryPool {
 
   std::mutex mut_allocation_;
   bool merge_upon_release_ = true;
+  Arch arch_;
 };
 
 }  // namespace gstaichi::lang

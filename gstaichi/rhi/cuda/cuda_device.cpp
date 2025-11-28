@@ -9,7 +9,7 @@ namespace cuda {
 
 CudaDevice::CudaDevice() {
   // Initialize the device memory pool
-  DeviceMemoryPool::get_instance(true /*merge_upon_release*/);
+  DeviceMemoryPool::get_instance(Arch::cuda, true /*merge_upon_release*/);
 }
 
 CudaDevice::AllocInfo CudaDevice::get_alloc_info(
@@ -22,7 +22,7 @@ RhiResult CudaDevice::allocate_memory(const AllocParams &params,
                                       DeviceAllocation *out_devalloc) {
   AllocInfo info;
 
-  auto &mem_pool = DeviceMemoryPool::get_instance();
+  auto &mem_pool = DeviceMemoryPool::get_instance(Arch::cuda, true /*merge_upon_release*/);
 
   bool managed = params.host_read || params.host_write;
   void *ptr =
@@ -58,7 +58,7 @@ DeviceAllocation CudaDevice::allocate_memory_runtime(
                                             nullptr);
   } else {
     info.ptr =
-        DeviceMemoryPool::get_instance().allocate_with_cache(this, params);
+        DeviceMemoryPool::get_instance(Arch::cuda, true /*merge_upon_release*/).allocate_with_cache(this, params);
   }
 
   if (info.ptr)
@@ -107,10 +107,10 @@ void CudaDevice::dealloc_memory(DeviceAllocation handle) {
   if (info.use_memory_pool) {
     CUDADriver::get_instance().mem_free_async(info.ptr, nullptr);
   } else if (info.use_cached) {
-    DeviceMemoryPool::get_instance().release(info.size, (uint64_t *)info.ptr,
+    DeviceMemoryPool::get_instance(Arch::cuda, true /*merge_upon_release*/).release(info.size, (uint64_t *)info.ptr,
                                              false);
   } else if (!info.use_preallocated) {
-    auto &mem_pool = DeviceMemoryPool::get_instance();
+    auto &mem_pool = DeviceMemoryPool::get_instance(Arch::cuda, true /*merge_upon_release*/);
     mem_pool.release(info.size, info.ptr, true /*release_raw*/);
   }
   info.ptr = nullptr;
