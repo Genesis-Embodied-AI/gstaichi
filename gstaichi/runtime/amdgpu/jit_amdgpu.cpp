@@ -66,7 +66,7 @@ std::string JITSessionAMDGPU::compile_module_to_hsaco(
 
   std::unique_ptr<llvm::TargetMachine> machine(target->createTargetMachine(
       triple_str, AMDGPUContext::get_instance().get_mcpu(), "", options,
-      llvm::Reloc::PIC_, llvm::CodeModel::Small, llvm::CodeGenOpt::Aggressive));
+      llvm::Reloc::PIC_, llvm::CodeModel::Small, llvm::CodeGenOptLevel::Aggressive));
 
   llvm_module->setDataLayout(machine->createDataLayout());
 
@@ -93,7 +93,7 @@ std::string JITSessionAMDGPU::compile_module_to_hsaco(
         target->createTargetMachine(
             triple_str, AMDGPUContext::get_instance().get_mcpu(), "", options,
             llvm::Reloc::PIC_, llvm::CodeModel::Small,
-            llvm::CodeGenOpt::Aggressive));
+            llvm::CodeGenOptLevel::Aggressive));
     
     // Replace PassManagerBuilder with PassBuilder API
     llvm::LoopAnalysisManager lam;
@@ -115,7 +115,7 @@ std::string JITSessionAMDGPU::compile_module_to_hsaco(
         machine_gen_gcn->getTargetIRAnalysis()));
     machine_gen_gcn->addPassesToEmitFile(module_gen_gcn_pass_manager,
                                          llvm_stream_gcn, nullptr,
-                                         llvm::CGFT_AssemblyFile, true);
+                                         llvm::CodeGenFileType::AssemblyFile, true);
     module_gen_gcn_pass_manager.run(*module_clone);
     std::string gcn(gcnstr.begin(), gcnstr.end());
     static FileSequenceWriter writer("gstaichi_kernel_amdgcn_{:04d}.gcn",
@@ -165,7 +165,7 @@ std::string JITSessionAMDGPU::compile_module_to_hsaco(
   llvm::raw_svector_ostream llvm_stream(outstr);
 
   machine->addPassesToEmitFile(module_pass_manager, llvm_stream, nullptr,
-                               llvm::CGFT_ObjectFile, true);
+                               llvm::CodeGenFileType::ObjectFile, true);
 
   function_pass_manager.doInitialization();
   for (auto func = llvm_module->begin(); func != llvm_module->end(); ++func)
