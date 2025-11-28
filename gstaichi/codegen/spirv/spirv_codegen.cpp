@@ -727,11 +727,11 @@ void TaskCodegen::visit(ExternalPtrStmt *stmt) {
       linear_offset = ir_->mul(linear_offset, size_var);
       linear_offset = ir_->add(linear_offset, indices);
     }
+    size_t type_size =
+        ir_->get_primitive_type_size(stmt->ret_type.ptr_removed());
     linear_offset = ir_->make_value(
         spv::OpShiftLeftLogical, ir_->i32_type(), linear_offset,
-        ir_->int_immediate_number(ir_->i32_type(),
-                                  log2int(ir_->get_primitive_type_size(
-                                      stmt->ret_type.ptr_removed()))));
+        ir_->int_immediate_number(ir_->i32_type(), log2int(type_size)));
     if (caps_->get(DeviceCapability::spirv_has_no_integer_wrap_decoration)) {
       ir_->decorate(spv::OpDecorate, linear_offset,
                     spv::DecorationNoSignedWrap);
@@ -2095,7 +2095,7 @@ spirv::Value TaskCodegen::load_buffer(const Stmt *ptr, DataType dt) {
   if (ptr_val.stype.dt == PrimitiveType::u64) {
     ti_buffer_type = dt;
   } else if (dt->is_primitive(PrimitiveTypeID::u1)) {
-    ti_buffer_type = PrimitiveType::i32;
+    ti_buffer_type = PrimitiveType::u8;
   }
 
   auto buf_ptr = at_buffer(ptr, ti_buffer_type);
@@ -2117,9 +2117,7 @@ void TaskCodegen::store_buffer(const Stmt *ptr, spirv::Value val) {
   if (ptr_val.stype.dt == PrimitiveType::u64) {
     ti_buffer_type = val.stype.dt;
   } else if (val.stype.dt->is_primitive(PrimitiveTypeID::u1)) {
-    ti_buffer_type = PrimitiveType::i32;
-    val = ir_->make_value(spv::OpSelect, ir_->i32_type(), val,
-                          ir_->const_i32_one_, ir_->const_i32_zero_);
+    ti_buffer_type = PrimitiveType::i8;
   }
 
   auto buf_ptr = at_buffer(ptr, ti_buffer_type);
