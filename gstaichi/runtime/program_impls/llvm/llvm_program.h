@@ -185,7 +185,7 @@ class LlvmProgramImpl : public ProgramImpl {
 
   size_t get_field_in_tree_offset(int tree_id,
                                   const SNode *child,
-                                  bool is_memory_aligned = false) override {
+                                  bool is_memory_aligned = true) override {
     // FIXME: Compute the proper offset. Current method taken from GGUI code
     // Now fix the offset computation to support memory alignment ,
     // the assumptions (That is, the parent of the snode is a dense, and the
@@ -199,11 +199,20 @@ class LlvmProgramImpl : public ProgramImpl {
 
     int child_id = root->child_id(dense_parent);
 
-    // The maximum cell size bytes is used to handle memory alignment for dlpack
-    // usage When compute field offset, SNode doesn't take the alignment into
-    // account yet, we need to handle it here
+    // SNode only store the actual bytes (i.e., 'cell_size_bytes') without
+    // considering memory alignment padding e.g., three ti.f32 and one ti.f64
+    // are allocated on same SNode tree, in SNode space, the layout is | ti.f32
+    // | ti.f32 | ti.f32 | ti.f64 | 20 bytes. However, in actual memory layout,
+    // due to alignment requirement, the layout would be like: | ti.f32 | ti.f32
+    // | ti.f32 | padding(4 bytes) | ti.f64 | = 24 bytes.
 
-    // The second ->ch is to get the actual data continer
+    // As a result, the offset computed is mismatched to the one in actual
+    // memory layout. In use case such as dlpack, we need the offset to read
+    // data from actual memory, therefore we add the memory alignment padding
+    // back for a correct offset
+
+    // The second `->ch` access is to reach the "data container" node:
+    // root -> child (dense/container) -> placed node (which holds data).
     DataType dt = root->ch[child_id].get()->ch[0]->dt;
     size_t max_cell_size_bytes = data_type_size(dt.get_element_type());
 
