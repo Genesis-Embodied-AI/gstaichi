@@ -98,11 +98,6 @@ std::pair<uint8_t, uint8_t> get_type_info(Arch arch, DataType dt) {
       break;
     }
     case PrimitiveTypeID::u1: {
-#if TI_WITH_METAL
-      if (arch_is_metal(arch)) {
-        TI_ERROR("DLPack conversion for bool type is not supported on Metal");
-      }
-#endif
       data_type_code = static_cast<uint8_t>(kDLBool);
       element_bits = 8;
       break;

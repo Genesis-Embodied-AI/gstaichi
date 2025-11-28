@@ -42,11 +42,6 @@ def test_dlpack_types(tensor_type, dtype, shape: tuple[int], poses: list[tuple[i
     ti_tensor = tensor_type(dtype, shape)
     for i, pos in enumerate(poses):
         ti_tensor[pos] = i * 10 + 10
-    if ti.cfg.arch == ti.metal and dtype is ti.u1:
-        # TODO: fix u1 on Metal
-        with pytest.raises(RuntimeError):
-            dlpack = ti_tensor.to_dlpack()
-        pytest.xfail(reason="ti.u1 doesn't work on Metal currently")
     ti.sync()
     dlpack = ti_tensor.to_dlpack()
     tt = torch.utils.dlpack.from_dlpack(dlpack)
