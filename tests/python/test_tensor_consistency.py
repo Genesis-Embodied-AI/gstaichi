@@ -25,11 +25,6 @@ def test_tensor_consistency_kernel_write_to_numpy_consistency(tensor_type, dtype
     """
     write from kernel => to_numpy => check
     """
-    assert ti.cfg is not None
-    arch = ti.cfg.arch
-    if dtype == ti.u1 and arch in [ti.vulkan, ti.metal]:
-        pytest.xfail("u1 doesnt work on vulkan or metal doesn't work currently, neither on field nor ndarray")
-
     poses = [0, 2, 5, 11]
     a = tensor_type(dtype, (16,))
 
@@ -56,11 +51,6 @@ def test_tensor_consistency_kernel_from_numpy_to_numpy_consistency(tensor_type, 
     """
     write to numpy => from_numpy => to_numpy => check
     """
-    assert ti.cfg is not None
-    arch = ti.cfg.arch
-    if dtype == ti.u1 and arch in [ti.vulkan, ti.metal]:
-        pytest.xfail("u1 doesnt work on vulkan or metal doesn't work currently, neither on field nor ndarray")
-
     poses = [0, 2, 5, 11]
 
     np_dtype = _TI_DTYPE_TO_NP_DTYPE[dtype]
@@ -87,11 +77,6 @@ def test_tensor_consistency_np_read_write_np_consistency(tensor_type, dtype) -> 
     write to numpy => read from kernel => write from kernel => numpy => check
     check consistency
     """
-    assert ti.cfg is not None
-    arch = ti.cfg.arch
-    if dtype == ti.u1 and arch in [ti.vulkan, ti.metal]:
-        pytest.xfail("u1 doesnt work on vulkan or metal doesn't work currently, neither on field nor ndarray")
-
     poses = [0, 2, 5, 11]
 
     np_dtype = _TI_DTYPE_TO_NP_DTYPE[dtype]
@@ -128,11 +113,6 @@ def test_tensor_consistency_from_numpy_accessor_read_consistency(tensor_type, dt
     write to numpy => from_numpy => accessor read => check
     check consistency
     """
-    assert ti.cfg is not None
-    arch = ti.cfg.arch
-    if dtype == ti.u1 and arch in [ti.vulkan, ti.metal]:
-        pytest.xfail("u1 doesnt work on vulkan or metal doesn't work currently, neither on field nor ndarray")
-
     poses = [0, 2, 5, 11]
 
     np_dtype = _TI_DTYPE_TO_NP_DTYPE[dtype]
@@ -154,11 +134,6 @@ def test_tensor_consistency_accessor_write_to_numpy_consistency(tensor_type, dty
     """
     accessor write => to_numpy => check
     """
-    assert ti.cfg is not None
-    arch = ti.cfg.arch
-    if dtype == ti.u1 and arch in [ti.vulkan, ti.metal]:
-        pytest.xfail("u1 doesnt work on vulkan or metal doesn't work currently, neither on field nor ndarray")
-
     poses = [0, 2, 5, 11]
 
     a = tensor_type(dtype, (16,))
@@ -179,11 +154,6 @@ def test_tensor_consistency_from_numpy_kern_read(tensor_type, dtype, std_dtype) 
     """
     write numpy => from_numpy => kernel read => kernel write to standard type => to_numpy => check
     """
-    assert ti.cfg is not None
-    arch = ti.cfg.arch
-    if dtype == ti.u1 and arch in [ti.metal, ti.vulkan]:
-        pytest.xfail("u1 not supported on metal or vulkan")
-
     poses = [0, 2, 5, 11]
     N = 16
 
@@ -220,11 +190,6 @@ def test_tensor_consistency_kern_write_to_numpy(tensor_type, dtype, std_dtype) -
     """
     write to std type numpy => from_numpy => std type kernel read => kernel write => to_numpy => check
     """
-    assert ti.cfg is not None
-    arch = ti.cfg.arch
-    if dtype == ti.u1 and arch in [ti.vulkan, ti.metal]:
-        pytest.xfail("u1 doesnt work on vulkan or metal doesn't work currently, neither on field nor ndarray")
-
     poses = [0, 2, 5, 11]
     N = 16
 
@@ -259,11 +224,6 @@ def test_tensor_consistency_ext_to_kern(dtype) -> None:
     """
     write to numpy => pass directly to kernel => test in kern
     """
-    assert ti.cfg is not None
-    arch = ti.cfg.arch
-    if dtype == ti.u1 and arch in [ti.vulkan, ti.metal]:
-        pytest.xfail("u1 doesnt work on vulkan or metal doesn't work currently.")
-
     poses_l = [0, 2, 5, 11]
     N = 16
 
@@ -298,10 +258,6 @@ def test_tensor_consistency_kern_to_ext(dtype) -> None:
     """
     write directly to numpy array in kernel => check in numpy
     """
-    assert ti.cfg is not None
-    arch = ti.cfg.arch
-    if dtype == ti.u1 and arch in [ti.vulkan, ti.metal]:
-        pytest.xfail("u1 doesnt work on vulkan or metal doesn't work currently")
 
     poses_l = [0, 2, 5, 11]
     N = 16
