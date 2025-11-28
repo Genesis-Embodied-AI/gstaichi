@@ -20,6 +20,7 @@ CudaDevice::AllocInfo CudaDevice::get_alloc_info(
 
 RhiResult CudaDevice::allocate_memory(const AllocParams &params,
                                       DeviceAllocation *out_devalloc) {
+  std::cout << "CudaDevice::allocate_memory called, size: " << params.size << std::endl;
   AllocInfo info;
 
   auto &mem_pool = DeviceMemoryPool::get_instance(Arch::cuda, true /*merge_upon_release*/);

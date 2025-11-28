@@ -4,6 +4,7 @@
 #include <vector>
 #include <assert.h>
 #include <memory>
+#include <iostream>
 
 // https://gcc.gnu.org/wiki/Visibility
 #if defined _WIN32 || defined _WIN64 || defined __CYGWIN__
@@ -679,11 +680,16 @@ class RHI_DLL_EXPORT Device {
 
   inline std::pair<DeviceAllocationUnique, RhiResult> allocate_memory_unique(
       const AllocParams &params) {
+    std::cout << "public_device.h allocate_memory_unique called" << std::endl;
     DeviceAllocation alloc;
+    std::cout << "public_device.h allocate_memory_unique allocate_memory" << std::endl;
     RhiResult res = allocate_memory(params, &alloc);
+    std::cout << "public_device.h allocate_memory_unique after allocate_memory" << std::endl;
     if (res != RhiResult::success) {
+      std::cout << "public_device.h allocate_memory_unique not success" << std::endl;
       return std::make_pair(nullptr, res);
     }
+    std::cout << "public_device.h allocate_memory_unique success" << std::endl;
     return std::make_pair(std::make_unique<DeviceAllocationGuard>(alloc), res);
   }
 

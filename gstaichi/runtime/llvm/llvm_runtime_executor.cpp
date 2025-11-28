@@ -465,7 +465,9 @@ void LlvmRuntimeExecutor::initialize_llvm_runtime_snodes(
 }
 
 LlvmDevice *LlvmRuntimeExecutor::llvm_device() {
+  std::cout << "LlvmRuntimeExecutor::llvm_device()" << std::endl;
   TI_ASSERT(dynamic_cast<LlvmDevice *>(device_.get()));
+  std::cout << "LlvmRuntimeExecutor::llvm_device() after assert" << std::endl;
   return static_cast<LlvmDevice *>(device_.get());
 }
 
@@ -575,6 +577,7 @@ void LlvmRuntimeExecutor::finalize() {
 }
 
 LlvmRuntimeExecutor::~LlvmRuntimeExecutor() {
+  std::cout << "LlvmRuntimeExecutor::~LlvmRuntimeExecutor()" << std::endl;
   if (!finalized_) {
     finalize();
   }
@@ -632,11 +635,13 @@ void LlvmRuntimeExecutor::materialize_runtime(KernelProfilerBase *profiler,
   // Starting random state for the program calculated using the random seed.
   // The seed is multiplied by 1048391 so that two programs with different seeds
   // will not have overlapping random states in any thread.
+  std::cout << "LlvmRuntimeExecutor::materialize_runtime()" << std::endl;
   int starting_rand_state = config_.random_seed * 1048391;
 
   // Number of random states. One per CPU/CUDA thread.
   int num_rand_states = 0;
 
+  std::cout << "config_.arch = " << (int)config_.arch << " cuda " << (int)Arch::cuda << " amd " << (int)Arch::amdgpu << std::endl;
   if (config_.arch == Arch::cuda || config_.arch == Arch::amdgpu) {
 #if defined(TI_WITH_CUDA) || defined(TI_WITH_AMDGPU)
     // It is important to make sure that every CUDA thread has its own random
@@ -661,13 +666,19 @@ void LlvmRuntimeExecutor::materialize_runtime(KernelProfilerBase *profiler,
   void *runtime_objects_prealloc_buffer = nullptr;
   if (config_.arch == Arch::cuda || config_.arch == Arch::amdgpu) {
 #if defined(TI_WITH_CUDA) || defined(TI_WITH_AMDGPU)
+  std::cout << "preallocating runtime objects" << std::endl;
+  auto device = llvm_device();
+  std::cout << "got device " << device << std::endl;
     auto [temp_result_alloc, res] =
         llvm_device()->allocate_memory_unique({sizeof(uint64_t)});
+    std::cout << "allocated temp result buffer" << std::endl;
     TI_ERROR_IF(
         res != RhiResult::success,
         "Failed to allocate memory for `runtime_get_memory_requirements`");
+    std::cout << "getting temp result ptr" << std::endl;
     void *temp_result_ptr = llvm_device()->get_memory_addr(*temp_result_alloc);
 
+    std::cout << "runtime_get_memory_requirements" << std::endl;
     runtime_jit->call<void *, int32_t, int32_t>(
         "runtime_get_memory_requirements", temp_result_ptr, num_rand_states,
         /*use_preallocated_buffer=*/1);
@@ -680,6 +691,7 @@ void LlvmRuntimeExecutor::materialize_runtime(KernelProfilerBase *profiler,
              1.0 * (runtime_objects_prealloc_size + result_buffer_size) /
                  (1UL << 20));
 
+    std::cout << "preallocating runtime objects" << std::endl;
     runtime_objects_prealloc_buffer = preallocate_memory(
         iroundup(runtime_objects_prealloc_size + result_buffer_size,
                  gstaichi_page_size),

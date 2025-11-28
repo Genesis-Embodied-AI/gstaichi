@@ -707,7 +707,7 @@ def is_arch_supported(arch):
     """
 
     arch_table = {
-        cuda: _ti_core.with_cuda,
+        # cuda: _ti_core.with_cuda,
         amdgpu: _ti_core.with_amdgpu,
         metal: _ti_core.with_metal,
         vulkan: _ti_core.with_vulkan,

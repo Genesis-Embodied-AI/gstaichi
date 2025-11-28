@@ -170,6 +170,7 @@ void Program::launch_kernel(const CompiledKernelData &compiled_kernel_data,
 }
 
 void Program::materialize_runtime() {
+  std::cout << "Program::materialize_runtime()" << std::endl;
   program_impl_->materialize_runtime(profiler.get(), &result_buffer);
 }
 
@@ -308,6 +309,7 @@ void Program::dump_cache_data_to_disk() {
 }
 
 void Program::finalize() {
+  std::cout << "Program::finalize()" << std::endl;
   if (finalized_) {
     return;
   }

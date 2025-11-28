@@ -35,6 +35,7 @@ void *DeviceMemoryPool::allocate_with_cache(
 void *DeviceMemoryPool::allocate(std::size_t size,
                                  std::size_t alignment,
                                  bool managed) {
+  std::cout << "DeviceMemoryPool::allocate called, size: " << size << std::endl;
   std::lock_guard<std::mutex> _(mut_allocation_);
 
   return allocate_raw_memory(size, managed);
@@ -60,10 +61,12 @@ void *DeviceMemoryPool::allocate_raw_memory(std::size_t size, bool managed) {
     The caller ensures that no other thread is accessing the memory pool
     when calling this method.
   */
+ std::cout << "DeviceMemoryPool::allocate_raw_memory called, size: " << size << std::endl;
   void *ptr = nullptr;
 
   if(arch_ == Arch::cuda) {
 #if TI_WITH_CUDA
+std::cout << "TI_WITH_CUDA branch" << std::endl;
   if (!managed) {
     CUDADriver::get_instance().malloc(&ptr, size);
   } else {
@@ -74,6 +77,7 @@ void *DeviceMemoryPool::allocate_raw_memory(std::size_t size, bool managed) {
 #endif
   } else if(arch_ == Arch::amdgpu) {
 #if TI_WITH_AMDGPU
+std::cout << "TI_WITH_AMDGPU branch" << std::endl;
   if (!managed) {
     AMDGPUDriver::get_instance().malloc(&ptr, size);
   } else {

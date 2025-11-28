@@ -21,31 +21,46 @@ AmdgpuDevice::AllocInfo AmdgpuDevice::get_alloc_info(
 
 RhiResult AmdgpuDevice::allocate_memory(const AllocParams &params,
                                         DeviceAllocation *out_devalloc) {
+  std::cout << "AmdgpuDevice::allocate_memory called, size: " << params.size << std::endl;
   AllocInfo info;
-
-  auto &mem_pool = DeviceMemoryPool::get_instance();
+  std::cout << "1" << std::endl;
   auto &mem_pool = DeviceMemoryPool::get_instance(Arch::amdgpu, false /*merge_upon_release*/);
+  std::cout << "1" << std::endl;
 
   bool managed = params.host_read || params.host_write;
+  std::cout << "1" << std::endl;
   void *ptr =
       mem_pool.allocate(params.size, DeviceMemoryPool::page_size, managed);
+  std::cout << "1" << std::endl;
   if (ptr == nullptr) {
+    std::cout << "2" << std::endl;
     return RhiResult::out_of_memory;
   }
+  std::cout << "1" << std::endl;
 
   info.ptr = ptr;
+  std::cout << "1" << std::endl;
   info.size = params.size;
+  std::cout << "1" << std::endl;
   info.is_imported = false;
+  std::cout << "1" << std::endl;
   info.use_cached = false;
+  std::cout << "1" << std::endl;
   info.use_preallocated = false;
+  std::cout << "1" << std::endl;
 
   if (info.ptr == nullptr) {
+  std::cout << "3" << std::endl;
     return RhiResult::out_of_memory;
   }
+  std::cout << "1" << std::endl;
 
+  std::cout << "AMDGPUDevice::allocate_memory memset" << std::endl;
   AMDGPUDriver::get_instance().memset((void *)info.ptr, 0, info.size);
 
+  std::cout << "DeviceAllocation()" << std::endl;
   *out_devalloc = DeviceAllocation{};
+  std::cout << "after DeviceAllocation()" << std::endl;
   out_devalloc->alloc_id = allocations_.size();
   out_devalloc->device = this;
 

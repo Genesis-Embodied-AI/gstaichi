@@ -45,8 +45,10 @@ bool AMDGPUDriver::detected() {
 }
 
 AMDGPUDriver::AMDGPUDriver() {
-  if (!load_lib("libamdhip64.so"))
+  if (!load_lib("libamdhip64.so")) {
+    std::cout << "AMDGPU driver libamdhip64.so not detected." << std::endl;
     return;
+  }
 
   loader_->load_function("hipGetErrorName", get_error_name);
   loader_->load_function("hipGetErrorString", get_error_string);
