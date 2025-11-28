@@ -269,14 +269,15 @@ struct AMDGPUConvertFuncParamAddressSpacePass : public ModulePass {
       f->getParent()->getFunctionList().insert(f->getIterator(), new_func);
       new_func->takeName(f);
       
-      // Move basic blocks using iterators (LLVM 20 compatible)
+      // Move basic blocks using LLVM 20 compatible API
       std::vector<llvm::BasicBlock *> blocks_to_move;
       for (auto &bb : *f) {
         blocks_to_move.push_back(&bb);
       }
       for (auto *bb : blocks_to_move) {
         bb->removeFromParent();
-        new_func->getBasicBlockList().push_back(bb);
+        // Use insert() with iterator instead of getBasicBlockList().push_back()
+        new_func->insert(new_func->end(), bb);
       }
       
       for (llvm::Function::arg_iterator I = f->arg_begin(), E = f->arg_end(),
