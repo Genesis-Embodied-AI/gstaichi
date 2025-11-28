@@ -36,7 +36,6 @@ KernelCompiler::CKDPtr KernelCompiler::compile(
   params.arch = compile_config.arch;
   params.caps = device_caps;
   params.enable_spv_opt = compile_config.external_optimization_level > 0;
-  params.print_kernel_asm = compile_config.print_kernel_asm;
   spirv::KernelCodegen codegen(params);
   spirv::CompiledKernelData::InternalData internal_data;
   codegen.run(internal_data.metadata.kernel_attribs,

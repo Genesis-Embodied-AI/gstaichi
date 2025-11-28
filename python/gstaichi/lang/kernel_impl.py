@@ -1426,7 +1426,6 @@ class Kernel:
     # Thus this part needs to be fast. (i.e. < 3us on a 4 GHz x64 CPU)
     @_shell_pop_print
     def __call__(self, *args, **kwargs) -> Any:
-        print(self.func.__name__)
         self.raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
 
         args = _process_args(self, is_func=False, is_pyfunc=False, args=args, kwargs=kwargs)

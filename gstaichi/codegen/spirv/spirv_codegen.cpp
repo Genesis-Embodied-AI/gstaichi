@@ -17,7 +17,6 @@
 #include "gstaichi/ir/transforms.h"
 #include "gstaichi/math/arithmetic.h"
 #include "gstaichi/codegen/ir_dump.h"
-#include "gstaichi/util/file_sequence_writer.h"
 
 #include <spirv-tools/libspirv.hpp>
 #include <spirv-tools/optimizer.hpp>
@@ -2436,21 +2435,6 @@ void KernelCodegen::run(GsTaichiKernelAttributes &kernel_attribs,
     TaskCodegen cgen(tp);
     auto task_res = cgen.run();
 
-    {
-      const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
-      if (dump_ir_env != nullptr && std::string(dump_ir_env) == "1") {
-        std::filesystem::create_directories(IR_DUMP_DIR);
-        std::string spirv_asm;
-        spirv_tools_->Disassemble(task_res.spirv_code, &spirv_asm);
-        auto kernel_name = tp.ti_kernel_name;
-        std::filesystem::path filename =
-            IR_DUMP_DIR / (kernel_name + "_before_opt.spirv");
-        if (std::ofstream out_file(filename); out_file) {
-          out_file.write(spirv_asm.c_str(), spirv_asm.size());
-        }
-      }
-    }
-
     for (auto &[id, access] : task_res.arr_access) {
       for (auto &arr_access_element : ctx_attribs_.arr_access) {
         if (arr_access_element.first == id) {
@@ -2483,22 +2467,11 @@ void KernelCodegen::run(GsTaichiKernelAttributes &kernel_attribs,
         std::string spirv_asm;
         spirv_tools_->Disassemble(optimized_spv, &spirv_asm);
         auto kernel_name = tp.ti_kernel_name;
-        std::filesystem::path filename =
-            IR_DUMP_DIR / (kernel_name + "_after_opt.spirv");
+        std::filesystem::path filename = IR_DUMP_DIR / (kernel_name + ".spirv");
         if (std::ofstream out_file(filename); out_file) {
           out_file.write(spirv_asm.c_str(), spirv_asm.size());
         }
       }
-    }
-
-    if (params_.print_kernel_asm) {
-      std::vector<uint32_t> &spirv =
-          success ? optimized_spv : task_res.spirv_code;
-      std::string spirv_asm;
-      spirv_tools_->Disassemble(spirv, &spirv_asm);
-      static FileSequenceWriter writer("gstaichi_kernel_spirv_{:04d}.spirv",
-                                       "module SPIR-V");
-      writer.write(spirv_asm);
     }
 
     // Enable to dump SPIR-V assembly of kernels

@@ -75,14 +75,6 @@ class HostDeviceContextBlitter {
             ArgArrayPtrKey data_ptr_idx{arg_id,
                                         TypeFactory::DATA_PTR_POS_IN_NDARRAY};
             const void *host_ptr = host_ctx_.array_ptrs[data_ptr_idx];
-            std::cout << "gfx/runtime.cpp host_to_device() ext arr size at "
-                      << arg_id << " = " << ext_arr_size.at(arg_id)
-                      << std::endl;
-            for (int i = 0; i < ext_arr_size.at(arg_id); i++) {
-              std::cout << "gfx/runtime.cpp host_to_device() ext arr data at "
-                        << arg_id << "[" << i
-                        << "] = " << (int)((char *)host_ptr)[i] << std::endl;
-            }
             std::memcpy(device_arr_ptr, host_ptr, ext_arr_size.at(arg_id));
             device_->unmap(buffer);
           }
@@ -715,7 +707,6 @@ GfxRuntime::RegisterParams run_codegen(
   params.arch = arch;
   params.caps = caps;
   params.enable_spv_opt = compile_config.external_optimization_level > 0;
-  params.print_kernel_asm = compile_config.print_kernel_asm;
   spirv::KernelCodegen codegen(params);
   GfxRuntime::RegisterParams res;
   codegen.run(res.kernel_attribs, res.task_spirv_source_codes);
