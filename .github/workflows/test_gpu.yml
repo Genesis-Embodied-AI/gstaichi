@@ -15,6 +15,9 @@ on:
         required: true
         type: string
   workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 jobs:
   test_linux_cpp_tests:
     name: Test Linux CPP Tests
