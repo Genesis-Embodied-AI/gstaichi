@@ -150,4 +150,4 @@ jobs:
           # Next 2 lines are kind of hacky
           export PATH=$PATH:$HOME/.cache/ti-build-cache/llvm-20.1.0-x86-202511141226/bin
           chmod +x $HOME/.cache/ti-build-cache/llvm-20.1.0-x86-202511141226/bin/ld.lld
-          python tests/run_tests.py -r 1 -v --arch amdgpu
+          python tests/run_tests.py -t 4 -r 1 -v --arch amdgpu
