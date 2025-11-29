@@ -566,7 +566,7 @@ void LlvmRuntimeExecutor::finalize() {
     llvm_device()->clear();
 
     // Reset memory pool
-    DeviceMemoryPool::get_instance().reset();
+    DeviceMemoryPool::get_instance(config_.arch).reset();
 
     // Release unused memory from cuda memory pool
     synchronize();
