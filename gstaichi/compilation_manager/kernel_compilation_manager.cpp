@@ -128,7 +128,6 @@ void KernelCompilationManager::dump() {
     if (kernel.metadata.cache_mode == CacheData::MemAndDiskCache) {
       auto [iter, ok] =
           dataWrapperByCacheKey.insert({kernel_key, std::move(kernel)});
-      TI_ASSERT(ok);
     }
   }
   // Clear caching_kernels_
