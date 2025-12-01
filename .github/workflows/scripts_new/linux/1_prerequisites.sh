@@ -22,6 +22,7 @@ python -c 'import platform; u = platform.uname(); print("u.system", u.system, "u
 curl -LsSf https://astral.sh/uv/install.sh | sh
 source $HOME/.local/bin/env
 uv venv
+source .venv/bin/activate
 
 git submodule
 git submodule update --init --recursive
