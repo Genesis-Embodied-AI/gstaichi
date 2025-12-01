@@ -12,6 +12,8 @@ clang --version
 ls -la
 python -V
 
+brew install uv
+
 pip install scikit-build
 pip install numpy
 

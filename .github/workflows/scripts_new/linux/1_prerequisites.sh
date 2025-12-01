@@ -18,6 +18,9 @@ which clang
 
 python -c 'import platform; u = platform.uname(); print("u.system", u.system, "u.machine", u.machine)'
 
+# uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
 git submodule
 git submodule update --init --recursive
 sudo apt update

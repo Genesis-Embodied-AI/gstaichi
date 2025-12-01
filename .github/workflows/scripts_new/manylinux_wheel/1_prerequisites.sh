@@ -2,6 +2,9 @@
 
 set -ex
 
+# uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
 # yum update
 yum install -y git wget
 # Note: following depends on the name of the repo:
