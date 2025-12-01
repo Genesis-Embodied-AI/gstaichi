@@ -13,6 +13,10 @@ from typing import Any, Mapping, Sequence
 # -- own --
 from .escapes import escape_codes
 
+import shlex
+
+quote = shlex.quote
+
 # -- code --
 # A minimal and naive imitiation of the sh library, which can work on Windows.
 # NOT written as a general purpose library, wild assumptions are made.
@@ -21,10 +25,6 @@ IS_WINDOWS = platform.system() == "Windows"
 
 if IS_WINDOWS:
     import ctypes
-
-    import mslex
-
-    quote = mslex.quote
 
     SW_SHOWNORMAL = 1
     SEE_MASK_NOCLOSEPROCESS = 0x00000040
@@ -73,11 +73,6 @@ if IS_WINDOWS:
         kernel32.GetExitCodeProcess(hProcess, ctypes.byref(rc))
         kernel32.CloseHandle(hProcess)
         return rc.value
-
-else:
-    import shlex
-
-    quote = shlex.quote
 
 
 class CommandFailed(Exception):
