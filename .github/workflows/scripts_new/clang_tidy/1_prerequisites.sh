@@ -4,10 +4,10 @@ set -ex
 
 set -ex
 
-curl -LsSf https://astral.sh/uv/install.sh | sh
-export PATH=$PATH:$HOME/.local/bin
-uv venv
-source .venv/bin/activate
+# curl -LsSf https://astral.sh/uv/install.sh | sh
+# export PATH=$PATH:$HOME/.local/bin
+# uv venv
+# source .venv/bin/activate
 
 sudo apt-get update
 sudo apt-get install -y clang-tidy-14

@@ -19,10 +19,10 @@ which clang
 python -c 'import platform; u = platform.uname(); print("u.system", u.system, "u.machine", u.machine)'
 
 # uv
-curl -LsSf https://astral.sh/uv/install.sh | sh
-export PATH=$PATH:$HOME/.local/bin
-uv venv
-source .venv/bin/activate
+# curl -LsSf https://astral.sh/uv/install.sh | sh
+# export PATH=$PATH:$HOME/.local/bin
+# uv venv
+# source .venv/bin/activate
 
 git submodule
 git submodule update --init --recursive
@@ -35,4 +35,4 @@ sudo apt install -y \
     cmake \
     ninja-build
 
-pip3 install scikit-build
+pip install scikit-build

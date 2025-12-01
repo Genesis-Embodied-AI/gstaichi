@@ -22,7 +22,7 @@ from .tinysh import Command, CommandFailed, nice
 
 # -- code --
 @banner("Build GsTaichi Wheel")
-def build_wheel(python: Command, pip: Command) -> None:
+def build_wheel(python: Command) -> None:
     extra = []
 
     cmake_args.writeback()
@@ -41,10 +41,10 @@ def build_wheel(python: Command, pip: Command) -> None:
         python("setup.py", "bdist_wheel", *extra)
 
 
-@banner("Install Build Wheel Dependencies")
-def install_build_wheel_deps(python: Command, pip: Command) -> None:
-    pip.install("-U", "pip")
-    pip.install("--group", "dev")
+# @banner("Install Build Wheel Dependencies")
+# def install_build_wheel_deps(python: Command, pip: Command) -> None:
+#     pip.install("-U", "pip")
+#     pip.install("--group", "dev")
 
 
 def setup_basic_build_env():
@@ -71,9 +71,9 @@ def setup_basic_build_env():
 
     # NOTE: We use conda/venv to build wheels, which may not be the same python
     #       running this script.
-    python, pip = setup_python()
+    python = setup_python()
 
-    return sccache, python, pip
+    return sccache, python
 
 
 def _is_sccache_running():
@@ -88,7 +88,7 @@ def _is_sccache_running():
 
 def action_wheel():
     setup_os_pkgs()
-    sccache, python, pip = setup_basic_build_env()
+    sccache, python = setup_basic_build_env()
 
     # Explicitly start sccache server before the build
     if _is_sccache_running():
@@ -96,9 +96,9 @@ def action_wheel():
     else:
         sccache("--start-server")
 
-    install_build_wheel_deps(python, pip)
+    # install_build_wheel_deps(python, pip)
     handle_alternate_actions()
-    build_wheel(python, pip)
+    build_wheel(python)
     try:
         sccache("-s")
     except CommandFailed:

@@ -66,18 +66,18 @@ from .tinysh import Command, sh
 
 
 @banner("Setup Python")
-def setup_python() -> Tuple[Command, Command]:
+def setup_python() -> Command:
     # """
     # Find the required Python environment and return the `python` and `pip` commands.
     # """
     # if version == "(Native)":
     info("Using your current Python interpreter as requested.")
     python = sh.bake(sys.executable)
-    uv = sh.bake("uv")
-    print("uv", uv)
-    pip = uv.bake("pip")
+    # uv = sh.bake("uv")
+    # print("uv", uv)
+    # pip = uv.bake("pip")
     # pip = python.bake("-m", "pip")
-    return python, pip
+    return python
 
     # windows = platform.system() == "Windows"
 
