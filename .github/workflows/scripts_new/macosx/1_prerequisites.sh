@@ -13,6 +13,7 @@ ls -la
 python -V
 
 brew install uv
+uv venv
 
 pip install scikit-build
 pip install numpy
