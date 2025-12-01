@@ -144,3 +144,8 @@ jobs:
       head_ref: ${{ github.head_ref || github.ref_name }}
       wheel_artifact_name: manylinux_wheel_cp310_ubuntu-22.04
       cpptests_artifact_name: manylinux_cpptests_cp310_ubuntu-22.04
+    secrets:
+      amdgpu_runner_region: ${{ secrets.AMDGPU_RUNNER_REGION }}
+      amdgpu_runner_instance_id: ${{ secrets.AMDGPU_RUNNER_INSTANCE_ID }}
+      aws_github_runner_access_key_id: ${{ secrets.AWS_GITHUB_RUNNER_ACCESS_KEY_ID }}
+      aws_github_runner_secret_access_key: ${{ secrets.AWS_GITHUB_RUNNER_SECRET_ACCESS_KEY }}

@@ -14,11 +14,44 @@ on:
         description: 'Name of the cpp tests artifact to download'
         required: true
         type: string
+    secrets:
+      amdgpu_runner_region:
+        description: 'The region of the AMD GPU runner to start'
+        required: true
+      amdgpu_runner_instance_id:
+        description: 'The instance ID of the AMD GPU runner to start'
+        required: true
+      aws_github_runner_access_key_id:
+        required: true
+      aws_github_runner_secret_access_key:
+        required: true
   workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 jobs:
+  start_amdgpu_runner:
+    name: Start AMD GPU Runner
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Python check
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.aws_github_runner_access_key_id }}
+          aws-secret-access-key: ${{ secrets.aws_github_runner_secret_access_key }}
+          aws-region: ${{ secrets.amdgpu_runner_region }}
+      - name: start amd gpu runner
+        run: |
+          pip install awscli
+          # we try a few times, in case the instance was shutting down, or starts to shut down
+          for i in {1..5}; do {
+            aws ec2 start-instances --instance-ids ${{ secrets.amdgpu_runner_instance_id }} --region ${{ secrets.amdgpu_runner_region }}
+            sleep 300
+          } done
   test_linux_cpp_tests:
     name: Test Linux CPP Tests
     runs-on: gpu-t4-4-core
