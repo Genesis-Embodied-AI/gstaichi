@@ -1,20 +1,13 @@
 # -*- coding: utf-8 -*-
 
 # -- stdlib --
-import os
-import platform
-import re
-import shutil
 import sys
 from typing import Tuple
 
 # -- third party --
 # -- own --
-from . import misc
-from .dep import download_dep
-from .misc import banner, get_cache_home, info, path_prepend
+from .misc import banner, info
 from .tinysh import Command, sh
-
 
 # -- code --
 # def setup_miniforge(prefix):
