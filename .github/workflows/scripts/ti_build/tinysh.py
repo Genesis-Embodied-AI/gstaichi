@@ -106,6 +106,7 @@ class Command:
     def bake(self, *moreargs: Sequence[str]) -> "Command":
         args = object.__getattribute__(self, "args")
         cls = object.__getattribute__(self, "__class__")
+        print("Command.bake moreargs", moreargs, "args", args, "cls", cls)
         return cls(*args, *moreargs)
 
     def __call__(self, *moreargs: Sequence[str]) -> None:
@@ -136,8 +137,10 @@ class Command:
         for o in OPTIONS_STACK:
             options.update(o)
 
+        print("Command.__call__ args", args, "cmd", cmd, "optoins", options, "overlay", overlay)
         exe = shutil.which(args[0])
         assert exe, f"Cannot find executable {args[0]}"
+        print("Command exe", exe)
 
         runas = IS_WINDOWS and options.get("runas")
         assert not (runas and overlay), "Cannot run with both elevated privileges and additional envs"
