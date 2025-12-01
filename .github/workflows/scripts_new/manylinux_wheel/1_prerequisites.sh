@@ -9,6 +9,9 @@ set -ex
 # source .venv/bin/activate
 # uv pip install setuptools
 
+pip install -U pip
+pip install --group dev
+
 # yum update
 yum install -y git wget
 # Note: following depends on the name of the repo:

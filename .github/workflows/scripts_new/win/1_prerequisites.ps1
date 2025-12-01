@@ -7,5 +7,8 @@ trap { Write-Error $_; exit 1 }
 # uv venv
 # uv pip install scikit-build
 
+pip install -U pip
+pip install --group dev
+
 # This will install Visual Studio Build Tools, then exit, with an (intentional) exception:
 Start-Process -NoNewWindow -FilePath "python" -ArgumentList "build.py" -ErrorAction SilentlyContinue -Wait

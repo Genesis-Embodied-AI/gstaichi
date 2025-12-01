@@ -9,6 +9,9 @@ set -ex
 # uv venv
 # source .venv/bin/activate
 
+pip install -U pip
+pip install --group dev
+
 sudo apt-get update
 sudo apt-get install -y clang-tidy-14
 git submodule update --init --recursive

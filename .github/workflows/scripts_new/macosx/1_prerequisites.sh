@@ -12,6 +12,9 @@ clang --version
 ls -la
 python -V
 
+pip install -U pip
+pip install --group dev
+
 # brew install uv
 # uv venv
 # source .venv/bin/activate
