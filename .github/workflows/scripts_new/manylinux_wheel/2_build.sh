@@ -8,8 +8,6 @@ if [[ ! "$PLATFORM" =~ ^(x86_64|aarch64)$ ]]; then
     exit 1
 fi
 
-# source .venv/bin/activate
-
 # this was already downloaded in 1_prerequisites.sh, so this is just to set the env var
 LLVM_DIR=$(python download_llvm.py | tail -n 1)
 export PATH=${LLVM_DIR}/bin:$PATH

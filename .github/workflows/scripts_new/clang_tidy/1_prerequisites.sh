@@ -4,11 +4,6 @@ set -ex
 
 set -ex
 
-# curl -LsSf https://astral.sh/uv/install.sh | sh
-# export PATH=$PATH:$HOME/.local/bin
-# uv venv
-# source .venv/bin/activate
-
 pip install -U pip
 pip install --group dev
 

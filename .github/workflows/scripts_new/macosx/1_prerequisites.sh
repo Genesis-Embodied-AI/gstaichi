@@ -15,10 +15,6 @@ python -V
 pip install -U pip
 pip install --group dev
 
-# brew install uv
-# uv venv
-# source .venv/bin/activate
-
 pip install scikit-build
 pip install numpy
 

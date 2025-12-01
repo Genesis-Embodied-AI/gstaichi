@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 
-# -- stdlib --
 import argparse
 import platform
+import sys
 
 import psutil
 
-# -- third party --
-# -- own --
 from . import misc
 from .alter import handle_alternate_actions
 from .cmake import cmake_args
@@ -15,9 +13,8 @@ from .compiler import setup_clang, setup_msvc
 from .llvm import setup_llvm
 from .misc import banner
 from .ospkg import setup_os_pkgs
-from .python import setup_python
 from .sccache import setup_sccache
-from .tinysh import Command, CommandFailed, nice
+from .tinysh import Command, CommandFailed, nice, sh
 
 
 # -- code --
@@ -41,12 +38,6 @@ def build_wheel(python: Command) -> None:
         python("setup.py", "bdist_wheel", *extra)
 
 
-# @banner("Install Build Wheel Dependencies")
-# def install_build_wheel_deps(python: Command, pip: Command) -> None:
-#     pip.install("-U", "pip")
-#     pip.install("--group", "dev")
-
-
 def setup_basic_build_env():
     u = platform.uname()
     if (u.system, u.machine) == ("Windows", "AMD64"):
@@ -64,15 +55,10 @@ def setup_basic_build_env():
         # We support & test Vulkan shader debug printf on Linux
         # This is done through the validation layer
         from .vulkan import setup_vulkan
-
         setup_vulkan()
 
     sccache = setup_sccache()
-
-    # NOTE: We use conda/venv to build wheels, which may not be the same python
-    #       running this script.
-    python = setup_python()
-
+    python = sh.bake(sys.executable)
     return sccache, python
 
 
@@ -96,7 +82,6 @@ def action_wheel():
     else:
         sccache("--start-server")
 
-    # install_build_wheel_deps(python, pip)
     handle_alternate_actions()
     build_wheel(python)
     try:
@@ -110,7 +95,6 @@ def parse_args():
 
     # Possible actions:
     #   wheel: build the wheel
-    #   cache: open the cache directory
     help = 'Action, may be build target "wheel" for opening the cache directory.'
     parser.add_argument("action", type=str, nargs="?", default="wheel", help=help)
 

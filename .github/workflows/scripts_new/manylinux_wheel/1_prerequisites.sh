@@ -2,17 +2,9 @@
 
 set -ex
 
-# # uv
-# curl -LsSf https://astral.sh/uv/install.sh | sh
-# source $HOME/.local/bin/env
-# uv venv
-# source .venv/bin/activate
-# uv pip install setuptools
-
 pip install -U pip
 pip install --group dev
 
-# yum update
 yum install -y git wget
 # Note: following depends on the name of the repo:
 git config --global --add safe.directory /__w/gstaichi/gstaichi

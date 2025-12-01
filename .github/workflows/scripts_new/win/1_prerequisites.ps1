@@ -2,11 +2,6 @@ $ErrorActionPreference = "Stop"
 Set-PSDebug -Trace 1
 trap { Write-Error $_; exit 1 }
 
-# powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-# $env:Path = "$HOME\.local\bin;$env:Path"
-# uv venv
-# uv pip install scikit-build
-
 pip install -U pip
 pip install --group dev
 
