@@ -15,7 +15,7 @@ from .compiler import setup_clang, setup_msvc
 from .llvm import setup_llvm
 from .misc import banner
 from .ospkg import setup_os_pkgs
-from .python import get_desired_python_version, setup_python
+from .python import setup_python
 from .sccache import setup_sccache
 from .tinysh import Command, CommandFailed, nice
 
@@ -71,7 +71,7 @@ def setup_basic_build_env():
 
     # NOTE: We use conda/venv to build wheels, which may not be the same python
     #       running this script.
-    python, pip = setup_python(get_desired_python_version())
+    python, pip = setup_python()
 
     return sccache, python, pip
 
