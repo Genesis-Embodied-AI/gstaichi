@@ -2,7 +2,6 @@
 
 # -- stdlib --
 import sys
-from typing import Tuple
 
 # -- third party --
 # -- own --
