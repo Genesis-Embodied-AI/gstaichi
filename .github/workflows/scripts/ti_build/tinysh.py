@@ -3,6 +3,7 @@
 # -- stdlib --
 import os
 import platform
+import shlex
 import shutil
 import subprocess
 import sys
@@ -12,8 +13,6 @@ from typing import Any, Mapping, Sequence
 # -- third party --
 # -- own --
 from .escapes import escape_codes
-
-import shlex
 
 quote = shlex.quote
 
