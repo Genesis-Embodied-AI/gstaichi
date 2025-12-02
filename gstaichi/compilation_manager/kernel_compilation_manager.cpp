@@ -126,9 +126,7 @@ void KernelCompilationManager::dump() {
   // Add new data
   for (auto &[kernel_key, kernel] : caching_kernels_) {
     if (kernel.metadata.cache_mode == CacheData::MemAndDiskCache) {
-      auto [iter, ok] =
-          dataWrapperByCacheKey.insert({kernel_key, std::move(kernel)});
-      TI_ASSERT(ok);
+      dataWrapperByCacheKey.insert({kernel_key, std::move(kernel)});
     }
   }
   // Clear caching_kernels_
