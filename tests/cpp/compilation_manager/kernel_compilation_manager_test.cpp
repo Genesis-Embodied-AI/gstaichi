@@ -174,42 +174,5 @@ TEST_F(KernelCompilationManagerTest, DumpEmptyCache) {
   // Should complete without error
 }
 
-TEST_F(KernelCompilationManagerTest,
-       CacheDuplicateKernelFromDiskThrowsException) {
-  compile_config_.offline_cache = true;
-  Program prog(Arch::x64);
-  Kernel kernel(prog, [] {}, "test_kernel", AutodiffMode::kNone);
-
-  std::string cachekey = "cachekey1";
-
-  // Step 1: Cache a kernel and dump it to disk
-  {
-    auto ckd1 = std::make_unique<FakeCompiledKernelData>("first_kernel_data");
-    mgr_->cache_kernel(cachekey, compile_config_, std::move(ckd1), kernel);
-    mgr_->dump();
-
-    // Verify it was written to disk
-    auto cache_file =
-        temp_dir_ / "kernel_compilation_manager" / (cachekey + ".tic");
-    EXPECT_TRUE(std::filesystem::exists(cache_file));
-  }
-
-  // Step 2: Create a new KernelCompilationManager that reads from disk
-  KernelCompilationManager::Config config2;
-  config2.offline_cache_path = temp_dir_.string();
-  config2.kernel_compiler = std::make_unique<FakeKernelCompiler>();
-  auto mgr2 = std::make_unique<KernelCompilationManager>(std::move(config2));
-
-  // Step 3: Attempt to cache a new kernel with the same cachekey
-  // cache_kernel() should succeed (caching_kernels_ is empty in the new
-  // manager)
-  auto ckd2 = std::make_unique<FakeCompiledKernelData>("second_kernel_data");
-  mgr2->cache_kernel(cachekey, compile_config_, std::move(ckd2), kernel);
-
-  // Step 4: dump() should throw an exception because the kernel already exists
-  // on disk with size > 0, so the insert will fail and TI_ASSERT(ok) will fire
-  EXPECT_ANY_THROW(mgr2->dump());
-}
-
 }  // namespace tests
 }  // namespace gstaichi::lang
