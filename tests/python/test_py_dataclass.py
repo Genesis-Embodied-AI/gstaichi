@@ -1313,3 +1313,81 @@ def test_prune_used_leaves_fastcache_no_used(tmp_path: Path):
         md2 = MyDataclass2(not_used1=nu1b, not_used2=nu2b)
 
         k1(envs_idx, md1, md2=md2)
+
+
+@test_utils.test()
+def test_pruning_with_keyword_rename() -> None:
+    @dataclasses.dataclass
+    class MyStruct:
+        used: ti.types.NDArray[ti.f32, 2]
+        not_used: ti.types.NDArray[ti.f32, 2]
+
+    my_struct = MyStruct(used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1)))
+
+    @ti.func
+    def f1(new_struct_name: MyStruct):
+        new_struct_name.used[0, 0]
+
+    @ti.kernel
+    def k1(my_struct: MyStruct):
+        f1(new_struct_name=my_struct)
+
+    k1(my_struct=my_struct)
+
+
+@test_utils.test()
+def test_pruning_with_arg_rename() -> None:
+    @dataclasses.dataclass
+    class MyStruct:
+        used: ti.types.NDArray[ti.f32, 2]
+        not_used: ti.types.NDArray[ti.f32, 2]
+
+    my_struct = MyStruct(used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1)))
+
+    @ti.func
+    def f1(new_struct_name: MyStruct):
+        new_struct_name.used[0, 0]
+
+    # @ti.func
+    # def f1(my_struct: MyStruct):
+    #     my_struct.used[0, 0]
+
+    @ti.kernel
+    def k1(my_struct: MyStruct):
+        f1(my_struct)
+
+    print("-----------------")
+    k1(my_struct=my_struct)
+    print("-----------------")
+    k1(my_struct=my_struct)
+    print("-----------------")
+
+
+@test_utils.test()
+def test_pruning_with_arg_kwargs_rename() -> None:
+    @dataclasses.dataclass
+    class MyStruct:
+        used: ti.types.NDArray[ti.f32, 2]
+        not_used: ti.types.NDArray[ti.f32, 2]
+
+    my_struct = MyStruct(used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1)))
+    my_struct2 = MyStruct(used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1)))
+
+    @ti.func
+    def f1(a2: ti.i32, new_struct_name: MyStruct, b2: ti.i32, d2: ti.i32, my_struct2_renamed: MyStruct, c2: ti.i32):
+        new_struct_name.used[0, 0]
+        my_struct2_renamed.used[0, 0]
+
+    # @ti.func
+    # def f1(my_struct: MyStruct):
+    #     my_struct.used[0, 0]
+
+    @ti.kernel
+    def k1(a: ti.i32, my_struct: MyStruct, b: ti.i32, d: ti.i32, my_struct2: MyStruct, c: ti.i32, ):
+        f1(a, my_struct, b, d2=d, my_struct2_renamed=my_struct2, c2=c)
+
+    print("-----------------")
+    k1(1, my_struct, 2, d=5, my_struct2=my_struct2, c=3)
+    print("-----------------")
+    k1(1, my_struct, 2, d=5, my_struct2=my_struct2, c=3)
+    print("-----------------")

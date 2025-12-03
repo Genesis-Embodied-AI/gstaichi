@@ -168,8 +168,10 @@ class FunctionDefTransformer:
             return None
 
         if dataclasses.is_dataclass(argument_type):
+            print("got dataclass")
             for field in dataclasses.fields(argument_type):
                 flat_name = create_flat_name(argument_name, field.name)
+                print("flat_name", flat_name)
                 data_child = getattr(data, field.name)
                 if isinstance(
                     data_child,
@@ -255,13 +257,18 @@ class FunctionDefTransformer:
 
         assert isinstance(ctx.func, Func)
         assert ctx.argument_data is not None
+        print("func argument data:")
         for data_i, data in enumerate(ctx.argument_data):
+            print("-", data_i, "data", data, type(data))
             argument = ctx.func.arg_metas_expanded[data_i]
             FunctionDefTransformer._transform_func_arg(ctx, argument.name, argument.annotation, data)
 
         # deal with dataclasses
+        print("func orig arguments:")
         for v in ctx.func.orig_arguments:
+            print("- ", "v", v, type(v))
             if dataclasses.is_dataclass(v.annotation):
+                print("   is datacalss, create varaible", v.name, v.annotation)
                 ctx.create_variable(v.name, v.annotation)
 
     @staticmethod

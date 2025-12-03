@@ -363,9 +363,9 @@ def _get_tree_and_ctx(
         is_real_function=is_real_function,
         autodiff_mode=autodiff_mode,
         raise_on_templated_floats=raise_on_templated_floats,
-        used_py_dataclass_parameters_collecting=current_kernel.used_py_dataclass_leaves_by_key_collecting[
-            args_instance_key
-        ],
+        # used_py_dataclass_parameters_collecting=current_kernel.used_py_dataclass_leaves_by_key_collecting[
+        #     args_instance_key
+        # ],
         used_py_dataclass_parameters_enforcing=used_py_dataclass_parameters_enforcing,
     )
     return tree, ctx
@@ -377,6 +377,7 @@ _ARG_EMPTY = inspect.Parameter.empty
 def _process_args(
     self: "Func | Kernel", is_pyfunc: bool, is_func: bool, args: tuple[Any, ...], kwargs
 ) -> tuple[Any, ...]:
+    print("_process args is_func", is_func, "is_pyfunc", is_pyfunc, self.func)
     if is_func and not is_pyfunc:
         if typing.TYPE_CHECKING:
             assert isinstance(self, Func)
@@ -390,6 +391,7 @@ def _process_args(
             current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(currently_compiling_materialize_key),
             self.arg_metas,
         )
+        print("expanded arg metas expanded:", self.arg_metas_expanded)
     else:
         self.arg_metas_expanded = list(self.arg_metas)
 
@@ -464,6 +466,7 @@ class Func:
         self.gstaichi_functions = {}  # The |Function| class in C++
         self.has_print = False
         self.current_kernel: Kernel | None = None
+        self.used_py_dataclass_parameters_collecting: set[str] = set()
 
     def __call__(self: "Func", *args, **kwargs) -> Any:
         self.current_kernel = impl.get_runtime().current_kernel if impl.inside_kernel() else None
@@ -969,7 +972,7 @@ class Kernel:
         self.compiled_kernel_data_by_key: dict[CompiledKernelKeyType, CompiledKernelData] = {}
         self._last_compiled_kernel_data: CompiledKernelData | None = None  # for dev/debug
         # for collecting, we'll grab an empty set if it doesnt exist
-        self.used_py_dataclass_leaves_by_key_collecting: dict[CompiledKernelKeyType, set[str]] = defaultdict(set)
+        # self.used_py_dataclass_leaves_by_key_collecting: dict[CompiledKernelKeyType, set[str]] = defaultdict(set)
         # however, for enforcing, we want None if it doesn't exist (we'll use .get() instead of [] )
         self.used_py_dataclass_leaves_by_key_enforcing: dict[CompiledKernelKeyType, set[str]] = {}
         self.used_py_dataclass_leaves_by_key_enforcing_dotted: dict[CompiledKernelKeyType, set[tuple[str, ...]]] = {}
@@ -1000,7 +1003,7 @@ class Kernel:
         self._last_compiled_kernel_data = None
         self.src_ll_cache_observations = SrcLlCacheObservations()
         self.fe_ll_cache_observations = FeLlCacheObservations()
-        self.used_py_dataclass_leaves_by_key_collecting = defaultdict(set)
+        # self.used_py_dataclass_leaves_by_key_collecting = defaultdict(set)
         self.used_py_dataclass_leaves_by_key_enforcing = {}
         self.used_py_dataclass_leaves_by_key_enforcing_dotted = {}
         self.currently_compiling_materialize_key = None
@@ -1116,6 +1119,8 @@ class Kernel:
 
         range_begin = 0 if used_py_dataclass_parameters is None else 1
         for _pass in range(range_begin, 2):
+            print("==============================")
+            print("_pass", _pass)
             used_py_dataclass_leaves_by_key_enforcing = None
             if _pass == 1:
                 assert used_py_dataclass_parameters is not None
@@ -1205,7 +1210,9 @@ class Kernel:
                     if not ctx.is_real_function and not ctx.only_parse_function_def:
                         if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
                             raise GsTaichiSyntaxError("Kernel has a return type but does not have a return statement")
+                    print("end of pass", _pass)
                     used_py_dataclass_parameters = self.used_py_dataclass_leaves_by_key_collecting[key]
+                    print("self.used_py_dataclass_leaves_by_key_collecting[key]", self.used_py_dataclass_leaves_by_key_collecting[key])
                 finally:
                     self.runtime.inside_kernel = False
                     self.runtime._current_kernel = None

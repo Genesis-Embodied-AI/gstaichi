@@ -34,6 +34,8 @@ class Builder:
     def __call__(self, ctx: "ASTTransformerContext", node: ast.AST):
         method_name = "build_" + node.__class__.__name__
         method = getattr(self, method_name, None)
+        indent = "  " * len(ctx.local_scopes)
+        print(indent, method_name, ast.dump(node)[:80])
         try:
             if method is None:
                 error_msg = f'Unsupported node "{node.__class__.__name__}"'
@@ -196,9 +198,10 @@ class ASTTransformerContext:
         autodiff_mode: AutodiffMode,
         raise_on_templated_floats: bool,
         # during 1st pass, we collect the names of used parameters
-        used_py_dataclass_parameters_collecting: set[str],
+        # used_py_dataclass_parameters_collecting: set[str],
         # during 2nd pass, we only handle these names
         used_py_dataclass_parameters_enforcing: set[str] | None,
+        # arg_metas_by_function
     ):
         from gstaichi import extension  # pylint: disable=import-outside-toplevel
 
@@ -237,7 +240,8 @@ class ASTTransformerContext:
         self.autodiff_mode = autodiff_mode
         self.loop_depth: int = 0
         self.raise_on_templated_floats = raise_on_templated_floats
-        self.used_py_dataclass_parameters_collecting = used_py_dataclass_parameters_collecting
+        # self.used_py_dataclass_parameters_collecting = used_py_dataclass_parameters_collecting
+        # self.used_py_dataclass_parameters_collecting: set[str] = set()
         self.used_py_dataclass_parameters_enforcing = used_py_dataclass_parameters_enforcing
         self.expanding_dataclass_call_parameters: bool = False
 

@@ -268,6 +268,7 @@ class CallTransformer:
         example ast:
         Call(func=Name(id='f2', ctx=Load()), args=[Name(id='my_struct_ab', ctx=Load())], keywords=[])
         """
+        print("build_Call", ast.dump(node))
         if get_decorator(ctx, node) in ["static", "static_assert"]:
             with ctx.static_scope_guard():
                 build_stmt(ctx, node.func)
@@ -282,15 +283,24 @@ class CallTransformer:
 
             added_args, node.args = CallTransformer._expand_Call_dataclass_args(ctx, node.args)
             added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(ctx, node.keywords)
+            # print("build_Call node.func.ptr.wrapper.arg_metas_expanded2  ", node.func.ptr.wrapper.arg_metas_expanded)
 
             # create variables for the now-expanded dataclass members
+            # we don't want to include these in the list of variables to not prune
+            # since these will contain *all* declared fields, instead of all used fields
+            # so we set expanding_dataclass_call_parameters to True during this expansion
             ctx.expanding_dataclass_call_parameters = True
+            print("args for call:")
             for arg in added_args:
+                print("- pos arg", ast.dump(arg)[:50])
                 assert not hasattr(arg, "ptr")
                 build_stmt(ctx, arg)
+                # print("arg.ptr", arg.ptr)
             for arg in added_keywords:
+                print("- keyword arg", ast.dump(arg)[:50])
                 assert not hasattr(arg, "ptr")
                 build_stmt(ctx, arg)
+                # print("arg.ptr", arg.ptr)
             ctx.expanding_dataclass_call_parameters = False
 
         # if any arg violates pure, then node also violates pure
@@ -344,7 +354,19 @@ class CallTransformer:
 
         CallTransformer._warn_if_is_external_func(ctx, node)
         try:
+            print("calling func", func.fn, "args", args, "keywords", keywords)
             node.ptr = func(*args, **keywords)
+            print("build_Call node.func.ptr", node.func.ptr, dir(node.func.ptr))
+            print("build_Call node.func.ptr.wrapper", node.func.ptr.wrapper, dir(node.func.ptr.wrapper))
+            print("build_Call node.func.ptr.wrapper.arg_metas")
+            for arg_meta in node.func.ptr.wrapper.arg_metas:
+                print("- arg meta", arg_meta)
+            print("build_Call node.func.ptr.wrapper.arg_metas_expanded")
+            for arg_meta in node.func.ptr.wrapper.arg_metas_expanded:
+                print("- arg meta expanded", arg_meta)
+            print("func.wrapper.used_py_dataclass_parameters_collecting", func.wrapper.used_py_dataclass_parameters_collecting)
+            # print("ctx.used_py_dataclass_parameters_collecting", ctx.used_py_dataclass_parameters_collecting)
+            # print("build_Call node.func.ptr.wrapper.arg_metas_expanded  ", node.func.ptr.wrapper.arg_metas_expanded)
         except TypeError as e:
             module = inspect.getmodule(func)
             error_msg = re.sub(r"\bExpr\b", "GsTaichi Expression", str(e))
