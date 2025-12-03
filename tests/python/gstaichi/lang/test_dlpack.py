@@ -297,3 +297,20 @@ def test_dlpack_joints_case_memory_alignment_field(metal_xfail) -> None:
         torch.utils.dlpack.from_dlpack(joints_n_dofs.to_dlpack()).cpu().numpy(),
         joints_n_dofs.to_numpy(),
     )
+
+
+@test_utils.test(arch=dlpack_arch)
+def test_dlpack_field_memory_allocation_before_to_dlpack():
+    first_time = ti.field(dtype=ti.i32, shape=(1,))
+    first_time_tc = torch.utils.dlpack.from_dlpack(first_time.to_dlpack())
+
+    first_time_tc[:] = 1
+    assert (first_time_tc == first_time.to_torch(device=first_time_tc.device)).all()
+
+    second_time = ti.Vector.field(3, dtype=ti.i32, shape=(1,))
+    second_time_tc = torch.utils.dlpack.from_dlpack(second_time.to_dlpack())
+
+    second_time_tc[:] = 2
+    assert (
+        second_time_tc == second_time.to_torch(device=second_time_tc.device)
+    ).all(), f"{second_time_tc} != {second_time.to_torch(device=second_time_tc.device)}"
