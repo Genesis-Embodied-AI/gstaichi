@@ -10,6 +10,9 @@ cat /etc/lsb-release
 ls -la
 python -V
 
+pip install -U pip
+pip install --group dev
+
 LLVM_DIR=$(python download_llvm.py | tail -n 1)
 export PATH=${LLVM_DIR}/bin:$PATH
 chmod +x ${LLVM_DIR}/bin/*
@@ -29,4 +32,4 @@ sudo apt install -y \
     cmake \
     ninja-build
 
-pip3 install scikit-build
+pip install scikit-build
