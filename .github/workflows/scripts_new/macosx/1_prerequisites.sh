@@ -12,6 +12,9 @@ clang --version
 ls -la
 python -V
 
+pip install -U pip
+pip install --group dev
+
 pip install scikit-build
 pip install numpy
 

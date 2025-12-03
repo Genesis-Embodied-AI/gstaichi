@@ -4,6 +4,9 @@ set -ex
 
 set -ex
 
+pip install -U pip
+pip install --group dev
+
 sudo apt-get update
 sudo apt-get install -y clang-tidy-14
 git submodule update --init --recursive
