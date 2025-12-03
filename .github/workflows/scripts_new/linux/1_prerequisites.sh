@@ -25,10 +25,6 @@ git submodule
 git submodule update --init --recursive
 sudo apt update
 sudo apt install -y \
-    pybind11-dev \
-    libc++-15-dev \
-    libc++abi-15-dev \
-    libclang-common-15-dev \
     cmake \
     ninja-build
 
