@@ -413,11 +413,13 @@ def _process_args(
     missing_arg_metas = self.arg_metas_expanded[num_args:]
     num_missing_args = len(missing_arg_metas)
     fused_args: list[Any] = [*args, *[arg_meta.default for arg_meta in missing_arg_metas]]
+    print("kernel_impl.py _process_args()")
     if kwargs:
         num_invalid_kwargs_args = len(kwargs)
         for i in range(num_args, num_arg_metas):
             arg_meta = self.arg_metas_expanded[i]
             value = kwargs.get(arg_meta.name, _ARG_EMPTY)
+            print("kwarg i", i, arg_meta, "value", value, type(value))
             if value is not _ARG_EMPTY:
                 fused_args[i] = value
                 num_invalid_kwargs_args -= 1
@@ -977,6 +979,7 @@ class Kernel:
         self.used_py_dataclass_leaves_by_key_enforcing: dict[CompiledKernelKeyType, set[str]] = {}
         self.used_py_dataclass_leaves_by_key_enforcing_dotted: dict[CompiledKernelKeyType, set[tuple[str, ...]]] = {}
         self.currently_compiling_materialize_key: CompiledKernelKeyType | None = None
+        self.used_py_dataclass_parameters_collecting: set[str] = set()
 
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
         self.fe_ll_cache_observations: FeLlCacheObservations = FeLlCacheObservations()
@@ -1211,8 +1214,8 @@ class Kernel:
                         if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
                             raise GsTaichiSyntaxError("Kernel has a return type but does not have a return statement")
                     print("end of pass", _pass)
-                    used_py_dataclass_parameters = self.used_py_dataclass_leaves_by_key_collecting[key]
-                    print("self.used_py_dataclass_leaves_by_key_collecting[key]", self.used_py_dataclass_leaves_by_key_collecting[key])
+                    used_py_dataclass_parameters = self.used_py_dataclass_parameters_collecting
+                    print("self.used_py_dataclass_leaves_by_key_collecting", self.used_py_dataclass_parameters_collecting)
                 finally:
                     self.runtime.inside_kernel = False
                     self.runtime._current_kernel = None
