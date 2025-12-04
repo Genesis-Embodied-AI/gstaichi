@@ -448,6 +448,7 @@ class Func:
     function_counter = 0
 
     def __init__(self, _func: Callable, _classfunc=False, _pyfunc=False, is_real_function=False) -> None:
+        print("*** Func.__init__()", _func, self)
         self.func = _func
         self.func_id = Func.function_counter
         Func.function_counter += 1
@@ -471,6 +472,7 @@ class Func:
         self.used_py_dataclass_parameters_collecting: set[str] = set()
 
     def __call__(self: "Func", *args, **kwargs) -> Any:
+        print("*** Func.__call__", self.func, self)
         self.current_kernel = impl.get_runtime().current_kernel if impl.inside_kernel() else None
         args = _process_args(self, is_func=True, is_pyfunc=self.pyfunc, args=args, kwargs=kwargs)
 
