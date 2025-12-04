@@ -1,5 +1,6 @@
 #include "gstaichi/runtime/amdgpu/kernel_launcher.h"
 #include "gstaichi/rhi/amdgpu/amdgpu_context.h"
+#include "gstaichi/program/launch_context_builder.h"
 
 namespace gstaichi::lang {
 namespace amdgpu {
@@ -25,12 +26,11 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
   AMDGPUContext::get_instance().make_current();
   ctx.get_context().runtime = executor->get_llvm_runtime();
 
-  std::unordered_map<std::vector<int>, std::pair<void *, DeviceAllocation>,
-                     hashing::Hasher<std::vector<int>>>
+  // Change from std::vector<int> to ArgArrayPtrKey
+  std::unordered_map<ArgArrayPtrKey, std::pair<void *, DeviceAllocation>,
+                     ArgArrayPtrKeyHasher>
       transfers;
-  std::unordered_map<std::vector<int>, void *,
-                     hashing::Hasher<std::vector<int>>>
-      device_ptrs;
+  std::unordered_map<ArgArrayPtrKey, void *, ArgArrayPtrKeyHasher> device_ptrs;
 
   char *device_result_buffer{nullptr};
   AMDGPUDriver::get_instance().malloc(
@@ -122,8 +122,7 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
   if (transfers.size()) {
     for (auto itr = transfers.begin(); itr != transfers.end(); itr++) {
       auto &idx = itr->first;
-      auto arg_id = idx;
-      arg_id.pop_back();
+      auto arg_id = idx.arg_id;
       AMDGPUDriver::get_instance().memcpy_device_to_host(
           itr->second.first, (void *)device_ptrs[idx],
           ctx.array_runtime_sizes[arg_id]);

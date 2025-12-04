@@ -8,7 +8,7 @@
 #include "gstaichi/system/threading.h"
 #include "gstaichi/rhi/amdgpu/amdgpu_driver.h"
 #include "gstaichi/rhi/amdgpu/amdgpu_profiler.h"
-#include "gstaichi/analysis/offline_cache_util.h"
+#include "gstaichi/util/offline_cache.h"
 
 namespace gstaichi {
 namespace lang {

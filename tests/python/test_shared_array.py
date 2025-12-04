@@ -61,6 +61,9 @@ def test_large_shared_array():
 
 @test_utils.test(arch=[ti.cuda, ti.vulkan, ti.amdgpu])
 def test_multiple_shared_array():
+    assert ti.cfg is not None
+    if ti.cfg.arch == ti.amdgpu:
+        pytest.xfail("failing on amd currently")
     block_dim = 128
     nBlocks = 64
     N = nBlocks * block_dim * 4

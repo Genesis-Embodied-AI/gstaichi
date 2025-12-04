@@ -66,7 +66,8 @@ std::string JITSessionAMDGPU::compile_module_to_hsaco(
 
   std::unique_ptr<llvm::TargetMachine> machine(target->createTargetMachine(
       triple_str, AMDGPUContext::get_instance().get_mcpu(), "", options,
-      llvm::Reloc::PIC_, llvm::CodeModel::Small, llvm::CodeGenOpt::Aggressive));
+      llvm::Reloc::PIC_, llvm::CodeModel::Small,
+      llvm::CodeGenOptLevel::Aggressive));
 
   llvm_module->setDataLayout(machine->createDataLayout());
 
@@ -93,17 +94,30 @@ std::string JITSessionAMDGPU::compile_module_to_hsaco(
         target->createTargetMachine(
             triple_str, AMDGPUContext::get_instance().get_mcpu(), "", options,
             llvm::Reloc::PIC_, llvm::CodeModel::Small,
-            llvm::CodeGenOpt::Aggressive));
-    llvm::PassManagerBuilder builder;
-    builder.OptLevel = 3;
-    builder.Inliner =
-        llvm::createFunctionInliningPass(builder.OptLevel, 0, false);
-    builder.populateModulePassManager(module_gen_gcn_pass_manager);
+            llvm::CodeGenOptLevel::Aggressive));
+
+    // Replace PassManagerBuilder with PassBuilder API
+    llvm::LoopAnalysisManager lam;
+    llvm::FunctionAnalysisManager fam;
+    llvm::CGSCCAnalysisManager cgam;
+    llvm::ModuleAnalysisManager mam;
+
+    llvm::PassBuilder pb(machine_gen_gcn.get());
+    pb.registerModuleAnalyses(mam);
+    pb.registerCGSCCAnalyses(cgam);
+    pb.registerFunctionAnalyses(fam);
+    pb.registerLoopAnalyses(lam);
+    pb.crossRegisterProxies(lam, fam, cgam, mam);
+
+    llvm::ModulePassManager mpm =
+        pb.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O3);
+    mpm.run(*module_clone, mam);
+
     module_gen_gcn_pass_manager.add(llvm::createTargetTransformInfoWrapperPass(
         machine_gen_gcn->getTargetIRAnalysis()));
-    machine_gen_gcn->addPassesToEmitFile(module_gen_gcn_pass_manager,
-                                         llvm_stream_gcn, nullptr,
-                                         llvm::CGFT_AssemblyFile, true);
+    machine_gen_gcn->addPassesToEmitFile(
+        module_gen_gcn_pass_manager, llvm_stream_gcn, nullptr,
+        llvm::CodeGenFileType::AssemblyFile, true);
     module_gen_gcn_pass_manager.run(*module_clone);
     std::string gcn(gcnstr.begin(), gcnstr.end());
     static FileSequenceWriter writer("gstaichi_kernel_amdgcn_{:04d}.gcn",
@@ -111,20 +125,32 @@ std::string JITSessionAMDGPU::compile_module_to_hsaco(
     writer.write(gcn);
   }
 
+  // Replace the main optimization pipeline (lines 114-127)
   llvm::legacy::FunctionPassManager function_pass_manager(llvm_module.get());
   llvm::legacy::PassManager module_pass_manager;
 
+  // Use new PassBuilder API for optimizations
+  llvm::LoopAnalysisManager lam;
+  llvm::FunctionAnalysisManager fam;
+  llvm::CGSCCAnalysisManager cgam;
+  llvm::ModuleAnalysisManager mam;
+
+  llvm::PassBuilder pb(machine.get());
+  pb.registerModuleAnalyses(mam);
+  pb.registerCGSCCAnalyses(cgam);
+  pb.registerFunctionAnalyses(fam);
+  pb.registerLoopAnalyses(lam);
+  pb.crossRegisterProxies(lam, fam, cgam, mam);
+
+  llvm::ModulePassManager mpm =
+      pb.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O3);
+
+  // Run the new optimization pipeline
+  mpm.run(*llvm_module, mam);
+
+  // Keep legacy PassManager for backend code generation
   module_pass_manager.add(llvm::createTargetTransformInfoWrapperPass(
       machine->getTargetIRAnalysis()));
-  function_pass_manager.add(llvm::createTargetTransformInfoWrapperPass(
-      machine->getTargetIRAnalysis()));
-
-  llvm::PassManagerBuilder builder;
-  builder.OptLevel = 3;
-  builder.Inliner =
-      llvm::createFunctionInliningPass(builder.OptLevel, 0, false);
-  builder.populateFunctionPassManager(function_pass_manager);
-  builder.populateModulePassManager(module_pass_manager);
 
   machine->Options.MCOptions.AsmVerbose = true;
 
@@ -142,7 +168,7 @@ std::string JITSessionAMDGPU::compile_module_to_hsaco(
   llvm::raw_svector_ostream llvm_stream(outstr);
 
   machine->addPassesToEmitFile(module_pass_manager, llvm_stream, nullptr,
-                               llvm::CGFT_ObjectFile, true);
+                               llvm::CodeGenFileType::ObjectFile, true);
 
   function_pass_manager.doInitialization();
   for (auto func = llvm_module->begin(); func != llvm_module->end(); ++func)
