@@ -10,6 +10,9 @@ cat /etc/lsb-release
 ls -la
 python -V
 
+pip install -U pip
+pip install --group dev
+
 LLVM_DIR=$(python download_llvm.py | tail -n 1)
 export PATH=${LLVM_DIR}/bin:$PATH
 chmod +x ${LLVM_DIR}/bin/*
@@ -22,11 +25,7 @@ git submodule
 git submodule update --init --recursive
 sudo apt update
 sudo apt install -y \
-    pybind11-dev \
-    libc++-15-dev \
-    libc++abi-15-dev \
-    libclang-common-15-dev \
     cmake \
     ninja-build
 
-pip3 install scikit-build
+pip install scikit-build

@@ -1166,6 +1166,7 @@ class MatrixField(Field):
         Note: caller is responsible for calling ti.sync() between modifying the field, and
         reading it.
         """
+        impl.get_runtime().materialize()
         return impl.get_runtime().prog.field_to_dlpack(self._snode.ptr, self.ndim, self.n, self.m)
 
     def get_scalar_field(self, *indices):

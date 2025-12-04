@@ -3,6 +3,7 @@
 # -- stdlib --
 import os
 import platform
+import shlex
 import shutil
 import subprocess
 import sys
@@ -13,6 +14,8 @@ from typing import Any, Mapping, Sequence
 # -- own --
 from .escapes import escape_codes
 
+quote = shlex.quote
+
 # -- code --
 # A minimal and naive imitiation of the sh library, which can work on Windows.
 # NOT written as a general purpose library, wild assumptions are made.
@@ -21,10 +24,6 @@ IS_WINDOWS = platform.system() == "Windows"
 
 if IS_WINDOWS:
     import ctypes
-
-    import mslex
-
-    quote = mslex.quote
 
     SW_SHOWNORMAL = 1
     SEE_MASK_NOCLOSEPROCESS = 0x00000040
@@ -73,11 +72,6 @@ if IS_WINDOWS:
         kernel32.GetExitCodeProcess(hProcess, ctypes.byref(rc))
         kernel32.CloseHandle(hProcess)
         return rc.value
-
-else:
-    import shlex
-
-    quote = shlex.quote
 
 
 class CommandFailed(Exception):
@@ -144,6 +138,7 @@ class Command:
 
         exe = shutil.which(args[0])
         assert exe, f"Cannot find executable {args[0]}"
+        print("Command.__call__ exe", exe, "args", args, "cmd", cmd, "options", options, "overlay", overlay)
 
         runas = IS_WINDOWS and options.get("runas")
         assert not (runas and overlay), "Cannot run with both elevated privileges and additional envs"
