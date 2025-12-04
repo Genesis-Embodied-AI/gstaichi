@@ -122,7 +122,6 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
   if (transfers.size()) {
     for (auto itr = transfers.begin(); itr != transfers.end(); itr++) {
       auto &idx = itr->first;
-      // Change from idx.pop_back() to idx.arg_id
       auto arg_id = idx.arg_id;
       AMDGPUDriver::get_instance().memcpy_device_to_host(
           itr->second.first, (void *)device_ptrs[idx],
