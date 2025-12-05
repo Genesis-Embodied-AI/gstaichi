@@ -1374,20 +1374,26 @@ def test_pruning_with_arg_kwargs_rename() -> None:
     my_struct2 = MyStruct(used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1)))
 
     @ti.func
-    def f1(a2: ti.i32, new_struct_name: MyStruct, b2: ti.i32, d2: ti.i32, my_struct2_renamed: MyStruct, c2: ti.i32):
-        new_struct_name.used[0, 0]
-        my_struct2_renamed.used[0, 0]
+    def f2(a3: ti.i32, struct_f2: MyStruct, b3: ti.i32, d3: ti.i32, struct2_f2: MyStruct, c3: ti.i32):
+        # new_struct_name.used[0, 0]
+        # my_struct2_renamed.used[0, 0]
+        struct_f2.used[0, 0]
+        struct2_f2.used[0, 0]
+
+    @ti.func
+    def f1(a2: ti.i32, struct_f1: MyStruct, b2: ti.i32, d2: ti.i32, struct2_f1: MyStruct, c2: ti.i32):
+        f2(a2, struct_f1, b2, d3=d2, struct2_f2=struct2_f1, c3=c2)
 
     # @ti.func
     # def f1(my_struct: MyStruct):
     #     my_struct.used[0, 0]
 
     @ti.kernel
-    def k1(a: ti.i32, my_struct: MyStruct, b: ti.i32, d: ti.i32, my_struct2: MyStruct, c: ti.i32, ):
-        f1(a, my_struct, b, d2=d, my_struct2_renamed=my_struct2, c2=c)
+    def k1(a: ti.i32, struct_k1: MyStruct, b: ti.i32, d: ti.i32, struct2_k1: MyStruct, c: ti.i32, ):
+        f1(a, struct_k1, b, d2=d, struct2_f1=struct2_k1, c2=c)
 
     print("-----------------")
-    k1(1, my_struct, 2, d=5, my_struct2=my_struct2, c=3)
+    k1(1, my_struct, 2, d=5, struct2_k1=my_struct2, c=3)
     print("-----------------")
-    k1(1, my_struct, 2, d=5, my_struct2=my_struct2, c=3)
+    k1(1, my_struct, 2, d=5, struct2_k1=my_struct2, c=3)
     print("-----------------")
