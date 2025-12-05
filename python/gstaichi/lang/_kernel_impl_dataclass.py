@@ -94,7 +94,9 @@ def expand_func_arguments(
     Used to expand arguments for @ti.func
     """
     expanded_arguments = []
+    print("expand_func_arguments used_py_dataclasses_parameters_enforcing", used_py_dataclasses_parameters_enforcing)
     for i, argument in enumerate(arguments):
+        print("i", i, "argument", argument)
         if dataclasses.is_dataclass(argument.annotation):
             for field in dataclasses.fields(argument.annotation):
                 child_name = create_flat_name(argument.name, field.name)
@@ -102,6 +104,7 @@ def expand_func_arguments(
                     used_py_dataclasses_parameters_enforcing is not None
                     and child_name not in used_py_dataclasses_parameters_enforcing
                 ):
+                    print(". (skip", child_name, ")")
                     continue
                 if dataclasses.is_dataclass(field.type):
                     new_arg = ArgMetadata(

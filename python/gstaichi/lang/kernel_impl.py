@@ -380,7 +380,7 @@ _ARG_EMPTY = inspect.Parameter.empty
 def _process_args(
     self: "Func | Kernel", is_pyfunc: bool, is_func: bool, args: tuple[Any, ...], kwargs
 ) -> tuple[Any, ...]:
-    # print("_process args is_func", is_func, "is_pyfunc", is_pyfunc, self.func)
+    print("_process args is_func", is_func, "is_pyfunc", is_pyfunc, self.func)
     if is_func and not is_pyfunc:
         if typing.TYPE_CHECKING:
             assert isinstance(self, Func)
@@ -391,7 +391,7 @@ def _process_args(
         if typing.TYPE_CHECKING:
             assert currently_compiling_materialize_key is not None
         self.arg_metas_expanded = _kernel_impl_dataclass.expand_func_arguments(
-            current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(currently_compiling_materialize_key),
+            # current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(currently_compiling_materialize_key),
             self.arg_metas,
         )
         # print("expanded arg metas expanded:", self.arg_metas_expanded)
@@ -503,9 +503,9 @@ class Func:
             return self.func_call_rvalue(key=key, args=args)
         current_args_key = self.current_kernel.currently_compiling_materialize_key
         assert current_args_key is not None
-        used_by_dataclass_parameters_enforcing = self.current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(
-            current_args_key
-        )
+        # used_by_dataclass_parameters_enforcing = self.current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(
+        #     current_args_key
+        # )
         tree, ctx = _get_tree_and_ctx(
             self,
             is_kernel=False,
@@ -1028,8 +1028,8 @@ class Kernel:
         self.src_ll_cache_observations = SrcLlCacheObservations()
         self.fe_ll_cache_observations = FeLlCacheObservations()
         # self.used_py_dataclass_leaves_by_key_collecting = defaultdict(set)
-        self.used_py_dataclass_leaves_by_key_enforcing = {}
-        self.used_py_dataclass_leaves_by_key_enforcing_dotted = {}
+        # self.used_py_dataclass_leaves_by_key_enforcing = {}
+        # self.used_py_dataclass_leaves_by_key_enforcing_dotted = {}
         self.currently_compiling_materialize_key = None
 
     def extract_arguments(self) -> None:
