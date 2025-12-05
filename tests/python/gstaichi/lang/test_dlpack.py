@@ -6,7 +6,7 @@ import gstaichi as ti
 
 from tests import test_utils
 
-dlpack_arch = [ti.cpu, ti.cuda, ti.metal]
+dlpack_arch = [ti.cpu, ti.cuda, ti.metal, ti.amdgpu]
 dlpack_ineligible_arch = [ti.vulkan]
 
 
@@ -15,7 +15,7 @@ def metal_xfail():
     from gstaichi.lang import impl
 
     if impl.current_cfg().arch == ti.metal:
-        pytest.xfail(reason="dlpack for field hasn't been supported on Metal backend yet.")
+        pytest.xfail(reason="dlpack for field isn't supported on Metal backend yet.")
 
 
 def ti_to_torch(ti_tensor: ti.types.NDArray) -> torch.Tensor:

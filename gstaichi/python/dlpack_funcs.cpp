@@ -7,6 +7,9 @@
 #if TI_WITH_CUDA
 #include "gstaichi/rhi/cuda/cuda_device.h"
 #endif  // TI_WITH_CUDA
+#if TI_WITH_AMDGPU
+#include "gstaichi/rhi/amdgpu/amdgpu_device.h"
+#endif // TI_WITH_AMDGPU
 #if TI_WITH_METAL
 #include "gstaichi/rhi/metal/metal_device.h"
 #endif  // TI_WITH_METAL
@@ -16,8 +19,8 @@ namespace gstaichi {
 namespace lang {
 
 void validate_arch(Arch arch) {
-  if (!arch_is_cpu(arch) && !arch_is_cuda(arch) && !arch_is_metal(arch)) {
-    TI_ERROR("DLPack conversion is only supported on CPU, Metal or CUDA archs");
+  if (!arch_is_cpu(arch) && !arch_is_cuda(arch) && !arch_is_metal(arch) && !arch_is_amdgpu(arch)) {
+    TI_ERROR("DLPack conversion is only supported on CPU, Metal, CUDA or AMDGPU archs");
   }
 }
 
@@ -45,6 +48,16 @@ std::tuple<void *, DLDeviceType, bool> get_raw_ptr(Arch arch,
     raw_ptr = alloc_info.ptr;
   }
 #endif  // TI_WITH_CUDA
+#if TI_WITH_AMDGPU
+  else if (arch_is_amdgpu(arch)) {
+    amdgpu::AMDGPUDevice *amdgpu_device =
+        static_cast<amdgpu::AMDGPUDevice *>(dev_alloc.device);
+    device_type = DLDeviceType::kDLROCM;
+    amdgpu::AMDGPUDevice::AllocInfo alloc_info =
+        amdgpu_device->get_alloc_info(dev_alloc);
+    raw_ptr = alloc_info.ptr;
+  }
+#endif // TI_WITH_AMDGPU
 #if TI_WITH_METAL
   else if (arch_is_metal(arch)) {
     metal::MetalDevice *metal_device =
