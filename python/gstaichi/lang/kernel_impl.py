@@ -391,6 +391,7 @@ def _process_args(
         if typing.TYPE_CHECKING:
             assert currently_compiling_materialize_key is not None
         self.arg_metas_expanded = _kernel_impl_dataclass.expand_func_arguments(
+            None,
             # current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(currently_compiling_materialize_key),
             self.arg_metas,
         )

@@ -1405,3 +1405,42 @@ def test_pruning_with_arg_kwargs_rename() -> None:
     print("-----------------")
     k1(1, my_struct, 2, d=5, struct2_k1=my_struct2, c=3, struct3_k1=my_struct3, struct4_k1=my_struct4)
     print("-----------------")
+
+
+@test_utils.test()
+def test_pruning_with_recursive_func() -> None:
+    @dataclasses.dataclass
+    class MyStruct:
+        a: ti.types.NDArray[ti.f32, 2]
+        b: ti.types.NDArray[ti.f32, 2]
+        c: ti.types.NDArray[ti.f32, 2]
+        d: ti.types.NDArray[ti.f32, 2]
+
+    my_struct = MyStruct(
+        a=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        b=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        c=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        d=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+    )
+
+    @ti.func
+    def f1(depth: ti.template(), struc_f1: MyStruct):
+        if ti.static(depth) == 0:
+            struc_f1.a[0, 0]
+            f1(1, struc_f1)
+        # elif ti.static(depth) == 1:
+        #     struc_f1.b[0, 0]
+        #     f1(2, struc_f1)
+        elif ti.static(depth) == 2:
+            struc_f1.c[0, 0]
+            # f1(2, struc_f1)
+
+    @ti.kernel
+    def k1(struct_k1: MyStruct):
+        f1(0, struct_k1)
+
+    print("-----------------")
+    k1(my_struct)
+    print("-----------------")
+    k1(my_struct)
+    print("-----------------")

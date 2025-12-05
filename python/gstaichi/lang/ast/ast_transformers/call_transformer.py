@@ -369,29 +369,32 @@ class CallTransformer:
             # called function
             # print("args")
             arg_id = 0
-            called_unpruned = func.wrapper.used_py_dataclass_parameters
-            to_unprune: set[str] = set()
-            for i, arg in enumerate(node.args):
-                # print(i, ast.dump(arg)[:50], node.func.ptr.wrapper.arg_metas_expanded[arg_id].name)
-                calling_name = arg.id
-                called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
-                if called_name in called_unpruned:
-                    # print('caller unprune', calling_name)
-                    to_unprune.add(calling_name)
-                arg_id += 1
-            # print("kwargs")
-            for i, arg in enumerate(node.keywords):
-                # print(i, "calling arg", ast.dump(arg)[:100], "arg meta", node.func.ptr.wrapper.arg_metas_expanded[arg_id].name)
-                calling_name = arg.value.id
-                called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
-                if called_name in called_unpruned:
-                    # print('caller unprune', calling_name)
-                    to_unprune.add(calling_name)
-                arg_id += 1
-            print("to_unprune", ctx.func.func, to_unprune)
-            # ctx.used_py_dataclass_parameters_enforcing
-            if not ctx.enforcing_dataclass_parameters:
-                ctx.func.used_py_dataclass_parameters |= to_unprune
+            print("func", func)
+            if hasattr(func, "wrapper"):
+                called_unpruned = func.wrapper.used_py_dataclass_parameters
+                to_unprune: set[str] = set()
+                for i, arg in enumerate(node.args):
+                    print(i, ast.dump(arg)[:50], node.func.ptr.wrapper.arg_metas_expanded[arg_id].name)
+                    if hasattr(arg, "id"):
+                        calling_name = arg.id
+                        called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
+                        if called_name in called_unpruned:
+                            # print('caller unprune', calling_name)
+                            to_unprune.add(calling_name)
+                    arg_id += 1
+                # print("kwargs")
+                for i, arg in enumerate(node.keywords):
+                    # print(i, "calling arg", ast.dump(arg)[:100], "arg meta", node.func.ptr.wrapper.arg_metas_expanded[arg_id].name)
+                    calling_name = arg.value.id
+                    called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
+                    if called_name in called_unpruned:
+                        # print('caller unprune', calling_name)
+                        to_unprune.add(calling_name)
+                    arg_id += 1
+                print("to_unprune", ctx.func.func, to_unprune)
+                # ctx.used_py_dataclass_parameters_enforcing
+                if not ctx.enforcing_dataclass_parameters:
+                    ctx.func.used_py_dataclass_parameters |= to_unprune
                 # print("updated ctx.func.used_py_dataclass_parameters", ctx.func.used_py_dataclass_parameters)
             # print("ctx.used_py_dataclass_parameters_collecting", ctx.used_py_dataclass_parameters_collecting)
             # print("build_Call node.func.ptr.wrapper.arg_metas_expanded  ", node.func.ptr.wrapper.arg_metas_expanded)
