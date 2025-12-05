@@ -55,7 +55,7 @@ std::tuple<void *, DLDeviceType, bool> get_raw_ptr(Arch arch,
   else if (arch_is_amdgpu(arch)) {
     amdgpu::AmdgpuDevice *amdgpu_device =
         static_cast<amdgpu::AmdgpuDevice *>(dev_alloc.device);
-    device_type = DLDeviceType::kDLROCM;
+    device_type = DLDeviceType::kDLCUDA;  // AMDGPU uses the same device type as CUDA
     amdgpu::AmdgpuDevice::AllocInfo alloc_info =
         amdgpu_device->get_alloc_info(dev_alloc);
     raw_ptr = alloc_info.ptr;
