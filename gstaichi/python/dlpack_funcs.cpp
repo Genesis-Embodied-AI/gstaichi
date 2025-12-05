@@ -184,6 +184,12 @@ pybind11::capsule field_to_dlpack(Program *program,
   int tree_id = snode->get_snode_tree_id();
   DevicePtr tree_device_ptr = program->get_snode_tree_device_ptr(tree_id);
 
+  if (tree_device_ptr.device == nullptr || tree_device_ptr.alloc_id == 0) {
+    TI_ERROR(
+        "Field memory is not allocated. Please run 'ti.sync' before "
+        "'to_dlpack'.")
+  }
+
   int field_in_tree_offset = program->get_field_in_tree_offset(tree_id, snode);
 
   void *raw_ptr = nullptr;
