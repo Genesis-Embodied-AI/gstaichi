@@ -51,6 +51,10 @@ bool arch_is_cuda(Arch arch) {
   return arch == Arch::cuda;
 }
 
+bool arch_is_amdgpu(Arch arch) {
+  return arch == Arch::amdgpu;
+}
+
 bool arch_is_metal(Arch arch) {
   return arch == Arch::metal;
 }
