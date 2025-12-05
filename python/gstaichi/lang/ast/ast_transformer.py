@@ -76,9 +76,9 @@ def boundary_type_cast_warning(expression: Expr) -> None:
 class ASTTransformer(Builder):
     @staticmethod
     def build_Name(ctx: ASTTransformerContext, node: ast.Name):
-        print("build_Name", ast.dump(node), "expanding_dataclass_call_parameters", ctx.expanding_dataclass_call_parameters)
-        if node.id.startswith("__ti_") and not ctx.expanding_dataclass_call_parameters:
-            ctx.func.used_py_dataclass_parameters_collecting.add(node.id)
+        # print("build_Name", ast.dump(node), "expanding_dataclass_call_parameters", ctx.expanding_dataclass_call_parameters)
+        if not ctx.enforcing_dataclass_parameters and not ctx.expanding_dataclass_call_parameters and node.id.startswith("__ti_"):
+            ctx.func.used_py_dataclass_parameters.add(node.id)
         node.violates_pure, node.ptr, node.violates_pure_reason = ctx.get_var_by_name(node.id)
         if isinstance(node, (ast.stmt, ast.expr)) and isinstance(node.ptr, Expr):
             node.ptr.dbg_info = _ti_core.DebugInfo(ctx.get_pos_info(node))

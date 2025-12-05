@@ -37,6 +37,7 @@ from gstaichi._lib.core.gstaichi_python import (
     CompiledKernelData,
     CompileResult,
     FunctionKey,
+    Function as FunctionCxx,
     KernelCxx,
     KernelLaunchContext,
 )
@@ -304,7 +305,8 @@ def _populate_global_vars_for_templates(
 def _get_tree_and_ctx(
     self: "Func | Kernel",
     args: tuple[Any, ...],
-    used_py_dataclass_parameters_enforcing: set[str] | None,
+    enforcing_dataclass_parameters: bool,
+    # used_py_dataclass_parameters_enforcing: set[str] | None,
     excluded_parameters=(),
     is_kernel: bool = True,
     arg_features=None,
@@ -366,7 +368,8 @@ def _get_tree_and_ctx(
         # used_py_dataclass_parameters_collecting=current_kernel.used_py_dataclass_leaves_by_key_collecting[
         #     args_instance_key
         # ],
-        used_py_dataclass_parameters_enforcing=used_py_dataclass_parameters_enforcing,
+        enforcing_dataclass_parameters=enforcing_dataclass_parameters,
+        # used_py_dataclass_parameters_enforcing=used_py_dataclass_parameters_enforcing,
     )
     return tree, ctx
 
@@ -377,7 +380,7 @@ _ARG_EMPTY = inspect.Parameter.empty
 def _process_args(
     self: "Func | Kernel", is_pyfunc: bool, is_func: bool, args: tuple[Any, ...], kwargs
 ) -> tuple[Any, ...]:
-    print("_process args is_func", is_func, "is_pyfunc", is_pyfunc, self.func)
+    # print("_process args is_func", is_func, "is_pyfunc", is_pyfunc, self.func)
     if is_func and not is_pyfunc:
         if typing.TYPE_CHECKING:
             assert isinstance(self, Func)
@@ -391,7 +394,7 @@ def _process_args(
             current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(currently_compiling_materialize_key),
             self.arg_metas,
         )
-        print("expanded arg metas expanded:", self.arg_metas_expanded)
+        # print("expanded arg metas expanded:", self.arg_metas_expanded)
     else:
         self.arg_metas_expanded = list(self.arg_metas)
 
@@ -413,13 +416,13 @@ def _process_args(
     missing_arg_metas = self.arg_metas_expanded[num_args:]
     num_missing_args = len(missing_arg_metas)
     fused_args: list[Any] = [*args, *[arg_meta.default for arg_meta in missing_arg_metas]]
-    print("kernel_impl.py _process_args()")
+    # print("kernel_impl.py _process_args()")
     if kwargs:
         num_invalid_kwargs_args = len(kwargs)
         for i in range(num_args, num_arg_metas):
             arg_meta = self.arg_metas_expanded[i]
             value = kwargs.get(arg_meta.name, _ARG_EMPTY)
-            print("kwarg i", i, arg_meta, "value", value, type(value))
+            # print("kwarg i", i, arg_meta, "value", value, type(value))
             if value is not _ARG_EMPTY:
                 fused_args[i] = value
                 num_invalid_kwargs_args -= 1
@@ -448,11 +451,11 @@ class Func:
     function_counter = 0
 
     def __init__(self, _func: Callable, _classfunc=False, _pyfunc=False, is_real_function=False) -> None:
-        print("*** Func.__init__()", _func, self)
+        # print("*** Func.__init__()", _func, self)
         self.func = _func
         self.func_id = Func.function_counter
         Func.function_counter += 1
-        self.compiled = {}
+        self.compiled: dict[int, Callable] = {}  # only for real funcs
         self.classfunc = _classfunc
         self.pyfunc = _pyfunc
         self.is_real_function = is_real_function
@@ -460,19 +463,24 @@ class Func:
         self.arg_metas_expanded: list[ArgMetadata] = []
         self.orig_arguments: list[ArgMetadata] = []
         self.return_type: tuple[Type, ...] | None = None
+        self.cxx_function_by_id: dict[int, FunctionCxx] = {}
+        self.has_print = False
+        # Used during compilation. Assumes only one compilation at a time (single-threaded).
+        self.current_kernel: Kernel | None = None
+        # enforcing_dataclass_parameters
+        self.used_py_dataclass_parameters: set[str] = set()
+        # self.used_py_dataclass_parameters_enforcing: set[str] | None = None
+
         self.extract_arguments()
+
         self.template_slot_locations: list[int] = []
         for i, arg in enumerate(self.arg_metas):
             if arg.annotation == template or isinstance(arg.annotation, template):
                 self.template_slot_locations.append(i)
         self.mapper = TemplateMapper(self.arg_metas, self.template_slot_locations)
-        self.gstaichi_functions = {}  # The |Function| class in C++
-        self.has_print = False
-        self.current_kernel: Kernel | None = None
-        self.used_py_dataclass_parameters_collecting: set[str] = set()
 
     def __call__(self: "Func", *args, **kwargs) -> Any:
-        print("*** Func.__call__", self.func, self)
+        # print("*** Func.__call__", self.func, self)
         self.current_kernel = impl.get_runtime().current_kernel if impl.inside_kernel() else None
         args = _process_args(self, is_func=True, is_pyfunc=self.pyfunc, args=args, kwargs=kwargs)
 
@@ -488,7 +496,7 @@ class Func:
                 self.current_kernel = None
                 raise GsTaichiSyntaxError("Real function in gradient kernels unsupported.")
             instance_id, arg_features = self.mapper.lookup(impl.current_cfg().raise_on_templated_floats, args)
-            key = _ti_core.FunctionKey(self.func.__name__, self.func_id, instance_id)
+            key = FunctionKey(self.func.__name__, self.func_id, instance_id)
             if key.instance_id not in self.compiled:
                 self.do_compile(key=key, args=args, arg_features=arg_features)
             self.current_kernel = None
@@ -504,7 +512,8 @@ class Func:
             args=args,
             ast_builder=self.current_kernel.ast_builder(),
             is_real_function=self.is_real_function,
-            used_py_dataclass_parameters_enforcing=used_by_dataclass_parameters_enforcing,
+            enforcing_dataclass_parameters=self.current_kernel.enforcing_dataclass_parameters,
+            # used_py_dataclass_parameters_enforcing=used_by_dataclass_parameters_enforcing,
         )
 
         struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
@@ -541,7 +550,7 @@ class Func:
         compiling_callable = impl.get_runtime().compiling_callable
         assert compiling_callable is not None
         func_call = compiling_callable.ast_builder().insert_func_call(
-            self.gstaichi_functions[key.instance_id], non_template_args, dbg_info
+            self.cxx_function_by_id[key.instance_id], non_template_args, dbg_info
         )
         if self.return_type is None:
             return None
@@ -566,13 +575,17 @@ class Func:
         return tuple(ret)
 
     def do_compile(self, key: FunctionKey, args: tuple[Any, ...], arg_features: tuple[Any, ...]) -> None:
+        """
+        only for real func
+        """
         tree, ctx = _get_tree_and_ctx(
             self,
             is_kernel=False,
             args=args,
+            enforcing_dataclass_parameters=False,  # we'll not prune with real func for now.
             arg_features=arg_features,
             is_real_function=self.is_real_function,
-            used_py_dataclass_parameters_enforcing=None,
+            # used_py_dataclass_parameters_enforcing=None,
         )
         fn = impl.get_runtime().prog.create_function(key)
 
@@ -583,9 +596,9 @@ class Func:
             transform_tree(tree, ctx)
             impl.get_runtime()._compiling_callable = old_callable
 
-        self.gstaichi_functions[key.instance_id] = fn
+        self.cxx_function_by_id[key.instance_id] = fn
         self.compiled[key.instance_id] = func_body
-        self.gstaichi_functions[key.instance_id].set_function_body(func_body)
+        self.cxx_function_by_id[key.instance_id].set_function_body(func_body)
 
     def extract_arguments(self) -> None:
         sig = inspect.signature(self.func)
@@ -978,10 +991,16 @@ class Kernel:
         # for collecting, we'll grab an empty set if it doesnt exist
         # self.used_py_dataclass_leaves_by_key_collecting: dict[CompiledKernelKeyType, set[str]] = defaultdict(set)
         # however, for enforcing, we want None if it doesn't exist (we'll use .get() instead of [] )
-        self.used_py_dataclass_leaves_by_key_enforcing: dict[CompiledKernelKeyType, set[str]] = {}
-        self.used_py_dataclass_leaves_by_key_enforcing_dotted: dict[CompiledKernelKeyType, set[tuple[str, ...]]] = {}
+        # self.used_py_dataclass_leaves_by_key_enforcing: dict[CompiledKernelKeyType, set[str]] = {}
+        # self.used_py_dataclass_leaves_by_key_enforcing_dotted: dict[CompiledKernelKeyType, set[tuple[str, ...]]] = {}
         self.currently_compiling_materialize_key: CompiledKernelKeyType | None = None
-        self.used_py_dataclass_parameters_collecting: set[str] = set()
+
+        # assumes that only one kernel is being built at a time
+        # value invalid when kernel not being built
+        self.used_py_dataclass_parameters: set[str] = set()
+        # assumes that only one kernel is being built at a time
+        # value invalid when kernel not being built
+        self.enforcing_dataclass_parameters: bool = False
 
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
         self.fe_ll_cache_observations: FeLlCacheObservations = FeLlCacheObservations()
@@ -1145,9 +1164,10 @@ class Kernel:
                 self,
                 args=args,
                 excluded_parameters=self.template_slot_locations,
+                enforcing_dataclass_parameters=_pass > 0,
                 arg_features=arg_features,
                 current_kernel=self,
-                used_py_dataclass_parameters_enforcing=used_py_dataclass_leaves_by_key_enforcing,
+                # used_py_dataclass_parameters_enforcing=used_py_dataclass_leaves_by_key_enforcing,
             )
 
             if self.autodiff_mode != _NONE:
@@ -1216,8 +1236,8 @@ class Kernel:
                         if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
                             raise GsTaichiSyntaxError("Kernel has a return type but does not have a return statement")
                     print("end of pass", _pass)
-                    used_py_dataclass_parameters = self.used_py_dataclass_parameters_collecting
-                    print("self.used_py_dataclass_leaves_by_key_collecting", self.used_py_dataclass_parameters_collecting)
+                    used_py_dataclass_parameters = self.used_py_dataclass_parameters
+                    print("self.used_py_dataclass_leaves_by_key_collecting", self.used_py_dataclass_parameters)
                 finally:
                     self.runtime.inside_kernel = False
                     self.runtime._current_kernel = None

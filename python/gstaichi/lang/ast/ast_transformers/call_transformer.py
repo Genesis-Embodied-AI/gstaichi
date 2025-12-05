@@ -185,8 +185,8 @@ class CallTransformer:
                     except Exception as e:
                         raise RuntimeError(f"Exception whilst processing {field.name} in {type(dataclass_type)}") from e
                     if (
-                        ctx.used_py_dataclass_parameters_enforcing is not None
-                        and child_name not in ctx.used_py_dataclass_parameters_enforcing
+                        ctx.enforcing_dataclass_parameters
+                        and child_name not in ctx.func.used_py_dataclass_parameters
                     ):
                         continue
                     load_ctx = ast.Load()
@@ -228,8 +228,8 @@ class CallTransformer:
                     src_name = create_flat_name(kwarg.value.id, field.name)
                     child_name = create_flat_name(kwarg.arg, field.name)
                     if (
-                        ctx.used_py_dataclass_parameters_enforcing is not None
-                        and child_name not in ctx.used_py_dataclass_parameters_enforcing
+                        ctx.enforcing_dataclass_parameters
+                        and child_name not in ctx.func.used_py_dataclass_parameters
                     ):
                         continue
                     load_ctx = ast.Load()
@@ -268,7 +268,7 @@ class CallTransformer:
         example ast:
         Call(func=Name(id='f2', ctx=Load()), args=[Name(id='my_struct_ab', ctx=Load())], keywords=[])
         """
-        print("build_Call", ast.dump(node))
+        # print("build_Call", ast.dump(node))
         if get_decorator(ctx, node) in ["static", "static_assert"]:
             with ctx.static_scope_guard():
                 build_stmt(ctx, node.func)
@@ -290,14 +290,14 @@ class CallTransformer:
             # since these will contain *all* declared fields, instead of all used fields
             # so we set expanding_dataclass_call_parameters to True during this expansion
             ctx.expanding_dataclass_call_parameters = True
-            print("args for call:")
+            # print("args for call:")
             for arg in added_args:
-                print("- pos arg", ast.dump(arg)[:50])
+                # print("- pos arg", ast.dump(arg)[:50])
                 assert not hasattr(arg, "ptr")
                 build_stmt(ctx, arg)
                 # print("arg.ptr", arg.ptr)
             for arg in added_keywords:
-                print("- keyword arg", ast.dump(arg)[:50])
+                # print("- keyword arg", ast.dump(arg)[:50])
                 assert not hasattr(arg, "ptr")
                 build_stmt(ctx, arg)
                 # print("arg.ptr", arg.ptr)
@@ -354,43 +354,44 @@ class CallTransformer:
 
         CallTransformer._warn_if_is_external_func(ctx, node)
         try:
-            print("calling func", func.fn, "args", args, "keywords", keywords)
+            # print("calling func", func.fn, "args", args, "keywords", keywords)
             node.ptr = func(*args, **keywords)
-            print("build_Call node.func.ptr", node.func.ptr, dir(node.func.ptr))
-            print("build_Call node.func.ptr.wrapper", node.func.ptr.wrapper, dir(node.func.ptr.wrapper))
-            print("build_Call node.func.ptr.wrapper.arg_metas")
-            for arg_meta in node.func.ptr.wrapper.arg_metas:
-                print("- arg meta", arg_meta)
-            print("build_Call node.func.ptr.wrapper.arg_metas_expanded")
-            for arg_meta in node.func.ptr.wrapper.arg_metas_expanded:
-                print("- arg meta expanded", arg_meta)
-            print("func.wrapper.used_py_dataclass_parameters_collecting", func.wrapper.used_py_dataclass_parameters_collecting)
+            # print("build_Call node.func.ptr", node.func.ptr, dir(node.func.ptr))
+            # print("build_Call node.func.ptr.wrapper", node.func.ptr.wrapper, dir(node.func.ptr.wrapper))
+            # print("build_Call node.func.ptr.wrapper.arg_metas")
+            # for arg_meta in node.func.ptr.wrapper.arg_metas:
+            #     print("- arg meta", arg_meta)
+            # print("build_Call node.func.ptr.wrapper.arg_metas_expanded")
+            # for arg_meta in node.func.ptr.wrapper.arg_metas_expanded:
+                # print("- arg meta expanded", arg_meta)
+            # print("func.wrapper.used_py_dataclass_parameters", func.wrapper.used_py_dataclass_parameters)
             # so now need to form an alignment between the parameters we are passing in, and the parameters in the
             # called function
-            print("args")
+            # print("args")
             arg_id = 0
-            called_unpruned = func.wrapper.used_py_dataclass_parameters_collecting
+            called_unpruned = func.wrapper.used_py_dataclass_parameters
             to_unprune: set[str] = set()
             for i, arg in enumerate(node.args):
-                print(i, ast.dump(arg)[:50], node.func.ptr.wrapper.arg_metas_expanded[arg_id].name)
+                # print(i, ast.dump(arg)[:50], node.func.ptr.wrapper.arg_metas_expanded[arg_id].name)
                 calling_name = arg.id
                 called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
                 if called_name in called_unpruned:
-                    print('caller unprune', calling_name)
+                    # print('caller unprune', calling_name)
                     to_unprune.add(calling_name)
                 arg_id += 1
-            print("kwargs")
+            # print("kwargs")
             for i, arg in enumerate(node.keywords):
-                print(i, "calling arg", ast.dump(arg)[:100], "arg meta", node.func.ptr.wrapper.arg_metas_expanded[arg_id].name)
+                # print(i, "calling arg", ast.dump(arg)[:100], "arg meta", node.func.ptr.wrapper.arg_metas_expanded[arg_id].name)
                 calling_name = arg.value.id
                 called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
                 if called_name in called_unpruned:
-                    print('caller unprune', calling_name)
+                    # print('caller unprune', calling_name)
                     to_unprune.add(calling_name)
                 arg_id += 1
-            print("to_unprune", to_unprune)
+            print("to_unprune", ctx.func.func, to_unprune)
             # ctx.used_py_dataclass_parameters_enforcing
-            ctx.func.used_py_dataclass_parameters_collecting |= to_unprune
+            if not ctx.enforcing_dataclass_parameters:
+                ctx.func.used_py_dataclass_parameters |= to_unprune
             # print("ctx.used_py_dataclass_parameters_collecting", ctx.used_py_dataclass_parameters_collecting)
             # print("build_Call node.func.ptr.wrapper.arg_metas_expanded  ", node.func.ptr.wrapper.arg_metas_expanded)
         except TypeError as e:

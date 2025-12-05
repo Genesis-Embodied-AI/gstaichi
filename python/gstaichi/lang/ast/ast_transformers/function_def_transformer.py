@@ -90,8 +90,8 @@ class FunctionDefTransformer:
             for field_idx, field in enumerate(dataclasses.fields(argument_type)):
                 flat_name = create_flat_name(argument_name, field.name)
                 if (
-                    ctx.used_py_dataclass_parameters_enforcing
-                    and flat_name not in ctx.used_py_dataclass_parameters_enforcing
+                    ctx.enforcing_dataclass_parameters
+                    and flat_name not in ctx.func.used_py_dataclass_parameters
                 ):
                     continue
                 # if a field is a dataclass, then feed back into process_kernel_arg recursively
@@ -257,18 +257,18 @@ class FunctionDefTransformer:
 
         assert isinstance(ctx.func, Func)
         assert ctx.argument_data is not None
-        print("func argument data:")
+        # print("func argument data:")
         for data_i, data in enumerate(ctx.argument_data):
-            print("-", data_i, "data", data, type(data))
+            # print("-", data_i, "data", data, type(data))
             argument = ctx.func.arg_metas_expanded[data_i]
             FunctionDefTransformer._transform_func_arg(ctx, argument.name, argument.annotation, data)
 
         # deal with dataclasses
-        print("func orig arguments:")
+        # print("func orig arguments:")
         for v in ctx.func.orig_arguments:
-            print("- ", "v", v, type(v))
+            # print("- ", "v", v, type(v))
             if dataclasses.is_dataclass(v.annotation):
-                print("   is datacalss, create varaible", v.name, v.annotation)
+                # print("   is datacalss, create varaible", v.name, v.annotation)
                 ctx.create_variable(v.name, v.annotation)
 
     @staticmethod
