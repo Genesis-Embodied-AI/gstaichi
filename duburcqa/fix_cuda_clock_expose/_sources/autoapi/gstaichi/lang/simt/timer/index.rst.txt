@@ -19,6 +19,8 @@ Module Contents
 
    Returns the value of a per-multiprocessor counter that is incremented every clock cycle.
 
+   It returns 0 for unsupported arch instead of raising an exception since failure is harmless.
+
    See official documentation for details:
    https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#time-function
 

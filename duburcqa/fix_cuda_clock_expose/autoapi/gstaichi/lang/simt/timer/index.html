@@ -434,6 +434,7 @@
 <dt class="sig sig-object py" id="gstaichi.lang.simt.timer.cuda_clock_i64">
 <span class="sig-prename descclassname"><span class="pre">gstaichi.lang.simt.timer.</span></span><span class="sig-name descname"><span class="pre">cuda_clock_i64</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/gstaichi/lang/simt/timer.html#cuda_clock_i64"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.simt.timer.cuda_clock_i64" title="Link to this definition">#</a></dt>
 <dd><p>Returns the value of a per-multiprocessor counter that is incremented every clock cycle.</p>
+<p>It returns 0 for unsupported arch instead of raising an exception since failure is harmless.</p>
 <p>See official documentation for details:
 <a class="reference external" href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#time-function">https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#time-function</a></p>
 </dd></dl>
