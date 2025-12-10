@@ -1,5 +1,3 @@
-import time
-
 import numpy as np
 import pytest
 from pytest import approx
@@ -236,16 +234,20 @@ def test_cuda_clock_i64():
 
     @ti.kernel
     def foo():
-        ti.loop_config()
+        ti.loop_config(block_dim=1)
         for i in range(32):
-            a[i] = ti.simt.timer.cuda_clock_i64()
+            start = ti.simt.timer.cuda_clock_i64()
+            x = ti.random() * 0.5 + 0.5
+            for j in range((i + 1) * 2000):
+                x = ti.sin(x * 1.0001 + j * 1e-6) + 1.2345
+            if x != 0:
+                a[i] = ti.simt.timer.cuda_clock_i64() - start
 
-    start_time_i64_ns = time.time_ns()
     foo()
-    end_time_i64_ns = time.time_ns()
 
-    for i in range(32):
-        assert start_time_i64_ns < a[i] < end_time_i64_ns
+    for i in range(1, 31):
+        assert a[i - 1] < a[i] < a[i + 1]
+        assert -1 < a[i] / a[0] - (i + 1) < 1
 
 
 @test_utils.test(arch=ti.cuda)
