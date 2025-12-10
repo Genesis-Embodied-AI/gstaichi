@@ -1,0 +1,19 @@
+gstaichi.lang.simt.timer
+========================
+
+.. py:module:: gstaichi.lang.simt.timer
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   gstaichi.lang.simt.timer.cuda_clock_i64
+
+
+Module Contents
+---------------
+
+.. py:function:: cuda_clock_i64()
+
