@@ -319,7 +319,7 @@ void Operations::init_internals() {
   // block_barrier, grid_memfence, cuda_all_sync, cuda_any_sync, cuda_uni_sync,
   // cuda_ballot, cuda_shfl_sync, cuda_shfl_up_sync, cuda_shfl_down_sync,
   // cuda_shfl_xor_sync, cuda_match_any_sync, cuda_match_all_sync,
-  // cuda_active_mask, warp_barrier
+  // cuda_active_mask, warp_barrier, cuda_clock_i64
 
 #define CUDA_VOTE_SYNC(name) \
   PLAIN_OP(cuda_##name##_sync_i32, i32, false, u32, i32)
@@ -328,6 +328,7 @@ void Operations::init_internals() {
 #define CUDA_MATCH_SYNC(name, dt) \
   PLAIN_OP(cuda_match_##name##_sync_##dt, u32, false, u32, dt)
 
+  PLAIN_OP(cuda_clock_i64, i64, false);
   PLAIN_OP(block_barrier, i32_void, false);
   PLAIN_OP(block_barrier_and_i32, i32, false, i32);
   PLAIN_OP(block_barrier_or_i32, i32, false, i32);
