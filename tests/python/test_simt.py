@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import pytest
 from pytest import approx
@@ -226,6 +228,24 @@ def test_shfl_sync_i32():
 
     for i in range(1, 32):
         assert a[i] == 1
+
+
+@test_utils.test(arch=ti.cuda)
+def test_cuda_clock_i64():
+    a = ti.field(dtype=ti.i64, shape=32)
+
+    @ti.kernel
+    def foo():
+        ti.loop_config()
+        for i in range(32):
+            a[i] = ti.simt.timer.cuda_clock_i64()
+
+    start_time_i64_ns = time.time_ns()
+    foo()
+    end_time_i64_ns = time.time_ns()
+
+    for i in range(32):
+        assert start_time_i64_ns < a[i] < end_time_i64_ns
 
 
 @test_utils.test(arch=ti.cuda)
