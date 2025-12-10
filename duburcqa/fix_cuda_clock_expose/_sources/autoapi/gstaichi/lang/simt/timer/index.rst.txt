@@ -17,3 +17,9 @@ Module Contents
 
 .. py:function:: cuda_clock_i64()
 
+   Returns the value of a per-multiprocessor counter that is incremented every clock cycle.
+
+   See official documentation for details:
+   https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#time-function
+
+
