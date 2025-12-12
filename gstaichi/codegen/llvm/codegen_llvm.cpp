@@ -885,7 +885,19 @@ void TaskCodeGenLLVM::visit(IfStmt *if_stmt) {
       llvm::BasicBlock::Create(*llvm_context, "false_block", func);
   llvm::BasicBlock *after_if =
       llvm::BasicBlock::Create(*llvm_context, "after_if", func);
-  llvm::Value *cond = builder->CreateIsNotNull(llvm_val[if_stmt->cond]);
+  
+  // Check if condition is already a boolean (i1) type
+  llvm::Value *cond_val = llvm_val[if_stmt->cond];
+  llvm::Type *cond_type = cond_val->getType();
+  llvm::Value *cond;
+  if (cond_type->isIntegerTy(1)) {
+    // Already a boolean, use directly
+    cond = cond_val;
+  } else {
+    // Convert to boolean using CreateIsNotNull
+    cond = builder->CreateIsNotNull(cond_val);
+  }
+  
   builder->CreateCondBr(cond, true_block, false_block);
   builder->SetInsertPoint(true_block);
   returned = false;  // Reset at start of true block

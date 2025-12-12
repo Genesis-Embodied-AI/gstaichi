@@ -814,21 +814,39 @@ class ASTTransformer(Builder):
         if ctx.is_in_static_scope():
             ops = {**ops, **ops_static}
         operands = [node.left.ptr] + [comparator.ptr for comparator in node.comparators]
-        val = True
-        for i, node_op in enumerate(node.ops):
+        
+        # Handle single comparison case - don't wrap with True &&
+        if len(node.ops) == 1:
+            node_op = node.ops[0]
             if isinstance(node_op, (ast.Is, ast.IsNot)):
                 name = "is" if isinstance(node_op, ast.Is) else "is not"
                 raise GsTaichiSyntaxError(f'Operator "{name}" in GsTaichi scope is not supported.')
-            l = operands[i]
-            r = operands[i + 1]
+            l = operands[0]
+            r = operands[1]
             op = ops.get(type(node_op))
-
             if op is None:
                 if type(node_op) in ops_static:
                     raise GsTaichiSyntaxError(f'"{type(node_op).__name__}" is only supported inside `ti.static`.')
                 else:
                     raise GsTaichiSyntaxError(f'"{type(node_op).__name__}" is not supported in GsTaichi kernels.')
-            val = ti_ops.logical_and(val, op(l, r))
+            val = op(l, r)
+        else:
+            # Multiple comparisons - chain with logical_and
+            val = True
+            for i, node_op in enumerate(node.ops):
+                if isinstance(node_op, (ast.Is, ast.IsNot)):
+                    name = "is" if isinstance(node_op, ast.Is) else "is not"
+                    raise GsTaichiSyntaxError(f'Operator "{name}" in GsTaichi scope is not supported.')
+                l = operands[i]
+                r = operands[i + 1]
+                op = ops.get(type(node_op))
+                if op is None:
+                    if type(node_op) in ops_static:
+                        raise GsTaichiSyntaxError(f'"{type(node_op).__name__}" is only supported inside `ti.static`.')
+                    else:
+                        raise GsTaichiSyntaxError(f'"{type(node_op).__name__}" is not supported in GsTaichi kernels.')
+                val = ti_ops.logical_and(val, op(l, r))
+        
         if not isinstance(val, (bool, np.bool_)):
             val = ti_ops.cast(val, primitive_types.u1)
         node.ptr = val
@@ -1239,6 +1257,9 @@ class ASTTransformer(Builder):
                 build_stmts(ctx, node.orelse)
             return node
 
+        # Save the returned status before processing the if
+        saved_returned = ctx.returned
+        
         with ctx.non_static_if_guard(node):
             stmt_dbg_info = _ti_core.DebugInfo(ctx.get_pos_info(node))
             impl.begin_frontend_if(ctx.ast_builder, node.test.ptr, stmt_dbg_info)
@@ -1248,6 +1269,10 @@ class ASTTransformer(Builder):
             ctx.ast_builder.begin_frontend_if_false()
             build_stmts(ctx, node.orelse)
             ctx.ast_builder.pop_scope()
+        
+        # Restore the returned status after processing the if
+        # A return inside the if should not affect code after the if
+        ctx.returned = saved_returned
         return None
 
     @staticmethod
