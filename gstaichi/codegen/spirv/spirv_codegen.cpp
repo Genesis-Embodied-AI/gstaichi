@@ -610,7 +610,7 @@ void TaskCodegen::visit(ReturnStmt *stmt) {
     returned_ = true;
     return;
   }
-  
+
   TI_ASSERT(ctx_attribs_->has_rets());
   // The `PrimitiveType::i32` in this function call is a placeholder.
   auto buffer_value = get_buffer_value(BufferType::Rets, PrimitiveType::i32);
@@ -1637,7 +1637,8 @@ void TaskCodegen::visit(IfStmt *if_stmt) {
   if (gen_label_) {  // Skip OpBranch, because ContinueStmt already generated
                      // one
     gen_label_ = false;
-  } else if (!returned_) {  // Skip OpBranch if ReturnStmt already emitted OpReturn
+  } else if (!returned_) {  // Skip OpBranch if ReturnStmt already emitted
+                            // OpReturn
     ir_->make_inst(spv::OpBranch, merge_label);
   } else {
     returned_ = false;
@@ -1650,7 +1651,8 @@ void TaskCodegen::visit(IfStmt *if_stmt) {
   }
   if (gen_label_) {
     gen_label_ = false;
-  } else if (!returned_) {  // Skip OpBranch if ReturnStmt already emitted OpReturn
+  } else if (!returned_) {  // Skip OpBranch if ReturnStmt already emitted
+                            // OpReturn
     ir_->make_inst(spv::OpBranch, merge_label);
   } else {
     returned_ = false;

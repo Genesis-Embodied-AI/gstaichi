@@ -893,8 +893,9 @@ void TaskCodeGenLLVM::visit(IfStmt *if_stmt) {
   }
   if (!returned) {
     builder->CreateBr(after_if);
-  // } else {
+    // } else {
   }
+
   builder->SetInsertPoint(false_block);
   returned = false;
   if (if_stmt->false_statements) {
@@ -902,8 +903,8 @@ void TaskCodeGenLLVM::visit(IfStmt *if_stmt) {
   }
   if (!returned) {
     builder->CreateBr(after_if);
-  // } else {
-  //   returned = false;
+    // } else {
+    //   returned = false;
   }
   returned = false;
   builder->SetInsertPoint(after_if);

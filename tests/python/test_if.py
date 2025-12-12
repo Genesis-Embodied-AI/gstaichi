@@ -38,10 +38,13 @@ def test_ifexpr_scalar():
     func()
 
 
-@pytest.mark.parametrize("in_val,expected",[
-    (0, 2),
-    (1, 5),
-])
+@pytest.mark.parametrize(
+    "in_val,expected",
+    [
+        (0, 2),
+        (1, 5),
+    ],
+)
 @test_utils.test()
 def test_if_return_void(in_val: int, expected: int) -> None:
     def k1(a: ti.types.NDArray) -> None:
@@ -58,11 +61,15 @@ def test_if_return_void(in_val: int, expected: int) -> None:
 
 # ========== Tests for returns inside if statements ==========
 
+
 # Kernel tests - void return
-@pytest.mark.parametrize("in_val,expected", [
-    (0, 2),
-    (1, 5),
-])
+@pytest.mark.parametrize(
+    "in_val,expected",
+    [
+        (0, 2),
+        (1, 5),
+    ],
+)
 @pytest.mark.xfail(reason="not implemented yet for kernels")
 @test_utils.test(offline_cache=False, advanced_optimization=False)
 def test_kernel_if_return_void_true_branch(in_val: int, expected: int):
@@ -79,10 +86,13 @@ def test_kernel_if_return_void_true_branch(in_val: int, expected: int):
     assert a[1] == expected
 
 
-@pytest.mark.parametrize("in_val,expected", [
-    (0, 10),
-    (1, 2),
-])
+@pytest.mark.parametrize(
+    "in_val,expected",
+    [
+        (0, 10),
+        (1, 2),
+    ],
+)
 @pytest.mark.xfail(reason="not implemented yet for kernels")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_if_return_void_false_branch(in_val: int, expected: int):
@@ -101,10 +111,13 @@ def test_kernel_if_return_void_false_branch(in_val: int, expected: int):
     assert a[1] == expected
 
 
-@pytest.mark.parametrize("in_val,expected", [
-    (0, 2),
-    (1, 3),
-])
+@pytest.mark.parametrize(
+    "in_val,expected",
+    [
+        (0, 2),
+        (1, 3),
+    ],
+)
 @pytest.mark.xfail(reason="not implemented yet for kernels")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_if_return_void_both_branches(in_val: int, expected: int):
@@ -125,10 +138,13 @@ def test_kernel_if_return_void_both_branches(in_val: int, expected: int):
 
 
 # Kernel tests - value return
-@pytest.mark.parametrize("in_val,expected", [
-    (0, 10),
-    (1, 20),
-])
+@pytest.mark.parametrize(
+    "in_val,expected",
+    [
+        (0, 10),
+        (1, 20),
+    ],
+)
 @pytest.mark.xfail(reason="not handling return type yet")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_if_return_value_true_branch(in_val: int, expected: int):
@@ -146,10 +162,13 @@ def test_kernel_if_return_value_true_branch(in_val: int, expected: int):
     assert result == expected
 
 
-@pytest.mark.parametrize("in_val,expected", [
-    (0, 20),
-    (1, 10),
-])
+@pytest.mark.parametrize(
+    "in_val,expected",
+    [
+        (0, 20),
+        (1, 10),
+    ],
+)
 @pytest.mark.xfail(reason="not handling return type yet")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_if_return_value_false_branch(in_val: int, expected: int):
@@ -169,10 +188,13 @@ def test_kernel_if_return_value_false_branch(in_val: int, expected: int):
     assert result == expected
 
 
-@pytest.mark.parametrize("in_val,expected", [
-    (0, 10),
-    (1, 20),
-])
+@pytest.mark.parametrize(
+    "in_val,expected",
+    [
+        (0, 10),
+        (1, 20),
+    ],
+)
 @pytest.mark.xfail(reason="not handling return type yet")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_if_return_value_both_branches(in_val: int, expected: int):
@@ -190,10 +212,13 @@ def test_kernel_if_return_value_both_branches(in_val: int, expected: int):
 
 
 # Function tests - void return
-@pytest.mark.parametrize("in_val,expected", [
-    (0, 2),
-    (1, 5),
-])
+@pytest.mark.parametrize(
+    "in_val,expected",
+    [
+        (0, 2),
+        (1, 5),
+    ],
+)
 # @pytest.mark.xfail(reason="not implemented yet for functions")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_func_if_return_void_true_branch(in_val: int, expected: int):
@@ -214,10 +239,13 @@ def test_func_if_return_void_true_branch(in_val: int, expected: int):
     assert a[1] == expected
 
 
-@pytest.mark.parametrize("in_val,expected", [
-    (0, 10),
-    (1, 2),
-])
+@pytest.mark.parametrize(
+    "in_val,expected",
+    [
+        (0, 10),
+        (1, 2),
+    ],
+)
 # @pytest.mark.xfail(reason="not implemented yet for functions")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_func_if_return_void_false_branch(in_val: int, expected: int):
@@ -240,10 +268,13 @@ def test_func_if_return_void_false_branch(in_val: int, expected: int):
     assert a[1] == expected
 
 
-@pytest.mark.parametrize("in_val,expected", [
-    (0, 2),
-    (1, 3),
-])
+@pytest.mark.parametrize(
+    "in_val,expected",
+    [
+        (0, 2),
+        (1, 3),
+    ],
+)
 # @pytest.mark.xfail(reason="not implemented yet for functions")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_func_if_return_void_both_branches(in_val: int, expected: int):
@@ -268,10 +299,13 @@ def test_func_if_return_void_both_branches(in_val: int, expected: int):
 
 
 # Function tests - value return
-@pytest.mark.parametrize("in_val,expected", [
-    (0, 10),
-    (1, 20),
-])
+@pytest.mark.parametrize(
+    "in_val,expected",
+    [
+        (0, 10),
+        (1, 20),
+    ],
+)
 # @pytest.mark.xfail(reason="not implemented yet for functions")
 @pytest.mark.xfail(reason="not implemented yet for returning value")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
@@ -294,10 +328,13 @@ def test_func_if_return_value_true_branch(in_val: int, expected: int):
     assert result == expected
 
 
-@pytest.mark.parametrize("in_val,expected", [
-    (0, 20),
-    (1, 10),
-])
+@pytest.mark.parametrize(
+    "in_val,expected",
+    [
+        (0, 20),
+        (1, 10),
+    ],
+)
 @pytest.mark.xfail(reason="not handling returning values")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_func_if_return_value_false_branch(in_val: int, expected: int):
@@ -321,10 +358,13 @@ def test_func_if_return_value_false_branch(in_val: int, expected: int):
     assert result == expected
 
 
-@pytest.mark.parametrize("in_val,expected", [
-    (0, 10),
-    (1, 20),
-])
+@pytest.mark.parametrize(
+    "in_val,expected",
+    [
+        (0, 10),
+        (1, 20),
+    ],
+)
 # @pytest.mark.xfail(reason="not implemented yet for functions")
 @pytest.mark.xfail(reason="not implemented yet for returning value")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
@@ -347,11 +387,14 @@ def test_func_if_return_value_both_branches(in_val: int, expected: int):
 
 
 # Multiple if statements tests
-@pytest.mark.parametrize("in_val,expected", [
-    (0, 1),
-    (1, 2),
-    (2, 3),
-])
+@pytest.mark.parametrize(
+    "in_val,expected",
+    [
+        (0, 1),
+        (1, 2),
+        (2, 3),
+    ],
+)
 @pytest.mark.xfail(reason="not implemented yet for kernels")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_multiple_ifs_return_void(in_val: int, expected: int):
@@ -371,11 +414,14 @@ def test_kernel_multiple_ifs_return_void(in_val: int, expected: int):
     assert a[1] == expected
 
 
-@pytest.mark.parametrize("in_val,expected", [
-    (0, 1),
-    (1, 2),
-    (2, 3),
-])
+@pytest.mark.parametrize(
+    "in_val,expected",
+    [
+        (0, 1),
+        (1, 2),
+        (2, 3),
+    ],
+)
 @pytest.mark.xfail(reason="not handling return type yet")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_multiple_ifs_return_value(in_val: int, expected: int):
@@ -393,11 +439,14 @@ def test_kernel_multiple_ifs_return_value(in_val: int, expected: int):
     assert result == expected
 
 
-@pytest.mark.parametrize("in_val,expected", [
-    (0, 1),
-    (1, 2),
-    (2, 3),
-])
+@pytest.mark.parametrize(
+    "in_val,expected",
+    [
+        (0, 1),
+        (1, 2),
+        (2, 3),
+    ],
+)
 # @pytest.mark.xfail(reason="not implemented yet for functions")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_func_multiple_ifs_return_void(in_val: int, expected: int):
@@ -421,11 +470,14 @@ def test_func_multiple_ifs_return_void(in_val: int, expected: int):
     assert a[1] == expected
 
 
-@pytest.mark.parametrize("in_val,expected", [
-    (0, 1),
-    (1, 2),
-    (2, 3),
-])
+@pytest.mark.parametrize(
+    "in_val,expected",
+    [
+        (0, 1),
+        (1, 2),
+        (2, 3),
+    ],
+)
 @pytest.mark.xfail(reason="not implemented yet for returning value")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_func_multiple_ifs_return_value(in_val: int, expected: int):
@@ -448,12 +500,15 @@ def test_func_multiple_ifs_return_value(in_val: int, expected: int):
 
 
 # Nested if tests
-@pytest.mark.parametrize("in_val1,in_val2,expected", [
-    (0, 0, 1),
-    (0, 1, 2),
-    (1, 0, 3),
-    (1, 1, 4),
-])
+@pytest.mark.parametrize(
+    "in_val1,in_val2,expected",
+    [
+        (0, 0, 1),
+        (0, 1, 2),
+        (1, 0, 3),
+        (1, 1, 4),
+    ],
+)
 @pytest.mark.xfail(reason="not implemented yet for kernels")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_nested_ifs_return_void(in_val1: int, in_val2: int, expected: int):
@@ -477,12 +532,15 @@ def test_kernel_nested_ifs_return_void(in_val1: int, in_val2: int, expected: int
     assert a[2] == expected
 
 
-@pytest.mark.parametrize("in_val1,in_val2,expected", [
-    (0, 0, 1),
-    (0, 1, 2),
-    (1, 0, 3),
-    (1, 1, 4),
-])
+@pytest.mark.parametrize(
+    "in_val1,in_val2,expected",
+    [
+        (0, 0, 1),
+        (0, 1, 2),
+        (1, 0, 3),
+        (1, 1, 4),
+    ],
+)
 @pytest.mark.xfail(reason="not handling return type yet")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_nested_ifs_return_value(in_val1: int, in_val2: int, expected: int):
@@ -504,10 +562,13 @@ def test_kernel_nested_ifs_return_value(in_val1: int, in_val2: int, expected: in
 
 
 # Edge case: return with code after in same branch
-@pytest.mark.parametrize("in_val,expected", [
-    (0, 2),
-    (1, 5),
-])
+@pytest.mark.parametrize(
+    "in_val,expected",
+    [
+        (0, 2),
+        (1, 5),
+    ],
+)
 @pytest.mark.xfail(reason="not implemented yet for kernels")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_if_return_void_with_code_after(in_val: int, expected: int):
@@ -526,11 +587,14 @@ def test_kernel_if_return_void_with_code_after(in_val: int, expected: int):
 
 
 # Edge case: if-elif-else with returns
-@pytest.mark.parametrize("in_val,expected", [
-    (0, 1),
-    (1, 2),
-    (2, 3),
-])
+@pytest.mark.parametrize(
+    "in_val,expected",
+    [
+        (0, 1),
+        (1, 2),
+        (2, 3),
+    ],
+)
 @pytest.mark.xfail(reason="not implemented yet for kernels")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_if_elif_else_return_void(in_val: int, expected: int):
@@ -552,11 +616,14 @@ def test_kernel_if_elif_else_return_void(in_val: int, expected: int):
     assert a[1] == expected
 
 
-@pytest.mark.parametrize("in_val,expected", [
-    (0, 1),
-    (1, 2),
-    (2, 3),
-])
+@pytest.mark.parametrize(
+    "in_val,expected",
+    [
+        (0, 1),
+        (1, 2),
+        (2, 3),
+    ],
+)
 @pytest.mark.xfail(reason="not implemented yet for kernels")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_if_elif_else_return_value(in_val: int, expected: int):
@@ -577,12 +644,16 @@ def test_kernel_if_elif_else_return_value(in_val: int, expected: int):
 
 # ========== Tests for returns inside for loops ==========
 
+
 # For loop with if-return in true branch
-@pytest.mark.parametrize("stop_at,expected_sum", [
-    (3, 3),  # 0 + 1 + 2, stops at i=3
-    (5, 10),  # 0 + 1 + 2 + 3 + 4, stops at i=5
-    (10, 45),  # Full range 0-9
-])
+@pytest.mark.parametrize(
+    "stop_at,expected_sum",
+    [
+        (3, 3),  # 0 + 1 + 2, stops at i=3
+        (5, 10),  # 0 + 1 + 2 + 3 + 4, stops at i=5
+        (10, 45),  # Full range 0-9
+    ],
+)
 @pytest.mark.xfail(reason="not implemented yet for kernels")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_for_if_return_void_early_exit(stop_at: int, expected_sum: int):
@@ -601,11 +672,14 @@ def test_kernel_for_if_return_void_early_exit(stop_at: int, expected_sum: int):
 
 
 # For loop with if-return in false branch
-@pytest.mark.parametrize("skip_val,expected_sum", [
-    (5, 40),  # Sum 0-9 except 5
-    (0, 45),  # Sum 1-9 (skip 0)
-    (9, 36),  # Sum 0-8 (skip 9)
-])
+@pytest.mark.parametrize(
+    "skip_val,expected_sum",
+    [
+        (5, 40),  # Sum 0-9 except 5
+        (0, 45),  # Sum 1-9 (skip 0)
+        (9, 36),  # Sum 0-8 (skip 9)
+    ],
+)
 @pytest.mark.xfail(reason="not implemented yet for kernels")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_for_if_else_return_void(skip_val: int, expected_sum: int):
@@ -627,12 +701,15 @@ def test_kernel_for_if_else_return_void(skip_val: int, expected_sum: int):
 
 
 # Nested for loops with return
-@pytest.mark.parametrize("stop_i,stop_j,expected", [
-    (2, 2, 22),  # thread 0: +5, thread 1: +5, thread 2: +2, htread 3: +5, thread 4: +5
-                # total: 5 * 4 + 2 = 22
-    (1, 1, 2),  # Stops at i=1, j=1
-    (3, 3, 12),  # Various nested iterations
-])
+@pytest.mark.parametrize(
+    "stop_i,stop_j,expected",
+    [
+        (2, 2, 22),  # thread 0: +5, thread 1: +5, thread 2: +2, htread 3: +5, thread 4: +5
+        # total: 5 * 4 + 2 = 22
+        (1, 1, 2),  # Stops at i=1, j=1
+        (3, 3, 12),  # Various nested iterations
+    ],
+)
 @pytest.mark.xfail(reason="not implemented yet for kernels")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_nested_for_if_return_void(stop_i: int, stop_j: int, expected: int):
@@ -642,7 +719,7 @@ def test_kernel_nested_for_if_return_void(stop_i: int, stop_j: int, expected: in
             for j in range(5):
                 if i == a[0] and j == a[1]:
                     return
-                print('i', i, 'j', j)
+                print("i", i, "j", j)
                 a[2] += i
 
     a = ti.ndarray(ti.i32, (10,))
@@ -654,11 +731,14 @@ def test_kernel_nested_for_if_return_void(stop_i: int, stop_j: int, expected: in
 
 
 # Multiple if statements inside for loop with returns
-@pytest.mark.parametrize("threshold1,threshold2,expected_count", [
-    (3, 7, 3),  # Counts 0, 1, 2 (stops at 3)
-    (5, 7, 5),  # Counts 0-4 (stops at 5)
-    (10, 7, 7),  # Counts 0-6 (stops at 7)
-])
+@pytest.mark.parametrize(
+    "threshold1,threshold2,expected_count",
+    [
+        (3, 7, 3),  # Counts 0, 1, 2 (stops at 3)
+        (5, 7, 5),  # Counts 0-4 (stops at 5)
+        (10, 7, 7),  # Counts 0-6 (stops at 7)
+    ],
+)
 @pytest.mark.xfail(reason="not implemented yet for kernels")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_for_multiple_ifs_return_void(threshold1: int, threshold2: int, expected_count: int):
@@ -680,10 +760,13 @@ def test_kernel_for_multiple_ifs_return_void(threshold1: int, threshold2: int, e
 
 
 # For loop with if-return and code after loop
-@pytest.mark.parametrize("stop_at,expected_sum,expected_marker", [
-    (3, 3, 0),  # Early return, marker not set
-    (10, 45, 999),  # No early return, marker set
-])
+@pytest.mark.parametrize(
+    "stop_at,expected_sum,expected_marker",
+    [
+        (3, 3, 0),  # Early return, marker not set
+        (10, 45, 999),  # No early return, marker set
+    ],
+)
 @pytest.mark.xfail(reason="not implemented yet for kernels")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_for_if_return_with_code_after_loop(stop_at: int, expected_sum: int, expected_marker: int):
@@ -727,11 +810,14 @@ def test_kernel_grouped_for_if_return_void():
 
 
 # Range for with dynamic bounds and return
-@pytest.mark.parametrize("n,threshold,expected", [
-    (10, 5, 10),  # Sum 0+1+2+3+4
-    (10, 10, 45),  # Full sum
-    (10, 0, 0),  # Immediate return
-])
+@pytest.mark.parametrize(
+    "n,threshold,expected",
+    [
+        (10, 5, 10),  # Sum 0+1+2+3+4
+        (10, 10, 45),  # Full sum
+        (10, 0, 0),  # Immediate return
+    ],
+)
 @pytest.mark.xfail(reason="not implemented yet for kernels")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_dynamic_range_for_if_return_void(n: int, threshold: int, expected: int):
