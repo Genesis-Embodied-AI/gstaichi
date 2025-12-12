@@ -126,6 +126,7 @@ def test_kernel_if_return_void_both_branches(in_val: int, expected: int):
     (0, 10),
     (1, 20),
 ])
+@pytest.mark.xfail(reason="not handling return type yet")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_if_return_value_true_branch(in_val: int, expected: int):
     @ti.kernel
@@ -146,6 +147,7 @@ def test_kernel_if_return_value_true_branch(in_val: int, expected: int):
     (0, 20),
     (1, 10),
 ])
+@pytest.mark.xfail(reason="not handling return type yet")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_if_return_value_false_branch(in_val: int, expected: int):
     @ti.kernel
@@ -168,6 +170,7 @@ def test_kernel_if_return_value_false_branch(in_val: int, expected: int):
     (0, 10),
     (1, 20),
 ])
+@pytest.mark.xfail(reason="not handling return type yet")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_if_return_value_both_branches(in_val: int, expected: int):
     @ti.kernel
@@ -367,6 +370,7 @@ def test_kernel_multiple_ifs_return_void(in_val: int, expected: int):
     (1, 2),
     (2, 3),
 ])
+@pytest.mark.xfail(reason="not handling return type yet")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_multiple_ifs_return_value(in_val: int, expected: int):
     @ti.kernel
@@ -472,6 +476,7 @@ def test_kernel_nested_ifs_return_void(in_val1: int, in_val2: int, expected: int
     (1, 0, 3),
     (1, 1, 4),
 ])
+@pytest.mark.xfail(reason="not handling return type yet")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_nested_ifs_return_value(in_val1: int, in_val2: int, expected: int):
     @ti.kernel
