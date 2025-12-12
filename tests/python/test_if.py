@@ -853,11 +853,11 @@ def test_if_func_for_loop_return_void() -> None:
             0: 2,
             1: 5,
         }[i]
-        print('')
-        print('=========')
+        print("")
+        print("=========")
         a[0] = i
         k1(a)
-        print('a', a.to_numpy())
+        print("a", a.to_numpy())
         for j in range(N):
             assert a[1 + j] == expected
-            print('res i', i, f'a[{1 + j}]', a[1 + j])
+            print("res i", i, f"a[{1 + j}]", a[1 + j])
