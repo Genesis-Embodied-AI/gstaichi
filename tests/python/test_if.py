@@ -36,3 +36,21 @@ def test_ifexpr_scalar():
             g_v[I] = 0 if cond else g_v[I]
 
     func()
+
+
+@pytest.mark.parametrize("in_val,expected",[
+    (0, 2),
+    (1, 5),
+])
+@test_utils.test()
+def test_if_return_void(in_val: int, expected: int) -> None:
+    def k1(a: ti.types.NDArray) -> None:
+        if a[0] == 0:
+            a[1] = 2
+            return
+        a[1] = 5
+
+    a = ti.ndarray(ti.i32, (10,))
+    a[0] = in_val
+    k1(a)
+    assert a[1] == expected
