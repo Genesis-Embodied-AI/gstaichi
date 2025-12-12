@@ -905,6 +905,7 @@ void TaskCodeGenLLVM::visit(IfStmt *if_stmt) {
   // } else {
   //   returned = false;
   }
+  returned = false;
   builder->SetInsertPoint(after_if);
 }
 

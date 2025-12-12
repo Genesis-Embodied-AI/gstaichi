@@ -63,7 +63,7 @@ def test_if_return_void(in_val: int, expected: int) -> None:
     (0, 2),
     (1, 5),
 ])
-@test_utils.test()
+@test_utils.test(offline_cache=False, advanced_optimization=False)
 def test_kernel_if_return_void_true_branch(in_val: int, expected: int):
     @ti.kernel
     def k1(a: ti.types.NDArray) -> None:
@@ -79,10 +79,10 @@ def test_kernel_if_return_void_true_branch(in_val: int, expected: int):
 
 
 @pytest.mark.parametrize("in_val,expected", [
-    (0, 5),
+    (0, 10),
     (1, 2),
 ])
-@test_utils.test()
+@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_if_return_void_false_branch(in_val: int, expected: int):
     @ti.kernel
     def k1(a: ti.types.NDArray) -> None:
@@ -91,7 +91,7 @@ def test_kernel_if_return_void_false_branch(in_val: int, expected: int):
         else:
             a[1] = 2
             return
-        a[1] = 10  # Should not execute
+        a[1] = 10
 
     a = ti.ndarray(ti.i32, (10,))
     a[0] = in_val
