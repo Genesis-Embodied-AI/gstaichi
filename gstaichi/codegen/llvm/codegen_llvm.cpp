@@ -901,8 +901,42 @@ void TaskCodeGenLLVM::visit(IfStmt *if_stmt) {
   builder->CreateCondBr(cond, true_block, false_block);
   builder->SetInsertPoint(true_block);
   returned = false;  // Reset at start of true block
+  
+  // Diagnostic: always log
+  TI_WARN("[IfStmt] Processing true_statements, insertion point set to true_block");
   if (if_stmt->true_statements) {
+    TI_WARN("[IfStmt] true_statements has {} statements", 
+            if_stmt->true_statements->statements.size());
+    
+    // Diagnostic: log each statement type
+    for (size_t i = 0; i < if_stmt->true_statements->statements.size(); ++i) {
+      auto &stmt = if_stmt->true_statements->statements[i];
+      Stmt *stmt_ptr = stmt.get();
+      TI_WARN("[IfStmt] Statement {}: id={}, is_container={}", 
+              i, stmt_ptr->id, 
+              stmt_ptr->is_container_statement());
+      if (auto *block = dynamic_cast<Block*>(stmt_ptr)) {
+        TI_WARN("[IfStmt] Statement {} is a Block with {} statements", 
+                i, block->statements.size());
+      }
+    }
+    
+    auto insert_block_before = builder->GetInsertBlock();
     if_stmt->true_statements->accept(this);
+    auto insert_block_after = builder->GetInsertBlock();
+    
+    TI_WARN("[IfStmt] After processing true_statements: insertion point {} -> {}, returned={}",
+            insert_block_before ? insert_block_before->getName().str() : "null",
+            insert_block_after ? insert_block_after->getName().str() : "null",
+            returned);
+    
+    // Ensure insertion point is still in true_block after processing
+    if (builder->GetInsertBlock() != true_block) {
+      TI_WARN("[IfStmt] WARNING: Insertion point not in true_block! Fixing...");
+      builder->SetInsertPoint(true_block);
+    }
+  } else {
+    TI_WARN("[IfStmt] true_statements is null!");
   }
   if (!returned) {
     builder->CreateBr(after_if);

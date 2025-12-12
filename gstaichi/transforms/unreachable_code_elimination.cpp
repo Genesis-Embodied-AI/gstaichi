@@ -42,16 +42,49 @@ class UnreachableCodeEliminator : public BasicStmtVisitor {
   }
 
   void visit(Block *stmt_list) override {
+    TI_WARN("[unreachable_code_elimination] Processing Block with {} statements", stmt_list->size());
     const int block_size = stmt_list->size();
+    
+    // Diagnostic: log all statement types
+    for (int i = 0; i < block_size; i++) {
+      bool is_continue = stmt_list->statements[i]->is<ContinueStmt>();
+      bool is_return = stmt_list->statements[i]->is<ReturnStmt>();
+      TI_WARN("[unreachable_code_elimination] Statement {}: id={}, is_ContinueStmt={}, is_ReturnStmt={}", 
+              i, stmt_list->statements[i]->id, is_continue, is_return);
+    }
+    
     for (int i = 0; i < block_size - 1; i++) {
       if (stmt_list->statements[i]->is<ContinueStmt>()) {
         // Eliminate statements after ContinueStmt
+        TI_WARN("[unreachable_code_elimination] Found ContinueStmt at index {}, removing {} statements after it", 
+                i, block_size - 1 - i);
+        for (int j = block_size - 1; j > i; j--)
+          stmt_list->erase(j);
+        modified = true;
+        break;
+      }
+      if (stmt_list->statements[i]->is<ReturnStmt>()) {
+        // Eliminate statements after ReturnStmt
+        TI_WARN("[unreachable_code_elimination] Found ReturnStmt at index {}, removing {} statements after it", 
+                i, block_size - 1 - i);
         for (int j = block_size - 1; j > i; j--)
           stmt_list->erase(j);
         modified = true;
         break;
       }
     }
+    
+    // Also check the last statement (if block_size > 0)
+    if (block_size > 0 && !modified) {
+      int last_idx = block_size - 1;
+      if (stmt_list->statements[last_idx]->is<ReturnStmt>()) {
+        TI_WARN("[unreachable_code_elimination] Found ReturnStmt at last index {}, no statements after it to remove", 
+                last_idx);
+        // No statements after it, so nothing to remove
+      }
+    }
+    
+    TI_WARN("[unreachable_code_elimination] Block now has {} statements after processing", stmt_list->size());
     for (auto &stmt : stmt_list->statements)
       stmt->accept(this);
   }

@@ -52,13 +52,25 @@ class LowerAST : public IRVisitor {
   }
 
   void visit(Block *stmt_list) override {
+    TI_WARN("[lower_ast] Processing Block with {} statements", stmt_list->statements.size());
     auto backup_block = this->current_block_;
     this->current_block_ = stmt_list;
     auto stmts = make_raw_pointer_list(stmt_list->statements);
     current_block_depth_++;
+    
+    size_t stmt_idx = 0;
     for (auto &stmt : stmts) {
+      TI_WARN("[lower_ast] Block: Processing statement {} (id={})", stmt_idx++, stmt->id);
+      size_t before_size = stmt_list->statements.size();
       stmt->accept(this);
+      size_t after_size = stmt_list->statements.size();
+      if (before_size != after_size) {
+        TI_WARN("[lower_ast] Block: Statement {} changed block size from {} to {}", 
+                stmt_idx - 1, before_size, after_size);
+      }
     }
+    
+    TI_WARN("[lower_ast] Block: Finished processing, final size: {}", stmt_list->statements.size());
     current_block_depth_--;
     this->current_block_ = backup_block;
   }
@@ -100,13 +112,25 @@ class LowerAST : public IRVisitor {
   }
 
   void visit(FrontendIfStmt *stmt) override {
+    TI_WARN("[lower_ast] Processing FrontendIfStmt");
+    if (stmt->true_statements) {
+      TI_WARN("[lower_ast] FrontendIfStmt true_statements has {} statements", 
+              stmt->true_statements->statements.size());
+    } else {
+      TI_WARN("[lower_ast] FrontendIfStmt true_statements is null");
+    }
+    
     auto fctx = make_flatten_ctx();
     auto condition_stmt = flatten_rvalue(stmt->condition, &fctx);
 
     auto new_if = std::make_unique<IfStmt>(condition_stmt);
 
     if (stmt->true_statements) {
+      TI_WARN("[lower_ast] Moving true_statements ({} statements) to IfStmt", 
+              stmt->true_statements->statements.size());
       new_if->set_true_statements(std::move(stmt->true_statements));
+      TI_WARN("[lower_ast] After move, IfStmt true_statements has {} statements", 
+              new_if->true_statements ? new_if->true_statements->statements.size() : 0);
     }
     if (stmt->false_statements) {
       new_if->set_false_statements(std::move(stmt->false_statements));
@@ -114,12 +138,23 @@ class LowerAST : public IRVisitor {
     auto pif = new_if.get();
     fctx.push_back(std::move(new_if));
     stmt->parent->replace_with(stmt, std::move(fctx.stmts));
+    
+    TI_WARN("[lower_ast] About to accept IfStmt, true_statements has {} statements", 
+            pif->true_statements ? pif->true_statements->statements.size() : 0);
     pif->accept(this);
+    TI_WARN("[lower_ast] After accepting IfStmt, true_statements has {} statements", 
+            pif->true_statements ? pif->true_statements->statements.size() : 0);
   }
 
   void visit(IfStmt *if_stmt) override {
-    if (if_stmt->true_statements)
+    TI_WARN("[lower_ast] Processing IfStmt");
+    if (if_stmt->true_statements) {
+      TI_WARN("[lower_ast] IfStmt true_statements has {} statements before accept", 
+              if_stmt->true_statements->statements.size());
       if_stmt->true_statements->accept(this);
+      TI_WARN("[lower_ast] IfStmt true_statements has {} statements after accept", 
+              if_stmt->true_statements->statements.size());
+    }
     if (if_stmt->false_statements) {
       if_stmt->false_statements->accept(this);
     }
@@ -389,6 +424,8 @@ class LowerAST : public IRVisitor {
   }
 
   void visit(FrontendReturnStmt *stmt) override {
+    TI_WARN("[lower_ast] Processing FrontendReturnStmt, parent block has {} statements", 
+            stmt->parent ? stmt->parent->statements.size() : 0);
     auto expr_group = stmt->values;
     auto fctx = make_flatten_ctx();
     std::vector<Stmt *> return_ele;
@@ -396,7 +433,11 @@ class LowerAST : public IRVisitor {
       return_ele.push_back(flatten_rvalue(x, &fctx));
     }
     fctx.push_back<ReturnStmt>(return_ele);
+    TI_WARN("[lower_ast] FrontendReturnStmt: About to replace_with, fctx has {} statements", 
+            fctx.stmts.size());
     stmt->parent->replace_with(stmt, std::move(fctx.stmts));
+    TI_WARN("[lower_ast] FrontendReturnStmt: After replace_with, parent block has {} statements", 
+            stmt->parent ? stmt->parent->statements.size() : 0);
   }
 
   void visit(FrontendAssignStmt *assign) override {

@@ -1264,9 +1264,13 @@ class ASTTransformer(Builder):
             stmt_dbg_info = _ti_core.DebugInfo(ctx.get_pos_info(node))
             impl.begin_frontend_if(ctx.ast_builder, node.test.ptr, stmt_dbg_info)
             ctx.ast_builder.begin_frontend_if_true()
+            # Reset returned status at start of true branch so statements before return are processed
+            ctx.returned = ReturnStatus.NoReturn
             build_stmts(ctx, node.body)
             ctx.ast_builder.pop_scope()
             ctx.ast_builder.begin_frontend_if_false()
+            # Reset returned status at start of false branch so statements before return are processed
+            ctx.returned = ReturnStatus.NoReturn
             build_stmts(ctx, node.orelse)
             ctx.ast_builder.pop_scope()
         
