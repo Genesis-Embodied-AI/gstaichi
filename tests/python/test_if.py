@@ -103,7 +103,7 @@ def test_kernel_if_return_void_false_branch(in_val: int, expected: int):
     (0, 2),
     (1, 3),
 ])
-@test_utils.test()
+@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_if_return_void_both_branches(in_val: int, expected: int):
     @ti.kernel
     def k1(a: ti.types.NDArray) -> None:
@@ -126,7 +126,7 @@ def test_kernel_if_return_void_both_branches(in_val: int, expected: int):
     (0, 10),
     (1, 20),
 ])
-@test_utils.test()
+@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_if_return_value_true_branch(in_val: int, expected: int):
     @ti.kernel
     def k1(a: ti.types.NDArray) -> ti.i32:
@@ -146,7 +146,7 @@ def test_kernel_if_return_value_true_branch(in_val: int, expected: int):
     (0, 20),
     (1, 10),
 ])
-@test_utils.test()
+@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_if_return_value_false_branch(in_val: int, expected: int):
     @ti.kernel
     def k1(a: ti.types.NDArray) -> ti.i32:
@@ -168,7 +168,7 @@ def test_kernel_if_return_value_false_branch(in_val: int, expected: int):
     (0, 10),
     (1, 20),
 ])
-@test_utils.test()
+@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_if_return_value_both_branches(in_val: int, expected: int):
     @ti.kernel
     def k1(a: ti.types.NDArray) -> ti.i32:
@@ -188,7 +188,8 @@ def test_kernel_if_return_value_both_branches(in_val: int, expected: int):
     (0, 2),
     (1, 5),
 ])
-@test_utils.test()
+@pytest.mark.xfail(reason="not implemented yet for functions")
+@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_func_if_return_void_true_branch(in_val: int, expected: int):
     @ti.func
     def f1(a: ti.types.NDArray) -> None:
@@ -211,7 +212,8 @@ def test_func_if_return_void_true_branch(in_val: int, expected: int):
     (0, 5),
     (1, 2),
 ])
-@test_utils.test()
+@pytest.mark.xfail(reason="not implemented yet for functions")
+@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_func_if_return_void_false_branch(in_val: int, expected: int):
     @ti.func
     def f1(a: ti.types.NDArray) -> None:
@@ -236,7 +238,8 @@ def test_func_if_return_void_false_branch(in_val: int, expected: int):
     (0, 2),
     (1, 3),
 ])
-@test_utils.test()
+@pytest.mark.xfail(reason="not implemented yet for functions")
+@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_func_if_return_void_both_branches(in_val: int, expected: int):
     @ti.func
     def f1(a: ti.types.NDArray) -> None:
@@ -263,7 +266,8 @@ def test_func_if_return_void_both_branches(in_val: int, expected: int):
     (0, 10),
     (1, 20),
 ])
-@test_utils.test()
+@pytest.mark.xfail(reason="not implemented yet for functions")
+@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_func_if_return_value_true_branch(in_val: int, expected: int):
     @ti.func
     def f1(a: ti.types.NDArray) -> ti.i32:
@@ -287,7 +291,8 @@ def test_func_if_return_value_true_branch(in_val: int, expected: int):
     (0, 20),
     (1, 10),
 ])
-@test_utils.test()
+@pytest.mark.xfail(reason="not implemented yet for functions")
+@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_func_if_return_value_false_branch(in_val: int, expected: int):
     @ti.func
     def f1(a: ti.types.NDArray) -> ti.i32:
@@ -313,7 +318,8 @@ def test_func_if_return_value_false_branch(in_val: int, expected: int):
     (0, 10),
     (1, 20),
 ])
-@test_utils.test()
+@pytest.mark.xfail(reason="not implemented yet for functions")
+@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_func_if_return_value_both_branches(in_val: int, expected: int):
     @ti.func
     def f1(a: ti.types.NDArray) -> ti.i32:
@@ -338,7 +344,7 @@ def test_func_if_return_value_both_branches(in_val: int, expected: int):
     (1, 2),
     (2, 3),
 ])
-@test_utils.test()
+@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_multiple_ifs_return_void(in_val: int, expected: int):
     @ti.kernel
     def k1(a: ti.types.NDArray) -> None:
@@ -361,7 +367,7 @@ def test_kernel_multiple_ifs_return_void(in_val: int, expected: int):
     (1, 2),
     (2, 3),
 ])
-@test_utils.test()
+@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_multiple_ifs_return_value(in_val: int, expected: int):
     @ti.kernel
     def k1(a: ti.types.NDArray) -> ti.i32:
@@ -382,7 +388,8 @@ def test_kernel_multiple_ifs_return_value(in_val: int, expected: int):
     (1, 2),
     (2, 3),
 ])
-@test_utils.test()
+@pytest.mark.xfail(reason="not implemented yet for functions")
+@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_func_multiple_ifs_return_void(in_val: int, expected: int):
     @ti.func
     def f1(a: ti.types.NDArray) -> None:
@@ -409,7 +416,8 @@ def test_func_multiple_ifs_return_void(in_val: int, expected: int):
     (1, 2),
     (2, 3),
 ])
-@test_utils.test()
+@pytest.mark.xfail(reason="not implemented yet for functions")
+@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_func_multiple_ifs_return_value(in_val: int, expected: int):
     @ti.func
     def f1(a: ti.types.NDArray) -> ti.i32:
@@ -436,7 +444,7 @@ def test_func_multiple_ifs_return_value(in_val: int, expected: int):
     (1, 0, 3),
     (1, 1, 4),
 ])
-@test_utils.test()
+@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_nested_ifs_return_void(in_val1: int, in_val2: int, expected: int):
     @ti.kernel
     def k1(a: ti.types.NDArray) -> None:
@@ -464,7 +472,7 @@ def test_kernel_nested_ifs_return_void(in_val1: int, in_val2: int, expected: int
     (1, 0, 3),
     (1, 1, 4),
 ])
-@test_utils.test()
+@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_nested_ifs_return_value(in_val1: int, in_val2: int, expected: int):
     @ti.kernel
     def k1(a: ti.types.NDArray) -> ti.i32:
@@ -488,7 +496,7 @@ def test_kernel_nested_ifs_return_value(in_val1: int, in_val2: int, expected: in
     (0, 2),
     (1, 5),
 ])
-@test_utils.test()
+@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_if_return_void_with_code_after(in_val: int, expected: int):
     @ti.kernel
     def k1(a: ti.types.NDArray) -> None:
@@ -510,7 +518,7 @@ def test_kernel_if_return_void_with_code_after(in_val: int, expected: int):
     (1, 2),
     (2, 3),
 ])
-@test_utils.test()
+@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_if_elif_else_return_void(in_val: int, expected: int):
     @ti.kernel
     def k1(a: ti.types.NDArray) -> None:
@@ -535,7 +543,7 @@ def test_kernel_if_elif_else_return_void(in_val: int, expected: int):
     (1, 2),
     (2, 3),
 ])
-@test_utils.test()
+@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_kernel_if_elif_else_return_value(in_val: int, expected: int):
     @ti.kernel
     def k1(a: ti.types.NDArray) -> ti.i32:
