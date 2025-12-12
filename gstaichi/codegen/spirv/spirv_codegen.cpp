@@ -603,6 +603,14 @@ void TaskCodegen::visit(GetElementStmt *stmt) {
 }
 
 void TaskCodegen::visit(ReturnStmt *stmt) {
+  // Handle void returns (no return values or kernel has no return type)
+  if (stmt->values.empty() || !ctx_attribs_->has_rets()) {
+    // Emit OpReturn to terminate the current block
+    ir_->make_inst(spv::OpReturn);
+    returned_ = true;
+    return;
+  }
+  
   TI_ASSERT(ctx_attribs_->has_rets());
   // The `PrimitiveType::i32` in this function call is a placeholder.
   auto buffer_value = get_buffer_value(BufferType::Rets, PrimitiveType::i32);
@@ -1621,6 +1629,7 @@ void TaskCodegen::visit(IfStmt *if_stmt) {
   ir_->make_inst(spv::OpBranchConditional, cond, then_label, else_label);
   // then block
   ir_->start_label(then_label);
+  returned_ = false;
   if (if_stmt->true_statements) {
     if_stmt->true_statements->accept(this);
   }
@@ -1628,18 +1637,23 @@ void TaskCodegen::visit(IfStmt *if_stmt) {
   if (gen_label_) {  // Skip OpBranch, because ContinueStmt already generated
                      // one
     gen_label_ = false;
-  } else {
+  } else if (!returned_) {  // Skip OpBranch if ReturnStmt already emitted OpReturn
     ir_->make_inst(spv::OpBranch, merge_label);
+  } else {
+    returned_ = false;
   }
   // else block
   ir_->start_label(else_label);
+  returned_ = false;
   if (if_stmt->false_statements) {
     if_stmt->false_statements->accept(this);
   }
   if (gen_label_) {
     gen_label_ = false;
-  } else {
+  } else if (!returned_) {  // Skip OpBranch if ReturnStmt already emitted OpReturn
     ir_->make_inst(spv::OpBranch, merge_label);
+  } else {
+    returned_ = false;
   }
   // merge label
   ir_->start_label(merge_label);

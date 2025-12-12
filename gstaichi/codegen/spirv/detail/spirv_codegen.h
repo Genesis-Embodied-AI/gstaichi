@@ -183,6 +183,7 @@ class TaskCodegen : public IRVisitor {
   spirv::Value kernel_function_;
   spirv::Label kernel_return_label_;
   bool gen_label_{false};
+  bool returned_{false};
 
   int binding_head_{2};  // Args:0, Ret:1
 
