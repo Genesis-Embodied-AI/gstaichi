@@ -1220,8 +1220,10 @@ class ReturnStmt : public Stmt {
     for (auto &x : values) {
       names += x->raw_name() + ", ";
     }
-    names.pop_back();
-    names.pop_back();
+    if (!names.empty()) {
+      names.pop_back();  // Remove trailing space
+      names.pop_back();  // Remove trailing comma
+    }
     return names;
   }
 
