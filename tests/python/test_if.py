@@ -219,7 +219,6 @@ def test_kernel_if_return_value_both_branches(in_val: int, expected: int):
         (1, 5),
     ],
 )
-# @pytest.mark.xfail(reason="not implemented yet for functions")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_func_if_return_void_true_branch(in_val: int, expected: int):
     @ti.func
@@ -246,7 +245,6 @@ def test_func_if_return_void_true_branch(in_val: int, expected: int):
         (1, 2),
     ],
 )
-# @pytest.mark.xfail(reason="not implemented yet for functions")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_func_if_return_void_false_branch(in_val: int, expected: int):
     @ti.func
@@ -275,7 +273,6 @@ def test_func_if_return_void_false_branch(in_val: int, expected: int):
         (1, 3),
     ],
 )
-# @pytest.mark.xfail(reason="not implemented yet for functions")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_func_if_return_void_both_branches(in_val: int, expected: int):
     @ti.func
@@ -306,7 +303,6 @@ def test_func_if_return_void_both_branches(in_val: int, expected: int):
         (1, 20),
     ],
 )
-# @pytest.mark.xfail(reason="not implemented yet for functions")
 @pytest.mark.xfail(reason="not implemented yet for returning value")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_func_if_return_value_true_branch(in_val: int, expected: int):
@@ -365,7 +361,6 @@ def test_func_if_return_value_false_branch(in_val: int, expected: int):
         (1, 20),
     ],
 )
-# @pytest.mark.xfail(reason="not implemented yet for functions")
 @pytest.mark.xfail(reason="not implemented yet for returning value")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_func_if_return_value_both_branches(in_val: int, expected: int):
@@ -447,7 +442,6 @@ def test_kernel_multiple_ifs_return_value(in_val: int, expected: int):
         (2, 3),
     ],
 )
-# @pytest.mark.xfail(reason="not implemented yet for functions")
 @test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
 def test_func_multiple_ifs_return_void(in_val: int, expected: int):
     @ti.func
@@ -833,3 +827,37 @@ def test_kernel_dynamic_range_for_if_return_void(n: int, threshold: int, expecte
     a[1] = 0
     k1(a, n)
     assert a[1] == expected
+
+
+@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
+def test_if_func_for_loop_return_void() -> None:
+    N = 4
+
+    @ti.func
+    def f1(a: ti.types.NDArray[ti.i32, 1], b: ti.i32) -> None:
+        print("b", b)
+        if a[0] == 0:
+            a[1 + b] = 2
+            return
+        a[1 + b] = 5
+
+    @ti.kernel
+    def k1(a: ti.types.NDArray) -> None:
+        for b in range(N):
+            print("b", b)
+            f1(a, b)
+
+    a = ti.ndarray(ti.i32, (10,))
+    for i in range(2):
+        expected = {
+            0: 2,
+            1: 5,
+        }[i]
+        print('')
+        print('=========')
+        a[0] = i
+        k1(a)
+        print('a', a.to_numpy())
+        for j in range(N):
+            assert a[1 + j] == expected
+            print('res i', i, f'a[{1 + j}]', a[1 + j])
