@@ -453,9 +453,6 @@ class ASTTransformer(Builder):
 
     @staticmethod
     def build_Return(ctx: ASTTransformerContext, node: ast.Return) -> None:
-        if not ctx.is_real_function:
-            if ctx.is_in_non_static_control_flow():
-                raise GsTaichiSyntaxError("Return inside non-static if/for is not supported")
         if node.value is not None:
             build_stmt(ctx, node.value)
         if node.value is None or node.value.ptr is None:
