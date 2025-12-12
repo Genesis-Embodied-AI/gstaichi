@@ -888,6 +888,7 @@ void TaskCodeGenLLVM::visit(IfStmt *if_stmt) {
   llvm::Value *cond = builder->CreateIsNotNull(llvm_val[if_stmt->cond]);
   builder->CreateCondBr(cond, true_block, false_block);
   builder->SetInsertPoint(true_block);
+  returned = false;  // Reset at start of true block
   if (if_stmt->true_statements) {
     if_stmt->true_statements->accept(this);
   }
@@ -897,6 +898,7 @@ void TaskCodeGenLLVM::visit(IfStmt *if_stmt) {
     returned = false;
   }
   builder->SetInsertPoint(false_block);
+  returned = false;  // Reset at start of false block
   if (if_stmt->false_statements) {
     if_stmt->false_statements->accept(this);
   }
@@ -1289,6 +1291,13 @@ void TaskCodeGenLLVM::visit(ArgLoadStmt *stmt) {
 }
 
 void TaskCodeGenLLVM::visit(ReturnStmt *stmt) {
+  // Handle void returns (no return values)
+  if (stmt->values.empty()) {
+    builder->CreateBr(final_block);
+    returned = true;
+    return;
+  }
+  
   auto types = stmt->element_types();
   if (std::any_of(types.begin(), types.end(),
                   [](const DataType &t) { return t.is_pointer(); })) {
