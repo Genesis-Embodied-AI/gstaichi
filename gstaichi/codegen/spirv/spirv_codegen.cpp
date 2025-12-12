@@ -603,6 +603,14 @@ void TaskCodegen::visit(GetElementStmt *stmt) {
 }
 
 void TaskCodegen::visit(ReturnStmt *stmt) {
+  // Handle void returns (no return values or kernel has no return type)
+  if (stmt->values.empty() || !ctx_attribs_->has_rets()) {
+    // Emit OpReturn to terminate the current block
+    ir_->make_inst(spv::OpReturn);
+    returned_ = true;
+    return;
+  }
+  
   TI_ASSERT(ctx_attribs_->has_rets());
   // The `PrimitiveType::i32` in this function call is a placeholder.
   auto buffer_value = get_buffer_value(BufferType::Rets, PrimitiveType::i32);
