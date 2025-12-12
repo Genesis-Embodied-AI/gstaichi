@@ -1245,9 +1245,13 @@ class ASTTransformer(Builder):
             ctx.ast_builder.begin_frontend_if_true()
             build_stmts(ctx, node.body)
             ctx.ast_builder.pop_scope()
+            if not is_static_if:
+                ctx.returned = ReturnStatus.NoReturn
             ctx.ast_builder.begin_frontend_if_false()
             build_stmts(ctx, node.orelse)
             ctx.ast_builder.pop_scope()
+        if not is_static_if:
+            ctx.returned = ReturnStatus.NoReturn
         return None
 
     @staticmethod
