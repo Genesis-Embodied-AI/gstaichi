@@ -878,6 +878,7 @@ void TaskCodeGenLLVM::visit(TernaryOpStmt *stmt) {
 }
 
 void TaskCodeGenLLVM::visit(IfStmt *if_stmt) {
+  std::cout << "visiting if statement" << std::endl;
   // TODO: take care of vectorized cases
   llvm::BasicBlock *true_block =
       llvm::BasicBlock::Create(*llvm_context, "true_block", func);
@@ -889,6 +890,7 @@ void TaskCodeGenLLVM::visit(IfStmt *if_stmt) {
   builder->CreateCondBr(cond, true_block, false_block);
   builder->SetInsertPoint(true_block);
   if (if_stmt->true_statements) {
+    std::cout << "writing true statemnets" << std::endl;
     if_stmt->true_statements->accept(this);
   }
   if (!returned) {
@@ -899,7 +901,10 @@ void TaskCodeGenLLVM::visit(IfStmt *if_stmt) {
   builder->SetInsertPoint(false_block);
   returned = false;
   if (if_stmt->false_statements) {
+    std::cout << "writing false statemnets" << std::endl;
     if_stmt->false_statements->accept(this);
+  } else {
+    std::cout << "no false statemnets" << std::endl;
   }
   if (!returned) {
     builder->CreateBr(after_if);
@@ -2042,6 +2047,7 @@ std::string TaskCodeGenLLVM::init_offloaded_task_function(OffloadedStmt *stmt,
 }
 
 void TaskCodeGenLLVM::finalize_offloaded_task_function() {
+  std::cout << "returned? " << returned << std::endl;
   if (!returned) {
     builder->CreateBr(final_block);
   } else {
@@ -2049,6 +2055,10 @@ void TaskCodeGenLLVM::finalize_offloaded_task_function() {
   }
   builder->SetInsertPoint(final_block);
   builder->CreateRetVoid();
+  // builder->CreateRetVoid();
+  // builder->CreateRetVoid();
+  // builder->CreateRetVoid();
+  // builder->CreateRetVoid();
 
   // entry_block should jump to the body after all allocas are inserted
   builder->SetInsertPoint(entry_block);
@@ -2060,6 +2070,8 @@ void TaskCodeGenLLVM::finalize_offloaded_task_function() {
         "unoptimized LLVM IR (generic)");
     writer.write(module.get());
   }
+  std::cout << "Verifying kernel function " << func->getName().str() << "..."
+            << std::endl;
   TI_ASSERT(!llvm::verifyFunction(*func, &llvm::errs()));
   // TI_INFO("Kernel function verified.");
 }

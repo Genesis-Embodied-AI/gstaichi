@@ -1116,6 +1116,7 @@ class Kernel:
 
         range_begin = 0 if used_py_dataclass_parameters is None else 1
         for _pass in range(range_begin, 2):
+            print("------------ pass", _pass)
             used_py_dataclass_leaves_by_key_enforcing = None
             if _pass == 1:
                 assert used_py_dataclass_parameters is not None
@@ -1202,9 +1203,9 @@ class Kernel:
                     tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
                     ctx.only_parse_function_def = self.compiled_kernel_data_by_key.get(key) is not None
                     transform_tree(tree, ctx)
-                    if not ctx.is_real_function and not ctx.only_parse_function_def:
-                        if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
-                            raise GsTaichiSyntaxError("Kernel has a return type but does not have a return statement")
+                    # if not ctx.is_real_function and not ctx.only_parse_function_def:
+                    #     if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
+                    #         raise GsTaichiSyntaxError("Kernel has a return type but does not have a return statement")
                     used_py_dataclass_parameters = self.used_py_dataclass_leaves_by_key_collecting[key]
                 finally:
                     self.runtime.inside_kernel = False

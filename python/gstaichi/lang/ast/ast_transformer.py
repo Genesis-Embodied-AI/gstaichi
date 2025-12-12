@@ -1242,12 +1242,19 @@ class ASTTransformer(Builder):
         with ctx.non_static_if_guard(node):
             stmt_dbg_info = _ti_core.DebugInfo(ctx.get_pos_info(node))
             impl.begin_frontend_if(ctx.ast_builder, node.test.ptr, stmt_dbg_info)
+            print("calling begin_frontend_if_true")
             ctx.ast_builder.begin_frontend_if_true()
+            for stmt in node.body:
+                print("- ", ast.dump(stmt))
             build_stmts(ctx, node.body)
             ctx.ast_builder.pop_scope()
+            print("calling begin_frontend_if_false")
             if not is_static_if:
                 ctx.returned = ReturnStatus.NoReturn
             ctx.ast_builder.begin_frontend_if_false()
+            # print(ast.dump(node.orelse))
+            for stmt in node.orelse:
+                print("- ", ast.dump(stmt))
             build_stmts(ctx, node.orelse)
             ctx.ast_builder.pop_scope()
         if not is_static_if:
@@ -1412,8 +1419,17 @@ def build_stmts(ctx: ASTTransformerContext, stmts: list[ast.stmt]):
     # TODO: Should we just make this part of ASTTransformer? Then, easier to pass around (just
     # pass the ASTTransformer object around)
     with ctx.variable_scope_guard():
+        print("build_stmts", len(stmts))
         for stmt in stmts:
+            print("- stmt", ast.dump(stmt)[:50])
             if ctx.returned != ReturnStatus.NoReturn or ctx.loop_status() != LoopStatus.Normal:
+                print(
+                    "   - breaking: ctx.returned",
+                    ctx.returned,
+                    ReturnStatus.NoReturn,
+                    "ctx.loop_status()",
+                    ctx.loop_status(),
+                )
                 break
             else:
                 build_stmt(ctx, stmt)
