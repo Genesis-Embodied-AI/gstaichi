@@ -861,3 +861,37 @@ def test_if_func_for_loop_return_void() -> None:
         for j in range(N):
             assert a[1 + j] == expected
             print("res i", i, f"a[{1 + j}]", a[1 + j])
+
+
+@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
+def test_if_func_inner_loop_return_void() -> None:
+    """Test return inside inner loop of ti.func - should continue kernel loop, not inner func loop"""
+    N = 4
+
+    @ti.func
+    def f1(a: ti.types.NDArray[ti.i32, 1], b: ti.i32) -> None:
+        for j in range(3):  # Inner loop in function
+            if a[0] == 0:
+                a[1 + b] = 2
+                return  # Should continue kernel's b loop, not this j loop
+        a[1 + b] = 5
+
+    @ti.kernel
+    def k1(a: ti.types.NDArray) -> None:
+        for b in range(N):
+            f1(a, b)
+
+    a = ti.ndarray(ti.i32, (10,))
+    for i in range(2):
+        expected = {
+            0: 2,
+            1: 5,
+        }[i]
+        print("")
+        print("=========")
+        a[0] = i
+        k1(a)
+        print("a", a.to_numpy())
+        for j in range(N):
+            assert a[1 + j] == expected
+            print("res i", i, f"a[{1 + j}]", a[1 + j])
