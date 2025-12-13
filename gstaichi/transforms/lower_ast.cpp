@@ -154,7 +154,13 @@ class LowerAST : public IRVisitor {
   }
 
   void visit(FrontendContinueStmt *stmt) override {
-    stmt->parent->replace_with(stmt, Stmt::make<ContinueStmt>());
+    auto cont = Stmt::make<ContinueStmt>();
+    auto *cont_ptr = static_cast<ContinueStmt *>(cont.get());
+    // Mark as from function return if unwind_depth > 0
+    cont_ptr->from_function_return = (stmt->function_loop_depth > 0);
+    // Transfer scope from frontend to lowered IR
+    cont_ptr->scope = stmt->scope;
+    stmt->parent->replace_with(stmt, std::move(cont));
   }
 
   void visit(FrontendWhileStmt *stmt) override {

@@ -470,7 +470,8 @@ class ASTTransformer(Builder):
                     )
             else:  # For ti.func, create continue to exit the inlined function
                 if ctx.ast_builder is not None:
-                    ctx.ast_builder.insert_continue_stmt(_ti_core.DebugInfo(ctx.get_pos_info(node)))
+                    # Pass loop_depth so we know how many function loops to unwind
+                    ctx.ast_builder.insert_function_continue_stmt(ctx.loop_depth, _ti_core.DebugInfo(ctx.get_pos_info(node)))
             return None
         if ctx.is_kernel or ctx.is_real_function:
             # TODO: check if it's at the end of a kernel, throw GsTaichiSyntaxError if not

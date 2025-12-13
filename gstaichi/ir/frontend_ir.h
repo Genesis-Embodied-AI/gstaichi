@@ -286,8 +286,14 @@ class FrontendBreakStmt : public Stmt {
 
 class FrontendContinueStmt : public Stmt {
  public:
-  explicit FrontendContinueStmt(const DebugInfo &dbg_info = DebugInfo())
-      : Stmt(dbg_info) {
+  // The loop this continue should target (set during inlining)
+  Stmt *scope = nullptr;
+  // Number of function loop levels to unwind (0 for regular continue)
+  int function_loop_depth = 0;
+
+  explicit FrontendContinueStmt(int function_loop_depth = 0,
+                                const DebugInfo &dbg_info = DebugInfo())
+      : Stmt(dbg_info), function_loop_depth(function_loop_depth) {
   }
 
   bool is_container_statement() const override {
@@ -1052,6 +1058,7 @@ class ASTBuilder {
                             const DebugInfo &dbg_info = DebugInfo());
   void insert_break_stmt(const DebugInfo &dbg_info = DebugInfo());
   void insert_continue_stmt(const DebugInfo &dbg_info = DebugInfo());
+  void insert_function_continue_stmt(int loop_depth, const DebugInfo &dbg_info = DebugInfo());
   void insert_expr_stmt(const Expr &val);
   void insert_snode_activate(SNode *snode,
                              const ExprGroup &expr_group,

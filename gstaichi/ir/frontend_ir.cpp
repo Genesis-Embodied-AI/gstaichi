@@ -1616,7 +1616,11 @@ void ASTBuilder::insert_break_stmt(const DebugInfo &dbg_info) {
 }
 
 void ASTBuilder::insert_continue_stmt(const DebugInfo &dbg_info) {
-  this->insert(Stmt::make<FrontendContinueStmt>(dbg_info));
+  this->insert(Stmt::make<FrontendContinueStmt>(0, dbg_info));
+}
+
+void ASTBuilder::insert_function_continue_stmt(int loop_depth, const DebugInfo &dbg_info) {
+  this->insert(Stmt::make<FrontendContinueStmt>(loop_depth, dbg_info));
 }
 
 void ASTBuilder::insert_expr_stmt(const Expr &val) {

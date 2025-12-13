@@ -116,7 +116,13 @@ class IRPrinter : public IRVisitor {
   }
 
   void visit(FrontendContinueStmt *stmt) override {
-    print("continue");
+    if (stmt->function_loop_depth > 0) {
+      print("continue (unwind_depth={})", stmt->function_loop_depth);
+    } else if (stmt->scope) {
+      print("continue (scope={})", stmt->scope->name());
+    } else {
+      print("continue");
+    }
     dbg_info_printer_(stmt);
   }
 

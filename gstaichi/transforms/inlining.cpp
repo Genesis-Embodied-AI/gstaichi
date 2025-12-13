@@ -2,9 +2,11 @@
 #include "gstaichi/ir/analysis.h"
 #include "gstaichi/ir/ir.h"
 #include "gstaichi/ir/statements.h"
+#include "gstaichi/ir/frontend_ir.h"
 #include "gstaichi/ir/transforms.h"
 #include "gstaichi/ir/visitors.h"
 #include "gstaichi/program/program.h"
+#include <functional>
 
 namespace gstaichi::lang {
 
@@ -65,8 +67,125 @@ class Inliner : public BasicStmtVisitor {
     }
   }
 
+  class ScopeAdjuster {
+   public:
+    Stmt *outermost_loop = nullptr;
+
+    void find_outermost_loop(Stmt *stmt) {
+      // Handle both frontend and lowered IR loops
+      if (stmt->is<RangeForStmt>() || stmt->is<StructForStmt>() || stmt->is<WhileStmt>() ||
+          stmt->is<FrontendForStmt>() || stmt->is<FrontendWhileStmt>()) {
+        outermost_loop = stmt;
+      }
+      // Visit children - need to handle Block separately since it contains statements
+      if (auto *block = stmt->cast<Block>()) {
+        for (auto &s : block->statements) {
+          find_outermost_loop(s.get());
+        }
+      } else if (auto *if_stmt = stmt->cast<IfStmt>()) {
+        if (if_stmt->true_statements) {
+          for (auto &s : if_stmt->true_statements->statements) {
+            find_outermost_loop(s.get());
+          }
+        }
+        if (if_stmt->false_statements) {
+          for (auto &s : if_stmt->false_statements->statements) {
+            find_outermost_loop(s.get());
+          }
+        }
+      } else if (auto *while_stmt = stmt->cast<WhileStmt>()) {
+        // while_stmt->body is Block *, visit its statements
+        for (auto &s : while_stmt->body->statements) {
+          find_outermost_loop(s.get());
+        }
+      } else if (auto *for_stmt = stmt->cast<RangeForStmt>()) {
+        // for_stmt->body is Block *, visit its statements
+        for (auto &s : for_stmt->body->statements) {
+          find_outermost_loop(s.get());
+        }
+      } else if (auto *for_stmt = stmt->cast<StructForStmt>()) {
+        // for_stmt->body is Block *, visit its statements
+        for (auto &s : for_stmt->body->statements) {
+          find_outermost_loop(s.get());
+        }
+      } else if (auto *frontend_while = stmt->cast<FrontendWhileStmt>()) {
+        for (auto &s : frontend_while->body->statements) {
+          find_outermost_loop(s.get());
+        }
+      } else if (auto *frontend_for = stmt->cast<FrontendForStmt>()) {
+        for (auto &s : frontend_for->body->statements) {
+          find_outermost_loop(s.get());
+        }
+      }
+      // Add other statement types as needed
+    }
+
+    void adjust_scopes(Stmt *stmt) {
+      // Handle both frontend and lowered IR continues from function returns
+      if (auto *cont = stmt->cast<ContinueStmt>(); cont && cont->from_function_return) {
+        cont->scope = outermost_loop;
+      } else if (auto *frontend_cont = stmt->cast<FrontendContinueStmt>(); 
+                 frontend_cont && frontend_cont->function_loop_depth > 0) {
+        // Set scope for frontend continues with unwind depth (from function returns)
+        frontend_cont->scope = outermost_loop;
+      }
+      // Visit children same as above
+      if (auto *block = stmt->cast<Block>()) {
+        for (auto &s : block->statements) {
+          adjust_scopes(s.get());
+        }
+      } else if (auto *if_stmt = stmt->cast<IfStmt>()) {
+        if (if_stmt->true_statements) {
+          for (auto &s : if_stmt->true_statements->statements) {
+            adjust_scopes(s.get());
+          }
+        }
+        if (if_stmt->false_statements) {
+          for (auto &s : if_stmt->false_statements->statements) {
+            adjust_scopes(s.get());
+          }
+        }
+      } else if (auto *while_stmt = stmt->cast<WhileStmt>()) {
+        // while_stmt->body is Block *, visit its statements
+        for (auto &s : while_stmt->body->statements) {
+          adjust_scopes(s.get());
+        }
+      } else if (auto *for_stmt = stmt->cast<RangeForStmt>()) {
+        // for_stmt->body is Block *, visit its statements
+        for (auto &s : for_stmt->body->statements) {
+          adjust_scopes(s.get());
+        }
+      } else if (auto *for_stmt = stmt->cast<StructForStmt>()) {
+        // for_stmt->body is Block *, visit its statements
+        for (auto &s : for_stmt->body->statements) {
+          adjust_scopes(s.get());
+        }
+      } else if (auto *frontend_while = stmt->cast<FrontendWhileStmt>()) {
+        for (auto &s : frontend_while->body->statements) {
+          adjust_scopes(s.get());
+        }
+      } else if (auto *frontend_for = stmt->cast<FrontendForStmt>()) {
+        for (auto &s : frontend_for->body->statements) {
+          adjust_scopes(s.get());
+        }
+      }
+    }
+  };
+
+  void adjust_function_return_scopes(IRNode *node) {
+    ScopeAdjuster adjuster;
+    auto *root_block = node->as<Block>();
+    for (auto &s : root_block->statements) {
+      adjuster.find_outermost_loop(s.get());  // Find outermost loop in statements
+    }
+    for (auto &s : root_block->statements) {
+      adjuster.adjust_scopes(s.get());  // Adjust scopes in statements
+    }
+  }
+
   static bool run(IRNode *node) {
     Inliner inliner;
+    inliner.adjust_function_return_scopes(node);
     bool modified = false;
     while (true) {
       node->accept(&inliner);

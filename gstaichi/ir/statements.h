@@ -88,8 +88,10 @@ class ContinueStmt : public Stmt {
   Stmt *scope;
   // Number of loop levels to continue up (1 = current loop, 2 = parent loop, etc.)
   int levels_up;
+  // True if this continue is from a ti.func return (needs special scoping)
+  bool from_function_return;
 
-  ContinueStmt() : scope(nullptr), levels_up(1) {
+  ContinueStmt() : scope(nullptr), levels_up(1), from_function_return(false) {
     TI_STMT_REG_FIELDS;
   }
 
