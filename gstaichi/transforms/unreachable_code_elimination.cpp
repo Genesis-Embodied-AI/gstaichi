@@ -65,20 +65,6 @@ class UnreachableCodeEliminator : public BasicStmtVisitor {
 
   void visit(Block *stmt_list) override {
     const int block_size = stmt_list->size();
-
-    // First, eliminate function-return unwinds that may have escaped to kernel
-    // scope
-    for (int i = 0; i < block_size; i++) {
-      if (auto *cont = stmt_list->statements[i]->cast<ContinueStmt>()) {
-        if (cont->from_function_return) {
-          // Function-return unwinds at kernel scope are meaningless
-          modifier.erase(cont);
-          modified = true;
-          // Continue checking - there may be more
-        }
-      }
-    }
-
     for (int i = 0; i < block_size - 1; i++) {
       if (stmt_list->statements[i]->is<ContinueStmt>()) {
         // Eliminate statements after ContinueStmt
@@ -119,6 +105,30 @@ class UnreachableCodeEliminator : public BasicStmtVisitor {
         }
       }
     }
+
+    // After the main loop, check if there are any function-return unwinds
+    // that ended up as siblings to if-statements (not inside them).
+    // These can happen when the simplify pass moves code around.
+    for (int i = 0; i < (int)stmt_list->size(); i++) {
+      if (auto *cont = stmt_list->statements[i]->cast<ContinueStmt>()) {
+        if (cont->from_function_return) {
+          // Check if this is at the same level as if-statements.
+          // If so, it's likely escaped from inside and should be removed.
+          bool has_sibling_if = false;
+          for (int j = 0; j < (int)stmt_list->size(); j++) {
+            if (j != i && stmt_list->statements[j]->is<IfStmt>()) {
+              has_sibling_if = true;
+              break;
+            }
+          }
+          if (has_sibling_if) {
+            modifier.erase(cont);
+            modified = true;
+          }
+        }
+      }
+    }
+
     for (auto &stmt : stmt_list->statements)
       stmt->accept(this);
   }
@@ -160,9 +170,10 @@ class UnreachableCodeEliminator : public BasicStmtVisitor {
         stmt->task_type == OffloadedStmt::TaskType::struct_for)
       visit_loop(stmt->body.get());
     else if (stmt->body) {
-      // For non-loop offloaded tasks (like serial), eliminate function-return
-      // unwinds since they're meaningless at kernel scope
-      eliminate_kernel_scope_unwinds(stmt->body.get());
+      // For non-loop offloaded tasks, eliminate function-return unwinds
+      // that are at the TOP LEVEL of the body (not inside control flow).
+      // These are meaningless after frontend inlining of void functions.
+      eliminate_top_level_unwinds(stmt->body.get());
       stmt->body->accept(this);
     }
 
@@ -220,8 +231,21 @@ class UnreachableCodeEliminator : public BasicStmtVisitor {
   }
 
  private:
-  // Eliminate unwind statements from function returns at kernel scope.
-  // These are meaningless after frontend inlining of void functions.
+  // Eliminate unwind statements from function returns at the TOP LEVEL only.
+  // Unwinds inside if-statements are meaningful for control flow.
+  void eliminate_top_level_unwinds(Block *block) {
+    for (auto &stmt : block->statements) {
+      if (auto *cont = stmt->cast<ContinueStmt>()) {
+        if (cont->from_function_return) {
+          modifier.erase(cont);
+          modified = true;
+        }
+      }
+      // Don't recurse into if-statements - unwinds there are meaningful
+    }
+  }
+
+  // This method is no longer used but kept for reference
   void eliminate_kernel_scope_unwinds(Block *block) {
     bool any_modified = false;
     for (auto &stmt : block->statements) {
