@@ -73,11 +73,13 @@ class Inliner : public BasicStmtVisitor {
 
     void find_outermost_loop(Stmt *stmt) {
       // Handle both frontend and lowered IR loops
-      if (stmt->is<RangeForStmt>() || stmt->is<StructForStmt>() || stmt->is<WhileStmt>() ||
-          stmt->is<FrontendForStmt>() || stmt->is<FrontendWhileStmt>()) {
+      if (stmt->is<RangeForStmt>() || stmt->is<StructForStmt>() ||
+          stmt->is<WhileStmt>() || stmt->is<FrontendForStmt>() ||
+          stmt->is<FrontendWhileStmt>()) {
         outermost_loop = stmt;
       }
-      // Visit children - need to handle Block separately since it contains statements
+      // Visit children - need to handle Block separately since it contains
+      // statements
       if (auto *block = stmt->cast<Block>()) {
         for (auto &s : block->statements) {
           find_outermost_loop(s.get());
@@ -122,11 +124,13 @@ class Inliner : public BasicStmtVisitor {
 
     void adjust_scopes(Stmt *stmt) {
       // Handle both frontend and lowered IR continues from function returns
-      if (auto *cont = stmt->cast<ContinueStmt>(); cont && cont->from_function_return) {
+      if (auto *cont = stmt->cast<ContinueStmt>();
+          cont && cont->from_function_return) {
         cont->scope = outermost_loop;
-      } else if (auto *frontend_cont = stmt->cast<FrontendContinueStmt>(); 
+      } else if (auto *frontend_cont = stmt->cast<FrontendContinueStmt>();
                  frontend_cont && frontend_cont->function_loop_depth > 0) {
-        // Set scope for frontend continues with unwind depth (from function returns)
+        // Set scope for frontend continues with unwind depth (from function
+        // returns)
         frontend_cont->scope = outermost_loop;
       }
       // Visit children same as above
@@ -176,7 +180,8 @@ class Inliner : public BasicStmtVisitor {
     ScopeAdjuster adjuster;
     auto *root_block = node->as<Block>();
     for (auto &s : root_block->statements) {
-      adjuster.find_outermost_loop(s.get());  // Find outermost loop in statements
+      adjuster.find_outermost_loop(
+          s.get());  // Find outermost loop in statements
     }
     for (auto &s : root_block->statements) {
       adjuster.adjust_scopes(s.get());  // Adjust scopes in statements

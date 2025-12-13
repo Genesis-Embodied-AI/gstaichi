@@ -157,12 +157,12 @@ class LowerAST : public IRVisitor {
     // For now, treat all as continues - the scope resolution will handle it
     auto cont = Stmt::make<ContinueStmt>();
     auto *cont_ptr = static_cast<ContinueStmt *>(cont.get());
-    
+
     if (stmt->function_loop_depth >= 0) {
       cont_ptr->from_function_return = true;
       cont_ptr->levels_up = stmt->function_loop_depth + 1;
     }
-    
+
     stmt->parent->replace_with(stmt, std::move(cont));
   }
 

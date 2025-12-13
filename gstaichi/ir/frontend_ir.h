@@ -304,7 +304,6 @@ class FrontendContinueStmt : public Stmt {
   TI_DEFINE_CLONE_FOR_FRONTEND_IR
 };
 
-
 class FrontendWhileStmt : public Stmt {
  public:
   Expr cond;
@@ -1058,7 +1057,8 @@ class ASTBuilder {
                             const DebugInfo &dbg_info = DebugInfo());
   void insert_break_stmt(const DebugInfo &dbg_info = DebugInfo());
   void insert_continue_stmt(const DebugInfo &dbg_info = DebugInfo());
-  void insert_function_continue_stmt(int loop_depth, const DebugInfo &dbg_info = DebugInfo());
+  void insert_function_continue_stmt(int loop_depth,
+                                     const DebugInfo &dbg_info = DebugInfo());
   void insert_expr_stmt(const Expr &val);
   void insert_snode_activate(SNode *snode,
                              const ExprGroup &expr_group,

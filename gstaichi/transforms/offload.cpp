@@ -733,13 +733,16 @@ class AssociateContinueScope : public BasicStmtVisitor {
   void visit(ContinueStmt *stmt) override {
     if (stmt->scope == nullptr) {
       if (stmt->from_function_return) {
-        // For continues from function returns: target the loop that contains the function call
+        // For continues from function returns: target the loop that contains
+        // the function call
         if (cur_internal_loop_ != nullptr) {
           stmt->scope = cur_internal_loop_;
           modified_ = true;
-        } else if (cur_offloaded_stmt_ != nullptr && 
-                   (cur_offloaded_stmt_->task_type == OffloadedStmt::TaskType::range_for ||
-                    cur_offloaded_stmt_->task_type == OffloadedStmt::TaskType::struct_for)) {
+        } else if (cur_offloaded_stmt_ != nullptr &&
+                   (cur_offloaded_stmt_->task_type ==
+                        OffloadedStmt::TaskType::range_for ||
+                    cur_offloaded_stmt_->task_type ==
+                        OffloadedStmt::TaskType::struct_for)) {
           stmt->scope = cur_offloaded_stmt_;
           modified_ = true;
         }
@@ -768,15 +771,17 @@ class AssociateContinueScope : public BasicStmtVisitor {
         break;
       }
     }
-    
+
     // Convert unresolved function return continues to returns
     irpass::replace_and_insert_statements(
         root,
-        /*filter=*/[](Stmt *s) {
+        /*filter=*/
+        [](Stmt *s) {
           auto *cont = s->cast<ContinueStmt>();
           return cont && cont->from_function_return && cont->scope == nullptr;
         },
-        /*generator=*/[](Stmt *s) {
+        /*generator=*/
+        [](Stmt *s) {
           // Convert to void kernel return
           return Stmt::make<ReturnStmt>(std::vector<Stmt *>{});
         });

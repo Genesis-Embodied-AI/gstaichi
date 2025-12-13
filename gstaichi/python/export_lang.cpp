@@ -335,7 +335,8 @@ void export_lang(py::module &m) {
       .def("begin_frontend_while", &ASTBuilder::begin_frontend_while)
       .def("insert_break_stmt", &ASTBuilder::insert_break_stmt)
       .def("insert_continue_stmt", &ASTBuilder::insert_continue_stmt)
-      .def("insert_function_continue_stmt", &ASTBuilder::insert_function_continue_stmt)
+      .def("insert_function_continue_stmt",
+           &ASTBuilder::insert_function_continue_stmt)
       .def("insert_expr_stmt", &ASTBuilder::insert_expr_stmt)
       .def("insert_thread_idx_expr", &ASTBuilder::insert_thread_idx_expr)
       .def("insert_patch_idx_expr", &ASTBuilder::insert_patch_idx_expr)

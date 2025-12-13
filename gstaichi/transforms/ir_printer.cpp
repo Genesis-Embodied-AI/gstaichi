@@ -117,7 +117,8 @@ class IRPrinter : public IRVisitor {
 
   void visit(FrontendContinueStmt *stmt) override {
     if (stmt->function_loop_depth >= 0) {
-      // Show actual unwind depth: function_loop_depth + 1 (for the function itself)
+      // Show actual unwind depth: function_loop_depth + 1 (for the function
+      // itself)
       print("unwind (depth={})", stmt->function_loop_depth + 1);
     } else if (stmt->scope) {
       print("continue (scope={})", stmt->scope->name());
