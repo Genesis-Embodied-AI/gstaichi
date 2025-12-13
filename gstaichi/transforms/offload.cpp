@@ -733,9 +733,11 @@ class AssociateContinueScope : public BasicStmtVisitor {
   void visit(ContinueStmt *stmt) override {
     if (stmt->scope == nullptr) {
       if (stmt->from_function_return) {
-        // For continues from function returns: target the loop that contains
-        // the function call
-        if (cur_internal_loop_ != nullptr) {
+        // For continues from function returns: use levels_up to determine target
+        // levels_up=1: just exit function, target current loop
+        // levels_up=2+: exit function + skip inner loops, target outer loop
+        if (stmt->levels_up == 1 && cur_internal_loop_ != nullptr) {
+          // Simple case: no inner loops in function, target current loop
           stmt->scope = cur_internal_loop_;
           modified_ = true;
         } else if (cur_offloaded_stmt_ != nullptr &&
@@ -743,10 +745,11 @@ class AssociateContinueScope : public BasicStmtVisitor {
                         OffloadedStmt::TaskType::range_for ||
                     cur_offloaded_stmt_->task_type ==
                         OffloadedStmt::TaskType::struct_for)) {
+          // Complex case: inner loops in function, target offloaded loop
           stmt->scope = cur_offloaded_stmt_;
           modified_ = true;
         }
-        // else: will be converted to ReturnStmt in preprocess_container_stmt
+        // else: no loop to continue, will be converted to ReturnStmt
       } else if (cur_internal_loop_ != nullptr) {
         stmt->scope = cur_internal_loop_;
         modified_ = true;
