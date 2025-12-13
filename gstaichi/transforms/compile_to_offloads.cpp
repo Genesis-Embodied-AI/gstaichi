@@ -9,6 +9,7 @@
 #include "gstaichi/program/kernel.h"
 #include "gstaichi/util/lang_util.h"
 #include "gstaichi/codegen/ir_dump.h"
+#include <fstream>
 
 namespace gstaichi::lang {
 
@@ -41,17 +42,22 @@ void compile_to_offloads(IRNode *ir,
   }
 
   const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
-  if (dump_ir_env != nullptr && std::string(dump_ir_env) == "1") {
+  bool should_dump = (dump_ir_env != nullptr && std::string(dump_ir_env) == "1");
+  
+  auto dump_ir = [&](const std::string &stage_name) {
+    if (!should_dump)
+      return;
     std::filesystem::create_directories(IR_DUMP_DIR);
-
-    std::filesystem::path filename =
-        IR_DUMP_DIR / (kernel->name + "_from_ast.ll");
-    if (std::ofstream out_file(filename.string()); out_file) {
-      std::string outString;
-      irpass::print(ir, &outString);
-      out_file << outString;
+    std::filesystem::path filename = IR_DUMP_DIR / (kernel->name + "_" + stage_name + ".ll");
+    std::string ir_str;
+    irpass::print(ir, &ir_str);
+    std::ofstream ofs(filename.string());
+    if (ofs.good()) {
+      ofs << ir_str;
     }
-  }
+  };
+
+  dump_ir("from_ast");
 
   if (start_from_ast) {
     irpass::frontend_type_check(ir);
@@ -59,15 +65,7 @@ void compile_to_offloads(IRNode *ir,
     print("Lowered");
   }
 
-  if (dump_ir_env != nullptr) {
-    std::filesystem::path filename =
-        IR_DUMP_DIR / (kernel->name + "_gstaichi1.ll");
-    if (std::ofstream out_file(filename.string()); out_file) {
-      std::string outString;
-      irpass::print(ir, &outString);
-      out_file << outString;
-    }
-  }
+  dump_ir("gstaichi1");
   irpass::compile_gstaichi_functions(ir, config,
                                      Function::IRStage::BeforeLowerAccess);
   irpass::analysis::gather_func_store_dests(ir);
@@ -103,15 +101,7 @@ void compile_to_offloads(IRNode *ir,
     print("Scalarized");
   }
 
-  if (dump_ir_env != nullptr) {
-    std::filesystem::path filename =
-        IR_DUMP_DIR / (kernel->name + "_before_simplify_I.ll");
-    if (std::ofstream out_file(filename.string()); out_file) {
-      std::string outString;
-      irpass::print(ir, &outString);
-      out_file << outString;
-    }
-  }
+  dump_ir("before_simplify_I");
 
   irpass::full_simplify(
       ir, config,
@@ -120,15 +110,7 @@ void compile_to_offloads(IRNode *ir,
   print("Simplified I");
   irpass::analysis::verify(ir);
 
-  if (dump_ir_env != nullptr) {
-    std::filesystem::path filename =
-        IR_DUMP_DIR / (kernel->name + "_after_simplify_I.ll");
-    if (std::ofstream out_file(filename.string()); out_file) {
-      std::string outString;
-      irpass::print(ir, &outString);
-      out_file << outString;
-    }
-  }
+  dump_ir("after_simplify_I");
 
   irpass::handle_external_ptr_boundary(ir, config);
   print("External ptr boundary processed");
@@ -184,15 +166,7 @@ void compile_to_offloads(IRNode *ir,
   print("Offloaded");
   irpass::analysis::verify(ir);
 
-  if (dump_ir_env != nullptr) {
-    std::filesystem::path filename =
-        IR_DUMP_DIR / (kernel->name + "_after_offload.ll");
-    if (std::ofstream out_file(filename.string()); out_file) {
-      std::string outString;
-      irpass::print(ir, &outString);
-      out_file << outString;
-    }
-  }
+  dump_ir("after_offload");
   // NOTE: There was an additional CFG pass here, removed in
   // https://github.com/taichi-dev/gstaichi/pull/8691
   irpass::flag_access(ir);
@@ -204,15 +178,7 @@ void compile_to_offloads(IRNode *ir,
   print("Simplified III");
   irpass::analysis::verify(ir);
 
-  if (dump_ir_env != nullptr) {
-    std::filesystem::path filename =
-        IR_DUMP_DIR / (kernel->name + "_after_simplify_III.ll");
-    if (std::ofstream out_file(filename.string()); out_file) {
-      std::string outString;
-      irpass::print(ir, &outString);
-      out_file << outString;
-    }
-  }
+  dump_ir("after_simplify_III");
 }
 
 void offload_to_executable(IRNode *ir,
