@@ -1116,6 +1116,12 @@ void TaskCodeGenLLVM::visit(ContinueStmt *stmt) {
   BasicBlock *after_continue =
       BasicBlock::Create(*llvm_context, "after_continue", func);
   builder->SetInsertPoint(after_continue);
+
+  // If this is a function return, the after_continue block is truly unreachable
+  // and needs a terminator for LLVM validation
+  if (stmt->from_function_return) {
+    builder->CreateUnreachable();
+  }
 }
 
 void TaskCodeGenLLVM::visit(WhileStmt *stmt) {

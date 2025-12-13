@@ -172,8 +172,8 @@ class CFGBuilder : public IRVisitor {
     auto node = new_node(current_stmt_id_ + 1);
     // ReturnStmt exits the function/kernel, so connect to final node
     unwind_nodes_.push_back(node);
-    // We do NOT add this node to prev_nodes_ because statements after the return
-    // are unreachable from this path.
+    // We do NOT add this node to prev_nodes_ because statements after the
+    // return are unreachable from this path.
   }
 
   /**
