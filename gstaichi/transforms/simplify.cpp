@@ -7,6 +7,7 @@
 #include "gstaichi/program/kernel.h"
 #include "gstaichi/program/program.h"
 #include "gstaichi/transforms/utils.h"
+#include "gstaichi/codegen/ir_dump.h"
 #include <set>
 #include <unordered_set>
 #include <utility>
@@ -534,61 +535,66 @@ void full_simplify(IRNode *root,
   const char *dump_ir_env = std::getenv("TI_DUMP_IR");
   bool should_dump = (dump_ir_env && std::string(dump_ir_env) == "1");
   auto dump_step = [&](const std::string &step_name, int iteration) {
-      std::string filename = "/tmp/ir/" + args.kernel_name +
-                             ".simplify_I_call" + std::to_string(this_call) + "_iter" + std::to_string(iteration) +
-                             "_" + step_name + ".ir";
-      std::string ir_str;
-      irpass::print(root, &ir_str);
-      std::ofstream ofs(filename);
-      if (ofs.good()) {
-        ofs << ir_str;
-      }
+    std::string filename = IR_DUMP_DIR / (args.kernel_name + ".simplify_I_call" +
+                           std::to_string(this_call) + "_iter" +
+                           std::to_string(iteration) + "_" + step_name + ".ir");
+    std::string ir_str;
+    irpass::print(root, &ir_str);
+    std::ofstream ofs(filename);
+    if (ofs.good()) {
+      ofs << ir_str;
+    }
   };
   if (config.advanced_optimization) {
     bool first_iteration = true;
     int iteration = 0;
-    if (should_dump) dump_step("00_start", iteration);
+    if (should_dump)
+      dump_step("00_start", iteration);
     while (true) {
       bool modified = false;
       iteration++;
       if (extract_constant(root, config))
         modified = true;
-      print("extract_constant");
-      if (should_dump) dump_step("01_extract_constant", iteration);
+      if (should_dump)
+        dump_step("01_extract_constant", iteration);
       if (unreachable_code_elimination(root))
         modified = true;
-      print("unreachable_code_elimination");
       if (binary_op_simplify(root, config))
         modified = true;
-      print("binary_op_simplify");
-      if (should_dump) dump_step("03_binary_op_simplify", iteration);
+      if (should_dump)
+        dump_step("03_binary_op_simplify", iteration);
       if (config.constant_folding && constant_fold(root))
         modified = true;
-      print("constant_fold");
-      if (should_dump) dump_step("04_constant_fold", iteration);
+      if (should_dump)
+        dump_step("04_constant_fold", iteration);
       if (die(root))
         modified = true;
-      print("die");
-      if (should_dump) dump_step("05_die", iteration);
+      if (should_dump)
+        dump_step("05_die", iteration);
       if (alg_simp(root, config))
         modified = true;
-      print("alg_simp");
-      if (should_dump) dump_step("06_alg_simp", iteration);
+      if (should_dump)
+        dump_step("06_alg_simp", iteration);
       if (loop_invariant_code_motion(root, config))
         modified = true;
-      print("loop_invariant_code_motion");
-      if (should_dump) dump_step("07_loop_invariant_code_motion", iteration);
+      if (should_dump)
+        dump_step("07_loop_invariant_code_motion", iteration);
       if (die(root))
         modified = true;
-      print("die");
+      if (should_dump)
+        dump_step("08_die", iteration);
       if (simplify(root, config))
         modified = true;
-      print("simplify");
+      if (should_dump)
+        dump_step("09_simplify", iteration);
       if (die(root))
         modified = true;
-      print("die");
+      if (should_dump)
+        dump_step("10_die", iteration);
       if (config.opt_level > 0 && whole_kernel_cse(root))
         modified = true;
+      if (should_dump)
+        dump_step("11_whole_kernel_cse", iteration);
       // Don't do this time-consuming optimization pass again if the IR is
       // not modified.
       if (config.opt_level > 0 && first_iteration && config.cfg_optimization &&
@@ -596,7 +602,8 @@ void full_simplify(IRNode *root,
               root, args.after_lower_access, args.autodiff_enabled,
               !config.real_matrix_scalarize && !config.force_scalarize_matrix))
         modified = true;
-      print("cfg_optimization");
+      if (should_dump)
+        dump_step("12_cfg_optimization", iteration);
       first_iteration = false;
       if (!modified)
         break;
@@ -605,14 +612,10 @@ void full_simplify(IRNode *root,
   }
   if (config.constant_folding) {
     constant_fold(root);
-    print("constant_fold");
     die(root);
-    print("die");
   }
   simplify(root, config);
-  print("simplify");
   die(root);
-  print("die");
 }
 
 }  // namespace irpass
