@@ -219,7 +219,7 @@ def test_kernel_if_return_value_both_branches(in_val: int, expected: int):
         (1, 5),
     ],
 )
-@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
+@test_utils.test(offline_cache=False)
 def test_func_if_return_void_true_branch(in_val: int, expected: int):
     @ti.func
     def f1(a: ti.types.NDArray[ti.i32, 1]) -> None:
