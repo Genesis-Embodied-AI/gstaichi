@@ -118,11 +118,37 @@ class CFGBuilder : public IRVisitor {
    *   }
    * }
    *
-   * Note that the edges are inserted in visit_loop().
+   * For function returns (unwind):
+   * block {
+   *   node {
+   *     ...
+   *   } -> (next node);
+   *   unwind (from function return);
+   *   (next node) {
+   *     ...
+   *   }
+   * }
+   *
+   * Note that the edges are inserted in visit_loop() for loop continues.
    */
   void visit(ContinueStmt *stmt) override {
     // Don't put ContinueStmt in any CFGNodes.
-    continues_in_current_loop_.push_back(new_node(current_stmt_id_ + 1));
+    auto node = new_node(current_stmt_id_ + 1);
+    // Distinguish between loop continues and function returns (unwind)
+    if (stmt->from_function_return) {
+      // For function returns (unwind), the control flow exits the current block
+      // and jumps to the unwind target. We track these nodes so we can connect
+      // them to the final node after the CFG is fully built.
+      TI_INFO("[CFG DEBUG] Found unwind with from_function_return=true at stmt {}, adding to unwind_nodes_", current_stmt_id_);
+      unwind_nodes_.push_back(node);
+      // We do NOT add this node to prev_nodes_ because statements after the unwind
+      // in the same block are unreachable from this path.
+    } else {
+      // For normal loop continues, add to continues_in_current_loop_
+      // so visit_loop() can connect them back to the loop beginning.
+      TI_INFO("[CFG DEBUG] Found continue with from_function_return=false at stmt {}, adding to continues_in_current_loop", current_stmt_id_);
+      continues_in_current_loop_.push_back(node);
+    }
   }
 
   /**
@@ -190,9 +216,14 @@ class CFGBuilder : public IRVisitor {
     }
     TI_ASSERT(prev_nodes_.empty());
     if (if_stmt->true_statements)
+    if (if_stmt->true_statements && !true_branch_end->prev.empty()) {
       prev_nodes_.push_back(true_branch_end);
     if (if_stmt->false_statements)
+    }
+    if (if_stmt->false_statements && !false_branch_end->prev.empty()) {
       prev_nodes_.push_back(false_branch_end);
+    }
+    // Add fallthrough edge (when condition is false for true-only if, or true for false-only if)
     if (!if_stmt->true_statements || !if_stmt->false_statements)
       prev_nodes_.push_back(before_if);
     // Container statements don't belong to any CFGNodes.
@@ -433,6 +464,12 @@ class CFGBuilder : public IRVisitor {
                         builder.graph_->back());
       builder.graph_->final_node = (int)builder.graph_->size() - 1;
     }
+    // Connect all unwind nodes (from function returns) to the final node.
+    // This ensures that DSE knows the stores before the unwind are live
+    // (they're visible when the function returns/kernel exits).
+    for (auto *unwind_node : builder.unwind_nodes_) {
+      CFGNode::add_edge(unwind_node, builder.graph_->nodes[builder.graph_->final_node].get());
+    }
     return std::move(builder.graph_);
   }
 
@@ -442,6 +479,7 @@ class CFGBuilder : public IRVisitor {
   CFGNode *last_node_in_current_block_;
   std::vector<CFGNode *> continues_in_current_loop_;
   std::vector<CFGNode *> breaks_in_current_loop_;
+  std::vector<CFGNode *> unwind_nodes_;  // Nodes that unwind from function returns
   int current_stmt_id_;
   int begin_location_;
   std::vector<CFGNode *> prev_nodes_;

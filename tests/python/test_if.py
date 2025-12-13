@@ -71,7 +71,7 @@ def test_if_return_void(in_val: int, expected: int) -> None:
     ],
 )
 @pytest.mark.xfail(reason="not implemented yet for kernels")
-@test_utils.test(offline_cache=False, advanced_optimization=False)
+@test_utils.test(offline_cache=False, print_kernel_llvm_ir=True)
 def test_kernel_if_return_void_true_branch(in_val: int, expected: int):
     @ti.kernel
     def k1(a: ti.types.NDArray) -> None:
@@ -94,7 +94,7 @@ def test_kernel_if_return_void_true_branch(in_val: int, expected: int):
     ],
 )
 @pytest.mark.xfail(reason="not implemented yet for kernels")
-@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
+@test_utils.test(offline_cache=False, print_kernel_llvm_ir=True)
 def test_kernel_if_return_void_false_branch(in_val: int, expected: int):
     @ti.kernel
     def k1(a: ti.types.NDArray) -> None:
@@ -219,7 +219,7 @@ def test_kernel_if_return_value_both_branches(in_val: int, expected: int):
         (1, 5),
     ],
 )
-@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
+@test_utils.test(offline_cache=False, advanced_optimization=True, print_kernel_llvm_ir=True)
 def test_func_if_return_void_true_branch(in_val: int, expected: int):
     @ti.func
     def f1(a: ti.types.NDArray[ti.i32, 1]) -> None:
