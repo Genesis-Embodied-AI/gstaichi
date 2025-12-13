@@ -768,6 +768,18 @@ class AssociateContinueScope : public BasicStmtVisitor {
         break;
       }
     }
+    
+    // Convert unresolved function return continues to returns
+    irpass::replace_and_insert_statements(
+        root,
+        /*filter=*/[](Stmt *s) {
+          auto *cont = s->cast<ContinueStmt>();
+          return cont && cont->from_function_return && cont->scope == nullptr;
+        },
+        /*generator=*/[](Stmt *s) {
+          // Convert to void kernel return
+          return Stmt::make<ReturnStmt>(std::vector<Stmt *>{});
+        });
   }
 
  private:
