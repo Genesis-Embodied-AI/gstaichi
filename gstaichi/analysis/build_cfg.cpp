@@ -140,14 +140,12 @@ class CFGBuilder : public IRVisitor {
       // For function returns (unwind), the control flow exits the current block
       // and jumps to the unwind target. We track these nodes so we can connect
       // them to the final node after the CFG is fully built.
-      TI_INFO("[CFG DEBUG] Found unwind with from_function_return=true at stmt {}, adding to unwind_nodes_", current_stmt_id_);
       unwind_nodes_.push_back(node);
       // We do NOT add this node to prev_nodes_ because statements after the
       // unwind in the same block are unreachable from this path.
     } else {
       // For normal loop continues, add to continues_in_current_loop_
       // so visit_loop() can connect them back to the loop beginning.
-      TI_INFO("[CFG DEBUG] Found continue with from_function_return=false at stmt {}, adding to continues_in_current_loop", current_stmt_id_);
       continues_in_current_loop_.push_back(node);
     }
   }
