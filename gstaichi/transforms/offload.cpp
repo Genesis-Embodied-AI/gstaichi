@@ -733,22 +733,31 @@ class AssociateContinueScope : public BasicStmtVisitor {
   void visit(ContinueStmt *stmt) override {
     if (stmt->scope == nullptr) {
       if (stmt->from_function_return) {
-        // For continues from function returns, target the outermost loop or offloaded stmt
-        // (skip any inner loops within the function)
-        if (cur_offloaded_stmt_ != nullptr) {
-          stmt->scope = cur_offloaded_stmt_;
-        } else {
-          // Fallback to innermost loop if not in offloaded context
+        // For continues from function returns: target the loop that contains the function call
+        if (cur_internal_loop_ != nullptr) {
           stmt->scope = cur_internal_loop_;
+          modified_ = true;
+        } else if (cur_offloaded_stmt_ != nullptr && 
+                   (cur_offloaded_stmt_->task_type == OffloadedStmt::TaskType::range_for ||
+                    cur_offloaded_stmt_->task_type == OffloadedStmt::TaskType::struct_for)) {
+          stmt->scope = cur_offloaded_stmt_;
+          modified_ = true;
         }
+        // else: will be converted to ReturnStmt in preprocess_container_stmt
       } else if (cur_internal_loop_ != nullptr) {
         stmt->scope = cur_internal_loop_;
+        modified_ = true;
       } else {
         stmt->scope = cur_offloaded_stmt_;
+        modified_ = true;
       }
-      modified_ = true;
     }
-    TI_ASSERT(stmt->scope != nullptr);
+    if (stmt->scope != nullptr || stmt->from_function_return) {
+      // Either has a scope, or will be converted to return
+      // OK
+    } else {
+      TI_ASSERT(stmt->scope != nullptr);
+    }
   }
 
   static void run(IRNode *root) {

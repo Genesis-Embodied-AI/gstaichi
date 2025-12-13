@@ -116,8 +116,9 @@ class IRPrinter : public IRVisitor {
   }
 
   void visit(FrontendContinueStmt *stmt) override {
-    if (stmt->function_loop_depth > 0) {
-      print("continue (unwind_depth={})", stmt->function_loop_depth);
+    if (stmt->function_loop_depth >= 0) {
+      // Show actual unwind depth: function_loop_depth + 1 (for the function itself)
+      print("unwind (depth={})", stmt->function_loop_depth + 1);
     } else if (stmt->scope) {
       print("continue (scope={})", stmt->scope->name());
     } else {
@@ -347,17 +348,13 @@ class IRPrinter : public IRVisitor {
 
   void visit(ContinueStmt *stmt) override {
     if (stmt->scope) {
-      if (stmt->from_function_return && stmt->levels_up > 1) {
-        print("{} continue (scope={}, unwind_depth={})", stmt->name(), stmt->scope->name(), stmt->levels_up - 1);
-      } else {
-        print("{} continue (scope={})", stmt->name(), stmt->scope->name());
-      }
+      // Once scope is resolved, it's just a continue (regardless of origin)
+      print("{} continue (scope={})", stmt->name(), stmt->scope->name());
+    } else if (stmt->from_function_return && stmt->levels_up > 0) {
+      // No scope yet, but has unwind depth - show as unwind
+      print("{} unwind (depth={})", stmt->name(), stmt->levels_up);
     } else {
-      if (stmt->from_function_return && stmt->levels_up > 1) {
-        print("{} continue (unwind_depth={})", stmt->name(), stmt->levels_up - 1);
-      } else {
-        print("{} continue", stmt->name());
-      }
+      print("{} continue", stmt->name());
     }
     dbg_info_printer_(stmt);
   }
