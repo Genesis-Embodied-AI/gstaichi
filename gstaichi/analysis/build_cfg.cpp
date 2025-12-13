@@ -240,17 +240,20 @@ class CFGBuilder : public IRVisitor {
       false_branch_end = graph_->back();
     }
     TI_ASSERT(prev_nodes_.empty());
-    
-    // Only add branch ends to prev_nodes_ if they're reachable (have incoming edges).
-    // A branch end with no incoming edges means the branch terminated with an unwind/return
-    // and cannot fall through to the code after the if statement.
+
+    // Only add branch ends to prev_nodes_ if they're reachable (have incoming
+    // edges). A branch end with no incoming edges means the branch terminated
+    // with an unwind/return and cannot fall through to the code after the if
+    // statement.
     if (if_stmt->true_statements && !true_branch_end->prev.empty()) {
       prev_nodes_.push_back(true_branch_end);
     }
     if (if_stmt->false_statements && !false_branch_end->prev.empty()) {
       prev_nodes_.push_back(false_branch_end);
     }
-    // Add fallthrough edge (when condition is false for true-only if, or true for false-only if)
+
+    // Add fallthrough edge (when condition is false for true-only if, or true
+    // for false-only if)
     if (!if_stmt->true_statements || !if_stmt->false_statements)
       prev_nodes_.push_back(before_if);
     // Container statements don't belong to any CFGNodes.
@@ -495,8 +498,10 @@ class CFGBuilder : public IRVisitor {
     // This ensures that DSE knows the stores before the unwind are live
     // (they're visible when the function returns/kernel exits).
     for (auto *unwind_node : builder.unwind_nodes_) {
-      CFGNode::add_edge(unwind_node, builder.graph_->nodes[builder.graph_->final_node].get());
+      CFGNode::add_edge(
+          unwind_node, builder.graph_->nodes[builder.graph_->final_node].get());
     }
+
     return std::move(builder.graph_);
   }
 
@@ -506,7 +511,8 @@ class CFGBuilder : public IRVisitor {
   CFGNode *last_node_in_current_block_;
   std::vector<CFGNode *> continues_in_current_loop_;
   std::vector<CFGNode *> breaks_in_current_loop_;
-  std::vector<CFGNode *> unwind_nodes_;  // Nodes that unwind from function returns
+  std::vector<CFGNode *>
+      unwind_nodes_;  // Nodes that unwind from function returns
   int current_stmt_id_;
   int begin_location_;
   std::vector<CFGNode *> prev_nodes_;
