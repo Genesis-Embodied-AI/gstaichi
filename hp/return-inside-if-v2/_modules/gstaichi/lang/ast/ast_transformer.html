@@ -891,7 +891,10 @@
                     <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>  <span class="c1"># For ti.func, create continue to exit the inlined function</span>
                 <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="o">.</span><span class="n">insert_continue_stmt</span><span class="p">(</span><span class="n">_ti_core</span><span class="o">.</span><span class="n">DebugInfo</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">get_pos_info</span><span class="p">(</span><span class="n">node</span><span class="p">)))</span>
+                    <span class="c1"># Pass loop_depth so we know how many function loops to unwind</span>
+                    <span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="o">.</span><span class="n">insert_function_continue_stmt</span><span class="p">(</span>
+                        <span class="n">ctx</span><span class="o">.</span><span class="n">loop_depth</span><span class="p">,</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">DebugInfo</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">get_pos_info</span><span class="p">(</span><span class="n">node</span><span class="p">))</span>
+                    <span class="p">)</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">is_kernel</span> <span class="ow">or</span> <span class="n">ctx</span><span class="o">.</span><span class="n">is_real_function</span><span class="p">:</span>
             <span class="c1"># TODO: check if it&#39;s at the end of a kernel, throw GsTaichiSyntaxError if not</span>
