@@ -9,6 +9,39 @@ namespace gstaichi::lang {
 
 // Convert unstructured continues (function returns through nested loops)
 // into structured control flow using flag variables for SPIRV compatibility
+//
+// Background:
+// - When a ti.func contains a return statement inside a nested loop, and that
+//   function is called from within a kernel loop, the return needs to continue
+//   the kernel loop (not the inner function loop)
+// - After inlining, this becomes a ContinueStmt with scope pointing to the
+//   kernel/offload loop, but physically inside a nested loop
+// - SPIRV does not support jumping out of nested loops with a single continue
+//
+// Solution:
+// - Replace: continue(outer_loop) inside inner_loop
+// - With: flag=true; continue(inner_loop); then after inner_loop: if(flag) continue(outer_loop)
+//
+// Example transformation:
+//   for b in range(4):           // outer (offload) loop
+//     for j in range(3):         // inner loop
+//       if cond:
+//         do_stuff()
+//         continue(outer)        // <- Problem: can't jump out of nested loop in SPIRV
+//     more_stuff()
+//
+// Becomes:
+//   flag = false
+//   for b in range(4):
+//     flag = false              // reset for each outer iteration
+//     for j in range(3):
+//       if cond:
+//         do_stuff()
+//         flag = true
+//         continue(inner)       // <- break out of inner loop
+//     if flag:
+//       continue(outer)         // <- now continue outer loop
+//     more_stuff()              // <- skipped when flag is true
 class StructureContinues {
  public:
   static bool run(IRNode *root) {
