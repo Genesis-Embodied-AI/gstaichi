@@ -42,13 +42,15 @@ void compile_to_offloads(IRNode *ir,
   }
 
   const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
-  bool should_dump = (dump_ir_env != nullptr && std::string(dump_ir_env) == "1");
-  
+  bool should_dump =
+      (dump_ir_env != nullptr && std::string(dump_ir_env) == "1");
+
   auto dump_ir = [&](const std::string &stage_name) {
     if (!should_dump)
       return;
     std::filesystem::create_directories(IR_DUMP_DIR);
-    std::filesystem::path filename = IR_DUMP_DIR / (kernel->name + "_" + stage_name + ".ll");
+    std::filesystem::path filename =
+        IR_DUMP_DIR / (kernel->name + "_" + stage_name + ".ll");
     std::string ir_str;
     irpass::print(ir, &ir_str);
     std::ofstream ofs(filename.string());

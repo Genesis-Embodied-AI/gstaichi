@@ -532,12 +532,14 @@ void full_simplify(IRNode *root,
   // Track which call to full_simplify this is, for debugging purposes.
   static int call_counter = 0;
   int this_call = call_counter++;
-  const char *dump_ir_env = std::getenv("TI_DUMP_IR");
-  bool should_dump = (dump_ir_env && std::string(dump_ir_env) == "1");
+  const char *dump_simplify_env = std::getenv(DUMP_SIMPLIFY_ENV.data());
+  bool should_dump =
+      (dump_simplify_env && std::string(dump_simplify_env) == "1");
   auto dump_step = [&](const std::string &step_name, int iteration) {
-    std::string filename = IR_DUMP_DIR / (args.kernel_name + ".simplify_I_call" +
-                           std::to_string(this_call) + "_iter" +
-                           std::to_string(iteration) + "_" + step_name + ".ir");
+    std::string filename =
+        IR_DUMP_DIR /
+        (args.kernel_name + ".simplify_I_call" + std::to_string(this_call) +
+         "_iter" + std::to_string(iteration) + "_" + step_name + ".ir");
     std::string ir_str;
     irpass::print(root, &ir_str);
     std::ofstream ofs(filename);
