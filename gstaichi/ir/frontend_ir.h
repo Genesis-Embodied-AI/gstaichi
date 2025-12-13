@@ -298,6 +298,7 @@ class FrontendContinueStmt : public Stmt {
   TI_DEFINE_CLONE_FOR_FRONTEND_IR
 };
 
+
 class FrontendWhileStmt : public Stmt {
  public:
   Expr cond;

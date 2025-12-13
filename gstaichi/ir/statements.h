@@ -86,8 +86,10 @@ class ContinueStmt : public Stmt {
   // This is the loop on which this continue stmt has effects. It can be either
   // an offloaded task, or a for/while loop inside the kernel.
   Stmt *scope;
+  // Number of loop levels to continue up (1 = current loop, 2 = parent loop, etc.)
+  int levels_up;
 
-  ContinueStmt() : scope(nullptr) {
+  ContinueStmt() : scope(nullptr), levels_up(1) {
     TI_STMT_REG_FIELDS;
   }
 

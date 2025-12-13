@@ -461,13 +461,16 @@ class ASTTransformer(Builder):
         if node.value is not None:
             build_stmt(ctx, node.value)
         if node.value is None or node.value.ptr is None:
-            if not ctx.is_real_function:
+            if ctx.is_kernel:  # Only kernels get void returns
                 ctx.returned = ReturnStatus.ReturnedVoid
                 # Create a void return statement in the IR
                 if ctx.ast_builder is not None:
                     ctx.ast_builder.create_kernel_exprgroup_return(
                         expr.make_expr_group([]), _ti_core.DebugInfo(ctx.get_pos_info(node))
                     )
+            else:  # For ti.func, create continue to exit the inlined function
+                if ctx.ast_builder is not None:
+                    ctx.ast_builder.insert_continue_stmt(_ti_core.DebugInfo(ctx.get_pos_info(node)))
             return None
         if ctx.is_kernel or ctx.is_real_function:
             # TODO: check if it's at the end of a kernel, throw GsTaichiSyntaxError if not

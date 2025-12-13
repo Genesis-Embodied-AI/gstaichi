@@ -1097,8 +1097,12 @@ void TaskCodeGenLLVM::visit(ContinueStmt *stmt) {
   if (stmt_in_off_range_for()) {
     builder->CreateRetVoid();
   } else {
-    TI_ASSERT(current_loop_reentry != nullptr);
-    builder->CreateBr(current_loop_reentry);
+    // Find the loop reentry levels_up levels up
+    TI_ASSERT(!loop_reentry_stack.empty());
+    int target_level = loop_reentry_stack.size() - stmt->levels_up;
+    TI_ASSERT(target_level >= 0);
+    llvm::BasicBlock *target_reentry = loop_reentry_stack[target_level];
+    builder->CreateBr(target_reentry);
   }
   // Stmts after continue are useless, so we switch the insertion point to
   // /dev/null. In LLVM IR, the "after_continue" label shows "No predecessors!".
@@ -1114,6 +1118,7 @@ void TaskCodeGenLLVM::visit(WhileStmt *stmt) {
   builder->SetInsertPoint(body);
   auto lrg = make_loop_reentry_guard(this);
   current_loop_reentry = body;
+  loop_reentry_stack.push_back(body);
 
   BasicBlock *after_loop =
       BasicBlock::Create(*llvm_context, "after_while", func);
@@ -1121,6 +1126,8 @@ void TaskCodeGenLLVM::visit(WhileStmt *stmt) {
   current_while_after_loop = after_loop;
 
   stmt->body->accept(this);
+
+  loop_reentry_stack.pop_back();
 
   if (!returned) {
     builder->CreateBr(body);  // jump to head
@@ -1206,10 +1213,13 @@ void TaskCodeGenLLVM::create_naive_range_for(RangeForStmt *for_stmt) {
       auto lrg = make_loop_reentry_guard(this);
       // The continue stmt should jump to the loop-increment block!
       current_loop_reentry = loop_inc;
+      loop_reentry_stack.push_back(loop_inc);
       // body cfg
       builder->SetInsertPoint(body);
 
       for_stmt->body->accept(this);
+
+      loop_reentry_stack.pop_back();
     }
     if (!returned) {
       builder->CreateBr(loop_inc);
@@ -2011,6 +2021,7 @@ std::string TaskCodeGenLLVM::init_offloaded_task_function(OffloadedStmt *stmt,
                                                           std::string suffix) {
   current_loop_reentry = nullptr;
   current_while_after_loop = nullptr;
+  loop_reentry_stack.clear();
 
   task_function_type =
       llvm::FunctionType::get(llvm::Type::getVoidTy(*llvm_context),
