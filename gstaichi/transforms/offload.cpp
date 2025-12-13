@@ -733,8 +733,8 @@ class AssociateContinueScope : public BasicStmtVisitor {
   void visit(ContinueStmt *stmt) override {
     if (stmt->scope == nullptr) {
       if (stmt->from_function_return) {
-        // For continues from function returns: use levels_up to determine target
-        // levels_up=1: just exit function, target current loop
+        // For continues from function returns: use levels_up to determine
+        // target levels_up=1: just exit function, target current loop
         // levels_up=2+: exit function + skip inner loops, target outer loop
         if (stmt->levels_up == 1 && cur_internal_loop_ != nullptr) {
           // Simple case: no inner loops in function, target current loop

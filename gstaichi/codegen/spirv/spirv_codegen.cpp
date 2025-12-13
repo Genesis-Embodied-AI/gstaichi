@@ -1774,7 +1774,7 @@ void TaskCodegen::visit(ContinueStmt *stmt) {
     }
     return false;
   };
-  
+
   if (stmt_in_off_for()) {
     // Return means end THIS main loop and start next loop, not exit kernel
     ir_->make_inst(spv::OpBranch, return_label());
