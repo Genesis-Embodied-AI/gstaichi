@@ -7,24 +7,46 @@
 namespace gstaichi::lang {
 
 // Unconditionally eliminate ContinueStmt's at **ends** of loops
+// But NOT if they are from function returns (unwinds) or inside branches
+// Also eliminate function-return unwinds that are at the top-level kernel scope
 class UselessContinueEliminator : public IRVisitor {
  public:
   bool modified;
+  bool inside_offloaded = false;
 
   UselessContinueEliminator() : modified(false) {
     allow_undefined_visitor = true;
   }
 
+  void visit(OffloadedStmt *stmt) override {
+    bool prev_inside = inside_offloaded;
+    inside_offloaded = true;
+    if (stmt->body)
+      stmt->body->accept(this);
+    inside_offloaded = prev_inside;
+  }
+
   void visit(ContinueStmt *stmt) override {
-    stmt->parent->erase(stmt);
-    modified = true;
+    // Erase continues that are not from function returns
+    if (!stmt->from_function_return) {
+      stmt->parent->erase(stmt);
+      modified = true;
+      return;
+    }
+
+    // If we're inside an offloaded kernel and this is a function-return unwind,
+    // it's meaningless at kernel scope (there's no function to return from).
+    // These come from inlined void functions at the Python frontend level.
+    if (inside_offloaded && stmt->from_function_return) {
+      stmt->parent->erase(stmt);
+      modified = true;
+      return;
+    }
   }
 
   void visit(IfStmt *if_stmt) override {
-    if (if_stmt->true_statements && if_stmt->true_statements->size())
-      if_stmt->true_statements->back()->accept(this);
-    if (if_stmt->false_statements && if_stmt->false_statements->size())
-      if_stmt->false_statements->back()->accept(this);
+    // Don't recurse into if statements - continues inside branches are not
+    // "at the end" of the loop, they are conditional and should be kept
   }
 };
 
@@ -51,7 +73,62 @@ class UnreachableCodeEliminator : public BasicStmtVisitor {
         modified = true;
         break;
       }
+      // Check if this is an if-statement where both branches end with
+      // unwind/return (making code after it unreachable)
+      if (auto *if_stmt = stmt_list->statements[i]->cast<IfStmt>()) {
+        bool true_branch_returns = false;
+        bool false_branch_returns = false;
+
+        // Check if true branch ends with return/unwind
+        if (if_stmt->true_statements &&
+            !if_stmt->true_statements->statements.empty()) {
+          auto *last_stmt = if_stmt->true_statements->statements.back().get();
+          true_branch_returns =
+              last_stmt->is<ContinueStmt>() || last_stmt->is<ReturnStmt>();
+        }
+
+        // Check if false branch ends with return/unwind
+        if (if_stmt->false_statements &&
+            !if_stmt->false_statements->statements.empty()) {
+          auto *last_stmt = if_stmt->false_statements->statements.back().get();
+          false_branch_returns =
+              last_stmt->is<ContinueStmt>() || last_stmt->is<ReturnStmt>();
+        }
+
+        // If both branches return, code after the if-statement is unreachable
+        if (true_branch_returns && false_branch_returns) {
+          // Erase all statements after this if-statement
+          for (int j = block_size - 1; j > i; j--)
+            stmt_list->erase(j);
+          modified = true;
+          break;
+        }
+      }
     }
+
+    // After the main loop, check if there are any function-return unwinds
+    // that ended up as siblings to if-statements (not inside them).
+    // These can happen when the simplify pass moves code around.
+    for (int i = 0; i < (int)stmt_list->size(); i++) {
+      if (auto *cont = stmt_list->statements[i]->cast<ContinueStmt>()) {
+        if (cont->from_function_return) {
+          // Check if this is at the same level as if-statements.
+          // If so, it's likely escaped from inside and should be removed.
+          bool has_sibling_if = false;
+          for (int j = 0; j < (int)stmt_list->size(); j++) {
+            if (j != i && stmt_list->statements[j]->is<IfStmt>()) {
+              has_sibling_if = true;
+              break;
+            }
+          }
+          if (has_sibling_if) {
+            modifier.erase(cont);
+            modified = true;
+          }
+        }
+      }
+    }
+
     for (auto &stmt : stmt_list->statements)
       stmt->accept(this);
   }
@@ -92,8 +169,13 @@ class UnreachableCodeEliminator : public BasicStmtVisitor {
         stmt->task_type == OffloadedStmt::TaskType::mesh_for ||
         stmt->task_type == OffloadedStmt::TaskType::struct_for)
       visit_loop(stmt->body.get());
-    else if (stmt->body)
+    else if (stmt->body) {
+      // For non-loop offloaded tasks, eliminate function-return unwinds
+      // that are at the TOP LEVEL of the body (not inside control flow).
+      // These are meaningless after frontend inlining of void functions.
+      eliminate_top_level_unwinds(stmt->body.get());
       stmt->body->accept(this);
+    }
 
     if (stmt->bls_epilogue)
       stmt->bls_epilogue->accept(this);
@@ -146,6 +228,64 @@ class UnreachableCodeEliminator : public BasicStmtVisitor {
       }
     }
     return modified;
+  }
+
+ private:
+  // Eliminate unwind statements from function returns at the TOP LEVEL only.
+  // Unwinds inside if-statements are meaningful for control flow.
+  void eliminate_top_level_unwinds(Block *block) {
+    for (auto &stmt : block->statements) {
+      if (auto *cont = stmt->cast<ContinueStmt>()) {
+        if (cont->from_function_return) {
+          modifier.erase(cont);
+          modified = true;
+        }
+      }
+      // Don't recurse into if-statements - unwinds there are meaningful
+    }
+  }
+
+  // This method is no longer used but kept for reference
+  void eliminate_kernel_scope_unwinds(Block *block) {
+    bool any_modified = false;
+    for (auto &stmt : block->statements) {
+      if (auto *cont = stmt->cast<ContinueStmt>()) {
+        if (cont->from_function_return) {
+          modifier.erase(cont);
+          any_modified = true;
+        }
+      }
+      // Recursively check inside if-statements
+      if (auto *if_stmt = stmt->cast<IfStmt>()) {
+        if (if_stmt->true_statements)
+          eliminate_kernel_scope_unwinds_recursive(
+              if_stmt->true_statements.get());
+        if (if_stmt->false_statements)
+          eliminate_kernel_scope_unwinds_recursive(
+              if_stmt->false_statements.get());
+      }
+    }
+    if (any_modified)
+      modified = true;
+  }
+
+  void eliminate_kernel_scope_unwinds_recursive(Block *block) {
+    for (auto &stmt : block->statements) {
+      if (auto *cont = stmt->cast<ContinueStmt>()) {
+        if (cont->from_function_return) {
+          modifier.erase(cont);
+          modified = true;
+        }
+      }
+      if (auto *if_stmt = stmt->cast<IfStmt>()) {
+        if (if_stmt->true_statements)
+          eliminate_kernel_scope_unwinds_recursive(
+              if_stmt->true_statements.get());
+        if (if_stmt->false_statements)
+          eliminate_kernel_scope_unwinds_recursive(
+              if_stmt->false_statements.get());
+      }
+    }
   }
 };
 

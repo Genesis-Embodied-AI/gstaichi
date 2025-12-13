@@ -93,7 +93,7 @@ def test_func_multiple_return():
 
     with pytest.raises(
         ti.GsTaichiCompilationError,
-        match="Return inside non-static if/for is not supported",
+        match="Return value inside non-static if/for is not supported",
     ):
         kern(-233)
 
@@ -115,7 +115,7 @@ def test_return_inside_static_for():
 def test_return_inside_non_static_for():
     with pytest.raises(
         ti.GsTaichiCompilationError,
-        match="Return inside non-static if/for is not supported",
+        match="Return value inside non-static if/for is not supported",
     ):
 
         @ti.kernel

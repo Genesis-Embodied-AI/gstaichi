@@ -86,8 +86,13 @@ class ContinueStmt : public Stmt {
   // This is the loop on which this continue stmt has effects. It can be either
   // an offloaded task, or a for/while loop inside the kernel.
   Stmt *scope;
+  // Number of loop levels to continue up (1 = current loop, 2 = parent loop,
+  // etc.)
+  int levels_up;
+  // True if this continue is from a ti.func return (needs special scoping)
+  bool from_function_return;
 
-  ContinueStmt() : scope(nullptr) {
+  ContinueStmt() : scope(nullptr), levels_up(1), from_function_return(false) {
     TI_STMT_REG_FIELDS;
   }
 
@@ -1220,8 +1225,10 @@ class ReturnStmt : public Stmt {
     for (auto &x : values) {
       names += x->raw_name() + ", ";
     }
-    names.pop_back();
-    names.pop_back();
+    if (!names.empty()) {
+      names.pop_back();  // Remove trailing space
+      names.pop_back();  // Remove trailing comma
+    }
     return names;
   }
 

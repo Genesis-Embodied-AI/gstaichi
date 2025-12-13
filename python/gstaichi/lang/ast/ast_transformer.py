@@ -453,14 +453,27 @@ class ASTTransformer(Builder):
 
     @staticmethod
     def build_Return(ctx: ASTTransformerContext, node: ast.Return) -> None:
-        if not ctx.is_real_function:
-            if ctx.is_in_non_static_control_flow():
-                raise GsTaichiSyntaxError("Return inside non-static if/for is not supported")
+        if not ctx.is_real_function and ctx.is_in_non_static_control_flow():
+            if node.value is not None:
+                raise GsTaichiSyntaxError("Return value inside non-static if/for is not supported")
+            if ctx.is_kernel:
+                raise GsTaichiSyntaxError("Return inside non-static if/for is not supported in kernels")
         if node.value is not None:
             build_stmt(ctx, node.value)
         if node.value is None or node.value.ptr is None:
-            if not ctx.is_real_function:
+            if ctx.is_kernel:  # Only kernels get void returns
                 ctx.returned = ReturnStatus.ReturnedVoid
+                # Create a void return statement in the IR
+                if ctx.ast_builder is not None:
+                    ctx.ast_builder.create_kernel_exprgroup_return(
+                        expr.make_expr_group([]), _ti_core.DebugInfo(ctx.get_pos_info(node))
+                    )
+            else:  # For ti.func, create continue to exit the inlined function
+                if ctx.ast_builder is not None:
+                    # Pass loop_depth so we know how many function loops to unwind
+                    ctx.ast_builder.insert_function_continue_stmt(
+                        ctx.loop_depth, _ti_core.DebugInfo(ctx.get_pos_info(node))
+                    )
             return None
         if ctx.is_kernel or ctx.is_real_function:
             # TODO: check if it's at the end of a kernel, throw GsTaichiSyntaxError if not
@@ -1243,9 +1256,13 @@ class ASTTransformer(Builder):
             ctx.ast_builder.begin_frontend_if_true()
             build_stmts(ctx, node.body)
             ctx.ast_builder.pop_scope()
+            if not is_static_if:
+                ctx.returned = ReturnStatus.NoReturn
             ctx.ast_builder.begin_frontend_if_false()
             build_stmts(ctx, node.orelse)
             ctx.ast_builder.pop_scope()
+        if not is_static_if:
+            ctx.returned = ReturnStatus.NoReturn
         return None
 
     @staticmethod

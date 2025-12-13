@@ -732,14 +732,38 @@ class AssociateContinueScope : public BasicStmtVisitor {
 
   void visit(ContinueStmt *stmt) override {
     if (stmt->scope == nullptr) {
-      if (cur_internal_loop_ != nullptr) {
+      if (stmt->from_function_return) {
+        // For continues from function returns: use levels_up to determine
+        // target levels_up=1: just exit function, target current loop
+        // levels_up=2+: exit function + skip inner loops, target outer loop
+        if (stmt->levels_up == 1 && cur_internal_loop_ != nullptr) {
+          // Simple case: no inner loops in function, target current loop
+          stmt->scope = cur_internal_loop_;
+          modified_ = true;
+        } else if (cur_offloaded_stmt_ != nullptr &&
+                   (cur_offloaded_stmt_->task_type ==
+                        OffloadedStmt::TaskType::range_for ||
+                    cur_offloaded_stmt_->task_type ==
+                        OffloadedStmt::TaskType::struct_for)) {
+          // Complex case: inner loops in function, target offloaded loop
+          stmt->scope = cur_offloaded_stmt_;
+          modified_ = true;
+        }
+        // else: no loop to continue, will be converted to ReturnStmt
+      } else if (cur_internal_loop_ != nullptr) {
         stmt->scope = cur_internal_loop_;
+        modified_ = true;
       } else {
         stmt->scope = cur_offloaded_stmt_;
+        modified_ = true;
       }
-      modified_ = true;
     }
-    TI_ASSERT(stmt->scope != nullptr);
+    if (stmt->scope != nullptr || stmt->from_function_return) {
+      // Either has a scope, or will be converted to return
+      // OK
+    } else {
+      TI_ASSERT(stmt->scope != nullptr);
+    }
   }
 
   static void run(IRNode *root) {
@@ -750,6 +774,20 @@ class AssociateContinueScope : public BasicStmtVisitor {
         break;
       }
     }
+
+    // Convert unresolved function return continues to returns
+    irpass::replace_and_insert_statements(
+        root,
+        /*filter=*/
+        [](Stmt *s) {
+          auto *cont = s->cast<ContinueStmt>();
+          return cont && cont->from_function_return && cont->scope == nullptr;
+        },
+        /*generator=*/
+        [](Stmt *s) {
+          // Convert to void kernel return
+          return Stmt::make<ReturnStmt>(std::vector<Stmt *>{});
+        });
   }
 
  private:

@@ -262,6 +262,12 @@ void offload_to_executable(IRNode *ir,
     print("Demote mesh statements");
   }
 
+  // Structure continues for SPIRV-based backends (Metal, Vulkan)
+  if (arch_uses_spirv(config.arch)) {
+    irpass::structure_continues(ir, config);
+    print("Structure continues");
+  }
+
   irpass::demote_atomics(ir, config);
   print("Atomics demoted II");
   irpass::analysis::verify(ir);

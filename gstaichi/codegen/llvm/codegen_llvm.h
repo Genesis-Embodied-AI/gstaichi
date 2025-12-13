@@ -46,6 +46,7 @@ class TaskCodeGenLLVM : public IRVisitor, public LLVMModuleBuilder {
   llvm::GlobalVariable *bls_buffer{nullptr};
   // Mainly for supporting continue stmt
   llvm::BasicBlock *current_loop_reentry;
+  std::vector<llvm::BasicBlock *> loop_reentry_stack;
   // Mainly for supporting break stmt
   llvm::BasicBlock *current_while_after_loop;
   llvm::FunctionType *task_function_type;
