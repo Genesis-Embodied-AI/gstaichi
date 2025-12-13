@@ -37,6 +37,20 @@ class Inliner : public BasicStmtVisitor {
           });
     }
     if (func->rets.empty()) {
+      // For void functions, we need to remove any "unwind" statements that
+      // represent function returns. After inlining, these become meaningless
+      // at the kernel scope since there's no function to return from.
+      // We replace them with nothing (erase them).
+      irpass::replace_statements(
+          inlined_ir.get(),
+          /*filter=*/
+          [&](Stmt *s) {
+            if (auto *cont = s->cast<ContinueStmt>()) {
+              return cont->from_function_return;
+            }
+            return false;
+          },
+          /*finder=*/[&](Stmt *s) { return nullptr; });
       modifier_.replace_with(
           stmt, VecStatement(std::move(inlined_ir->as<Block>()->statements)));
     } else {
@@ -190,9 +204,11 @@ class Inliner : public BasicStmtVisitor {
 
   static bool run(IRNode *node) {
     Inliner inliner;
-    inliner.adjust_function_return_scopes(node);
     bool modified = false;
     while (true) {
+      // Adjust scopes before each inlining iteration to handle newly inlined
+      // statements
+      inliner.adjust_function_return_scopes(node);
       node->accept(&inliner);
       if (inliner.modifier_.modify_ir())
         modified = true;

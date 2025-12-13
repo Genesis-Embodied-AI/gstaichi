@@ -311,6 +311,15 @@ class BasicBlockSimplify : public IRVisitor {
 
       bool global_state_changed = false;
       for (int i = 0; i < (int)clause.size() && plain_clause; i++) {
+        // Control flow statements (continue/break/return/unwind) should never
+        // be moved out of their original scope, as this changes program
+        // semantics
+        if (clause[i]->is<ContinueStmt>() || clause[i]->is<ReturnStmt>() ||
+            clause[i]->is<WhileControlStmt>()) {
+          plain_clause = false;
+          break;
+        }
+
         bool has_side_effects = clause[i]->is_container_statement() ||
                                 clause[i]->has_global_side_effect();
 
