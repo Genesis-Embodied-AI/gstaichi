@@ -103,12 +103,32 @@ void compile_to_offloads(IRNode *ir,
     print("Scalarized");
   }
 
+  if (dump_ir_env != nullptr) {
+    std::filesystem::path filename =
+        IR_DUMP_DIR / (kernel->name + "_before_simplify_I.ll");
+    if (std::ofstream out_file(filename.string()); out_file) {
+      std::string outString;
+      irpass::print(ir, &outString);
+      out_file << outString;
+    }
+  }
+
   irpass::full_simplify(
       ir, config,
       {false, /*autodiff_enabled*/ autodiff_mode != AutodiffMode::kNone,
        kernel->get_name(), verbose});
   print("Simplified I");
   irpass::analysis::verify(ir);
+
+  if (dump_ir_env != nullptr) {
+    std::filesystem::path filename =
+        IR_DUMP_DIR / (kernel->name + "_after_simplify_I.ll");
+    if (std::ofstream out_file(filename.string()); out_file) {
+      std::string outString;
+      irpass::print(ir, &outString);
+      out_file << outString;
+    }
+  }
 
   irpass::handle_external_ptr_boundary(ir, config);
   print("External ptr boundary processed");
@@ -163,6 +183,16 @@ void compile_to_offloads(IRNode *ir,
   irpass::offload(ir, config);
   print("Offloaded");
   irpass::analysis::verify(ir);
+
+  if (dump_ir_env != nullptr) {
+    std::filesystem::path filename =
+        IR_DUMP_DIR / (kernel->name + "_after_offload.ll");
+    if (std::ofstream out_file(filename.string()); out_file) {
+      std::string outString;
+      irpass::print(ir, &outString);
+      out_file << outString;
+    }
+  }
   // NOTE: There was an additional CFG pass here, removed in
   // https://github.com/taichi-dev/gstaichi/pull/8691
   irpass::flag_access(ir);
@@ -173,6 +203,16 @@ void compile_to_offloads(IRNode *ir,
       {false, /*autodiff_enabled*/ false, kernel->get_name(), verbose});
   print("Simplified III");
   irpass::analysis::verify(ir);
+
+  if (dump_ir_env != nullptr) {
+    std::filesystem::path filename =
+        IR_DUMP_DIR / (kernel->name + "_after_simplify_III.ll");
+    if (std::ofstream out_file(filename.string()); out_file) {
+      std::string outString;
+      irpass::print(ir, &outString);
+      out_file << outString;
+    }
+  }
 }
 
 void offload_to_executable(IRNode *ir,

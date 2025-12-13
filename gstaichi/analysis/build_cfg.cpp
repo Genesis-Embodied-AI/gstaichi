@@ -135,19 +135,32 @@ class CFGBuilder : public IRVisitor {
   void visit(ContinueStmt *stmt) override {
     // Don't put ContinueStmt in any CFGNodes.
     auto node = new_node(current_stmt_id_ + 1);
+
+    TI_INFO(
+        "[CFG DEBUG] Created node for unwind/continue: node_id={}, block={}, "
+        "begin={}, end={}, stmt_id={}",
+        graph_->size() - 1, fmt::ptr(node->block), node->begin_location,
+        node->end_location, current_stmt_id_);
+
     // Distinguish between loop continues and function returns (unwind)
     if (stmt->from_function_return) {
       // For function returns (unwind), the control flow exits the current block
       // and jumps to the unwind target. We track these nodes so we can connect
       // them to the final node after the CFG is fully built.
-      TI_INFO("[CFG DEBUG] Found unwind with from_function_return=true at stmt {}, adding to unwind_nodes_", current_stmt_id_);
+      TI_INFO(
+          "[CFG DEBUG] Found unwind with from_function_return=true at stmt {}, "
+          "adding to unwind_nodes_",
+          current_stmt_id_);
       unwind_nodes_.push_back(node);
       // We do NOT add this node to prev_nodes_ because statements after the
       // unwind in the same block are unreachable from this path.
     } else {
       // For normal loop continues, add to continues_in_current_loop_
       // so visit_loop() can connect them back to the loop beginning.
-      TI_INFO("[CFG DEBUG] Found continue with from_function_return=false at stmt {}, adding to continues_in_current_loop", current_stmt_id_);
+      TI_INFO(
+          "[CFG DEBUG] Found continue with from_function_return=false at stmt "
+          "{}, adding to continues_in_current_loop",
+          current_stmt_id_);
       continues_in_current_loop_.push_back(node);
     }
   }
@@ -170,7 +183,16 @@ class CFGBuilder : public IRVisitor {
   void visit(ReturnStmt *stmt) override {
     // Don't put ReturnStmt in any CFGNodes.
     auto node = new_node(current_stmt_id_ + 1);
+
+    TI_INFO(
+        "[CFG DEBUG] Created node for return: node_id={}, block={}, begin={}, "
+        "end={}, stmt_id={}",
+        graph_->size() - 1, fmt::ptr(node->block), node->begin_location,
+        node->end_location, current_stmt_id_);
+
     // ReturnStmt exits the function/kernel, so connect to final node
+    TI_INFO("[CFG DEBUG] Found ReturnStmt at stmt {}, adding to unwind_nodes_",
+            current_stmt_id_);
     unwind_nodes_.push_back(node);
     // We do NOT add this node to prev_nodes_ because statements after the
     // return are unreachable from this path.
@@ -225,20 +247,40 @@ class CFGBuilder : public IRVisitor {
    */
   void visit(IfStmt *if_stmt) override {
     auto before_if = new_node(-1);
+    TI_INFO("[CFG DEBUG] IfStmt: created before_if node_id={}",
+            graph_->size() - 1);
+
     CFGNode *true_branch_end = nullptr;
     if (if_stmt->true_statements) {
       auto true_branch_begin = graph_->size();
+      TI_INFO("[CFG DEBUG] IfStmt: visiting true branch, first node will be {}",
+              true_branch_begin);
       if_stmt->true_statements->accept(this);
       CFGNode::add_edge(before_if, graph_->nodes[true_branch_begin].get());
       true_branch_end = graph_->back();
+      TI_INFO(
+          "[CFG DEBUG] IfStmt: true branch end node_id={}, begin={}, end={}, "
+          "prev.size={}",
+          graph_->size() - 1, true_branch_end->begin_location,
+          true_branch_end->end_location, true_branch_end->prev.size());
     }
     CFGNode *false_branch_end = nullptr;
     if (if_stmt->false_statements) {
       auto false_branch_begin = graph_->size();
+      TI_INFO(
+          "[CFG DEBUG] IfStmt: visiting false branch, first node will be {}",
+          false_branch_begin);
       if_stmt->false_statements->accept(this);
       CFGNode::add_edge(before_if, graph_->nodes[false_branch_begin].get());
       false_branch_end = graph_->back();
+      TI_INFO(
+          "[CFG DEBUG] IfStmt: false branch end node_id={}, begin={}, end={}, "
+          "prev.size={}",
+          graph_->size() - 1, false_branch_end->begin_location,
+          false_branch_end->end_location, false_branch_end->prev.size());
     }
+    TI_INFO("[CFG DEBUG] IfStmt: prev_nodes_.size() before assertion = {}",
+            prev_nodes_.size());
     TI_ASSERT(prev_nodes_.empty());
 
     // Only add branch ends to prev_nodes_ if they're reachable (have incoming
@@ -246,16 +288,33 @@ class CFGBuilder : public IRVisitor {
     // with an unwind/return and cannot fall through to the code after the if
     // statement.
     if (if_stmt->true_statements && !true_branch_end->prev.empty()) {
+      TI_INFO(
+          "[CFG DEBUG] IfStmt: adding true_branch_end to prev_nodes "
+          "(reachable)");
       prev_nodes_.push_back(true_branch_end);
+    } else if (if_stmt->true_statements) {
+      TI_INFO(
+          "[CFG DEBUG] IfStmt: NOT adding true_branch_end to prev_nodes "
+          "(unreachable, terminated with unwind)");
     }
+
     if (if_stmt->false_statements && !false_branch_end->prev.empty()) {
+      TI_INFO(
+          "[CFG DEBUG] IfStmt: adding false_branch_end to prev_nodes "
+          "(reachable)");
       prev_nodes_.push_back(false_branch_end);
+    } else if (if_stmt->false_statements) {
+      TI_INFO(
+          "[CFG DEBUG] IfStmt: NOT adding false_branch_end to prev_nodes "
+          "(unreachable, terminated with unwind)");
     }
 
     // Add fallthrough edge (when condition is false for true-only if, or true
     // for false-only if)
     if (!if_stmt->true_statements || !if_stmt->false_statements)
       prev_nodes_.push_back(before_if);
+    TI_INFO("[CFG DEBUG] IfStmt: prev_nodes_.size() after setting = {}",
+            prev_nodes_.size());
     // Container statements don't belong to any CFGNodes.
     begin_location_ = current_stmt_id_ + 1;
   }
@@ -471,13 +530,23 @@ class CFGBuilder : public IRVisitor {
     last_node_in_current_block_ = nullptr;
     begin_location_ = 0;
 
+    TI_INFO("[CFG DEBUG] Block: visiting block with {} statements, block={}",
+            block->size(), fmt::ptr(block));
+
     for (int i = 0; i < (int)block->size(); i++) {
       current_stmt_id_ = i;
+      TI_INFO("[CFG DEBUG] Block: visiting stmt {}: {}", i,
+              block->statements[i]->name());
       block->statements[i]->accept(this);
     }
     current_stmt_id_ = block->size();
+    TI_INFO("[CFG DEBUG] Block: creating final node, prev_nodes_.size()={}",
+            prev_nodes_.size());
     new_node(-1);  // Each block has a deterministic last node.
     graph_->final_node = (int)graph_->size() - 1;
+    TI_INFO("[CFG DEBUG] Block: final node_id={}, begin={}, end={}",
+            graph_->size() - 1, graph_->back()->begin_location,
+            graph_->back()->end_location);
 
     current_block_ = backup_block;
     last_node_in_current_block_ = backup_last_node;
@@ -494,9 +563,12 @@ class CFGBuilder : public IRVisitor {
                         builder.graph_->back());
       builder.graph_->final_node = (int)builder.graph_->size() - 1;
     }
+
     // Connect all unwind nodes (from function returns) to the final node.
     // This ensures that DSE knows the stores before the unwind are live
     // (they're visible when the function returns/kernel exits).
+    TI_INFO("[CFG DEBUG] Connecting {} unwind nodes to final node {}",
+            builder.unwind_nodes_.size(), builder.graph_->final_node);
     for (auto *unwind_node : builder.unwind_nodes_) {
       CFGNode::add_edge(
           unwind_node, builder.graph_->nodes[builder.graph_->final_node].get());
