@@ -7,6 +7,7 @@
 namespace gstaichi::lang {
 
 // Unconditionally eliminate ContinueStmt's at **ends** of loops
+// But NOT if they are from function returns (unwinds) or inside branches
 class UselessContinueEliminator : public IRVisitor {
  public:
   bool modified;
@@ -16,15 +17,16 @@ class UselessContinueEliminator : public IRVisitor {
   }
 
   void visit(ContinueStmt *stmt) override {
-    stmt->parent->erase(stmt);
-    modified = true;
+    // Don't erase continues from function returns - they are meaningful
+    if (!stmt->from_function_return) {
+      stmt->parent->erase(stmt);
+      modified = true;
+    }
   }
 
   void visit(IfStmt *if_stmt) override {
-    if (if_stmt->true_statements && if_stmt->true_statements->size())
-      if_stmt->true_statements->back()->accept(this);
-    if (if_stmt->false_statements && if_stmt->false_statements->size())
-      if_stmt->false_statements->back()->accept(this);
+    // Don't recurse into if statements - continues inside branches are not
+    // "at the end" of the loop, they are conditional and should be kept
   }
 };
 
