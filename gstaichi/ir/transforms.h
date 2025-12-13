@@ -10,7 +10,6 @@
 #include "gstaichi/ir/pass.h"
 #include "gstaichi/transforms/check_out_of_bound.h"
 #include "gstaichi/transforms/constant_fold.h"
-#include "gstaichi/transforms/inlining.h"
 #include "gstaichi/transforms/lower_access.h"
 #include "gstaichi/transforms/make_block_local.h"
 #include "gstaichi/transforms/make_mesh_block_local.h"
@@ -65,9 +64,6 @@ std::function<void(const std::string &)> make_pass_printer(
 void frontend_type_check(IRNode *root);
 void lower_ast(IRNode *root);
 void type_check(IRNode *root, const CompileConfig &config);
-bool inlining(IRNode *root,
-              const CompileConfig &config,
-              const InliningPass::Args &args);
 void bit_loop_vectorize(IRNode *root);
 void slp_vectorize(IRNode *root);
 void replace_all_usages_with(IRNode *root, Stmt *old_stmt, Stmt *new_stmt);
