@@ -174,20 +174,40 @@ class CFGBuilder : public IRVisitor {
    */
   void visit(IfStmt *if_stmt) override {
     auto before_if = new_node(-1);
+    TI_INFO("[CFG DEBUG] IfStmt: created before_if node_id={}",
+            graph_->size() - 1);
+
     CFGNode *true_branch_end = nullptr;
     if (if_stmt->true_statements) {
       auto true_branch_begin = graph_->size();
+      TI_INFO("[CFG DEBUG] IfStmt: visiting true branch, first node will be {}",
+              true_branch_begin);
       if_stmt->true_statements->accept(this);
       CFGNode::add_edge(before_if, graph_->nodes[true_branch_begin].get());
       true_branch_end = graph_->back();
+      TI_INFO(
+          "[CFG DEBUG] IfStmt: true branch end node_id={}, begin={}, end={}, "
+          "prev.size={}",
+          graph_->size() - 1, true_branch_end->begin_location,
+          true_branch_end->end_location, true_branch_end->prev.size());
     }
     CFGNode *false_branch_end = nullptr;
     if (if_stmt->false_statements) {
       auto false_branch_begin = graph_->size();
+      TI_INFO(
+          "[CFG DEBUG] IfStmt: visiting false branch, first node will be {}",
+          false_branch_begin);
       if_stmt->false_statements->accept(this);
       CFGNode::add_edge(before_if, graph_->nodes[false_branch_begin].get());
       false_branch_end = graph_->back();
+      TI_INFO(
+          "[CFG DEBUG] IfStmt: false branch end node_id={}, begin={}, end={}, "
+          "prev.size={}",
+          graph_->size() - 1, false_branch_end->begin_location,
+          false_branch_end->end_location, false_branch_end->prev.size());
     }
+    TI_INFO("[CFG DEBUG] IfStmt: prev_nodes_.size() before assertion = {}",
+            prev_nodes_.size());
     TI_ASSERT(prev_nodes_.empty());
     if (if_stmt->true_statements)
       prev_nodes_.push_back(true_branch_end);
@@ -195,6 +215,8 @@ class CFGBuilder : public IRVisitor {
       prev_nodes_.push_back(false_branch_end);
     if (!if_stmt->true_statements || !if_stmt->false_statements)
       prev_nodes_.push_back(before_if);
+    TI_INFO("[CFG DEBUG] IfStmt: prev_nodes_.size() after setting = {}",
+            prev_nodes_.size());
     // Container statements don't belong to any CFGNodes.
     begin_location_ = current_stmt_id_ + 1;
   }
@@ -410,13 +432,23 @@ class CFGBuilder : public IRVisitor {
     last_node_in_current_block_ = nullptr;
     begin_location_ = 0;
 
+    TI_INFO("[CFG DEBUG] Block: visiting block with {} statements, block={}",
+            block->size(), fmt::ptr(block));
+
     for (int i = 0; i < (int)block->size(); i++) {
       current_stmt_id_ = i;
+      TI_INFO("[CFG DEBUG] Block: visiting stmt {}: {}", i,
+              block->statements[i]->name());
       block->statements[i]->accept(this);
     }
     current_stmt_id_ = block->size();
+    TI_INFO("[CFG DEBUG] Block: creating final node, prev_nodes_.size()={}",
+            prev_nodes_.size());
     new_node(-1);  // Each block has a deterministic last node.
     graph_->final_node = (int)graph_->size() - 1;
+    TI_INFO("[CFG DEBUG] Block: final node_id={}, begin={}, end={}",
+            graph_->size() - 1, graph_->back()->begin_location,
+            graph_->back()->end_location);
 
     current_block_ = backup_block;
     last_node_in_current_block_ = backup_last_node;

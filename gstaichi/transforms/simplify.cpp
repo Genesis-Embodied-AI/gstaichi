@@ -10,6 +10,8 @@
 #include <set>
 #include <unordered_set>
 #include <utility>
+#include <fstream>
+#include <cstdlib>
 
 namespace gstaichi::lang {
 
@@ -525,53 +527,168 @@ void full_simplify(IRNode *root,
   auto print = make_pass_printer(args.verbose, config.print_ir_dbg_info,
                                  args.kernel_name + ".simplify", root);
   TI_AUTO_PROF;
+
+  // Track which call to full_simplify this is, to debug the first call only
+  static int call_counter = 0;
+  int this_call = call_counter++;
+  const char *dump_ir_env = std::getenv("TI_DUMP_IR");
+  bool should_dump =
+      (dump_ir_env && std::string(dump_ir_env) == "1" && this_call == 0);
+
+  if (should_dump) {
+    TI_INFO(
+        "[SIMPLIFY_I DEBUG] This is call #{} to full_simplify for kernel: {}",
+        this_call, args.kernel_name);
+  }
+
+  auto dump_step = [&](const std::string &step_name, int iteration) {
+    if (should_dump) {
+      std::string filename = "/tmp/ir/" + args.kernel_name +
+                             ".simplify_I_iter" + std::to_string(iteration) +
+                             "_" + step_name + ".ir";
+      std::string ir_str;
+      irpass::print(root, &ir_str);
+      std::ofstream ofs(filename);
+      if (ofs.good()) {
+        ofs << ir_str;
+      }
+    }
+  };
+
   if (config.advanced_optimization) {
     bool first_iteration = true;
+    int iteration = 0;
+
+    if (should_dump) {
+      dump_step("00_start", iteration);
+    }
+
     while (true) {
       bool modified = false;
-      if (extract_constant(root, config))
+      iteration++;
+
+      if (extract_constant(root, config)) {
         modified = true;
+        if (should_dump)
+          TI_INFO("  [iter {}] extract_constant modified IR", iteration);
+      }
       print("extract_constant");
-      if (unreachable_code_elimination(root))
+      if (should_dump)
+        dump_step("01_extract_constant", iteration);
+
+      if (unreachable_code_elimination(root)) {
         modified = true;
+        if (should_dump)
+          TI_INFO("  [iter {}] unreachable_code_elimination modified IR",
+                  iteration);
+      }
       print("unreachable_code_elimination");
-      if (binary_op_simplify(root, config))
+      if (should_dump)
+        dump_step("02_unreachable_code_elimination", iteration);
+
+      if (binary_op_simplify(root, config)) {
         modified = true;
+        if (should_dump)
+          TI_INFO("  [iter {}] binary_op_simplify modified IR", iteration);
+      }
       print("binary_op_simplify");
-      if (config.constant_folding && constant_fold(root))
+      if (should_dump)
+        dump_step("03_binary_op_simplify", iteration);
+
+      if (config.constant_folding && constant_fold(root)) {
         modified = true;
+        if (should_dump)
+          TI_INFO("  [iter {}] constant_fold modified IR", iteration);
+      }
       print("constant_fold");
-      if (die(root))
+      if (should_dump)
+        dump_step("04_constant_fold", iteration);
+
+      if (die(root)) {
         modified = true;
+        if (should_dump)
+          TI_INFO("  [iter {}] die (1st) modified IR", iteration);
+      }
       print("die");
-      if (alg_simp(root, config))
+      if (should_dump)
+        dump_step("05_die", iteration);
+
+      if (alg_simp(root, config)) {
         modified = true;
+        if (should_dump)
+          TI_INFO("  [iter {}] alg_simp modified IR", iteration);
+      }
       print("alg_simp");
-      if (loop_invariant_code_motion(root, config))
+      if (should_dump)
+        dump_step("06_alg_simp", iteration);
+
+      if (loop_invariant_code_motion(root, config)) {
         modified = true;
+        if (should_dump)
+          TI_INFO("  [iter {}] loop_invariant_code_motion modified IR",
+                  iteration);
+      }
       print("loop_invariant_code_motion");
-      if (die(root))
+      if (should_dump)
+        dump_step("07_loop_invariant_code_motion", iteration);
+
+      if (die(root)) {
         modified = true;
+        if (should_dump)
+          TI_INFO("  [iter {}] die (2nd) modified IR", iteration);
+      }
       print("die");
-      if (simplify(root, config))
+      if (should_dump)
+        dump_step("08_die", iteration);
+
+      if (simplify(root, config)) {
         modified = true;
+        if (should_dump)
+          TI_INFO("  [iter {}] simplify modified IR", iteration);
+      }
       print("simplify");
-      if (die(root))
+      if (should_dump)
+        dump_step("09_simplify", iteration);
+
+      if (die(root)) {
         modified = true;
+        if (should_dump)
+          TI_INFO("  [iter {}] die (3rd) modified IR", iteration);
+      }
       print("die");
-      if (config.opt_level > 0 && whole_kernel_cse(root))
+      if (should_dump)
+        dump_step("10_die", iteration);
+
+      if (config.opt_level > 0 && whole_kernel_cse(root)) {
         modified = true;
+        if (should_dump)
+          TI_INFO("  [iter {}] whole_kernel_cse modified IR", iteration);
+      }
+      if (should_dump)
+        dump_step("11_whole_kernel_cse", iteration);
+
       // Don't do this time-consuming optimization pass again if the IR is
       // not modified.
       if (config.opt_level > 0 && first_iteration && config.cfg_optimization &&
-          cfg_optimization(
-              root, args.after_lower_access, args.autodiff_enabled,
-              !config.real_matrix_scalarize && !config.force_scalarize_matrix))
+          cfg_optimization(root, args.after_lower_access, args.autodiff_enabled,
+                           !config.real_matrix_scalarize &&
+                               !config.force_scalarize_matrix)) {
         modified = true;
+        if (should_dump)
+          TI_INFO("  [iter {}] cfg_optimization modified IR", iteration);
+      }
       print("cfg_optimization");
+      if (should_dump)
+        dump_step("12_cfg_optimization", iteration);
+
       first_iteration = false;
-      if (!modified)
+      if (!modified) {
+        if (should_dump)
+          TI_INFO(
+              "[SIMPLIFY_I DEBUG] Optimization complete after {} iterations",
+              iteration);
         break;
+      }
     }
     return;
   }

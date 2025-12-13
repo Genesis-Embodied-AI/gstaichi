@@ -888,9 +888,20 @@ void TaskCodeGenLLVM::visit(IfStmt *if_stmt) {
   llvm::Value *cond = builder->CreateIsNotNull(llvm_val[if_stmt->cond]);
   builder->CreateCondBr(cond, true_block, false_block);
   builder->SetInsertPoint(true_block);
+  TI_INFO("[LLVM CODEGEN DEBUG] Visiting true branch, has {} statements",
+          if_stmt->true_statements ? if_stmt->true_statements->size() : 0);
+  if (if_stmt->true_statements && if_stmt->true_statements->size() > 0) {
+    TI_INFO("[LLVM CODEGEN DEBUG] True branch statement types:");
+    for (size_t i = 0; i < if_stmt->true_statements->size(); i++) {
+      auto *stmt = if_stmt->true_statements->statements[i].get();
+      TI_INFO("[LLVM CODEGEN DEBUG]   [{}] {} (type: {})", i, stmt->name(),
+              stmt->type_hint());
+    }
+  }
   if (if_stmt->true_statements) {
     if_stmt->true_statements->accept(this);
   }
+  TI_INFO("[LLVM CODEGEN DEBUG] After true branch, returned={}", returned);
   if (!returned) {
     builder->CreateBr(after_if);
     // } else {
@@ -1301,6 +1312,8 @@ void TaskCodeGenLLVM::visit(ArgLoadStmt *stmt) {
 }
 
 void TaskCodeGenLLVM::visit(ReturnStmt *stmt) {
+  TI_INFO("[LLVM CODEGEN DEBUG] Visiting ReturnStmt, values.size()={}",
+          stmt->values.size());
   auto types = stmt->element_types();
   if (std::any_of(types.begin(), types.end(),
                   [](const DataType &t) { return t.is_pointer(); })) {
@@ -2724,6 +2737,20 @@ LLVMCompiledTask TaskCodeGenLLVM::run_compilation() {
   };
 
   offload_to_executable(ir, compile_config, kernel);
+
+  // DEBUG: Dump IR right before LLVM codegen starts
+  if (get_environ_config("TI_DUMP_IR")) {
+    std::filesystem::create_directories("/tmp/ir");
+    std::filesystem::path filename =
+        "/tmp/ir/" + kernel->name + "_before_llvm_codegen.ll";
+    if (std::ofstream out_file(filename.string()); out_file) {
+      std::string outString;
+      irpass::print(ir, &outString);
+      out_file << outString;
+      TI_INFO("[LLVM CODEGEN DEBUG] Dumped IR before codegen to {}",
+              filename.string());
+    }
+  }
 
   emit_to_module();
   eliminate_unused_functions();

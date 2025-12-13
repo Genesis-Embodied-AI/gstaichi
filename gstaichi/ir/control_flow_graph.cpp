@@ -698,6 +698,12 @@ bool CFGNode::dead_store_elimination(bool after_lower_access) {
   // Map a variable to its nearest load
   std::unordered_map<Stmt *, Stmt *> live_load_in_this_node;
 
+  TI_INFO(
+      "[DSE DEBUG] Node: block={}, begin={}, end={}, next.size={}, "
+      "prev.size={}",
+      fmt::ptr(block), begin_location, end_location, next.size(), prev.size());
+  TI_INFO("[DSE DEBUG] Node live_out.size()={}", live_out.size());
+
   // For any stmt with TensorType'd address, the address can be either partially
   // or fully stored/loaded, which will eventually influence the
   // dead-store-elimination strategy
@@ -774,6 +780,13 @@ bool CFGNode::dead_store_elimination(bool after_lower_access) {
             contain_variable(killed_in_this_node, store_ptr);
         bool is_dead = is_killed_in_current_node || !is_used_in_next_nodes;
         is_dead &= !may_contain_variable(live_in_this_node, store_ptr);
+
+        TI_INFO(
+            "[DSE DEBUG] Stmt {}: store_ptr={}, is_used_in_next_nodes={}, "
+            "is_killed={}, is_dead={}",
+            stmt->name(), store_ptr->name(), is_used_in_next_nodes,
+            is_killed_in_current_node, is_dead);
+
         if (!stmt->is<AllocaStmt>() && !stmt->is<AdStackAllocaStmt>() &&
             !stmt->is<ExternalFuncCallStmt>() && is_dead) {
           // If an address is neither used in this node, nor used in the next
@@ -785,6 +798,7 @@ bool CFGNode::dead_store_elimination(bool after_lower_access) {
           //    converting the AtomicStmt into a LoadStmt
           if (!stmt->is<AtomicOpStmt>()) {
             // Eliminate the dead store.
+            TI_INFO("[DSE DEBUG] Eliminating dead store: {}", stmt->name());
             erase(i);
             modified = true;
             continue;
