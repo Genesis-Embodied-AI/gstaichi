@@ -732,7 +732,16 @@ class AssociateContinueScope : public BasicStmtVisitor {
 
   void visit(ContinueStmt *stmt) override {
     if (stmt->scope == nullptr) {
-      if (cur_internal_loop_ != nullptr) {
+      if (stmt->from_function_return) {
+        // For continues from function returns, target the outermost loop or offloaded stmt
+        // (skip any inner loops within the function)
+        if (cur_offloaded_stmt_ != nullptr) {
+          stmt->scope = cur_offloaded_stmt_;
+        } else {
+          // Fallback to innermost loop if not in offloaded context
+          stmt->scope = cur_internal_loop_;
+        }
+      } else if (cur_internal_loop_ != nullptr) {
         stmt->scope = cur_internal_loop_;
       } else {
         stmt->scope = cur_offloaded_stmt_;

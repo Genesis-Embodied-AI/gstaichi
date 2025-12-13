@@ -347,9 +347,17 @@ class IRPrinter : public IRVisitor {
 
   void visit(ContinueStmt *stmt) override {
     if (stmt->scope) {
-      print("{} continue (scope={})", stmt->name(), stmt->scope->name());
+      if (stmt->from_function_return && stmt->levels_up > 1) {
+        print("{} continue (scope={}, unwind_depth={})", stmt->name(), stmt->scope->name(), stmt->levels_up - 1);
+      } else {
+        print("{} continue (scope={})", stmt->name(), stmt->scope->name());
+      }
     } else {
-      print("{} continue", stmt->name());
+      if (stmt->from_function_return && stmt->levels_up > 1) {
+        print("{} continue (unwind_depth={})", stmt->name(), stmt->levels_up - 1);
+      } else {
+        print("{} continue", stmt->name());
+      }
     }
     dbg_info_printer_(stmt);
   }
