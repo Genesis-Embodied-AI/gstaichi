@@ -13,6 +13,7 @@
 #include <utility>
 #include <fstream>
 #include <cstdlib>
+#include <filesystem>
 
 namespace gstaichi::lang {
 
@@ -536,7 +537,7 @@ void full_simplify(IRNode *root,
   bool should_dump =
       (dump_simplify_env && std::string(dump_simplify_env) == "1");
   auto dump_step = [&](const std::string &step_name, int iteration) {
-    std::string filename =
+    std::filesystem::path filename =
         IR_DUMP_DIR /
         (args.kernel_name + ".simplify_I_call" + std::to_string(this_call) +
          "_iter" + std::to_string(iteration) + "_" + step_name + ".ir");
