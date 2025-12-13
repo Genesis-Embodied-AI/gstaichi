@@ -62,7 +62,6 @@ void compile_to_offloads(IRNode *ir,
   if (start_from_ast) {
     irpass::frontend_type_check(ir);
     irpass::lower_ast(ir);
-    print("Lowered");
   }
 
   dump_ir("gstaichi1");
@@ -74,10 +73,8 @@ void compile_to_offloads(IRNode *ir,
   irpass::analysis::gather_func_store_dests(ir);
 
   irpass::eliminate_immutable_local_vars(ir);
-  print("Immutable local vars eliminated");
 
   irpass::type_check(ir, config);
-  print("Typechecked");
   irpass::analysis::verify(ir);
 
   // TODO: strictly enforce bit vectorization for x86 cpu and CUDA now
@@ -86,34 +83,26 @@ void compile_to_offloads(IRNode *ir,
       config.arch == Arch::amdgpu) {
     irpass::bit_loop_vectorize(ir);
     irpass::type_check(ir, config);
-    print("Bit Loop Vectorized");
     irpass::analysis::verify(ir);
   }
 
   // Removes MatrixOfMatrixPtrStmt & MatrixOfGlobalPtrStmt
   irpass::lower_matrix_ptr(ir, config.force_scalarize_matrix);
-  print("Matrix ptr lowered");
 
   if (config.force_scalarize_matrix) {
     irpass::scalarize(ir, false /*half2_optimization_enabled*/);
-
     irpass::die(ir);
-    print("Scalarized");
   }
 
   dump_ir("before_simplify_I");
-
   irpass::full_simplify(
       ir, config,
       {false, /*autodiff_enabled*/ autodiff_mode != AutodiffMode::kNone,
        kernel->get_name(), verbose});
-  print("Simplified I");
   irpass::analysis::verify(ir);
-
   dump_ir("after_simplify_I");
 
   irpass::handle_external_ptr_boundary(ir, config);
-  print("External ptr boundary processed");
 
   if (is_extension_supported(config.arch, Extension::mesh)) {
     irpass::analysis::gather_meshfor_relation_types(ir);
@@ -142,40 +131,33 @@ void compile_to_offloads(IRNode *ir,
     irpass::full_simplify(
         ir, config,
         {false, /*autodiff_enabled*/ false, kernel->get_name(), verbose});
-    print("Gradient");
     irpass::analysis::verify(ir);
   }
 
   if (config.check_out_of_bound) {
     irpass::check_out_of_bound(ir, config, {kernel->get_name()});
-    print("Bound checked");
     irpass::analysis::verify(ir);
   }
 
   irpass::flag_access(ir);
-  print("Access flagged I");
   irpass::analysis::verify(ir);
 
   irpass::full_simplify(
       ir, config,
       {false, /*autodiff_enabled*/ false, kernel->get_name(), verbose});
-  print("Simplified II");
   irpass::analysis::verify(ir);
 
   irpass::offload(ir, config);
-  print("Offloaded");
   irpass::analysis::verify(ir);
 
   dump_ir("after_offload");
   // NOTE: There was an additional CFG pass here, removed in
   // https://github.com/taichi-dev/gstaichi/pull/8691
   irpass::flag_access(ir);
-  print("Access flagged II");
 
   irpass::full_simplify(
       ir, config,
       {false, /*autodiff_enabled*/ false, kernel->get_name(), verbose});
-  print("Simplified III");
   irpass::analysis::verify(ir);
 
   dump_ir("after_simplify_III");
