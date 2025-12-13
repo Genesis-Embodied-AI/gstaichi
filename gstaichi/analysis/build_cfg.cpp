@@ -108,6 +108,7 @@ class CFGBuilder : public IRVisitor {
   /**
    * Structure:
    *
+   * For loop continues:
    * block {
    *   node {
    *     ...
@@ -149,6 +150,30 @@ class CFGBuilder : public IRVisitor {
       TI_INFO("[CFG DEBUG] Found continue with from_function_return=false at stmt {}, adding to continues_in_current_loop", current_stmt_id_);
       continues_in_current_loop_.push_back(node);
     }
+  }
+
+  /**
+   * Structure:
+   *
+   * block {
+   *   node {
+   *     ...
+   *   } -> final_node;
+   *   return;
+   *   (next node - unreachable) {
+   *     ...
+   *   }
+   * }
+   *
+   * ReturnStmt terminates the current control flow path, similar to unwind.
+   */
+  void visit(ReturnStmt *stmt) override {
+    // Don't put ReturnStmt in any CFGNodes.
+    auto node = new_node(current_stmt_id_ + 1);
+    // ReturnStmt exits the function/kernel, so connect to final node
+    unwind_nodes_.push_back(node);
+    // We do NOT add this node to prev_nodes_ because statements after the return
+    // are unreachable from this path.
   }
 
   /**
@@ -215,10 +240,12 @@ class CFGBuilder : public IRVisitor {
       false_branch_end = graph_->back();
     }
     TI_ASSERT(prev_nodes_.empty());
-    if (if_stmt->true_statements)
+    
+    // Only add branch ends to prev_nodes_ if they're reachable (have incoming edges).
+    // A branch end with no incoming edges means the branch terminated with an unwind/return
+    // and cannot fall through to the code after the if statement.
     if (if_stmt->true_statements && !true_branch_end->prev.empty()) {
       prev_nodes_.push_back(true_branch_end);
-    if (if_stmt->false_statements)
     }
     if (if_stmt->false_statements && !false_branch_end->prev.empty()) {
       prev_nodes_.push_back(false_branch_end);

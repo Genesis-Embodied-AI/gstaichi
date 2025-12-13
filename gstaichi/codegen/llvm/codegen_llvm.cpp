@@ -1104,6 +1104,13 @@ void TaskCodeGenLLVM::visit(ContinueStmt *stmt) {
     llvm::BasicBlock *target_reentry = loop_reentry_stack[target_level];
     builder->CreateBr(target_reentry);
   }
+  
+  // If this is an unwind from a function return, set returned=true so that
+  // the surrounding if/block knows not to emit a fall-through branch.
+  if (stmt->from_function_return) {
+    returned = true;
+  }
+  
   // Stmts after continue are useless, so we switch the insertion point to
   // /dev/null. In LLVM IR, the "after_continue" label shows "No predecessors!".
   BasicBlock *after_continue =
