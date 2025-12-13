@@ -10,7 +10,6 @@
 #include "gstaichi/ir/pass.h"
 #include "gstaichi/transforms/check_out_of_bound.h"
 #include "gstaichi/transforms/constant_fold.h"
-#include "gstaichi/transforms/inlining.h"
 #include "gstaichi/transforms/lower_access.h"
 #include "gstaichi/transforms/make_block_local.h"
 #include "gstaichi/transforms/make_mesh_block_local.h"
