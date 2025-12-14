@@ -574,19 +574,20 @@ void full_simplify(IRNode *root,
         if (!modified)
           break;
       }
-      return;
     }
-    if (config.constant_folding) {
-      constant_fold(root);
-      print("constant_fold");
-      die(root);
-      print("die");
-    }
-    simplify(root, config);
-    print("simplify");
+    return;
+  }
+  if (config.constant_folding) {
+    constant_fold(root);
+    print("constant_fold");
     die(root);
     print("die");
   }
+  simplify(root, config);
+  print("simplify");
+  die(root);
+  print("die");
+}
 
 }  // namespace irpass
 
