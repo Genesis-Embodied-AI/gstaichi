@@ -1084,12 +1084,12 @@ void ControlFlowGraph::dump_graph_to_file(const std::string &kernel_name,
       auto next_stmt = nodes[i]->block->statements[nodes[i]->end_location].get();
       if (auto *cont = next_stmt->cast<FrontendContinueStmt>()) {
         if (cont->function_loop_depth > 0) {
-          out_file << fmt::format("; TERMINATOR=unwind(depth={}) ⚠️", 
+          out_file << fmt::format("; TERMINATOR=unwind(depth={})", 
                                   cont->function_loop_depth);
         }
       } else if (auto *cont = next_stmt->cast<ContinueStmt>()) {
         if (cont->from_function_return) {
-          out_file << "; TERMINATOR=return ⚠️";
+          out_file << "; TERMINATOR=return";
         } else {
           out_file << "; TERMINATOR=continue";
         }
