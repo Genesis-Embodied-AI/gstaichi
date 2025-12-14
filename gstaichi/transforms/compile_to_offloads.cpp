@@ -116,7 +116,7 @@ void compile_to_offloads(IRNode *ir,
   irpass::full_simplify(
       ir, config,
       {false, /*autodiff_enabled*/ autodiff_mode != AutodiffMode::kNone,
-       kernel->get_name(), verbose});
+       kernel->get_name(), verbose, "simplify_I"});
   print("Simplified I");
   irpass::analysis::verify(ir);
 
@@ -154,12 +154,12 @@ void compile_to_offloads(IRNode *ir,
 
     irpass::full_simplify(
         ir, config,
-        {false, /*autodiff_enabled*/ true, kernel->get_name(), verbose});
+        {false, /*autodiff_enabled*/ true, kernel->get_name(), verbose, "pre_autodiff"});
     irpass::auto_diff(ir, config, autodiff_mode, ad_use_stack);
     // TODO: Be carefull with the full_simplify when do high-order autodiff
     irpass::full_simplify(
         ir, config,
-        {false, /*autodiff_enabled*/ false, kernel->get_name(), verbose});
+        {false, /*autodiff_enabled*/ false, kernel->get_name(), verbose, "post_autodiff"});
     print("Gradient");
     irpass::analysis::verify(ir);
   }
@@ -176,7 +176,7 @@ void compile_to_offloads(IRNode *ir,
 
   irpass::full_simplify(
       ir, config,
-      {false, /*autodiff_enabled*/ false, kernel->get_name(), verbose});
+      {false, /*autodiff_enabled*/ false, kernel->get_name(), verbose, "simplify_II"});
   print("Simplified II");
   irpass::analysis::verify(ir);
 
@@ -200,7 +200,7 @@ void compile_to_offloads(IRNode *ir,
 
   irpass::full_simplify(
       ir, config,
-      {false, /*autodiff_enabled*/ false, kernel->get_name(), verbose});
+      {false, /*autodiff_enabled*/ false, kernel->get_name(), verbose, "simplify_III"});
   print("Simplified III");
   irpass::analysis::verify(ir);
 
@@ -287,7 +287,7 @@ void offload_to_executable(IRNode *ir,
       print("Make mesh block local");
       irpass::full_simplify(
           ir, config,
-          {false, /*autodiff_enabled*/ false, kernel->get_name(), verbose});
+          {false, /*autodiff_enabled*/ false, kernel->get_name(), verbose, "simplify_X"});
       print("Simplified X");
     }
   }
@@ -327,7 +327,7 @@ void offload_to_executable(IRNode *ir,
   if (lower_global_access) {
     irpass::full_simplify(
         ir, config,
-        {false, /*autodiff_enabled*/ false, kernel->get_name(), verbose});
+        {false, /*autodiff_enabled*/ false, kernel->get_name(), verbose, "before_lower_access"});
     print("Simplified before lower access");
     irpass::lower_access(ir, config, {kernel->no_activate, true});
     print("Access lowered");
@@ -347,7 +347,7 @@ void offload_to_executable(IRNode *ir,
 
   irpass::full_simplify(ir, config,
                         {lower_global_access, /*autodiff_enabled*/ false,
-                         kernel->get_name(), verbose});
+                         kernel->get_name(), verbose, "simplify_IV"});
   print("Simplified IV");
 
   if (determine_ad_stack_size) {
@@ -371,7 +371,7 @@ void offload_to_executable(IRNode *ir,
       // Remove redundant MatrixInitStmt inserted during scalarization
       irpass::full_simplify(
           ir, config,
-          {false, /*autodiff_enabled*/ false, kernel->get_name(), verbose});
+          {false, /*autodiff_enabled*/ false, kernel->get_name(), verbose, "scalarize"});
       print("Scalarized");
     }
   }
@@ -474,7 +474,7 @@ void compile_function(IRNode *ir,
 
     irpass::full_simplify(ir, config,
                           {true, autodiff_mode != AutodiffMode::kNone,
-                           func->get_name(), verbose});
+                           func->get_name(), verbose, "final"});
     print("Simplified");
     irpass::analysis::verify(ir);
     func->set_ir_stage(Function::IRStage::OptimizedIR);

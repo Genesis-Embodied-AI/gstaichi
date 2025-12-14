@@ -1003,7 +1003,7 @@ void ControlFlowGraph::dump_graph_to_file(const std::string &kernel_name,
 
   std::filesystem::create_directories(IR_DUMP_DIR);
   std::filesystem::path filename = 
-      IR_DUMP_DIR / (kernel_name + suffix + ".txt");
+      IR_DUMP_DIR / (kernel_name + "_CFG" + suffix + ".txt");
 
   std::ofstream out_file(filename.string());
   if (!out_file) {
