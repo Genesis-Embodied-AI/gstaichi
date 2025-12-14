@@ -3,6 +3,7 @@
 #include "gstaichi/ir/transforms.h"
 #include "gstaichi/ir/analysis.h"
 #include "gstaichi/system/profiler.h"
+#include "gstaichi/codegen/ir_dump.h"
 
 namespace gstaichi::lang {
 
@@ -19,9 +20,12 @@ bool cfg_optimization(
   TI_AUTO_PROF;
   auto cfg = analysis::build_cfg(root);
   
-  // Dump CFG before optimization
-  std::string suffix = phase.empty() ? "_before_cfg_opt" : ("_" + phase + "_before_cfg_opt");
-  cfg->dump_graph_to_file(kernel_name, suffix);
+  const char *dump_cfg_env = std::getenv(DUMP_CFG_ENV.data());
+  bool dump_cfg = dump_cfg_env != nullptr && std::string(dump_cfg_env) == "1";
+  if (dump_cfg) {
+    std::string suffix = phase.empty() ? "_before_cfg_opt" : ("_" + phase + "_before_cfg_opt");
+    cfg->dump_graph_to_file(kernel_name, suffix);
+  }
   
   bool result_modified = false;
   if (!real_matrix_enabled) {
@@ -34,9 +38,10 @@ bool cfg_optimization(
       result_modified = true;
     }
     
-    // Dump CFG after optimization
-    suffix = phase.empty() ? "_post_cfg_opt" : ("_" + phase + "_post_cfg_opt");
-    cfg->dump_graph_to_file(kernel_name, suffix);
+    if (dump_cfg) {
+      std::string suffix = phase.empty() ? "_post_cfg_opt" : ("_" + phase + "_post_cfg_opt");
+      cfg->dump_graph_to_file(kernel_name, suffix);
+    }
   }
   // TODO: implement cfg->dead_instruction_elimination()
   die(root);  // remove unused allocas

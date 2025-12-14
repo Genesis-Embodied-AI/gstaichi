@@ -996,11 +996,6 @@ void ControlFlowGraph::print_graph_structure() const {
 
 void ControlFlowGraph::dump_graph_to_file(const std::string &kernel_name, 
                                            const std::string &suffix) const {
-  const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
-  if (dump_ir_env == nullptr || std::string(dump_ir_env) != "1") {
-    return;  // Only dump if TI_DUMP_IR=1
-  }
-
   std::filesystem::create_directories(IR_DUMP_DIR);
   std::filesystem::path filename = 
       IR_DUMP_DIR / (kernel_name + "_CFG" + suffix + ".txt");
