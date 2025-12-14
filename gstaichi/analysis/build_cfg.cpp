@@ -433,19 +433,6 @@ class CFGBuilder : public IRVisitor {
                         builder.graph_->back());
       builder.graph_->final_node = (int)builder.graph_->size() - 1;
     }
-
-    if (std::getenv("TI_DUMP_CFG") != nullptr && std::string(std::getenv("TI_DUMP_CFG")) == "1") {
-      std::string kernel_name = "unknown";
-      if (auto *block = root->cast<Block>()) {
-        if (auto *parent = block->parent_stmt()) {
-          if (auto *callable = parent->get_callable()) {
-            kernel_name = callable->get_name();
-          }
-        }
-      }
-      builder.graph_->dump_graph_to_file(kernel_name, "_cfg");
-    }
-
     return std::move(builder.graph_);
   }
 
