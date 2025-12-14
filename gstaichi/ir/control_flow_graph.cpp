@@ -9,6 +9,7 @@
 #include "gstaichi/common/exceptions.h"
 #include "gstaichi/ir/analysis.h"
 #include "gstaichi/ir/statements.h"
+#include "gstaichi/ir/frontend_ir.h"
 #include "gstaichi/ir/transforms.h"
 #include "gstaichi/system/profiler.h"
 #include "gstaichi/program/function.h"
@@ -1037,6 +1038,66 @@ void ControlFlowGraph::dump_graph_to_file(const std::string &kernel_name,
       }
       out_file << fmt::format("; next={{{}}}", fmt::join(indices, ", "));
     }
+    
+    // Add container information
+    if (!nodes[i]->empty() && nodes[i]->block) {
+      auto parent_stmt = nodes[i]->block->parent_stmt();
+      if (parent_stmt) {
+        if (auto *if_stmt = parent_stmt->cast<IfStmt>()) {
+          if (nodes[i]->block == if_stmt->true_statements.get()) {
+            out_file << "; [in IF TRUE branch]";
+          } else if (nodes[i]->block == if_stmt->false_statements.get()) {
+            out_file << "; [in IF FALSE branch]";
+          }
+        } else if (parent_stmt->cast<WhileStmt>()) {
+          out_file << "; [in WHILE body]";
+        } else if (parent_stmt->cast<RangeForStmt>()) {
+          out_file << "; [in FOR body]";
+        } else if (parent_stmt->cast<StructForStmt>()) {
+          out_file << "; [in STRUCT-FOR body]";
+        } else if (parent_stmt->cast<MeshForStmt>()) {
+          out_file << "; [in MESH-FOR body]";
+        } else if (parent_stmt->cast<OffloadedStmt>()) {
+          out_file << "; [in OFFLOADED task]";
+        }
+      } else {
+        // Top-level kernel body
+        if (i == start_node) {
+          out_file << "; [START]";
+        } else if (i == final_node) {
+          out_file << "; [EXIT]";
+        } else {
+          out_file << "; [KERNEL body]";
+        }
+      }
+    } else if (nodes[i]->empty()) {
+      if (i == start_node) {
+        out_file << "; [START]";
+      } else if (i == final_node) {
+        out_file << "; [EXIT]";
+      }
+    }
+    
+    // Check for terminator after this node
+    if (!nodes[i]->empty() && nodes[i]->block && 
+        nodes[i]->end_location < (int)nodes[i]->block->statements.size()) {
+      auto next_stmt = nodes[i]->block->statements[nodes[i]->end_location].get();
+      if (auto *cont = next_stmt->cast<FrontendContinueStmt>()) {
+        if (cont->function_loop_depth > 0) {
+          out_file << fmt::format("; TERMINATOR=unwind(depth={}) ⚠️", 
+                                  cont->function_loop_depth);
+        }
+      } else if (auto *cont = next_stmt->cast<ContinueStmt>()) {
+        if (cont->from_function_return) {
+          out_file << "; TERMINATOR=return ⚠️";
+        } else {
+          out_file << "; TERMINATOR=continue";
+        }
+      } else if (next_stmt->cast<FrontendBreakStmt>() || next_stmt->cast<WhileControlStmt>()) {
+        out_file << "; TERMINATOR=break";
+      }
+    }
+    
     if (!nodes[i]->live_out.empty()) {
       std::vector<std::string> vars;
       for (auto stmt : nodes[i]->live_out) {
@@ -1063,6 +1124,26 @@ void ControlFlowGraph::dump_graph_to_file(const std::string &kernel_name,
           }
         }
       }
+      
+      // Show the terminator statement if there is one
+      if (nodes[i]->end_location < (int)nodes[i]->block->statements.size()) {
+        auto next_stmt = nodes[i]->block->statements[nodes[i]->end_location].get();
+        if (next_stmt->cast<FrontendContinueStmt>() || 
+            next_stmt->cast<ContinueStmt>() ||
+            next_stmt->cast<FrontendBreakStmt>() ||
+            next_stmt->cast<WhileControlStmt>()) {
+          std::string stmt_output;
+          irpass::print(next_stmt, &stmt_output, false, false);
+          std::istringstream iss(stmt_output);
+          std::string line;
+          while (std::getline(iss, line)) {
+            if (!line.empty()) {
+              out_file << "    [followed by: " << line << "]\n";
+            }
+          }
+        }
+      }
+      
       out_file << "\n";
     }
   }
