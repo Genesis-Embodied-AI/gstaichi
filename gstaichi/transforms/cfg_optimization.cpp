@@ -19,14 +19,15 @@ bool cfg_optimization(
     const std::string &phase) {
   TI_AUTO_PROF;
   auto cfg = analysis::build_cfg(root);
-  
+
   const char *dump_cfg_env = std::getenv(DUMP_CFG_ENV.data());
   bool dump_cfg = dump_cfg_env != nullptr && std::string(dump_cfg_env) == "1";
   if (dump_cfg) {
-    std::string suffix = phase.empty() ? "_before_cfg_opt" : ("_" + phase + "_before_cfg_opt");
+    std::string suffix =
+        phase.empty() ? "_before_cfg_opt" : ("_" + phase + "_before_cfg_opt");
     cfg->dump_graph_to_file(kernel_name, suffix);
   }
-  
+
   bool result_modified = false;
   if (!real_matrix_enabled) {
     cfg->simplify_graph();
@@ -37,9 +38,10 @@ bool cfg_optimization(
     if (cfg->dead_store_elimination(after_lower_access, lva_config_opt)) {
       result_modified = true;
     }
-    
+
     if (dump_cfg) {
-      std::string suffix = phase.empty() ? "_post_cfg_opt" : ("_" + phase + "_post_cfg_opt");
+      std::string suffix =
+          phase.empty() ? "_post_cfg_opt" : ("_" + phase + "_post_cfg_opt");
       cfg->dump_graph_to_file(kernel_name, suffix);
     }
   }

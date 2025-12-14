@@ -971,24 +971,27 @@ void ControlFlowGraph::print_graph_structure() const {
     if (nodes[i]->empty()) {
       fmt::print("empty");
     } else {
-      fmt::print("{}~{} (size={})",
-                 nodes[i]->block->statements[nodes[i]->begin_location]->name(),
-                 nodes[i]->block->statements[nodes[i]->end_location - 1]->name(),
-                 nodes[i]->size());
+      fmt::print(
+          "{}~{} (size={})",
+          nodes[i]->block->statements[nodes[i]->begin_location]->name(),
+          nodes[i]->block->statements[nodes[i]->end_location - 1]->name(),
+          nodes[i]->size());
     }
     if (!nodes[i]->prev.empty()) {
       std::vector<std::string> indices;
       for (auto prev_node : nodes[i]->prev) {
         indices.push_back(std::to_string(to_index[prev_node]));
       }
-      fmt::print("; prev={{{}}}", fmt::join(indices, ", "));  // ← Works directly!
+      fmt::print("; prev={{{}}}",
+                 fmt::join(indices, ", "));  // ← Works directly!
     }
     if (!nodes[i]->next.empty()) {
       std::vector<std::string> indices;
       for (auto next_node : nodes[i]->next) {
         indices.push_back(std::to_string(to_index[next_node]));
       }
-      fmt::print("; next={{{}}}", fmt::join(indices, ", "));  // ← Works directly!
+      fmt::print("; next={{{}}}",
+                 fmt::join(indices, ", "));  // ← Works directly!
     }
     // ... rest of the function similarly
     fmt::print("\n");
@@ -1100,7 +1103,7 @@ void ControlFlowGraph::dump_graph_to_file(const std::string &kernel_name,
         out_file << "; TERMINATOR=break";
       }
     }
-    
+
     if (!nodes[i]->live_out.empty()) {
       std::vector<std::string> vars;
       for (auto stmt : nodes[i]->live_out) {
@@ -1109,7 +1112,7 @@ void ControlFlowGraph::dump_graph_to_file(const std::string &kernel_name,
       out_file << fmt::format("; live_out={{{}}}", fmt::join(vars, ", "));
     }
     out_file << "\n";
-    
+
     // Print the actual statements in this node
     if (!nodes[i]->empty()) {
       for (int j = nodes[i]->begin_location; j < nodes[i]->end_location; j++) {
@@ -1117,7 +1120,7 @@ void ControlFlowGraph::dump_graph_to_file(const std::string &kernel_name,
         std::string stmt_output;
         // Use print_kernel_wrapper=false to avoid the "kernel { }" wrapper
         irpass::print(stmt, &stmt_output, false, false);
-        
+
         // Add indentation to each line
         std::istringstream iss(stmt_output);
         std::string line;
@@ -1127,11 +1130,12 @@ void ControlFlowGraph::dump_graph_to_file(const std::string &kernel_name,
           }
         }
       }
-      
+
       // Show the terminator statement if there is one
       if (nodes[i]->end_location < (int)nodes[i]->block->statements.size()) {
-        auto next_stmt = nodes[i]->block->statements[nodes[i]->end_location].get();
-        if (next_stmt->cast<FrontendContinueStmt>() || 
+        auto next_stmt =
+            nodes[i]->block->statements[nodes[i]->end_location].get();
+        if (next_stmt->cast<FrontendContinueStmt>() ||
             next_stmt->cast<ContinueStmt>() ||
             next_stmt->cast<FrontendBreakStmt>() ||
             next_stmt->cast<WhileControlStmt>()) {
@@ -1146,11 +1150,11 @@ void ControlFlowGraph::dump_graph_to_file(const std::string &kernel_name,
           }
         }
       }
-      
+
       out_file << "\n";
     }
   }
-  
+
   out_file.close();
   TI_INFO("CFG dumped to: {}", filename.string());
 }
