@@ -35,7 +35,7 @@ bool cfg_optimization(
     }
     
     // Dump CFG after optimization
-    suffix = phase.empty() ? "_after_cfg_opt" : ("_" + phase + "_after_cfg_opt");
+    suffix = phase.empty() ? "_post_cfg_opt" : ("_" + phase + "_post_cfg_opt");
     cfg->dump_graph_to_file(kernel_name, suffix);
   }
   // TODO: implement cfg->dead_instruction_elimination()
