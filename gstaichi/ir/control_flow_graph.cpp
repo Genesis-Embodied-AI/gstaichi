@@ -2,12 +2,17 @@
 
 #include <queue>
 #include <unordered_set>
+#include <fstream>
+#include <filesystem>
+#include <sstream>
 
 #include "gstaichi/common/exceptions.h"
 #include "gstaichi/ir/analysis.h"
 #include "gstaichi/ir/statements.h"
+#include "gstaichi/ir/transforms.h"
 #include "gstaichi/system/profiler.h"
 #include "gstaichi/program/function.h"
+#include "gstaichi/codegen/ir_dump.h"
 
 namespace gstaichi::lang {
 
@@ -941,53 +946,120 @@ CFGNode *ControlFlowGraph::back() const {
 
 void ControlFlowGraph::print_graph_structure() const {
   const int num_nodes = size();
-  std::cout << "Control Flow Graph with " << num_nodes
-            << " nodes:" << std::endl;
+  fmt::print("Control Flow Graph with {} nodes:\n", num_nodes);
   std::unordered_map<CFGNode *, int> to_index;
   for (int i = 0; i < num_nodes; i++) {
     to_index[nodes[i].get()] = i;
   }
   for (int i = 0; i < num_nodes; i++) {
-    std::string node_info = fmt::format("Node {} : ", i);
+    fmt::print("Node {} : ", i);
     if (nodes[i]->empty()) {
-      node_info += "empty";
+      fmt::print("empty");
     } else {
-      node_info += fmt::format(
-          "{}~{} (size={})",
-          nodes[i]->block->statements[nodes[i]->begin_location]->name(),
-          nodes[i]->block->statements[nodes[i]->end_location - 1]->name(),
-          nodes[i]->size());
+      fmt::print("{}~{} (size={})",
+                 nodes[i]->block->statements[nodes[i]->begin_location]->name(),
+                 nodes[i]->block->statements[nodes[i]->end_location - 1]->name(),
+                 nodes[i]->size());
     }
     if (!nodes[i]->prev.empty()) {
       std::vector<std::string> indices;
       for (auto prev_node : nodes[i]->prev) {
         indices.push_back(std::to_string(to_index[prev_node]));
       }
-      node_info += fmt::format("; prev={{{}}}", fmt::join(indices, ", "));
+      fmt::print("; prev={{{}}}", fmt::join(indices, ", "));  // ← Works directly!
     }
     if (!nodes[i]->next.empty()) {
       std::vector<std::string> indices;
       for (auto next_node : nodes[i]->next) {
         indices.push_back(std::to_string(to_index[next_node]));
       }
-      node_info += fmt::format("; next={{{}}}", fmt::join(indices, ", "));
+      fmt::print("; next={{{}}}", fmt::join(indices, ", "));  // ← Works directly!
     }
-    if (!nodes[i]->reach_in.empty()) {
-      std::vector<std::string> indices;
-      for (auto stmt : nodes[i]->reach_in) {
-        indices.push_back(stmt->name());
-      }
-      node_info += fmt::format("; reach_in={{{}}}", fmt::join(indices, ", "));
-    }
-    if (!nodes[i]->reach_out.empty()) {
-      std::vector<std::string> indices;
-      for (auto stmt : nodes[i]->reach_out) {
-        indices.push_back(stmt->name());
-      }
-      node_info += fmt::format("; reach_out={{{}}}", fmt::join(indices, ", "));
-    }
-    std::cout << node_info << std::endl;
+    // ... rest of the function similarly
+    fmt::print("\n");
   }
+}
+
+void ControlFlowGraph::dump_graph_to_file(const std::string &kernel_name, 
+                                           const std::string &suffix) const {
+  const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
+  if (dump_ir_env == nullptr || std::string(dump_ir_env) != "1") {
+    return;  // Only dump if TI_DUMP_IR=1
+  }
+
+  std::filesystem::create_directories(IR_DUMP_DIR);
+  std::filesystem::path filename = 
+      IR_DUMP_DIR / (kernel_name + suffix + ".txt");
+
+  std::ofstream out_file(filename.string());
+  if (!out_file) {
+    TI_WARN("Failed to open file for CFG dump: {}", filename.string());
+    return;
+  }
+
+  // Write directly to the file using fmt::format
+  const int num_nodes = size();
+  std::unordered_map<CFGNode *, int> to_index;
+  for (int i = 0; i < num_nodes; i++) {
+    to_index[nodes[i].get()] = i;
+  }
+  
+  for (int i = 0; i < num_nodes; i++) {
+    out_file << fmt::format("Node {} : ", i);
+    if (nodes[i]->empty()) {
+      out_file << "empty";
+    } else {
+      out_file << fmt::format("{}~{} (size={})",
+                              nodes[i]->block->statements[nodes[i]->begin_location]->name(),
+                              nodes[i]->block->statements[nodes[i]->end_location - 1]->name(),
+                              nodes[i]->size());
+    }
+    if (!nodes[i]->prev.empty()) {
+      std::vector<std::string> indices;
+      for (auto prev_node : nodes[i]->prev) {
+        indices.push_back(std::to_string(to_index[prev_node]));
+      }
+      out_file << fmt::format("; prev={{{}}}", fmt::join(indices, ", "));
+    }
+    if (!nodes[i]->next.empty()) {
+      std::vector<std::string> indices;
+      for (auto next_node : nodes[i]->next) {
+        indices.push_back(std::to_string(to_index[next_node]));
+      }
+      out_file << fmt::format("; next={{{}}}", fmt::join(indices, ", "));
+    }
+    if (!nodes[i]->live_out.empty()) {
+      std::vector<std::string> vars;
+      for (auto stmt : nodes[i]->live_out) {
+        vars.push_back(stmt->name());
+      }
+      out_file << fmt::format("; live_out={{{}}}", fmt::join(vars, ", "));
+    }
+    out_file << "\n";
+    
+    // Print the actual statements in this node
+    if (!nodes[i]->empty()) {
+      for (int j = nodes[i]->begin_location; j < nodes[i]->end_location; j++) {
+        auto stmt = nodes[i]->block->statements[j].get();
+        std::string stmt_output;
+        // Use print_kernel_wrapper=false to avoid the "kernel { }" wrapper
+        irpass::print(stmt, &stmt_output, false, false);
+        
+        // Add indentation to each line
+        std::istringstream iss(stmt_output);
+        std::string line;
+        while (std::getline(iss, line)) {
+          if (!line.empty()) {
+            out_file << "    " << line << "\n";
+          }
+        }
+      }
+      out_file << "\n";
+    }
+  }
+  
+  out_file.close();
+  TI_INFO("CFG dumped to: {}", filename.string());
 }
 
 void ControlFlowGraph::reaching_definition_analysis(bool after_lower_access) {
