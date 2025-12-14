@@ -962,9 +962,13 @@ class IRPrinter : public IRVisitor {
 
 namespace irpass {
 
-void print(IRNode *root, std::string *output, bool print_ir_dbg_info, bool print_kernel_wrapper) {
+void print(IRNode *root,
+           std::string *output,
+           bool print_ir_dbg_info,
+           bool print_kernel_wrapper) {
   ExpressionHumanFriendlyPrinter expr_printer;
-  return IRPrinter::run(&expr_printer, root, output, print_ir_dbg_info, print_kernel_wrapper);
+  return IRPrinter::run(&expr_printer, root, output, print_ir_dbg_info,
+                        print_kernel_wrapper);
 }
 
 std::function<void(const std::string &)> make_pass_printer(

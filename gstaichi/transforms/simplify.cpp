@@ -564,29 +564,29 @@ void full_simplify(IRNode *root,
       // Don't do this time-consuming optimization pass again if the IR is
       // not modified.
       if (config.opt_level > 0 && first_iteration && config.cfg_optimization &&
-          cfg_optimization(root, args.after_lower_access, args.autodiff_enabled,
-                           !config.real_matrix_scalarize &&
-                               !config.force_scalarize_matrix,
-                           std::nullopt, args.kernel_name, args.phase)) {
+          cfg_optimization(
+              root, args.after_lower_access, args.autodiff_enabled,
+              !config.real_matrix_scalarize && !config.force_scalarize_matrix,
+              std::nullopt, args.kernel_name, args.phase)) {
         modified = true;
-      print("cfg_optimization");
-      first_iteration = false;
-      if (!modified)
-        break;
+        print("cfg_optimization");
+        first_iteration = false;
+        if (!modified)
+          break;
+      }
+      return;
     }
-    return;
-  }
-  if (config.constant_folding) {
-    constant_fold(root);
-    print("constant_fold");
+    if (config.constant_folding) {
+      constant_fold(root);
+      print("constant_fold");
+      die(root);
+      print("die");
+    }
+    simplify(root, config);
+    print("simplify");
     die(root);
     print("die");
   }
-  simplify(root, config);
-  print("simplify");
-  die(root);
-  print("die");
-}
 
 }  // namespace irpass
 
