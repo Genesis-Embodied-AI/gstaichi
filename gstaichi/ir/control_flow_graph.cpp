@@ -944,45 +944,6 @@ CFGNode *ControlFlowGraph::back() const {
   return nodes.back().get();
 }
 
-void ControlFlowGraph::print_graph_structure() const {
-  const int num_nodes = size();
-  fmt::print("Control Flow Graph with {} nodes:\n", num_nodes);
-  std::unordered_map<CFGNode *, int> to_index;
-  for (int i = 0; i < num_nodes; i++) {
-    to_index[nodes[i].get()] = i;
-  }
-  for (int i = 0; i < num_nodes; i++) {
-    fmt::print("Node {} : ", i);
-    if (nodes[i]->empty()) {
-      fmt::print("empty");
-    } else {
-      fmt::print(
-          "{}~{} (size={})",
-          nodes[i]->block->statements[nodes[i]->begin_location]->name(),
-          nodes[i]->block->statements[nodes[i]->end_location - 1]->name(),
-          nodes[i]->size());
-    }
-    if (!nodes[i]->prev.empty()) {
-      std::vector<std::string> indices;
-      for (auto prev_node : nodes[i]->prev) {
-        indices.push_back(std::to_string(to_index[prev_node]));
-      }
-      fmt::print("; prev={{{}}}",
-                 fmt::join(indices, ", "));  // ← Works directly!
-    }
-    if (!nodes[i]->next.empty()) {
-      std::vector<std::string> indices;
-      for (auto next_node : nodes[i]->next) {
-        indices.push_back(std::to_string(to_index[next_node]));
-      }
-      fmt::print("; next={{{}}}",
-                 fmt::join(indices, ", "));  // ← Works directly!
-    }
-    // ... rest of the function similarly
-    fmt::print("\n");
-  }
-}
-
 void ControlFlowGraph::dump_graph_to_file(const std::string &kernel_name,
                                           const std::string &suffix) const {
   std::filesystem::create_directories(IR_DUMP_DIR);
