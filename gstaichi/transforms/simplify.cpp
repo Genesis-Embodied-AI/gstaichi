@@ -567,13 +567,12 @@ void full_simplify(IRNode *root,
           cfg_optimization(
               root, args.after_lower_access, args.autodiff_enabled,
               !config.real_matrix_scalarize && !config.force_scalarize_matrix,
-              std::nullopt, args.kernel_name, args.phase)) {
+              std::nullopt, args.kernel_name, args.phase))
         modified = true;
-        print("cfg_optimization");
-        first_iteration = false;
-        if (!modified)
-          break;
-      }
+      print("cfg_optimization");
+      first_iteration = false;
+      if (!modified)
+        break;
     }
     return;
   }
