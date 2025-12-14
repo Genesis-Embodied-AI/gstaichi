@@ -13,9 +13,14 @@ bool cfg_optimization(
     bool autodiff_enabled,
     bool real_matrix_enabled,
     const std::optional<ControlFlowGraph::LiveVarAnalysisConfig>
-        &lva_config_opt) {
+        &lva_config_opt,
+    const std::string &kernel_name) {
   TI_AUTO_PROF;
   auto cfg = analysis::build_cfg(root);
+  
+  // Dump CFG before optimization
+  cfg->dump_graph_to_file(kernel_name, "_before_cfg_opt");
+  
   bool result_modified = false;
   if (!real_matrix_enabled) {
     cfg->simplify_graph();
@@ -26,6 +31,9 @@ bool cfg_optimization(
     if (cfg->dead_store_elimination(after_lower_access, lva_config_opt)) {
       result_modified = true;
     }
+    
+    // Dump CFG after optimization
+    cfg->dump_graph_to_file(kernel_name, "_after_cfg_opt");
   }
   // TODO: implement cfg->dead_instruction_elimination()
   die(root);  // remove unused allocas

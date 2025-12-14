@@ -672,7 +672,8 @@ void full_simplify(IRNode *root,
       if (config.opt_level > 0 && first_iteration && config.cfg_optimization &&
           cfg_optimization(root, args.after_lower_access, args.autodiff_enabled,
                            !config.real_matrix_scalarize &&
-                               !config.force_scalarize_matrix)) {
+                               !config.force_scalarize_matrix,
+                           std::nullopt, args.kernel_name)) {
         modified = true;
         if (should_dump)
           TI_INFO("  [iter {}] cfg_optimization modified IR", iteration);
