@@ -588,7 +588,7 @@ class Kernel:
     def __call__(self, *args, **kwargs) -> Any:
         self.raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
 
-        args = kernel_impl._process_args(self, is_func=False, is_pyfunc=False, args=args, kwargs=kwargs)
+        args = kernel_impl.process_args(self, is_func=False, is_pyfunc=False, args=args, kwargs=kwargs)
 
         # Transform the primal kernel to forward mode grad kernel
         # then recover to primal when exiting the forward mode manager
