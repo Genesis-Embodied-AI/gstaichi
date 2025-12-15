@@ -128,9 +128,6 @@ class Kernel:
         self.used_py_dataclass_parameters: set[str] = set()
         # assumes that only one kernel is being built at a time
         # value invalid when kernel not being built
-        self.used_py_dataclass_parameters_dotted: set[tuple[str, ...]] = set()
-        # assumes that only one kernel is being built at a time
-        # value invalid when kernel not being built
         self.enforcing_dataclass_parameters: bool = False
 
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
@@ -257,8 +254,8 @@ class Kernel:
                 )
                 if self.compiled_kernel_data_by_key[key]:
                     self.src_ll_cache_observations.cache_loaded = True
-                    self.used_py_dataclass_parameters = used_py_dataclass_parameters
-                    self.used_py_dataclass_parameters_dotted = set(
+                    self.used_py_dataclass_leaves_by_key_enforcing[key] = used_py_dataclass_parameters
+                    self.used_py_dataclass_leaves_by_key_enforcing_dotted[key] = set(
                         [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_parameters]
                     )
         elif self.gstaichi_callable and not self.gstaichi_callable.is_pure and self.runtime.print_non_pure:
@@ -276,20 +273,20 @@ class Kernel:
         for _pass in range(range_begin, 2):
             print("==============================")
             print("_pass", _pass)
-            # used_py_dataclass_leaves_by_key_enforcing = None
+            used_py_dataclass_leaves_by_key_enforcing = None
             if _pass == 1:
                 assert used_py_dataclass_parameters is not None
-                # used_py_dataclass_leaves_by_key_enforcing = set()
-                for param in list(used_py_dataclass_parameters):
+                used_py_dataclass_leaves_by_key_enforcing = set()
+                for param in used_py_dataclass_parameters:
                     split_param = param.split("__ti_")
                     for i in range(len(split_param), 0, -1):
                         joined = "__ti_".join(split_param[:i])
-                        # if joined in used_py_dataclass_leaves:
-                        #     break
-                        used_py_dataclass_parameters.add(joined)
-                # self.used_py_dataclass_leaves_by_key_enforcing[key] = used_py_dataclass_leaves_by_key_enforcing
-                self.used_py_dataclass_parameters_dotted = set(
-                    [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_parameters]
+                        if joined in used_py_dataclass_leaves_by_key_enforcing:
+                            break
+                        used_py_dataclass_leaves_by_key_enforcing.add(joined)
+                self.used_py_dataclass_leaves_by_key_enforcing[key] = used_py_dataclass_leaves_by_key_enforcing
+                self.used_py_dataclass_leaves_by_key_enforcing_dotted[key] = set(
+                    [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_leaves_by_key_enforcing]
                 )
             tree, ctx = kernel_impl.get_tree_and_ctx(
                 self,
@@ -429,7 +426,9 @@ class Kernel:
             template_num = 0
             i_out = 0
             assert self.currently_compiling_materialize_key
-            used_py_dataclass_parameters_enforcing_dotted = self.used_py_dataclass_parameters_dotted
+            used_py_dataclass_parameters_enforcing_dotted = self.used_py_dataclass_leaves_by_key_enforcing_dotted[
+                self.currently_compiling_materialize_key
+            ]
             for i_in, val in enumerate(args):
                 needed_ = self.arg_metas[i_in].annotation
                 if needed_ is template or type(needed_) is template:
@@ -537,7 +536,7 @@ class Kernel:
                         compile_result.cache_key,
                         self.fast_checksum,
                         self.visited_functions,
-                        self.used_py_dataclass_parameters,
+                        self.used_py_dataclass_leaves_by_key_enforcing[self.currently_compiling_materialize_key],
                     )
                     self.src_ll_cache_observations.cache_stored = True
             self._last_compiled_kernel_data = compiled_kernel_data
