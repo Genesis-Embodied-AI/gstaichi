@@ -1238,7 +1238,7 @@ class Kernel:
                             raise GsTaichiSyntaxError("Kernel has a return type but does not have a return statement")
                     print("end of pass", _pass)
                     used_py_dataclass_parameters = self.used_py_dataclass_parameters
-                    print("self.used_py_dataclass_leaves_by_key_collecting", self.used_py_dataclass_parameters)
+                    print("self.used_py_dataclass_leaves_by_key_collecting", sorted(self.used_py_dataclass_parameters))
                 finally:
                     self.runtime.inside_kernel = False
                     self.runtime._current_kernel = None
