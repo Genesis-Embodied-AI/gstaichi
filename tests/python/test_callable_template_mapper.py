@@ -1,6 +1,6 @@
 import gstaichi as ti
-from gstaichi.lang.kernel_arguments import ArgMetadata
 from gstaichi.lang._template_mapper import TemplateMapper
+from gstaichi.lang.kernel_arguments import ArgMetadata
 
 from tests import test_utils
 
