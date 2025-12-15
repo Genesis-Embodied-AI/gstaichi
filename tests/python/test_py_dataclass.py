@@ -1552,8 +1552,8 @@ def test_pruning_reuse_func_across_kernels() -> None:
     )
 
     @ti.func
-    def f1(flag: ti.Template, struct_f1: MyStruct):
-        if flag:
+    def f1(flag: ti.template(), struct_f1: MyStruct):
+        if ti.static(flag):
             struct_f1._f1_with_flag[0, 0]
         else:
             struct_f1._f1_no_flag[0, 0]
@@ -1598,8 +1598,8 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
     )
 
     @ti.func
-    def f1(flag: ti.Template, struct_f1: MyStruct):
-        if flag:
+    def f1(flag: ti.template(), struct_f1: MyStruct):
+        if ti.static(flag):
             struct_f1._f1_with_flag[0, 0]
         else:
             struct_f1._f1_no_flag[0, 0]
