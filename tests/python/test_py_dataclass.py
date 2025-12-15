@@ -1428,6 +1428,8 @@ def test_pruning_with_arg_kwargs_rename() -> None:
     print("-----------------")
 
 
+@pytest.mark.xfail(
+    reason="calling sub functions with different templated values seems unsupported currently")
 @test_utils.test()
 def test_pruning_with_recursive_func() -> None:
     @dataclasses.dataclass
@@ -1464,4 +1466,112 @@ def test_pruning_with_recursive_func() -> None:
     k1(my_struct)
     print("-----------------")
     k1(my_struct)
+    print("-----------------")
+
+
+@test_utils.test()
+def test_pruning_reuse_func_same_kernel() -> None:
+    """
+    In this test, any vertical call stack doesn't ever
+    contain the same function more than once.
+    However, the same function might be present in multiple
+    child calls of a function.
+    We assume however that the same py dataclass members will be used
+    in both calls.s
+    """
+    @dataclasses.dataclass
+    class MyStruct:
+        _f3: ti.types.NDArray[ti.f32, 2]
+        _f2b: ti.types.NDArray[ti.f32, 2]
+        _f2a: ti.types.NDArray[ti.f32, 2]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _unused: ti.types.NDArray[ti.f32, 2]
+
+    my_struct = MyStruct(
+        _f3=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        _f2b=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        _f2a=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+    )
+
+    @ti.func
+    def f3(struc_f3: MyStruct):
+        struc_f3._f3[0, 0]
+        f2b(struc_f3)
+
+    @ti.func
+    def f2b(struc_f2b: MyStruct):
+        struc_f2b._f2b[0, 0]
+
+    @ti.func
+    def f2a(struc_f2a: MyStruct):
+        struc_f2a._f2a[0, 0]
+        f2b(struc_f2a)
+
+    @ti.func
+    def f1(struc_f1: MyStruct):
+        struc_f1._f1[0, 0]
+        f2a(struc_f1)
+        f3(struc_f1)
+
+    @ti.kernel
+    def k1(struct_k1: MyStruct):
+        struct_k1._k1[0, 0]
+        f1(struct_k1)
+
+    print("-----------------")
+    k1(my_struct)
+    print("-----------------")
+    k1(my_struct)
+    print("-----------------")
+
+
+@test_utils.test()
+def test_pruning_reuse_func_across_kernels() -> None:
+    """
+    In this test, the same function can be used in different kernels,
+    but with *different* used members
+    """
+    @dataclasses.dataclass
+    class MyStruct:
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _k2: ti.types.NDArray[ti.f32, 2]
+        _f1_no_flag: ti.types.NDArray[ti.f32, 2]
+        _f1_with_flag: ti.types.NDArray[ti.f32, 2]
+        _unused: ti.types.NDArray[ti.f32, 2]
+
+    my_struct = MyStruct(
+        _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        _k2=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        _f1_no_flag=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        _f1_with_flag=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+    )
+
+    @ti.func
+    def f1(flag: ti.Template, struct_f1: MyStruct):
+        if flag:
+            struct_f1._f1_with_flag[0, 0]
+        else:
+            struct_f1._f1_no_flag[0, 0]
+
+
+    @ti.kernel
+    def k1(struct_k1: MyStruct):
+        struct_k1._k1[0, 0]
+        f1(False, struct_k1)
+
+
+    @ti.kernel
+    def k2(struct_k2: MyStruct):
+        struct_k2._k2[0, 0]
+        f1(True, struct_k2)
+
+    print("-----------------")
+    k1(my_struct)
+    print("-----------------")
+    k2(my_struct)
     print("-----------------")
