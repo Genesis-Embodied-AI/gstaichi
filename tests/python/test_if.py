@@ -230,12 +230,16 @@ def test_func_if_return_void_true_branch(in_val: int, expected: int):
 
     @ti.kernel
     def k1(a: ti.types.NDArray) -> None:
+        a[3] = 4
         f1(a)
+        a[2] = 3
 
     a = ti.ndarray(ti.i32, (10,))
     a[0] = in_val
     k1(a)
     assert a[1] == expected
+    assert a[2] == 3
+    assert a[3] == 4
 
 
 @pytest.mark.parametrize(
