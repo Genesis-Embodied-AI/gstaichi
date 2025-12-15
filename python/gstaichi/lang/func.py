@@ -62,6 +62,11 @@ class Func:
         # Used during compilation. Assumes only one compilation at a time (single-threaded).
         self.current_kernel: Kernel | None = None
         # enforcing_dataclass_parameters
+        # Used during compilation. Assumes only one compilation at a time (single-threaded).
+        # Value invalid outside of kernel compilation.
+        # Note that we assume that if a single function is called multiple times during a
+        # specific kernel compilation, then the used py dataclass parameters are invariant
+        # across those calls.
         self.used_py_dataclass_parameters: set[str] = set()
         # self.used_py_dataclass_parameters_enforcing: set[str] | None = None
 

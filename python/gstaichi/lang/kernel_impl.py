@@ -59,12 +59,12 @@ from .._test_tools import warnings_helper
 
 MAX_ARG_NUM = 512
 
-
 # Define proxies for fast lookup
 _NONE, _REVERSE = (
     AutodiffMode.NONE,
     AutodiffMode.REVERSE,
 )
+_ARG_EMPTY = inspect.Parameter.empty
 _arch_cuda = _ti_core.Arch.cuda
 
 
@@ -155,7 +155,7 @@ def _populate_global_vars_for_templates(
             )
 
 
-def _get_tree_and_ctx(
+def get_tree_and_ctx(
     self: "Func | Kernel",
     args: tuple[Any, ...],
     enforcing_dataclass_parameters: bool,
@@ -227,10 +227,7 @@ def _get_tree_and_ctx(
     return tree, ctx
 
 
-_ARG_EMPTY = inspect.Parameter.empty
-
-
-def _process_args(
+def process_args(
     self: "Func | Kernel", is_pyfunc: bool, is_func: bool, args: tuple[Any, ...], kwargs
 ) -> tuple[Any, ...]:
     print("_process args is_func", is_func, "is_pyfunc", is_pyfunc, self.func)
@@ -331,7 +328,7 @@ def cast_int(x: int | np.integer) -> int:
 _FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = _KernelBatchedArgType
 
 
-def _destroy_callback(kernel_ref: ReferenceType["Kernel"], ref: ReferenceType):
+def destroy_callback(kernel_ref: ReferenceType["Kernel"], ref: ReferenceType):
     maybe_kernel = kernel_ref()
     if maybe_kernel is not None:
         maybe_kernel._launch_ctx_cache.clear()
@@ -339,7 +336,7 @@ def _destroy_callback(kernel_ref: ReferenceType["Kernel"], ref: ReferenceType):
         maybe_kernel._prog_weakref = None
 
 
-def _recursive_set_args(
+def recursive_set_args(
     used_py_dataclass_parameters: set[tuple[str, ...]],
     py_dataclass_basename: tuple[str, ...],
     launch_ctx: KernelLaunchContext,
@@ -405,7 +402,7 @@ def _recursive_set_args(
             field_type = field.type
             assert not isinstance(field_type, str)
             field_value = getattr(v, field_name)
-            num_args_, is_launch_ctx_cacheable_ = _recursive_set_args(
+            num_args_, is_launch_ctx_cacheable_ = recursive_set_args(
                 used_py_dataclass_parameters,
                 field_full_name,
                 launch_ctx,

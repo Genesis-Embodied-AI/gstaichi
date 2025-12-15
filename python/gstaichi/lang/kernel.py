@@ -282,7 +282,7 @@ class Kernel:
                 self.used_py_dataclass_leaves_by_key_enforcing_dotted[key] = set(
                     [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_leaves_by_key_enforcing]
                 )
-            tree, ctx = kernel_impl._get_tree_and_ctx(
+            tree, ctx = kernel_impl.get_tree_and_ctx(
                 self,
                 args=args,
                 excluded_parameters=self.template_slot_locations,
@@ -379,7 +379,7 @@ class Kernel:
         if self._prog_weakref is None:
             prog = impl.get_runtime().prog
             assert prog is not None
-            self._prog_weakref = ReferenceType(prog, partial(kernel_impl._destroy_callback, ReferenceType(self)))
+            self._prog_weakref = ReferenceType(prog, partial(kernel_impl.destroy_callback, ReferenceType(self)))
         else:
             # Since we already store a weak reference to taichi program, it is much faster to use it rather than
             # paying the overhead of calling pybind11 functions (~200ns vs 5ns).
@@ -429,7 +429,7 @@ class Kernel:
                     template_num += 1
                     i_out += 1
                     continue
-                num_args_, is_launch_ctx_cacheable_ = kernel_impl._recursive_set_args(
+                num_args_, is_launch_ctx_cacheable_ = kernel_impl.recursive_set_args(
                     used_py_dataclass_parameters_enforcing_dotted,
                     (self.arg_metas[i_in].name,),
                     launch_ctx,
