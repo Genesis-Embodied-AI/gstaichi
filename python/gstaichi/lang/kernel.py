@@ -125,10 +125,11 @@ class Kernel:
 
         # assumes that only one kernel is being built at a time
         # value invalid when kernel not being built
-        self.used_py_dataclass_parameters: set[str] = set()
+        self.used_py_dataclass_parameters: set[str] | None = None
+        self.used_py_dataclass_parameters_with_prefixes: set[str] | None = None
         # assumes that only one kernel is being built at a time
         # value invalid when kernel not being built
-        self.used_py_dataclass_parameters_dotted: set[tuple[str, ...]] = set()
+        self.used_py_dataclass_parameters_with_prefixes_dotted: set[tuple[str, ...]] | None = None
         # assumes that only one kernel is being built at a time
         # value invalid when kernel not being built
         self.enforcing_dataclass_parameters: bool = False
@@ -234,18 +235,26 @@ class Kernel:
         if key in self.materialized_kernels:
             return
 
-        used_py_dataclass_parameters: set[str] | None = None
+        # used_py_dataclass_parameters_with_prefixes: set[str] | None = None
+        # self.used_py_dataclass_parameters.clear()
+        # self.used_py_dataclass_parameters_with_prefixes.clear()
+        # self.used_py_dataclass_parameters_with_prefixes_dotted.clear()
         frontend_cache_key: str | None = None
 
+        self.enforcing_dataclass_parameters = False
+        self.used_py_dataclass_parameters = None
+        self.used_py_dataclass_parameters_with_prefixes = None
+        self.used_py_dataclass_parameters_with_prefixes_dotted = None
         if self.runtime.src_ll_cache and self.gstaichi_callable and self.gstaichi_callable.is_pure:
             kernel_source_info, _src = get_source_info_and_src(self.func)
             self.fast_checksum = src_hasher.create_cache_key(
                 self.raise_on_templated_floats, kernel_source_info, args, self.arg_metas
             )
+            used_py_dataclass_parameters_with_prefixes = None
             if self.fast_checksum:
                 self.src_ll_cache_observations.cache_key_generated = True
-                used_py_dataclass_parameters, frontend_cache_key = src_hasher.load(self.fast_checksum)
-            if used_py_dataclass_parameters is not None and frontend_cache_key is not None:
+                used_py_dataclass_parameters_with_prefixes, frontend_cache_key = src_hasher.load(self.fast_checksum)
+            if used_py_dataclass_parameters_with_prefixes is not None and frontend_cache_key is not None:
                 self.src_ll_cache_observations.cache_validated = True
                 prog = impl.get_runtime().prog
                 assert self.fast_checksum is not None
@@ -257,9 +266,10 @@ class Kernel:
                 )
                 if self.compiled_kernel_data_by_key[key]:
                     self.src_ll_cache_observations.cache_loaded = True
-                    self.used_py_dataclass_parameters = used_py_dataclass_parameters
-                    self.used_py_dataclass_parameters_dotted = set(
-                        [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_parameters]
+                    self.enforcing_dataclass_parameters = True
+                    self.used_py_dataclass_parameters_with_prefixes = used_py_dataclass_parameters_with_prefixes
+                    self.used_py_dataclass_parameters_with_prefixes_dotted = set(
+                        [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_parameters_with_prefixes]
                     )
         elif self.gstaichi_callable and not self.gstaichi_callable.is_pure and self.runtime.print_non_pure:
             # The bit in caps should not be modified without updating corresponding test
@@ -269,27 +279,38 @@ class Kernel:
             # confusing to set that to True, and see nothing printed.
             print(f"[NOT_PURE] Debug information: not pure: {self.func.__name__}")
 
+        # if not self.enforcing_dataclass_parameters:
+            # self.used_py_dataclass_parameters = set()
+
         kernel_name = f"{self.func.__name__}_c{self.kernel_counter}_{key[1]}"
         _logging.trace(f"Materializing kernel {kernel_name} in {self.autodiff_mode}...")
 
-        range_begin = 0 if used_py_dataclass_parameters is None else 1
+        range_begin = 0 if self.used_py_dataclass_parameters_with_prefixes is None else 1
         for _pass in range(range_begin, 2):
             print("==============================")
             print("_pass", _pass)
             # used_py_dataclass_leaves_by_key_enforcing = None
-            if _pass == 1:
-                assert used_py_dataclass_parameters is not None
+            if _pass == 0:
+                self.used_py_dataclass_parameters = set()
+                self.enforcing_dataclass_parameters = False
+            elif _pass == 1:
+                self.enforcing_dataclass_parameters = True
+                if self.used_py_dataclass_parameters_with_prefixes is None:
+                    assert self.used_py_dataclass_parameters is not None
+                    self.used_py_dataclass_parameters_with_prefixes = set()
+                    for param in self.used_py_dataclass_parameters:
+                        split_param = param.split("__ti_")
+                        for i in range(len(split_param), 0, -1):
+                            joined = "__ti_".join(split_param[:i])
+                            # if joined in used_py_dataclass_leaves:
+                            #     break
+                            self.used_py_dataclass_parameters_with_prefixes.add(joined)
+                # assert self.used_py_dataclass_parameters is not None and self.used_py_dataclass_parameters_with_prefixes is not None
                 # used_py_dataclass_leaves_by_key_enforcing = set()
-                for param in list(used_py_dataclass_parameters):
-                    split_param = param.split("__ti_")
-                    for i in range(len(split_param), 0, -1):
-                        joined = "__ti_".join(split_param[:i])
-                        # if joined in used_py_dataclass_leaves:
-                        #     break
-                        used_py_dataclass_parameters.add(joined)
+                # self.used_py_dataclass_parameters_with_prefixes = set()
                 # self.used_py_dataclass_leaves_by_key_enforcing[key] = used_py_dataclass_leaves_by_key_enforcing
-                self.used_py_dataclass_parameters_dotted = set(
-                    [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_parameters]
+                self.used_py_dataclass_parameters_with_prefixes_dotted = set(
+                    [tuple(p.split("__ti_")[1:]) for p in self.used_py_dataclass_parameters_with_prefixes]
                 )
             tree, ctx = kernel_impl.get_tree_and_ctx(
                 self,
@@ -307,7 +328,7 @@ class Kernel:
             # Do not change the name of 'gstaichi_ast_generator'
             # The warning system needs this identifier to remove unnecessary messages
             def gstaichi_ast_generator(kernel_cxx: KernelCxx):
-                nonlocal tree, used_py_dataclass_parameters
+                nonlocal tree  # , used_py_dataclass_parameters
                 if self.runtime.inside_kernel:
                     raise GsTaichiSyntaxError(
                         "Kernels cannot call other kernels. I.e., nested kernels are not allowed. "
@@ -356,10 +377,10 @@ class Kernel:
                         output_file.write_text(
                             json.dumps({"elapsed_txt": elapsed_txt, "elapsed_json": elapsed_json}, indent=2)
                         )
-                    if not used_py_dataclass_parameters:
+                    if self.used_py_dataclass_parameters is None:
                         struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
                     else:
-                        struct_locals = used_py_dataclass_parameters
+                        struct_locals = self.used_py_dataclass_parameters
                     tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
                     ctx.only_parse_function_def = self.compiled_kernel_data_by_key.get(key) is not None
                     transform_tree(tree, ctx)
@@ -367,7 +388,8 @@ class Kernel:
                         if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
                             raise GsTaichiSyntaxError("Kernel has a return type but does not have a return statement")
                     print("end of pass", _pass)
-                    used_py_dataclass_parameters = self.used_py_dataclass_parameters
+                    # used_py_dataclass_parameters = self.used_py_dataclass_parameters
+                    assert self.used_py_dataclass_parameters is not None
                     print("self.used_py_dataclass_leaves_by_key_collecting", sorted(self.used_py_dataclass_parameters))
                 finally:
                     self.runtime.inside_kernel = False
@@ -587,6 +609,7 @@ class Kernel:
     # Thus this part needs to be fast. (i.e. < 3us on a 4 GHz x64 CPU)
     @_shell_pop_print
     def __call__(self, *args, **kwargs) -> Any:
+        print("Kernel.__call__", self.func)
         self.raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
 
         args = kernel_impl.process_args(self, is_func=False, is_pyfunc=False, args=args, kwargs=kwargs)
