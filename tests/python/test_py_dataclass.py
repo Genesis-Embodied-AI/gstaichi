@@ -1370,17 +1370,23 @@ def test_pruning_with_arg_kwargs_rename() -> None:
         used: ti.types.NDArray[ti.f32, 2]
         not_used: ti.types.NDArray[ti.f32, 2]
 
-    my_struct = MyStruct(used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1)))
+    my_struct1 = MyStruct(used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1)))
     my_struct2 = MyStruct(used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1)))
     my_struct3 = MyStruct(used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1)))
     my_struct4 = MyStruct(used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1)))
 
     @ti.func
     def g1(struc3_g1: MyStruct):
+        # should be used:
+        # struc3_g1.used
         struc3_g1.used[0, 0]
 
     @ti.func
     def f2(a3: ti.i32, struct_f2: MyStruct, b3: ti.i32, d3: ti.i32, struct2_f2: MyStruct, c3: ti.i32):
+        # should be used:
+        # struct_f2.used
+        # struct2_f2.useds
+        # 
         # new_struct_name.used[0, 0]
         # my_struct2_renamed.used[0, 0]
         struct_f2.used[0, 0]
@@ -1388,6 +1394,9 @@ def test_pruning_with_arg_kwargs_rename() -> None:
 
     @ti.func
     def f1(a2: ti.i32, struct_f1: MyStruct, b2: ti.i32, d2: ti.i32, struct2_f1: MyStruct, c2: ti.i32):
+        # should be used:
+        # struct_f1.used
+        # struct2_f1.used
         f2(a2, struct_f1, b2, d3=d2, struct2_f2=struct2_f1, c3=c2)
 
     # @ti.func
@@ -1395,15 +1404,27 @@ def test_pruning_with_arg_kwargs_rename() -> None:
     #     my_struct.used[0, 0]
 
     @ti.kernel
-    def k1(a: ti.i32, struct_k1: MyStruct, b: ti.i32, d: ti.i32, struct2_k1: MyStruct, c: ti.i32, struct3_k1: MyStruct, struct4_k1: MyStruct):
-        f1(a, struct_k1, b, d2=d, struct2_f1=struct2_k1, c2=c)
+    def k1(a: ti.i32, struct1_k1: MyStruct, b: ti.i32, d: ti.i32, struct2_k1: MyStruct, c: ti.i32, struct3_k1: MyStruct, struct4_k1: MyStruct):
+        # should be used:
+        # struct1_k1.used
+        # struct2_k1.used
+        f1(a, struct1_k1, b, d2=d, struct2_f1=struct2_k1, c2=c)
+        # should be used:
+        # struct3_k1.used
         g1(struct3_k1)
+        # should be used:
+        # struct4_k1.used
         g1(struct4_k1)
 
     print("-----------------")
-    k1(1, my_struct, 2, d=5, struct2_k1=my_struct2, c=3, struct3_k1=my_struct3, struct4_k1=my_struct4)
+    # should be used:
+    # my_struct1.used
+    # my_struct2.used
+    # my_struct3.used
+    # my_struct4.used
+    k1(1, my_struct1, 2, d=5, struct2_k1=my_struct2, c=3, struct3_k1=my_struct3, struct4_k1=my_struct4)
     print("-----------------")
-    k1(1, my_struct, 2, d=5, struct2_k1=my_struct2, c=3, struct3_k1=my_struct3, struct4_k1=my_struct4)
+    k1(1, my_struct1, 2, d=5, struct2_k1=my_struct2, c=3, struct3_k1=my_struct3, struct4_k1=my_struct4)
     print("-----------------")
 
 
