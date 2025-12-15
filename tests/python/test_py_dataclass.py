@@ -1575,3 +1575,44 @@ def test_pruning_reuse_func_across_kernels() -> None:
     print("-----------------")
     k2(my_struct)
     print("-----------------")
+
+
+@test_utils.test()
+def test_pruning_reuse_func_same_kernel_diff_call() -> None:
+    """
+    In this test, the same function can be used in different calls to the same kernel,
+    but with *different* used members
+    """
+    @dataclasses.dataclass
+    class MyStruct:
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _f1_no_flag: ti.types.NDArray[ti.f32, 2]
+        _f1_with_flag: ti.types.NDArray[ti.f32, 2]
+        _unused: ti.types.NDArray[ti.f32, 2]
+
+    my_struct = MyStruct(
+        _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        _f1_no_flag=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        _f1_with_flag=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+    )
+
+    @ti.func
+    def f1(flag: ti.Template, struct_f1: MyStruct):
+        if flag:
+            struct_f1._f1_with_flag[0, 0]
+        else:
+            struct_f1._f1_no_flag[0, 0]
+
+
+    @ti.kernel
+    def k1(flag: ti.Template, struct_k1: MyStruct):
+        struct_k1._k1[0, 0]
+        f1(flag, struct_k1)
+
+
+    print("-----------------")
+    k1(False, my_struct)
+    print("-----------------")
+    k1(True, my_struct)
+    print("-----------------")
