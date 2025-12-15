@@ -122,7 +122,31 @@ class CFGBuilder : public IRVisitor {
    */
   void visit(ContinueStmt *stmt) override {
     // Don't put ContinueStmt in any CFGNodes.
-    continues_in_current_loop_.push_back(new_node(current_stmt_id_ + 1));
+    auto node = new_node(current_stmt_id_ + 1);
+    
+    if (stmt->from_function_return) {
+      // Function returns should break out of loops (exit to next statement),
+      // not continue them (jump to loop beginning).
+      // Store the unwind node so we can connect it to the appropriate
+      // "after-loop" target in run().
+      UnwindInfo info;
+      info.node = node;
+      info.cont_stmt = stmt;
+      info.enclosing_loops = loop_scope_stack_;
+      unwind_nodes_.push_back(info);
+      // Do NOT add to prev_nodes_ - statements after return are unreachable
+    } else {
+      // Normal continues jump to loop beginnings.
+      // Store them so we can connect them in run().
+      UnwindInfo info;
+      info.node = node;
+      info.cont_stmt = stmt;
+      info.enclosing_loops = loop_scope_stack_;
+      unwind_nodes_.push_back(info);
+      // Do NOT add to prev_nodes_ - continues jump back to loop beginning
+    }
+  }
+
   }
 
   /**
@@ -240,12 +264,14 @@ class CFGBuilder : public IRVisitor {
    *   ...
    * }
    */
-  void visit_loop(Block *body, CFGNode *before_loop, bool is_while_true) {
+  void visit_loop(Block *body, CFGNode *before_loop, bool is_while_true,
+                  Stmt *loop_stmt) {
     int loop_stmt_id = current_stmt_id_;
-    auto backup_continues = std::move(continues_in_current_loop_);
     auto backup_breaks = std::move(breaks_in_current_loop_);
-    continues_in_current_loop_.clear();
     breaks_in_current_loop_.clear();
+
+    // Push this loop onto the scope stack
+    loop_scope_stack_.push_back(loop_stmt);
 
     auto loop_begin_index = graph_->size();
     body->accept(this);
@@ -257,29 +283,32 @@ class CFGBuilder : public IRVisitor {
       prev_nodes_.push_back(before_loop);
       prev_nodes_.push_back(loop_end);
     }
-    for (auto &node : continues_in_current_loop_) {
-      CFGNode::add_edge(node, loop_begin);
-      prev_nodes_.push_back(node);
-    }
+    
+    // Breaks exit the loop and flow to subsequent statements
     for (auto &node : breaks_in_current_loop_) {
       prev_nodes_.push_back(node);
     }
 
+    // Record the loop-begin node for this loop (for normal continues).
+    loop_to_begin_node_[loop_stmt] = loop_begin;
+
+    // Pop this loop from the scope stack
+    loop_scope_stack_.pop_back();
+
     // Container statements don't belong to any CFGNodes.
     begin_location_ = loop_stmt_id + 1;
-    continues_in_current_loop_ = std::move(backup_continues);
     breaks_in_current_loop_ = std::move(backup_breaks);
   }
 
   void visit(WhileStmt *stmt) override {
-    visit_loop(stmt->body.get(), new_node(-1), true);
+    visit_loop(stmt->body.get(), new_node(-1), true, stmt);
   }
 
   void visit(RangeForStmt *stmt) override {
     auto old_in_parallel_for = in_parallel_for_;
     if (!current_offload_)
       in_parallel_for_ = true;
-    visit_loop(stmt->body.get(), new_node(-1), false);
+    visit_loop(stmt->body.get(), new_node(-1), false, stmt);
     in_parallel_for_ = old_in_parallel_for;
   }
 
@@ -287,7 +316,7 @@ class CFGBuilder : public IRVisitor {
     auto old_in_parallel_for = in_parallel_for_;
     if (!current_offload_)
       in_parallel_for_ = true;
-    visit_loop(stmt->body.get(), new_node(-1), false);
+    visit_loop(stmt->body.get(), new_node(-1), false, stmt);
     in_parallel_for_ = old_in_parallel_for;
   }
 
@@ -295,7 +324,7 @@ class CFGBuilder : public IRVisitor {
     auto old_in_parallel_for = in_parallel_for_;
     if (!current_offload_)
       in_parallel_for_ = true;
-    visit_loop(stmt->body.get(), new_node(-1), false);
+    visit_loop(stmt->body.get(), new_node(-1), false, stmt);
     in_parallel_for_ = old_in_parallel_for;
   }
 
@@ -367,13 +396,20 @@ class CFGBuilder : public IRVisitor {
           stmt->task_type == OffloadedStmt::TaskType::struct_for ||
           stmt->task_type == OffloadedStmt::TaskType::mesh_for) {
         in_parallel_for_ = true;
+        // Track this offloaded loop as a scope for continues to target
+        loop_scope_stack_.push_back(stmt);
       }
       stmt->body->accept(this);
       auto block_begin = graph_->nodes[block_begin_index].get();
-      for (auto &node : continues_in_current_loop_) {
-        CFGNode::add_edge(node, block_begin);
-        prev_nodes_.push_back(node);
+      
+      // Record the loop-begin node for this offloaded loop
+      if (stmt->task_type == OffloadedStmt::TaskType::range_for ||
+          stmt->task_type == OffloadedStmt::TaskType::struct_for ||
+          stmt->task_type == OffloadedStmt::TaskType::mesh_for) {
+        loop_to_begin_node_[stmt] = block_begin;
+        loop_scope_stack_.pop_back();
       }
+      
       in_parallel_for_ = false;
       prev_nodes_.push_back(graph_->back());
       // Container statements don't belong to any CFGNodes.
@@ -465,15 +501,118 @@ class CFGBuilder : public IRVisitor {
                         builder.graph_->back());
       builder.graph_->final_node = (int)builder.graph_->size() - 1;
     }
+    
+    // Connect all continue/unwind nodes to their appropriate targets:
+    // - Normal continues → loop beginning (restart iteration)
+    // - Function return unwinds → after loop (break out, continue next statement)
+    //
+    // Both can have:
+    // 1. Explicit scope set → use that
+    // 2. levels_up to determine target (levels_up=1 means innermost enclosing loop)
+    // 3. Neither → final node (exit entire kernel)
+    for (auto &unwind_info : builder.unwind_nodes_) {
+      CFGNode *node = unwind_info.node;
+      ContinueStmt *cont_stmt = unwind_info.cont_stmt;
+      CFGNode *target_node = nullptr;
+      Stmt *target_scope = nullptr;
+      
+      // Determine which loop scope to target
+      if (cont_stmt->scope != nullptr) {
+        // Case 1: Explicit scope
+        target_scope = cont_stmt->scope;
+      } else if (cont_stmt->levels_up > 0 &&
+                 !unwind_info.enclosing_loops.empty()) {
+        // Case 2: Use levels_up to index into the enclosing loops
+        // levels_up=1 means the innermost enclosing loop
+        // levels_up=2 means the next outer loop, etc.
+        int target_idx =
+            (int)unwind_info.enclosing_loops.size() - cont_stmt->levels_up;
+        if (target_idx >= 0 &&
+            target_idx < (int)unwind_info.enclosing_loops.size()) {
+          target_scope = unwind_info.enclosing_loops[target_idx];
+        } else {
+          TI_WARN(
+              "[CFG] Continue/unwind has levels_up={} but only {} enclosing loops. "
+              "Will target final node.",
+              cont_stmt->levels_up, unwind_info.enclosing_loops.size());
+        }
+      }
+      
+      // Look up the target node for this scope
+      if (target_scope != nullptr) {
+        if (cont_stmt->from_function_return) {
+          // Function returns should semantically break out of loops and continue
+          // to the next statement. However, accurately modeling this in the CFG
+          // is complex because the "after-loop" node might not exist yet or might
+          // be ambiguous (multiple exit points from the loop).
+          //
+          // For correctness (especially for DSE), we conservatively connect
+          // function returns to the final node. This ensures that stores before
+          // the return are considered live (they're visible when the function
+          // returns/kernel exits).
+          //
+          // TODO: For more precise CFG, we could track loop exit points and
+          // connect to the appropriate "after-loop" node.
+          target_node = builder.graph_->nodes[builder.graph_->final_node].get();
+          TI_INFO(
+              "[CFG] Function return unwind to final node: node={}, scope={}, "
+              "levels_up={}",
+              (void *)node, (void *)target_scope, cont_stmt->levels_up);
+        } else {
+          // Normal continues jump to loop beginning
+          auto it = builder.loop_to_begin_node_.find(target_scope);
+          if (it != builder.loop_to_begin_node_.end()) {
+            target_node = it->second;
+            TI_INFO(
+                "[CFG] Normal continue to loop begin: node={}, scope={}, "
+                "levels_up={}",
+                (void *)node, (void *)target_scope, cont_stmt->levels_up);
+          }
+        }
+        
+        if (target_node == nullptr) {
+          TI_WARN(
+              "[CFG] Continue/unwind has target scope but target not found. "
+              "Scope={}, from_function_return={}. Will target final node.",
+              (void *)target_scope, cont_stmt->from_function_return);
+        }
+      }
+      
+      // If we couldn't find a specific target, connect to the final node
+      if (target_node == nullptr) {
+        target_node = builder.graph_->nodes[builder.graph_->final_node].get();
+        TI_INFO(
+            "[CFG] Connecting to final node: node={}, scope={}, levels_up={}, "
+            "from_function_return={}",
+            (void *)node, (void *)cont_stmt->scope, cont_stmt->levels_up,
+            cont_stmt->from_function_return);
+      }
+      
+      CFGNode::add_edge(node, target_node);
+    }
+
     return std::move(builder.graph_);
   }
 
  private:
+  struct UnwindInfo {
+    CFGNode *node;
+    ContinueStmt *cont_stmt;
+    // Snapshot of loop_scope_stack_ at the point where this unwind was created
+    // Used to resolve levels_up when scope is not explicitly set
+    std::vector<Stmt *> enclosing_loops;
+  };
+  
   std::unique_ptr<ControlFlowGraph> graph_;
   Block *current_block_;
   CFGNode *last_node_in_current_block_;
-  std::vector<CFGNode *> continues_in_current_loop_;
   std::vector<CFGNode *> breaks_in_current_loop_;
+  // All continue nodes (normal and unwind continues)
+  std::vector<UnwindInfo> unwind_nodes_;
+  // Stack of loop scopes being visited (for tracking nested loops)
+  std::vector<Stmt *> loop_scope_stack_;
+  // Map from loop scope statement to its loop-begin CFG node (for normal continues)
+  std::unordered_map<Stmt *, CFGNode *> loop_to_begin_node_;
   int current_stmt_id_;
   int begin_location_;
   std::vector<CFGNode *> prev_nodes_;
