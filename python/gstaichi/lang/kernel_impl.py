@@ -323,7 +323,6 @@ def cast_int(x: int | np.integer) -> int:
     return int(x)
 
 
-
 # Define proxies for fast lookup
 _FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = _KernelBatchedArgType
 

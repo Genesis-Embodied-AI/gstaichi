@@ -184,10 +184,7 @@ class CallTransformer:
                         child_name = create_flat_name(arg.id, field.name)
                     except Exception as e:
                         raise RuntimeError(f"Exception whilst processing {field.name} in {type(dataclass_type)}") from e
-                    if (
-                        ctx.enforcing_dataclass_parameters
-                        and child_name not in ctx.func.used_py_dataclass_parameters
-                    ):
+                    if ctx.enforcing_dataclass_parameters and child_name not in ctx.func.used_py_dataclass_parameters:
                         continue
                     load_ctx = ast.Load()
                     arg_node = ast.Name(
@@ -227,10 +224,7 @@ class CallTransformer:
                 for field in dataclasses.fields(dataclass_type):
                     src_name = create_flat_name(kwarg.value.id, field.name)
                     child_name = create_flat_name(kwarg.arg, field.name)
-                    if (
-                        ctx.enforcing_dataclass_parameters
-                        and child_name not in ctx.func.used_py_dataclass_parameters
-                    ):
+                    if ctx.enforcing_dataclass_parameters and child_name not in ctx.func.used_py_dataclass_parameters:
                         continue
                     load_ctx = ast.Load()
                     src_node = ast.Name(
@@ -363,7 +357,7 @@ class CallTransformer:
             #     print("- arg meta", arg_meta)
             # print("build_Call node.func.ptr.wrapper.arg_metas_expanded")
             # for arg_meta in node.func.ptr.wrapper.arg_metas_expanded:
-                # print("- arg meta expanded", arg_meta)
+            # print("- arg meta expanded", arg_meta)
             # print("func.wrapper.used_py_dataclass_parameters", func.wrapper.used_py_dataclass_parameters)
             # so now need to form an alignment between the parameters we are passing in, and the parameters in the
             # called function

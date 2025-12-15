@@ -88,8 +88,7 @@ def extract_struct_locals_from_context(ctx: ASTTransformerContext) -> set[str]:
 
 
 def expand_func_arguments(
-    used_py_dataclasses_parameters_enforcing: set[str] | None,
-    arguments: list[ArgMetadata]
+    used_py_dataclasses_parameters_enforcing: set[str] | None, arguments: list[ArgMetadata]
 ) -> list[ArgMetadata]:
     """
     Used to expand arguments for @ti.func
@@ -113,10 +112,7 @@ def expand_func_arguments(
                         name=child_name,
                         default=argument.default,
                     )
-                    child_args = expand_func_arguments(
-                        used_py_dataclasses_parameters_enforcing,
-                        [new_arg]
-                    )
+                    child_args = expand_func_arguments(used_py_dataclasses_parameters_enforcing, [new_arg])
                     expanded_arguments += child_args
                 else:
                     new_argument = ArgMetadata(

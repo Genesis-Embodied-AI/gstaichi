@@ -1386,7 +1386,7 @@ def test_pruning_with_arg_kwargs_rename() -> None:
         # should be used:
         # struct_f2.used
         # struct2_f2.useds
-        # 
+        #
         # new_struct_name.used[0, 0]
         # my_struct2_renamed.used[0, 0]
         struct_f2.used[0, 0]
@@ -1404,7 +1404,16 @@ def test_pruning_with_arg_kwargs_rename() -> None:
     #     my_struct.used[0, 0]
 
     @ti.kernel
-    def k1(a: ti.i32, struct1_k1: MyStruct, b: ti.i32, d: ti.i32, struct2_k1: MyStruct, c: ti.i32, struct3_k1: MyStruct, struct4_k1: MyStruct):
+    def k1(
+        a: ti.i32,
+        struct1_k1: MyStruct,
+        b: ti.i32,
+        d: ti.i32,
+        struct2_k1: MyStruct,
+        c: ti.i32,
+        struct3_k1: MyStruct,
+        struct4_k1: MyStruct,
+    ):
         # should be used:
         # struct1_k1.used
         # struct2_k1.used
@@ -1428,8 +1437,7 @@ def test_pruning_with_arg_kwargs_rename() -> None:
     print("-----------------")
 
 
-@pytest.mark.xfail(
-    reason="calling sub functions with different templated values seems unsupported currently")
+@pytest.mark.xfail(reason="calling sub functions with different templated values seems unsupported currently")
 @test_utils.test()
 def test_pruning_with_recursive_func() -> None:
     @dataclasses.dataclass
@@ -1479,6 +1487,7 @@ def test_pruning_reuse_func_same_kernel() -> None:
     We assume however that the same py dataclass members will be used
     in both calls.s
     """
+
     @dataclasses.dataclass
     class MyStruct:
         _f3: ti.types.NDArray[ti.f32, 2]
@@ -1535,6 +1544,7 @@ def test_pruning_reuse_func_across_kernels() -> None:
     In this test, the same function can be used in different kernels,
     but with *different* used members
     """
+
     @dataclasses.dataclass
     class MyStruct:
         _k1: ti.types.NDArray[ti.f32, 2]
@@ -1558,12 +1568,10 @@ def test_pruning_reuse_func_across_kernels() -> None:
         else:
             struct_f1._f1_no_flag[0, 0]
 
-
     @ti.kernel
     def k1(struct_k1: MyStruct):
         struct_k1._k1[0, 0]
         f1(False, struct_k1)
-
 
     @ti.kernel
     def k2(struct_k2: MyStruct):
@@ -1583,6 +1591,7 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
     In this test, the same function can be used in different calls to the same kernel,
     but with *different* used members
     """
+
     @dataclasses.dataclass
     class MyStruct:
         _k1: ti.types.NDArray[ti.f32, 2]
@@ -1604,12 +1613,10 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
         else:
             struct_f1._f1_no_flag[0, 0]
 
-
     @ti.kernel
     def k1(flag: ti.Template, struct_k1: MyStruct):
         struct_k1._k1[0, 0]
         f1(flag, struct_k1)
-
 
     print("-----------------")
     k1(False, my_struct)
