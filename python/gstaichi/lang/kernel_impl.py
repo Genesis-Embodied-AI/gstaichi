@@ -163,7 +163,7 @@ def get_tree_and_ctx(
     excluded_parameters=(),
     is_kernel: bool = True,
     arg_features=None,
-    ast_builder: "ASTBuilder | None" = None,
+    ast_builder: ASTBuilder | None = None,
     is_real_function: bool = False,
     current_kernel: "Kernel | None" = None,
 ) -> tuple[ast.Module, ASTTransformerContext]:
