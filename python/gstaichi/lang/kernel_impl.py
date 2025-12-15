@@ -503,6 +503,20 @@ class Func:
         struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
 
         tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
+        
+        # Wrap void function body in while-true loop so returns can use break
+        if not self.return_type:
+            func_def = tree.body[0]
+            # Create: while True: <original body>; break
+            while_node = ast.While(
+                test=ast.Constant(value=True),
+                body=func_def.body,
+                orelse=[]
+            )
+            # Add implicit break at end for normal exit
+            while_node.body.append(ast.Break())
+            func_def.body = [while_node]
+        
         ret = transform_tree(tree, ctx)
         self.current_kernel = None
         if not self.is_real_function:

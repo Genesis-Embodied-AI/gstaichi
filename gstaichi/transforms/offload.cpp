@@ -775,19 +775,9 @@ class AssociateContinueScope : public BasicStmtVisitor {
       }
     }
 
-    // Convert unresolved function return continues to returns
-    irpass::replace_and_insert_statements(
-        root,
-        /*filter=*/
-        [](Stmt *s) {
-          auto *cont = s->cast<ContinueStmt>();
-          return cont && cont->from_function_return && cont->scope == nullptr;
-        },
-        /*generator=*/
-        [](Stmt *s) {
-          // Convert to void kernel return
-          return Stmt::make<ReturnStmt>(std::vector<Stmt *>{});
-        });
+    // No need to convert function return continues anymore
+    // They are now wrapped in while-true loops and use break statements
+
   }
 
  private:

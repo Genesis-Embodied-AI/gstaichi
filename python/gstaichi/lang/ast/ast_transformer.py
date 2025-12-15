@@ -468,12 +468,10 @@ class ASTTransformer(Builder):
                     ctx.ast_builder.create_kernel_exprgroup_return(
                         expr.make_expr_group([]), _ti_core.DebugInfo(ctx.get_pos_info(node))
                     )
-            else:  # For ti.func, create continue to exit the inlined function
+            else:  # For ti.func, emit break to exit the while-true wrapper
                 if ctx.ast_builder is not None:
-                    # Pass loop_depth so we know how many function loops to unwind
-                    ctx.ast_builder.insert_function_continue_stmt(
-                        ctx.loop_depth, _ti_core.DebugInfo(ctx.get_pos_info(node))
-                    )
+                    # The function body is wrapped in while-true, so break exits it
+                    ctx.ast_builder.insert_break_stmt(_ti_core.DebugInfo(ctx.get_pos_info(node)))
             return None
         if ctx.is_kernel or ctx.is_real_function:
             # TODO: check if it's at the end of a kernel, throw GsTaichiSyntaxError if not
