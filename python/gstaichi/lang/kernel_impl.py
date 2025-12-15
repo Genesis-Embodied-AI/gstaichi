@@ -4,20 +4,17 @@ import math
 import re
 import sys
 import textwrap
-import types
 import typing
 import warnings
 from dataclasses import (
     _FIELD,  # type: ignore[reportAttributeAccessIssue]
     _FIELDS,  # type: ignore[reportAttributeAccessIssue]
-    dataclass,
     is_dataclass,
 )
-from enum import IntEnum
 
 # Must import 'partial' directly instead of the entire module to avoid attribute lookup overhead.
 from functools import partial, update_wrapper, wraps
-from typing import Any, Callable, DefaultDict, Type, TypeAlias, TypeVar, cast, overload
+from typing import Any, Callable, DefaultDict, Type, TypeVar, cast, overload
 
 # Must import 'ReferenceType' directly instead of the entire module to avoid attribute lookup overhead.
 from weakref import ReferenceType
@@ -27,28 +24,20 @@ import numpy as np
 from gstaichi._lib import core as _ti_core
 from gstaichi._lib.core.gstaichi_python import (
     ASTBuilder,
-    FunctionKey,
-    Function as FunctionCxx,
     KernelLaunchContext,
 )
-from gstaichi.lang import _kernel_impl_dataclass, impl, ops
+from gstaichi.lang import _kernel_impl_dataclass, impl
 from gstaichi.lang._ndarray import Ndarray
-from gstaichi.lang._template_mapper import TemplateMapper
 from gstaichi.lang._wrap_inspect import get_source_info_and_src
-from gstaichi.lang.any_array import AnyArray
 from gstaichi.lang.ast import (
     ASTTransformerContext,
-    transform_tree,
 )
-from gstaichi.lang.ast.ast_transformer_utils import ReturnStatus
 from gstaichi.lang.exception import (
     GsTaichiCompilationError,
     GsTaichiRuntimeError,
     GsTaichiRuntimeTypeError,
     GsTaichiSyntaxError,
-    GsTaichiTypeError,
 )
-from gstaichi.lang.expr import Expr
 from gstaichi.lang.kernel_arguments import ArgMetadata
 from gstaichi.lang.matrix import MatrixType
 from gstaichi.lang.struct import StructType
@@ -72,10 +61,8 @@ MAX_ARG_NUM = 512
 
 
 # Define proxies for fast lookup
-_NONE, _VALIDATION, _FORWARD, _REVERSE = (
+_NONE, _REVERSE = (
     AutodiffMode.NONE,
-    AutodiffMode.VALIDATION,
-    AutodiffMode.FORWARD,
     AutodiffMode.REVERSE,
 )
 _arch_cuda = _ti_core.Arch.cuda
