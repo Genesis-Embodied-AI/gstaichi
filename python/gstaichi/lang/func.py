@@ -37,13 +37,8 @@ from . import kernel_impl
 MAX_ARG_NUM = 512
 
 
-# Define proxies for fast lookup
-_NONE, _VALIDATION, _FORWARD, _REVERSE = (
-    AutodiffMode.NONE,
-    AutodiffMode.VALIDATION,
-    AutodiffMode.FORWARD,
-    AutodiffMode.REVERSE,
-)
+# Define proxy for fast lookup
+_NONE = AutodiffMode.NONE
 
 
 class Func:
