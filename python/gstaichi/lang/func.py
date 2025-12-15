@@ -6,8 +6,10 @@ from typing import Any, Callable, Type
 
 from gstaichi._lib import core as _ti_core
 from gstaichi._lib.core.gstaichi_python import (
-    FunctionKey,
     Function as FunctionCxx,
+)
+from gstaichi._lib.core.gstaichi_python import (
+    FunctionKey,
 )
 from gstaichi.lang import _kernel_impl_dataclass, impl, ops
 from gstaichi.lang._template_mapper import TemplateMapper
@@ -30,9 +32,9 @@ from gstaichi.types import (
     template,
 )
 from gstaichi.types.enums import AutodiffMode
-from .kernel import Kernel
-from . import kernel_impl
 
+from . import kernel_impl
+from .kernel import Kernel
 
 MAX_ARG_NUM = 512
 
@@ -81,7 +83,7 @@ class Func:
     def __call__(self: "Func", *args, **kwargs) -> Any:
         # print("*** Func.__call__", self.func, self)
         self.current_kernel = impl.get_runtime().current_kernel if impl.inside_kernel() else None
-        args = kernel_impl._process_args(self, is_func=True, is_pyfunc=self.pyfunc, args=args, kwargs=kwargs)
+        args = kernel_impl.process_args(self, is_func=True, is_pyfunc=self.pyfunc, args=args, kwargs=kwargs)
 
         if not impl.inside_kernel():
             if not self.pyfunc:
@@ -105,7 +107,7 @@ class Func:
         # used_by_dataclass_parameters_enforcing = self.current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(
         #     current_args_key
         # )
-        tree, ctx = kernel_impl._get_tree_and_ctx(
+        tree, ctx = kernel_impl.get_tree_and_ctx(
             self,
             is_kernel=False,
             args=args,
@@ -177,7 +179,7 @@ class Func:
         """
         only for real func
         """
-        tree, ctx = kernel_impl._get_tree_and_ctx(
+        tree, ctx = kernel_impl.get_tree_and_ctx(
             self,
             is_kernel=False,
             args=args,

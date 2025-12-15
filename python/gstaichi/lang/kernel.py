@@ -18,7 +18,7 @@ from typing import Any, Callable, DefaultDict, TypeAlias
 
 # Must import 'ReferenceType' directly instead of the entire module to avoid attribute lookup overhead.
 from weakref import ReferenceType
-from gstaichi.lang._fast_caching import src_hasher
+
 from gstaichi import _logging
 from gstaichi._lib.core.gstaichi_python import (
     ASTBuilder,
@@ -28,6 +28,7 @@ from gstaichi._lib.core.gstaichi_python import (
     KernelLaunchContext,
 )
 from gstaichi.lang import _kernel_impl_dataclass, impl, runtime_ops
+from gstaichi.lang._fast_caching import src_hasher
 from gstaichi.lang._template_mapper import TemplateMapper
 from gstaichi.lang._wrap_inspect import FunctionSourceInfo, get_source_info_and_src
 from gstaichi.lang.ast import (
@@ -45,7 +46,7 @@ from gstaichi.lang.kernel_arguments import ArgMetadata
 from gstaichi.lang.matrix import MatrixType
 from gstaichi.lang.shell import _shell_pop_print
 from gstaichi.lang.struct import StructType
-from gstaichi.lang.util import cook_dtype, has_pytorch
+from gstaichi.lang.util import cook_dtype
 from gstaichi.types import (
     ndarray_type,
     primitive_types,
@@ -55,10 +56,15 @@ from gstaichi.types import (
 from gstaichi.types.compound_types import CompoundType
 from gstaichi.types.enums import AutodiffMode
 from gstaichi.types.utils import is_signed
-from .gstaichi_callable import GsTaichiCallable
-from . import kernel_impl
-from .kernel_types import SrcLlCacheObservations, FeLlCacheObservations, LaunchStats, _KernelBatchedArgType
 
+from . import kernel_impl
+from .gstaichi_callable import GsTaichiCallable
+from .kernel_types import (
+    FeLlCacheObservations,
+    LaunchStats,
+    SrcLlCacheObservations,
+    _KernelBatchedArgType,
+)
 
 CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
 ArgsHash: TypeAlias = tuple[int, ...]

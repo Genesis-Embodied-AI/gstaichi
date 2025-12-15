@@ -1,6 +1,5 @@
-from typing import TYPE_CHECKING
 from functools import update_wrapper
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 if TYPE_CHECKING:
     from .kernel import Kernel
