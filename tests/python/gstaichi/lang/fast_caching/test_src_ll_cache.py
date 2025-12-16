@@ -10,7 +10,7 @@ import pytest
 import gstaichi as ti
 import gstaichi.lang
 from gstaichi._test_tools import ti_init_same_arch
-from gstaichi.lang.kernel_impl import SrcLlCacheObservations
+from gstaichi.lang.kernel_types import SrcLlCacheObservations
 
 from tests import test_utils
 
