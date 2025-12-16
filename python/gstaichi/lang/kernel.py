@@ -150,7 +150,7 @@ class ASTGenerator:
                 "col_offset": getattr(node, "col_offset", None),
             }
         if isinstance(node, list):
-            return [ast_to_dict(x) for x in node]
+            return [self._ast_to_dict(x) for x in node]
         return node  # Basic types (str, int, None, etc.)
 
 
