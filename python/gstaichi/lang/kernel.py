@@ -28,7 +28,7 @@ from gstaichi.lang.ast import (
     KernelSimplicityASTChecker,
     transform_tree,
 )
-from gstaichi.lang.ast.ast_transformer_utils import ReturnStatus
+from gstaichi.lang.ast.ast_transformer_utils import ReturnStatus, ASTTransformerContext
 from gstaichi.lang.exception import (
     GsTaichiRuntimeTypeError,
     GsTaichiSyntaxError,
@@ -66,6 +66,90 @@ _NONE, _VALIDATION = (
 _FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = _KernelBatchedArgType
 
 
+class ASTGenerator:
+    def __init__(self, ctx: ASTTransformerContext, kernel_name: str, current_kernel: "Kernel",
+                 only_parse_function_def: bool, tree: ast.Module,
+                 used_py_dataclass_parameters: set[str] | None,
+                 dump_ast: bool,
+        ) -> None:
+        self.runtime = impl.get_runtime()
+        self.current_kernel = current_kernel
+        self.ctx = ctx
+        self.kernel_name = kernel_name
+        self.tree = tree
+        self.only_parse_function_def = only_parse_function_def
+        self.used_py_dataclass_parameters = used_py_dataclass_parameters
+        self.dump_ast = dump_ast
+
+    # Do not change the name of 'gstaichi_ast_generator'
+    # The warning system needs this identifier to remove unnecessary messages
+    def __call__(self, kernel_cxx: KernelCxx):
+        # nonlocal tree, used_py_dataclass_parameters
+        if self.runtime.inside_kernel:
+            raise GsTaichiSyntaxError(
+                "Kernels cannot call other kernels. I.e., nested kernels are not allowed. "
+                "Please check if you have direct/indirect invocation of kernels within kernels. "
+                "Note that some methods provided by the GsTaichi standard library may invoke kernels, "
+                "and please move their invocations to Python-scope."
+            )
+        self.current_kernel.kernel_cpp = kernel_cxx
+        ctx = self.ctx
+        self.runtime.inside_kernel = True
+        self.runtime._current_kernel = self.current_kernel
+        assert self.runtime._compiling_callable is None
+        self.runtime._compiling_callable = kernel_cxx
+        try:
+            ctx.ast_builder = kernel_cxx.ast_builder()
+
+            def ast_to_dict(node: ast.AST | list | primitive_types._python_primitive_types):
+                if isinstance(node, ast.AST):
+                    fields = {k: ast_to_dict(v) for k, v in ast.iter_fields(node)}
+                    return {
+                        "type": node.__class__.__name__,
+                        "fields": fields,
+                        "lineno": getattr(node, "lineno", None),
+                        "col_offset": getattr(node, "col_offset", None),
+                    }
+                if isinstance(node, list):
+                    return [ast_to_dict(x) for x in node]
+                return node  # Basic types (str, int, None, etc.)
+
+            if self.dump_ast:
+                target_dir = pathlib.Path("/tmp/ast")
+                target_dir.mkdir(parents=True, exist_ok=True)
+
+                start = time.time()
+                ast_str = ast.dump(self.tree, indent=2)
+                output_file = target_dir / f"{self.kernel_name}_ast_.txt"
+                output_file.write_text(ast_str)
+                elapsed_txt = time.time() - start
+
+                start = time.time()
+                json_str = json.dumps(ast_to_dict(self.tree), indent=2)
+                output_file = target_dir / f"{self.kernel_name}_ast.json"
+                output_file.write_text(json_str)
+                elapsed_json = time.time() - start
+
+                output_file = target_dir / f"{self.kernel_name}_gen_time.json"
+                output_file.write_text(
+                    json.dumps({"elapsed_txt": elapsed_txt, "elapsed_json": elapsed_json}, indent=2)
+                )
+            if not self.used_py_dataclass_parameters:
+                struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
+            else:
+                struct_locals = self.used_py_dataclass_parameters
+            tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(self.tree, struct_locals=struct_locals)
+            ctx.only_parse_function_def = self.only_parse_function_def
+            transform_tree(tree, ctx)
+            if not ctx.is_real_function and not ctx.only_parse_function_def:
+                if self.current_kernel.return_type and ctx.returned != ReturnStatus.ReturnedValue:
+                    raise GsTaichiSyntaxError("Kernel has a return type but does not have a return statement")
+        finally:
+            self.current_kernel.runtime.inside_kernel = False
+            self.current_kernel.runtime._current_kernel = None
+            self.current_kernel.runtime._compiling_callable = None
+
+
 class Kernel(FuncBase):
     counter = 0
 
@@ -90,7 +174,7 @@ class Kernel(FuncBase):
         self.grad: "Kernel | None" = None
         impl.get_runtime().kernels.append(self)
         self.reset()
-        self.kernel_cpp = None
+        self.kernel_cpp: None | KernelCxx = None
         # A materialized kernel is a KernelCxx object which may or may not have
         # been compiled. It generally has been converted at least as far as AST
         # and front-end IR, but not necessarily any further.
@@ -216,74 +300,16 @@ class Kernel(FuncBase):
             if self.autodiff_mode != _NONE:
                 KernelSimplicityASTChecker(self.func).visit(tree)
 
-            # Do not change the name of 'gstaichi_ast_generator'
-            # The warning system needs this identifier to remove unnecessary messages
-            def gstaichi_ast_generator(kernel_cxx: KernelCxx):
-                nonlocal tree, used_py_dataclass_parameters
-                if self.runtime.inside_kernel:
-                    raise GsTaichiSyntaxError(
-                        "Kernels cannot call other kernels. I.e., nested kernels are not allowed. "
-                        "Please check if you have direct/indirect invocation of kernels within kernels. "
-                        "Note that some methods provided by the GsTaichi standard library may invoke kernels, "
-                        "and please move their invocations to Python-scope."
-                    )
-                self.kernel_cpp = kernel_cxx
-                self.runtime.inside_kernel = True
-                self.runtime._current_kernel = self
-                assert self.runtime._compiling_callable is None
-                self.runtime._compiling_callable = kernel_cxx
-                try:
-                    ctx.ast_builder = kernel_cxx.ast_builder()
-
-                    def ast_to_dict(node: ast.AST | list | primitive_types._python_primitive_types):
-                        if isinstance(node, ast.AST):
-                            fields = {k: ast_to_dict(v) for k, v in ast.iter_fields(node)}
-                            return {
-                                "type": node.__class__.__name__,
-                                "fields": fields,
-                                "lineno": getattr(node, "lineno", None),
-                                "col_offset": getattr(node, "col_offset", None),
-                            }
-                        if isinstance(node, list):
-                            return [ast_to_dict(x) for x in node]
-                        return node  # Basic types (str, int, None, etc.)
-
-                    if os.environ.get("TI_DUMP_AST", "") == "1" and _pass == 1:
-                        target_dir = pathlib.Path("/tmp/ast")
-                        target_dir.mkdir(parents=True, exist_ok=True)
-
-                        start = time.time()
-                        ast_str = ast.dump(tree, indent=2)
-                        output_file = target_dir / f"{kernel_name}_ast_.txt"
-                        output_file.write_text(ast_str)
-                        elapsed_txt = time.time() - start
-
-                        start = time.time()
-                        json_str = json.dumps(ast_to_dict(tree), indent=2)
-                        output_file = target_dir / f"{kernel_name}_ast.json"
-                        output_file.write_text(json_str)
-                        elapsed_json = time.time() - start
-
-                        output_file = target_dir / f"{kernel_name}_gen_time.json"
-                        output_file.write_text(
-                            json.dumps({"elapsed_txt": elapsed_txt, "elapsed_json": elapsed_json}, indent=2)
-                        )
-                    if not used_py_dataclass_parameters:
-                        struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
-                    else:
-                        struct_locals = used_py_dataclass_parameters
-                    tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
-                    ctx.only_parse_function_def = self.compiled_kernel_data_by_key.get(key) is not None
-                    transform_tree(tree, ctx)
-                    if not ctx.is_real_function and not ctx.only_parse_function_def:
-                        if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
-                            raise GsTaichiSyntaxError("Kernel has a return type but does not have a return statement")
-                    used_py_dataclass_parameters = self.used_py_dataclass_leaves_by_key_collecting[key]
-                finally:
-                    self.runtime.inside_kernel = False
-                    self.runtime._current_kernel = None
-                    self.runtime._compiling_callable = None
-
+            gstaichi_ast_generator = ASTGenerator(
+                ctx=ctx,
+                kernel_name=kernel_name,
+                current_kernel=self,
+                only_parse_function_def=self.compiled_kernel_data_by_key.get(key) is not None,
+                tree=tree,
+                used_py_dataclass_parameters=used_py_dataclass_parameters,
+                dump_ast=os.environ.get("TI_DUMP_AST", "") == "1" and _pass == 1,
+            )
+            used_py_dataclass_parameters = self.used_py_dataclass_leaves_by_key_collecting[key]
             gstaichi_kernel = impl.get_runtime().prog.create_kernel(
                 gstaichi_ast_generator, kernel_name, self.autodiff_mode
             )
@@ -424,29 +450,6 @@ class Kernel(FuncBase):
                 prog_device_cap = prog.get_device_caps()
 
                 compile_result: CompileResult = prog.compile_kernel(prog_config, prog_device_cap, t_kernel)
-                if self._dump_kernel_checksums:
-                    debug_dump_path = pathlib.Path(impl.current_cfg().debug_dump_path)
-                    checksums_file_path = debug_dump_path / "checksums.csv"
-                    kernels_dump_dir = debug_dump_path / "kernels"
-                    file_exists = checksums_file_path.exists()
-                    if self.fast_checksum:
-                        with checksums_file_path.open("a") as f:
-                            dict_writer = csv.DictWriter(f, fieldnames=["kernel", "fe", "src"])
-                            if not file_exists:
-                                dict_writer.writeheader()
-                            dict_writer.writerow(
-                                {
-                                    "kernel": self.func.__name__,
-                                    "fe": compile_result.cache_key,
-                                    "src": self.fast_checksum,
-                                }
-                            )
-                            f.flush()
-                        kernels_dump_dir.mkdir(exist_ok=True)
-                        ch_ir_path = kernels_dump_dir / f"{compile_result.cache_key}.ll"
-                        if not ch_ir_path.exists() and self.kernel_cpp:
-                            with ch_ir_path.open("w") as f:
-                                f.write(self.kernel_cpp.to_string())
                 compiled_kernel_data = compile_result.compiled_kernel_data
                 if compile_result.cache_hit:
                     self.fe_ll_cache_observations.cache_hit = True
