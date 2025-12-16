@@ -393,7 +393,13 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">autodiff_mode</span><span class="p">:</span> <span class="n">AutodiffMode</span><span class="p">,</span> <span class="n">_is_classkernel</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">_func</span><span class="p">,</span> <span class="n">is_classfunc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_kernel</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_classkernel</span><span class="o">=</span><span class="n">_is_classkernel</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">func</span><span class="o">=</span><span class="n">_func</span><span class="p">,</span>
+            <span class="n">is_classfunc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">is_kernel</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">is_classkernel</span><span class="o">=</span><span class="n">_is_classkernel</span><span class="p">,</span>
+            <span class="n">is_real_function</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="c1"># self.func = _func</span>
 <div class="viewcode-block" id="Kernel.kernel_counter">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.kernel_counter">[docs]</a>
@@ -578,8 +584,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing_dotted</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
                     <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;__ti_&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:])</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">used_py_dataclass_leaves_by_key_enforcing</span><span class="p">]</span>
                 <span class="p">)</span>
-            <span class="n">tree</span><span class="p">,</span> <span class="n">ctx</span> <span class="o">=</span> <span class="n">kernel_impl</span><span class="o">.</span><span class="n">get_tree_and_ctx</span><span class="p">(</span>
-                <span class="bp">self</span><span class="p">,</span>
+            <span class="n">tree</span><span class="p">,</span> <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tree_and_ctx</span><span class="p">(</span>
                 <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
                 <span class="n">excluded_parameters</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">template_slot_locations</span><span class="p">,</span>
                 <span class="n">arg_features</span><span class="o">=</span><span class="n">arg_features</span><span class="p">,</span>
@@ -732,7 +737,7 @@
                     <span class="n">template_num</span> <span class="o">+=</span> <span class="mi">1</span>
                     <span class="n">i_out</span> <span class="o">+=</span> <span class="mi">1</span>
                     <span class="k">continue</span>
-                <span class="n">num_args_</span><span class="p">,</span> <span class="n">is_launch_ctx_cacheable_</span> <span class="o">=</span> <span class="n">kernel_impl</span><span class="o">.</span><span class="n">recursive_set_args</span><span class="p">(</span>
+                <span class="n">num_args_</span><span class="p">,</span> <span class="n">is_launch_ctx_cacheable_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recursive_set_args</span><span class="p">(</span>
                     <span class="n">used_py_dataclass_parameters_enforcing_dotted</span><span class="p">,</span>
                     <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">[</span><span class="n">i_in</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">,),</span>
                     <span class="n">launch_ctx</span><span class="p">,</span>
@@ -892,7 +897,7 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">raise_on_templated_floats</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span><span class="o">.</span><span class="n">raise_on_templated_floats</span>
 
-        <span class="n">args</span> <span class="o">=</span> <span class="n">kernel_impl</span><span class="o">.</span><span class="n">process_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_func</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_pyfunc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_args</span><span class="p">(</span><span class="n">is_func</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_pyfunc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="c1"># Transform the primal kernel to forward mode grad kernel</span>
         <span class="c1"># then recover to primal when exiting the forward mode manager</span>
