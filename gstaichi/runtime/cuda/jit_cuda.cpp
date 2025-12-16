@@ -91,7 +91,7 @@ JITModule *JITSessionCUDA::add_module(std::unique_ptr<llvm::Module> M,
                                       int max_reg) {
   const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
   if (dump_ir_env != nullptr && std::string(dump_ir_env) == "1") {
-    std::filesystem::path ir_dump_dir = config.get_debug_dump_path();
+    std::filesystem::path ir_dump_dir = config.debug_dump_path;
     std::filesystem::create_directories(ir_dump_dir);
     std::string dumpName = moduleToDumpName(M.get());
     std::filesystem::path filename =
