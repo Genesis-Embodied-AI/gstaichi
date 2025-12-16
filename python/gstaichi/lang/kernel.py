@@ -378,6 +378,13 @@ class Kernel:
                 assert key not in self.materialized_kernels
                 self.materialized_kernels[key] = gstaichi_kernel
 
+    def _destroy_callback(self, kernel_ref: ReferenceType["Kernel"], ref: ReferenceType):
+        maybe_kernel = kernel_ref()
+        if maybe_kernel is not None:
+            maybe_kernel._launch_ctx_cache.clear()
+            maybe_kernel._launch_ctx_cache_tracker.clear()
+            maybe_kernel._prog_weakref = None
+
     def launch_kernel(self, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
         assert len(args) == len(self.arg_metas), f"{len(self.arg_metas)} arguments needed but {len(args)} provided"
 
@@ -385,7 +392,7 @@ class Kernel:
         if self._prog_weakref is None:
             prog = impl.get_runtime().prog
             assert prog is not None
-            self._prog_weakref = ReferenceType(prog, partial(kernel_impl.destroy_callback, ReferenceType(self)))
+            self._prog_weakref = ReferenceType(prog, partial(self._destroy_callback, ReferenceType(self)))
         else:
             # Since we already store a weak reference to taichi program, it is much faster to use it rather than
             # paying the overhead of calling pybind11 functions (~200ns vs 5ns).
