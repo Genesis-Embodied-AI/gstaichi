@@ -77,7 +77,8 @@ JITSessionCUDA::JITSessionCUDA(GsTaichiLLVMContext *tlctx,
                                ProgramImpl *program_impl)
     : JITSession(tlctx, config),
       data_layout(data_layout),
-      program_impl_(program_impl) {
+      program_impl_(program_impl),
+      config(config) {
   PtxCache::Config ptx_cache_config;
   ptx_cache_config.offline_cache_path = config.offline_cache_file_path;
   ptx_cache_ = std::make_unique<PtxCache>(ptx_cache_config, config);
@@ -90,10 +91,11 @@ JITModule *JITSessionCUDA::add_module(std::unique_ptr<llvm::Module> M,
                                       int max_reg) {
   const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
   if (dump_ir_env != nullptr && std::string(dump_ir_env) == "1") {
-    std::filesystem::create_directories(IR_DUMP_DIR);
+    std::filesystem::path ir_dump_dir = config.get_debug_dump_path();
+    std::filesystem::create_directories(ir_dump_dir);
     std::string dumpName = moduleToDumpName(M.get());
     std::filesystem::path filename =
-        IR_DUMP_DIR / (dumpName + "_before_ptx.ll");
+        ir_dump_dir / (dumpName + "_before_ptx.ll");
     std::error_code EC;
     llvm::raw_fd_ostream dest_file(filename.string(), EC);
     if (!EC) {
