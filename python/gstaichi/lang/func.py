@@ -32,6 +32,7 @@ from gstaichi.types import (
     template,
 )
 from gstaichi.types.enums import AutodiffMode
+from .func_base import FuncBase
 
 from . import kernel_impl
 from .kernel import Kernel
@@ -43,22 +44,23 @@ MAX_ARG_NUM = 512
 _NONE = AutodiffMode.NONE
 
 
-class Func:
+class Func(FuncBase):
     function_counter = 0
 
     def __init__(self, _func: Callable, _classfunc=False, _pyfunc=False, is_real_function=False) -> None:
         # print("*** Func.__init__()", _func, self)
-        self.func = _func
+        super().__init__(func=_func, is_kernel=False, is_classkernel=False)
+        # self.func = _func
         self.func_id = Func.function_counter
         Func.function_counter += 1
         self.compiled: dict[int, Callable] = {}  # only for real funcs
         self.classfunc = _classfunc
         self.pyfunc = _pyfunc
         self.is_real_function = is_real_function
-        self.arg_metas: list[ArgMetadata] = []
-        self.arg_metas_expanded: list[ArgMetadata] = []
-        self.orig_arguments: list[ArgMetadata] = []
-        self.return_type: tuple[Type, ...] | None = None
+        # self.arg_metas: list[ArgMetadata] = []
+        # self.arg_metas_expanded: list[ArgMetadata] = []
+        # self.orig_arguments: list[ArgMetadata] = []
+        # self.return_type: tuple[Type, ...] | None = None
         self.cxx_function_by_id: dict[int, FunctionCxx] = {}
         self.has_print = False
         # Used during compilation. Assumes only one compilation at a time (single-threaded).
@@ -72,13 +74,9 @@ class Func:
         self.used_py_dataclass_parameters: set[str] = set()
         # self.used_py_dataclass_parameters_enforcing: set[str] | None = None
 
-        self.check_parameter_annotations()
+        # self.check_parameter_annotations()
 
-        self.template_slot_locations: list[int] = []
-        for i, arg in enumerate(self.arg_metas):
-            if arg.annotation == template or isinstance(arg.annotation, template):
-                self.template_slot_locations.append(i)
-        self.mapper = TemplateMapper(self.arg_metas, self.template_slot_locations)
+        # self.mapper = TemplateMapper(self.arg_metas, self.template_slot_locations)
 
     def __call__(self: "Func", *args, **kwargs) -> Any:
         # print("*** Func.__call__", self.func, self)

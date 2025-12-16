@@ -65,6 +65,7 @@ from .kernel_types import (
     SrcLlCacheObservations,
     _KernelBatchedArgType,
 )
+from .func_base import FuncBase
 
 CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
 ArgsHash: TypeAlias = tuple[int, ...]
@@ -77,11 +78,12 @@ _NONE, _VALIDATION = (
 _FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = _KernelBatchedArgType
 
 
-class Kernel:
+class Kernel(FuncBase):
     counter = 0
 
-    def __init__(self, _func: Callable, autodiff_mode: AutodiffMode, _classkernel=False) -> None:
-        self.func = _func
+    def __init__(self, _func: Callable, autodiff_mode: AutodiffMode, _is_classkernel=False) -> None:
+        super().__init__(func=_func, is_kernel=True, is_classkernel=_is_classkernel)
+        # self.func = _func
         self.kernel_counter = Kernel.counter
         Kernel.counter += 1
         assert autodiff_mode in (
@@ -92,16 +94,13 @@ class Kernel:
         )
         self.autodiff_mode = autodiff_mode
         self.grad: "Kernel | None" = None
-        self.arg_metas: list[ArgMetadata] = []
-        self.arg_metas_expanded: list[ArgMetadata] = []
-        self.return_type = None
-        self.classkernel = _classkernel
-        self.check_parameter_annotations()
-        self.template_slot_locations = []
-        for i, arg in enumerate(self.arg_metas):
-            if arg.annotation == template or isinstance(arg.annotation, template):
-                self.template_slot_locations.append(i)
-        self.mapper = TemplateMapper(self.arg_metas, self.template_slot_locations)
+        # self.classkernel = _classkernel
+        # self.check_parameter_annotations()
+        # self.template_slot_locations = []
+        # for i, arg in enumerate(self.arg_metas):
+        #     if arg.annotation == template or isinstance(arg.annotation, template):
+        #         self.template_slot_locations.append(i)
+        # self.mapper = TemplateMapper(self.arg_metas, self.template_slot_locations)
         impl.get_runtime().kernels.append(self)
         self.reset()
         self.kernel_cpp = None
@@ -160,65 +159,6 @@ class Kernel:
         # self.used_py_dataclass_leaves_by_key_enforcing_dotted = {}
         self.currently_compiling_materialize_key = None
 
-    def check_parameter_annotations(self) -> None:
-        sig = inspect.signature(self.func)
-        if sig.return_annotation not in {inspect._empty, None}:
-            self.return_type = sig.return_annotation
-            if (
-                isinstance(self.return_type, (types.GenericAlias, typing._GenericAlias))  # type: ignore
-                and self.return_type.__origin__ is tuple
-            ):
-                self.return_type = self.return_type.__args__
-            if not isinstance(self.return_type, (list, tuple)):
-                self.return_type = (self.return_type,)
-            for return_type in self.return_type:
-                if return_type is Ellipsis:
-                    raise GsTaichiSyntaxError("Ellipsis is not supported in return type annotations")
-        params = dict(sig.parameters)
-        arg_names = params.keys()
-        for i, arg_name in enumerate(arg_names):
-            param = params[arg_name]
-            if param.kind == inspect.Parameter.VAR_KEYWORD:
-                raise GsTaichiSyntaxError(
-                    "GsTaichi kernels do not support variable keyword parameters (i.e., **kwargs)"
-                )
-            if param.kind == inspect.Parameter.VAR_POSITIONAL:
-                raise GsTaichiSyntaxError(
-                    "GsTaichi kernels do not support variable positional parameters (i.e., *args)"
-                )
-            if param.default is not inspect.Parameter.empty:
-                raise GsTaichiSyntaxError("GsTaichi kernels do not support default values for arguments")
-            if param.kind == inspect.Parameter.KEYWORD_ONLY:
-                raise GsTaichiSyntaxError("GsTaichi kernels do not support keyword parameters")
-            if param.kind != inspect.Parameter.POSITIONAL_OR_KEYWORD:
-                raise GsTaichiSyntaxError('GsTaichi kernels only support "positional or keyword" parameters')
-            annotation = param.annotation
-            if param.annotation is inspect.Parameter.empty:
-                if i == 0 and self.classkernel:  # The |self| parameter
-                    annotation = template()
-                else:
-                    raise GsTaichiSyntaxError("GsTaichi kernels parameters must be type annotated")
-            else:
-                if isinstance(annotation, (template, ndarray_type.NdarrayType)):
-                    pass
-                elif annotation is ndarray_type.NdarrayType:
-                    # convert from ti.types.NDArray into ti.types.NDArray()
-                    annotation = annotation()
-                elif id(annotation) in primitive_types.type_ids:
-                    pass
-                elif isinstance(annotation, sparse_matrix_builder):
-                    pass
-                elif isinstance(annotation, MatrixType):
-                    pass
-                elif isinstance(annotation, StructType):
-                    pass
-                elif annotation is template:
-                    pass
-                elif isinstance(annotation, type) and is_dataclass(annotation):
-                    pass
-                else:
-                    raise GsTaichiSyntaxError(f"Invalid type annotation (argument {i}) of Taichi kernel: {annotation}")
-            self.arg_metas.append(ArgMetadata(annotation, param.name, param.default))
 
     def materialize(self, key: CompiledKernelKeyType | None, args: tuple[Any, ...], arg_features=None):
         if key is None:
