@@ -310,11 +310,7 @@
                 <article class="bd-article">
                   
   <h1>Source code for gstaichi.lang.func</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">types</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">typing</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_dataclass</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Type</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi._lib</span><span class="w"> </span><span class="kn">import</span> <span class="n">core</span> <span class="k">as</span> <span class="n">_ti_core</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi._lib.core.gstaichi_python</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -324,7 +320,6 @@
     <span class="n">FunctionKey</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang</span><span class="w"> </span><span class="kn">import</span> <span class="n">_kernel_impl_dataclass</span><span class="p">,</span> <span class="n">impl</span><span class="p">,</span> <span class="n">ops</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang._template_mapper</span><span class="w"> </span><span class="kn">import</span> <span class="n">TemplateMapper</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.any_array</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnyArray</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.ast</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">transform_tree</span><span class="p">,</span>
@@ -335,7 +330,6 @@
     <span class="n">GsTaichiTypeError</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.expr</span><span class="w"> </span><span class="kn">import</span> <span class="n">Expr</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.kernel_arguments</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArgMetadata</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.matrix</span><span class="w"> </span><span class="kn">import</span> <span class="n">MatrixType</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.struct</span><span class="w"> </span><span class="kn">import</span> <span class="n">StructType</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.types</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -344,16 +338,10 @@
     <span class="n">template</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.types.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutodiffMode</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.func_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">FuncBase</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">kernel_impl</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._func_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">FuncBase</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.kernel</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kernel</span>
-
-<div class="viewcode-block" id="MAX_ARG_NUM">
-<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/func/index.html#gstaichi.lang.func.MAX_ARG_NUM">[docs]</a>
-<span class="n">MAX_ARG_NUM</span> <span class="o">=</span> <span class="mi">512</span></div>
-
-
 
 <span class="c1"># Define proxy for fast lookup</span>
 <span class="n">_NONE</span> <span class="o">=</span> <span class="n">AutodiffMode</span><span class="o">.</span><span class="n">NONE</span>
@@ -368,9 +356,7 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">_classfunc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">_pyfunc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_real_function</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># print(&quot;*** Func.__init__()&quot;, _func, self)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">_func</span><span class="p">,</span> <span class="n">is_classfunc</span><span class="o">=</span><span class="n">_classfunc</span><span class="p">,</span> <span class="n">is_kernel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_classkernel</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-        <span class="c1"># self.func = _func</span>
 <div class="viewcode-block" id="Func.func_id">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/func/index.html#gstaichi.lang.func.Func.func_id">[docs]</a>
         <span class="bp">self</span><span class="o">.</span><span class="n">func_id</span> <span class="o">=</span> <span class="n">Func</span><span class="o">.</span><span class="n">function_counter</span></div>
@@ -392,10 +378,6 @@
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/func/index.html#gstaichi.lang.func.Func.is_real_function">[docs]</a>
         <span class="bp">self</span><span class="o">.</span><span class="n">is_real_function</span> <span class="o">=</span> <span class="n">is_real_function</span></div>
 
-        <span class="c1"># self.arg_metas: list[ArgMetadata] = []</span>
-        <span class="c1"># self.arg_metas_expanded: list[ArgMetadata] = []</span>
-        <span class="c1"># self.orig_arguments: list[ArgMetadata] = []</span>
-        <span class="c1"># self.return_type: tuple[Type, ...] | None = None</span>
 <div class="viewcode-block" id="Func.cxx_function_by_id">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/func/index.html#gstaichi.lang.func.Func.cxx_function_by_id">[docs]</a>
         <span class="bp">self</span><span class="o">.</span><span class="n">cxx_function_by_id</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">FunctionCxx</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span></div>
@@ -409,10 +391,6 @@
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/func/index.html#gstaichi.lang.func.Func.current_kernel">[docs]</a>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span><span class="p">:</span> <span class="n">Kernel</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
-
-        <span class="c1"># self.check_parameter_annotations()</span>
-
-        <span class="c1"># self.mapper = TemplateMapper(self.arg_metas, self.template_slot_locations)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="s2">&quot;Func&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">current_kernel</span> <span class="k">if</span> <span class="n">impl</span><span class="o">.</span><span class="n">inside_kernel</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span>
@@ -538,77 +516,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">cxx_function_by_id</span><span class="p">[</span><span class="n">key</span><span class="o">.</span><span class="n">instance_id</span><span class="p">]</span><span class="o">.</span><span class="n">set_function_body</span><span class="p">(</span><span class="n">func_body</span><span class="p">)</span></div>
 </div>
 
-
-    <span class="c1"># def check_parameter_annotations(self) -&gt; None:</span>
-    <span class="c1">#     &quot;&quot;&quot;</span>
-    <span class="c1">#     Look at annotations of function parameters, and store into self.arg_metas</span>
-    <span class="c1">#     and self.orig_arguments (both are identical after this call)</span>
-    <span class="c1">#     - they just contain the original parameter annotations for now, unexpanded</span>
-    <span class="c1">#     - this function mostly just does checking</span>
-    <span class="c1">#     &quot;&quot;&quot;</span>
-    <span class="c1">#     sig = inspect.signature(self.func)</span>
-    <span class="c1">#     if sig.return_annotation not in (inspect.Signature.empty, None):</span>
-    <span class="c1">#         self.return_type = sig.return_annotation</span>
-    <span class="c1">#         if (</span>
-    <span class="c1">#             isinstance(self.return_type, (types.GenericAlias, typing._GenericAlias))  # type: ignore</span>
-    <span class="c1">#             and self.return_type.__origin__ is tuple  # type: ignore</span>
-    <span class="c1">#         ):</span>
-    <span class="c1">#             self.return_type = self.return_type.__args__  # type: ignore</span>
-    <span class="c1">#         if self.return_type is None:</span>
-    <span class="c1">#             return</span>
-    <span class="c1">#         if not isinstance(self.return_type, (list, tuple)):</span>
-    <span class="c1">#             self.return_type = (self.return_type,)</span>
-    <span class="c1">#         for i, return_type in enumerate(self.return_type):</span>
-    <span class="c1">#             if return_type is Ellipsis:</span>
-    <span class="c1">#                 raise GsTaichiSyntaxError(&quot;Ellipsis is not supported in return type annotations&quot;)</span>
-    <span class="c1">#     params = sig.parameters</span>
-    <span class="c1">#     arg_names = params.keys()</span>
-    <span class="c1">#     for i, arg_name in enumerate(arg_names):</span>
-    <span class="c1">#         param = params[arg_name]</span>
-    <span class="c1">#         if param.kind == inspect.Parameter.VAR_KEYWORD:</span>
-    <span class="c1">#             raise GsTaichiSyntaxError(</span>
-    <span class="c1">#                 &quot;GsTaichi functions do not support variable keyword parameters (i.e., **kwargs)&quot;</span>
-    <span class="c1">#             )</span>
-    <span class="c1">#         if param.kind == inspect.Parameter.VAR_POSITIONAL:</span>
-    <span class="c1">#             raise GsTaichiSyntaxError(</span>
-    <span class="c1">#                 &quot;GsTaichi functions do not support variable positional parameters (i.e., *args)&quot;</span>
-    <span class="c1">#             )</span>
-    <span class="c1">#         if param.kind == inspect.Parameter.KEYWORD_ONLY:</span>
-    <span class="c1">#             raise GsTaichiSyntaxError(&quot;GsTaichi functions do not support keyword parameters&quot;)</span>
-    <span class="c1">#         if param.kind != inspect.Parameter.POSITIONAL_OR_KEYWORD:</span>
-    <span class="c1">#             raise GsTaichiSyntaxError(&#39;GsTaichi functions only support &quot;positional or keyword&quot; parameters&#39;)</span>
-    <span class="c1">#         annotation = param.annotation</span>
-    <span class="c1">#         if annotation is inspect.Parameter.empty:</span>
-    <span class="c1">#             if i == 0 and self.classfunc:</span>
-    <span class="c1">#                 annotation = template()</span>
-    <span class="c1">#             # TODO: pyfunc also need type annotation check when real function is enabled,</span>
-    <span class="c1">#             #       but that has to happen at runtime when we know which scope it&#39;s called from.</span>
-    <span class="c1">#             elif not self.pyfunc and self.is_real_function:</span>
-    <span class="c1">#                 raise GsTaichiSyntaxError(</span>
-    <span class="c1">#                     f&quot;GsTaichi function `{self.func.__name__}` parameter `{arg_name}` must be type annotated&quot;</span>
-    <span class="c1">#                 )</span>
-    <span class="c1">#         else:</span>
-    <span class="c1">#             annotation_type = type(annotation)</span>
-    <span class="c1">#             if annotation_type is ndarray_type.NdarrayType:</span>
-    <span class="c1">#                 pass</span>
-    <span class="c1">#             elif issubclass(annotation_type, MatrixType):</span>
-    <span class="c1">#                 pass</span>
-    <span class="c1">#             elif annotation_type is StructType:</span>
-    <span class="c1">#                 pass</span>
-    <span class="c1">#             elif id(annotation) in primitive_types.type_ids:</span>
-    <span class="c1">#                 pass</span>
-    <span class="c1">#             elif annotation_type is template or annotation is template:</span>
-    <span class="c1">#                 pass</span>
-    <span class="c1">#             elif annotation_type is primitive_types.RefType:</span>
-    <span class="c1">#                 pass</span>
-    <span class="c1">#             elif annotation_type is type and is_dataclass(annotation):</span>
-    <span class="c1">#                 pass</span>
-    <span class="c1">#             else:</span>
-    <span class="c1">#                 raise GsTaichiSyntaxError(</span>
-    <span class="c1">#                     f&quot;Invalid type annotation (argument {i}) of GsTaichi function: {annotation}&quot;</span>
-    <span class="c1">#                 )</span>
-    <span class="c1">#         self.arg_metas.append(ArgMetadata(annotation, param.name, param.default))</span>
-    <span class="c1">#         self.orig_arguments.append(ArgMetadata(annotation, param.name, param.default))</span>
 </pre></div>
 
                 </article>

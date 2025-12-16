@@ -58,7 +58,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/gstaichi/lang/func/index';</script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
-    <link rel="next" title="gstaichi.lang.func_base" href="../func_base/index.html" />
+    <link rel="next" title="gstaichi.lang.impl" href="../impl/index.html" />
     <link rel="prev" title="gstaichi.lang.field" href="../field/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -285,13 +285,10 @@
 <li class="toctree-l3"><a class="reference internal" href="../expr/index.html">gstaichi.lang.expr</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../field/index.html">gstaichi.lang.field</a></li>
 <li class="toctree-l3 current active"><a class="current reference internal" href="#">gstaichi.lang.func</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../func_base/index.html">gstaichi.lang.func_base</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../gstaichi_callable/index.html">gstaichi.lang.gstaichi_callable</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../impl/index.html">gstaichi.lang.impl</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../kernel/index.html">gstaichi.lang.kernel</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../kernel_arguments/index.html">gstaichi.lang.kernel_arguments</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../kernel_impl/index.html">gstaichi.lang.kernel_impl</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../kernel_types/index.html">gstaichi.lang.kernel_types</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../matrix/index.html">gstaichi.lang.matrix</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../matrix_ops/index.html">gstaichi.lang.matrix_ops</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../matrix_ops_utils/index.html">gstaichi.lang.matrix_ops_utils</a></li>
@@ -418,17 +415,6 @@
                   
   <section id="module-gstaichi.lang.func">
 <span id="gstaichi-lang-func"></span><h1>gstaichi.lang.func<a class="headerlink" href="#module-gstaichi.lang.func" title="Link to this heading">#</a></h1>
-<section id="attributes">
-<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">#</a></h2>
-<div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.func.MAX_ARG_NUM" title="gstaichi.lang.func.MAX_ARG_NUM"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MAX_ARG_NUM</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</section>
 <section id="classes">
 <h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
@@ -442,15 +428,10 @@
 </section>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
-<dl class="py data">
-<dt class="sig sig-object py" id="gstaichi.lang.func.MAX_ARG_NUM">
-<span class="sig-prename descclassname"><span class="pre">gstaichi.lang.func.</span></span><span class="sig-name descname"><span class="pre">MAX_ARG_NUM</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">512</span></em><a class="reference internal" href="../../../../_modules/gstaichi/lang/func.html#MAX_ARG_NUM"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.func.MAX_ARG_NUM" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
 <dl class="py class">
 <dt class="sig sig-object py" id="gstaichi.lang.func.Func">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gstaichi.lang.func.</span></span><span class="sig-name descname"><span class="pre">Func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_classfunc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_pyfunc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_real_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/gstaichi/lang/func.html#Func"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.func.Func" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="../func_base/index.html#gstaichi.lang.func_base.FuncBase" title="gstaichi.lang.func_base.FuncBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gstaichi.lang.func_base.FuncBase</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">gstaichi.lang._func_base.FuncBase</span></code></p>
 <p>Base class for Kernels and Funcs</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gstaichi.lang.func.Func.function_counter">
@@ -533,11 +514,11 @@
       </div>
     </a>
     <a class="right-next"
-       href="../func_base/index.html"
+       href="../impl/index.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">gstaichi.lang.func_base</p>
+        <p class="prev-next-title">gstaichi.lang.impl</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -560,10 +541,8 @@
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#attributes">Attributes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.func.MAX_ARG_NUM"><code class="docutils literal notranslate"><span class="pre">MAX_ARG_NUM</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.func.Func"><code class="docutils literal notranslate"><span class="pre">Func</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.func.Func.function_counter"><code class="docutils literal notranslate"><span class="pre">Func.function_counter</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.func.Func.func_id"><code class="docutils literal notranslate"><span class="pre">Func.func_id</span></code></a></li>

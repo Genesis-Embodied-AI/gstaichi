@@ -32,7 +32,7 @@ Module Contents
 
 .. py:class:: Kernel(_func: Callable, autodiff_mode: gstaichi.types.enums.AutodiffMode, _is_classkernel=False)
 
-   Bases: :py:obj:`gstaichi.lang.func_base.FuncBase`
+   Bases: :py:obj:`gstaichi.lang._func_base.FuncBase`
 
 
    Base class for Kernels and Funcs
@@ -72,7 +72,7 @@ Module Contents
 
 
    .. py:attribute:: gstaichi_callable
-      :type:  gstaichi.lang.gstaichi_callable.GsTaichiCallable | None
+      :type:  gstaichi.lang._gstaichi_callable.GsTaichiCallable | None
       :value: None
 
 
@@ -110,11 +110,11 @@ Module Contents
 
 
    .. py:attribute:: src_ll_cache_observations
-      :type:  gstaichi.lang.kernel_types.SrcLlCacheObservations
+      :type:  gstaichi.lang._kernel_types.SrcLlCacheObservations
 
 
    .. py:attribute:: fe_ll_cache_observations
-      :type:  gstaichi.lang.kernel_types.FeLlCacheObservations
+      :type:  gstaichi.lang._kernel_types.FeLlCacheObservations
 
 
    .. py:method:: ast_builder() -> gstaichi._lib.core.gstaichi_python.ASTBuilder

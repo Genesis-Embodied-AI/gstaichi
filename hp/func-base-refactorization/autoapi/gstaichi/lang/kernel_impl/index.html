@@ -58,7 +58,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/gstaichi/lang/kernel_impl/index';</script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
-    <link rel="next" title="gstaichi.lang.kernel_types" href="../kernel_types/index.html" />
+    <link rel="next" title="gstaichi.lang.matrix" href="../matrix/index.html" />
     <link rel="prev" title="gstaichi.lang.kernel_arguments" href="../kernel_arguments/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -285,13 +285,10 @@
 <li class="toctree-l3"><a class="reference internal" href="../expr/index.html">gstaichi.lang.expr</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../field/index.html">gstaichi.lang.field</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../func/index.html">gstaichi.lang.func</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../func_base/index.html">gstaichi.lang.func_base</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../gstaichi_callable/index.html">gstaichi.lang.gstaichi_callable</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../impl/index.html">gstaichi.lang.impl</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../kernel/index.html">gstaichi.lang.kernel</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../kernel_arguments/index.html">gstaichi.lang.kernel_arguments</a></li>
 <li class="toctree-l3 current active"><a class="current reference internal" href="#">gstaichi.lang.kernel_impl</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../kernel_types/index.html">gstaichi.lang.kernel_types</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../matrix/index.html">gstaichi.lang.matrix</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../matrix_ops/index.html">gstaichi.lang.matrix_ops</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../matrix_ops_utils/index.html">gstaichi.lang.matrix_ops_utils</a></li>
@@ -422,13 +419,13 @@
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.kernel_impl.func" title="gstaichi.lang.kernel_impl.func"><code class="xref py py-obj docutils literal notranslate"><span class="pre">func</span></code></a>(→ gstaichi.lang.gstaichi_callable.GsTaichiCallable)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.kernel_impl.func" title="gstaichi.lang.kernel_impl.func"><code class="xref py py-obj docutils literal notranslate"><span class="pre">func</span></code></a>(→ gstaichi.lang._gstaichi_callable.GsTaichiCallable)</p></td>
 <td><p>Marks a function as callable in GsTaichi-scope.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#gstaichi.lang.kernel_impl.real_func" title="gstaichi.lang.kernel_impl.real_func"><code class="xref py py-obj docutils literal notranslate"><span class="pre">real_func</span></code></a>(...)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.kernel_impl.pyfunc" title="gstaichi.lang.kernel_impl.pyfunc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pyfunc</span></code></a>(→ gstaichi.lang.gstaichi_callable.GsTaichiCallable)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.kernel_impl.pyfunc" title="gstaichi.lang.kernel_impl.pyfunc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pyfunc</span></code></a>(→ gstaichi.lang._gstaichi_callable.GsTaichiCallable)</p></td>
 <td><p>Marks a function as callable in both GsTaichi and Python scopes.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#gstaichi.lang.kernel_impl.kernel" title="gstaichi.lang.kernel_impl.kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kernel</span></code></a>(…)</p></td>
@@ -445,7 +442,7 @@
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="gstaichi.lang.kernel_impl.func">
-<span class="sig-prename descclassname"><span class="pre">gstaichi.lang.kernel_impl.</span></span><span class="sig-name descname"><span class="pre">func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_real_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../gstaichi_callable/index.html#gstaichi.lang.gstaichi_callable.GsTaichiCallable" title="gstaichi.lang.gstaichi_callable.GsTaichiCallable"><span class="pre">gstaichi.lang.gstaichi_callable.GsTaichiCallable</span></a></span></span><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel_impl.html#func"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel_impl.func" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">gstaichi.lang.kernel_impl.</span></span><span class="sig-name descname"><span class="pre">func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_real_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">gstaichi.lang._gstaichi_callable.GsTaichiCallable</span></span></span><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel_impl.html#func"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel_impl.func" title="Link to this definition">#</a></dt>
 <dd><p>Marks a function as callable in GsTaichi-scope.</p>
 <p>This decorator transforms a Python function into a GsTaichi one. GsTaichi
 will JIT compile it into native instructions.</p>
@@ -477,12 +474,12 @@ will JIT compile it into native instructions.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="gstaichi.lang.kernel_impl.real_func">
-<span class="sig-prename descclassname"><span class="pre">gstaichi.lang.kernel_impl.</span></span><span class="sig-name descname"><span class="pre">real_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../gstaichi_callable/index.html#gstaichi.lang.gstaichi_callable.GsTaichiCallable" title="gstaichi.lang.gstaichi_callable.GsTaichiCallable"><span class="pre">gstaichi.lang.gstaichi_callable.GsTaichiCallable</span></a></span></span><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel_impl.html#real_func"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel_impl.real_func" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">gstaichi.lang.kernel_impl.</span></span><span class="sig-name descname"><span class="pre">real_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">gstaichi.lang._gstaichi_callable.GsTaichiCallable</span></span></span><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel_impl.html#real_func"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel_impl.real_func" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="gstaichi.lang.kernel_impl.pyfunc">
-<span class="sig-prename descclassname"><span class="pre">gstaichi.lang.kernel_impl.</span></span><span class="sig-name descname"><span class="pre">pyfunc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../gstaichi_callable/index.html#gstaichi.lang.gstaichi_callable.GsTaichiCallable" title="gstaichi.lang.gstaichi_callable.GsTaichiCallable"><span class="pre">gstaichi.lang.gstaichi_callable.GsTaichiCallable</span></a></span></span><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel_impl.html#pyfunc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel_impl.pyfunc" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">gstaichi.lang.kernel_impl.</span></span><span class="sig-name descname"><span class="pre">pyfunc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">gstaichi.lang._gstaichi_callable.GsTaichiCallable</span></span></span><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel_impl.html#pyfunc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel_impl.pyfunc" title="Link to this definition">#</a></dt>
 <dd><p>Marks a function as callable in both GsTaichi and Python scopes.</p>
 <p>When called inside the GsTaichi scope, GsTaichi will JIT compile it into
 native instructions. Otherwise it will be invoked directly as a
@@ -579,11 +576,11 @@ GsTaichi kernels can be defined inside a class.</p>
       </div>
     </a>
     <a class="right-next"
-       href="../kernel_types/index.html"
+       href="../matrix/index.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">gstaichi.lang.kernel_types</p>
+        <p class="prev-next-title">gstaichi.lang.matrix</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

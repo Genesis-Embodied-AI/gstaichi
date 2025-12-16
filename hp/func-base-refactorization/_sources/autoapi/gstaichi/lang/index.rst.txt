@@ -17,13 +17,10 @@ Submodules
    /autoapi/gstaichi/lang/expr/index
    /autoapi/gstaichi/lang/field/index
    /autoapi/gstaichi/lang/func/index
-   /autoapi/gstaichi/lang/func_base/index
-   /autoapi/gstaichi/lang/gstaichi_callable/index
    /autoapi/gstaichi/lang/impl/index
    /autoapi/gstaichi/lang/kernel/index
    /autoapi/gstaichi/lang/kernel_arguments/index
    /autoapi/gstaichi/lang/kernel_impl/index
-   /autoapi/gstaichi/lang/kernel_types/index
    /autoapi/gstaichi/lang/matrix/index
    /autoapi/gstaichi/lang/matrix_ops/index
    /autoapi/gstaichi/lang/matrix_ops_utils/index

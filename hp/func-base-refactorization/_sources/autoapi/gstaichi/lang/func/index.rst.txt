@@ -4,14 +4,6 @@ gstaichi.lang.func
 .. py:module:: gstaichi.lang.func
 
 
-Attributes
-----------
-
-.. autoapisummary::
-
-   gstaichi.lang.func.MAX_ARG_NUM
-
-
 Classes
 -------
 
@@ -23,13 +15,9 @@ Classes
 Module Contents
 ---------------
 
-.. py:data:: MAX_ARG_NUM
-   :value: 512
-
-
 .. py:class:: Func(_func: Callable, _classfunc=False, _pyfunc=False, is_real_function=False)
 
-   Bases: :py:obj:`gstaichi.lang.func_base.FuncBase`
+   Bases: :py:obj:`gstaichi.lang._func_base.FuncBase`
 
 
    Base class for Kernels and Funcs
