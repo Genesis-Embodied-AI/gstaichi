@@ -91,7 +91,7 @@ class FuncBase:
         """
         Look at annotations of function parameters, and store into self.arg_metas
         and self.orig_arguments (both are identical after this call)
-        - they just contain the original parameter annotations for now, unexpanded
+        - they just contain the original parameter annotations after this call, unexpanded
         - this function mostly just does checking
         """
         sig = inspect.signature(self.func)
