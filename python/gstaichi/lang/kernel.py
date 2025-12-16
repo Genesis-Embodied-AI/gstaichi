@@ -1,5 +1,4 @@
 import ast
-import csv
 import json
 import os
 import pathlib
@@ -28,7 +27,7 @@ from gstaichi.lang.ast import (
     KernelSimplicityASTChecker,
     transform_tree,
 )
-from gstaichi.lang.ast.ast_transformer_utils import ReturnStatus, ASTTransformerContext
+from gstaichi.lang.ast.ast_transformer_utils import ASTTransformerContext, ReturnStatus
 from gstaichi.lang.exception import (
     GsTaichiRuntimeTypeError,
     GsTaichiSyntaxError,
@@ -67,11 +66,16 @@ _FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = _KernelBatchedArgType
 
 
 class ASTGenerator:
-    def __init__(self, ctx: ASTTransformerContext, kernel_name: str, current_kernel: "Kernel",
-                 only_parse_function_def: bool, tree: ast.Module,
-                 used_py_dataclass_parameters: set[str] | None,
-                 dump_ast: bool,
-        ) -> None:
+    def __init__(
+        self,
+        ctx: ASTTransformerContext,
+        kernel_name: str,
+        current_kernel: "Kernel",
+        only_parse_function_def: bool,
+        tree: ast.Module,
+        used_py_dataclass_parameters: set[str] | None,
+        dump_ast: bool,
+    ) -> None:
         self.runtime = impl.get_runtime()
         self.current_kernel = current_kernel
         self.ctx = ctx
@@ -100,40 +104,8 @@ class ASTGenerator:
         self.runtime._compiling_callable = kernel_cxx
         try:
             ctx.ast_builder = kernel_cxx.ast_builder()
-
-            def ast_to_dict(node: ast.AST | list | primitive_types._python_primitive_types):
-                if isinstance(node, ast.AST):
-                    fields = {k: ast_to_dict(v) for k, v in ast.iter_fields(node)}
-                    return {
-                        "type": node.__class__.__name__,
-                        "fields": fields,
-                        "lineno": getattr(node, "lineno", None),
-                        "col_offset": getattr(node, "col_offset", None),
-                    }
-                if isinstance(node, list):
-                    return [ast_to_dict(x) for x in node]
-                return node  # Basic types (str, int, None, etc.)
-
             if self.dump_ast:
-                target_dir = pathlib.Path("/tmp/ast")
-                target_dir.mkdir(parents=True, exist_ok=True)
-
-                start = time.time()
-                ast_str = ast.dump(self.tree, indent=2)
-                output_file = target_dir / f"{self.kernel_name}_ast_.txt"
-                output_file.write_text(ast_str)
-                elapsed_txt = time.time() - start
-
-                start = time.time()
-                json_str = json.dumps(ast_to_dict(self.tree), indent=2)
-                output_file = target_dir / f"{self.kernel_name}_ast.json"
-                output_file.write_text(json_str)
-                elapsed_json = time.time() - start
-
-                output_file = target_dir / f"{self.kernel_name}_gen_time.json"
-                output_file.write_text(
-                    json.dumps({"elapsed_txt": elapsed_txt, "elapsed_json": elapsed_json}, indent=2)
-                )
+                self._dump_ast()
             if not self.used_py_dataclass_parameters:
                 struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
             else:
@@ -148,6 +120,38 @@ class ASTGenerator:
             self.current_kernel.runtime.inside_kernel = False
             self.current_kernel.runtime._current_kernel = None
             self.current_kernel.runtime._compiling_callable = None
+
+    def _dump_ast(self) -> None:
+        target_dir = pathlib.Path("/tmp/ast")
+        target_dir.mkdir(parents=True, exist_ok=True)
+
+        start = time.time()
+        ast_str = ast.dump(self.tree, indent=2)
+        output_file = target_dir / f"{self.kernel_name}_ast_.txt"
+        output_file.write_text(ast_str)
+        elapsed_txt = time.time() - start
+
+        start = time.time()
+        json_str = json.dumps(self._ast_to_dict(self.tree), indent=2)
+        output_file = target_dir / f"{self.kernel_name}_ast.json"
+        output_file.write_text(json_str)
+        elapsed_json = time.time() - start
+
+        output_file = target_dir / f"{self.kernel_name}_gen_time.json"
+        output_file.write_text(json.dumps({"elapsed_txt": elapsed_txt, "elapsed_json": elapsed_json}, indent=2))
+
+    def _ast_to_dict(self, node: ast.AST | list | primitive_types._python_primitive_types):
+        if isinstance(node, ast.AST):
+            fields = {k: self._ast_to_dict(v) for k, v in ast.iter_fields(node)}
+            return {
+                "type": node.__class__.__name__,
+                "fields": fields,
+                "lineno": getattr(node, "lineno", None),
+                "col_offset": getattr(node, "col_offset", None),
+            }
+        if isinstance(node, list):
+            return [ast_to_dict(x) for x in node]
+        return node  # Basic types (str, int, None, etc.)
 
 
 class Kernel(FuncBase):
@@ -223,20 +227,9 @@ class Kernel(FuncBase):
         self.used_py_dataclass_leaves_by_key_enforcing_dotted = {}
         self.currently_compiling_materialize_key = None
 
-    def materialize(self, key: CompiledKernelKeyType | None, args: tuple[Any, ...], arg_features=None):
-        if key is None:
-            key = (self.func, 0, self.autodiff_mode)
-        self.runtime.materialize()
-        self.fast_checksum = None
-
-        self.currently_compiling_materialize_key = key
-
-        if key in self.materialized_kernels:
-            return
-
-        used_py_dataclass_parameters: set[str] | None = None
+    def _try_load_fastcache(self, args: tuple[Any, ...], key: CompiledKernelKeyType) -> set[str] | None:
         frontend_cache_key: str | None = None
-
+        used_py_dataclass_parameters: set[str] | None = None
         if self.runtime.src_ll_cache and self.gstaichi_callable and self.gstaichi_callable.is_pure:
             kernel_source_info, _src = get_source_info_and_src(self.func)
             self.fast_checksum = src_hasher.create_cache_key(
@@ -268,6 +261,20 @@ class Kernel(FuncBase):
             # this is only printed when ti.init(print_non_pure=..) is True. And it is
             # confusing to set that to True, and see nothing printed.
             print(f"[NOT_PURE] Debug information: not pure: {self.func.__name__}")
+        return used_py_dataclass_parameters
+
+    def materialize(self, key: CompiledKernelKeyType | None, args: tuple[Any, ...], arg_features=None):
+        if key is None:
+            key = (self.func, 0, self.autodiff_mode)
+        self.runtime.materialize()
+        self.fast_checksum = None
+
+        self.currently_compiling_materialize_key = key
+
+        if key in self.materialized_kernels:
+            return
+
+        used_py_dataclass_parameters = self._try_load_fastcache(args, key)
 
         kernel_name = f"{self.func.__name__}_c{self.kernel_counter}_{key[1]}"
         _logging.trace(f"Materializing kernel {kernel_name} in {self.autodiff_mode}...")
