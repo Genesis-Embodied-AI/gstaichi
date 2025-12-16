@@ -2729,10 +2729,11 @@ LLVMCompiledTask TaskCodeGenLLVM::run_compilation() {
       tlctx->mark_function_as_amdgpu_kernel(func);
     }
   }
+  std::filesystem::path ir_dump_dir = compile_config.debug_dump_path;
   if (get_environ_config(DUMP_IR_ENV.data())) {
-    std::filesystem::create_directories(IR_DUMP_DIR);
+    std::filesystem::create_directories(ir_dump_dir);
 
-    std::filesystem::path filename = IR_DUMP_DIR / (kernel->name + "_llvm.ll");
+    std::filesystem::path filename = ir_dump_dir / (kernel->name + "_llvm.ll");
     std::error_code EC;
     llvm::raw_fd_ostream dest_file(filename.string(), EC);
     if (!EC) {
@@ -2741,7 +2742,7 @@ LLVMCompiledTask TaskCodeGenLLVM::run_compilation() {
   }
 
   if (get_environ_config(LOAD_IR_ENV.data())) {
-    std::filesystem::path filename = IR_DUMP_DIR / (kernel->name + "_llvm.ll");
+    std::filesystem::path filename = ir_dump_dir / (kernel->name + "_llvm.ll");
     llvm::SMDiagnostic err;
     auto loaded_module =
         llvm::parseAssemblyFile(filename.string(), err, *llvm_context);

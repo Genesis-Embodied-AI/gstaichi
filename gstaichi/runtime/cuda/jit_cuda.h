@@ -85,6 +85,7 @@ class JITSessionCUDA : public JITSession {
   std::unique_ptr<PtxCache> ptx_cache_;
   ProgramImpl *program_impl_;
   std::unique_ptr<Finalizer> finalizer_;
+  const CompileConfig &config;
 };
 
 #endif

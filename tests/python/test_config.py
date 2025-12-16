@@ -36,13 +36,14 @@ def config_debug_dump_path_child(args: list[str]) -> None:
 def test_config_debug_dump_path(specify_path: bool, tmp_path: pathlib.Path):
     if not specify_path and sys.platform == "win32":
         pytest.skip("Default debug_dump_path for windows not supported")
+    tmp_path.mkdir(exist_ok=True)
     assert ti.lang is not None
     arch = ti.lang.impl.current_cfg().arch.name
     cmd_line = [sys.executable, __file__, config_debug_dump_path_child.__name__, arch, str(tmp_path), str(specify_path)]
     print(cmd_line)
     env = dict(os.environ)
     env["PYTHONPATH"] = "."
-    env["TI_DUMP_KERNEL_CHECKSUMS"] = "1"
+    env["TI_DUMP_IR"] = "1"
     proc = subprocess.run(
         cmd_line,
         capture_output=True,
@@ -56,7 +57,12 @@ def test_config_debug_dump_path(specify_path: bool, tmp_path: pathlib.Path):
         print(proc.stderr)
     assert proc.returncode == RET_SUCCESS
     if specify_path:
+        print("tmp_path", tmp_path)
+        os.system(f"ls {tmp_path}")
         assert len(list(tmp_path.glob("*"))) > 0
+    else:
+        os.system(f"ls /tmp/ir")
+        assert len(list(pathlib.Path("/tmp/ir").glob("*"))) > 0
 
 
 # The following lines are critical for the tests to work. If they are missing, the test will
