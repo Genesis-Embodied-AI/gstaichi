@@ -26,10 +26,6 @@ if TYPE_CHECKING:
 AutodiffMode = _ti_core.AutodiffMode
 
 
-if TYPE_CHECKING:
-    pass
-
-
 class Builder:
     def __call__(self, ctx: "ASTTransformerContext", node: ast.AST):
         method_name = "build_" + node.__class__.__name__
