@@ -311,7 +311,6 @@
                   
   <h1>Source code for gstaichi.lang.kernel</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">ast</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span>
@@ -340,7 +339,7 @@
     <span class="n">KernelSimplicityASTChecker</span><span class="p">,</span>
     <span class="n">transform_tree</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.ast.ast_transformer_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReturnStatus</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.ast.ast_transformer_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ASTTransformerContext</span><span class="p">,</span> <span class="n">ReturnStatus</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.exception</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">GsTaichiRuntimeTypeError</span><span class="p">,</span>
     <span class="n">GsTaichiSyntaxError</span><span class="p">,</span>
@@ -384,6 +383,122 @@
 <span class="n">_FLOAT</span><span class="p">,</span> <span class="n">_INT</span><span class="p">,</span> <span class="n">_UINT</span><span class="p">,</span> <span class="n">_TI_ARRAY</span><span class="p">,</span> <span class="n">_TI_ARRAY_WITH_GRAD</span> <span class="o">=</span> <span class="n">_KernelBatchedArgType</span>
 
 
+<div class="viewcode-block" id="ASTGenerator">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.ASTGenerator">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ASTGenerator</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">ASTTransformerContext</span><span class="p">,</span>
+        <span class="n">kernel_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">current_kernel</span><span class="p">:</span> <span class="s2">&quot;Kernel&quot;</span><span class="p">,</span>
+        <span class="n">only_parse_function_def</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">tree</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
+        <span class="n">used_py_dataclass_parameters</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dump_ast</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="ASTGenerator.runtime">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.ASTGenerator.runtime">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ASTGenerator.current_kernel">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.ASTGenerator.current_kernel">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span> <span class="o">=</span> <span class="n">current_kernel</span></div>
+
+<div class="viewcode-block" id="ASTGenerator.ctx">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.ASTGenerator.ctx">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ctx</span> <span class="o">=</span> <span class="n">ctx</span></div>
+
+<div class="viewcode-block" id="ASTGenerator.kernel_name">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.ASTGenerator.kernel_name">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kernel_name</span> <span class="o">=</span> <span class="n">kernel_name</span></div>
+
+<div class="viewcode-block" id="ASTGenerator.tree">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.ASTGenerator.tree">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tree</span> <span class="o">=</span> <span class="n">tree</span></div>
+
+<div class="viewcode-block" id="ASTGenerator.only_parse_function_def">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.ASTGenerator.only_parse_function_def">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">only_parse_function_def</span> <span class="o">=</span> <span class="n">only_parse_function_def</span></div>
+
+<div class="viewcode-block" id="ASTGenerator.used_py_dataclass_parameters">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.ASTGenerator.used_py_dataclass_parameters">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters</span> <span class="o">=</span> <span class="n">used_py_dataclass_parameters</span></div>
+
+<div class="viewcode-block" id="ASTGenerator.dump_ast">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.ASTGenerator.dump_ast">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dump_ast</span> <span class="o">=</span> <span class="n">dump_ast</span></div>
+
+
+    <span class="c1"># Do not change the name of &#39;gstaichi_ast_generator&#39;</span>
+    <span class="c1"># The warning system needs this identifier to remove unnecessary messages</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kernel_cxx</span><span class="p">:</span> <span class="n">KernelCxx</span><span class="p">):</span>
+        <span class="c1"># nonlocal tree, used_py_dataclass_parameters</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">inside_kernel</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span>
+                <span class="s2">&quot;Kernels cannot call other kernels. I.e., nested kernels are not allowed. &quot;</span>
+                <span class="s2">&quot;Please check if you have direct/indirect invocation of kernels within kernels. &quot;</span>
+                <span class="s2">&quot;Note that some methods provided by the GsTaichi standard library may invoke kernels, &quot;</span>
+                <span class="s2">&quot;and please move their invocations to Python-scope.&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span><span class="o">.</span><span class="n">kernel_cpp</span> <span class="o">=</span> <span class="n">kernel_cxx</span>
+        <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctx</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">inside_kernel</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">_current_kernel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">_compiling_callable</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">_compiling_callable</span> <span class="o">=</span> <span class="n">kernel_cxx</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span> <span class="o">=</span> <span class="n">kernel_cxx</span><span class="o">.</span><span class="n">ast_builder</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dump_ast</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_dump_ast</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters</span><span class="p">:</span>
+                <span class="n">struct_locals</span> <span class="o">=</span> <span class="n">_kernel_impl_dataclass</span><span class="o">.</span><span class="n">extract_struct_locals_from_context</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">struct_locals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters</span>
+            <span class="n">tree</span> <span class="o">=</span> <span class="n">_kernel_impl_dataclass</span><span class="o">.</span><span class="n">unpack_ast_struct_expressions</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tree</span><span class="p">,</span> <span class="n">struct_locals</span><span class="o">=</span><span class="n">struct_locals</span><span class="p">)</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">only_parse_function_def</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">only_parse_function_def</span>
+            <span class="n">transform_tree</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ctx</span><span class="o">.</span><span class="n">is_real_function</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ctx</span><span class="o">.</span><span class="n">only_parse_function_def</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span><span class="o">.</span><span class="n">return_type</span> <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">returned</span> <span class="o">!=</span> <span class="n">ReturnStatus</span><span class="o">.</span><span class="n">ReturnedValue</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="s2">&quot;Kernel has a return type but does not have a return statement&quot;</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">inside_kernel</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">_current_kernel</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">_compiling_callable</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_dump_ast</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">target_dir</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/tmp/ast&quot;</span><span class="p">)</span>
+        <span class="n">target_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">ast_str</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tree</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">output_file</span> <span class="o">=</span> <span class="n">target_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_name</span><span class="si">}</span><span class="s2">_ast_.txt&quot;</span>
+        <span class="n">output_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">ast_str</span><span class="p">)</span>
+        <span class="n">elapsed_txt</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">json_str</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ast_to_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tree</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">output_file</span> <span class="o">=</span> <span class="n">target_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_name</span><span class="si">}</span><span class="s2">_ast.json&quot;</span>
+        <span class="n">output_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json_str</span><span class="p">)</span>
+        <span class="n">elapsed_json</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+
+        <span class="n">output_file</span> <span class="o">=</span> <span class="n">target_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_name</span><span class="si">}</span><span class="s2">_gen_time.json&quot;</span>
+        <span class="n">output_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">&quot;elapsed_txt&quot;</span><span class="p">:</span> <span class="n">elapsed_txt</span><span class="p">,</span> <span class="s2">&quot;elapsed_json&quot;</span><span class="p">:</span> <span class="n">elapsed_json</span><span class="p">},</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_ast_to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">AST</span> <span class="o">|</span> <span class="nb">list</span> <span class="o">|</span> <span class="n">primitive_types</span><span class="o">.</span><span class="n">_python_primitive_types</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">AST</span><span class="p">):</span>
+            <span class="n">fields</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ast_to_dict</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">iter_fields</span><span class="p">(</span><span class="n">node</span><span class="p">)}</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">node</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="n">fields</span><span class="p">,</span>
+                <span class="s2">&quot;lineno&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;lineno&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                <span class="s2">&quot;col_offset&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;col_offset&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="p">}</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_ast_to_dict</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">node</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">node</span>  <span class="c1"># Basic types (str, int, None, etc.)</span></div>
+
+
+
 <div class="viewcode-block" id="Kernel">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Kernel</span><span class="p">(</span><span class="n">FuncBase</span><span class="p">):</span>
@@ -424,12 +539,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
 <div class="viewcode-block" id="Kernel.kernel_cpp">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.kernel_cpp">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">kernel_cpp</span> <span class="o">=</span> <span class="kc">None</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kernel_cpp</span><span class="p">:</span> <span class="kc">None</span> <span class="o">|</span> <span class="n">KernelCxx</span> <span class="o">=</span> <span class="kc">None</span></div>
 
         <span class="c1"># A materialized kernel is a KernelCxx object which may or may not have</span>
         <span class="c1"># been compiled. It generally has been converted at least as far as AST</span>
         <span class="c1"># and front-end IR, but not necessarily any further.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dump_kernel_checksums</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;TI_DUMP_KERNEL_CHECKSUMS&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span>
 <div class="viewcode-block" id="Kernel.materialized_kernels">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.materialized_kernels">[docs]</a>
         <span class="bp">self</span><span class="o">.</span><span class="n">materialized_kernels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CompiledKernelKeyType</span><span class="p">,</span> <span class="n">KernelCxx</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span></div>
@@ -516,22 +630,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
-<div class="viewcode-block" id="Kernel.materialize">
-<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.materialize">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">materialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">CompiledKernelKeyType</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">arg_features</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">autodiff_mode</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">materialize</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span> <span class="o">=</span> <span class="kc">None</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span> <span class="o">=</span> <span class="n">key</span>
-
-        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">materialized_kernels</span><span class="p">:</span>
-            <span class="k">return</span>
-
-        <span class="n">used_py_dataclass_parameters</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_try_load_fastcache</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">key</span><span class="p">:</span> <span class="n">CompiledKernelKeyType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">frontend_cache_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-
+        <span class="n">used_py_dataclass_parameters</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">src_ll_cache</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">gstaichi_callable</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">gstaichi_callable</span><span class="o">.</span><span class="n">is_pure</span><span class="p">:</span>
             <span class="n">kernel_source_info</span><span class="p">,</span> <span class="n">_src</span> <span class="o">=</span> <span class="n">get_source_info_and_src</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span> <span class="o">=</span> <span class="n">src_hasher</span><span class="o">.</span><span class="n">create_cache_key</span><span class="p">(</span>
@@ -563,6 +664,22 @@
             <span class="c1"># this is only printed when ti.init(print_non_pure=..) is True. And it is</span>
             <span class="c1"># confusing to set that to True, and see nothing printed.</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[NOT_PURE] Debug information: not pure: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">used_py_dataclass_parameters</span>
+
+<div class="viewcode-block" id="Kernel.materialize">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.materialize">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">materialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">CompiledKernelKeyType</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">arg_features</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">autodiff_mode</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">materialize</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span> <span class="o">=</span> <span class="n">key</span>
+
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">materialized_kernels</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">used_py_dataclass_parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_try_load_fastcache</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
 
         <span class="n">kernel_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_c</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_counter</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="n">_logging</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Materializing kernel </span><span class="si">{</span><span class="n">kernel_name</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">autodiff_mode</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
@@ -595,74 +712,16 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">autodiff_mode</span> <span class="o">!=</span> <span class="n">_NONE</span><span class="p">:</span>
                 <span class="n">KernelSimplicityASTChecker</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">visit</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
 
-            <span class="c1"># Do not change the name of &#39;gstaichi_ast_generator&#39;</span>
-            <span class="c1"># The warning system needs this identifier to remove unnecessary messages</span>
-            <span class="k">def</span><span class="w"> </span><span class="nf">gstaichi_ast_generator</span><span class="p">(</span><span class="n">kernel_cxx</span><span class="p">:</span> <span class="n">KernelCxx</span><span class="p">):</span>
-                <span class="k">nonlocal</span> <span class="n">tree</span><span class="p">,</span> <span class="n">used_py_dataclass_parameters</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">inside_kernel</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span>
-                        <span class="s2">&quot;Kernels cannot call other kernels. I.e., nested kernels are not allowed. &quot;</span>
-                        <span class="s2">&quot;Please check if you have direct/indirect invocation of kernels within kernels. &quot;</span>
-                        <span class="s2">&quot;Note that some methods provided by the GsTaichi standard library may invoke kernels, &quot;</span>
-                        <span class="s2">&quot;and please move their invocations to Python-scope.&quot;</span>
-                    <span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">kernel_cpp</span> <span class="o">=</span> <span class="n">kernel_cxx</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">inside_kernel</span> <span class="o">=</span> <span class="kc">True</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">_current_kernel</span> <span class="o">=</span> <span class="bp">self</span>
-                <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">_compiling_callable</span> <span class="ow">is</span> <span class="kc">None</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">_compiling_callable</span> <span class="o">=</span> <span class="n">kernel_cxx</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span> <span class="o">=</span> <span class="n">kernel_cxx</span><span class="o">.</span><span class="n">ast_builder</span><span class="p">()</span>
-
-                    <span class="k">def</span><span class="w"> </span><span class="nf">ast_to_dict</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">AST</span> <span class="o">|</span> <span class="nb">list</span> <span class="o">|</span> <span class="n">primitive_types</span><span class="o">.</span><span class="n">_python_primitive_types</span><span class="p">):</span>
-                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">AST</span><span class="p">):</span>
-                            <span class="n">fields</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">ast_to_dict</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">iter_fields</span><span class="p">(</span><span class="n">node</span><span class="p">)}</span>
-                            <span class="k">return</span> <span class="p">{</span>
-                                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">node</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
-                                <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="n">fields</span><span class="p">,</span>
-                                <span class="s2">&quot;lineno&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;lineno&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-                                <span class="s2">&quot;col_offset&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;col_offset&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-                            <span class="p">}</span>
-                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-                            <span class="k">return</span> <span class="p">[</span><span class="n">ast_to_dict</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">node</span><span class="p">]</span>
-                        <span class="k">return</span> <span class="n">node</span>  <span class="c1"># Basic types (str, int, None, etc.)</span>
-
-                    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;TI_DUMP_AST&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span> <span class="ow">and</span> <span class="n">_pass</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                        <span class="n">target_dir</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/tmp/ast&quot;</span><span class="p">)</span>
-                        <span class="n">target_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-                        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-                        <span class="n">ast_str</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-                        <span class="n">output_file</span> <span class="o">=</span> <span class="n">target_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">kernel_name</span><span class="si">}</span><span class="s2">_ast_.txt&quot;</span>
-                        <span class="n">output_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">ast_str</span><span class="p">)</span>
-                        <span class="n">elapsed_txt</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
-
-                        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-                        <span class="n">json_str</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">ast_to_dict</span><span class="p">(</span><span class="n">tree</span><span class="p">),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-                        <span class="n">output_file</span> <span class="o">=</span> <span class="n">target_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">kernel_name</span><span class="si">}</span><span class="s2">_ast.json&quot;</span>
-                        <span class="n">output_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json_str</span><span class="p">)</span>
-                        <span class="n">elapsed_json</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
-
-                        <span class="n">output_file</span> <span class="o">=</span> <span class="n">target_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">kernel_name</span><span class="si">}</span><span class="s2">_gen_time.json&quot;</span>
-                        <span class="n">output_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
-                            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">&quot;elapsed_txt&quot;</span><span class="p">:</span> <span class="n">elapsed_txt</span><span class="p">,</span> <span class="s2">&quot;elapsed_json&quot;</span><span class="p">:</span> <span class="n">elapsed_json</span><span class="p">},</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-                        <span class="p">)</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="n">used_py_dataclass_parameters</span><span class="p">:</span>
-                        <span class="n">struct_locals</span> <span class="o">=</span> <span class="n">_kernel_impl_dataclass</span><span class="o">.</span><span class="n">extract_struct_locals_from_context</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="n">struct_locals</span> <span class="o">=</span> <span class="n">used_py_dataclass_parameters</span>
-                    <span class="n">tree</span> <span class="o">=</span> <span class="n">_kernel_impl_dataclass</span><span class="o">.</span><span class="n">unpack_ast_struct_expressions</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">struct_locals</span><span class="o">=</span><span class="n">struct_locals</span><span class="p">)</span>
-                    <span class="n">ctx</span><span class="o">.</span><span class="n">only_parse_function_def</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compiled_kernel_data_by_key</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                    <span class="n">transform_tree</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="n">ctx</span><span class="o">.</span><span class="n">is_real_function</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ctx</span><span class="o">.</span><span class="n">only_parse_function_def</span><span class="p">:</span>
-                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span> <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">returned</span> <span class="o">!=</span> <span class="n">ReturnStatus</span><span class="o">.</span><span class="n">ReturnedValue</span><span class="p">:</span>
-                            <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="s2">&quot;Kernel has a return type but does not have a return statement&quot;</span><span class="p">)</span>
-                    <span class="n">used_py_dataclass_parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_collecting</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-                <span class="k">finally</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">inside_kernel</span> <span class="o">=</span> <span class="kc">False</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">_current_kernel</span> <span class="o">=</span> <span class="kc">None</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">_compiling_callable</span> <span class="o">=</span> <span class="kc">None</span>
-
+            <span class="n">gstaichi_ast_generator</span> <span class="o">=</span> <span class="n">ASTGenerator</span><span class="p">(</span>
+                <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span>
+                <span class="n">kernel_name</span><span class="o">=</span><span class="n">kernel_name</span><span class="p">,</span>
+                <span class="n">current_kernel</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">only_parse_function_def</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">compiled_kernel_data_by_key</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">tree</span><span class="o">=</span><span class="n">tree</span><span class="p">,</span>
+                <span class="n">used_py_dataclass_parameters</span><span class="o">=</span><span class="n">used_py_dataclass_parameters</span><span class="p">,</span>
+                <span class="n">dump_ast</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;TI_DUMP_AST&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span> <span class="ow">and</span> <span class="n">_pass</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">used_py_dataclass_parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_collecting</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
             <span class="n">gstaichi_kernel</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">prog</span><span class="o">.</span><span class="n">create_kernel</span><span class="p">(</span>
                 <span class="n">gstaichi_ast_generator</span><span class="p">,</span> <span class="n">kernel_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">autodiff_mode</span>
             <span class="p">)</span>
@@ -806,29 +865,6 @@
                 <span class="n">prog_device_cap</span> <span class="o">=</span> <span class="n">prog</span><span class="o">.</span><span class="n">get_device_caps</span><span class="p">()</span>
 
                 <span class="n">compile_result</span><span class="p">:</span> <span class="n">CompileResult</span> <span class="o">=</span> <span class="n">prog</span><span class="o">.</span><span class="n">compile_kernel</span><span class="p">(</span><span class="n">prog_config</span><span class="p">,</span> <span class="n">prog_device_cap</span><span class="p">,</span> <span class="n">t_kernel</span><span class="p">)</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dump_kernel_checksums</span><span class="p">:</span>
-                    <span class="n">debug_dump_path</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span><span class="o">.</span><span class="n">debug_dump_path</span><span class="p">)</span>
-                    <span class="n">checksums_file_path</span> <span class="o">=</span> <span class="n">debug_dump_path</span> <span class="o">/</span> <span class="s2">&quot;checksums.csv&quot;</span>
-                    <span class="n">kernels_dump_dir</span> <span class="o">=</span> <span class="n">debug_dump_path</span> <span class="o">/</span> <span class="s2">&quot;kernels&quot;</span>
-                    <span class="n">file_exists</span> <span class="o">=</span> <span class="n">checksums_file_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">:</span>
-                        <span class="k">with</span> <span class="n">checksums_file_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                            <span class="n">dict_writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictWriter</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">fieldnames</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;fe&quot;</span><span class="p">,</span> <span class="s2">&quot;src&quot;</span><span class="p">])</span>
-                            <span class="k">if</span> <span class="ow">not</span> <span class="n">file_exists</span><span class="p">:</span>
-                                <span class="n">dict_writer</span><span class="o">.</span><span class="n">writeheader</span><span class="p">()</span>
-                            <span class="n">dict_writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span>
-                                <span class="p">{</span>
-                                    <span class="s2">&quot;kernel&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
-                                    <span class="s2">&quot;fe&quot;</span><span class="p">:</span> <span class="n">compile_result</span><span class="o">.</span><span class="n">cache_key</span><span class="p">,</span>
-                                    <span class="s2">&quot;src&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">,</span>
-                                <span class="p">}</span>
-                            <span class="p">)</span>
-                            <span class="n">f</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
-                        <span class="n">kernels_dump_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                        <span class="n">ch_ir_path</span> <span class="o">=</span> <span class="n">kernels_dump_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">compile_result</span><span class="o">.</span><span class="n">cache_key</span><span class="si">}</span><span class="s2">.ll&quot;</span>
-                        <span class="k">if</span> <span class="ow">not</span> <span class="n">ch_ir_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel_cpp</span><span class="p">:</span>
-                            <span class="k">with</span> <span class="n">ch_ir_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_cpp</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
                 <span class="n">compiled_kernel_data</span> <span class="o">=</span> <span class="n">compile_result</span><span class="o">.</span><span class="n">compiled_kernel_data</span>
                 <span class="k">if</span> <span class="n">compile_result</span><span class="o">.</span><span class="n">cache_hit</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">fe_ll_cache_observations</span><span class="o">.</span><span class="n">cache_hit</span> <span class="o">=</span> <span class="kc">True</span>
