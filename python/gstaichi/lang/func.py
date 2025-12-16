@@ -26,11 +26,10 @@ from gstaichi.types import (
     template,
 )
 from gstaichi.types.enums import AutodiffMode
-from ._func_base import FuncBase
 
 from . import kernel_impl
+from ._func_base import FuncBase
 from .kernel import Kernel
-
 
 # Define proxy for fast lookup
 _NONE = AutodiffMode.NONE

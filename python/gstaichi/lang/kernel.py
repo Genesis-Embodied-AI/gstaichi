@@ -46,6 +46,7 @@ from gstaichi.types.enums import AutodiffMode
 from gstaichi.types.utils import is_signed
 
 from . import kernel_impl
+from ._func_base import FuncBase
 from ._gstaichi_callable import GsTaichiCallable
 from ._kernel_types import (
     FeLlCacheObservations,
@@ -53,7 +54,6 @@ from ._kernel_types import (
     SrcLlCacheObservations,
     _KernelBatchedArgType,
 )
-from ._func_base import FuncBase
 
 CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
 ArgsHash: TypeAlias = tuple[int, ...]

@@ -5,18 +5,13 @@ from dataclasses import is_dataclass
 
 from gstaichi.lang._template_mapper import TemplateMapper
 from gstaichi.lang.exception import GsTaichiSyntaxError
-from gstaichi.types import (
-    ndarray_type,
-    primitive_types,
-    sparse_matrix_builder,
-    template,
-)
 from gstaichi.lang.kernel_arguments import ArgMetadata
 from gstaichi.lang.matrix import MatrixType
 from gstaichi.lang.struct import StructType
 from gstaichi.types import (
     ndarray_type,
     primitive_types,
+    sparse_matrix_builder,
     template,
 )
 
@@ -25,6 +20,7 @@ class FuncBase:
     """
     Base class for Kernels and Funcs
     """
+
     def __init__(self, func, is_kernel: bool, is_classkernel: bool, is_classfunc: bool) -> None:
         self.func = func
         self.is_kernel = is_kernel
