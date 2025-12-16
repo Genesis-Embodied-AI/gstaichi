@@ -182,7 +182,6 @@ class Kernel(FuncBase):
         # A materialized kernel is a KernelCxx object which may or may not have
         # been compiled. It generally has been converted at least as far as AST
         # and front-end IR, but not necessarily any further.
-        self._dump_kernel_checksums = os.environ.get("TI_DUMP_KERNEL_CHECKSUMS", "0") == "1"
         self.materialized_kernels: dict[CompiledKernelKeyType, KernelCxx] = {}
         self.has_print = False
         self.gstaichi_callable: GsTaichiCallable | None = None
