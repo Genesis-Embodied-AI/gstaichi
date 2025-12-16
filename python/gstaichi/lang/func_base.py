@@ -55,7 +55,7 @@ class FuncBase:
         self.arg_metas: list[ArgMetadata] = []
         self.arg_metas_expanded: list[ArgMetadata] = []
         self.orig_arguments: list[ArgMetadata] = []
-        self.return_type: tuple[Type, ...] | None = None
+        self.return_type = None
 
         self.check_parameter_annotations()
 
