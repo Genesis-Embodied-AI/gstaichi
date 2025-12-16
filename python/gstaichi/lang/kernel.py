@@ -96,7 +96,7 @@ class Kernel:
         self.arg_metas_expanded: list[ArgMetadata] = []
         self.return_type = None
         self.classkernel = _classkernel
-        self.extract_arguments()
+        self.check_parameter_annotations()
         self.template_slot_locations = []
         for i, arg in enumerate(self.arg_metas):
             if arg.annotation == template or isinstance(arg.annotation, template):
@@ -160,7 +160,7 @@ class Kernel:
         # self.used_py_dataclass_leaves_by_key_enforcing_dotted = {}
         self.currently_compiling_materialize_key = None
 
-    def extract_arguments(self) -> None:
+    def check_parameter_annotations(self) -> None:
         sig = inspect.signature(self.func)
         if sig.return_annotation not in {inspect._empty, None}:
             self.return_type = sig.return_annotation

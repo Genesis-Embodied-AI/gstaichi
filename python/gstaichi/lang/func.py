@@ -72,7 +72,7 @@ class Func:
         self.used_py_dataclass_parameters: set[str] = set()
         # self.used_py_dataclass_parameters_enforcing: set[str] | None = None
 
-        self.extract_arguments()
+        self.check_parameter_annotations()
 
         self.template_slot_locations: list[int] = []
         for i, arg in enumerate(self.arg_metas):
@@ -201,7 +201,7 @@ class Func:
         self.compiled[key.instance_id] = func_body
         self.cxx_function_by_id[key.instance_id].set_function_body(func_body)
 
-    def extract_arguments(self) -> None:
+    def check_parameter_annotations(self) -> None:
         """
         Look at annotations of function parameters, and store into self.arg_metas
         and self.orig_arguments (both are identical after this call)
