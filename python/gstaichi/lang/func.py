@@ -202,6 +202,12 @@ class Func:
         self.cxx_function_by_id[key.instance_id].set_function_body(func_body)
 
     def extract_arguments(self) -> None:
+        """
+        Look at annotations of function parameters, and store into self.arg_metas
+        and self.orig_arguments (both are identical after this call)
+        - they just contain the original parameter annotations for now, unexpanded
+        - this function mostly just does checking
+        """
         sig = inspect.signature(self.func)
         if sig.return_annotation not in (inspect.Signature.empty, None):
             self.return_type = sig.return_annotation
