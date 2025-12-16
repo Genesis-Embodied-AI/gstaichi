@@ -71,8 +71,10 @@ class Func(FuncBase):
         # Note that we assume that if a single function is called multiple times during a
         # specific kernel compilation, then the used py dataclass parameters are invariant
         # across those calls.
-        self.used_py_dataclass_parameters: set[str] = set()
-        # self.used_py_dataclass_parameters_enforcing: set[str] | None = None
+        self.used_py_dataclass_parameters_collecting: set[str] = set()
+        # self.used_py_dataclass_parameters_enforcing: None | set[str] = None
+        # self.used_py_dataclass_parameters_with_prefixes: set[str] = set()
+        self.used_py_dataclass_parameters_enforcing: set[str] | None = None
 
         # self.check_parameter_annotations()
 

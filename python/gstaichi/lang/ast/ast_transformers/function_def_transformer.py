@@ -89,7 +89,7 @@ class FunctionDefTransformer:
             ctx.create_variable(argument_name, argument_type)
             for field_idx, field in enumerate(dataclasses.fields(argument_type)):
                 flat_name = create_flat_name(argument_name, field.name)
-                if ctx.enforcing_dataclass_parameters and flat_name not in ctx.func.used_py_dataclass_parameters:
+                if ctx.enforcing_dataclass_parameters and flat_name not in ctx.func.used_py_dataclass_parameters_enforcing:
                     continue
                 # if a field is a dataclass, then feed back into process_kernel_arg recursively
                 if dataclasses.is_dataclass(field.type):
@@ -100,6 +100,7 @@ class FunctionDefTransformer:
                         this_arg_features[field_idx],
                     )
                 else:
+                    print('_transform_kernel_arg creating variable for field idx', field_idx, flat_name)
                     result, obj = FunctionDefTransformer._decl_and_create_variable(
                         ctx,
                         field.type,
@@ -141,6 +142,7 @@ class FunctionDefTransformer:
 
         for i in range(len(args.args)):
             arg_meta = ctx.func.arg_metas[i]
+            print('transform as kernel i', i, 'arg_meta.name', arg_meta.name, 'arg_meta.annotation', arg_meta.annotation)
             FunctionDefTransformer._transform_kernel_arg(
                 ctx,
                 arg_meta.name,

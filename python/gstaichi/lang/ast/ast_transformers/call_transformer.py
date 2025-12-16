@@ -348,7 +348,11 @@ class CallTransformer:
 
         CallTransformer._warn_if_is_external_func(ctx, node)
         try:
-            # print("calling func", func.fn, "args", args, "keywords", keywords)
+            # if hasattr(func, "fn"):
+            if hasattr(func, "wrapper"):
+                print("calling func", func.fn, "args", args, "keywords", keywords)
+            parent_params = ctx.func.used_py_dataclass_parameters_collecting
+            print("parent_params", parent_params)
             node.ptr = func(*args, **keywords)
             # print("build_Call node.func.ptr", node.func.ptr, dir(node.func.ptr))
             # print("build_Call node.func.ptr.wrapper", node.func.ptr.wrapper, dir(node.func.ptr.wrapper))
@@ -365,7 +369,7 @@ class CallTransformer:
             arg_id = 0
             print("func", func)
             if hasattr(func, "wrapper"):
-                called_unpruned = func.wrapper.used_py_dataclass_parameters
+                called_unpruned = func.wrapper.used_py_dataclass_parameters_collecting
                 to_unprune: set[str] = set()
                 for i, arg in enumerate(node.args):
                     print(i, ast.dump(arg)[:50], node.func.ptr.wrapper.arg_metas_expanded[arg_id].name)
@@ -388,7 +392,7 @@ class CallTransformer:
                 print("to_unprune", ctx.func.func, to_unprune)
                 # ctx.used_py_dataclass_parameters_enforcing
                 if not ctx.enforcing_dataclass_parameters:
-                    ctx.func.used_py_dataclass_parameters |= to_unprune
+                    ctx.func.used_py_dataclass_parameters_collecting.update(to_unprune)
                 # print("updated ctx.func.used_py_dataclass_parameters", ctx.func.used_py_dataclass_parameters)
             # print("ctx.used_py_dataclass_parameters_collecting", ctx.used_py_dataclass_parameters_collecting)
             # print("build_Call node.func.ptr.wrapper.arg_metas_expanded  ", node.func.ptr.wrapper.arg_metas_expanded)

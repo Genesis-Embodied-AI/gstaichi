@@ -82,7 +82,7 @@ class ASTTransformer(Builder):
             and not ctx.expanding_dataclass_call_parameters
             and node.id.startswith("__ti_")
         ):
-            ctx.func.used_py_dataclass_parameters.add(node.id)
+            ctx.func.used_py_dataclass_parameters_collecting.add(node.id)
         node.violates_pure, node.ptr, node.violates_pure_reason = ctx.get_var_by_name(node.id)
         if isinstance(node, (ast.stmt, ast.expr)) and isinstance(node.ptr, Expr):
             node.ptr.dbg_info = _ti_core.DebugInfo(ctx.get_pos_info(node))
@@ -262,6 +262,9 @@ class ASTTransformer(Builder):
         build_stmt(ctx, node.slice)
         if not ASTTransformer.is_tuple(node.slice):
             node.slice.ptr = [node.slice.ptr]
+        print("build_subscript node ", ast.dump(node, indent=2))
+        print("node.value.ptr", node.value.ptr)
+        print("node.slice.ptr", node.slice.ptr)
         node.ptr = impl.subscript(ctx.ast_builder, node.value.ptr, *node.slice.ptr)
         node.violates_pure = node.value.violates_pure
         if node.violates_pure:

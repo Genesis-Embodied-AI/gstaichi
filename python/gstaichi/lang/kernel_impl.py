@@ -232,6 +232,7 @@ def process_args(
 ) -> tuple[Any, ...]:
     print("_process args is_func", is_func, "is_pyfunc", is_pyfunc, self.func)
     if is_func and not is_pyfunc:
+        print("is func and not is pyfunc")
         if typing.TYPE_CHECKING:
             assert isinstance(self, Func)
         current_kernel = self.current_kernel
@@ -240,14 +241,17 @@ def process_args(
         currently_compiling_materialize_key = current_kernel.currently_compiling_materialize_key
         if typing.TYPE_CHECKING:
             assert currently_compiling_materialize_key is not None
+        assert self.current_kernel is not None
+        used_py_dataclass_parameters_enforcing = self.current_kernel.enforcing_dataclass_parameters
         self.arg_metas_expanded = _kernel_impl_dataclass.expand_func_arguments(
-            None,
+            self.used_py_dataclass_parameters if used_py_dataclass_parameters_enforcing else None,
             # current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(currently_compiling_materialize_key),
             self.arg_metas,
         )
         # print("expanded arg metas expanded:", self.arg_metas_expanded)
     else:
         self.arg_metas_expanded = list(self.arg_metas)
+    print("self.arg_metas_expanded", self.arg_metas_expanded)
 
     num_args = len(args)
     num_arg_metas = len(self.arg_metas_expanded)
@@ -255,7 +259,7 @@ def process_args(
         arg_str = ", ".join(map(str, args))
         expected_str = ", ".join(f"{arg.name} : {arg.annotation}" for arg in self.arg_metas_expanded)
         msg_l = []
-        msg_l.append(f"Too many arguments. Expected ({expected_str}), got ({arg_str}).")
+        msg_l.append(f"Too many arguments. Expected ({num_arg_metas}), got ({num_args}).")
         for i in range(num_args):
             if i < num_arg_metas:
                 msg_l.append(f" - {i} arg meta: {self.arg_metas_expanded[i].name} arg type: {type(args[i])}")
@@ -267,13 +271,13 @@ def process_args(
     missing_arg_metas = self.arg_metas_expanded[num_args:]
     num_missing_args = len(missing_arg_metas)
     fused_args: list[Any] = [*args, *[arg_meta.default for arg_meta in missing_arg_metas]]
-    # print("kernel_impl.py _process_args()")
+    print("kernel_impl.py _process_args()")
     if kwargs:
         num_invalid_kwargs_args = len(kwargs)
         for i in range(num_args, num_arg_metas):
             arg_meta = self.arg_metas_expanded[i]
             value = kwargs.get(arg_meta.name, _ARG_EMPTY)
-            # print("kwarg i", i, arg_meta, "value", value, type(value))
+            print("kwarg i", i, arg_meta, "value", value, type(value))
             if value is not _ARG_EMPTY:
                 fused_args[i] = value
                 num_invalid_kwargs_args -= 1

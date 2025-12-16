@@ -116,17 +116,17 @@ class Kernel(FuncBase):
         self.compiled_kernel_data_by_key: dict[CompiledKernelKeyType, CompiledKernelData] = {}
         self._last_compiled_kernel_data: CompiledKernelData | None = None  # for dev/debug
         # for collecting, we'll grab an empty set if it doesnt exist
-        # self.used_py_dataclass_leaves_by_key_collecting: dict[CompiledKernelKeyType, set[str]] = defaultdict(set)
+        self.used_py_dataclass_parameters_by_key_collecting: dict[CompiledKernelKeyType, set[str]] = defaultdict(set)
         # however, for enforcing, we want None if it doesn't exist (we'll use .get() instead of [] )
-        # self.used_py_dataclass_leaves_by_key_enforcing: dict[CompiledKernelKeyType, set[str]] = {}
-        # self.used_py_dataclass_leaves_by_key_enforcing_dotted: dict[CompiledKernelKeyType, set[tuple[str, ...]]] = {}
+        self.used_py_dataclass_parameters_by_key_enforcing: dict[CompiledKernelKeyType, set[str]] = {}
+        self.used_py_dataclass_parameters_by_key_enforcing_dotted: dict[CompiledKernelKeyType, set[tuple[str, ...]]] = {}
         self.currently_compiling_materialize_key: CompiledKernelKeyType | None = None
 
-        # assumes that only one kernel is being built at a time
-        # value invalid when kernel not being built
-        self.used_py_dataclass_parameters: set[str] = set()
-        # assumes that only one kernel is being built at a time
-        # value invalid when kernel not being built
+        # # assumes that only one kernel is being built at a time
+        # # value invalid when kernel not being built
+        # self.used_py_dataclass_parameters: set[str] = set()
+        # # assumes that only one kernel is being built at a time
+        # # value invalid when kernel not being built
         self.enforcing_dataclass_parameters: bool = False
 
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
@@ -142,6 +142,21 @@ class Kernel(FuncBase):
         self._launch_ctx_cache: dict[ArgsHash, KernelLaunchContext] = {}
         self._launch_ctx_cache_tracker: dict[ArgsHash, list[ReferenceType]] = {}
         self._prog_weakref: ReferenceType[Program] | None = None
+
+    @property
+    def used_py_dataclass_parameters_collecting(self) -> set[str]:
+        assert self.currently_compiling_materialize_key is not None
+        return self.used_py_dataclass_parameters_by_key_collecting[self.currently_compiling_materialize_key]
+
+    @property
+    def used_py_dataclass_parameters_enforcing(self) -> set[str]:
+        assert self.currently_compiling_materialize_key is not None
+        return self.used_py_dataclass_parameters_by_key_enforcing[self.currently_compiling_materialize_key]
+
+    @property
+    def used_py_dataclass_parameters_enforcing_dotted(self) -> set[tuple[str, ...]]:
+        assert self.currently_compiling_materialize_key is not None
+        return self.used_py_dataclass_parameters_by_key_enforcing_dotted[self.currently_compiling_materialize_key]
 
     def ast_builder(self) -> ASTBuilder:
         assert self.kernel_cpp is not None
@@ -194,8 +209,8 @@ class Kernel(FuncBase):
                 )
                 if self.compiled_kernel_data_by_key[key]:
                     self.src_ll_cache_observations.cache_loaded = True
-                    self.used_py_dataclass_leaves_by_key_enforcing[key] = used_py_dataclass_parameters
-                    self.used_py_dataclass_leaves_by_key_enforcing_dotted[key] = set(
+                    self.used_py_dataclass_parameters_by_key_enforcing[key] = used_py_dataclass_parameters
+                    self.used_py_dataclass_parameters_by_key_enforcing_dotted[key] = set(
                         [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_parameters]
                     )
         elif self.gstaichi_callable and not self.gstaichi_callable.is_pure and self.runtime.print_non_pure:
@@ -213,7 +228,7 @@ class Kernel(FuncBase):
         for _pass in range(range_begin, 2):
             print("==============================")
             print("_pass", _pass)
-            used_py_dataclass_leaves_by_key_enforcing = None
+            # used_py_dataclass_leaves_by_key_enforcing = None
             if _pass == 1:
                 assert used_py_dataclass_parameters is not None
                 used_py_dataclass_leaves_by_key_enforcing = set()
@@ -224,8 +239,8 @@ class Kernel(FuncBase):
                         if joined in used_py_dataclass_leaves_by_key_enforcing:
                             break
                         used_py_dataclass_leaves_by_key_enforcing.add(joined)
-                self.used_py_dataclass_leaves_by_key_enforcing[key] = used_py_dataclass_leaves_by_key_enforcing
-                self.used_py_dataclass_leaves_by_key_enforcing_dotted[key] = set(
+                self.used_py_dataclass_parameters_by_key_enforcing[key] = used_py_dataclass_leaves_by_key_enforcing
+                self.used_py_dataclass_parameters_by_key_enforcing_dotted[key] = set(
                     [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_leaves_by_key_enforcing]
                 )
             tree, ctx = kernel_impl.get_tree_and_ctx(
@@ -304,8 +319,9 @@ class Kernel(FuncBase):
                         if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
                             raise GsTaichiSyntaxError("Kernel has a return type but does not have a return statement")
                     print("end of pass", _pass)
-                    used_py_dataclass_parameters = self.used_py_dataclass_parameters
-                    print("self.used_py_dataclass_leaves_by_key_collecting", sorted(self.used_py_dataclass_parameters))
+                    assert used_py_dataclass_parameters is not None
+                    # self.used_py_dataclass_parameters_by_key_enforcing[self.currently_compiling_materialize_key] = used_py_dataclass_parameters
+                    print("self.used_py_dataclass_leaves_by_key_collecting", sorted(used_py_dataclass_parameters))
                 finally:
                     self.runtime.inside_kernel = False
                     self.runtime._current_kernel = None
@@ -373,7 +389,7 @@ class Kernel(FuncBase):
             template_num = 0
             i_out = 0
             assert self.currently_compiling_materialize_key
-            used_py_dataclass_parameters_enforcing_dotted = self.used_py_dataclass_leaves_by_key_enforcing_dotted[
+            used_py_dataclass_parameters_enforcing_dotted = self.used_py_dataclass_parameters_by_key_enforcing_dotted[
                 self.currently_compiling_materialize_key
             ]
             for i_in, val in enumerate(args):
@@ -483,7 +499,7 @@ class Kernel(FuncBase):
                         compile_result.cache_key,
                         self.fast_checksum,
                         self.visited_functions,
-                        self.used_py_dataclass_leaves_by_key_enforcing[self.currently_compiling_materialize_key],
+                        self.used_py_dataclass_parameters_by_key_enforcing[self.currently_compiling_materialize_key],
                     )
                     self.src_ll_cache_observations.cache_stored = True
             self._last_compiled_kernel_data = compiled_kernel_data

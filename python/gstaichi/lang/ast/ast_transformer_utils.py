@@ -35,7 +35,7 @@ class Builder:
         method_name = "build_" + node.__class__.__name__
         method = getattr(self, method_name, None)
         indent = "  " * len(ctx.local_scopes)
-        # print(indent, method_name, ast.dump(node)[:80])
+        print(indent, method_name, ast.dump(node)[:80])
         try:
             if method is None:
                 error_msg = f'Unsupported node "{node.__class__.__name__}"'
