@@ -27,7 +27,6 @@ from gstaichi.types import (
 )
 from gstaichi.types.enums import AutodiffMode
 
-from . import kernel_impl
 from ._func_base import FuncBase
 from .kernel import Kernel
 
@@ -39,7 +38,13 @@ class Func(FuncBase):
     function_counter = 0
 
     def __init__(self, _func: Callable, _classfunc=False, _pyfunc=False, is_real_function=False) -> None:
-        super().__init__(func=_func, is_classfunc=_classfunc, is_kernel=False, is_classkernel=False)
+        super().__init__(
+            func=_func,
+            is_classfunc=_classfunc,
+            is_kernel=False,
+            is_classkernel=False,
+            is_real_function=is_real_function,
+        )
         self.func_id = Func.function_counter
         Func.function_counter += 1
         self.compiled: dict[int, Callable] = {}  # only for real funcs
@@ -53,7 +58,7 @@ class Func(FuncBase):
 
     def __call__(self: "Func", *args, **kwargs) -> Any:
         self.current_kernel = impl.get_runtime().current_kernel if impl.inside_kernel() else None
-        args = kernel_impl.process_args(self, is_func=True, is_pyfunc=self.pyfunc, args=args, kwargs=kwargs)
+        args = self.process_args(is_func=True, is_pyfunc=self.pyfunc, args=args, kwargs=kwargs)
 
         if not impl.inside_kernel():
             if not self.pyfunc:
@@ -77,8 +82,7 @@ class Func(FuncBase):
         used_by_dataclass_parameters_enforcing = self.current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(
             current_args_key
         )
-        tree, ctx = kernel_impl.get_tree_and_ctx(
-            self,
+        tree, ctx = self.get_tree_and_ctx(
             is_kernel=False,
             args=args,
             ast_builder=self.current_kernel.ast_builder(),
@@ -148,8 +152,7 @@ class Func(FuncBase):
         """
         only for real func
         """
-        tree, ctx = kernel_impl.get_tree_and_ctx(
-            self,
+        tree, ctx = self.get_tree_and_ctx(
             is_kernel=False,
             args=args,
             arg_features=arg_features,

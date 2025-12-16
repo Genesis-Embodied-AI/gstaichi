@@ -70,7 +70,13 @@ class Kernel(FuncBase):
     counter = 0
 
     def __init__(self, _func: Callable, autodiff_mode: AutodiffMode, _is_classkernel=False) -> None:
-        super().__init__(func=_func, is_classfunc=False, is_kernel=True, is_classkernel=_is_classkernel)
+        super().__init__(
+            func=_func,
+            is_classfunc=False,
+            is_kernel=True,
+            is_classkernel=_is_classkernel,
+            is_real_function=False,
+        )
         # self.func = _func
         self.kernel_counter = Kernel.counter
         Kernel.counter += 1
@@ -199,8 +205,7 @@ class Kernel(FuncBase):
                 self.used_py_dataclass_leaves_by_key_enforcing_dotted[key] = set(
                     [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_leaves_by_key_enforcing]
                 )
-            tree, ctx = kernel_impl.get_tree_and_ctx(
-                self,
+            tree, ctx = self.get_tree_and_ctx(
                 args=args,
                 excluded_parameters=self.template_slot_locations,
                 arg_features=arg_features,
@@ -350,7 +355,7 @@ class Kernel(FuncBase):
                     template_num += 1
                     i_out += 1
                     continue
-                num_args_, is_launch_ctx_cacheable_ = kernel_impl.recursive_set_args(
+                num_args_, is_launch_ctx_cacheable_ = self._recursive_set_args(
                     used_py_dataclass_parameters_enforcing_dotted,
                     (self.arg_metas[i_in].name,),
                     launch_ctx,
@@ -503,7 +508,7 @@ class Kernel(FuncBase):
     def __call__(self, *args, **kwargs) -> Any:
         self.raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
 
-        args = kernel_impl.process_args(self, is_func=False, is_pyfunc=False, args=args, kwargs=kwargs)
+        args = self.process_args(is_func=False, is_pyfunc=False, args=args, kwargs=kwargs)
 
         # Transform the primal kernel to forward mode grad kernel
         # then recover to primal when exiting the forward mode manager
