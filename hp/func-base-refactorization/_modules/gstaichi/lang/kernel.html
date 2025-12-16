@@ -544,7 +544,6 @@
         <span class="c1"># A materialized kernel is a KernelCxx object which may or may not have</span>
         <span class="c1"># been compiled. It generally has been converted at least as far as AST</span>
         <span class="c1"># and front-end IR, but not necessarily any further.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dump_kernel_checksums</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;TI_DUMP_KERNEL_CHECKSUMS&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span>
 <div class="viewcode-block" id="Kernel.materialized_kernels">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.materialized_kernels">[docs]</a>
         <span class="bp">self</span><span class="o">.</span><span class="n">materialized_kernels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CompiledKernelKeyType</span><span class="p">,</span> <span class="n">KernelCxx</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span></div>
