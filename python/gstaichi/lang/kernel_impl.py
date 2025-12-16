@@ -53,9 +53,9 @@ from gstaichi.types.utils import is_signed
 
 from .._test_tools import warnings_helper
 from .func import Func
-from .gstaichi_callable import BoundGsTaichiCallable, GsTaichiCallable
+from ._gstaichi_callable import BoundGsTaichiCallable, GsTaichiCallable
 from .kernel import Kernel
-from .kernel_types import _KernelBatchedArgType
+from ._kernel_types import _KernelBatchedArgType
 
 MAX_ARG_NUM = 512
 

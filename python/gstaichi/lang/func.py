@@ -1,8 +1,4 @@
-import inspect
-import types
-import typing
-from dataclasses import is_dataclass
-from typing import Any, Callable, Type
+from typing import Any, Callable
 
 from gstaichi._lib import core as _ti_core
 from gstaichi._lib.core.gstaichi_python import (
@@ -12,7 +8,6 @@ from gstaichi._lib.core.gstaichi_python import (
     FunctionKey,
 )
 from gstaichi.lang import _kernel_impl_dataclass, impl, ops
-from gstaichi.lang._template_mapper import TemplateMapper
 from gstaichi.lang.any_array import AnyArray
 from gstaichi.lang.ast import (
     transform_tree,
@@ -23,7 +18,6 @@ from gstaichi.lang.exception import (
     GsTaichiTypeError,
 )
 from gstaichi.lang.expr import Expr
-from gstaichi.lang.kernel_arguments import ArgMetadata
 from gstaichi.lang.matrix import MatrixType
 from gstaichi.lang.struct import StructType
 from gstaichi.types import (
@@ -32,12 +26,10 @@ from gstaichi.types import (
     template,
 )
 from gstaichi.types.enums import AutodiffMode
-from .func_base import FuncBase
+from ._func_base import FuncBase
 
 from . import kernel_impl
 from .kernel import Kernel
-
-MAX_ARG_NUM = 512
 
 
 # Define proxy for fast lookup
@@ -48,27 +40,17 @@ class Func(FuncBase):
     function_counter = 0
 
     def __init__(self, _func: Callable, _classfunc=False, _pyfunc=False, is_real_function=False) -> None:
-        # print("*** Func.__init__()", _func, self)
         super().__init__(func=_func, is_classfunc=_classfunc, is_kernel=False, is_classkernel=False)
-        # self.func = _func
         self.func_id = Func.function_counter
         Func.function_counter += 1
         self.compiled: dict[int, Callable] = {}  # only for real funcs
         self.classfunc = _classfunc
         self.pyfunc = _pyfunc
         self.is_real_function = is_real_function
-        # self.arg_metas: list[ArgMetadata] = []
-        # self.arg_metas_expanded: list[ArgMetadata] = []
-        # self.orig_arguments: list[ArgMetadata] = []
-        # self.return_type: tuple[Type, ...] | None = None
         self.cxx_function_by_id: dict[int, FunctionCxx] = {}
         self.has_print = False
         # Used during compilation. Assumes only one compilation at a time (single-threaded).
         self.current_kernel: Kernel | None = None
-
-        # self.check_parameter_annotations()
-
-        # self.mapper = TemplateMapper(self.arg_metas, self.template_slot_locations)
 
     def __call__(self: "Func", *args, **kwargs) -> Any:
         self.current_kernel = impl.get_runtime().current_kernel if impl.inside_kernel() else None
@@ -187,74 +169,3 @@ class Func(FuncBase):
         self.cxx_function_by_id[key.instance_id] = fn
         self.compiled[key.instance_id] = func_body
         self.cxx_function_by_id[key.instance_id].set_function_body(func_body)
-
-    # def check_parameter_annotations(self) -> None:
-    #     """
-    #     Look at annotations of function parameters, and store into self.arg_metas
-    #     and self.orig_arguments (both are identical after this call)
-    #     - they just contain the original parameter annotations for now, unexpanded
-    #     - this function mostly just does checking
-    #     """
-    #     sig = inspect.signature(self.func)
-    #     if sig.return_annotation not in (inspect.Signature.empty, None):
-    #         self.return_type = sig.return_annotation
-    #         if (
-    #             isinstance(self.return_type, (types.GenericAlias, typing._GenericAlias))  # type: ignore
-    #             and self.return_type.__origin__ is tuple  # type: ignore
-    #         ):
-    #             self.return_type = self.return_type.__args__  # type: ignore
-    #         if self.return_type is None:
-    #             return
-    #         if not isinstance(self.return_type, (list, tuple)):
-    #             self.return_type = (self.return_type,)
-    #         for i, return_type in enumerate(self.return_type):
-    #             if return_type is Ellipsis:
-    #                 raise GsTaichiSyntaxError("Ellipsis is not supported in return type annotations")
-    #     params = sig.parameters
-    #     arg_names = params.keys()
-    #     for i, arg_name in enumerate(arg_names):
-    #         param = params[arg_name]
-    #         if param.kind == inspect.Parameter.VAR_KEYWORD:
-    #             raise GsTaichiSyntaxError(
-    #                 "GsTaichi functions do not support variable keyword parameters (i.e., **kwargs)"
-    #             )
-    #         if param.kind == inspect.Parameter.VAR_POSITIONAL:
-    #             raise GsTaichiSyntaxError(
-    #                 "GsTaichi functions do not support variable positional parameters (i.e., *args)"
-    #             )
-    #         if param.kind == inspect.Parameter.KEYWORD_ONLY:
-    #             raise GsTaichiSyntaxError("GsTaichi functions do not support keyword parameters")
-    #         if param.kind != inspect.Parameter.POSITIONAL_OR_KEYWORD:
-    #             raise GsTaichiSyntaxError('GsTaichi functions only support "positional or keyword" parameters')
-    #         annotation = param.annotation
-    #         if annotation is inspect.Parameter.empty:
-    #             if i == 0 and self.classfunc:
-    #                 annotation = template()
-    #             # TODO: pyfunc also need type annotation check when real function is enabled,
-    #             #       but that has to happen at runtime when we know which scope it's called from.
-    #             elif not self.pyfunc and self.is_real_function:
-    #                 raise GsTaichiSyntaxError(
-    #                     f"GsTaichi function `{self.func.__name__}` parameter `{arg_name}` must be type annotated"
-    #                 )
-    #         else:
-    #             annotation_type = type(annotation)
-    #             if annotation_type is ndarray_type.NdarrayType:
-    #                 pass
-    #             elif issubclass(annotation_type, MatrixType):
-    #                 pass
-    #             elif annotation_type is StructType:
-    #                 pass
-    #             elif id(annotation) in primitive_types.type_ids:
-    #                 pass
-    #             elif annotation_type is template or annotation is template:
-    #                 pass
-    #             elif annotation_type is primitive_types.RefType:
-    #                 pass
-    #             elif annotation_type is type and is_dataclass(annotation):
-    #                 pass
-    #             else:
-    #                 raise GsTaichiSyntaxError(
-    #                     f"Invalid type annotation (argument {i}) of GsTaichi function: {annotation}"
-    #                 )
-    #         self.arg_metas.append(ArgMetadata(annotation, param.name, param.default))
-    #         self.orig_arguments.append(ArgMetadata(annotation, param.name, param.default))

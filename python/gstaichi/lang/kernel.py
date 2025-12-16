@@ -1,16 +1,10 @@
 import ast
 import csv
-import inspect
 import json
 import os
 import pathlib
 import time
-import types
-import typing
 from collections import defaultdict
-from dataclasses import (
-    is_dataclass,
-)
 
 # Must import 'partial' directly instead of the entire module to avoid attribute lookup overhead.
 from functools import partial
@@ -29,7 +23,6 @@ from gstaichi._lib.core.gstaichi_python import (
 )
 from gstaichi.lang import _kernel_impl_dataclass, impl, runtime_ops
 from gstaichi.lang._fast_caching import src_hasher
-from gstaichi.lang._template_mapper import TemplateMapper
 from gstaichi.lang._wrap_inspect import FunctionSourceInfo, get_source_info_and_src
 from gstaichi.lang.ast import (
     KernelSimplicityASTChecker,
@@ -42,15 +35,10 @@ from gstaichi.lang.exception import (
     handle_exception_from_cpp,
 )
 from gstaichi.lang.impl import Program
-from gstaichi.lang.kernel_arguments import ArgMetadata
-from gstaichi.lang.matrix import MatrixType
 from gstaichi.lang.shell import _shell_pop_print
-from gstaichi.lang.struct import StructType
 from gstaichi.lang.util import cook_dtype
 from gstaichi.types import (
-    ndarray_type,
     primitive_types,
-    sparse_matrix_builder,
     template,
 )
 from gstaichi.types.compound_types import CompoundType
@@ -58,14 +46,14 @@ from gstaichi.types.enums import AutodiffMode
 from gstaichi.types.utils import is_signed
 
 from . import kernel_impl
-from .gstaichi_callable import GsTaichiCallable
-from .kernel_types import (
+from ._gstaichi_callable import GsTaichiCallable
+from ._kernel_types import (
     FeLlCacheObservations,
     LaunchStats,
     SrcLlCacheObservations,
     _KernelBatchedArgType,
 )
-from .func_base import FuncBase
+from ._func_base import FuncBase
 
 CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
 ArgsHash: TypeAlias = tuple[int, ...]
@@ -94,13 +82,6 @@ class Kernel(FuncBase):
         )
         self.autodiff_mode = autodiff_mode
         self.grad: "Kernel | None" = None
-        # self.classkernel = _classkernel
-        # self.check_parameter_annotations()
-        # self.template_slot_locations = []
-        # for i, arg in enumerate(self.arg_metas):
-        #     if arg.annotation == template or isinstance(arg.annotation, template):
-        #         self.template_slot_locations.append(i)
-        # self.mapper = TemplateMapper(self.arg_metas, self.template_slot_locations)
         impl.get_runtime().kernels.append(self)
         self.reset()
         self.kernel_cpp = None
@@ -151,7 +132,6 @@ class Kernel(FuncBase):
         self.used_py_dataclass_leaves_by_key_enforcing = {}
         self.used_py_dataclass_leaves_by_key_enforcing_dotted = {}
         self.currently_compiling_materialize_key = None
-
 
     def materialize(self, key: CompiledKernelKeyType | None, args: tuple[Any, ...], arg_features=None):
         if key is None:

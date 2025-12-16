@@ -2,33 +2,15 @@ import inspect
 import types
 import typing
 from dataclasses import is_dataclass
-from typing import Any, Callable, Type
 
-from gstaichi._lib import core as _ti_core
-from gstaichi._lib.core.gstaichi_python import (
-    Function as FunctionCxx,
-)
-from gstaichi._lib.core.gstaichi_python import (
-    FunctionKey,
-)
-from gstaichi.lang import _kernel_impl_dataclass, impl, ops
 from gstaichi.lang._template_mapper import TemplateMapper
-from gstaichi.lang.any_array import AnyArray
-from gstaichi.lang.ast import (
-    transform_tree,
-)
-from gstaichi.lang.ast.ast_transformer_utils import ReturnStatus
-from gstaichi.lang.exception import (
-    GsTaichiSyntaxError,
-    GsTaichiTypeError,
-)
+from gstaichi.lang.exception import GsTaichiSyntaxError
 from gstaichi.types import (
     ndarray_type,
     primitive_types,
     sparse_matrix_builder,
     template,
 )
-from gstaichi.lang.expr import Expr
 from gstaichi.lang.kernel_arguments import ArgMetadata
 from gstaichi.lang.matrix import MatrixType
 from gstaichi.lang.struct import StructType
@@ -80,10 +62,8 @@ class FuncBase:
                     raise GsTaichiSyntaxError("Ellipsis is not supported in return type annotations")
         params = dict(sig.parameters)
         arg_names = params.keys()
-        print(self.func)
         for i, arg_name in enumerate(arg_names):
             param = params[arg_name]
-            print(i, arg_name, param)
             if param.kind == inspect.Parameter.VAR_KEYWORD:
                 raise GsTaichiSyntaxError(
                     "GsTaichi kernels do not support variable keyword parameters (i.e., **kwargs)"
@@ -102,8 +82,6 @@ class FuncBase:
             if param.annotation is inspect.Parameter.empty:
                 if i == 0 and (self.is_classkernel or self.is_classfunc):  # The |self| parameter
                     annotation = template()
-                # if i == 0 and self.classfunc:
-                #     annotation = template()
                 elif self.is_kernel:
                     raise GsTaichiSyntaxError("GsTaichi kernels parameters must be type annotated")
             else:
