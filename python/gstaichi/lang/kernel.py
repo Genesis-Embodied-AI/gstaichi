@@ -99,7 +99,6 @@ class LaunchContextBufferCache:
         self._prog_weakref: ReferenceType[Program] | None = None
 
     def _destroy_callback(self, ref: ReferenceType):
-        print("destroy callback")
         if self._launch_ctx_cache is not None:
             self._launch_ctx_cache.clear()
         if self._launch_ctx_cache_tracker is not None:
