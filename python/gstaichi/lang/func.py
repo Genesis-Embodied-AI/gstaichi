@@ -77,6 +77,7 @@ class Func(FuncBase):
                 self.do_compile(key=key, args=args, arg_features=arg_features)
             self.current_kernel = None
             return self.func_call_rvalue(key=key, args=args)
+
         current_args_key = self.current_kernel.currently_compiling_materialize_key
         assert current_args_key is not None
         used_by_dataclass_parameters_enforcing = self.current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(
@@ -98,6 +99,7 @@ class Func(FuncBase):
         if not self.is_real_function:
             if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
                 raise GsTaichiSyntaxError("Function has a return type but does not have a return statement")
+
         return ret
 
     def func_call_rvalue(self, key: FunctionKey, args: tuple[Any, ...]) -> Any:
@@ -128,6 +130,7 @@ class Func(FuncBase):
         )
         if self.return_type is None:
             return None
+
         func_call = Expr(func_call)
         ret = []
 
@@ -144,8 +147,10 @@ class Func(FuncBase):
                 ret.append(return_type.from_gstaichi_object(func_call, (i,)))
             else:
                 raise GsTaichiTypeError(f"Unsupported return type for return value {i}: {return_type}")
+
         if len(ret) == 1:
             return ret[0]
+
         return tuple(ret)
 
     def do_compile(self, key: FunctionKey, args: tuple[Any, ...], arg_features: tuple[Any, ...]) -> None:
