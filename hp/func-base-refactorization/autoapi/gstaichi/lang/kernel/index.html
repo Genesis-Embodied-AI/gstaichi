@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>gstaichi.lang.kernel &#8212; GsTaichi 4.4.0 documentation</title>
+    <title>gstaichi.lang.kernel &#8212; GsTaichi 4.5.0 documentation</title>
   
   
   
@@ -43,7 +43,7 @@
   <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../../_static/documentation_options.js?v=2f20d6c1"></script>
+    <script src="../../../../_static/documentation_options.js?v=5ef59c98"></script>
     <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -62,7 +62,7 @@
     <link rel="prev" title="gstaichi.lang.impl" href="../impl/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="4.4.0" />
+  <meta name="docsearch:version" content="4.5.0" />
   </head>
   
   
@@ -124,7 +124,7 @@
   
   
   
-    <p class="title logo__title">GsTaichi 4.4.0 documentation</p>
+    <p class="title logo__title">GsTaichi 4.5.0 documentation</p>
   
 </a></div>
     
@@ -433,10 +433,13 @@
 <h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.kernel.ASTGenerator" title="gstaichi.lang.kernel.ASTGenerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ASTGenerator</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.kernel.LaunchContextBufferCache" title="gstaichi.lang.kernel.LaunchContextBufferCache"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LaunchContextBufferCache</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#gstaichi.lang.kernel.Kernel" title="gstaichi.lang.kernel.Kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Kernel</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#gstaichi.lang.kernel.ASTGenerator" title="gstaichi.lang.kernel.ASTGenerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ASTGenerator</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.kernel.Kernel" title="gstaichi.lang.kernel.Kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Kernel</span></code></a></p></td>
 <td><p>Base class for Kernels and Funcs</p></td>
 </tr>
 </tbody>
@@ -454,6 +457,21 @@
 <dt class="sig sig-object py" id="gstaichi.lang.kernel.ArgsHash">
 <em class="property"><span class="pre">type</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gstaichi.lang.kernel.</span></span><span class="sig-name descname"><span class="pre">ArgsHash</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></em><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel.html#ArgsHash"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel.ArgsHash" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="gstaichi.lang.kernel.LaunchContextBufferCache">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gstaichi.lang.kernel.</span></span><span class="sig-name descname"><span class="pre">LaunchContextBufferCache</span></span><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel.html#LaunchContextBufferCache"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel.LaunchContextBufferCache" title="Link to this definition">#</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="gstaichi.lang.kernel.LaunchContextBufferCache.cache">
+<span class="sig-name descname"><span class="pre">cache</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t_kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args_hash</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">launch_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">launch_ctx_buffer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">gstaichi.lang._kernel_types._KernelBatchedArgType</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel.html#LaunchContextBufferCache.cache"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel.LaunchContextBufferCache.cache" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="gstaichi.lang.kernel.LaunchContextBufferCache.populate_launch_ctx_from_cache">
+<span class="sig-name descname"><span class="pre">populate_launch_ctx_from_cache</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args_hash</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">launch_ctx</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">gstaichi.lang.impl.Program</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel.html#LaunchContextBufferCache.populate_launch_ctx_from_cache"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel.LaunchContextBufferCache.populate_launch_ctx_from_cache" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="gstaichi.lang.kernel.ASTGenerator">
@@ -590,6 +608,11 @@
 <span class="sig-name descname"><span class="pre">fe_ll_cache_observations</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">gstaichi.lang._kernel_types.FeLlCacheObservations</span></em><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel.html#Kernel.fe_ll_cache_observations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel.Kernel.fe_ll_cache_observations" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="gstaichi.lang.kernel.Kernel.launch_context_buffer_cache">
+<span class="sig-name descname"><span class="pre">launch_context_buffer_cache</span></span><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel.html#Kernel.launch_context_buffer_cache"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel.Kernel.launch_context_buffer_cache" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="gstaichi.lang.kernel.Kernel.ast_builder">
 <span class="sig-name descname"><span class="pre">ast_builder</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">gstaichi._lib.core.gstaichi_python.ASTBuilder</span></span></span><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel.html#Kernel.ast_builder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel.Kernel.ast_builder" title="Link to this definition">#</a></dt>
@@ -677,6 +700,11 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.CompiledKernelKeyType"><code class="docutils literal notranslate"><span class="pre">CompiledKernelKeyType</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.ArgsHash"><code class="docutils literal notranslate"><span class="pre">ArgsHash</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.LaunchContextBufferCache"><code class="docutils literal notranslate"><span class="pre">LaunchContextBufferCache</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.LaunchContextBufferCache.cache"><code class="docutils literal notranslate"><span class="pre">LaunchContextBufferCache.cache()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.LaunchContextBufferCache.populate_launch_ctx_from_cache"><code class="docutils literal notranslate"><span class="pre">LaunchContextBufferCache.populate_launch_ctx_from_cache()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.ASTGenerator"><code class="docutils literal notranslate"><span class="pre">ASTGenerator</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.ASTGenerator.runtime"><code class="docutils literal notranslate"><span class="pre">ASTGenerator.runtime</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.ASTGenerator.current_kernel"><code class="docutils literal notranslate"><span class="pre">ASTGenerator.current_kernel</span></code></a></li>
@@ -706,6 +734,7 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.Kernel.currently_compiling_materialize_key"><code class="docutils literal notranslate"><span class="pre">Kernel.currently_compiling_materialize_key</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.Kernel.src_ll_cache_observations"><code class="docutils literal notranslate"><span class="pre">Kernel.src_ll_cache_observations</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.Kernel.fe_ll_cache_observations"><code class="docutils literal notranslate"><span class="pre">Kernel.fe_ll_cache_observations</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.Kernel.launch_context_buffer_cache"><code class="docutils literal notranslate"><span class="pre">Kernel.launch_context_buffer_cache</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.Kernel.ast_builder"><code class="docutils literal notranslate"><span class="pre">Kernel.ast_builder()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.Kernel.reset"><code class="docutils literal notranslate"><span class="pre">Kernel.reset()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.Kernel.materialize"><code class="docutils literal notranslate"><span class="pre">Kernel.materialize()</span></code></a></li>

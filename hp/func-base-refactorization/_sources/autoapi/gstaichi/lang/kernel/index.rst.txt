@@ -18,6 +18,7 @@ Classes
 
 .. autoapisummary::
 
+   gstaichi.lang.kernel.LaunchContextBufferCache
    gstaichi.lang.kernel.ASTGenerator
    gstaichi.lang.kernel.Kernel
 
@@ -29,6 +30,14 @@ Module Contents
 
 .. py:type:: ArgsHash
    :canonical: tuple[int, ...]
+
+
+.. py:class:: LaunchContextBufferCache
+
+   .. py:method:: cache(t_kernel, args_hash, launch_ctx, launch_ctx_buffer: dict[gstaichi.lang._kernel_types._KernelBatchedArgType, list[tuple]]) -> None
+
+
+   .. py:method:: populate_launch_ctx_from_cache(args_hash, launch_ctx) -> tuple[gstaichi.lang.impl.Program, bool]
 
 
 .. py:class:: ASTGenerator(ctx: gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext, kernel_name: str, current_kernel: Kernel, only_parse_function_def: bool, tree: ast.Module, used_py_dataclass_parameters: set[str] | None, dump_ast: bool)
@@ -143,6 +152,9 @@ Module Contents
 
    .. py:attribute:: fe_ll_cache_observations
       :type:  gstaichi.lang._kernel_types.FeLlCacheObservations
+
+
+   .. py:attribute:: launch_context_buffer_cache
 
 
    .. py:method:: ast_builder() -> gstaichi._lib.core.gstaichi_python.ASTBuilder
