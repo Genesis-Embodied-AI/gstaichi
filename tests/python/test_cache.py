@@ -11,7 +11,7 @@ def test_cache_primitive_args():
         flag_1: bool = True
 
     @ti.kernel
-    def fun(static_args: ti.template(), flag_2: ti.template(), value: ti.types.ndarray()):
+    def fun(static_args: ti.Template, flag_2: ti.Template, value: ti.types.NDArray):
         if ti.static(static_args.flag_1):
             if ti.static(flag_2):
                 value[None] = value[None] + 1
@@ -22,8 +22,8 @@ def test_cache_primitive_args():
 
     assert len(fun._primal.mapper._mapping_cache) == 0
     assert len(fun._primal.mapper._mapping_cache_tracker) == 0
-    assert len(fun._primal._launch_ctx_cache) == 0
-    assert len(fun._primal._launch_ctx_cache_tracker) == 0
+    assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache) == 0
+    assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache_tracker) == 0
 
     static_args = StructStaticConfig()
     flag_2 = True
@@ -34,21 +34,21 @@ def test_cache_primitive_args():
     assert value[None] == 2
     assert len(fun._primal.mapper._mapping_cache) == 1
     assert len(fun._primal.mapper._mapping_cache_tracker) == 1
-    assert len(fun._primal._launch_ctx_cache) == 1
-    assert len(fun._primal._launch_ctx_cache_tracker) == 1
+    assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache) == 1
+    assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache_tracker) == 1
 
     fun(static_args, flag_2, value)
     assert value[None] == 3
     assert len(fun._primal.mapper._mapping_cache) == 1
     assert len(fun._primal.mapper._mapping_cache_tracker) == 1
-    assert len(fun._primal._launch_ctx_cache) == 1
-    assert len(fun._primal._launch_ctx_cache_tracker) == 1
+    assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache) == 1
+    assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache_tracker) == 1
 
 
 @test_utils.test(arch=get_host_arch_list())
 def test_cache_fields_only():
     @ti.kernel
-    def fun(flag: ti.template(), value: ti.template()):
+    def fun(flag: ti.Template, value: ti.Template):
         if ti.static(flag):
             value[None] = value[None] + 1
         else:
@@ -56,8 +56,8 @@ def test_cache_fields_only():
 
     assert len(fun._primal.mapper._mapping_cache) == 0
     assert len(fun._primal.mapper._mapping_cache_tracker) == 0
-    assert len(fun._primal._launch_ctx_cache) == 0
-    assert len(fun._primal._launch_ctx_cache_tracker) == 0
+    assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache) == 0
+    assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache_tracker) == 0
 
     flag = True
     value = ti.field(ti.i32, shape=())
@@ -67,12 +67,12 @@ def test_cache_fields_only():
     assert value[None] == 2
     assert len(fun._primal.mapper._mapping_cache) == 1
     assert len(fun._primal.mapper._mapping_cache_tracker) == 1
-    assert len(fun._primal._launch_ctx_cache) == 1
-    assert len(fun._primal._launch_ctx_cache_tracker) == 1
+    assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache) == 1
+    assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache_tracker) == 1
 
     fun(flag, value)
     assert value[None] == 3
     assert len(fun._primal.mapper._mapping_cache) == 1
     assert len(fun._primal.mapper._mapping_cache_tracker) == 1
-    assert len(fun._primal._launch_ctx_cache) == 1
-    assert len(fun._primal._launch_ctx_cache_tracker) == 1
+    assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache) == 1
+    assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache_tracker) == 1
