@@ -139,7 +139,7 @@ class Func(FuncBase):
                 ret.append(
                     Expr(
                         _ti_core.make_get_element_expr(
-                            func_call.ptr, (i,), _ti_core.DebugInfo(impl.get_runtime().get_current_src_info())
+                            func_call.ptr, (i,), dbg_info)
                         )
                     )
                 )
