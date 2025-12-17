@@ -95,7 +95,6 @@ def test_cache_multi_entry_static():
     assert len(fun._primal._launch_ctx_cache_tracker) == 2
 
 
-
 @test_utils.test(arch=get_host_arch_list())
 def test_cache_fields_only():
     @ti.kernel
