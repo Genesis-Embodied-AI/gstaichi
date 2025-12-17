@@ -130,21 +130,21 @@ class LaunchContextBufferCache:
 
     def populate_launch_ctx_from_cache(self, args_hash, launch_ctx) -> tuple[Program, bool]:
         if self._prog_weakref is None or self._prog_weakref() is None:
-            self.prog = impl.get_runtime().prog
-            assert self.prog is not None
-            self._prog_weakref = ReferenceType(self.prog, self._destroy_callback)
+            prog = impl.get_runtime().prog
+            assert prog is not None
+            self._prog_weakref = ReferenceType(prog, self._destroy_callback)
         else:
             # Since we already store a weak reference to taichi program, it is much faster to use it rather than
             # paying the overhead of calling pybind11 functions (~200ns vs 5ns).
-            self.prog = self._prog_weakref()
-        assert self.prog is not None
+            prog = self._prog_weakref()
+        assert prog is not None
 
         assert args_hash is not None
         cached_launch_ctx = self._launch_ctx_cache.get(args_hash)
         if cached_launch_ctx is None:
-            return self.prog, False
+            return prog, False
         launch_ctx.copy(cached_launch_ctx)
-        return self.prog, True
+        return prog, True
 
 
 class ASTGenerator:
