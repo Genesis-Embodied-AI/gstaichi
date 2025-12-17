@@ -55,11 +55,6 @@ if TYPE_CHECKING:
 MAX_ARG_NUM = 512
 
 # Define proxies for fast lookup
-# _NONE, _REVERSE = (
-#     AutodiffMode.NONE,
-#     AutodiffMode.REVERSE,
-# )
-# Define proxies for fast lookup
 _ARG_EMPTY = inspect.Parameter.empty
 _arch_cuda = _ti_core.Arch.cuda
 _FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = _KernelBatchedArgType
