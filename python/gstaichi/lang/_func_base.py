@@ -261,8 +261,8 @@ class FuncBase:
 
     def process_args(self, is_pyfunc: bool, is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
         """
-        - expand dataclass args
-        - fuse args and kwargs into a single list of args
+        - for functions, expand dataclass arg_metas
+        - fuse incoming args and kwargs into a single list of args
         """
         if is_func and not is_pyfunc:
             current_kernel = self.current_kernel
