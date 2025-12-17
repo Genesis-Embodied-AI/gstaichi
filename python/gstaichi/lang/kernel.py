@@ -4,6 +4,7 @@ import os
 import pathlib
 import time
 from collections import defaultdict
+from functools import partial
 
 # Must import 'partial' directly instead of the entire module to avoid attribute lookup overhead.
 from typing import Any, Callable, TypeAlias
@@ -98,11 +99,13 @@ class LaunchContextBufferCache:
         self._launch_ctx_cache_tracker: dict[ArgsHash, list[ReferenceType | None]] = {}
         self._prog_weakref: ReferenceType[Program] | None = None
 
-    def _destroy_callback(self, ref: ReferenceType):
-        self._launch_ctx_cache.clear()
-        self._launch_ctx_cache_tracker.clear()
-        self._prog_weakref = None
-        self.prog = None
+    @staticmethod
+    def _destroy_callback(kernel_ref: ReferenceType["LaunchContextBufferCache"], ref: ReferenceType):
+        maybe_kernel = kernel_ref()
+        if maybe_kernel is not None:
+            maybe_kernel._launch_ctx_cache.clear()
+            maybe_kernel._launch_ctx_cache_tracker.clear()
+            maybe_kernel._prog_weakref = None
 
     def cache(
         self, t_kernel, args_hash, launch_ctx, launch_ctx_buffer: dict[_KernelBatchedArgType, list[tuple]]
@@ -133,7 +136,7 @@ class LaunchContextBufferCache:
         if self._prog_weakref is None or self._prog_weakref() is None:
             prog = impl.get_runtime().prog
             assert prog is not None
-            self._prog_weakref = ReferenceType(prog, self._destroy_callback)
+            self._prog_weakref = ReferenceType(prog, partial(self._destroy_callback, ReferenceType(self)))
         else:
             # Since we already store a weak reference to taichi program, it is much faster to use it rather than
             # paying the overhead of calling pybind11 functions (~200ns vs 5ns).
