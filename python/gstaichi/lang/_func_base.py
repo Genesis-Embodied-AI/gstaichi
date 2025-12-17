@@ -260,6 +260,10 @@ class FuncBase:
         return tree, ctx
 
     def process_args(self, is_pyfunc: bool, is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
+        """
+        - expand dataclass args
+        - fuse args and kwargs into a single list of args
+        """
         if is_func and not is_pyfunc:
             # if typing.TYPE_CHECKING:
             #     assert isinstance(self, Func)
