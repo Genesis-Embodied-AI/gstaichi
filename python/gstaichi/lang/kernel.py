@@ -99,11 +99,10 @@ class LaunchContextBufferCache:
         self._prog_weakref: ReferenceType[Program] | None = None
 
     def _destroy_callback(self, ref: ReferenceType):
-        if self._launch_ctx_cache is not None:
-            self._launch_ctx_cache.clear()
-        if self._launch_ctx_cache_tracker is not None:
-            self._launch_ctx_cache_tracker.clear()
+        self._launch_ctx_cache.clear()
+        self._launch_ctx_cache_tracker.clear()
         self._prog_weakref = None
+        self.prog = None
 
     def cache(
         self, t_kernel, args_hash, launch_ctx, launch_ctx_buffer: dict[_KernelBatchedArgType, list[tuple]]
@@ -130,7 +129,7 @@ class LaunchContextBufferCache:
         self._launch_ctx_cache_tracker[args_hash] = launch_ctx_cache_tracker_
 
     def populate_launch_ctx_from_cache(self, args_hash, launch_ctx) -> tuple[Program, bool]:
-        if self._prog_weakref is None or not self._prog_weakref():
+        if self._prog_weakref is None or self._prog_weakref() is None:
             self.prog = impl.get_runtime().prog
             assert self.prog is not None
             self._prog_weakref = ReferenceType(self.prog, self._destroy_callback)
