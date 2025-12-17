@@ -136,13 +136,7 @@ class Func(FuncBase):
 
         for i, return_type in enumerate(self.return_type):
             if id(return_type) in primitive_types.type_ids:
-                ret.append(
-                    Expr(
-                        _ti_core.make_get_element_expr(
-                            func_call.ptr, (i,), dbg_info)
-                        )
-                    )
-                )
+                ret.append(Expr(_ti_core.make_get_element_expr(func_call.ptr, (i,), dbg_info)))
             elif isinstance(return_type, (StructType, MatrixType)):
                 ret.append(return_type.from_gstaichi_object(func_call, (i,)))
             else:
