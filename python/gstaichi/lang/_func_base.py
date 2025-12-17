@@ -315,7 +315,6 @@ class FuncBase:
                         raise GsTaichiSyntaxError(f"Unexpected argument '{key}'.")
         elif num_missing_args:
             for i in range(num_args, num_arg_metas):
-                arg = fused_args[i]
                 if fused_args[i] is _ARG_EMPTY:
                     arg_meta = self.arg_metas_expanded[i]
                     raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")

@@ -207,7 +207,7 @@ class Kernel(FuncBase):
         #   the launch context being stored in cache.
         # See 'launch_kernel' for details regarding the intended use of caching.
         self._launch_ctx_cache: dict[ArgsHash, KernelLaunchContext] = {}
-        self._launch_ctx_cache_tracker: dict[ArgsHash, list[ReferenceType]] = {}
+        self._launch_ctx_cache_tracker: dict[ArgsHash, list[ReferenceType | None]] = {}
         self._prog_weakref: ReferenceType[Program] | None = None
 
     def ast_builder(self) -> ASTBuilder:
@@ -365,8 +365,8 @@ class Kernel(FuncBase):
         callbacks: list[Callable[[], None]] = []
         launch_ctx = t_kernel.make_launch_context()
         launch_ctx_cache: KernelLaunchContext | None = None
-        launch_ctx_cache_tracker: list[ReferenceType] | None = None
-        args_hash: ArgsHash = tuple(map(id, args))
+        launch_ctx_cache_tracker: list[ReferenceType | None] | None = None
+        args_hash: ArgsHash = (id(t_kernel), *[id(arg) for arg in args if type(arg) is not template])
         try:
             launch_ctx_cache_tracker = self._launch_ctx_cache_tracker[args_hash]
         except KeyError:
@@ -431,11 +431,12 @@ class Kernel(FuncBase):
                 self._launch_ctx_cache[args_hash] = launch_ctx_cache
 
                 # Note that the clearing callback will only be called once despite being registered for each tracked
-                # objects, because all the weakrefs get deallocated right away, and their respective callback
-                # vanishes with them, without even getting a chance to get called. This means that registring the
-                # clearing callback systematically does not incur any cumulative runtime penalty yet ensures full
-                # memory safety.
-                launch_ctx_cache_tracker_: list[ReferenceType] = []
+                # objects, because all the weakrefs get deallocated right away, and their respective callback vanishes
+                # with them, without even getting a chance to get called. This means that registring the clearing
+                # callback systematically does not incur any cumulative runtime penalty yet ensures full memory safety.
+                # Note that it is important to prepend the cache tracker with 'None' to avoid misclassifying no argument
+                # with expired cache entry caused by deallocated argument.
+                launch_ctx_cache_tracker_: list[ReferenceType | None] = []
                 clear_callback = lambda ref: launch_ctx_cache_tracker_.clear()
                 if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY):
                     _, arrs = zip(*launch_ctx_args)
