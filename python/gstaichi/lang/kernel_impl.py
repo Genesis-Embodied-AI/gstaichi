@@ -959,7 +959,6 @@ class Kernel:
         # A materialized kernel is a KernelCxx object which may or may not have
         # been compiled. It generally has been converted at least as far as AST
         # and front-end IR, but not necessarily any further.
-        self._dump_kernel_checksums = os.environ.get("TI_DUMP_KERNEL_CHECKSUMS", "0") == "1"
         self.materialized_kernels: dict[CompiledKernelKeyType, KernelCxx] = {}
         self.has_print = False
         self.gstaichi_callable: GsTaichiCallable | None = None
@@ -1344,29 +1343,6 @@ class Kernel:
                 prog_device_cap = prog.get_device_caps()
 
                 compile_result: CompileResult = prog.compile_kernel(prog_config, prog_device_cap, t_kernel)
-                if self._dump_kernel_checksums:
-                    debug_dump_path = pathlib.Path(impl.current_cfg().debug_dump_path)
-                    checksums_file_path = debug_dump_path / "checksums.csv"
-                    kernels_dump_dir = debug_dump_path / "kernels"
-                    file_exists = checksums_file_path.exists()
-                    if self.fast_checksum:
-                        with checksums_file_path.open("a") as f:
-                            dict_writer = csv.DictWriter(f, fieldnames=["kernel", "fe", "src"])
-                            if not file_exists:
-                                dict_writer.writeheader()
-                            dict_writer.writerow(
-                                {
-                                    "kernel": self.func.__name__,
-                                    "fe": compile_result.cache_key,
-                                    "src": self.fast_checksum,
-                                }
-                            )
-                            f.flush()
-                        kernels_dump_dir.mkdir(exist_ok=True)
-                        ch_ir_path = kernels_dump_dir / f"{compile_result.cache_key}.ll"
-                        if not ch_ir_path.exists() and self.kernel_cpp:
-                            with ch_ir_path.open("w") as f:
-                                f.write(self.kernel_cpp.to_string())
                 compiled_kernel_data = compile_result.compiled_kernel_data
                 if compile_result.cache_hit:
                     self.fe_ll_cache_observations.cache_hit = True
