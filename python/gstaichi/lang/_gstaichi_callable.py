@@ -110,8 +110,7 @@ class BoundGsTaichiCallable:
         return self.wrapper(self.instance, *args, **kwargs)
 
     def __getattr__(self, k: str) -> Any:
-        res = getattr(self.gstaichi_callable, k)
-        return res
+        return getattr(self.gstaichi_callable, k)
 
     def __setattr__(self, k: str, v: Any) -> None:
         # Note: these have to match the name of any attributes on this class.
