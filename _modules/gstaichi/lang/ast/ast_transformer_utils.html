@@ -332,13 +332,17 @@
     <span class="n">handle_exception_from_cpp</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">.._func_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">FuncBase</span>
-
 <div class="viewcode-block" id="AutodiffMode">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.AutodiffMode">[docs]</a>
 <span class="n">AutodiffMode</span> <span class="o">=</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">AutodiffMode</span></div>
 
+
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.kernel_impl</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">Func</span><span class="p">,</span>
+        <span class="n">Kernel</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
 <div class="viewcode-block" id="Builder">
@@ -591,7 +595,7 @@
         <span class="n">excluded_parameters</span><span class="p">,</span>
         <span class="n">end_lineno</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">is_kernel</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
-        <span class="n">func</span><span class="p">:</span> <span class="s2">&quot;FuncBase&quot;</span><span class="p">,</span>
+        <span class="n">func</span><span class="p">:</span> <span class="s2">&quot;Func | Kernel&quot;</span><span class="p">,</span>
         <span class="n">arg_features</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">global_vars</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
         <span class="n">template_vars</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
