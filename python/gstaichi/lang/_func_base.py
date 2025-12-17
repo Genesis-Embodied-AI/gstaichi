@@ -265,8 +265,6 @@ class FuncBase:
         - fuse args and kwargs into a single list of args
         """
         if is_func and not is_pyfunc:
-            # if typing.TYPE_CHECKING:
-            #     assert isinstance(self, Func)
             current_kernel = self.current_kernel
             if typing.TYPE_CHECKING:
                 assert current_kernel is not None
