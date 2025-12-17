@@ -48,9 +48,9 @@ from ._func_base import FuncBase
 from ._gstaichi_callable import GsTaichiCallable
 from ._kernel_types import (
     FeLlCacheObservations,
+    KernelBatchedArgType,
     LaunchStats,
     SrcLlCacheObservations,
-    KernelBatchedArgType,
 )
 
 CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
