@@ -64,9 +64,6 @@ _NONE, _VALIDATION = (
 _FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = _KernelBatchedArgType
 
 
-count = 0
-
-
 class LaunchContextBufferCache:
     # Here, we are tracking whether a launch context buffer can be cached.
     # The point of caching the launch context buffer is allowing skipping recursive processing of all the input
