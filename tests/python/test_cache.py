@@ -20,7 +20,9 @@ def test_cache_primitive_args():
         else:
             assert "Invalid 'static_args.flag_1' branch"
 
-    assert len(fun._primal.mapper.mapping) == 0
+    assert len(fun._primal.mapper._mapping_cache) == 0
+    assert len(fun._primal.mapper._mapping_cache_tracker) == 0
+    assert len(fun._primal._launch_ctx_cache) == 0
     assert len(fun._primal._launch_ctx_cache_tracker) == 0
 
     static_args = StructStaticConfig()
@@ -30,12 +32,16 @@ def test_cache_primitive_args():
 
     fun(static_args, flag_2, value)
     assert value[None] == 2
-    assert len(fun._primal.mapper.mapping) == 1
+    assert len(fun._primal.mapper._mapping_cache) == 1
+    assert len(fun._primal.mapper._mapping_cache_tracker) == 1
+    assert len(fun._primal._launch_ctx_cache) == 1
     assert len(fun._primal._launch_ctx_cache_tracker) == 1
 
     fun(static_args, flag_2, value)
     assert value[None] == 3
-    assert len(fun._primal.mapper.mapping) == 1
+    assert len(fun._primal.mapper._mapping_cache) == 1
+    assert len(fun._primal.mapper._mapping_cache_tracker) == 1
+    assert len(fun._primal._launch_ctx_cache) == 1
     assert len(fun._primal._launch_ctx_cache_tracker) == 1
 
 
@@ -48,7 +54,9 @@ def test_cache_fields_only():
         else:
             assert "Invalid 'static_args.flag_1' branch"
 
-    assert len(fun._primal.mapper.mapping) == 0
+    assert len(fun._primal.mapper._mapping_cache) == 0
+    assert len(fun._primal.mapper._mapping_cache_tracker) == 0
+    assert len(fun._primal._launch_ctx_cache) == 0
     assert len(fun._primal._launch_ctx_cache_tracker) == 0
 
     flag = True
@@ -57,10 +65,14 @@ def test_cache_fields_only():
 
     fun(flag, value)
     assert value[None] == 2
-    assert len(fun._primal.mapper.mapping) == 1
+    assert len(fun._primal.mapper._mapping_cache) == 1
+    assert len(fun._primal.mapper._mapping_cache_tracker) == 1
+    assert len(fun._primal._launch_ctx_cache) == 1
     assert len(fun._primal._launch_ctx_cache_tracker) == 1
 
     fun(flag, value)
     assert value[None] == 3
-    assert len(fun._primal.mapper.mapping) == 1
+    assert len(fun._primal.mapper._mapping_cache) == 1
+    assert len(fun._primal.mapper._mapping_cache_tracker) == 1
+    assert len(fun._primal._launch_ctx_cache) == 1
     assert len(fun._primal._launch_ctx_cache_tracker) == 1
