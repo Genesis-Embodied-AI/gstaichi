@@ -282,16 +282,6 @@ class Kernel(FuncBase):
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
         self.fe_ll_cache_observations: FeLlCacheObservations = FeLlCacheObservations()
 
-        # The cache key corresponds to the hash of the (packed) python-side input arguments of the kernel.
-        # * '_launch_ctx_cache' is storing a backup of the launch context BEFORE ever calling the kernel.
-        # * '_launch_ctx_cache_tracker' is used for bounding the lifetime of a cache entry to its corresponding set of
-        #   input arguments. Internally, this is done by wrapping all Taichi ndarrays as weak reference.
-        # * '_prog_weakref'is used for bounding the lifetime of the entire cache to the Taichi programm managing all
-        #   the launch context being stored in cache.
-        # See 'launch_kernel' for details regarding the intended use of caching.
-        # self._launch_ctx_cache: dict[ArgsHash, KernelLaunchContext] = {}
-        # self._launch_ctx_cache_tracker: dict[ArgsHash, list[ReferenceType]] = {}
-        # self._prog_weakref: ReferenceType[Program] | None = None
         self.launch_context_buffer_cache = LaunchContextBufferCache()
 
     def ast_builder(self) -> ASTBuilder:
