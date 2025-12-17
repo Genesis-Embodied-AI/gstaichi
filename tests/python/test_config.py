@@ -57,10 +57,8 @@ def test_config_debug_dump_path(specify_path: bool, tmp_path: pathlib.Path):
         print(proc.stderr)
     assert proc.returncode == RET_SUCCESS
     if specify_path:
-        os.system(f"ls {tmp_path}")
         assert len(list(tmp_path.glob("*"))) > 0
     else:
-        os.system(f"ls /tmp/ir")
         assert len(list(pathlib.Path("/tmp/ir").glob("*"))) > 0
 
 
