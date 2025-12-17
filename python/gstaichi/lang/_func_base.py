@@ -260,9 +260,11 @@ class FuncBase:
         return tree, ctx
 
     def process_args(self, is_pyfunc: bool, is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
+        """
+        - expand dataclass args
+        - fuse args and kwargs into a single list of args
+        """
         if is_func and not is_pyfunc:
-            # if typing.TYPE_CHECKING:
-            #     assert isinstance(self, Func)
             current_kernel = self.current_kernel
             if typing.TYPE_CHECKING:
                 assert current_kernel is not None
@@ -315,7 +317,6 @@ class FuncBase:
                         raise GsTaichiSyntaxError(f"Unexpected argument '{key}'.")
         elif num_missing_args:
             for i in range(num_args, num_arg_metas):
-                arg = fused_args[i]
                 if fused_args[i] is _ARG_EMPTY:
                     arg_meta = self.arg_metas_expanded[i]
                     raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")

@@ -6,7 +6,8 @@ from gstaichi.lang import impl
 from gstaichi.lang.impl import Program
 from gstaichi.lang.kernel_arguments import ArgMetadata
 
-from ._template_mapper_hotpath import _extract_arg
+from .._test_tools import warnings_helper
+from ._template_mapper_hotpath import _extract_arg, _primitive_types
 
 ArgsHash: TypeAlias = tuple[int, ...]
 Key: TypeAlias = tuple[Any, ...]
@@ -38,7 +39,7 @@ class TemplateMapper:
         self.template_slot_locations: list[int] = template_slot_locations
         self.mapping: dict[Key, int] = {}
         self._mapping_cache: dict[ArgsHash, tuple[int, Key]] = {}
-        self._mapping_cache_tracker: dict[ArgsHash, list[ReferenceType]] = {}
+        self._mapping_cache_tracker: dict[ArgsHash, list[ReferenceType | None]] = {}
         self._prog_weakref: ReferenceType[Program] | None = None
 
     def extract(self, raise_on_templated_floats: bool, args: tuple[Any, ...]) -> Key:
@@ -64,8 +65,12 @@ class TemplateMapper:
             prog = self._prog_weakref()
         assert prog is not None
 
-        mapping_cache_tracker: list[ReferenceType] | None = None
-        args_hash: ArgsHash = tuple([id(arg) for arg in args])
+        # Note that it is necessary to handle primitive types separately. First, using their address as cache key must
+        # be avoided, because even though it is theoretically possible, it is overly restrictive. Second, it does not
+        # make sense to use these arguments to track the lifetime of the corresponding cache entry and taking weakref
+        # of primitive types if forbidden anyway.
+        mapping_cache_tracker: list[ReferenceType | None] | None = None
+        args_hash: ArgsHash = tuple([id(arg) if type(arg) not in _primitive_types else arg for arg in args])
         try:
             mapping_cache_tracker = self._mapping_cache_tracker[args_hash]
         except KeyError:
@@ -79,13 +84,17 @@ class TemplateMapper:
         except KeyError:
             count = self.mapping[key] = len(self.mapping)
 
-        mapping_cache_tracker_: list[ReferenceType] = []
+        # Note that it is important to prepend the cache tracker with 'None' to avoid misclassifying no argument with
+        # expired cache entry caused by deallocated argument.
+        mapping_cache_tracker_: list[ReferenceType | None] = [None]
         clear_callback = lambda ref: mapping_cache_tracker_.clear()
         try:
-            mapping_cache_tracker_ += [ReferenceType(arg, clear_callback) for arg in args]
+            mapping_cache_tracker_ += [
+                ReferenceType(arg, clear_callback) for arg in args if type(arg) not in _primitive_types
+            ]
             self._mapping_cache_tracker[args_hash] = mapping_cache_tracker_
             self._mapping_cache[args_hash] = (count, key)
-        except TypeError:
-            pass
+        except TypeError as e:
+            warnings_helper.warn_once(f"{e}. Template mapper caching disabled.")
 
         return (count, key)
