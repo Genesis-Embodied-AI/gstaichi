@@ -89,10 +89,10 @@ def _extract_arg(raise_on_templated_floats: bool, arg: Any, annotation: Annotati
             # TODO(zhanlue): replacing "tuple(args)" with "hash of argument values"
             # This can resolve the following issues:
             # 1. Invalid weak-ref will leave a dead(dangling) entry in both caches: "self.mapping" and "self.compiled_functions"
-            # 2. Different argument instances with same type and same value, will get templatized into seperate kernels.
+            # 2. Different argument instances with same type and same value, will get templatized into separate kernels.
             return weakref.ref(arg)
 
-        # [Primitive arguments] Return the value
+        # Return value directly for other types, i.e. primitive types and all ti.Field-derived classes
         if raise_on_templated_floats and arg_type is float:
             raise ValueError("Floats not allowed as templated types.")
         return arg
