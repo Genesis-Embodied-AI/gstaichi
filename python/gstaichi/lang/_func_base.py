@@ -47,7 +47,7 @@ from gstaichi.types import (
 from gstaichi.types.enums import Layout
 from gstaichi.types.utils import is_signed
 
-from ._kernel_types import _KernelBatchedArgType
+from ._kernel_types import KernelBatchedArgType
 
 if TYPE_CHECKING:
     from .kernel import Kernel
@@ -62,7 +62,7 @@ MAX_ARG_NUM = 512
 # Define proxies for fast lookup
 _ARG_EMPTY = inspect.Parameter.empty
 _arch_cuda = _ti_core.Arch.cuda
-_FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = _KernelBatchedArgType
+_FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = KernelBatchedArgType
 
 
 class FuncBase:
@@ -352,7 +352,7 @@ class FuncBase:
         used_py_dataclass_parameters: set[tuple[str, ...]],
         py_dataclass_basename: tuple[str, ...],
         launch_ctx: KernelLaunchContext,
-        launch_ctx_buffer: DefaultDict[_KernelBatchedArgType, list[tuple]],
+        launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]],
         needed_arg_type: Type,
         provided_arg_type: Type,
         v: Any,

@@ -19,7 +19,7 @@ from gstaichi.types.enums import AutodiffMode
 
 from .._test_tools import warnings_helper
 from ._gstaichi_callable import BoundGsTaichiCallable, GsTaichiCallable
-from ._kernel_types import _KernelBatchedArgType
+from ._kernel_types import KernelBatchedArgType
 from .func import Func
 from .kernel import Kernel
 
@@ -324,4 +324,4 @@ def data_oriented(cls):
     return cls
 
 
-__all__ = ["data_oriented", "func", "kernel", "pyfunc", "real_func", "_KernelBatchedArgType"]
+__all__ = ["data_oriented", "func", "kernel", "pyfunc", "real_func", "KernelBatchedArgType"]
