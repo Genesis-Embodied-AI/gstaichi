@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import IntEnum
 
 
-class KernelBatchedArgType(IntEnum):
+class _KernelBatchedArgType(IntEnum):
     FLOAT = 0
     INT = 1
     UINT = 2
@@ -25,4 +25,4 @@ class FeLlCacheObservations:
 
 @dataclass
 class LaunchStats:
-    kernel_args_count_by_type: dict[KernelBatchedArgType, int]
+    kernel_args_count_by_type: dict[_KernelBatchedArgType, int]
