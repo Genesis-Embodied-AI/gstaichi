@@ -491,8 +491,8 @@ class Kernel(FuncBase):
                 raise e
             raise e from None
 
-        for c in callbacks:
-            c()
+        for callback in callbacks:
+            callback()
 
         self.currently_compiling_materialize_key = None
 
