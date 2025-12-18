@@ -3,12 +3,9 @@ import re
 import sys
 import typing
 
-# Must import 'partial' directly instead of the entire module to avoid attribute lookup overhead.
 from functools import update_wrapper, wraps
 from typing import Any, Callable, TypeVar, cast, overload
 
-# Must import 'ReferenceType' directly instead of the entire module to avoid attribute lookup overhead.
-from gstaichi._lib import core as _ti_core
 from gstaichi.lang import impl
 from gstaichi.lang.exception import (
     GsTaichiCompilationError,
@@ -28,8 +25,6 @@ _NONE, _REVERSE = (
     AutodiffMode.NONE,
     AutodiffMode.REVERSE,
 )
-_ARG_EMPTY = inspect.Parameter.empty
-_arch_cuda = _ti_core.Arch.cuda
 
 
 def func(fn: Callable, is_real_function: bool = False) -> GsTaichiCallable:
