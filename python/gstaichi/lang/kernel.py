@@ -121,7 +121,7 @@ class LaunchContextBufferCache:
         # callback systematically does not incur any cumulative runtime penalty yet ensures full memory safety.
         # Note that it is important to prepend the cache tracker with 'None' to avoid misclassifying no argument
         # with expired cache entry caused by deallocated argument.
-        launch_ctx_cache_tracker_: list[ReferenceType | None] = []
+        launch_ctx_cache_tracker_: list[ReferenceType | None] = [None]
         clear_callback = lambda ref: launch_ctx_cache_tracker_.clear()
         if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY):
             _, arrs = zip(*launch_ctx_args)
