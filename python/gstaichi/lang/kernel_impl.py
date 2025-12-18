@@ -42,7 +42,7 @@ from gstaichi._lib.core.gstaichi_python import (
 from gstaichi.lang import _kernel_impl_dataclass, impl, ops, runtime_ops
 from gstaichi.lang._fast_caching import src_hasher
 from gstaichi.lang._ndarray import Ndarray
-from gstaichi.lang._template_mapper import TemplateMapper, _primitive_types
+from gstaichi.lang._template_mapper import TemplateMapper
 from gstaichi.lang._wrap_inspect import FunctionSourceInfo, get_source_info_and_src
 from gstaichi.lang.any_array import AnyArray
 from gstaichi.lang.ast import (
@@ -1252,7 +1252,8 @@ class Kernel:
         launch_ctx = t_kernel.make_launch_context()
         launch_ctx_cache: KernelLaunchContext | None = None
         launch_ctx_cache_tracker: list[ReferenceType | None] | None = None
-        args_hash: ArgsHash = (id(t_kernel), *[id(arg) if type(arg) not in _primitive_types else arg for arg in args])
+        # Special treatment for primitive types is unecessary and detrimendal. See 'TemplateMapper.lookup' for details.
+        args_hash: ArgsHash = (id(t_kernel), *[id(arg) for arg in args])
         try:
             launch_ctx_cache_tracker = self._launch_ctx_cache_tracker[args_hash]
         except KeyError:

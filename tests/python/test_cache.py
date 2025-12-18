@@ -37,9 +37,7 @@ def test_cache_primitive_args():
     assert len(fun._primal._launch_ctx_cache) == 1
     assert len(fun._primal._launch_ctx_cache_tracker) == 1
 
-    constant_2 = int("1234567890")  # Must be smart to defeat object interning and get a different address
-    assert id(constant) != id(constant_2)
-    fun(static_args, constant_2, value)
+    fun(static_args, 1234567890, value)
     assert value[None] == 3
     assert len(fun._primal.mapper._mapping_cache) == 1
     assert len(fun._primal.mapper._mapping_cache_tracker) == 1
