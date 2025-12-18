@@ -35,6 +35,7 @@ void lower_matrix_ptr(IRNode *root, bool force_scalarize = false);
 bool die(IRNode *root);
 bool simplify(IRNode *root, const CompileConfig &config);
 bool cfg_optimization(
+    const CompileConfig &config,
     IRNode *root,
     bool after_lower_access,
     bool autodiff_enabled,

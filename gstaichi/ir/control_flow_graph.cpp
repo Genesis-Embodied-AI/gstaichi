@@ -944,11 +944,13 @@ CFGNode *ControlFlowGraph::back() const {
   return nodes.back().get();
 }
 
-void ControlFlowGraph::dump_graph_to_file(const std::string &kernel_name,
+void ControlFlowGraph::dump_graph_to_file(const CompileConfig &config,
+                                          const std::string &kernel_name,
                                           const std::string &suffix) const {
-  std::filesystem::create_directories(IR_DUMP_DIR);
+  std::filesystem::path ir_dump_dir = config.debug_dump_path;
+  std::filesystem::create_directories(ir_dump_dir);
   std::filesystem::path filename =
-      IR_DUMP_DIR / (kernel_name + "_CFG" + suffix + ".txt");
+      ir_dump_dir / (kernel_name + "_CFG" + suffix + ".txt");
 
   std::ofstream out_file(filename.string());
   if (!out_file) {

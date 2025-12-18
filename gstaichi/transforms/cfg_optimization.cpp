@@ -9,6 +9,7 @@ namespace gstaichi::lang {
 
 namespace irpass {
 bool cfg_optimization(
+    const CompileConfig &config,
     IRNode *root,
     bool after_lower_access,
     bool autodiff_enabled,
@@ -25,7 +26,7 @@ bool cfg_optimization(
   if (dump_cfg) {
     std::string suffix =
         phase.empty() ? "_before_cfg_opt" : ("_" + phase + "_before_cfg_opt");
-    cfg->dump_graph_to_file(kernel_name, suffix);
+    cfg->dump_graph_to_file(config, kernel_name, suffix);
   }
 
   bool result_modified = false;
@@ -42,7 +43,7 @@ bool cfg_optimization(
     if (dump_cfg) {
       std::string suffix =
           phase.empty() ? "_post_cfg_opt" : ("_" + phase + "_post_cfg_opt");
-      cfg->dump_graph_to_file(kernel_name, suffix);
+      cfg->dump_graph_to_file(config, kernel_name, suffix);
     }
   }
   // TODO: implement cfg->dead_instruction_elimination()
