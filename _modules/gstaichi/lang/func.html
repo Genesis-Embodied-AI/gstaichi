@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gstaichi.lang.func &#8212; GsTaichi 4.5.0 documentation</title>
+    <title>gstaichi.lang.func &#8212; GsTaichi 4.6.0 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../_static/documentation_options.js?v=5ef59c98"></script>
+    <script src="../../../_static/documentation_options.js?v=cc8a4273"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -59,7 +59,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="4.5.0" />
+  <meta name="docsearch:version" content="4.6.0" />
   </head>
   
   
@@ -121,7 +121,7 @@
   
   
   
-    <p class="title logo__title">GsTaichi 4.5.0 documentation</p>
+    <p class="title logo__title">GsTaichi 4.6.0 documentation</p>
   
 </a></div>
     
@@ -418,6 +418,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">do_compile</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">arg_features</span><span class="o">=</span><span class="n">arg_features</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">func_call_rvalue</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">)</span>
+
         <span class="n">current_args_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span>
         <span class="k">assert</span> <span class="n">current_args_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">used_by_dataclass_parameters_enforcing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
@@ -439,6 +440,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_real_function</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span> <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">returned</span> <span class="o">!=</span> <span class="n">ReturnStatus</span><span class="o">.</span><span class="n">ReturnedValue</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="s2">&quot;Function has a return type but does not have a return statement&quot;</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="n">ret</span>
 
 <div class="viewcode-block" id="Func.func_call_rvalue">
@@ -471,24 +473,21 @@
         <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
+
         <span class="n">func_call</span> <span class="o">=</span> <span class="n">Expr</span><span class="p">(</span><span class="n">func_call</span><span class="p">)</span>
         <span class="n">ret</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">return_type</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">return_type</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">id</span><span class="p">(</span><span class="n">return_type</span><span class="p">)</span> <span class="ow">in</span> <span class="n">primitive_types</span><span class="o">.</span><span class="n">type_ids</span><span class="p">:</span>
-                <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="n">Expr</span><span class="p">(</span>
-                        <span class="n">_ti_core</span><span class="o">.</span><span class="n">make_get_element_expr</span><span class="p">(</span>
-                            <span class="n">func_call</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,),</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">DebugInfo</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">get_current_src_info</span><span class="p">())</span>
-                        <span class="p">)</span>
-                    <span class="p">)</span>
-                <span class="p">)</span>
+                <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Expr</span><span class="p">(</span><span class="n">_ti_core</span><span class="o">.</span><span class="n">make_get_element_expr</span><span class="p">(</span><span class="n">func_call</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,),</span> <span class="n">dbg_info</span><span class="p">)))</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">return_type</span><span class="p">,</span> <span class="p">(</span><span class="n">StructType</span><span class="p">,</span> <span class="n">MatrixType</span><span class="p">)):</span>
                 <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">return_type</span><span class="o">.</span><span class="n">from_gstaichi_object</span><span class="p">(</span><span class="n">func_call</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,)))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">GsTaichiTypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported return type for return value </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">return_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">ret</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span></div>
 
 
