@@ -125,7 +125,8 @@ class ControlFlowGraph {
   [[nodiscard]] std::size_t size() const;
   [[nodiscard]] CFGNode *back() const;
 
-  void dump_graph_to_file(const std::string &kernel_name,
+  void dump_graph_to_file(const CompileConfig &config,
+                          const std::string &kernel_name,
                           const std::string &suffix = "") const;
 
   /**

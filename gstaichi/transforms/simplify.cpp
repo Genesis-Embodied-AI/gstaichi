@@ -537,8 +537,9 @@ void full_simplify(IRNode *root,
   bool should_dump =
       (dump_simplify_env && std::string(dump_simplify_env) == "1");
   auto dump_step = [&](const std::string &step_name, int iteration) {
+    std::filesystem::path ir_dump_dir = config.debug_dump_path;
     std::filesystem::path filename =
-        IR_DUMP_DIR /
+        ir_dump_dir /
         (args.kernel_name + ".simplify_I_call" + std::to_string(this_call) +
          "_iter" + std::to_string(iteration) + "_" + step_name + ".ir");
     std::string ir_str;
@@ -602,7 +603,7 @@ void full_simplify(IRNode *root,
       // not modified.
       if (config.opt_level > 0 && first_iteration && config.cfg_optimization &&
           cfg_optimization(
-              root, args.after_lower_access, args.autodiff_enabled,
+              config, root, args.after_lower_access, args.autodiff_enabled,
               !config.real_matrix_scalarize && !config.force_scalarize_matrix,
               std::nullopt, args.kernel_name, args.phase))
         modified = true;
