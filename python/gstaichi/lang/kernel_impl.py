@@ -1066,13 +1066,13 @@ class Kernel:
     def materialize(self, key: CompiledKernelKeyType | None, args: tuple[Any, ...], arg_features=None):
         if key is None:
             key = (self.func, 0, self.autodiff_mode)
-        self.runtime.materialize()
         self.fast_checksum = None
-
         self.currently_compiling_materialize_key = key
 
         if key in self.materialized_kernels:
             return
+
+        self.runtime.materialize()
 
         used_py_dataclass_parameters: set[str] | None = None
         frontend_cache_key: str | None = None
