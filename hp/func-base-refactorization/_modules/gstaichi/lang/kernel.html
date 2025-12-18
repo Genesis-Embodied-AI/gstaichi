@@ -356,14 +356,14 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.types.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutodiffMode</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.types.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_signed</span>
 
-<span class="c1"># from .kernel_impl import _KernelBatchedArgType</span>
+<span class="c1"># from .kernel_impl import KernelBatchedArgType</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._func_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">FuncBase</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._gstaichi_callable</span><span class="w"> </span><span class="kn">import</span> <span class="n">GsTaichiCallable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._kernel_types</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">FeLlCacheObservations</span><span class="p">,</span>
+    <span class="n">KernelBatchedArgType</span><span class="p">,</span>
     <span class="n">LaunchStats</span><span class="p">,</span>
     <span class="n">SrcLlCacheObservations</span><span class="p">,</span>
-    <span class="n">_KernelBatchedArgType</span><span class="p">,</span>
 <span class="p">)</span>
 
 <div class="viewcode-block" id="CompiledKernelKeyType">
@@ -380,7 +380,7 @@
     <span class="n">AutodiffMode</span><span class="o">.</span><span class="n">VALIDATION</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="c1"># Define proxies for fast lookup</span>
-<span class="n">_FLOAT</span><span class="p">,</span> <span class="n">_INT</span><span class="p">,</span> <span class="n">_UINT</span><span class="p">,</span> <span class="n">_TI_ARRAY</span><span class="p">,</span> <span class="n">_TI_ARRAY_WITH_GRAD</span> <span class="o">=</span> <span class="n">_KernelBatchedArgType</span>
+<span class="n">_FLOAT</span><span class="p">,</span> <span class="n">_INT</span><span class="p">,</span> <span class="n">_UINT</span><span class="p">,</span> <span class="n">_TI_ARRAY</span><span class="p">,</span> <span class="n">_TI_ARRAY_WITH_GRAD</span> <span class="o">=</span> <span class="n">KernelBatchedArgType</span>
 
 
 <div class="viewcode-block" id="LaunchContextBufferCache">
@@ -430,7 +430,7 @@
 <div class="viewcode-block" id="LaunchContextBufferCache.cache">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.LaunchContextBufferCache.cache">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">cache</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">t_kernel</span><span class="p">,</span> <span class="n">args_hash</span><span class="p">,</span> <span class="n">launch_ctx</span><span class="p">,</span> <span class="n">launch_ctx_buffer</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">_KernelBatchedArgType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]]</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">t_kernel</span><span class="p">,</span> <span class="n">args_hash</span><span class="p">,</span> <span class="n">launch_ctx</span><span class="p">,</span> <span class="n">launch_ctx_buffer</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">KernelBatchedArgType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="c1"># TODO: It some rare occurrences, arguments can be cached yet not hashable. Ignoring for now...</span>
         <span class="n">cached_launch_ctx</span> <span class="o">=</span> <span class="n">t_kernel</span><span class="o">.</span><span class="n">make_launch_context</span><span class="p">()</span>
@@ -443,7 +443,7 @@
         <span class="c1"># callback systematically does not incur any cumulative runtime penalty yet ensures full memory safety.</span>
         <span class="c1"># Note that it is important to prepend the cache tracker with &#39;None&#39; to avoid misclassifying no argument</span>
         <span class="c1"># with expired cache entry caused by deallocated argument.</span>
-        <span class="n">launch_ctx_cache_tracker_</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReferenceType</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">launch_ctx_cache_tracker_</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReferenceType</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
         <span class="n">clear_callback</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">ref</span><span class="p">:</span> <span class="n">launch_ctx_cache_tracker_</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_TI_ARRAY</span><span class="p">):</span>
             <span class="n">_</span><span class="p">,</span> <span class="n">arrs</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">)</span>
@@ -825,13 +825,14 @@
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">)</span><span class="si">}</span><span class="s2"> arguments needed but </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="si">}</span><span class="s2"> provided&quot;</span>
 
         <span class="n">callbacks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">args_hash</span><span class="p">:</span> <span class="n">ArgsHash</span> <span class="o">=</span> <span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="n">t_kernel</span><span class="p">),</span> <span class="o">*</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">template</span><span class="p">])</span>
+        <span class="c1"># Special treatment for primitive types is unecessary and detrimental. See &#39;TemplateMapper.lookup&#39; for details.</span>
+        <span class="n">args_hash</span><span class="p">:</span> <span class="n">ArgsHash</span> <span class="o">=</span> <span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="n">t_kernel</span><span class="p">),</span> <span class="o">*</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">])</span>
         <span class="n">launch_ctx</span> <span class="o">=</span> <span class="n">t_kernel</span><span class="o">.</span><span class="n">make_launch_context</span><span class="p">()</span>
         <span class="n">prog</span><span class="p">,</span> <span class="n">_populated_launch_ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">launch_context_buffer_cache</span><span class="o">.</span><span class="n">populate_launch_ctx_from_cache</span><span class="p">(</span>
             <span class="n">launch_ctx</span><span class="p">,</span> <span class="n">args_hash</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">_populated_launch_ctx</span><span class="p">:</span>
-            <span class="n">launch_ctx_buffer</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">_KernelBatchedArgType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+            <span class="n">launch_ctx_buffer</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">KernelBatchedArgType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
             <span class="n">actual_argument_slot</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">is_launch_ctx_cacheable</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="n">template_num</span> <span class="o">=</span> <span class="mi">0</span>

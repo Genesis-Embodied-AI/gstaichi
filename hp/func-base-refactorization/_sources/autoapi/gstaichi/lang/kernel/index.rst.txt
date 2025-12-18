@@ -34,7 +34,7 @@ Module Contents
 
 .. py:class:: LaunchContextBufferCache
 
-   .. py:method:: cache(t_kernel, args_hash, launch_ctx, launch_ctx_buffer: dict[gstaichi.lang._kernel_types._KernelBatchedArgType, list[tuple]]) -> None
+   .. py:method:: cache(t_kernel, args_hash, launch_ctx, launch_ctx_buffer: dict[gstaichi.lang._kernel_types.KernelBatchedArgType, list[tuple]]) -> None
 
 
    .. py:method:: populate_launch_ctx_from_cache(args_hash, launch_ctx) -> tuple[gstaichi.lang.impl.Program, bool]
