@@ -407,9 +407,11 @@ def _process_args(
         msg_l.append(f"In function: {self.func}")
         raise GsTaichiSyntaxError("\n".join(msg_l))
 
-    missing_arg_metas = self.arg_metas_expanded[num_args:]
-    num_missing_args = len(missing_arg_metas)
-    fused_args: list[Any] = [*args, *[arg_meta.default for arg_meta in missing_arg_metas]]
+    # Early return without further processing if possible for efficiency. This is by far the most common scenario.
+    if not (kwargs or num_arg_metas > num_args):
+        return args
+
+    fused_args: list[Any] = [*args, *[arg_meta.default for arg_meta in self.arg_metas_expanded[num_args:]]]
     if kwargs:
         num_invalid_kwargs_args = len(kwargs)
         for i in range(num_args, num_arg_metas):
@@ -429,12 +431,11 @@ def _process_args(
                         break
                 else:
                     raise GsTaichiSyntaxError(f"Unexpected argument '{key}'.")
-    elif num_missing_args:
+    else:
         for i in range(num_args, num_arg_metas):
             if fused_args[i] is _ARG_EMPTY:
                 arg_meta = self.arg_metas_expanded[i]
                 raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
-
     return tuple(fused_args)
 
 
