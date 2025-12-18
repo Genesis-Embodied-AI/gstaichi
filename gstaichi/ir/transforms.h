@@ -10,7 +10,6 @@
 #include "gstaichi/ir/pass.h"
 #include "gstaichi/transforms/check_out_of_bound.h"
 #include "gstaichi/transforms/constant_fold.h"
-#include "gstaichi/transforms/inlining.h"
 #include "gstaichi/transforms/lower_access.h"
 #include "gstaichi/transforms/make_block_local.h"
 #include "gstaichi/transforms/make_mesh_block_local.h"
@@ -41,7 +40,9 @@ bool cfg_optimization(
     bool autodiff_enabled,
     bool real_matrix_enabled,
     const std::optional<ControlFlowGraph::LiveVarAnalysisConfig>
-        &lva_config_opt = std::nullopt);
+        &lva_config_opt = std::nullopt,
+    const std::string &kernel_name = "unknown",
+    const std::string &phase = "");
 bool alg_simp(IRNode *root, const CompileConfig &config);
 bool demote_operations(IRNode *root, const CompileConfig &config);
 bool binary_op_simplify(IRNode *root, const CompileConfig &config);
@@ -56,7 +57,8 @@ void full_simplify(IRNode *root,
                    const FullSimplifyPass::Args &args);
 void print(IRNode *root,
            std::string *output = nullptr,
-           bool print_ir_dbg_info = false);
+           bool print_ir_dbg_info = false,
+           bool print_kernel_wrapper = true);
 std::function<void(const std::string &)> make_pass_printer(
     bool verbose,
     bool print_ir_dbg_info,
@@ -65,9 +67,6 @@ std::function<void(const std::string &)> make_pass_printer(
 void frontend_type_check(IRNode *root);
 void lower_ast(IRNode *root);
 void type_check(IRNode *root, const CompileConfig &config);
-bool inlining(IRNode *root,
-              const CompileConfig &config,
-              const InliningPass::Args &args);
 void bit_loop_vectorize(IRNode *root);
 void slp_vectorize(IRNode *root);
 void replace_all_usages_with(IRNode *root, Stmt *old_stmt, Stmt *new_stmt);
