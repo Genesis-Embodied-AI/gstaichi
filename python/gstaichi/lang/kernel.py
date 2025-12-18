@@ -411,57 +411,20 @@ class Kernel(FuncBase):
             launch_ctx, args_hash
         )
         if not _populated_launch_ctx:
-            launch_ctx_buffer: dict[KernelBatchedArgType, list[tuple]] = defaultdict(list)
-            actual_argument_slot = 0
-            is_launch_ctx_cacheable = True
-            template_num = 0
-            i_out = 0
             assert self.currently_compiling_materialize_key is not None
-            used_py_dataclass_parameters_enforcing_dotted = self.used_py_dataclass_leaves_by_key_enforcing_dotted[
-                self.currently_compiling_materialize_key
-            ]
-            for i_in, val in enumerate(args):
-                needed_ = self.arg_metas[i_in].annotation
-                if needed_ is template or type(needed_) is template:
-                    template_num += 1
-                    i_out += 1
-                    continue
-                num_args_, is_launch_ctx_cacheable_ = self._recursive_set_args(
-                    used_py_dataclass_parameters_enforcing_dotted,
-                    (self.arg_metas[i_in].name,),
-                    launch_ctx,
-                    launch_ctx_buffer,
-                    needed_,
-                    type(val),
-                    val,
-                    i_out - template_num,
-                    actual_argument_slot,
-                    callbacks,
-                )
-                i_out += num_args_
-                is_launch_ctx_cacheable &= is_launch_ctx_cacheable_
-
+            is_launch_ctx_cacheable, launch_ctx_buffer = self._set_args_on_launch_context(
+                args,
+                self.used_py_dataclass_leaves_by_key_enforcing_dotted[
+                    self.currently_compiling_materialize_key
+                ],
+                launch_ctx,
+                callbacks,
+            )
             kernel_args_count_by_type = defaultdict(int)
             kernel_args_count_by_type.update(
                 {key: len(launch_ctx_args) for key, launch_ctx_args in launch_ctx_buffer.items()}
             )
             self.launch_stats = LaunchStats(kernel_args_count_by_type=kernel_args_count_by_type)
-
-            # All arguments to context in batches to mitigate overhead of calling Python bindings repeatedly.
-            # This is essential because calling any pybind11 function is adding ~180ns penalty no matter what.
-            # Note that we are allowed to do this because GsTaichi Launch Kernel context is storing the input
-            # arguments in an unordered list. The actual runtime (gfx, llvm...) will later query this context
-            # in correct order.
-            if launch_ctx_args := launch_ctx_buffer.get(_FLOAT):
-                launch_ctx.set_args_float(*zip(*launch_ctx_args))  # type: ignore
-            if launch_ctx_args := launch_ctx_buffer.get(_INT):
-                launch_ctx.set_args_int(*zip(*launch_ctx_args))  # type: ignore
-            if launch_ctx_args := launch_ctx_buffer.get(_UINT):
-                launch_ctx.set_args_uint(*zip(*launch_ctx_args))  # type: ignore
-            if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY):
-                launch_ctx.set_args_ndarray(*zip(*launch_ctx_args))  # type: ignore
-            if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY_WITH_GRAD):
-                launch_ctx.set_args_ndarray_with_grad(*zip(*launch_ctx_args))  # type: ignore
             if is_launch_ctx_cacheable and args_hash is not None:
                 self.launch_context_buffer_cache.cache(t_kernel, args_hash, launch_ctx, launch_ctx_buffer)
 
@@ -533,7 +496,7 @@ class Kernel(FuncBase):
     def __call__(self, *args, **kwargs) -> Any:
         self.raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
 
-        args = self.process_args(is_func=False, is_pyfunc=False, args=args, kwargs=kwargs)
+        args = self.fuse_args(is_func=False, is_pyfunc=False, args=args, kwargs=kwargs)
 
         # Transform the primal kernel to forward mode grad kernel
         # then recover to primal when exiting the forward mode manager

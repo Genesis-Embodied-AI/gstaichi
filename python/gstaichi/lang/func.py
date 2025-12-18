@@ -58,7 +58,7 @@ class Func(FuncBase):
 
     def __call__(self: "Func", *args, **kwargs) -> Any:
         self.current_kernel = impl.get_runtime().current_kernel if impl.inside_kernel() else None
-        args = self.process_args(is_func=True, is_pyfunc=self.pyfunc, args=args, kwargs=kwargs)
+        args = self.fuse_args(is_func=True, is_pyfunc=self.pyfunc, args=args, kwargs=kwargs)
 
         if not impl.inside_kernel():
             if not self.pyfunc:

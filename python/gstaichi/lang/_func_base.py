@@ -1,4 +1,5 @@
 import ast
+from collections import defaultdict
 import inspect
 import math
 import textwrap
@@ -254,7 +255,7 @@ class FuncBase:
         )
         return tree, ctx
 
-    def process_args(self, is_pyfunc: bool, is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
+    def fuse_args(self, is_pyfunc: bool, is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
         """
         - for functions, expand dataclass arg_metas
         - fuse incoming args and kwargs into a single list of args
@@ -344,7 +345,58 @@ class FuncBase:
             raise ValueError(f"Invalid argument type '{type(x)}")
         return int(x)
 
-    def _recursive_set_args(
+    def _set_args_on_launch_context(
+        self,
+        args,
+        used_py_dataclass_parameters: set[tuple[str, ...]],
+        launch_ctx: KernelLaunchContext,
+        callbacks: list[Callable[[], Any]],
+    ) -> tuple[bool, dict[KernelBatchedArgType, list[tuple]]]:
+        launch_ctx_buffer: dict[KernelBatchedArgType, list[tuple]] = defaultdict(list)
+        actual_argument_slot = 0
+        is_launch_ctx_cacheable = True
+        template_num = 0
+        i_out = 0
+        for i_in, val in enumerate(args):
+            needed_ = self.arg_metas[i_in].annotation
+            if needed_ is template or type(needed_) is template:
+                template_num += 1
+                i_out += 1
+                continue
+            num_args_, is_launch_ctx_cacheable_ = self._set_arg_on_launch_context(
+                used_py_dataclass_parameters,
+                (self.arg_metas[i_in].name,),
+                launch_ctx,
+                launch_ctx_buffer,
+                needed_,
+                type(val),
+                val,
+                i_out - template_num,
+                actual_argument_slot,
+                callbacks,
+            )
+            i_out += num_args_
+            is_launch_ctx_cacheable &= is_launch_ctx_cacheable_
+
+        # All arguments to context in batches to mitigate overhead of calling Python bindings repeatedly.
+        # This is essential because calling any pybind11 function is adding ~180ns penalty no matter what.
+        # Note that we are allowed to do this because GsTaichi Launch Kernel context is storing the input
+        # arguments in an unordered list. The actual runtime (gfx, llvm...) will later query this context
+        # in correct order.
+        if launch_ctx_args := launch_ctx_buffer.get(_FLOAT):
+            launch_ctx.set_args_float(*zip(*launch_ctx_args))  # type: ignore
+        if launch_ctx_args := launch_ctx_buffer.get(_INT):
+            launch_ctx.set_args_int(*zip(*launch_ctx_args))  # type: ignore
+        if launch_ctx_args := launch_ctx_buffer.get(_UINT):
+            launch_ctx.set_args_uint(*zip(*launch_ctx_args))  # type: ignore
+        if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY):
+            launch_ctx.set_args_ndarray(*zip(*launch_ctx_args))  # type: ignore
+        if launch_ctx_args := launch_ctx_buffer.get(_TI_ARRAY_WITH_GRAD):
+            launch_ctx.set_args_ndarray_with_grad(*zip(*launch_ctx_args))  # type: ignore
+
+        return is_launch_ctx_cacheable, launch_ctx_buffer
+
+    def _set_arg_on_launch_context(
         self,
         used_py_dataclass_parameters: set[tuple[str, ...]],
         py_dataclass_basename: tuple[str, ...],
@@ -368,6 +420,8 @@ class FuncBase:
 
         Note that templates don't set kernel args, and a single scalar, an external array (numpy or torch) or a taichi
         ndarray all set 1 kernel arg. Similarlty, a struct of N ndarrays would set N kernel args.
+
+        launch_ctx_buffer is conceptually an output variable.
         """
         if actual_argument_slot >= MAX_ARG_NUM:
             raise GsTaichiRuntimeError(
@@ -411,7 +465,7 @@ class FuncBase:
                 field_type = field.type
                 assert not isinstance(field_type, str)
                 field_value = getattr(v, field_name)
-                num_args_, is_launch_ctx_cacheable_ = self._recursive_set_args(
+                num_args_, is_launch_ctx_cacheable_ = self._set_arg_on_launch_context(
                     used_py_dataclass_parameters,
                     field_full_name,
                     launch_ctx,
