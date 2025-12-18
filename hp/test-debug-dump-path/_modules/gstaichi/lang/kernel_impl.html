@@ -728,9 +728,11 @@
         <span class="n">msg_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;In function: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">msg_l</span><span class="p">))</span>
 
-    <span class="n">missing_arg_metas</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas_expanded</span><span class="p">[</span><span class="n">num_args</span><span class="p">:]</span>
-    <span class="n">num_missing_args</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing_arg_metas</span><span class="p">)</span>
-    <span class="n">fused_args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">*</span><span class="p">[</span><span class="n">arg_meta</span><span class="o">.</span><span class="n">default</span> <span class="k">for</span> <span class="n">arg_meta</span> <span class="ow">in</span> <span class="n">missing_arg_metas</span><span class="p">]]</span>
+    <span class="c1"># Early return without further processing if possible for efficiency. This is by far the most common scenario.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">kwargs</span> <span class="ow">or</span> <span class="n">num_arg_metas</span> <span class="o">&gt;</span> <span class="n">num_args</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">args</span>
+
+    <span class="n">fused_args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">*</span><span class="p">[</span><span class="n">arg_meta</span><span class="o">.</span><span class="n">default</span> <span class="k">for</span> <span class="n">arg_meta</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas_expanded</span><span class="p">[</span><span class="n">num_args</span><span class="p">:]]]</span>
     <span class="k">if</span> <span class="n">kwargs</span><span class="p">:</span>
         <span class="n">num_invalid_kwargs_args</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_args</span><span class="p">,</span> <span class="n">num_arg_metas</span><span class="p">):</span>
@@ -750,12 +752,11 @@
                         <span class="k">break</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected argument &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">num_missing_args</span><span class="p">:</span>
+    <span class="k">else</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_args</span><span class="p">,</span> <span class="n">num_arg_metas</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">fused_args</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">is</span> <span class="n">_ARG_EMPTY</span><span class="p">:</span>
                 <span class="n">arg_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas_expanded</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
                 <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing argument &#39;</span><span class="si">{</span><span class="n">arg_meta</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
-
     <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">fused_args</span><span class="p">)</span>
 
 
