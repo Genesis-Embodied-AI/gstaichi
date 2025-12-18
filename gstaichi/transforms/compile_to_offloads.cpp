@@ -49,7 +49,7 @@ void compile_to_offloads(IRNode *ir,
   auto dump_ir = [&](const std::string &stage_name) {
     if (!should_dump)
       return;
-    std::filesystem::create_directories(IR_DUMP_DIR);
+    std::filesystem::create_directories(ir_dump_dir);
     std::filesystem::path filename =
         ir_dump_dir / (kernel->name + "_" + stage_name + ".ll");
     std::string ir_str;
