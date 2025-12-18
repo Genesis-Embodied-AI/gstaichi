@@ -152,8 +152,6 @@ class FunctionDefTransformer:
             )
 
         compiling_callable.finalize_params()
-        # remove original args
-        node.args.args = []
 
     @staticmethod
     def _transform_func_arg(
