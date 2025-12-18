@@ -16,9 +16,7 @@ Submodules
    /autoapi/gstaichi/lang/exception/index
    /autoapi/gstaichi/lang/expr/index
    /autoapi/gstaichi/lang/field/index
-   /autoapi/gstaichi/lang/func/index
    /autoapi/gstaichi/lang/impl/index
-   /autoapi/gstaichi/lang/kernel/index
    /autoapi/gstaichi/lang/kernel_arguments/index
    /autoapi/gstaichi/lang/kernel_impl/index
    /autoapi/gstaichi/lang/matrix/index
