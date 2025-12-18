@@ -404,7 +404,8 @@ class Kernel(FuncBase):
         assert len(args) == len(self.arg_metas), f"{len(self.arg_metas)} arguments needed but {len(args)} provided"
 
         callbacks: list[Callable[[], None]] = []
-        args_hash: ArgsHash = (id(t_kernel), *[id(arg) for arg in args if type(arg) is not template])
+        # Special treatment for primitive types is unecessary and detrimental. See 'TemplateMapper.lookup' for details.
+        args_hash: ArgsHash = (id(t_kernel), *[id(arg) for arg in args])
         launch_ctx = t_kernel.make_launch_context()
         prog, _populated_launch_ctx = self.launch_context_buffer_cache.populate_launch_ctx_from_cache(
             launch_ctx, args_hash

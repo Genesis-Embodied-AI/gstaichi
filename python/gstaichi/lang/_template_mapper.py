@@ -65,12 +65,12 @@ class TemplateMapper:
             prog = self._prog_weakref()
         assert prog is not None
 
-        # Note that it is necessary to handle primitive types separately. First, using their address as cache key must
-        # be avoided, because even though it is theoretically possible, it is overly restrictive. Second, it does not
-        # make sense to use these arguments to track the lifetime of the corresponding cache entry and taking weakref
-        # of primitive types if forbidden anyway.
+        # Note that it is not necessary to handle primitive types separately here because primitive types are
+        # immutable and therefore identical primitive values usually reuse the same addresses for efficiency unless
+        # extra effort is made to do otherwise (this behavior is referring to as "interning"). Avoiding special
+        # branching for primitive types dramatically improve performance of hash computation.
         mapping_cache_tracker: list[ReferenceType | None] | None = None
-        args_hash: ArgsHash = tuple([id(arg) if type(arg) not in _primitive_types else arg for arg in args])
+        args_hash: ArgsHash = tuple([id(arg) for arg in args])
         try:
             mapping_cache_tracker = self._mapping_cache_tracker[args_hash]
         except KeyError:
@@ -89,6 +89,9 @@ class TemplateMapper:
         mapping_cache_tracker_: list[ReferenceType | None] = [None]
         clear_callback = lambda ref: mapping_cache_tracker_.clear()
         try:
+            # Note that it is necessary to handle primitive types separately because it does not make sense to use
+            # these arguments to track the lifetime of the corresponding cache entry and taking weakref of primitive
+            # types if forbidden anyway.
             mapping_cache_tracker_ += [
                 ReferenceType(arg, clear_callback) for arg in args if type(arg) not in _primitive_types
             ]
