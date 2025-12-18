@@ -20,14 +20,10 @@ from gstaichi.lang.exception import (
     handle_exception_from_cpp,
 )
 
-AutodiffMode = _ti_core.AutodiffMode
-
-
 if TYPE_CHECKING:
-    from gstaichi.lang.kernel_impl import (
-        Func,
-        Kernel,
-    )
+    from .._func_base import FuncBase
+
+AutodiffMode = _ti_core.AutodiffMode
 
 
 class Builder:
@@ -182,7 +178,7 @@ class ASTTransformerContext:
         excluded_parameters,
         end_lineno: int,
         is_kernel: bool,
-        func: "Func | Kernel",
+        func: "FuncBase",
         arg_features: list[tuple[Any, ...]] | None,
         global_vars: dict[str, Any],
         template_vars: dict[str, Any],

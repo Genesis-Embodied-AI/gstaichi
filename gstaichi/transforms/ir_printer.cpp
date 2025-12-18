@@ -79,7 +79,8 @@ class IRPrinter : public IRVisitor {
   static void run(ExpressionPrinter *expr_printer,
                   IRNode *node,
                   std::string *output,
-                  bool print_ir_dbg_info) {
+                  bool print_ir_dbg_info,
+                  bool print_kernel_wrapper) {
     if (node == nullptr) {
       TI_WARN("IRPrinter: Printing nullptr.");
       if (output) {
@@ -88,9 +89,13 @@ class IRPrinter : public IRVisitor {
       return;
     }
     auto p = IRPrinter(expr_printer, output, print_ir_dbg_info);
-    p.print("kernel {{");
+    if (print_kernel_wrapper) {
+      p.print("kernel {{");
+    }
     node->accept(&p);
-    p.print("}}");
+    if (print_kernel_wrapper) {
+      p.print("}}");
+    }
     if (output)
       *output = p.ss.str();
   }
@@ -969,9 +974,13 @@ class IRPrinter : public IRVisitor {
 
 namespace irpass {
 
-void print(IRNode *root, std::string *output, bool print_ir_dbg_info) {
+void print(IRNode *root,
+           std::string *output,
+           bool print_ir_dbg_info,
+           bool print_kernel_wrapper) {
   ExpressionHumanFriendlyPrinter expr_printer;
-  return IRPrinter::run(&expr_printer, root, output, print_ir_dbg_info);
+  return IRPrinter::run(&expr_printer, root, output, print_ir_dbg_info,
+                        print_kernel_wrapper);
 }
 
 std::function<void(const std::string &)> make_pass_printer(

@@ -265,11 +265,12 @@ void StructCompilerLLVM::run(SNode &root) {
   }
 
   const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
+  std::filesystem::path ir_dump_dir = config_.debug_dump_path;
   if (dump_ir_env != nullptr && std::string(dump_ir_env) == "1") {
-    std::filesystem::create_directories(IR_DUMP_DIR);
+    std::filesystem::create_directories(ir_dump_dir);
 
     std::filesystem::path filename =
-        IR_DUMP_DIR / (std::string(module->getName()) + "_{:04d}_llvm.ll");
+        ir_dump_dir / (std::string(module->getName()) + "_{:04d}_llvm.ll");
     static FileSequenceWriter writer(filename.string(), "struct LLVM IR");
     writer.write(module.get());
   }

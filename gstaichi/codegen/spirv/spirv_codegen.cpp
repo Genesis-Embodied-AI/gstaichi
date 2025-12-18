@@ -2425,12 +2425,13 @@ void KernelCodegen::run(GsTaichiKernelAttributes &kernel_attribs,
 
   const char *dump_ir_env = std::getenv(DUMP_IR_ENV.data());
   bool dump_ir = dump_ir_env != nullptr && std::string(dump_ir_env) == "1";
+  std::filesystem::path ir_dump_dir = params_.compile_config->debug_dump_path;
   if (dump_ir) {
-    std::filesystem::create_directories(IR_DUMP_DIR);
+    std::filesystem::create_directories(ir_dump_dir);
   }
   if (dump_ir) {
     std::filesystem::path filename =
-        IR_DUMP_DIR / (params_.ti_kernel_name + "_before_final_spirv.ll");
+        ir_dump_dir / (params_.ti_kernel_name + "_before_final_spirv.ll");
     if (std::ofstream out_file(filename); out_file) {
       std::string outString;
       irpass::print(const_cast<IRNode *>(params_.ir_root), &outString);
@@ -2452,11 +2453,12 @@ void KernelCodegen::run(GsTaichiKernelAttributes &kernel_attribs,
     TaskCodegen cgen(tp);
     auto task_res = cgen.run();
 
+    std::filesystem::path ir_dump_dir = params_.compile_config->debug_dump_path;
     if (dump_ir) {
       std::string spirv_asm;
       spirv_tools_->Disassemble(task_res.spirv_code, &spirv_asm);
       std::filesystem::path filename =
-          IR_DUMP_DIR / (tp.ti_kernel_name + "_before_opt.spirv");
+          ir_dump_dir / (tp.ti_kernel_name + "_before_opt.spirv");
       if (std::ofstream out_file(filename); out_file) {
         out_file.write(spirv_asm.c_str(), spirv_asm.size());
       }
@@ -2491,7 +2493,7 @@ void KernelCodegen::run(GsTaichiKernelAttributes &kernel_attribs,
       std::string spirv_asm;
       spirv_tools_->Disassemble(optimized_spv, &spirv_asm);
       std::filesystem::path filename =
-          IR_DUMP_DIR / (tp.ti_kernel_name + "_after_opt.spirv");
+          ir_dump_dir / (tp.ti_kernel_name + "_after_opt.spirv");
       if (std::ofstream out_file(filename); out_file) {
         out_file.write(spirv_asm.c_str(), spirv_asm.size());
       }

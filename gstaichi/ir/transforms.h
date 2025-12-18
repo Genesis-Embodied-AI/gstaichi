@@ -35,12 +35,15 @@ void lower_matrix_ptr(IRNode *root, bool force_scalarize = false);
 bool die(IRNode *root);
 bool simplify(IRNode *root, const CompileConfig &config);
 bool cfg_optimization(
+    const CompileConfig &config,
     IRNode *root,
     bool after_lower_access,
     bool autodiff_enabled,
     bool real_matrix_enabled,
     const std::optional<ControlFlowGraph::LiveVarAnalysisConfig>
-        &lva_config_opt = std::nullopt);
+        &lva_config_opt = std::nullopt,
+    const std::string &kernel_name = "unknown",
+    const std::string &phase = "");
 bool alg_simp(IRNode *root, const CompileConfig &config);
 bool demote_operations(IRNode *root, const CompileConfig &config);
 bool binary_op_simplify(IRNode *root, const CompileConfig &config);
@@ -55,7 +58,8 @@ void full_simplify(IRNode *root,
                    const FullSimplifyPass::Args &args);
 void print(IRNode *root,
            std::string *output = nullptr,
-           bool print_ir_dbg_info = false);
+           bool print_ir_dbg_info = false,
+           bool print_kernel_wrapper = true);
 std::function<void(const std::string &)> make_pass_printer(
     bool verbose,
     bool print_ir_dbg_info,

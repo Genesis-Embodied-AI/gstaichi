@@ -68,7 +68,7 @@ struct CompileConfig {
   bool print_kernel_llvm_ir_optimized;
   bool print_kernel_asm;
   bool print_kernel_amdgcn;
-  std::string debug_dump_path;
+  std::string debug_dump_path{"/tmp/ir/"};
 
   // CUDA/AMDGPU backend options:
   float64 device_memory_GB;
