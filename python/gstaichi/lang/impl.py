@@ -1,7 +1,7 @@
 import numbers
 import weakref
 from types import FunctionType, MethodType
-from typing import TYPE_CHECKING, Any, Iterable, Sequence
+from typing import TYPE_CHECKING, Any, Iterable, Sequence, Union, Optional
 
 import numpy as np
 
@@ -71,6 +71,9 @@ from gstaichi.types.primitive_types import (
 
 if TYPE_CHECKING:
     from gstaichi.lang._ndarray import Ndarray
+
+
+_Axis = _ti_core.Axis
 
 
 @gstaichi_scope
@@ -672,8 +675,69 @@ class _Root:
         assert isinstance(_root_fb, fields_builder.FieldsBuilder)
         return _root_fb.root._id
 
-    def __getattr__(self, item):
-        return getattr(_root_fb, item)
+    @property
+    def finalized(self):
+        return _root_fb.finalized
+
+    @property
+    def ptr(self):
+        return _root_fb.ptr
+
+    @property
+    def empty(self):
+        return _root_fb.empty
+
+    def deactivate_all(self):
+        return _root_fb.deactivate_all()
+
+    def dense(
+        self,
+        indices: Union[Sequence[_Axis], _Axis],
+        dimensions: Union[Sequence[int], int],
+    ):
+        return _root_fb.dense(indices, dimensions)
+
+    def pointer(
+        self,
+        indices: Union[Sequence[_Axis], _Axis],
+        dimensions: Union[Sequence[int], int],
+    ):
+        return _root_fb.pointer(indices, dimensions)
+
+    def dynamic(
+        self,
+        index: Union[Sequence[_Axis], _Axis],
+        dimension: Union[Sequence[int], int],
+        chunk_size: Optional[int] = None,
+    ):
+        return _root_fb.dynamic(index, dimension, chunk_size)
+
+    def bitmasked(
+        self,
+        indices: Union[Sequence[_Axis], _Axis],
+        dimensions: Union[Sequence[int], int],
+    ):
+        return _root_fb.bitmasked(indices, dimensions)
+
+    def quant_array(
+        self,
+        indices: Union[Sequence[_Axis], _Axis],
+        dimensions: Union[Sequence[int], int],
+        max_num_bits: int,
+    ):
+        return _root_fb.quant_array(indices, dimensions, max_num_bits)
+
+    def place(self, *args: Any, offset: Optional[Union[Sequence[int], int]] = None):
+        return _root_fb.quant_array(*args, offset)
+
+    def lazy_grad(self):
+        return _root_fb.lazy_grad()
+
+    def lazy_dual(self):
+        return _root_fb.lazy_dual()
+
+    def finalize(self, raise_warning=True):
+        return _root_fb.finalize(raise_warning)
 
     def __repr__(self):
         return "ti.root"
