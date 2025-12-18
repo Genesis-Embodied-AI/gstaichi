@@ -1252,7 +1252,8 @@ class Kernel:
         launch_ctx = t_kernel.make_launch_context()
         launch_ctx_cache: KernelLaunchContext | None = None
         launch_ctx_cache_tracker: list[ReferenceType | None] | None = None
-        args_hash: ArgsHash = (id(t_kernel), *[id(arg) for arg in args if type(arg) is not template])
+        # Special treatment for primitive types is unecessary and detrimental. See 'TemplateMapper.lookup' for details.
+        args_hash: ArgsHash = (id(t_kernel), *[id(arg) for arg in args])
         try:
             launch_ctx_cache_tracker = self._launch_ctx_cache_tracker[args_hash]
         except KeyError:
