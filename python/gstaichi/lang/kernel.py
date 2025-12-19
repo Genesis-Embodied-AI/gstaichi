@@ -557,4 +557,8 @@ class Kernel(FuncBase):
         key = self.ensure_compiled(*args)
         kernel_cpp = self.materialized_kernels[key]
         compiled_kernel_data = self.compiled_kernel_data_by_key.get(key, None)
-        return self.launch_kernel(kernel_cpp, compiled_kernel_data, *args)
+        ret = self.launch_kernel(kernel_cpp, compiled_kernel_data, *args)
+        if compiled_kernel_data is None:
+            assert self._last_compiled_kernel_data is not None
+            self.compiled_kernel_data_by_key[key] = self._last_compiled_kernel_data
+        return ret
