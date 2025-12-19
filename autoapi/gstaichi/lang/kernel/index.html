@@ -420,7 +420,7 @@
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.kernel.Kernel" title="gstaichi.lang.kernel.Kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Kernel</span></code></a></p></td>
-<td><p></p></td>
+<td><p>Base class for Kernels and Funcs</p></td>
 </tr>
 </tbody>
 </table>
@@ -431,14 +431,11 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="gstaichi.lang.kernel.Kernel">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gstaichi.lang.kernel.</span></span><span class="sig-name descname"><span class="pre">Kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">autodiff_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">gstaichi.types.enums.AutodiffMode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_classkernel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel.html#Kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel.Kernel" title="Link to this definition">#</a></dt>
-<dd><dl class="py attribute">
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">gstaichi.lang._func_base.FuncBase</span></code></p>
+<p>Base class for Kernels and Funcs</p>
+<dl class="py attribute">
 <dt class="sig sig-object py" id="gstaichi.lang.kernel.Kernel.counter">
 <span class="sig-name descname"><span class="pre">counter</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel.html#Kernel.counter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel.Kernel.counter" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="gstaichi.lang.kernel.Kernel.func">
-<span class="sig-name descname"><span class="pre">func</span></span><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel.html#Kernel.func"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel.Kernel.func" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -457,38 +454,8 @@
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="gstaichi.lang.kernel.Kernel.arg_metas">
-<span class="sig-name descname"><span class="pre">arg_metas</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../kernel_arguments/index.html#gstaichi.lang.kernel_arguments.ArgMetadata" title="gstaichi.lang.kernel_arguments.ArgMetadata"><span class="pre">gstaichi.lang.kernel_arguments.ArgMetadata</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel.html#Kernel.arg_metas"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel.Kernel.arg_metas" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="gstaichi.lang.kernel.Kernel.arg_metas_expanded">
-<span class="sig-name descname"><span class="pre">arg_metas_expanded</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../kernel_arguments/index.html#gstaichi.lang.kernel_arguments.ArgMetadata" title="gstaichi.lang.kernel_arguments.ArgMetadata"><span class="pre">gstaichi.lang.kernel_arguments.ArgMetadata</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel.html#Kernel.arg_metas_expanded"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel.Kernel.arg_metas_expanded" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="gstaichi.lang.kernel.Kernel.return_type">
-<span class="sig-name descname"><span class="pre">return_type</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel.html#Kernel.return_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel.Kernel.return_type" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="gstaichi.lang.kernel.Kernel.classkernel">
-<span class="sig-name descname"><span class="pre">classkernel</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel.html#Kernel.classkernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel.Kernel.classkernel" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="gstaichi.lang.kernel.Kernel.template_slot_locations">
-<span class="sig-name descname"><span class="pre">template_slot_locations</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel.html#Kernel.template_slot_locations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel.Kernel.template_slot_locations" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="gstaichi.lang.kernel.Kernel.mapper">
-<span class="sig-name descname"><span class="pre">mapper</span></span><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel.html#Kernel.mapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel.Kernel.mapper" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
 <dt class="sig sig-object py" id="gstaichi.lang.kernel.Kernel.kernel_cpp">
-<span class="sig-name descname"><span class="pre">kernel_cpp</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel.html#Kernel.kernel_cpp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel.Kernel.kernel_cpp" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">kernel_cpp</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">gstaichi._lib.core.gstaichi_python.KernelCxx</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="reference internal" href="../../../../_modules/gstaichi/lang/kernel.html#Kernel.kernel_cpp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.kernel.Kernel.kernel_cpp" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -642,16 +609,9 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.Kernel"><code class="docutils literal notranslate"><span class="pre">Kernel</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.Kernel.counter"><code class="docutils literal notranslate"><span class="pre">Kernel.counter</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.Kernel.func"><code class="docutils literal notranslate"><span class="pre">Kernel.func</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.Kernel.kernel_counter"><code class="docutils literal notranslate"><span class="pre">Kernel.kernel_counter</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.Kernel.autodiff_mode"><code class="docutils literal notranslate"><span class="pre">Kernel.autodiff_mode</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.Kernel.grad"><code class="docutils literal notranslate"><span class="pre">Kernel.grad</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.Kernel.arg_metas"><code class="docutils literal notranslate"><span class="pre">Kernel.arg_metas</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.Kernel.arg_metas_expanded"><code class="docutils literal notranslate"><span class="pre">Kernel.arg_metas_expanded</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.Kernel.return_type"><code class="docutils literal notranslate"><span class="pre">Kernel.return_type</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.Kernel.classkernel"><code class="docutils literal notranslate"><span class="pre">Kernel.classkernel</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.Kernel.template_slot_locations"><code class="docutils literal notranslate"><span class="pre">Kernel.template_slot_locations</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.Kernel.mapper"><code class="docutils literal notranslate"><span class="pre">Kernel.mapper</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.Kernel.kernel_cpp"><code class="docutils literal notranslate"><span class="pre">Kernel.kernel_cpp</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.Kernel.materialized_kernels"><code class="docutils literal notranslate"><span class="pre">Kernel.materialized_kernels</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.kernel.Kernel.has_print"><code class="docutils literal notranslate"><span class="pre">Kernel.has_print</span></code></a></li>
