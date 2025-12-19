@@ -30,7 +30,7 @@ A direct consequence of this breaking type checking because pyright is not able 
 
 import weakref
 from dataclasses import _FIELD, _FIELDS
-from typing import Any, Callable, Union
+from typing import Any, Union
 
 from gstaichi._lib import core as _ti_core
 from gstaichi.lang._dataclass_util import create_flat_name
@@ -47,10 +47,6 @@ from gstaichi.types import (
     sparse_matrix_builder,
     template,
 )
-from gstaichi.types.enums import AutodiffMode
-
-CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
-
 
 AnnotationType = Union[
     template,
