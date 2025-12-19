@@ -2,6 +2,7 @@ import ast
 import inspect
 import math
 import textwrap
+import types
 import typing
 import warnings
 from dataclasses import (
@@ -72,6 +73,7 @@ class FuncBase:
         self.func = func
         self.is_kernel = is_kernel
         self.is_real_function = is_real_function
+        # TODO: rename classkernel and classfunc to is_classkernel and is_classfunc
         # TODO: merge is_classkernel and is_classfunc?
         self.classkernel = classkernel
         self.classfunc = classfunc
@@ -81,17 +83,84 @@ class FuncBase:
         self.return_type = None
         self.current_kernel: "Kernel | None" = None
 
-        self.extract_arguments()
-        # TODO: move the following into fused extract_arguments
+        self.check_parameter_annotations()
+
+        self.mapper = TemplateMapper(self.arg_metas, self.template_slot_locations)
+
+    def check_parameter_annotations(self) -> None:
+        """
+        Look at annotations of function parameters, and store into self.arg_metas
+        and self.orig_arguments (both are identical after this call)
+        - they just contain the original parameter annotations after this call, unexpanded
+        - this function mostly just does checking
+        """
+        sig = inspect.signature(self.func)
+        if sig.return_annotation not in {inspect._empty, None}:
+            self.return_type = sig.return_annotation
+            if (
+                isinstance(self.return_type, (types.GenericAlias, typing._GenericAlias))  # type: ignore
+                and self.return_type.__origin__ is tuple
+            ):
+                self.return_type = self.return_type.__args__
+            if not isinstance(self.return_type, (list, tuple)):
+                self.return_type = (self.return_type,)
+            for return_type in self.return_type:
+                if return_type is Ellipsis:
+                    raise GsTaichiSyntaxError("Ellipsis is not supported in return type annotations")
+        params = dict(sig.parameters)
+        arg_names = params.keys()
+        for i, arg_name in enumerate(arg_names):
+            param = params[arg_name]
+            if param.kind == inspect.Parameter.VAR_KEYWORD:
+                raise GsTaichiSyntaxError(
+                    "GsTaichi kernels do not support variable keyword parameters (i.e., **kwargs)"
+                )
+            if param.kind == inspect.Parameter.VAR_POSITIONAL:
+                raise GsTaichiSyntaxError(
+                    "GsTaichi kernels do not support variable positional parameters (i.e., *args)"
+                )
+            if self.is_kernel and param.default is not inspect.Parameter.empty:
+                raise GsTaichiSyntaxError("GsTaichi kernels do not support default values for arguments")
+            if param.kind == inspect.Parameter.KEYWORD_ONLY:
+                raise GsTaichiSyntaxError("GsTaichi kernels do not support keyword parameters")
+            if param.kind != inspect.Parameter.POSITIONAL_OR_KEYWORD:
+                raise GsTaichiSyntaxError('GsTaichi kernels only support "positional or keyword" parameters')
+            annotation = param.annotation
+            if param.annotation is inspect.Parameter.empty:
+                if i == 0 and (self.classkernel or self.classfunc):  # The |self| parameter
+                    annotation = template()
+                elif self.is_kernel or self.is_real_function:
+                    raise GsTaichiSyntaxError("GsTaichi kernels parameters must be type annotated")
+            else:
+                annotation_type = type(annotation)
+                if annotation_type is ndarray_type.NdarrayType:
+                    pass
+                elif annotation is ndarray_type.NdarrayType:
+                    # convert from ti.types.NDArray into ti.types.NDArray()
+                    annotation = annotation()
+                elif id(annotation) in primitive_types.type_ids:
+                    pass
+                elif issubclass(annotation_type, MatrixType):
+                    pass
+                elif not self.is_kernel and annotation_type is primitive_types.RefType:
+                    pass
+                elif annotation_type is StructType:
+                    pass
+                elif annotation_type is template or annotation is template:
+                    pass
+                elif annotation_type is type and is_dataclass(annotation):
+                    pass
+                elif self.is_kernel and isinstance(annotation, sparse_matrix_builder):
+                    pass
+                else:
+                    raise GsTaichiSyntaxError(f"Invalid type annotation (argument {i}) of Taichi kernel: {annotation}")
+            self.arg_metas.append(ArgMetadata(annotation, param.name, param.default))
+            self.orig_arguments.append(ArgMetadata(annotation, param.name, param.default))
+
         self.template_slot_locations: list[int] = []
         for i, arg in enumerate(self.arg_metas):
             if arg.annotation == template or isinstance(arg.annotation, template):
                 self.template_slot_locations.append(i)
-        self.mapper = TemplateMapper(self.arg_metas, self.template_slot_locations)
-
-    # TODO: fuse func.extract_arguments and kernel.extract_arguments
-    def extract_arguments(self) -> None:
-        raise NotImplementedError()
 
     def _populate_global_vars_for_templates(
         self,
