@@ -2,8 +2,7 @@ import inspect
 import types
 import typing
 from dataclasses import is_dataclass
-
-from typing import Any, Callable, Type, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Type
 
 from gstaichi._lib import core as _ti_core
 from gstaichi._lib.core.gstaichi_python import FunctionKey
@@ -28,10 +27,12 @@ from gstaichi.types import (
     template,
 )
 from gstaichi.types.enums import AutodiffMode
+
 from ._func_base import (
-    _process_args,
     _get_tree_and_ctx,
+    _process_args,
 )
+
 if TYPE_CHECKING:
     from .kernel import Kernel
 

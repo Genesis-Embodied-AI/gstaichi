@@ -7,7 +7,6 @@ import warnings
 from dataclasses import (
     _FIELD,  # type: ignore[reportAttributeAccessIssue]
     _FIELDS,  # type: ignore[reportAttributeAccessIssue]
-    dataclass,
     is_dataclass,
 )
 
@@ -46,8 +45,8 @@ from gstaichi.types import (
 )
 from gstaichi.types.enums import AutodiffMode, Layout
 from gstaichi.types.utils import is_signed
-from ._kernel_types import _KernelBatchedArgType
 
+from ._kernel_types import _KernelBatchedArgType
 
 MAX_ARG_NUM = 512
 
@@ -225,8 +224,6 @@ def _process_args(
     return tuple(fused_args)
 
 
-
-
 def _get_global_vars(_func: Callable) -> dict[str, Any]:
     # Discussions: https://github.com/taichi-dev/gstaichi/issues/282
     global_vars = _func.__globals__.copy()
@@ -240,8 +237,6 @@ def _get_global_vars(_func: Callable) -> dict[str, Any]:
     return global_vars
 
 
-
-
 def cast_float(x: float | np.floating | np.integer | int) -> float:
     if not isinstance(x, (int, float, np.integer, np.floating)):
         raise ValueError(f"Invalid argument type '{type(x)}")
@@ -252,8 +247,6 @@ def cast_int(x: int | np.integer) -> int:
     if not isinstance(x, (int, np.integer)):
         raise ValueError(f"Invalid argument type '{type(x)}")
     return int(x)
-
-
 
 
 def _destroy_callback(kernel_ref: ReferenceType["Kernel"], ref: ReferenceType):

@@ -2,8 +2,6 @@ import inspect
 import re
 import sys
 import typing
-from typing import TYPE_CHECKING
-
 from functools import update_wrapper, wraps
 from typing import Any, Callable, TypeAlias, TypeVar, cast, overload
 
@@ -14,11 +12,11 @@ from gstaichi.lang.exception import (
     GsTaichiSyntaxError,
 )
 from gstaichi.types.enums import AutodiffMode
-from ._gstaichi_callable import GsTaichiCallable, BoundGsTaichiCallable
-from .func import Func
-from .kernel import Kernel
 
 from .._test_tools import warnings_helper
+from ._gstaichi_callable import BoundGsTaichiCallable, GsTaichiCallable
+from .func import Func
+from .kernel import Kernel
 
 # Define proxies for fast lookup
 _NONE, _REVERSE = (

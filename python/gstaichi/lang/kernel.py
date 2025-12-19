@@ -6,7 +6,6 @@ import pathlib
 import time
 import types
 import typing
-from typing import TYPE_CHECKING
 from collections import defaultdict
 from dataclasses import (
     is_dataclass,
@@ -14,7 +13,7 @@ from dataclasses import (
 
 # Must import 'partial' directly instead of the entire module to avoid attribute lookup overhead.
 from functools import partial
-from typing import Any, Callable, DefaultDict
+from typing import TYPE_CHECKING, Any, Callable, DefaultDict
 
 # Must import 'ReferenceType' directly instead of the entire module to avoid attribute lookup overhead.
 from weakref import ReferenceType
@@ -56,17 +55,22 @@ from gstaichi.types import (
 from gstaichi.types.compound_types import CompoundType
 from gstaichi.types.enums import AutodiffMode
 from gstaichi.types.utils import is_signed
-if TYPE_CHECKING:
-    from .kernel_impl import CompiledKernelKeyType, ArgsHash
-from ._gstaichi_callable import GsTaichiCallable
-from ._kernel_types import SrcLlCacheObservations, FeLlCacheObservations, _KernelBatchedArgType, LaunchStats
-from ._func_base import (
-    _get_tree_and_ctx,
-    _destroy_callback,
-    _recursive_set_args,
-    _process_args,
-)
 
+if TYPE_CHECKING:
+    from .kernel_impl import ArgsHash, CompiledKernelKeyType
+from ._func_base import (
+    _destroy_callback,
+    _get_tree_and_ctx,
+    _process_args,
+    _recursive_set_args,
+)
+from ._gstaichi_callable import GsTaichiCallable
+from ._kernel_types import (
+    FeLlCacheObservations,
+    LaunchStats,
+    SrcLlCacheObservations,
+    _KernelBatchedArgType,
+)
 
 # Define proxies for fast lookup
 _NONE, _VALIDATION = AutodiffMode.NONE, AutodiffMode.VALIDATION
