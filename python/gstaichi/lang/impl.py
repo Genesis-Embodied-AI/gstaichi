@@ -24,8 +24,9 @@ from gstaichi.lang.exception import (
 )
 from gstaichi.lang.expr import Expr, make_expr_group
 from gstaichi.lang.field import Field, ScalarField
+from gstaichi.lang.kernel import Kernel
 from gstaichi.lang.kernel_arguments import SparseMatrixProxy
-from gstaichi.lang.kernel_impl import BoundGsTaichiCallable, GsTaichiCallable, Kernel
+from gstaichi.lang.kernel_impl import BoundGsTaichiCallable, GsTaichiCallable
 from gstaichi.lang.matrix import (
     Matrix,
     MatrixField,
