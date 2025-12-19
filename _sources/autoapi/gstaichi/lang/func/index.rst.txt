@@ -17,15 +17,12 @@ Module Contents
 
 .. py:class:: Func(_func: Callable, _classfunc=False, _pyfunc=False, is_real_function=False)
 
-   Bases: :py:obj:`gstaichi.lang._func_base.FuncBase`
-
-
-   Base class for Kernels and Funcs
-
-
    .. py:attribute:: function_counter
       :value: 0
 
+
+
+   .. py:attribute:: func
 
 
    .. py:attribute:: func_id
@@ -34,7 +31,6 @@ Module Contents
 
 
    .. py:attribute:: compiled
-      :type:  dict[int, Callable]
 
 
    .. py:attribute:: classfunc
@@ -52,8 +48,40 @@ Module Contents
 
 
 
-   .. py:attribute:: cxx_function_by_id
-      :type:  dict[int, gstaichi._lib.core.gstaichi_python.Function]
+   .. py:attribute:: arg_metas
+      :type:  list[gstaichi.lang.kernel_arguments.ArgMetadata]
+      :value: []
+
+
+
+   .. py:attribute:: arg_metas_expanded
+      :type:  list[gstaichi.lang.kernel_arguments.ArgMetadata]
+      :value: []
+
+
+
+   .. py:attribute:: orig_arguments
+      :type:  list[gstaichi.lang.kernel_arguments.ArgMetadata]
+      :value: []
+
+
+
+   .. py:attribute:: return_type
+      :type:  tuple[Type, Ellipsis] | None
+      :value: None
+
+
+
+   .. py:attribute:: template_slot_locations
+      :type:  list[int]
+      :value: []
+
+
+
+   .. py:attribute:: mapper
+
+
+   .. py:attribute:: gstaichi_functions
 
 
    .. py:attribute:: has_print
@@ -72,7 +100,7 @@ Module Contents
 
    .. py:method:: do_compile(key: gstaichi._lib.core.gstaichi_python.FunctionKey, args: tuple[Any, Ellipsis], arg_features: tuple[Any, Ellipsis]) -> None
 
-      only for real func
 
+   .. py:method:: extract_arguments() -> None
 
 
