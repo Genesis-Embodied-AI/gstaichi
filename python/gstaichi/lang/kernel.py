@@ -128,7 +128,7 @@ class LaunchContextBufferCache:
 
         # Note that the clearing callback will only be called once despite being registered for each tracked
         # objects, because all the weakrefs get deallocated right away, and their respective callback vanishes
-        # with them, without even getting a chance to get called. This means that registring the clearing
+        # with them, without even getting a chance to get called. This means that registering the clearing
         # callback systematically does not incur any cumulative runtime penalty yet ensures full memory safety.
         # Note that it is important to prepend the cache tracker with 'None' to avoid misclassifying no argument
         # with expired cache entry caused by deallocated argument.
