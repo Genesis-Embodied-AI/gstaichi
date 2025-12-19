@@ -1,6 +1,9 @@
 # Must import 'partial' directly instead of the entire module to avoid attribute lookup overhead.
 from functools import update_wrapper
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
+
+if TYPE_CHECKING:
+    from .kernel import Kernel
 
 
 class GsTaichiCallable:
@@ -83,9 +86,9 @@ class GsTaichiCallable:
         self._is_gstaichi_function: bool = False
         self._is_wrapped_kernel: bool = False
         self._is_classkernel: bool = False
-        self._primal: Kernel | None = None
-        self._adjoint: Kernel | None = None
-        self.grad: Kernel | None = None
+        self._primal: "Kernel | None" = None
+        self._adjoint: "Kernel | None" = None
+        self.grad: "Kernel | None" = None
         self.is_pure: bool = False
         update_wrapper(self, fn)
 
