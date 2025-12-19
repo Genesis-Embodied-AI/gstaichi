@@ -1,4 +1,7 @@
+import pathlib
+
 import gstaichi as ti
+from gstaichi._test_tools import ti_init_same_arch
 from gstaichi.lang.misc import get_host_arch_list
 
 from tests import test_utils
@@ -20,6 +23,7 @@ def test_cache_primitive_args():
         else:
             assert "Invalid 'static_args.flag' branch"
 
+    assert len(fun._primal.compiled_kernel_data_by_key) == 0
     assert len(fun._primal.mapper._mapping_cache) == 0
     assert len(fun._primal.mapper._mapping_cache_tracker) == 0
     assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache) == 0
@@ -32,6 +36,7 @@ def test_cache_primitive_args():
 
     fun(static_args, constant, value)
     assert value[None] == 2
+    assert len(fun._primal.compiled_kernel_data_by_key) == 1
     assert len(fun._primal.mapper._mapping_cache) == 1
     assert len(fun._primal.mapper._mapping_cache_tracker) == 1
     assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache) == 1
@@ -39,6 +44,7 @@ def test_cache_primitive_args():
 
     fun(static_args, 1234567890, value)
     assert value[None] == 3
+    assert len(fun._primal.compiled_kernel_data_by_key) == 1
     assert len(fun._primal.mapper._mapping_cache) == 1
     assert len(fun._primal.mapper._mapping_cache_tracker) == 1
     assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache) == 1
@@ -48,6 +54,7 @@ def test_cache_primitive_args():
     assert id(static_args) != id(static_args_2)
     fun(static_args_2, constant, value)
     assert value[None] == 4
+    assert len(fun._primal.compiled_kernel_data_by_key) == 2
     assert len(fun._primal.mapper._mapping_cache) == 2
     assert len(fun._primal.mapper._mapping_cache_tracker) == 2
     assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache) == 2
@@ -63,6 +70,7 @@ def test_cache_multi_entry_static():
         else:
             value[None] = value[None] - 1
 
+    assert len(fun._primal.compiled_kernel_data_by_key) == 0
     assert len(fun._primal.mapper._mapping_cache) == 0
     assert len(fun._primal.mapper._mapping_cache_tracker) == 0
     assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache) == 0
@@ -73,6 +81,7 @@ def test_cache_multi_entry_static():
 
     fun(True, value)
     assert value[None] == 2
+    assert len(fun._primal.compiled_kernel_data_by_key) == 1
     assert len(fun._primal.mapper._mapping_cache) == 1
     assert len(fun._primal.mapper._mapping_cache_tracker) == 1
     assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache) == 1
@@ -80,6 +89,7 @@ def test_cache_multi_entry_static():
 
     fun(True, value)
     assert value[None] == 3
+    assert len(fun._primal.compiled_kernel_data_by_key) == 1
     assert len(fun._primal.mapper._mapping_cache) == 1
     assert len(fun._primal.mapper._mapping_cache_tracker) == 1
     assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache) == 1
@@ -87,6 +97,7 @@ def test_cache_multi_entry_static():
 
     fun(False, value)
     assert value[None] == 2
+    assert len(fun._primal.compiled_kernel_data_by_key) == 2
     assert len(fun._primal.mapper._mapping_cache) == 2
     assert len(fun._primal.mapper._mapping_cache_tracker) == 2
     assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache) == 2
@@ -102,6 +113,7 @@ def test_cache_fields_only():
         else:
             assert "Invalid 'static_args.flag_1' branch"
 
+    assert len(fun._primal.compiled_kernel_data_by_key) == 0
     assert len(fun._primal.mapper._mapping_cache) == 0
     assert len(fun._primal.mapper._mapping_cache_tracker) == 0
     assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache) == 0
@@ -113,6 +125,7 @@ def test_cache_fields_only():
 
     fun(flag, value)
     assert value[None] == 2
+    assert len(fun._primal.compiled_kernel_data_by_key) == 1
     assert len(fun._primal.mapper._mapping_cache) == 1
     assert len(fun._primal.mapper._mapping_cache_tracker) == 1
     assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache) == 1
@@ -120,7 +133,91 @@ def test_cache_fields_only():
 
     fun(flag, value)
     assert value[None] == 3
+    assert len(fun._primal.compiled_kernel_data_by_key) == 1
     assert len(fun._primal.mapper._mapping_cache) == 1
     assert len(fun._primal.mapper._mapping_cache_tracker) == 1
     assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache) == 1
     assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache_tracker) == 1
+
+
+@test_utils.test(arch=get_host_arch_list())
+def test_cache_ndarray_only():
+    @ti.kernel
+    def fun(value: ti.types.ndarray()):
+        value[None] = value[None] + 1
+
+    assert len(fun._primal.compiled_kernel_data_by_key) == 0
+    assert len(fun._primal.mapper._mapping_cache) == 0
+    assert len(fun._primal.mapper._mapping_cache_tracker) == 0
+    assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache) == 0
+    assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache_tracker) == 0
+
+    value = ti.ndarray(ti.i32, shape=())
+    value[None] = 1
+
+    fun(value)
+    assert value[None] == 2
+    assert len(fun._primal.compiled_kernel_data_by_key) == 1
+    assert len(fun._primal.mapper._mapping_cache) == 1
+    assert len(fun._primal.mapper._mapping_cache_tracker) == 1
+    assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache) == 1
+    assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache_tracker) == 1
+
+    fun(value)
+    assert value[None] == 3
+    assert len(fun._primal.compiled_kernel_data_by_key) == 1
+    assert len(fun._primal.mapper._mapping_cache) == 1
+    assert len(fun._primal.mapper._mapping_cache_tracker) == 1
+    assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache) == 1
+    assert len(fun._primal.launch_context_buffer_cache._launch_ctx_cache_tracker) == 1
+
+
+@test_utils.test(arch=get_host_arch_list())
+def test_fastcache(tmp_path: pathlib.Path, monkeypatch):
+    launch_kernel_orig = ti.lang.kernel_impl.Kernel.launch_kernel
+
+    ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
+    is_valid = False
+
+    def launch_kernel(self, t_kernel, compiled_kernel_data, *args):
+        nonlocal is_valid
+        is_valid = True
+        assert compiled_kernel_data is None
+        return launch_kernel_orig(self, t_kernel, compiled_kernel_data, *args)
+
+    monkeypatch.setattr("gstaichi.lang.kernel_impl.Kernel.launch_kernel", launch_kernel)
+
+    @ti.kernel(fastcache=True)
+    def fun(value: ti.types.ndarray(), offset: ti.template()):
+        value[None] = value[None] + offset
+
+    assert len(fun._primal.compiled_kernel_data_by_key) == 0
+
+    value = ti.ndarray(ti.i32, shape=())
+    value[None] = 1
+
+    assert not is_valid
+    fun(value, 3)
+    assert is_valid
+    assert value[None] == 4
+    assert len(fun._primal.compiled_kernel_data_by_key) == 1
+
+    ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
+    is_valid = False
+
+    def launch_kernel(self, t_kernel, compiled_kernel_data, *args):
+        nonlocal is_valid
+        is_valid = True
+        assert compiled_kernel_data is not None
+        return launch_kernel_orig(self, t_kernel, compiled_kernel_data, *args)
+
+    monkeypatch.setattr("gstaichi.lang.kernel_impl.Kernel.launch_kernel", launch_kernel)
+
+    value = ti.ndarray(ti.i32, shape=())
+    value[None] = 1
+
+    assert not is_valid
+    fun(value, 3)
+    assert is_valid
+    assert value[None] == 4
+    assert len(fun._primal.compiled_kernel_data_by_key) == 1
