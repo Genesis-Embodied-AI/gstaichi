@@ -482,6 +482,16 @@ void export_lang(py::module &m) {
            [](Program *program, Ndarray *ndarray, uint32_t val) {
              program->fill_ndarray_fast_u32(ndarray, val);
            })
+      .def("cublas_sgemm",
+           [](Program *program, Ndarray *A, Ndarray *B, Ndarray *C, int M,
+              int N, int K, float alpha, float beta, bool transpose_a,
+              bool transpose_b) {
+             program->cublas_sgemm(A, B, C, M, N, K, alpha, beta, transpose_a,
+                                   transpose_b);
+           },
+           py::arg("A"), py::arg("B"), py::arg("C"), py::arg("M"), py::arg("N"),
+           py::arg("K"), py::arg("alpha") = 1.0f, py::arg("beta") = 0.0f,
+           py::arg("transpose_a") = false, py::arg("transpose_b") = false)
       .def("get_graphics_device",
            [](Program *program) { return program->get_graphics_device(); })
       .def("compile_kernel", &Program::compile_kernel,

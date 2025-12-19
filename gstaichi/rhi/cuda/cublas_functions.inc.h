@@ -33,3 +33,19 @@ PER_CUBLAS_FUNCTION(cubSscal,
                     const float *,
                     float *,
                     int);
+PER_CUBLAS_FUNCTION(cubSgemm,
+                    cublasSgemm_v2,
+                    cublasHandle_t,
+                    int,  // transa (cublasOperation_t)
+                    int,  // transb (cublasOperation_t)
+                    int,  // m
+                    int,  // n
+                    int,  // k
+                    const float *,  // alpha
+                    const float *,  // A
+                    int,  // lda
+                    const float *,  // B
+                    int,  // ldb
+                    const float *,  // beta
+                    float *,  // C
+                    int);  // ldc

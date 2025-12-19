@@ -1,4 +1,4 @@
-"""Benchmark WMMA TF32 vs classical for-loop matrix multiplication."""
+"""Benchmark WMMA TF32 vs classical for-loop vs cuBLAS."""
 
 import numpy as np
 import time
@@ -6,6 +6,7 @@ import time
 import gstaichi as ti
 from gstaichi.lang.simt import warp
 from gstaichi.lang import snode
+from gstaichi import linalg
 
 # WMMA tile sizes for m16n16k8
 TILE_M, TILE_N, TILE_K = 16, 16, 8
@@ -17,7 +18,6 @@ def benchmark_wmma_tf32(M, K, N):
     ti.init(arch=ti.cuda)
 
     if ti.lang.impl.get_cuda_compute_capability() < 80:
-        print("WMMA TF32 requires sm_80+, skipping")
         return None
 
     # Pad to tile boundaries
@@ -116,11 +116,38 @@ def benchmark_classical(M, K, N):
     return (end - start) / NUM_CALLS * 1000  # ms per call
 
 
+def benchmark_cublas(M, K, N):
+    """Benchmark cuBLAS via Taichi's linalg.cublas_matmul."""
+    ti.init(arch=ti.cuda)
+
+    rng = np.random.default_rng(seed=42)
+    A = ti.ndarray(dtype=ti.f32, shape=(M, K))
+    B = ti.ndarray(dtype=ti.f32, shape=(K, N))
+    C = ti.ndarray(dtype=ti.f32, shape=(M, N))
+
+    A.from_numpy(rng.uniform(-1, 1, (M, K)).astype(np.float32))
+    B.from_numpy(rng.uniform(-1, 1, (K, N)).astype(np.float32))
+
+    # Warmup
+    for _ in range(10):
+        linalg.cublas_matmul(A, B, C)
+    ti.sync()
+
+    # Benchmark: 1000 calls + 1 sync
+    start = time.perf_counter()
+    for _ in range(NUM_CALLS):
+        linalg.cublas_matmul(A, B, C)
+    ti.sync()
+    end = time.perf_counter()
+
+    return (end - start) / NUM_CALLS * 1000  # ms per call
+
+
 def main():
-    print("=" * 70)
-    print("Matrix Multiplication Benchmark: WMMA TF32 vs Classical For-Loop")
+    print("=" * 80)
+    print("Matrix Multiplication Benchmark: Taichi Classical vs WMMA TF32 vs cuBLAS")
     print(f"({NUM_CALLS} kernel calls + 1 sync)")
-    print("=" * 70)
+    print("=" * 80)
 
     # Test different matrix sizes
     sizes = [
@@ -128,10 +155,11 @@ def main():
         (256, 256, 256),
         (512, 512, 512),
         (1024, 1024, 1024),
+        (2048, 2048, 2048),
     ]
 
-    print(f"\n{'Size (M×K×N)':<20} {'Classical (ms)':<15} {'WMMA TF32 (ms)':<15} {'Speedup':<10}")
-    print("-" * 60)
+    print(f"\n{'Size':<16} {'Classical':<12} {'WMMA TF32':<12} {'cuBLAS':<12} {'WMMA/Class':<12} {'cuBLAS/Class':<12}")
+    print("-" * 76)
 
     for M, K, N in sizes:
         # Classical for-loop
@@ -140,13 +168,25 @@ def main():
         # WMMA TF32
         t_wmma = benchmark_wmma_tf32(M, K, N)
 
-        if t_wmma is not None:
-            speedup = t_classical / t_wmma
-            print(f"{M}×{K}×{N:<12} {t_classical:<15.4f} {t_wmma:<15.4f} {speedup:<10.1f}x")
-        else:
-            print(f"{M}×{K}×{N:<12} {t_classical:<15.4f} {'N/A':<15} {'N/A':<10}")
+        # cuBLAS
+        t_cublas = benchmark_cublas(M, K, N)
 
-    print("\n" + "=" * 70)
+        size_str = f"{M}×{K}×{N}"
+        class_str = f"{t_classical:.4f}ms"
+        wmma_str = f"{t_wmma:.4f}ms" if t_wmma else "N/A"
+        cublas_str = f"{t_cublas:.4f}ms" if t_cublas else "N/A"
+
+        speedup_wmma = f"{t_classical/t_wmma:.1f}x" if t_wmma else "N/A"
+        speedup_cublas = f"{t_classical/t_cublas:.1f}x" if t_cublas else "N/A"
+
+        print(f"{size_str:<16} {class_str:<12} {wmma_str:<12} {cublas_str:<12} {speedup_wmma:<12} {speedup_cublas:<12}")
+
+    print("\n" + "=" * 80)
+    print("Notes:")
+    print("- WMMA TF32 requires sm_80+ (Ampere). Current impl is suboptimal (no register accum).")
+    print("- cuBLAS uses NVIDIA's highly optimized library via ti.linalg.cublas_matmul().")
+    print("- Classical loop is Taichi's auto-parallelized naive implementation.")
+    print("=" * 80)
 
 
 if __name__ == "__main__":

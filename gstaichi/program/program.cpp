@@ -15,6 +15,10 @@
 #include "gstaichi/math/arithmetic.h"
 #include "gstaichi/rhi/common/host_memory_pool.h"
 
+#ifdef TI_WITH_CUDA
+#include "gstaichi/rhi/cuda/cuda_driver.h"
+#endif
+
 #ifdef TI_WITH_LLVM
 #include "gstaichi/runtime/program_impls/llvm/llvm_program.h"
 #include "gstaichi/codegen/llvm/struct_llvm.h"
@@ -414,6 +418,51 @@ void Program::fill_ndarray_fast_u32(Ndarray *ndarray, uint32_t val) {
       ndarray->ndarray_alloc_,
       ndarray->get_nelement() * ndarray->get_element_size() / sizeof(uint32_t),
       val);
+}
+
+void Program::cublas_sgemm(const Ndarray *A,
+                           const Ndarray *B,
+                           const Ndarray *C,
+                           int M,
+                           int N,
+                           int K,
+                           float alpha,
+                           float beta,
+                           bool transpose_a,
+                           bool transpose_b) {
+#ifdef TI_WITH_CUDA
+  if (!CUBLASDriver::get_instance().is_loaded()) {
+    bool load_success = CUBLASDriver::get_instance().load_cublas();
+    TI_ERROR_IF(!load_success, "Failed to load cuBLAS library!");
+  }
+
+  cublasHandle_t handle;
+  CUBLASDriver::get_instance().cubCreate(&handle);
+
+  // Get device pointers
+  float *d_A = reinterpret_cast<float *>(get_ndarray_data_ptr_as_int(A));
+  float *d_B = reinterpret_cast<float *>(get_ndarray_data_ptr_as_int(B));
+  float *d_C = reinterpret_cast<float *>(get_ndarray_data_ptr_as_int(C));
+
+  // cuBLAS uses column-major, but our matrices are row-major
+  // To compute C = A @ B in row-major, we compute C^T = B^T @ A^T in col-major
+  // Since (AB)^T = B^T A^T, we swap A and B and their transposes
+  int transa = transpose_b ? 0 : 1;  // CUBLAS_OP_N=0, CUBLAS_OP_T=1
+  int transb = transpose_a ? 0 : 1;
+
+  int lda = transpose_b ? K : N;
+  int ldb = transpose_a ? M : K;
+  int ldc = N;
+
+  // Call cuBLAS SGEMM: C = alpha * op(A) * op(B) + beta * C
+  // Swapped: we call with (B, A) to handle row-major
+  CUBLASDriver::get_instance().cubSgemm(handle, transa, transb, N, M, K, &alpha,
+                                        d_B, lda, d_A, ldb, &beta, d_C, ldc);
+
+  CUBLASDriver::get_instance().cubDestroy(handle);
+#else
+  TI_NOT_IMPLEMENTED;
+#endif
 }
 
 std::pair<const StructType *, size_t> Program::get_struct_type_with_data_layout(

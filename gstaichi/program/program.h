@@ -268,6 +268,18 @@ class TI_DLL_EXPORT Program {
 
   void fill_ndarray_fast_u32(Ndarray *ndarray, uint32_t val);
 
+  // cuBLAS SGEMM: C = alpha * A @ B + beta * C
+  void cublas_sgemm(const Ndarray *A,
+                    const Ndarray *B,
+                    const Ndarray *C,
+                    int M,
+                    int N,
+                    int K,
+                    float alpha,
+                    float beta,
+                    bool transpose_a,
+                    bool transpose_b);
+
   Identifier get_next_global_id(const std::string &name = "") {
     return Identifier(global_id_counter_++, name);
   }
