@@ -12,7 +12,7 @@ from dataclasses import (
 
 # Must import 'partial' directly instead of the entire module to avoid attribute lookup overhead.
 from functools import partial
-from typing import Any, Callable, DefaultDict, Type, TypeAlias
+from typing import TYPE_CHECKING, Any, Callable, DefaultDict, Type, TypeAlias
 
 # Must import 'ReferenceType' directly instead of the entire module to avoid attribute lookup overhead.
 from weakref import ReferenceType
@@ -20,7 +20,7 @@ from weakref import ReferenceType
 import numpy as np
 
 from gstaichi._lib import core as _ti_core
-from gstaichi._lib.core.gstaichi_python import KernelLaunchContext
+from gstaichi._lib.core.gstaichi_python import ASTBuilder, KernelLaunchContext
 from gstaichi.lang import _kernel_impl_dataclass, impl
 from gstaichi.lang._ndarray import Ndarray
 from gstaichi.lang._wrap_inspect import get_source_info_and_src
@@ -40,6 +40,10 @@ from gstaichi.types import (
     sparse_matrix_builder,
     template,
 )
+
+if TYPE_CHECKING:
+    from .func import Func
+    from .kernel import Kernel
 from gstaichi.types.enums import AutodiffMode, Layout
 from gstaichi.types.utils import is_signed
 

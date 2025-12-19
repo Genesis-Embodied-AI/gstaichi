@@ -1,6 +1,9 @@
 # Must import 'partial' directly instead of the entire module to avoid attribute lookup overhead.
 from functools import update_wrapper
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
+
+if TYPE_CHECKING:
+    from .kernel import Kernel
 
 
 class GsTaichiCallable:
