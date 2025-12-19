@@ -100,6 +100,9 @@ class AnyArrayAccess:
 def get_addr(arr, indices):
     """Query the memory address of ndarray `arr` at index `indices`.
 
+    NOTE: This function is not yet fully implemented for ndarrays.
+    Use ti.field with snode.get_addr() instead for WMMA operations.
+
     Currently, this function can only be called inside a gstaichi kernel.
 
     Args:
@@ -115,49 +118,10 @@ def get_addr(arr, indices):
         def foo(arr: ti.types.ndarray()):
             ptr = any_array.get_addr(arr, [0, 0])
     """
-    from gstaichi.lang.expr import Expr
-    from gstaichi.lang import ops
-    from gstaichi.types import primitive_types
-    from gstaichi.lang.impl import call_internal
-
-    if isinstance(arr, AnyArray):
-        tensor_ptr = arr.ptr
-    else:
-        tensor_ptr = arr.ptr if hasattr(arr, 'ptr') else arr
-
-    dbg_info = _ti_core.DebugInfo(impl.get_runtime().get_current_src_info())
-
-    # Get base pointer of the external tensor
-    base_ptr_raw = Expr(_ti_core.make_external_tensor_base_ptr_expr(
-        tensor_ptr, False, dbg_info))
-    # Convert pointer to u64 using internal op
-    base_ptr = call_internal("ptr_to_u64", base_ptr_raw)
-
-    if not indices:
-        return base_ptr
-
-    # Get shape for stride calculation
-    ndim = _ti_core.get_external_tensor_dim(tensor_ptr)
-    shape = [ops.cast(Expr(_ti_core.get_external_tensor_shape_along_axis(tensor_ptr, i, dbg_info)),
-                      primitive_types.u64)
-             for i in range(ndim)]
-
-    # Calculate linear offset in row-major order (result in elements)
-    # offset = sum(indices[i] * prod(shape[i+1:]))
-    offset = ops.cast(0, primitive_types.u64)
-    for i, idx in enumerate(indices):
-        idx_u64 = ops.cast(idx, primitive_types.u64)
-        # stride = prod(shape[i+1:])
-        stride = ops.cast(1, primitive_types.u64)
-        for j in range(i + 1, len(indices)):
-            stride = ops.mul(stride, shape[j])
-
-        offset = ops.add(offset, ops.mul(idx_u64, stride))
-
-    # Multiply by element size (4 bytes for f32)
-    offset_bytes = ops.mul(offset, ops.cast(4, primitive_types.u64))
-
-    return ops.add(base_ptr, offset_bytes)
+    raise NotImplementedError(
+        "any_array.get_addr is not yet implemented. "
+        "Use ti.field with snode.get_addr() instead for WMMA operations."
+    )
 
 
 __all__ = ["get_addr"]

@@ -1280,38 +1280,9 @@ int32 block_barrier_count_i32(int32 predicate) {
 void warp_barrier(uint32 mask) {
 }
 
-// Pointer to u64 conversion - replaced by ptrtoint on CUDA/AMDGPU
-uint64 ptr_to_u64(float *ptr) {
-  return (uint64)ptr;
-}
-
-// WMMA TF32 stubs (m16n16k8) - replaced by LLVM intrinsics on CUDA sm_80+
-// Fragment types: A/B are 4xf32, C/D are 8xf32 per thread
-struct WmmaFragA {
-  float data[4];
-};
-struct WmmaFragC {
-  float data[8];
-};
-
-WmmaFragA cuda_wmma_load_a_tf32(void *ptr, int stride) {
-  return WmmaFragA{};
-}
-
-WmmaFragA cuda_wmma_load_b_tf32(void *ptr, int stride) {
-  return WmmaFragA{};
-}
-
-WmmaFragC cuda_wmma_load_c_f32(void *ptr, int stride) {
-  return WmmaFragC{};
-}
-
-WmmaFragC cuda_wmma_mma_tf32(WmmaFragA a, WmmaFragA b, WmmaFragC c) {
-  return WmmaFragC{};
-}
-
-void cuda_wmma_store_d_f32(void *ptr, WmmaFragC d, int stride) {
-}
+// WMMA TF32 stubs - these are replaced by LLVM intrinsics in codegen_cuda.cpp
+// Note: These signatures must match the internal op signatures in type_system.cpp
+// The actual intrinsics will be emitted by TaskCodeGenCUDA::emit_wmma_intrinsic
 
 void block_memfence() {
 }

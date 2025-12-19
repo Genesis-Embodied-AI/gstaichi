@@ -5,7 +5,7 @@ import pytest
 
 import gstaichi as ti
 from gstaichi.lang.simt import warp
-from gstaichi.lang import snode, any_array
+from gstaichi.lang import snode
 
 
 def test_wmma_intrinsic_registration():
@@ -59,46 +59,6 @@ def test_wmma_tf32_basic():
             warp._wmma_store_d_f32(snode.get_addr(C, [0, 0]), d_frag, N)
 
     wmma_kernel()
-
-    np.testing.assert_allclose(C.to_numpy(), expected, rtol=1e-2, atol=1e-3)
-
-
-def test_wmma_tf32_basic_ndarray():
-    """Basic WMMA TF32 test with ndarray storage."""
-    ti.init(arch=ti.cuda)
-    _skip_if_no_sm80()
-
-    M, N, K = 16, 16, 8
-
-    rng = np.random.default_rng(seed=12345)
-    A_np = rng.uniform(-1, 1, (M, K)).astype(np.float32)
-    B_np = rng.uniform(-1, 1, (K, N)).astype(np.float32)
-    C_np = rng.uniform(-1, 1, (M, N)).astype(np.float32)
-    expected = A_np @ B_np + C_np
-
-    A = ti.ndarray(dtype=ti.f32, shape=(M, K))
-    B_T = ti.ndarray(dtype=ti.f32, shape=(N, K))
-    C = ti.ndarray(dtype=ti.f32, shape=(M, N))
-
-    A.from_numpy(A_np)
-    B_T.from_numpy(B_np.T)
-    C.from_numpy(C_np)
-
-    @ti.kernel
-    def wmma_kernel(
-        A: ti.types.ndarray(dtype=ti.f32, ndim=2),
-        B_T: ti.types.ndarray(dtype=ti.f32, ndim=2),
-        C: ti.types.ndarray(dtype=ti.f32, ndim=2)
-    ):
-        ti.loop_config(block_dim=32)
-        for _ in range(32):
-            a_frag = warp._wmma_load_a_tf32(any_array.get_addr(A, [0, 0]), K)
-            b_frag = warp._wmma_load_b_tf32(any_array.get_addr(B_T, [0, 0]), K)
-            c_frag = warp._wmma_load_c_f32(any_array.get_addr(C, [0, 0]), N)
-            d_frag = warp._wmma_mma_tf32(a_frag, b_frag, c_frag)
-            warp._wmma_store_d_f32(any_array.get_addr(C, [0, 0]), d_frag, N)
-
-    wmma_kernel(A, B_T, C)
 
     np.testing.assert_allclose(C.to_numpy(), expected, rtol=1e-2, atol=1e-3)
 

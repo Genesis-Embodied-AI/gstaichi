@@ -349,10 +349,6 @@ void Operations::init_internals() {
   PLAIN_OP(cuda_active_mask, u32, false);
   PLAIN_OP(warp_barrier, i32_void, false, u32);
 
-  // Pointer utilities
-  auto f32_ptr = TypeFactory::get_instance().get_pointer_type(PrimitiveType::f32);
-  PLAIN_OP(ptr_to_u64, u64, false, f32_ptr);  // ptr -> u64 address
-
   // WMMA TF32 Tensor Core intrinsics (sm_80+, m16n16k8)
   // Fragment types: A/B are 4xf32, C/D are 8xf32 per thread
   // For type checking purposes, we use tensor types
