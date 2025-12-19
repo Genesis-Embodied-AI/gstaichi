@@ -98,7 +98,7 @@ class LaunchContextBufferCache:
     # the cache stores wear references to pointers, so it does not hold alife any allocated memory.
     def __init__(self) -> None:
         # Keep track of taichi runtime to automatically clear cache if destroyed
-        self._prog_weakref = None
+        self._prog_weakref: ReferenceType[Program] | None = None
 
         # The cache key corresponds to the hash of the (packed) python-side input arguments of the kernel.
         # * '_launch_ctx_cache' is storing a backup of the launch context BEFORE ever calling the kernel.
@@ -109,7 +109,6 @@ class LaunchContextBufferCache:
         # See 'launch_kernel' for details regarding the intended use of caching.
         self._launch_ctx_cache: dict[ArgsHash, KernelLaunchContext] = {}
         self._launch_ctx_cache_tracker: dict[ArgsHash, list[ReferenceType | None]] = {}
-        self._prog_weakref: ReferenceType[Program] | None = None
 
     @staticmethod
     def _destroy_callback(kernel_ref: ReferenceType["LaunchContextBufferCache"], ref: ReferenceType):
