@@ -141,9 +141,7 @@ class LaunchContextBufferCache:
             launch_ctx_cache_tracker_ += [ReferenceType(arr_grad, clear_callback) for arr_grad in arrs_grad]
         self._launch_ctx_cache_tracker[args_hash] = launch_ctx_cache_tracker_
 
-    def populate_launch_ctx_from_cache(
-        self, args_hash: "ArgsHash", launch_ctx: KernelLaunchContext
-    ) -> tuple[Program, bool]:
+    def populate_launch_ctx_from_cache(self, args_hash: "ArgsHash", launch_ctx: KernelLaunchContext) -> bool:
         if self._prog_weakref is None:
             prog = impl.get_runtime().prog
             assert prog is not None
@@ -162,11 +160,11 @@ class LaunchContextBufferCache:
         except KeyError:
             pass
         if not launch_ctx_cache_tracker:  # Empty or none
-            return prog, False
+            return False
 
         assert args_hash is not None
         launch_ctx.copy(self._launch_ctx_cache[args_hash])
-        return prog, True
+        return True
 
 
 class Kernel(FuncBase):
@@ -450,10 +448,7 @@ class Kernel(FuncBase):
         launch_ctx = t_kernel.make_launch_context()
         # Special treatment for primitive types is unecessary and detrimental. See 'TemplateMapper.lookup' for details.
         args_hash: "ArgsHash" = (id(t_kernel), *[id(arg) for arg in args])
-        prog, _populated_launch_ctx = self.launch_context_buffer_cache.populate_launch_ctx_from_cache(
-            args_hash, launch_ctx
-        )
-        if not _populated_launch_ctx:
+        if not self.launch_context_buffer_cache.populate_launch_ctx_from_cache(args_hash, launch_ctx):
             launch_ctx_buffer: dict[_KernelBatchedArgType, list[tuple]] = defaultdict(list)
             actual_argument_slot = 0
             is_launch_ctx_cacheable = True
@@ -510,6 +505,7 @@ class Kernel(FuncBase):
                 self.launch_context_buffer_cache.cache(t_kernel, args_hash, launch_ctx, launch_ctx_buffer)
 
         try:
+            prog = impl.get_runtime().prog
             if not compiled_kernel_data:
                 # Store Taichi program config and device cap for efficiency because they are used at multiple places
                 prog_config = prog.config()
