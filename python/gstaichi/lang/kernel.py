@@ -154,11 +154,16 @@ class LaunchContextBufferCache:
             prog = self._prog_weakref()
         assert prog is not None
 
-        assert args_hash is not None
-        cached_launch_ctx = self._launch_ctx_cache.get(args_hash)
-        if cached_launch_ctx is None:
+        launch_ctx_cache_tracker: list[ReferenceType | None] | None = None
+        try:
+            launch_ctx_cache_tracker = self._launch_ctx_cache_tracker[args_hash]
+        except KeyError:
+            pass
+        if not launch_ctx_cache_tracker:  # Empty or none
             return prog, False
-        launch_ctx.copy(cached_launch_ctx)
+
+        assert args_hash is not None
+        launch_ctx.copy(self._launch_ctx_cache[args_hash])
         return prog, True
 
 class Kernel:
