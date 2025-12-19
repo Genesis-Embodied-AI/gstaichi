@@ -28,9 +28,6 @@ Module Contents
 
 
 
-   .. py:attribute:: func
-
-
    .. py:attribute:: func_id
       :value: 0
 
@@ -52,39 +49,6 @@ Module Contents
    .. py:attribute:: is_real_function
       :value: False
 
-
-
-   .. py:attribute:: arg_metas
-      :type:  list[gstaichi.lang.kernel_arguments.ArgMetadata]
-      :value: []
-
-
-
-   .. py:attribute:: arg_metas_expanded
-      :type:  list[gstaichi.lang.kernel_arguments.ArgMetadata]
-      :value: []
-
-
-
-   .. py:attribute:: orig_arguments
-      :type:  list[gstaichi.lang.kernel_arguments.ArgMetadata]
-      :value: []
-
-
-
-   .. py:attribute:: return_type
-      :type:  tuple[Type, Ellipsis] | None
-      :value: None
-
-
-
-   .. py:attribute:: template_slot_locations
-      :type:  list[int]
-      :value: []
-
-
-
-   .. py:attribute:: mapper
 
 
    .. py:attribute:: gstaichi_functions
