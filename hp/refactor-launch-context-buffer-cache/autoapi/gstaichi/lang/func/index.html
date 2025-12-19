@@ -420,7 +420,7 @@
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.func.Func" title="gstaichi.lang.func.Func"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Func</span></code></a></p></td>
-<td><p></p></td>
+<td><p>Base class for Kernels and Funcs</p></td>
 </tr>
 </tbody>
 </table>
@@ -431,14 +431,11 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="gstaichi.lang.func.Func">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gstaichi.lang.func.</span></span><span class="sig-name descname"><span class="pre">Func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_classfunc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_pyfunc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_real_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/gstaichi/lang/func.html#Func"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.func.Func" title="Link to this definition">#</a></dt>
-<dd><dl class="py attribute">
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">gstaichi.lang._func_base.FuncBase</span></code></p>
+<p>Base class for Kernels and Funcs</p>
+<dl class="py attribute">
 <dt class="sig sig-object py" id="gstaichi.lang.func.Func.function_counter">
 <span class="sig-name descname"><span class="pre">function_counter</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="reference internal" href="../../../../_modules/gstaichi/lang/func.html#Func.function_counter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.func.Func.function_counter" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="gstaichi.lang.func.Func.func">
-<span class="sig-name descname"><span class="pre">func</span></span><a class="reference internal" href="../../../../_modules/gstaichi/lang/func.html#Func.func"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.func.Func.func" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -464,36 +461,6 @@
 <dl class="py attribute">
 <dt class="sig sig-object py" id="gstaichi.lang.func.Func.is_real_function">
 <span class="sig-name descname"><span class="pre">is_real_function</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="reference internal" href="../../../../_modules/gstaichi/lang/func.html#Func.is_real_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.func.Func.is_real_function" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="gstaichi.lang.func.Func.arg_metas">
-<span class="sig-name descname"><span class="pre">arg_metas</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../kernel_arguments/index.html#gstaichi.lang.kernel_arguments.ArgMetadata" title="gstaichi.lang.kernel_arguments.ArgMetadata"><span class="pre">gstaichi.lang.kernel_arguments.ArgMetadata</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="reference internal" href="../../../../_modules/gstaichi/lang/func.html#Func.arg_metas"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.func.Func.arg_metas" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="gstaichi.lang.func.Func.arg_metas_expanded">
-<span class="sig-name descname"><span class="pre">arg_metas_expanded</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../kernel_arguments/index.html#gstaichi.lang.kernel_arguments.ArgMetadata" title="gstaichi.lang.kernel_arguments.ArgMetadata"><span class="pre">gstaichi.lang.kernel_arguments.ArgMetadata</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="reference internal" href="../../../../_modules/gstaichi/lang/func.html#Func.arg_metas_expanded"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.func.Func.arg_metas_expanded" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="gstaichi.lang.func.Func.orig_arguments">
-<span class="sig-name descname"><span class="pre">orig_arguments</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../kernel_arguments/index.html#gstaichi.lang.kernel_arguments.ArgMetadata" title="gstaichi.lang.kernel_arguments.ArgMetadata"><span class="pre">gstaichi.lang.kernel_arguments.ArgMetadata</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="reference internal" href="../../../../_modules/gstaichi/lang/func.html#Func.orig_arguments"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.func.Func.orig_arguments" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="gstaichi.lang.func.Func.return_type">
-<span class="sig-name descname"><span class="pre">return_type</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Type</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Ellipsis</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="reference internal" href="../../../../_modules/gstaichi/lang/func.html#Func.return_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.func.Func.return_type" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="gstaichi.lang.func.Func.template_slot_locations">
-<span class="sig-name descname"><span class="pre">template_slot_locations</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="reference internal" href="../../../../_modules/gstaichi/lang/func.html#Func.template_slot_locations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.func.Func.template_slot_locations" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="gstaichi.lang.func.Func.mapper">
-<span class="sig-name descname"><span class="pre">mapper</span></span><a class="reference internal" href="../../../../_modules/gstaichi/lang/func.html#Func.mapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.func.Func.mapper" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -582,18 +549,11 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.func.Func"><code class="docutils literal notranslate"><span class="pre">Func</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.func.Func.function_counter"><code class="docutils literal notranslate"><span class="pre">Func.function_counter</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.func.Func.func"><code class="docutils literal notranslate"><span class="pre">Func.func</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.func.Func.func_id"><code class="docutils literal notranslate"><span class="pre">Func.func_id</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.func.Func.compiled"><code class="docutils literal notranslate"><span class="pre">Func.compiled</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.func.Func.classfunc"><code class="docutils literal notranslate"><span class="pre">Func.classfunc</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.func.Func.pyfunc"><code class="docutils literal notranslate"><span class="pre">Func.pyfunc</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.func.Func.is_real_function"><code class="docutils literal notranslate"><span class="pre">Func.is_real_function</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.func.Func.arg_metas"><code class="docutils literal notranslate"><span class="pre">Func.arg_metas</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.func.Func.arg_metas_expanded"><code class="docutils literal notranslate"><span class="pre">Func.arg_metas_expanded</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.func.Func.orig_arguments"><code class="docutils literal notranslate"><span class="pre">Func.orig_arguments</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.func.Func.return_type"><code class="docutils literal notranslate"><span class="pre">Func.return_type</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.func.Func.template_slot_locations"><code class="docutils literal notranslate"><span class="pre">Func.template_slot_locations</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.func.Func.mapper"><code class="docutils literal notranslate"><span class="pre">Func.mapper</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.func.Func.gstaichi_functions"><code class="docutils literal notranslate"><span class="pre">Func.gstaichi_functions</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.func.Func.has_print"><code class="docutils literal notranslate"><span class="pre">Func.has_print</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.func.Func.current_kernel"><code class="docutils literal notranslate"><span class="pre">Func.current_kernel</span></code></a></li>
