@@ -48,6 +48,9 @@ from gstaichi.types.enums import AutodiffMode, Layout
 from gstaichi.types.utils import is_signed
 from ._kernel_types import _KernelBatchedArgType
 
+
+MAX_ARG_NUM = 512
+
 # Define proxies for fast lookup
 _FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = _KernelBatchedArgType
 _ARG_EMPTY = inspect.Parameter.empty

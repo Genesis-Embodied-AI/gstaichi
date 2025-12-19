@@ -30,8 +30,6 @@ ArgsHash: TypeAlias = tuple[int, ...]
 
 CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
 
-MAX_ARG_NUM = 512
-
 
 def func(fn: Callable, is_real_function: bool = False) -> GsTaichiCallable:
     """Marks a function as callable in GsTaichi-scope.
