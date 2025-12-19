@@ -20,10 +20,7 @@ from weakref import ReferenceType
 import numpy as np
 
 from gstaichi._lib import core as _ti_core
-from gstaichi._lib.core.gstaichi_python import (
-    ASTBuilder,
-    KernelLaunchContext,
-)
+from gstaichi._lib.core.gstaichi_python import KernelLaunchContext
 from gstaichi.lang import _kernel_impl_dataclass, impl
 from gstaichi.lang._ndarray import Ndarray
 from gstaichi.lang._wrap_inspect import get_source_info_and_src
