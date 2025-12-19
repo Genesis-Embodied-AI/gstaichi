@@ -1850,6 +1850,19 @@ void TaskCodeGenLLVM::visit(GetChStmt *stmt) {
 }
 
 void TaskCodeGenLLVM::visit(MatrixPtrStmt *stmt) {
+  auto origin_type = stmt->origin->ret_type;
+
+  // Handle extraction from non-pointer tensor values (e.g., InternalFuncStmt
+  // results like WMMA intrinsics that return struct types)
+  if (!origin_type.is_pointer() && origin_type->is<TensorType>()) {
+    // The offset must be a compile-time constant for extractvalue
+    auto offset_stmt = stmt->offset->cast<ConstStmt>();
+    TI_ASSERT(offset_stmt != nullptr);
+    unsigned idx = static_cast<unsigned>(offset_stmt->val.val_int32());
+    llvm_val[stmt] = builder->CreateExtractValue(llvm_val[stmt->origin], {idx});
+    return;
+  }
+
   if (stmt->offset_used_as_index()) {
     auto type = tlctx->get_data_type(stmt->origin->ret_type.ptr_removed());
 

@@ -54,23 +54,42 @@ class Scalarize : public BasicStmtVisitor {
 
       TI_ASSERT(dest_tensor_type->get_shape() == val_tensor_type->get_shape());
 
-      TI_ASSERT(stmt->val->template is<MatrixInitStmt>());
-      auto matrix_init_stmt = stmt->val->template as<MatrixInitStmt>();
-
       int num_elements = val_tensor_type->get_num_elements();
       auto primitive_type = dest_tensor_type->get_element_type();
+
+      // Get scalar values from the tensor source
+      std::vector<Stmt *> scalar_values;
+      if (stmt->val->template is<MatrixInitStmt>()) {
+        // Already decomposed into scalars
+        scalar_values = stmt->val->template as<MatrixInitStmt>()->values;
+      } else {
+        // Extract scalars from opaque tensor (e.g., InternalFuncStmt result)
+        for (int i = 0; i < num_elements; i++) {
+          auto idx_stmt = std::make_unique<ConstStmt>(
+              TypedConstant(get_data_type<int32>(), i));
+          auto extract_stmt =
+              std::make_unique<MatrixPtrStmt>(stmt->val, idx_stmt.get());
+          extract_stmt->ret_type = primitive_type;
+          // Note: NOT setting is_pointer - this extracts a value, not a pointer
+
+          delayed_modifier_.insert_before(stmt, std::move(idx_stmt));
+          scalar_values.push_back(extract_stmt.get());
+          delayed_modifier_.insert_before(stmt, std::move(extract_stmt));
+        }
+      }
+
+      // Store each scalar to the destination
       for (int i = 0; i < num_elements; i++) {
         auto const_stmt = std::make_unique<ConstStmt>(
             TypedConstant(get_data_type<int32>(), i));
 
-        // Merge with previous MatrixPtrStmt
         auto matrix_ptr_stmt =
             std::make_unique<MatrixPtrStmt>(stmt->dest, const_stmt.get());
         matrix_ptr_stmt->ret_type = primitive_type;
         matrix_ptr_stmt->ret_type.set_is_pointer(true);
 
         auto scalarized_stmt = std::make_unique<T>(matrix_ptr_stmt.get(),
-                                                   matrix_init_stmt->values[i]);
+                                                   scalar_values[i]);
 
         delayed_modifier_.insert_before(stmt, std::move(const_stmt));
         delayed_modifier_.insert_before(stmt, std::move(matrix_ptr_stmt));

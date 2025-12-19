@@ -479,6 +479,136 @@ std::unique_ptr<llvm::Module> GsTaichiLLVMContext::module_from_file(
 
       patch_intrinsic("block_memfence", Intrinsic::nvvm_membar_cta, false);
 
+      // Pointer to u64 conversion
+      {
+        auto func = module->getFunction("ptr_to_u64");
+        if (func) {
+          func->deleteBody();
+          auto bb = llvm::BasicBlock::Create(*ctx, "entry", func);
+          IRBuilder<> builder(*ctx);
+          builder.SetInsertPoint(bb);
+          auto ptr_arg = func->arg_begin();
+          auto u64_val = builder.CreatePtrToInt(&*ptr_arg,
+                                                llvm::Type::getInt64Ty(*ctx));
+          builder.CreateRet(u64_val);
+          GsTaichiLLVMContext::mark_inline(func);
+        }
+      }
+
+      // WMMA TF32 Tensor Core intrinsics (sm_80+, m16n16k8)
+      auto patch_wmma_load = [&](std::string name, Intrinsic::ID intrin) {
+        auto func = module->getFunction(name);
+        if (!func) return;
+        func->deleteBody();
+        auto bb = llvm::BasicBlock::Create(*ctx, "entry", func);
+        IRBuilder<> builder(*ctx);
+        builder.SetInsertPoint(bb);
+        // Args: ptr (u64), stride (i32)
+        auto it = func->arg_begin();
+        auto ptr_u64 = &*it++;
+        auto stride = &*it;
+        // Convert u64 to ptr
+        auto ptr = builder.CreateIntToPtr(ptr_u64,
+                                          llvm::PointerType::get(*ctx, 0));
+        // Call intrinsic with ptr and stride
+        auto result = builder.CreateIntrinsic(intrin, {}, {ptr, stride});
+        // Convert struct result {i32,i32,i32,i32} to {f32,f32,f32,f32}
+        llvm::Value *ret = llvm::UndefValue::get(
+            llvm::ArrayType::get(llvm::Type::getFloatTy(*ctx), 4));
+        for (int i = 0; i < 4; i++) {
+          auto elem = builder.CreateExtractValue(result, {(unsigned)i});
+          auto f32_elem = builder.CreateBitCast(elem, llvm::Type::getFloatTy(*ctx));
+          ret = builder.CreateInsertValue(ret, f32_elem, {(unsigned)i});
+        }
+        builder.CreateRet(ret);
+        GsTaichiLLVMContext::mark_inline(func);
+      };
+
+      patch_wmma_load("cuda_wmma_load_a_tf32",
+                      Intrinsic::nvvm_wmma_m16n16k8_load_a_tf32_row_stride);
+      patch_wmma_load("cuda_wmma_load_b_tf32",
+                      Intrinsic::nvvm_wmma_m16n16k8_load_b_tf32_col_stride);
+
+      // Load C (8xf32)
+      {
+        auto func = module->getFunction("cuda_wmma_load_c_f32");
+        if (func) {
+          func->deleteBody();
+          auto bb = llvm::BasicBlock::Create(*ctx, "entry", func);
+          IRBuilder<> builder(*ctx);
+          builder.SetInsertPoint(bb);
+          auto it = func->arg_begin();
+          auto ptr_u64 = &*it++;
+          auto stride = &*it;
+          auto ptr = builder.CreateIntToPtr(ptr_u64,
+                                            llvm::PointerType::get(*ctx, 0));
+          auto result = builder.CreateIntrinsic(
+              Intrinsic::nvvm_wmma_m16n16k8_load_c_f32_row_stride, {},
+              {ptr, stride});
+          builder.CreateRet(result);
+          GsTaichiLLVMContext::mark_inline(func);
+        }
+      }
+
+      // MMA operation
+      {
+        auto func = module->getFunction("cuda_wmma_mma_tf32");
+        if (func) {
+          func->deleteBody();
+          auto bb = llvm::BasicBlock::Create(*ctx, "entry", func);
+          IRBuilder<> builder(*ctx);
+          builder.SetInsertPoint(bb);
+          auto it = func->arg_begin();
+          // Extract a_frag (4xf32), b_frag (4xf32), c_frag (8xf32)
+          auto a_frag = &*it++;
+          auto b_frag = &*it++;
+          auto c_frag = &*it;
+          // Convert f32 fragments to i32 for the intrinsic
+          std::vector<llvm::Value *> args;
+          for (int i = 0; i < 4; i++) {
+            auto f32 = builder.CreateExtractValue(a_frag, {(unsigned)i});
+            args.push_back(builder.CreateBitCast(f32, llvm::Type::getInt32Ty(*ctx)));
+          }
+          for (int i = 0; i < 4; i++) {
+            auto f32 = builder.CreateExtractValue(b_frag, {(unsigned)i});
+            args.push_back(builder.CreateBitCast(f32, llvm::Type::getInt32Ty(*ctx)));
+          }
+          for (int i = 0; i < 8; i++) {
+            args.push_back(builder.CreateExtractValue(c_frag, {(unsigned)i}));
+          }
+          auto result = builder.CreateIntrinsic(
+              Intrinsic::nvvm_wmma_m16n16k8_mma_row_col_tf32, {}, args);
+          builder.CreateRet(result);
+          GsTaichiLLVMContext::mark_inline(func);
+        }
+      }
+
+      // Store D
+      {
+        auto func = module->getFunction("cuda_wmma_store_d_f32");
+        if (func) {
+          func->deleteBody();
+          auto bb = llvm::BasicBlock::Create(*ctx, "entry", func);
+          IRBuilder<> builder(*ctx);
+          builder.SetInsertPoint(bb);
+          auto it = func->arg_begin();
+          auto ptr_u64 = &*it++;
+          auto d_frag = &*it++;
+          auto stride = &*it;
+          auto ptr = builder.CreateIntToPtr(ptr_u64,
+                                            llvm::PointerType::get(*ctx, 0));
+          std::vector<llvm::Value *> args = {ptr};
+          for (int i = 0; i < 8; i++) {
+            args.push_back(builder.CreateExtractValue(d_frag, {(unsigned)i}));
+          }
+          args.push_back(stride);
+          builder.CreateIntrinsic(
+              Intrinsic::nvvm_wmma_m16n16k8_store_d_f32_row_stride, {}, args);
+          builder.CreateRetVoid();
+          GsTaichiLLVMContext::mark_inline(func);
+        }
+      }
+
       link_module_with_cuda_libdevice(module);
 
 #ifdef TI_WITH_CUDA

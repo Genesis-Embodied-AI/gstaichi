@@ -1280,6 +1280,11 @@ int32 block_barrier_count_i32(int32 predicate) {
 void warp_barrier(uint32 mask) {
 }
 
+// Pointer to u64 conversion - replaced by ptrtoint on CUDA/AMDGPU
+uint64 ptr_to_u64(float *ptr) {
+  return (uint64)ptr;
+}
+
 // WMMA TF32 stubs (m16n16k8) - replaced by LLVM intrinsics on CUDA sm_80+
 // Fragment types: A/B are 4xf32, C/D are 8xf32 per thread
 struct WmmaFragA {

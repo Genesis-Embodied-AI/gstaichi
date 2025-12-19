@@ -66,6 +66,9 @@ PER_INTERNAL_OP(cuda_match_all_sync_i32)
 PER_INTERNAL_OP(cuda_active_mask)
 PER_INTERNAL_OP(warp_barrier)
 
+// Pointer utilities
+PER_INTERNAL_OP(ptr_to_u64)
+
 // CUDA WMMA TF32 (Tensor Cores, sm_80+) - m16n16k8
 PER_INTERNAL_OP(cuda_wmma_load_a_tf32)
 PER_INTERNAL_OP(cuda_wmma_load_b_tf32)
