@@ -13,7 +13,7 @@ from dataclasses import (
 
 # Must import 'partial' directly instead of the entire module to avoid attribute lookup overhead.
 from functools import partial
-from typing import TYPE_CHECKING, Any, Callable, DefaultDict
+from typing import TYPE_CHECKING, Any, Callable
 
 # Must import 'ReferenceType' directly instead of the entire module to avoid attribute lookup overhead.
 from weakref import ReferenceType
@@ -59,7 +59,6 @@ from gstaichi.types.utils import is_signed
 if TYPE_CHECKING:
     from .kernel_impl import ArgsHash, CompiledKernelKeyType
 from ._func_base import (
-    _destroy_callback,
     _get_tree_and_ctx,
     _process_args,
     _recursive_set_args,
@@ -107,8 +106,8 @@ class LaunchContextBufferCache:
         # * '_prog_weakref'is used for bounding the lifetime of the entire cache to the Taichi programm managing all
         #   the launch context being stored in cache.
         # See 'launch_kernel' for details regarding the intended use of caching.
-        self._launch_ctx_cache: dict[ArgsHash, KernelLaunchContext] = {}
-        self._launch_ctx_cache_tracker: dict[ArgsHash, list[ReferenceType | None]] = {}
+        self._launch_ctx_cache: dict["ArgsHash", KernelLaunchContext] = {}
+        self._launch_ctx_cache_tracker: dict["ArgsHash", list[ReferenceType | None]] = {}
 
     @staticmethod
     def _destroy_callback(kernel_ref: ReferenceType["LaunchContextBufferCache"], ref: ReferenceType):
@@ -119,7 +118,11 @@ class LaunchContextBufferCache:
             maybe_kernel._prog_weakref = None
 
     def cache(
-        self, t_kernel, args_hash, launch_ctx, launch_ctx_buffer: dict[_KernelBatchedArgType, list[tuple]]
+        self,
+        t_kernel,
+        args_hash: "ArgsHash",
+        launch_ctx: KernelLaunchContext,
+        launch_ctx_buffer: dict[_KernelBatchedArgType, list[tuple]],
     ) -> None:
         # TODO: It some rare occurrences, arguments can be cached yet not hashable. Ignoring for now...
         cached_launch_ctx = t_kernel.make_launch_context()
@@ -143,11 +146,15 @@ class LaunchContextBufferCache:
             launch_ctx_cache_tracker_ += [ReferenceType(arr_grad, clear_callback) for arr_grad in arrs_grad]
         self._launch_ctx_cache_tracker[args_hash] = launch_ctx_cache_tracker_
 
-    def populate_launch_ctx_from_cache(self, args_hash, launch_ctx) -> tuple[Program, bool]:
+    def populate_launch_ctx_from_cache(
+        self, args_hash: "ArgsHash", launch_ctx: KernelLaunchContext
+    ) -> tuple[Program, bool]:
         if self._prog_weakref is None:
             prog = impl.get_runtime().prog
             assert prog is not None
-            self._prog_weakref = ReferenceType(prog, partial(LaunchContextBufferCache._destroy_callback, ReferenceType(self)))
+            self._prog_weakref = ReferenceType(
+                prog, partial(LaunchContextBufferCache._destroy_callback, ReferenceType(self))
+            )
         else:
             # Since we already store a weak reference to taichi program, it is much faster to use it rather than
             # paying the overhead of calling pybind11 functions (~200ns vs 5ns).
@@ -165,6 +172,7 @@ class LaunchContextBufferCache:
         assert args_hash is not None
         launch_ctx.copy(self._launch_ctx_cache[args_hash])
         return prog, True
+
 
 class Kernel:
     counter = 0
@@ -451,9 +459,9 @@ class Kernel:
         callbacks: list[Callable[[], None]] = []
         launch_ctx = t_kernel.make_launch_context()
         # Special treatment for primitive types is unecessary and detrimental. See 'TemplateMapper.lookup' for details.
-        args_hash: ArgsHash = (id(t_kernel), *[id(arg) for arg in args])
+        args_hash: "ArgsHash" = (id(t_kernel), *[id(arg) for arg in args])
         prog, _populated_launch_ctx = self.launch_context_buffer_cache.populate_launch_ctx_from_cache(
-            launch_ctx, args_hash
+            args_hash, launch_ctx
         )
         if not _populated_launch_ctx:
             launch_ctx_buffer: dict[_KernelBatchedArgType, list[tuple]] = defaultdict(list)
