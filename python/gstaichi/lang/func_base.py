@@ -2,46 +2,20 @@ import inspect
 import types
 import typing
 from dataclasses import is_dataclass
-from typing import Any, Callable, Type
 
-from gstaichi._lib import core as _ti_core
-from gstaichi._lib.core.gstaichi_python import (
-    Function as FunctionCxx,
-)
-from gstaichi._lib.core.gstaichi_python import (
-    FunctionKey,
-)
-from gstaichi.lang import _kernel_impl_dataclass, impl, ops
 from gstaichi.lang._template_mapper import TemplateMapper
-from gstaichi.lang.any_array import AnyArray
-from gstaichi.lang.ast import (
-    transform_tree,
-)
-from gstaichi.lang.ast.ast_transformer_utils import ReturnStatus
 from gstaichi.lang.exception import (
     GsTaichiSyntaxError,
-    GsTaichiTypeError,
 )
-from gstaichi.types import (
-    ndarray_type,
-    primitive_types,
-    sparse_matrix_builder,
-    template,
-)
-from gstaichi.lang.expr import Expr
 from gstaichi.lang.kernel_arguments import ArgMetadata
 from gstaichi.lang.matrix import MatrixType
 from gstaichi.lang.struct import StructType
 from gstaichi.types import (
     ndarray_type,
     primitive_types,
+    sparse_matrix_builder,
     template,
 )
-from gstaichi.types.enums import AutodiffMode
-from .func_base import FuncBase
-
-from . import kernel_impl
-from .kernel import Kernel
 
 
 class FuncBase:

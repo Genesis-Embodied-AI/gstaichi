@@ -2,7 +2,7 @@ import inspect
 import types
 import typing
 from dataclasses import is_dataclass
-from typing import Any, Callable, Type
+from typing import Any, Callable
 
 from gstaichi._lib import core as _ti_core
 from gstaichi._lib.core.gstaichi_python import (
@@ -12,7 +12,6 @@ from gstaichi._lib.core.gstaichi_python import (
     FunctionKey,
 )
 from gstaichi.lang import _kernel_impl_dataclass, impl, ops
-from gstaichi.lang._template_mapper import TemplateMapper
 from gstaichi.lang.any_array import AnyArray
 from gstaichi.lang.ast import (
     transform_tree,
@@ -32,9 +31,9 @@ from gstaichi.types import (
     template,
 )
 from gstaichi.types.enums import AutodiffMode
-from .func_base import FuncBase
 
 from . import kernel_impl
+from .func_base import FuncBase
 from .kernel import Kernel
 
 MAX_ARG_NUM = 512

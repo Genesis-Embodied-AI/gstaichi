@@ -17,8 +17,6 @@ from functools import partial, update_wrapper, wraps
 from typing import Any, Callable, DefaultDict, Type, TypeVar, cast, overload
 
 # Must import 'ReferenceType' directly instead of the entire module to avoid attribute lookup overhead.
-from weakref import ReferenceType
-
 import numpy as np
 
 from gstaichi._lib import core as _ti_core
