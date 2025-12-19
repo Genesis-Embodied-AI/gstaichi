@@ -763,6 +763,95 @@ class TaskCodeGenCUDA : public TaskCodeGenLLVM {
     }
   }
 
+  void visit(InternalFuncStmt *stmt) override {
+    // Handle WMMA TF32 intrinsics (sm_80+)
+    if (stmt->func_name.rfind("cuda_wmma_", 0) == 0) {
+      emit_wmma_intrinsic(stmt);
+      return;
+    }
+    // Fall back to default handling
+    TaskCodeGenLLVM::visit(stmt);
+  }
+
+  void emit_wmma_intrinsic(InternalFuncStmt *stmt) {
+    auto ptr_ty = llvm::PointerType::get(*llvm_context, 0);
+
+    // Helper to convert i64 address to ptr
+    auto to_ptr = [&](llvm::Value *addr) -> llvm::Value * {
+      if (addr->getType()->isPointerTy()) {
+        return addr;
+      }
+      return builder->CreateIntToPtr(addr, ptr_ty);
+    };
+
+    if (stmt->func_name == "cuda_wmma_load_a_tf32") {
+      // wmma.load.a.sync.aligned.row.m16n16k8.tf32
+      auto ptr = to_ptr(llvm_val[stmt->args[0]]);
+      auto stride = llvm_val[stmt->args[1]];
+      auto result = builder->CreateIntrinsic(
+          Intrinsic::nvvm_wmma_m16n16k8_load_a_tf32_row_stride, {ptr_ty},
+          {ptr, stride});
+      llvm_val[stmt] = result;
+    } else if (stmt->func_name == "cuda_wmma_load_b_tf32") {
+      // wmma.load.b.sync.aligned.col.m16n16k8.tf32 (B stored as N×K transposed)
+      auto ptr = to_ptr(llvm_val[stmt->args[0]]);
+      auto stride = llvm_val[stmt->args[1]];
+      auto result = builder->CreateIntrinsic(
+          Intrinsic::nvvm_wmma_m16n16k8_load_b_tf32_col_stride, {ptr_ty},
+          {ptr, stride});
+      llvm_val[stmt] = result;
+    } else if (stmt->func_name == "cuda_wmma_load_c_f32") {
+      // wmma.load.c.sync.aligned.row.m16n16k8.f32
+      auto ptr = to_ptr(llvm_val[stmt->args[0]]);
+      auto stride = llvm_val[stmt->args[1]];
+      auto result = builder->CreateIntrinsic(
+          Intrinsic::nvvm_wmma_m16n16k8_load_c_f32_row_stride, {ptr_ty},
+          {ptr, stride});
+      llvm_val[stmt] = result;
+    } else if (stmt->func_name == "cuda_wmma_mma_tf32") {
+      // wmma.mma.sync.aligned.row.col.m16n16k8.f32.tf32.tf32.f32
+      // Args: a_frag (4 f32), b_frag (4 f32), c_frag (8 f32)
+      auto a_frag = llvm_val[stmt->args[0]];
+      auto b_frag = llvm_val[stmt->args[1]];
+      auto c_frag = llvm_val[stmt->args[2]];
+
+      // Extract a_frag elements
+      std::vector<llvm::Value *> args;
+      for (int i = 0; i < 4; i++) {
+        args.push_back(builder->CreateExtractValue(a_frag, {(unsigned)i}));
+      }
+      // Extract b_frag elements
+      for (int i = 0; i < 4; i++) {
+        args.push_back(builder->CreateExtractValue(b_frag, {(unsigned)i}));
+      }
+      // Extract c_frag elements
+      for (int i = 0; i < 8; i++) {
+        args.push_back(builder->CreateExtractValue(c_frag, {(unsigned)i}));
+      }
+
+      auto result = builder->CreateIntrinsic(
+          Intrinsic::nvvm_wmma_m16n16k8_mma_row_col_tf32, {}, args);
+      llvm_val[stmt] = result;
+    } else if (stmt->func_name == "cuda_wmma_store_d_f32") {
+      // wmma.store.d.sync.aligned.row.m16n16k8.f32
+      auto ptr = to_ptr(llvm_val[stmt->args[0]]);
+      auto d_frag = llvm_val[stmt->args[1]];
+      auto stride = llvm_val[stmt->args[2]];
+
+      // Extract d_frag elements and store
+      std::vector<llvm::Value *> args = {ptr};
+      for (int i = 0; i < 8; i++) {
+        args.push_back(builder->CreateExtractValue(d_frag, {(unsigned)i}));
+      }
+      args.push_back(stride);
+
+      builder->CreateIntrinsic(
+          Intrinsic::nvvm_wmma_m16n16k8_store_d_f32_row_stride, {ptr_ty}, args);
+    } else {
+      TI_ERROR("Unknown WMMA intrinsic: {}", stmt->func_name);
+    }
+  }
+
  private:
   std::tuple<llvm::Value *, llvm::Value *> get_spmd_info() override {
     auto thread_idx =

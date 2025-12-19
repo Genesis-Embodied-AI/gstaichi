@@ -349,6 +349,22 @@ void Operations::init_internals() {
   PLAIN_OP(cuda_active_mask, u32, false);
   PLAIN_OP(warp_barrier, i32_void, false, u32);
 
+  // WMMA TF32 Tensor Core intrinsics (sm_80+, m16n16k8)
+  // Fragment types: A/B are 4xf32, C/D are 8xf32 per thread
+  // For type checking purposes, we use tensor types
+  auto f32x4 = TypeFactory::create_tensor_type({4}, PrimitiveType::f32);
+  auto f32x8 = TypeFactory::create_tensor_type({8}, PrimitiveType::f32);
+  PLAIN_OP(cuda_wmma_load_a_tf32, f32x4, false, u64,
+           i32);  // ptr, stride -> 4xf32
+  PLAIN_OP(cuda_wmma_load_b_tf32, f32x4, false, u64,
+           i32);  // ptr, stride -> 4xf32
+  PLAIN_OP(cuda_wmma_load_c_f32, f32x8, false, u64,
+           i32);  // ptr, stride -> 8xf32
+  PLAIN_OP(cuda_wmma_mma_tf32, f32x8, false, f32x4, f32x4,
+           f32x8);  // a, b, c -> 8xf32
+  PLAIN_OP(cuda_wmma_store_d_f32, i32_void, false, u64, f32x8,
+           i32);  // ptr, d, stride
+
 #undef CUDA_MATCH_SYNC
 #undef CUDA_SHFL_SYNC
 #undef CUDA_VOTE_SYNC

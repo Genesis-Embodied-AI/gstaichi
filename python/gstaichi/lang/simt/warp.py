@@ -77,6 +77,59 @@ def sync(mask):
     return impl.call_internal("warp_barrier", mask, with_runtime_context=False)
 
 
+# =============================================================================
+# WMMA TF32 Tensor Core Operations (sm_80+, Ampere and newer)
+# =============================================================================
+# These operations use m16n16k8 matrix tiles with TF32 precision.
+# TF32 uses f32 input/output but internally uses reduced precision for speed.
+# All 32 threads in a warp must call these cooperatively.
+
+
+def _wmma_load_a_tf32(ptr, stride):
+    """Load matrix A fragment for WMMA m16n16k8 TF32 (row-major).
+
+    Internal function - each thread receives 4 f32 values.
+    """
+    return impl.call_internal("cuda_wmma_load_a_tf32", ptr, stride,
+                              with_runtime_context=False)
+
+
+def _wmma_load_b_tf32(ptr, stride):
+    """Load matrix B fragment for WMMA m16n16k8 TF32 (col-major).
+
+    Internal function - each thread receives 4 f32 values.
+    """
+    return impl.call_internal("cuda_wmma_load_b_tf32", ptr, stride,
+                              with_runtime_context=False)
+
+
+def _wmma_load_c_f32(ptr, stride):
+    """Load accumulator C fragment for WMMA m16n16k8 (row-major).
+
+    Internal function - each thread receives 8 f32 values.
+    """
+    return impl.call_internal("cuda_wmma_load_c_f32", ptr, stride,
+                              with_runtime_context=False)
+
+
+def _wmma_mma_tf32(a_frag, b_frag, c_frag):
+    """Perform warp matrix multiply-accumulate D = A @ B + C.
+
+    Internal function using TF32 precision on Tensor Cores.
+    """
+    return impl.call_internal("cuda_wmma_mma_tf32", a_frag, b_frag, c_frag,
+                              with_runtime_context=False)
+
+
+def _wmma_store_d_f32(ptr, d_frag, stride):
+    """Store result fragment D to memory (row-major).
+
+    Internal function.
+    """
+    impl.call_internal("cuda_wmma_store_d_f32", ptr, d_frag, stride,
+                       with_runtime_context=False)
+
+
 __all__ = [
     "all_nonzero",
     "any_nonzero",
@@ -93,4 +146,10 @@ __all__ = [
     "match_all",
     "active_mask",
     "sync",
+    # WMMA internals (for advanced users)
+    "_wmma_load_a_tf32",
+    "_wmma_load_b_tf32",
+    "_wmma_load_c_f32",
+    "_wmma_mma_tf32",
+    "_wmma_store_d_f32",
 ]
