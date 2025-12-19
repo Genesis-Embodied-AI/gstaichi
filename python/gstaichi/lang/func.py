@@ -28,10 +28,7 @@ from gstaichi.types import (
 )
 from gstaichi.types.enums import AutodiffMode
 
-from ._func_base import (
-    _get_tree_and_ctx,
-    _process_args,
-)
+from ._func_base import FuncBase
 
 if TYPE_CHECKING:
     from .kernel import Kernel
@@ -41,7 +38,7 @@ if TYPE_CHECKING:
 _NONE = AutodiffMode.NONE
 
 
-class Func:
+class Func(FuncBase):
     function_counter = 0
 
     def __init__(self, _func: Callable, _classfunc=False, _pyfunc=False, is_real_function=False) -> None:
@@ -68,7 +65,7 @@ class Func:
 
     def __call__(self: "Func", *args, **kwargs) -> Any:
         self.current_kernel = impl.get_runtime().current_kernel if impl.inside_kernel() else None
-        args = _process_args(self, is_func=True, is_pyfunc=self.pyfunc, args=args, kwargs=kwargs)
+        args = self.process_args(is_func=True, is_pyfunc=self.pyfunc, args=args, kwargs=kwargs)
 
         if not impl.inside_kernel():
             if not self.pyfunc:
@@ -92,8 +89,7 @@ class Func:
         used_by_dataclass_parameters_enforcing = self.current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(
             current_args_key
         )
-        tree, ctx = _get_tree_and_ctx(
-            self,
+        tree, ctx = self.get_tree_and_ctx(
             is_kernel=False,
             args=args,
             ast_builder=self.current_kernel.ast_builder(),
@@ -160,8 +156,7 @@ class Func:
         return tuple(ret)
 
     def do_compile(self, key: FunctionKey, args: tuple[Any, ...], arg_features: tuple[Any, ...]) -> None:
-        tree, ctx = _get_tree_and_ctx(
-            self,
+        tree, ctx = self.get_tree_and_ctx(
             is_kernel=False,
             args=args,
             arg_features=arg_features,
