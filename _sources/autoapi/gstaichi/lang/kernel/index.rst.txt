@@ -76,7 +76,7 @@ Module Contents
 
 
    .. py:attribute:: materialized_kernels
-      :type:  dict[gstaichi.lang.kernel_impl.CompiledKernelKeyType, gstaichi._lib.core.gstaichi_python.KernelCxx]
+      :type:  dict[gstaichi.lang._kernel_types.CompiledKernelKeyType, gstaichi._lib.core.gstaichi_python.KernelCxx]
 
 
    .. py:attribute:: has_print
@@ -101,23 +101,23 @@ Module Contents
 
 
    .. py:attribute:: compiled_kernel_data_by_key
-      :type:  dict[gstaichi.lang.kernel_impl.CompiledKernelKeyType, gstaichi._lib.core.gstaichi_python.CompiledKernelData]
+      :type:  dict[gstaichi.lang._kernel_types.CompiledKernelKeyType, gstaichi._lib.core.gstaichi_python.CompiledKernelData]
 
 
    .. py:attribute:: used_py_dataclass_leaves_by_key_collecting
-      :type:  dict[gstaichi.lang.kernel_impl.CompiledKernelKeyType, set[str]]
+      :type:  dict[gstaichi.lang._kernel_types.CompiledKernelKeyType, set[str]]
 
 
    .. py:attribute:: used_py_dataclass_leaves_by_key_enforcing
-      :type:  dict[gstaichi.lang.kernel_impl.CompiledKernelKeyType, set[str]]
+      :type:  dict[gstaichi.lang._kernel_types.CompiledKernelKeyType, set[str]]
 
 
    .. py:attribute:: used_py_dataclass_leaves_by_key_enforcing_dotted
-      :type:  dict[gstaichi.lang.kernel_impl.CompiledKernelKeyType, set[tuple[str, Ellipsis]]]
+      :type:  dict[gstaichi.lang._kernel_types.CompiledKernelKeyType, set[tuple[str, Ellipsis]]]
 
 
    .. py:attribute:: currently_compiling_materialize_key
-      :type:  gstaichi.lang.kernel_impl.CompiledKernelKeyType | None
+      :type:  gstaichi.lang._kernel_types.CompiledKernelKeyType | None
       :value: None
 
 
