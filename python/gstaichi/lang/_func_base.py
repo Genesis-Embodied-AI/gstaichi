@@ -194,7 +194,8 @@ class FuncBase:
     def get_tree_and_ctx(
         self,
         args: tuple[Any, ...],
-        used_py_dataclass_parameters_enforcing: set[str] | None,
+        enforcing_dataclass_parameters: bool,
+        # used_py_dataclass_parameters_enforcing: set[str] | None,
         excluded_parameters=(),
         is_kernel: bool = True,
         arg_features=None,

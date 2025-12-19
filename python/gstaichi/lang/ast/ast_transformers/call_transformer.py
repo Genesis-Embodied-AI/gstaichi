@@ -184,10 +184,7 @@ class CallTransformer:
                         child_name = create_flat_name(arg.id, field.name)
                     except Exception as e:
                         raise RuntimeError(f"Exception whilst processing {field.name} in {type(dataclass_type)}") from e
-                    if (
-                        ctx.used_py_dataclass_parameters_enforcing is not None
-                        and child_name not in ctx.used_py_dataclass_parameters_enforcing
-                    ):
+                    if ctx.enforcing_dataclass_parameters and child_name not in ctx.func.used_py_dataclass_parameters:
                         continue
                     load_ctx = ast.Load()
                     arg_node = ast.Name(
@@ -227,10 +224,7 @@ class CallTransformer:
                 for field in dataclasses.fields(dataclass_type):
                     src_name = create_flat_name(kwarg.value.id, field.name)
                     child_name = create_flat_name(kwarg.arg, field.name)
-                    if (
-                        ctx.used_py_dataclass_parameters_enforcing is not None
-                        and child_name not in ctx.used_py_dataclass_parameters_enforcing
-                    ):
+                    if ctx.enforcing_dataclass_parameters and child_name not in ctx.func.used_py_dataclass_parameters:
                         continue
                     load_ctx = ast.Load()
                     src_node = ast.Name(
@@ -284,6 +278,9 @@ class CallTransformer:
             added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(ctx, node.keywords)
 
             # create variables for the now-expanded dataclass members
+            # we don't want to include these in the list of variables to not prune
+            # since these will contain *all* declared fields, instead of all used fields
+            # so we set expanding_dataclass_call_parameters to True during this expansion
             ctx.expanding_dataclass_call_parameters = True
             for arg in added_args:
                 assert not hasattr(arg, "ptr")
@@ -344,7 +341,37 @@ class CallTransformer:
 
         CallTransformer._warn_if_is_external_func(ctx, node)
         try:
+            parent_params = ctx.func.used_py_dataclass_parameters_collecting
             node.ptr = func(*args, **keywords)
+            arg_id = 0
+            if hasattr(func, "wrapper"):
+                called_unpruned = func.wrapper.used_py_dataclass_parameters_collecting
+                to_unprune: set[str] = set()
+                for i, arg in enumerate(node.args):
+                    print(i, ast.dump(arg)[:50], node.func.ptr.wrapper.arg_metas_expanded[arg_id].name)
+                    if hasattr(arg, "id"):
+                        calling_name = arg.id
+                        called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
+                        if called_name in called_unpruned:
+                            # print('caller unprune', calling_name)
+                            to_unprune.add(calling_name)
+                    arg_id += 1
+                # print("kwargs")
+                for i, arg in enumerate(node.keywords):
+                    # print(i, "calling arg", ast.dump(arg)[:100], "arg meta", node.func.ptr.wrapper.arg_metas_expanded[arg_id].name)
+                    calling_name = arg.value.id
+                    called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
+                    if called_name in called_unpruned:
+                        # print('caller unprune', calling_name)
+                        to_unprune.add(calling_name)
+                    arg_id += 1
+                print("to_unprune", ctx.func.func, to_unprune)
+                # ctx.used_py_dataclass_parameters_enforcing
+                if not ctx.enforcing_dataclass_parameters:
+                    ctx.func.used_py_dataclass_parameters_collecting.update(to_unprune)
+                # print("updated ctx.func.used_py_dataclass_parameters", ctx.func.used_py_dataclass_parameters)
+            # print("ctx.used_py_dataclass_parameters_collecting", ctx.used_py_dataclass_parameters_collecting)
+            # print("build_Call node.func.ptr.wrapper.arg_metas_expanded  ", node.func.ptr.wrapper.arg_metas_expanded)
         except TypeError as e:
             module = inspect.getmodule(func)
             error_msg = re.sub(r"\bExpr\b", "GsTaichi Expression", str(e))
