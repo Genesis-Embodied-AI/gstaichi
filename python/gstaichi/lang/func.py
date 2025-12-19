@@ -3,7 +3,7 @@ import types
 import typing
 from dataclasses import is_dataclass
 
-from typing import Any, Callable, Type
+from typing import Any, Callable, Type, TYPE_CHECKING
 
 from gstaichi._lib import core as _ti_core
 from gstaichi._lib.core.gstaichi_python import FunctionKey
@@ -27,6 +27,17 @@ from gstaichi.types import (
     primitive_types,
     template,
 )
+from gstaichi.types.enums import AutodiffMode
+from ._func_base import (
+    _process_args,
+    _get_tree_and_ctx,
+)
+if TYPE_CHECKING:
+    from .kernel import Kernel
+
+
+# Define proxies for fast lookup
+_NONE = AutodiffMode.NONE
 
 
 class Func:

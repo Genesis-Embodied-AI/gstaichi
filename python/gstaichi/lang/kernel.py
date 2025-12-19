@@ -6,11 +6,11 @@ import pathlib
 import time
 import types
 import typing
+from typing import TYPE_CHECKING
 from collections import defaultdict
 from dataclasses import (
     is_dataclass,
 )
-from enum import IntEnum
 
 # Must import 'partial' directly instead of the entire module to avoid attribute lookup overhead.
 from functools import partial
@@ -41,7 +41,6 @@ from gstaichi.lang.exception import (
     GsTaichiSyntaxError,
     handle_exception_from_cpp,
 )
-from gstaichi.lang.expr import Expr
 from gstaichi.lang.impl import Program
 from gstaichi.lang.kernel_arguments import ArgMetadata
 from gstaichi.lang.matrix import MatrixType
@@ -57,6 +56,21 @@ from gstaichi.types import (
 from gstaichi.types.compound_types import CompoundType
 from gstaichi.types.enums import AutodiffMode
 from gstaichi.types.utils import is_signed
+if TYPE_CHECKING:
+    from .kernel_impl import CompiledKernelKeyType, ArgsHash
+from ._gstaichi_callable import GsTaichiCallable
+from ._kernel_types import SrcLlCacheObservations, FeLlCacheObservations, _KernelBatchedArgType, LaunchStats
+from ._func_base import (
+    _get_tree_and_ctx,
+    _destroy_callback,
+    _recursive_set_args,
+    _process_args,
+)
+
+
+# Define proxies for fast lookup
+_NONE, _VALIDATION = AutodiffMode.NONE, AutodiffMode.VALIDATION
+_FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = _KernelBatchedArgType
 
 
 class Kernel:
@@ -194,7 +208,7 @@ class Kernel:
                     raise GsTaichiSyntaxError(f"Invalid type annotation (argument {i}) of Taichi kernel: {annotation}")
             self.arg_metas.append(ArgMetadata(annotation, param.name, param.default))
 
-    def materialize(self, key: CompiledKernelKeyType | None, args: tuple[Any, ...], arg_features=None):
+    def materialize(self, key: "CompiledKernelKeyType | None", args: tuple[Any, ...], arg_features=None):
         if key is None:
             key = (self.func, 0, self.autodiff_mode)
         self.fast_checksum = None

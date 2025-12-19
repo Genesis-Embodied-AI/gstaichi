@@ -46,6 +46,7 @@ from gstaichi.types import (
 )
 from gstaichi.types.enums import AutodiffMode, Layout
 from gstaichi.types.utils import is_signed
+from ._kernel_types import _KernelBatchedArgType
 
 # Define proxies for fast lookup
 _FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = _KernelBatchedArgType
@@ -236,17 +237,6 @@ def _get_global_vars(_func: Callable) -> dict[str, Any]:
     return global_vars
 
 
-@dataclass
-class SrcLlCacheObservations:
-    cache_key_generated: bool = False
-    cache_validated: bool = False
-    cache_loaded: bool = False
-    cache_stored: bool = False
-
-
-@dataclass
-class FeLlCacheObservations:
-    cache_hit: bool = False
 
 
 def cast_float(x: float | np.floating | np.integer | int) -> float:

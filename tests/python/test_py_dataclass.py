@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 
 import gstaichi as ti
-from gstaichi.lang import _KernelBatchedArgType
+from gstaichi.lang._kernel_types import _KernelBatchedArgType
 
 from tests import test_utils
 

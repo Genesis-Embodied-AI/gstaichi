@@ -2,6 +2,7 @@ import inspect
 import re
 import sys
 import typing
+from typing import TYPE_CHECKING
 
 from functools import update_wrapper, wraps
 from typing import Any, Callable, TypeAlias, TypeVar, cast, overload
@@ -13,6 +14,9 @@ from gstaichi.lang.exception import (
     GsTaichiSyntaxError,
 )
 from gstaichi.types.enums import AutodiffMode
+from ._gstaichi_callable import GsTaichiCallable, BoundGsTaichiCallable
+from .func import Func
+from .kernel import Kernel
 
 from .._test_tools import warnings_helper
 
@@ -86,8 +90,6 @@ def pyfunc(fn: Callable) -> GsTaichiCallable:
     gstaichi_callable._is_gstaichi_function = True
     gstaichi_callable._is_real_function = False
     return gstaichi_callable
-
-
 
 
 # For a GsTaichi class definition like below:
@@ -256,7 +258,7 @@ class _BoundedDifferentiableMethod:
                 raise e
             raise type(e)("\n" + str(e)) from None
 
-    def grad(self, *args, **kwargs) -> Kernel:
+    def grad(self, *args, **kwargs) -> "Kernel":
         assert self._adjoint is not None
         return self._adjoint(self._kernel_owner, *args, **kwargs)
 
@@ -323,4 +325,4 @@ def data_oriented(cls):
     return cls
 
 
-__all__ = ["data_oriented", "func", "kernel", "pyfunc", "real_func", "_KernelBatchedArgType"]
+__all__ = ["data_oriented", "func", "kernel", "pyfunc", "real_func"]
