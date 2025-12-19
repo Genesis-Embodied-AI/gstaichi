@@ -311,19 +311,15 @@
                   
   <h1>Source code for gstaichi.lang.kernel</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">ast</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">types</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">typing</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_dataclass</span>
 
 <span class="c1"># Must import &#39;partial&#39; directly instead of the entire module to avoid attribute lookup overhead.</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">DefaultDict</span>
 
 <span class="c1"># Must import &#39;ReferenceType&#39; directly instead of the entire module to avoid attribute lookup overhead.</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">weakref</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReferenceType</span>
@@ -350,15 +346,10 @@
     <span class="n">handle_exception_from_cpp</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.impl</span><span class="w"> </span><span class="kn">import</span> <span class="n">Program</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.kernel_arguments</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArgMetadata</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.matrix</span><span class="w"> </span><span class="kn">import</span> <span class="n">MatrixType</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.shell</span><span class="w"> </span><span class="kn">import</span> <span class="n">_shell_pop_print</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.struct</span><span class="w"> </span><span class="kn">import</span> <span class="n">StructType</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">cook_dtype</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.types</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">ndarray_type</span><span class="p">,</span>
     <span class="n">primitive_types</span><span class="p">,</span>
-    <span class="n">sparse_matrix_builder</span><span class="p">,</span>
     <span class="n">template</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.types.compound_types</span><span class="w"> </span><span class="kn">import</span> <span class="n">CompoundType</span>
@@ -380,111 +371,6 @@
 <span class="c1"># Define proxies for fast lookup</span>
 <span class="n">_NONE</span><span class="p">,</span> <span class="n">_VALIDATION</span> <span class="o">=</span> <span class="n">AutodiffMode</span><span class="o">.</span><span class="n">NONE</span><span class="p">,</span> <span class="n">AutodiffMode</span><span class="o">.</span><span class="n">VALIDATION</span>
 <span class="n">_FLOAT</span><span class="p">,</span> <span class="n">_INT</span><span class="p">,</span> <span class="n">_UINT</span><span class="p">,</span> <span class="n">_TI_ARRAY</span><span class="p">,</span> <span class="n">_TI_ARRAY_WITH_GRAD</span> <span class="o">=</span> <span class="n">_KernelBatchedArgType</span>
-
-
-<div class="viewcode-block" id="LaunchContextBufferCache">
-<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.LaunchContextBufferCache">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">LaunchContextBufferCache</span><span class="p">:</span>
-    <span class="c1"># Here, we are tracking whether a launch context buffer can be cached.</span>
-    <span class="c1"># The point of caching the launch context buffer is allowing skipping recursive processing of all the input</span>
-    <span class="c1"># arguments one-by-one, which is adding a significant overhead, without changing anything in regards of the</span>
-    <span class="c1"># function calls to the launch context that must be made for a given kernel.</span>
-    <span class="c1"># You can understand this as resolving the static part of the entire control flow of &#39;_recursive_set_args&#39;</span>
-    <span class="c1"># for a given set of arguments, which is (mostly surely uniquely) characterized by its hash, gathering all</span>
-    <span class="c1"># the instructions that cannot be evaluated statically and packing them in a buffer without evaluating them at</span>
-    <span class="c1"># this point. This buffer is then cached once and for all and evaluated every time the exact same set of input</span>
-    <span class="c1"># argument is passed. This means that, ultimately, it will result in the exact same function calls with or</span>
-    <span class="c1"># without caching. In this particular case, the function calls corresponds to adding arguments to the current</span>
-    <span class="c1"># context for this kernel call.</span>
-    <span class="c1"># A launch context buffer is considered cache-friendly if and only if no direct call to the launch context</span>
-    <span class="c1"># where made preemptively during the recursive processing of the arguments, all of leaves of the arguments are</span>
-    <span class="c1"># pointers, the address of these pointers cannot change, and the set of leaves is fixed.</span>
-    <span class="c1"># The lifetime of a cache entry is bound to the lifetime of any of its input arguments: the first being garbage</span>
-    <span class="c1"># collected will invalidate the entire entry. Moreover, the entire cache registry is bound to the lifetime of</span>
-    <span class="c1"># the taichi prog itself, which means that calling `ti.reset()` will automatically clear the cache. Note that</span>
-    <span class="c1"># the cache stores wear references to pointers, so it does not hold alife any allocated memory.</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># Keep track of taichi runtime to automatically clear cache if destroyed</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_prog_weakref</span><span class="p">:</span> <span class="n">ReferenceType</span><span class="p">[</span><span class="n">Program</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-
-        <span class="c1"># The cache key corresponds to the hash of the (packed) python-side input arguments of the kernel.</span>
-        <span class="c1"># * &#39;_launch_ctx_cache&#39; is storing a backup of the launch context BEFORE ever calling the kernel.</span>
-        <span class="c1"># * &#39;_launch_ctx_cache_tracker&#39; is used for bounding the lifetime of a cache entry to its corresponding set of</span>
-        <span class="c1">#   input arguments. Internally, this is done by wrapping all Taichi ndarrays as weak reference.</span>
-        <span class="c1"># * &#39;_prog_weakref&#39;is used for bounding the lifetime of the entire cache to the Taichi programm managing all</span>
-        <span class="c1">#   the launch context being stored in cache.</span>
-        <span class="c1"># See &#39;launch_kernel&#39; for details regarding the intended use of caching.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_launch_ctx_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="s2">&quot;ArgsHash&quot;</span><span class="p">,</span> <span class="n">KernelLaunchContext</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_launch_ctx_cache_tracker</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="s2">&quot;ArgsHash&quot;</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReferenceType</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_destroy_callback</span><span class="p">(</span><span class="n">kernel_ref</span><span class="p">:</span> <span class="n">ReferenceType</span><span class="p">[</span><span class="s2">&quot;LaunchContextBufferCache&quot;</span><span class="p">],</span> <span class="n">ref</span><span class="p">:</span> <span class="n">ReferenceType</span><span class="p">):</span>
-        <span class="n">maybe_kernel</span> <span class="o">=</span> <span class="n">kernel_ref</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">maybe_kernel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">maybe_kernel</span><span class="o">.</span><span class="n">_launch_ctx_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-            <span class="n">maybe_kernel</span><span class="o">.</span><span class="n">_launch_ctx_cache_tracker</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-            <span class="n">maybe_kernel</span><span class="o">.</span><span class="n">_prog_weakref</span> <span class="o">=</span> <span class="kc">None</span>
-
-<div class="viewcode-block" id="LaunchContextBufferCache.cache">
-<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.LaunchContextBufferCache.cache">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">cache</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">t_kernel</span><span class="p">,</span>
-        <span class="n">args_hash</span><span class="p">:</span> <span class="s2">&quot;ArgsHash&quot;</span><span class="p">,</span>
-        <span class="n">launch_ctx</span><span class="p">:</span> <span class="n">KernelLaunchContext</span><span class="p">,</span>
-        <span class="n">launch_ctx_buffer</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">_KernelBatchedArgType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]],</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># TODO: It some rare occurrences, arguments can be cached yet not hashable. Ignoring for now...</span>
-        <span class="n">cached_launch_ctx</span> <span class="o">=</span> <span class="n">t_kernel</span><span class="o">.</span><span class="n">make_launch_context</span><span class="p">()</span>
-        <span class="n">cached_launch_ctx</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">launch_ctx</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_launch_ctx_cache</span><span class="p">[</span><span class="n">args_hash</span><span class="p">]</span> <span class="o">=</span> <span class="n">cached_launch_ctx</span>
-
-        <span class="c1"># Note that the clearing callback will only be called once despite being registered for each tracked</span>
-        <span class="c1"># objects, because all the weakrefs get deallocated right away, and their respective callback vanishes</span>
-        <span class="c1"># with them, without even getting a chance to get called. This means that registering the clearing</span>
-        <span class="c1"># callback systematically does not incur any cumulative runtime penalty yet ensures full memory safety.</span>
-        <span class="c1"># Note that it is important to prepend the cache tracker with &#39;None&#39; to avoid misclassifying no argument</span>
-        <span class="c1"># with expired cache entry caused by deallocated argument.</span>
-        <span class="n">launch_ctx_cache_tracker_</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReferenceType</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
-        <span class="n">clear_callback</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">ref</span><span class="p">:</span> <span class="n">launch_ctx_cache_tracker_</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_TI_ARRAY</span><span class="p">):</span>
-            <span class="n">_</span><span class="p">,</span> <span class="n">arrs</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">)</span>
-            <span class="n">launch_ctx_cache_tracker_</span> <span class="o">+=</span> <span class="p">[</span><span class="n">ReferenceType</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">clear_callback</span><span class="p">)</span> <span class="k">for</span> <span class="n">arr</span> <span class="ow">in</span> <span class="n">arrs</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_TI_ARRAY_WITH_GRAD</span><span class="p">):</span>
-            <span class="n">_</span><span class="p">,</span> <span class="n">arrs</span><span class="p">,</span> <span class="n">arrs_grad</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">)</span>
-            <span class="n">launch_ctx_cache_tracker_</span> <span class="o">+=</span> <span class="p">[</span><span class="n">ReferenceType</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">clear_callback</span><span class="p">)</span> <span class="k">for</span> <span class="n">arr</span> <span class="ow">in</span> <span class="n">arrs</span><span class="p">]</span>
-            <span class="n">launch_ctx_cache_tracker_</span> <span class="o">+=</span> <span class="p">[</span><span class="n">ReferenceType</span><span class="p">(</span><span class="n">arr_grad</span><span class="p">,</span> <span class="n">clear_callback</span><span class="p">)</span> <span class="k">for</span> <span class="n">arr_grad</span> <span class="ow">in</span> <span class="n">arrs_grad</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_launch_ctx_cache_tracker</span><span class="p">[</span><span class="n">args_hash</span><span class="p">]</span> <span class="o">=</span> <span class="n">launch_ctx_cache_tracker_</span></div>
-
-
-<div class="viewcode-block" id="LaunchContextBufferCache.populate_launch_ctx_from_cache">
-<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.LaunchContextBufferCache.populate_launch_ctx_from_cache">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">populate_launch_ctx_from_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args_hash</span><span class="p">:</span> <span class="s2">&quot;ArgsHash&quot;</span><span class="p">,</span> <span class="n">launch_ctx</span><span class="p">:</span> <span class="n">KernelLaunchContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prog_weakref</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">prog</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">prog</span>
-            <span class="k">assert</span> <span class="n">prog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_prog_weakref</span> <span class="o">=</span> <span class="n">ReferenceType</span><span class="p">(</span>
-                <span class="n">prog</span><span class="p">,</span> <span class="n">partial</span><span class="p">(</span><span class="n">LaunchContextBufferCache</span><span class="o">.</span><span class="n">_destroy_callback</span><span class="p">,</span> <span class="n">ReferenceType</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Since we already store a weak reference to taichi program, it is much faster to use it rather than</span>
-            <span class="c1"># paying the overhead of calling pybind11 functions (~200ns vs 5ns).</span>
-            <span class="n">prog</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prog_weakref</span><span class="p">()</span>
-        <span class="k">assert</span> <span class="n">prog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-
-        <span class="n">launch_ctx_cache_tracker</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReferenceType</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">launch_ctx_cache_tracker</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_launch_ctx_cache_tracker</span><span class="p">[</span><span class="n">args_hash</span><span class="p">]</span>
-        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-            <span class="k">pass</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">launch_ctx_cache_tracker</span><span class="p">:</span>  <span class="c1"># Empty or none</span>
-            <span class="k">return</span> <span class="kc">False</span>
-
-        <span class="k">assert</span> <span class="n">args_hash</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="n">launch_ctx</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_launch_ctx_cache</span><span class="p">[</span><span class="n">args_hash</span><span class="p">])</span>
-        <span class="k">return</span> <span class="kc">True</span></div>
-</div>
-
 
 
 <div class="viewcode-block" id="ASTGenerator">
@@ -700,10 +586,16 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">fe_ll_cache_observations</span><span class="p">:</span> <span class="n">FeLlCacheObservations</span> <span class="o">=</span> <span class="n">FeLlCacheObservations</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="Kernel.launch_context_buffer_cache">
-<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.launch_context_buffer_cache">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">launch_context_buffer_cache</span> <span class="o">=</span> <span class="n">LaunchContextBufferCache</span><span class="p">()</span></div>
-
+        <span class="c1"># The cache key corresponds to the hash of the (packed) python-side input arguments of the kernel.</span>
+        <span class="c1"># * &#39;_launch_ctx_cache&#39; is storing a backup of the launch context BEFORE ever calling the kernel.</span>
+        <span class="c1"># * &#39;_launch_ctx_cache_tracker&#39; is used for bounding the lifetime of a cache entry to its corresponding set of</span>
+        <span class="c1">#   input arguments. Internally, this is done by wrapping all Taichi ndarrays as weak reference.</span>
+        <span class="c1"># * &#39;_prog_weakref&#39;is used for bounding the lifetime of the entire cache to the Taichi programm managing all</span>
+        <span class="c1">#   the launch context being stored in cache.</span>
+        <span class="c1"># See &#39;launch_kernel&#39; for details regarding the intended use of caching.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_launch_ctx_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ArgsHash</span><span class="p">,</span> <span class="n">KernelLaunchContext</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_launch_ctx_cache_tracker</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ArgsHash</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReferenceType</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prog_weakref</span><span class="p">:</span> <span class="n">ReferenceType</span><span class="p">[</span><span class="n">Program</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="Kernel.ast_builder">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.ast_builder">[docs]</a>
@@ -725,69 +617,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing_dotted</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span> <span class="o">=</span> <span class="kc">None</span></div>
-
-
-<div class="viewcode-block" id="Kernel.extract_arguments">
-<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.extract_arguments">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">extract_arguments</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">sig</span><span class="o">.</span><span class="n">return_annotation</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="n">inspect</span><span class="o">.</span><span class="n">_empty</span><span class="p">,</span> <span class="kc">None</span><span class="p">}:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">return_annotation</span>
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">return_type</span><span class="p">,</span> <span class="p">(</span><span class="n">types</span><span class="o">.</span><span class="n">GenericAlias</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">_GenericAlias</span><span class="p">))</span>  <span class="c1"># type: ignore</span>
-                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span><span class="o">.</span><span class="n">__origin__</span> <span class="ow">is</span> <span class="nb">tuple</span>
-            <span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span><span class="o">.</span><span class="n">__args__</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">return_type</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">return_type</span><span class="p">,)</span>
-            <span class="k">for</span> <span class="n">return_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">return_type</span> <span class="ow">is</span> <span class="bp">Ellipsis</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="s2">&quot;Ellipsis is not supported in return type annotations&quot;</span><span class="p">)</span>
-        <span class="n">params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
-        <span class="n">arg_names</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">arg_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">arg_names</span><span class="p">):</span>
-            <span class="n">param</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="n">arg_name</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">VAR_KEYWORD</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span>
-                    <span class="s2">&quot;GsTaichi kernels do not support variable keyword parameters (i.e., **kwargs)&quot;</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">VAR_POSITIONAL</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span>
-                    <span class="s2">&quot;GsTaichi kernels do not support variable positional parameters (i.e., *args)&quot;</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="s2">&quot;GsTaichi kernels do not support default values for arguments&quot;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">KEYWORD_ONLY</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="s2">&quot;GsTaichi kernels do not support keyword parameters&quot;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">POSITIONAL_OR_KEYWORD</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="s1">&#39;GsTaichi kernels only support &quot;positional or keyword&quot; parameters&#39;</span><span class="p">)</span>
-            <span class="n">annotation</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">annotation</span>
-            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">annotation</span> <span class="ow">is</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">classkernel</span><span class="p">:</span>  <span class="c1"># The |self| parameter</span>
-                    <span class="n">annotation</span> <span class="o">=</span> <span class="n">template</span><span class="p">()</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="s2">&quot;GsTaichi kernels parameters must be type annotated&quot;</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="p">(</span><span class="n">template</span><span class="p">,</span> <span class="n">ndarray_type</span><span class="o">.</span><span class="n">NdarrayType</span><span class="p">)):</span>
-                    <span class="k">pass</span>
-                <span class="k">elif</span> <span class="n">annotation</span> <span class="ow">is</span> <span class="n">ndarray_type</span><span class="o">.</span><span class="n">NdarrayType</span><span class="p">:</span>
-                    <span class="c1"># convert from ti.types.NDArray into ti.types.NDArray()</span>
-                    <span class="n">annotation</span> <span class="o">=</span> <span class="n">annotation</span><span class="p">()</span>
-                <span class="k">elif</span> <span class="nb">id</span><span class="p">(</span><span class="n">annotation</span><span class="p">)</span> <span class="ow">in</span> <span class="n">primitive_types</span><span class="o">.</span><span class="n">type_ids</span><span class="p">:</span>
-                    <span class="k">pass</span>
-                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">sparse_matrix_builder</span><span class="p">):</span>
-                    <span class="k">pass</span>
-                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">MatrixType</span><span class="p">):</span>
-                    <span class="k">pass</span>
-                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">StructType</span><span class="p">):</span>
-                    <span class="k">pass</span>
-                <span class="k">elif</span> <span class="n">annotation</span> <span class="ow">is</span> <span class="n">template</span><span class="p">:</span>
-                    <span class="k">pass</span>
-                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_dataclass</span><span class="p">(</span><span class="n">annotation</span><span class="p">):</span>
-                    <span class="k">pass</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid type annotation (argument </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">) of Taichi kernel: </span><span class="si">{</span><span class="n">annotation</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ArgMetadata</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">param</span><span class="o">.</span><span class="n">default</span><span class="p">))</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_try_load_fastcache</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">key</span><span class="p">:</span> <span class="s2">&quot;CompiledKernelKeyType&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
@@ -892,12 +721,47 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">launch_kernel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t_kernel</span><span class="p">:</span> <span class="n">KernelCxx</span><span class="p">,</span> <span class="n">compiled_kernel_data</span><span class="p">:</span> <span class="n">CompiledKernelData</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">)</span><span class="si">}</span><span class="s2"> arguments needed but </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="si">}</span><span class="s2"> provided&quot;</span>
 
+        <span class="c1"># Keep track of taichi runtime to automatically clear cache if destroyed</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prog_weakref</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">prog</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">prog</span>
+            <span class="k">assert</span> <span class="n">prog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_prog_weakref</span> <span class="o">=</span> <span class="n">ReferenceType</span><span class="p">(</span><span class="n">prog</span><span class="p">,</span> <span class="n">partial</span><span class="p">(</span><span class="n">Kernel</span><span class="o">.</span><span class="n">destroy_callback</span><span class="p">,</span> <span class="n">ReferenceType</span><span class="p">(</span><span class="bp">self</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Since we already store a weak reference to taichi program, it is much faster to use it rather than</span>
+            <span class="c1"># paying the overhead of calling pybind11 functions (~200ns vs 5ns).</span>
+            <span class="n">prog</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prog_weakref</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">prog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+        <span class="c1"># Here, we are tracking whether a launch context buffer can be cached.</span>
+        <span class="c1"># The point of caching the launch context buffer is allowing skipping recursive processing of all the input</span>
+        <span class="c1"># arguments one-by-one, which is adding a significant overhead, without changing anything in regards of the</span>
+        <span class="c1"># function calls to the launch context that must be made for a given kernel.</span>
+        <span class="c1"># You can understand this as resolving the static part of the entire control flow of &#39;_recursive_set_args&#39;</span>
+        <span class="c1"># for a given set of arguments, which is (mostly surely uniquely) characterized by its hash, gathering all</span>
+        <span class="c1"># the instructions that cannot be evaluated statically and packing them in a buffer without evaluating them at</span>
+        <span class="c1"># this point. This buffer is then cached once and for all and evaluated every time the exact same set of input</span>
+        <span class="c1"># argument is passed. This means that, ultimately, it will result in the exact same function calls with or</span>
+        <span class="c1"># without caching. In this particular case, the function calls corresponds to adding arguments to the current</span>
+        <span class="c1"># context for this kernel call.</span>
+        <span class="c1"># A launch context buffer is considered cache-friendly if and only if no direct call to the launch context</span>
+        <span class="c1"># where made preemptively during the recursive processing of the arguments, all of leaves of the arguments are</span>
+        <span class="c1"># pointers, the address of these pointers cannot change, and the set of leaves is fixed.</span>
+        <span class="c1"># The lifetime of a cache entry is bound to the lifetime of any of its input arguments: the first being garbage</span>
+        <span class="c1"># collected will invalidate the entire entry. Moreover, the entire cache registry is bound to the lifetime of</span>
+        <span class="c1"># the taichi prog itself, which means that calling `ti.reset()` will automatically clear the cache. Note that</span>
+        <span class="c1"># the cache stores wear references to pointers, so it does not hold alife any allocated memory.</span>
         <span class="n">callbacks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">launch_ctx</span> <span class="o">=</span> <span class="n">t_kernel</span><span class="o">.</span><span class="n">make_launch_context</span><span class="p">()</span>
+        <span class="n">launch_ctx_cache</span><span class="p">:</span> <span class="n">KernelLaunchContext</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">launch_ctx_cache_tracker</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReferenceType</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="c1"># Special treatment for primitive types is unecessary and detrimental. See &#39;TemplateMapper.lookup&#39; for details.</span>
-        <span class="n">args_hash</span><span class="p">:</span> <span class="s2">&quot;ArgsHash&quot;</span> <span class="o">=</span> <span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="n">t_kernel</span><span class="p">),</span> <span class="o">*</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">])</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">launch_context_buffer_cache</span><span class="o">.</span><span class="n">populate_launch_ctx_from_cache</span><span class="p">(</span><span class="n">args_hash</span><span class="p">,</span> <span class="n">launch_ctx</span><span class="p">):</span>
-            <span class="n">launch_ctx_buffer</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">_KernelBatchedArgType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="n">args_hash</span><span class="p">:</span> <span class="n">ArgsHash</span> <span class="o">=</span> <span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="n">t_kernel</span><span class="p">),</span> <span class="o">*</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">])</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">launch_ctx_cache_tracker</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_launch_ctx_cache_tracker</span><span class="p">[</span><span class="n">args_hash</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">launch_ctx_cache_tracker</span><span class="p">:</span>  <span class="c1"># Empty or none</span>
+            <span class="n">launch_ctx_buffer</span><span class="p">:</span> <span class="n">DefaultDict</span><span class="p">[</span><span class="n">_KernelBatchedArgType</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
             <span class="n">actual_argument_slot</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">is_launch_ctx_cacheable</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="n">template_num</span> <span class="o">=</span> <span class="mi">0</span>
@@ -950,10 +814,32 @@
                 <span class="n">launch_ctx</span><span class="o">.</span><span class="n">set_args_ndarray_with_grad</span><span class="p">(</span><span class="o">*</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">))</span>  <span class="c1"># type: ignore</span>
 
             <span class="k">if</span> <span class="n">is_launch_ctx_cacheable</span> <span class="ow">and</span> <span class="n">args_hash</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">launch_context_buffer_cache</span><span class="o">.</span><span class="n">cache</span><span class="p">(</span><span class="n">t_kernel</span><span class="p">,</span> <span class="n">args_hash</span><span class="p">,</span> <span class="n">launch_ctx</span><span class="p">,</span> <span class="n">launch_ctx_buffer</span><span class="p">)</span>
+                <span class="c1"># TODO: It some rare occurrences, arguments can be cached yet not hashable. Ignoring for now...</span>
+                <span class="n">launch_ctx_cache</span> <span class="o">=</span> <span class="n">t_kernel</span><span class="o">.</span><span class="n">make_launch_context</span><span class="p">()</span>
+                <span class="n">launch_ctx_cache</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">launch_ctx</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_launch_ctx_cache</span><span class="p">[</span><span class="n">args_hash</span><span class="p">]</span> <span class="o">=</span> <span class="n">launch_ctx_cache</span>
+
+                <span class="c1"># Note that the clearing callback will only be called once despite being registered for each tracked</span>
+                <span class="c1"># objects, because all the weakrefs get deallocated right away, and their respective callback vanishes</span>
+                <span class="c1"># with them, without even getting a chance to get called. This means that registring the clearing</span>
+                <span class="c1"># callback systematically does not incur any cumulative runtime penalty yet ensures full memory safety.</span>
+                <span class="c1"># Note that it is important to prepend the cache tracker with &#39;None&#39; to avoid misclassifying no argument</span>
+                <span class="c1"># with expired cache entry caused by deallocated argument.</span>
+                <span class="n">launch_ctx_cache_tracker_</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReferenceType</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+                <span class="n">clear_callback</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">ref</span><span class="p">:</span> <span class="n">launch_ctx_cache_tracker_</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_TI_ARRAY</span><span class="p">):</span>
+                    <span class="n">_</span><span class="p">,</span> <span class="n">arrs</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">)</span>
+                    <span class="n">launch_ctx_cache_tracker_</span> <span class="o">+=</span> <span class="p">[</span><span class="n">ReferenceType</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">clear_callback</span><span class="p">)</span> <span class="k">for</span> <span class="n">arr</span> <span class="ow">in</span> <span class="n">arrs</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">launch_ctx_args</span> <span class="o">:=</span> <span class="n">launch_ctx_buffer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_TI_ARRAY_WITH_GRAD</span><span class="p">):</span>
+                    <span class="n">_</span><span class="p">,</span> <span class="n">arrs</span><span class="p">,</span> <span class="n">arrs_grad</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">launch_ctx_args</span><span class="p">)</span>
+                    <span class="n">launch_ctx_cache_tracker_</span> <span class="o">+=</span> <span class="p">[</span><span class="n">ReferenceType</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">clear_callback</span><span class="p">)</span> <span class="k">for</span> <span class="n">arr</span> <span class="ow">in</span> <span class="n">arrs</span><span class="p">]</span>
+                    <span class="n">launch_ctx_cache_tracker_</span> <span class="o">+=</span> <span class="p">[</span><span class="n">ReferenceType</span><span class="p">(</span><span class="n">arr_grad</span><span class="p">,</span> <span class="n">clear_callback</span><span class="p">)</span> <span class="k">for</span> <span class="n">arr_grad</span> <span class="ow">in</span> <span class="n">arrs_grad</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_launch_ctx_cache_tracker</span><span class="p">[</span><span class="n">args_hash</span><span class="p">]</span> <span class="o">=</span> <span class="n">launch_ctx_cache_tracker_</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">args_hash</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="n">launch_ctx</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_launch_ctx_cache</span><span class="p">[</span><span class="n">args_hash</span><span class="p">])</span>
 
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">prog</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">prog</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">compiled_kernel_data</span><span class="p">:</span>
                 <span class="c1"># Store Taichi program config and device cap for efficiency because they are used at multiple places</span>
                 <span class="n">prog_config</span> <span class="o">=</span> <span class="n">prog</span><span class="o">.</span><span class="n">config</span><span class="p">()</span>
