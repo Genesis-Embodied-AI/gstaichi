@@ -2,12 +2,11 @@ import inspect
 import types
 import typing
 from dataclasses import is_dataclass
-from typing import TYPE_CHECKING, Any, Callable, Type
+from typing import TYPE_CHECKING, Any, Callable
 
 from gstaichi._lib import core as _ti_core
 from gstaichi._lib.core.gstaichi_python import FunctionKey
 from gstaichi.lang import _kernel_impl_dataclass, impl, ops
-from gstaichi.lang._template_mapper import TemplateMapper
 from gstaichi.lang.any_array import AnyArray
 from gstaichi.lang.ast import (
     transform_tree,
@@ -28,10 +27,7 @@ from gstaichi.types import (
 )
 from gstaichi.types.enums import AutodiffMode
 
-from ._func_base import (
-    _get_tree_and_ctx,
-    _process_args,
-)
+from ._func_base import FuncBase
 
 if TYPE_CHECKING:
     from .kernel import Kernel
@@ -41,34 +37,31 @@ if TYPE_CHECKING:
 _NONE = AutodiffMode.NONE
 
 
-class Func:
+class Func(FuncBase):
     function_counter = 0
 
     def __init__(self, _func: Callable, _classfunc=False, _pyfunc=False, is_real_function=False) -> None:
-        self.func = _func
         self.func_id = Func.function_counter
         Func.function_counter += 1
         self.compiled = {}
         self.classfunc = _classfunc
         self.pyfunc = _pyfunc
         self.is_real_function = is_real_function
-        self.arg_metas: list[ArgMetadata] = []
-        self.arg_metas_expanded: list[ArgMetadata] = []
-        self.orig_arguments: list[ArgMetadata] = []
-        self.return_type: tuple[Type, ...] | None = None
-        self.extract_arguments()
-        self.template_slot_locations: list[int] = []
-        for i, arg in enumerate(self.arg_metas):
-            if arg.annotation == template or isinstance(arg.annotation, template):
-                self.template_slot_locations.append(i)
-        self.mapper = TemplateMapper(self.arg_metas, self.template_slot_locations)
         self.gstaichi_functions = {}  # The |Function| class in C++
         self.has_print = False
         self.current_kernel: Kernel | None = None
 
+        super().__init__(
+            func=_func,
+            classfunc=_classfunc,
+            is_kernel=False,
+            classkernel=False,
+            is_real_function=is_real_function,
+        )
+
     def __call__(self: "Func", *args, **kwargs) -> Any:
         self.current_kernel = impl.get_runtime().current_kernel if impl.inside_kernel() else None
-        args = _process_args(self, is_func=True, is_pyfunc=self.pyfunc, args=args, kwargs=kwargs)
+        args = self.process_args(is_func=True, is_pyfunc=self.pyfunc, args=args, kwargs=kwargs)
 
         if not impl.inside_kernel():
             if not self.pyfunc:
@@ -92,8 +85,7 @@ class Func:
         used_by_dataclass_parameters_enforcing = self.current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(
             current_args_key
         )
-        tree, ctx = _get_tree_and_ctx(
-            self,
+        tree, ctx = self.get_tree_and_ctx(
             is_kernel=False,
             args=args,
             ast_builder=self.current_kernel.ast_builder(),
@@ -160,8 +152,7 @@ class Func:
         return tuple(ret)
 
     def do_compile(self, key: FunctionKey, args: tuple[Any, ...], arg_features: tuple[Any, ...]) -> None:
-        tree, ctx = _get_tree_and_ctx(
-            self,
+        tree, ctx = self.get_tree_and_ctx(
             is_kernel=False,
             args=args,
             arg_features=arg_features,
