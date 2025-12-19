@@ -28,7 +28,6 @@ from gstaichi._lib.core.gstaichi_python import (
 )
 from gstaichi.lang import _kernel_impl_dataclass, impl, runtime_ops
 from gstaichi.lang._fast_caching import src_hasher
-from gstaichi.lang._template_mapper import TemplateMapper
 from gstaichi.lang._wrap_inspect import FunctionSourceInfo, get_source_info_and_src
 from gstaichi.lang.ast import (
     KernelSimplicityASTChecker,

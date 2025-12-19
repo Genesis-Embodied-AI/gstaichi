@@ -12,7 +12,7 @@ from dataclasses import (
 
 # Must import 'partial' directly instead of the entire module to avoid attribute lookup overhead.
 from functools import partial
-from typing import Any, Callable, DefaultDict, Type, TypeAlias, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, DefaultDict, Type, TypeAlias
 
 # Must import 'ReferenceType' directly instead of the entire module to avoid attribute lookup overhead.
 from weakref import ReferenceType
@@ -65,6 +65,7 @@ class FuncBase:
     """
     Base class for Kernels and Funcs
     """
+
     def __init__(self, func, is_kernel: bool, classkernel: bool, classfunc: bool, is_real_function: bool) -> None:
         self.func = func
         self.is_kernel = is_kernel
