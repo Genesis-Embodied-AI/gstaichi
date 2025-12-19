@@ -148,7 +148,7 @@ class LaunchContextBufferCache:
         if self._prog_weakref is None or self._prog_weakref() is None:
             prog = impl.get_runtime().prog
             assert prog is not None
-            self._prog_weakref = ReferenceType(prog, partial(self._destroy_callback, ReferenceType(self)))
+            self._prog_weakref = ReferenceType(prog, partial(LaunchContextBufferCache._destroy_callback, ReferenceType(self)))
         else:
             # Since we already store a weak reference to taichi program, it is much faster to use it rather than
             # paying the overhead of calling pybind11 functions (~200ns vs 5ns).
