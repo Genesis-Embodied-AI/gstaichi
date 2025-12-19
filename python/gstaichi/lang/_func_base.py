@@ -40,6 +40,12 @@ from gstaichi.types import (
     sparse_matrix_builder,
     template,
 )
+
+if TYPE_CHECKING:
+    from gstaichi._lib.core.gstaichi_python import ASTBuilder
+
+    from .func import Func
+    from .kernel import Kernel
 from gstaichi.types.enums import AutodiffMode, Layout
 from gstaichi.types.utils import is_signed
 
