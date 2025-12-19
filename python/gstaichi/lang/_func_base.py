@@ -46,7 +46,7 @@ if TYPE_CHECKING:
     from gstaichi._lib.core.gstaichi_python import ASTBuilder
 
     from .kernel import Kernel
-from gstaichi.types.enums import AutodiffMode, Layout
+from gstaichi.types.enums import Layout
 from gstaichi.types.utils import is_signed
 
 from ._kernel_types import _KernelBatchedArgType
@@ -63,8 +63,6 @@ _ARG_EMPTY = inspect.Parameter.empty
 _arch_cuda = _ti_core.Arch.cuda
 
 ArgsHash: TypeAlias = tuple[int, ...]
-
-CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
 
 
 class FuncBase:
