@@ -26,8 +26,6 @@ _NONE, _REVERSE = (
 
 ArgsHash: TypeAlias = tuple[int, ...]
 
-CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
-
 
 def func(fn: Callable, is_real_function: bool = False) -> GsTaichiCallable:
     """Marks a function as callable in GsTaichi-scope.
