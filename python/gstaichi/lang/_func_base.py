@@ -290,8 +290,8 @@ class FuncBase:
             maybe_kernel._launch_ctx_cache_tracker.clear()
             maybe_kernel._prog_weakref = None
 
-    @staticmethod
     def _recursive_set_args(
+        self,
         used_py_dataclass_parameters: set[tuple[str, ...]],
         py_dataclass_basename: tuple[str, ...],
         launch_ctx: KernelLaunchContext,
