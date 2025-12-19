@@ -1,0 +1,13 @@
+class Pruning:
+    def __init__(self) -> None:
+        ...
+        # self.used_sp
+    
+    def prune_kernel_params(self) -> None:
+        ...
+    
+    def prune_func_calling_params(self) -> None:
+        ...
+
+    def prune_func_called_params(self) -> None:
+        ...
