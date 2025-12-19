@@ -144,7 +144,7 @@ class LaunchContextBufferCache:
         self._launch_ctx_cache_tracker[args_hash] = launch_ctx_cache_tracker_
 
     def populate_launch_ctx_from_cache(self, args_hash, launch_ctx) -> tuple[Program, bool]:
-        if self._prog_weakref is None or self._prog_weakref() is None:
+        if self._prog_weakref is None:
             prog = impl.get_runtime().prog
             assert prog is not None
             self._prog_weakref = ReferenceType(prog, partial(LaunchContextBufferCache._destroy_callback, ReferenceType(self)))
