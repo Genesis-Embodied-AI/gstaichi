@@ -136,9 +136,6 @@ Module Contents
    .. py:method:: reset() -> None
 
 
-   .. py:method:: extract_arguments() -> None
-
-
    .. py:method:: materialize(key: CompiledKernelKeyType | None, args: tuple[Any, Ellipsis], arg_features=None)
 
 

@@ -71,6 +71,3 @@ Module Contents
    .. py:method:: do_compile(key: gstaichi._lib.core.gstaichi_python.FunctionKey, args: tuple[Any, Ellipsis], arg_features: tuple[Any, Ellipsis]) -> None
 
 
-   .. py:method:: extract_arguments() -> None
-
-
