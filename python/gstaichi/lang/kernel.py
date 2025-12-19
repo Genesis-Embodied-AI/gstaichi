@@ -28,7 +28,6 @@ from gstaichi._lib.core.gstaichi_python import (
 )
 from gstaichi.lang import _kernel_impl_dataclass, impl, runtime_ops
 from gstaichi.lang._fast_caching import src_hasher
-from gstaichi.lang._template_mapper import TemplateMapper
 from gstaichi.lang._wrap_inspect import FunctionSourceInfo, get_source_info_and_src
 from gstaichi.lang.ast import (
     KernelSimplicityASTChecker,
@@ -58,11 +57,7 @@ from gstaichi.types.utils import is_signed
 
 if TYPE_CHECKING:
     from .kernel_impl import ArgsHash, CompiledKernelKeyType
-from ._func_base import (
-    _get_tree_and_ctx,
-    _process_args,
-    _recursive_set_args,
-)
+from ._func_base import FuncBase
 from ._gstaichi_callable import GsTaichiCallable
 from ._kernel_types import (
     FeLlCacheObservations,
@@ -174,11 +169,17 @@ class LaunchContextBufferCache:
         return prog, True
 
 
-class Kernel:
+class Kernel(FuncBase):
     counter = 0
 
     def __init__(self, _func: Callable, autodiff_mode: AutodiffMode, _classkernel=False) -> None:
-        self.func = _func
+        super().__init__(
+            func=_func,
+            classfunc=False,
+            is_kernel=True,
+            classkernel=_classkernel,
+            is_real_function=False,
+        )
         self.kernel_counter = Kernel.counter
         Kernel.counter += 1
         assert autodiff_mode in (
@@ -189,19 +190,9 @@ class Kernel:
         )
         self.autodiff_mode = autodiff_mode
         self.grad: "Kernel | None" = None
-        self.arg_metas: list[ArgMetadata] = []
-        self.arg_metas_expanded: list[ArgMetadata] = []
-        self.return_type = None
-        self.classkernel = _classkernel
-        self.extract_arguments()
-        self.template_slot_locations = []
-        for i, arg in enumerate(self.arg_metas):
-            if arg.annotation == template or isinstance(arg.annotation, template):
-                self.template_slot_locations.append(i)
-        self.mapper = TemplateMapper(self.arg_metas, self.template_slot_locations)
         impl.get_runtime().kernels.append(self)
         self.reset()
-        self.kernel_cpp = None
+        self.kernel_cpp: None | KernelCxx = None
         # A materialized kernel is a KernelCxx object which may or may not have
         # been compiled. It generally has been converted at least as far as AST
         # and front-end IR, but not necessarily any further.
@@ -366,8 +357,7 @@ class Kernel:
                 self.used_py_dataclass_leaves_by_key_enforcing_dotted[key] = set(
                     [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_leaves_by_key_enforcing]
                 )
-            tree, ctx = _get_tree_and_ctx(
-                self,
+            tree, ctx = self.get_tree_and_ctx(
                 args=args,
                 excluded_parameters=self.template_slot_locations,
                 arg_features=arg_features,
@@ -479,7 +469,7 @@ class Kernel:
                     template_num += 1
                     i_out += 1
                     continue
-                num_args_, is_launch_ctx_cacheable_ = _recursive_set_args(
+                num_args_, is_launch_ctx_cacheable_ = self._recursive_set_args(
                     used_py_dataclass_parameters_enforcing_dotted,
                     (self.arg_metas[i_in].name,),
                     launch_ctx,
@@ -587,7 +577,7 @@ class Kernel:
     def __call__(self, *args, **kwargs) -> Any:
         self.raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
 
-        args = _process_args(self, is_func=False, is_pyfunc=False, args=args, kwargs=kwargs)
+        args = self.process_args(is_func=False, is_pyfunc=False, args=args, kwargs=kwargs)
 
         # Transform the primal kernel to forward mode grad kernel
         # then recover to primal when exiting the forward mode manager

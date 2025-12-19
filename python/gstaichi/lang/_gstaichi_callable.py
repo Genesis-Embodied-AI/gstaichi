@@ -86,9 +86,9 @@ class GsTaichiCallable:
         self._is_gstaichi_function: bool = False
         self._is_wrapped_kernel: bool = False
         self._is_classkernel: bool = False
-        self._primal: Kernel | None = None
-        self._adjoint: Kernel | None = None
-        self.grad: Kernel | None = None
+        self._primal: "Kernel | None" = None
+        self._adjoint: "Kernel | None" = None
+        self.grad: "Kernel | None" = None
         self.is_pure: bool = False
         update_wrapper(self, fn)
 
