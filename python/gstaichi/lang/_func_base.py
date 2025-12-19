@@ -357,7 +357,7 @@ class FuncBase:
                 field_type = field.type
                 assert not isinstance(field_type, str)
                 field_value = getattr(v, field_name)
-                num_args_, is_launch_ctx_cacheable_ = self._recursive_set_args(
+                num_args_, is_launch_ctx_cacheable_ = FuncBase._recursive_set_args(
                     used_py_dataclass_parameters,
                     field_full_name,
                     launch_ctx,
