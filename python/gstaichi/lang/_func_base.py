@@ -290,8 +290,8 @@ class FuncBase:
             maybe_kernel._launch_ctx_cache_tracker.clear()
             maybe_kernel._prog_weakref = None
 
+    @staticmethod
     def _recursive_set_args(
-        self,
         used_py_dataclass_parameters: set[tuple[str, ...]],
         py_dataclass_basename: tuple[str, ...],
         launch_ctx: KernelLaunchContext,
@@ -470,9 +470,9 @@ class FuncBase:
         if issubclass(needed_arg_basetype, MatrixType):
             cast_func: Callable[[Any], int | float] | None = None
             if needed_arg_type.dtype in primitive_types.real_types:
-                cast_func = self.cast_float
+                cast_func = FuncBase.cast_float
             elif needed_arg_type.dtype in primitive_types.integer_types:
-                cast_func = self.cast_int
+                cast_func = FuncBase.cast_int
             else:
                 raise ValueError(f"Matrix dtype {needed_arg_type.dtype} is not integer type or real type.")
 
