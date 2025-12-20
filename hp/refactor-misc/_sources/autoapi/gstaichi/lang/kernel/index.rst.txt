@@ -19,10 +19,10 @@ Module Contents
 
 .. py:class:: LaunchContextBufferCache
 
-   .. py:method:: cache(t_kernel, args_hash: gstaichi.lang.kernel_impl.ArgsHash, launch_ctx: gstaichi._lib.core.gstaichi_python.KernelLaunchContext, launch_ctx_buffer: dict[gstaichi.lang._kernel_types._KernelBatchedArgType, list[tuple]]) -> None
+   .. py:method:: cache(t_kernel, args_hash: gstaichi.lang._kernel_types.ArgsHash, launch_ctx: gstaichi._lib.core.gstaichi_python.KernelLaunchContext, launch_ctx_buffer: dict[gstaichi.lang._kernel_types.KernelBatchedArgType, list[tuple]]) -> None
 
 
-   .. py:method:: populate_launch_ctx_from_cache(args_hash: gstaichi.lang.kernel_impl.ArgsHash, launch_ctx: gstaichi._lib.core.gstaichi_python.KernelLaunchContext) -> bool
+   .. py:method:: populate_launch_ctx_from_cache(args_hash: gstaichi.lang._kernel_types.ArgsHash, launch_ctx: gstaichi._lib.core.gstaichi_python.KernelLaunchContext) -> bool
 
 
 .. py:class:: ASTGenerator(ctx: gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext, kernel_name: str, current_kernel: Kernel, only_parse_function_def: bool, tree: ast.Module, used_py_dataclass_parameters: set[str] | None, dump_ast: bool)
@@ -51,7 +51,7 @@ Module Contents
    .. py:attribute:: dump_ast
 
 
-.. py:class:: Kernel(_func: Callable, autodiff_mode: gstaichi.types.enums.AutodiffMode, _classkernel=False)
+.. py:class:: Kernel(_func: Callable, autodiff_mode: gstaichi.types.enums.AutodiffMode, _is_classkernel=False)
 
    Bases: :py:obj:`gstaichi.lang._func_base.FuncBase`
 

@@ -34,6 +34,7 @@ Module Contents
 
 
    .. py:attribute:: compiled
+      :type:  dict[int, Callable]
 
 
    .. py:attribute:: classfunc
@@ -51,7 +52,8 @@ Module Contents
 
 
 
-   .. py:attribute:: gstaichi_functions
+   .. py:attribute:: cxx_function_by_id
+      :type:  dict[int, gstaichi._lib.core.gstaichi_python.Function]
 
 
    .. py:attribute:: has_print
@@ -69,5 +71,8 @@ Module Contents
 
 
    .. py:method:: do_compile(key: gstaichi._lib.core.gstaichi_python.FunctionKey, args: tuple[Any, Ellipsis], arg_features: tuple[Any, Ellipsis]) -> None
+
+      only for real func
+
 
 

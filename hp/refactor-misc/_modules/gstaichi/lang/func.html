@@ -313,6 +313,9 @@
 <span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi._lib</span><span class="w"> </span><span class="kn">import</span> <span class="n">core</span> <span class="k">as</span> <span class="n">_ti_core</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi._lib.core.gstaichi_python</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Function</span> <span class="k">as</span> <span class="n">FunctionCxx</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi._lib.core.gstaichi_python</span><span class="w"> </span><span class="kn">import</span> <span class="n">FunctionKey</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang</span><span class="w"> </span><span class="kn">import</span> <span class="n">_kernel_impl_dataclass</span><span class="p">,</span> <span class="n">impl</span><span class="p">,</span> <span class="n">ops</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.any_array</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnyArray</span>
@@ -339,8 +342,7 @@
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">.kernel</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kernel</span>
 
-
-<span class="c1"># Define proxies for fast lookup</span>
+<span class="c1"># Define proxy for fast lookup</span>
 <span class="n">_NONE</span> <span class="o">=</span> <span class="n">AutodiffMode</span><span class="o">.</span><span class="n">NONE</span>
 
 
@@ -355,9 +357,9 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">_classfunc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">_pyfunc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_real_function</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">func</span><span class="o">=</span><span class="n">_func</span><span class="p">,</span>
-            <span class="n">classfunc</span><span class="o">=</span><span class="n">_classfunc</span><span class="p">,</span>
+            <span class="n">is_classfunc</span><span class="o">=</span><span class="n">_classfunc</span><span class="p">,</span>
             <span class="n">is_kernel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">classkernel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">is_classkernel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">is_real_function</span><span class="o">=</span><span class="n">is_real_function</span><span class="p">,</span>
         <span class="p">)</span>
 <div class="viewcode-block" id="Func.func_id">
@@ -367,7 +369,7 @@
         <span class="n">Func</span><span class="o">.</span><span class="n">function_counter</span> <span class="o">+=</span> <span class="mi">1</span>
 <div class="viewcode-block" id="Func.compiled">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/func/index.html#gstaichi.lang.func.Func.compiled">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">compiled</span> <span class="o">=</span> <span class="p">{}</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compiled</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># only for real funcs</span></div>
 
 <div class="viewcode-block" id="Func.classfunc">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/func/index.html#gstaichi.lang.func.Func.classfunc">[docs]</a>
@@ -381,14 +383,15 @@
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/func/index.html#gstaichi.lang.func.Func.is_real_function">[docs]</a>
         <span class="bp">self</span><span class="o">.</span><span class="n">is_real_function</span> <span class="o">=</span> <span class="n">is_real_function</span></div>
 
-<div class="viewcode-block" id="Func.gstaichi_functions">
-<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/func/index.html#gstaichi.lang.func.Func.gstaichi_functions">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">gstaichi_functions</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># The |Function| class in C++</span></div>
+<div class="viewcode-block" id="Func.cxx_function_by_id">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/func/index.html#gstaichi.lang.func.Func.cxx_function_by_id">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cxx_function_by_id</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">FunctionCxx</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span></div>
 
 <div class="viewcode-block" id="Func.has_print">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/func/index.html#gstaichi.lang.func.Func.has_print">[docs]</a>
         <span class="bp">self</span><span class="o">.</span><span class="n">has_print</span> <span class="o">=</span> <span class="kc">False</span></div>
 
+        <span class="c1"># Used during compilation. Assumes only one compilation at a time (single-threaded).</span>
 <div class="viewcode-block" id="Func.current_kernel">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/func/index.html#gstaichi.lang.func.Func.current_kernel">[docs]</a>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span><span class="p">:</span> <span class="n">Kernel</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
@@ -410,7 +413,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span> <span class="o">=</span> <span class="kc">None</span>
                 <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="s2">&quot;Real function in gradient kernels unsupported.&quot;</span><span class="p">)</span>
             <span class="n">instance_id</span><span class="p">,</span> <span class="n">arg_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapper</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span><span class="o">.</span><span class="n">raise_on_templated_floats</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
-            <span class="n">key</span> <span class="o">=</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">FunctionKey</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">func_id</span><span class="p">,</span> <span class="n">instance_id</span><span class="p">)</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">FunctionKey</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">func_id</span><span class="p">,</span> <span class="n">instance_id</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">instance_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">compiled</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">do_compile</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">arg_features</span><span class="o">=</span><span class="n">arg_features</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span> <span class="o">=</span> <span class="kc">None</span>
@@ -436,6 +439,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_real_function</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span> <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">returned</span> <span class="o">!=</span> <span class="n">ReturnStatus</span><span class="o">.</span><span class="n">ReturnedValue</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="s2">&quot;Function has a return type but does not have a return statement&quot;</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="n">ret</span>
 
 <div class="viewcode-block" id="Func.func_call_rvalue">
@@ -464,7 +468,7 @@
         <span class="n">compiling_callable</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">compiling_callable</span>
         <span class="k">assert</span> <span class="n">compiling_callable</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">func_call</span> <span class="o">=</span> <span class="n">compiling_callable</span><span class="o">.</span><span class="n">ast_builder</span><span class="p">()</span><span class="o">.</span><span class="n">insert_func_call</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">gstaichi_functions</span><span class="p">[</span><span class="n">key</span><span class="o">.</span><span class="n">instance_id</span><span class="p">],</span> <span class="n">non_template_args</span><span class="p">,</span> <span class="n">dbg_info</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cxx_function_by_id</span><span class="p">[</span><span class="n">key</span><span class="o">.</span><span class="n">instance_id</span><span class="p">],</span> <span class="n">non_template_args</span><span class="p">,</span> <span class="n">dbg_info</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
@@ -473,13 +477,7 @@
 
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">return_type</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">return_type</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">id</span><span class="p">(</span><span class="n">return_type</span><span class="p">)</span> <span class="ow">in</span> <span class="n">primitive_types</span><span class="o">.</span><span class="n">type_ids</span><span class="p">:</span>
-                <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="n">Expr</span><span class="p">(</span>
-                        <span class="n">_ti_core</span><span class="o">.</span><span class="n">make_get_element_expr</span><span class="p">(</span>
-                            <span class="n">func_call</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,),</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">DebugInfo</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">get_current_src_info</span><span class="p">())</span>
-                        <span class="p">)</span>
-                    <span class="p">)</span>
-                <span class="p">)</span>
+                <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Expr</span><span class="p">(</span><span class="n">_ti_core</span><span class="o">.</span><span class="n">make_get_element_expr</span><span class="p">(</span><span class="n">func_call</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,),</span> <span class="n">dbg_info</span><span class="p">)))</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">return_type</span><span class="p">,</span> <span class="p">(</span><span class="n">StructType</span><span class="p">,</span> <span class="n">MatrixType</span><span class="p">)):</span>
                 <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">return_type</span><span class="o">.</span><span class="n">from_gstaichi_object</span><span class="p">(</span><span class="n">func_call</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,)))</span>
             <span class="k">else</span><span class="p">:</span>
@@ -492,6 +490,9 @@
 <div class="viewcode-block" id="Func.do_compile">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/func/index.html#gstaichi.lang.func.Func.do_compile">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">do_compile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">FunctionKey</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">arg_features</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        only for real func</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">tree</span><span class="p">,</span> <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tree_and_ctx</span><span class="p">(</span>
             <span class="n">is_kernel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
@@ -508,9 +509,9 @@
             <span class="n">transform_tree</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
             <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">_compiling_callable</span> <span class="o">=</span> <span class="n">old_callable</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">gstaichi_functions</span><span class="p">[</span><span class="n">key</span><span class="o">.</span><span class="n">instance_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">fn</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cxx_function_by_id</span><span class="p">[</span><span class="n">key</span><span class="o">.</span><span class="n">instance_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">fn</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">compiled</span><span class="p">[</span><span class="n">key</span><span class="o">.</span><span class="n">instance_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">func_body</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">gstaichi_functions</span><span class="p">[</span><span class="n">key</span><span class="o">.</span><span class="n">instance_id</span><span class="p">]</span><span class="o">.</span><span class="n">set_function_body</span><span class="p">(</span><span class="n">func_body</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cxx_function_by_id</span><span class="p">[</span><span class="n">key</span><span class="o">.</span><span class="n">instance_id</span><span class="p">]</span><span class="o">.</span><span class="n">set_function_body</span><span class="p">(</span><span class="n">func_body</span><span class="p">)</span></div>
 </div>
 
 </pre></div>
