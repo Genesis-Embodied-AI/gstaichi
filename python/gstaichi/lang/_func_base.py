@@ -254,10 +254,11 @@ class FuncBase:
             is_real_function=is_real_function,
             autodiff_mode=autodiff_mode,
             raise_on_templated_floats=raise_on_templated_floats,
-            used_py_dataclass_parameters_collecting=current_kernel.used_py_dataclass_leaves_by_key_collecting[
-                args_instance_key
-            ],
-            used_py_dataclass_parameters_enforcing=used_py_dataclass_parameters_enforcing,
+            # used_py_dataclass_parameters_collecting=current_kernel.used_py_dataclass_leaves_by_key_collecting[
+            #     args_instance_key
+            # ],
+            # used_py_dataclass_parameters_enforcing=used_py_dataclass_parameters_enforcing,
+            enforcing_dataclass_parameters=enforcing_dataclass_parameters,
         )
         return tree, ctx
 
@@ -274,7 +275,7 @@ class FuncBase:
             if typing.TYPE_CHECKING:
                 assert currently_compiling_materialize_key is not None
             self.arg_metas_expanded = _kernel_impl_dataclass.expand_func_arguments(
-                current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(currently_compiling_materialize_key),
+                # current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(currently_compiling_materialize_key),
                 self.arg_metas,
             )
         else:
