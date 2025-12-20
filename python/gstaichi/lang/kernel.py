@@ -1,15 +1,9 @@
 import ast
-import inspect
 import json
 import os
 import pathlib
 import time
-import types
-import typing
 from collections import defaultdict
-from dataclasses import (
-    is_dataclass,
-)
 
 # Must import 'partial' directly instead of the entire module to avoid attribute lookup overhead.
 from functools import partial
@@ -40,15 +34,10 @@ from gstaichi.lang.exception import (
     handle_exception_from_cpp,
 )
 from gstaichi.lang.impl import Program
-from gstaichi.lang.kernel_arguments import ArgMetadata
-from gstaichi.lang.matrix import MatrixType
 from gstaichi.lang.shell import _shell_pop_print
-from gstaichi.lang.struct import StructType
 from gstaichi.lang.util import cook_dtype
 from gstaichi.types import (
-    ndarray_type,
     primitive_types,
-    sparse_matrix_builder,
     template,
 )
 from gstaichi.types.compound_types import CompoundType
@@ -56,7 +45,8 @@ from gstaichi.types.enums import AutodiffMode
 from gstaichi.types.utils import is_signed
 
 if TYPE_CHECKING:
-    from .kernel_impl import ArgsHash, CompiledKernelKeyType
+    from ._kernel_types import CompiledKernelKeyType
+    from .kernel_impl import ArgsHash
 from ._func_base import FuncBase
 from ._gstaichi_callable import GsTaichiCallable
 from ._kernel_types import (
@@ -318,80 +308,9 @@ class Kernel(FuncBase):
         self.used_py_dataclass_leaves_by_key_enforcing_dotted = {}
         self.currently_compiling_materialize_key = None
 
-    def extract_arguments(self) -> None:
-        sig = inspect.signature(self.func)
-        if sig.return_annotation not in {inspect._empty, None}:
-            self.return_type = sig.return_annotation
-            if (
-                isinstance(self.return_type, (types.GenericAlias, typing._GenericAlias))  # type: ignore
-                and self.return_type.__origin__ is tuple
-            ):
-                self.return_type = self.return_type.__args__
-            if not isinstance(self.return_type, (list, tuple)):
-                self.return_type = (self.return_type,)
-            for return_type in self.return_type:
-                if return_type is Ellipsis:
-                    raise GsTaichiSyntaxError("Ellipsis is not supported in return type annotations")
-        params = dict(sig.parameters)
-        arg_names = params.keys()
-        for i, arg_name in enumerate(arg_names):
-            param = params[arg_name]
-            if param.kind == inspect.Parameter.VAR_KEYWORD:
-                raise GsTaichiSyntaxError(
-                    "GsTaichi kernels do not support variable keyword parameters (i.e., **kwargs)"
-                )
-            if param.kind == inspect.Parameter.VAR_POSITIONAL:
-                raise GsTaichiSyntaxError(
-                    "GsTaichi kernels do not support variable positional parameters (i.e., *args)"
-                )
-            if param.default is not inspect.Parameter.empty:
-                raise GsTaichiSyntaxError("GsTaichi kernels do not support default values for arguments")
-            if param.kind == inspect.Parameter.KEYWORD_ONLY:
-                raise GsTaichiSyntaxError("GsTaichi kernels do not support keyword parameters")
-            if param.kind != inspect.Parameter.POSITIONAL_OR_KEYWORD:
-                raise GsTaichiSyntaxError('GsTaichi kernels only support "positional or keyword" parameters')
-            annotation = param.annotation
-            if param.annotation is inspect.Parameter.empty:
-                if i == 0 and self.classkernel:  # The |self| parameter
-                    annotation = template()
-                else:
-                    raise GsTaichiSyntaxError("GsTaichi kernels parameters must be type annotated")
-            else:
-                if isinstance(annotation, (template, ndarray_type.NdarrayType)):
-                    pass
-                elif annotation is ndarray_type.NdarrayType:
-                    # convert from ti.types.NDArray into ti.types.NDArray()
-                    annotation = annotation()
-                elif id(annotation) in primitive_types.type_ids:
-                    pass
-                elif isinstance(annotation, sparse_matrix_builder):
-                    pass
-                elif isinstance(annotation, MatrixType):
-                    pass
-                elif isinstance(annotation, StructType):
-                    pass
-                elif annotation is template:
-                    pass
-                elif isinstance(annotation, type) and is_dataclass(annotation):
-                    pass
-                else:
-                    raise GsTaichiSyntaxError(f"Invalid type annotation (argument {i}) of Taichi kernel: {annotation}")
-            self.arg_metas.append(ArgMetadata(annotation, param.name, param.default))
-
-    def materialize(self, key: "CompiledKernelKeyType | None", args: tuple[Any, ...], arg_features=None):
-        if key is None:
-            key = (self.func, 0, self.autodiff_mode)
-        self.fast_checksum = None
-        self.currently_compiling_materialize_key = key
-
-        if key in self.materialized_kernels:
-            return
-
-        self.runtime.materialize()
-
-        used_py_dataclass_parameters: set[str] | None = None
+    def _try_load_fastcache(self, args: tuple[Any, ...], key: "CompiledKernelKeyType") -> set[str] | None:
         frontend_cache_key: str | None = None
-
+        used_py_dataclass_parameters: set[str] | None = None
         if self.runtime.src_ll_cache and self.gstaichi_callable and self.gstaichi_callable.is_pure:
             kernel_source_info, _src = get_source_info_and_src(self.func)
             self.fast_checksum = src_hasher.create_cache_key(
@@ -423,7 +342,18 @@ class Kernel(FuncBase):
             # this is only printed when ti.init(print_non_pure=..) is True. And it is
             # confusing to set that to True, and see nothing printed.
             print(f"[NOT_PURE] Debug information: not pure: {self.func.__name__}")
+        return used_py_dataclass_parameters
 
+    def materialize(self, key: "CompiledKernelKeyType | None", args: tuple[Any, ...], arg_features=None):
+        if key is None:
+            key = (self.func, 0, self.autodiff_mode)
+        self.fast_checksum = None
+        self.currently_compiling_materialize_key = key
+        if key in self.materialized_kernels:
+            return
+
+        self.runtime.materialize()
+        used_py_dataclass_parameters = self._try_load_fastcache(args, key)
         kernel_name = f"{self.func.__name__}_c{self.kernel_counter}_{key[1]}"
         _logging.trace(f"Materializing kernel {kernel_name} in {self.autodiff_mode}...")
 
