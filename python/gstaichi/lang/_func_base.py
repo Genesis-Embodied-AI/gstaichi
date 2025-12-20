@@ -15,9 +15,6 @@ from dataclasses import (
 from functools import partial
 from typing import TYPE_CHECKING, Any, Callable, DefaultDict, Type, TypeAlias
 
-# Must import 'ReferenceType' directly instead of the entire module to avoid attribute lookup overhead.
-from weakref import ReferenceType
-
 import numpy as np
 
 from gstaichi._lib import core as _ti_core
@@ -348,14 +345,6 @@ class FuncBase:
         if not isinstance(x, (int, np.integer)):
             raise ValueError(f"Invalid argument type '{type(x)}")
         return int(x)
-
-    @staticmethod
-    def destroy_callback(kernel_ref: ReferenceType["Kernel"], ref: ReferenceType):
-        maybe_kernel = kernel_ref()
-        if maybe_kernel is not None:
-            maybe_kernel._launch_ctx_cache.clear()
-            maybe_kernel._launch_ctx_cache_tracker.clear()
-            maybe_kernel._prog_weakref = None
 
     @staticmethod
     def _recursive_set_args(
