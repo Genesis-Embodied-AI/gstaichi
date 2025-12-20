@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Callable
+from typing import Callable, TypeAlias
 
 from gstaichi.types.enums import AutodiffMode
 
 
-class _KernelBatchedArgType(IntEnum):
+class KernelBatchedArgType(IntEnum):
     FLOAT = 0
     INT = 1
     UINT = 2
@@ -28,7 +28,8 @@ class FeLlCacheObservations:
 
 @dataclass
 class LaunchStats:
-    kernel_args_count_by_type: dict[_KernelBatchedArgType, int]
+    kernel_args_count_by_type: dict[KernelBatchedArgType, int]
 
 
 CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
+ArgsHash: TypeAlias = tuple[int, ...]
