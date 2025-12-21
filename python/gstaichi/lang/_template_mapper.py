@@ -7,9 +7,9 @@ from gstaichi.lang.impl import Program
 from gstaichi.lang.kernel_arguments import ArgMetadata
 
 from .._test_tools import warnings_helper
+from ._kernel_types import ArgsHash
 from ._template_mapper_hotpath import _extract_arg, _primitive_types
 
-ArgsHash: TypeAlias = tuple[int, ...]
 Key: TypeAlias = tuple[Any, ...]
 
 

@@ -7,7 +7,7 @@ from collections import defaultdict
 
 # Must import 'partial' directly instead of the entire module to avoid attribute lookup overhead.
 from functools import partial
-from typing import TYPE_CHECKING, Any, Callable
+from typing import Any, Callable
 
 # Must import 'ReferenceType' directly instead of the entire module to avoid attribute lookup overhead.
 from weakref import ReferenceType
@@ -44,21 +44,20 @@ from gstaichi.types.compound_types import CompoundType
 from gstaichi.types.enums import AutodiffMode
 from gstaichi.types.utils import is_signed
 
-if TYPE_CHECKING:
-    from ._kernel_types import CompiledKernelKeyType
-    from .kernel_impl import ArgsHash
 from ._func_base import FuncBase
 from ._gstaichi_callable import GsTaichiCallable
 from ._kernel_types import (
+    ArgsHash,
+    CompiledKernelKeyType,
     FeLlCacheObservations,
+    KernelBatchedArgType,
     LaunchStats,
     SrcLlCacheObservations,
-    _KernelBatchedArgType,
 )
 
 # Define proxies for fast lookup
 _NONE, _VALIDATION = AutodiffMode.NONE, AutodiffMode.VALIDATION
-_FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = _KernelBatchedArgType
+_FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = KernelBatchedArgType
 
 
 class LaunchContextBufferCache:
@@ -107,7 +106,7 @@ class LaunchContextBufferCache:
         t_kernel,
         args_hash: "ArgsHash",
         launch_ctx: KernelLaunchContext,
-        launch_ctx_buffer: dict[_KernelBatchedArgType, list[tuple]],
+        launch_ctx_buffer: dict[KernelBatchedArgType, list[tuple]],
     ) -> None:
         # TODO: It some rare occurrences, arguments can be cached yet not hashable. Ignoring for now...
         cached_launch_ctx = t_kernel.make_launch_context()
@@ -249,12 +248,12 @@ class ASTGenerator:
 class Kernel(FuncBase):
     counter = 0
 
-    def __init__(self, _func: Callable, autodiff_mode: AutodiffMode, _classkernel=False) -> None:
+    def __init__(self, _func: Callable, autodiff_mode: AutodiffMode, _is_classkernel=False) -> None:
         super().__init__(
             func=_func,
-            classfunc=False,
+            is_classfunc=False,
             is_kernel=True,
-            classkernel=_classkernel,
+            is_classkernel=_is_classkernel,
             is_real_function=False,
         )
         self.kernel_counter = Kernel.counter
@@ -410,7 +409,7 @@ class Kernel(FuncBase):
         # Special treatment for primitive types is unecessary and detrimental. See 'TemplateMapper.lookup' for details.
         args_hash: "ArgsHash" = (id(t_kernel), *[id(arg) for arg in args])
         if not self.launch_context_buffer_cache.populate_launch_ctx_from_cache(args_hash, launch_ctx):
-            launch_ctx_buffer: dict[_KernelBatchedArgType, list[tuple]] = defaultdict(list)
+            launch_ctx_buffer: dict[KernelBatchedArgType, list[tuple]] = defaultdict(list)
             actual_argument_slot = 0
             is_launch_ctx_cacheable = True
             template_num = 0
@@ -493,8 +492,8 @@ class Kernel(FuncBase):
                 raise e
             raise e from None
 
-        for c in callbacks:
-            c()
+        for callback in callbacks:
+            callback()
 
         self.currently_compiling_materialize_key = None
 
