@@ -45,6 +45,7 @@ PER_INTERNAL_OP(subgroupInclusiveOr)
 PER_INTERNAL_OP(subgroupInclusiveXor)
 
 // CUDA
+PER_INTERNAL_OP(cuda_clock_i64)
 PER_INTERNAL_OP(block_barrier)
 PER_INTERNAL_OP(block_barrier_and_i32)
 PER_INTERNAL_OP(block_barrier_or_i32)
