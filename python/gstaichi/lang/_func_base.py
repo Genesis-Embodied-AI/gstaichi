@@ -188,7 +188,7 @@ class FuncBase:
 
     def get_tree_and_ctx(
         self,
-        args: tuple[Any, ...],
+        py_args: tuple[Any, ...],
         enforcing_dataclass_parameters: bool,
         # used_py_dataclass_parameters_enforcing: set[str] | None,
         template_slot_locations=(),
@@ -225,7 +225,7 @@ class FuncBase:
                 argument_metas=self.arg_metas,
                 global_vars=template_vars,
                 fn=self.func,
-                py_args=args,
+                py_args=py_args,
             )
 
         raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
@@ -240,7 +240,7 @@ class FuncBase:
             arg_features=arg_features,
             global_vars=global_vars,
             template_vars=template_vars,
-            py_args=args,
+            py_args=py_args,
             src=src,
             start_lineno=function_source_info.start_lineno,
             end_lineno=function_source_info.end_lineno,

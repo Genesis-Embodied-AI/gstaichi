@@ -95,7 +95,7 @@ class Func(FuncBase):
 
         tree, ctx = self.get_tree_and_ctx(
             is_kernel=False,
-            args=args,
+            py_args=args,
             ast_builder=self.current_kernel.ast_builder(),
             is_real_function=self.is_real_function,
             enforcing_dataclass_parameters=self.current_kernel.enforcing_dataclass_parameters,
