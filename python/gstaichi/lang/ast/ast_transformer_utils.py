@@ -201,11 +201,6 @@ class ASTTransformerFuncContext:
         is_real_function: bool,
         autodiff_mode: AutodiffMode,
         raise_on_templated_floats: bool,
-        # enforcing_dataclass_parameters: bool,
-        # during 1st pass, we collect the names of used parameters
-        # used_py_dataclass_parameters_collecting: set[str],
-        # during 2nd pass, we only handle these names
-        # used_py_dataclass_parameters_enforcing: set[str] | None,
         # arg_metas_by_function
     ):
         from gstaichi import extension  # pylint: disable=import-outside-toplevel
@@ -246,10 +241,6 @@ class ASTTransformerFuncContext:
         self.autodiff_mode = autodiff_mode
         self.loop_depth: int = 0
         self.raise_on_templated_floats = raise_on_templated_floats
-        # self.used_py_dataclass_parameters_collecting = used_py_dataclass_parameters_collecting
-        # self.used_py_dataclass_parameters_collecting: set[str] = set()
-        # self.used_py_dataclass_parameters_enforcing = used_py_dataclass_parameters_enforcing
-        # self.enforcing_dataclass_parameters: bool = enforcing_dataclass_parameters
         self.expanding_dataclass_call_parameters: bool = False
 
         self.adstack_enabled: bool = (
