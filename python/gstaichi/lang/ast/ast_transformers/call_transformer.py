@@ -348,7 +348,11 @@ class CallTransformer:
             node.ptr = func(*args, **keywords)
             arg_id = 0
             if hasattr(func, "wrapper"):
-                called_unpruned = func.wrapper.used_py_dataclass_parameters_collecting
+                _pruning = ctx.global_context.pruning
+                _called_func_id = func.wrapper.func_id
+                print("_called_func_id", _called_func_id)
+                called_unpruned = _pruning.used_parameters_by_func_id[_called_func_id]
+                # called_unpruned = func.wrapper.used_py_dataclass_parameters_collecting
                 to_unprune: set[str] = set()
                 for i, arg in enumerate(node.args):
                     print(i, ast.dump(arg)[:50], node.func.ptr.wrapper.arg_metas_expanded[arg_id].name)
