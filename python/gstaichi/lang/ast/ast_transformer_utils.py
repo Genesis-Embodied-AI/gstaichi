@@ -202,21 +202,21 @@ class ASTTransformerContext:
     ):
         from gstaichi import extension  # pylint: disable=import-outside-toplevel
 
-        self.func = func
+        self.func: "FuncBase" = func
         self.local_scopes: list[dict[str, Any]] = []
         self.loop_scopes: List[LoopScopeAttribute] = []
         self.template_slot_locations = template_slot_locations
-        self.is_kernel = is_kernel
-        self.arg_features = arg_features
+        self.is_kernel: bool = is_kernel
+        self.arg_features: list[tuple[Any, ...]] = arg_features
         self.returns = None
-        self.global_vars = global_vars
-        self.template_vars = template_vars
-        self.is_pure = is_pure
+        self.global_vars: dict[str, Any] = global_vars
+        self.template_vars: dict[str, Any] = template_vars
+        self.is_pure: bool = is_pure
         self.argument_data = argument_data
         self.return_data: tuple[Any, ...] | Any | None = None
-        self.file = file
-        self.src = src
-        self.indent = 0
+        self.file: str = file
+        self.src: list[str] = src
+        self.indent: int = 0
         for c in self.src[0]:
             if c == " ":
                 self.indent += 1
