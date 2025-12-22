@@ -44,8 +44,9 @@ class Func(FuncBase):
             is_kernel=False,
             is_classkernel=False,
             is_real_function=is_real_function,
+            func_id = Func.function_counter
         )
-        self.func_id = Func.function_counter
+        # self.func_id = Func.function_counter
         Func.function_counter += 1
         self.compiled: dict[int, Callable] = {}  # only for real funcs
         self.classfunc = _classfunc
@@ -63,6 +64,10 @@ class Func(FuncBase):
         # self.used_py_dataclass_parameters_enforcing: None | set[str] = None
         # self.used_py_dataclass_parameters_with_prefixes: set[str] = set()
         self.used_py_dataclass_parameters_enforcing: set[str] | None = None
+
+    # @property
+    # def func_id(self) -> int:
+    #     return self.func_id
 
     def __call__(self: "Func", *args, **kwargs) -> Any:
         runtime = impl.get_runtime()
@@ -87,8 +92,8 @@ class Func(FuncBase):
                 self.do_compile(key=key, args=args, arg_features=arg_features)
             # self.current_kernel = None
             return self.func_call_rvalue(key=key, args=args)
-        current_args_key = current_kernel.currently_compiling_materialize_key
-        assert current_args_key is not None
+        # current_args_key = current_kernel.currently_compiling_materialize_key
+        # assert current_args_key is not None
         # used_by_dataclass_parameters_enforcing = self.current_kernel.used_py_dataclass_parameters_by_key_enforcing.get(
         #     current_args_key
         # )

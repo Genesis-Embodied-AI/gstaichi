@@ -39,6 +39,7 @@ from gstaichi.types import (
     sparse_matrix_builder,
     template,
 )
+from ._pruning import Pruning
 
 if TYPE_CHECKING:
     from gstaichi._lib.core.gstaichi_python import ASTBuilder
@@ -66,8 +67,9 @@ class FuncBase:
     Base class for Kernels and Funcs
     """
 
-    def __init__(self, func, is_kernel: bool, is_classkernel: bool, is_classfunc: bool, is_real_function: bool) -> None:
+    def __init__(self, func, func_id: int, is_kernel: bool, is_classkernel: bool, is_classfunc: bool, is_real_function: bool) -> None:
         self.func = func
+        self.func_id = func_id
         self.is_kernel = is_kernel
         self.is_real_function = is_real_function
         # TODO: rename classkernel and classfunc to is_classkernel and is_classfunc
@@ -210,7 +212,10 @@ class FuncBase:
 
         if current_kernel is not None:  # Kernel
             current_kernel.kernel_function_info = function_source_info
-            global_context = ASTTransformerGlobalContext(current_kernel=current_kernel)
+            pruning = Pruning()
+            global_context = ASTTransformerGlobalContext(
+                current_kernel=current_kernel,
+                pruning=pruning)
             runtime._current_global_context = global_context
         else: # Func
             # current_kernel = runtime._current_kernel
@@ -240,8 +245,8 @@ class FuncBase:
 
         raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
 
-        args_instance_key = current_kernel.currently_compiling_materialize_key
-        assert args_instance_key is not None
+        # args_instance_key = current_kernel.currently_compiling_materialize_key
+        # assert args_instance_key is not None
         ctx = ASTTransformerFuncContext(
             global_context=runtime._current_global_context,
             template_slot_locations=template_slot_locations,

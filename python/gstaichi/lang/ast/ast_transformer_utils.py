@@ -22,6 +22,7 @@ from gstaichi.lang.exception import (
 
 if TYPE_CHECKING:
     from .._func_base import FuncBase
+    from .._pruning import Pruning
 
 AutodiffMode = _ti_core.AutodiffMode
 
@@ -175,8 +176,9 @@ class PureViolation:
 
 
 class ASTTransformerGlobalContext:
-    def __init__(self, current_kernel: "Kernel") -> None:
+    def __init__(self, current_kernel: "Kernel", pruning: "Pruning") -> None:
         self.current_kernel: "Kernel" = current_kernel
+        self.pruning: "Pruning" = pruning
 
 
 class ASTTransformerFuncContext:
