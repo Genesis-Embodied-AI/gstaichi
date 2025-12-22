@@ -9,7 +9,7 @@ import re
 import warnings
 from ast import unparse
 from collections import ChainMap
-from typing import Any, cast
+from typing import Any, cast, TYPE_CHECKING
 
 import numpy as np
 
@@ -33,6 +33,8 @@ from gstaichi.lang.matrix import Matrix, Vector
 from gstaichi.lang.util import is_gstaichi_class
 from gstaichi.types import primitive_types
 from ...kernel_arguments import ArgMetadata
+if TYPE_CHECKING:
+    from ...func import Func
 
 
 class CallTransformer:
@@ -348,6 +350,8 @@ class CallTransformer:
             if hasattr(func, "wrapper"):
                 _pruning = ctx.global_context.pruning
                 _called_func_id = func.wrapper.func_id
+                _my_func_id = ctx.func.func_id
+                func_id = func.wrapper.func_id
                 print("potentially calling", ast.dump(node.func)[:20], "with args", py_args, "keywords", keywords)
                 if _pruning.enforcing:
                     called_needed = _pruning.used_parameters_by_func_id[_called_func_id]
@@ -369,14 +373,15 @@ class CallTransformer:
                     print("child_metas_pruned", [c.name for c in child_metas_pruned])
                     child_metas = child_metas_pruned
                     for i, arg in enumerate(node.args):
-                        print(i, ast.dump(arg)[:50], child_metas[child_arg_id].name)
+                        # print(i, ast.dump(arg)[:50], child_metas[child_arg_id].name)
                         if hasattr(arg, "id"):
                             calling_name = arg.id
                             if calling_name.startswith("__ti_"):
                                 print('calling_name', calling_name)
-                                called_name = child_metas[child_arg_id].name
+                                called_name = _pruning.child_name_by_caller_name_by_func_id[func_id].get(calling_name)
+                                # called_name = child_metas[child_arg_id].name
                                 print('called_name', called_name)
-                                if called_name in called_needed:
+                                if called_name is not None and called_name in called_needed:
                                     new_args.append(py_args[i])
                             else:
                                 new_args.append(py_args[i])
@@ -390,6 +395,7 @@ class CallTransformer:
             node.ptr = func(*py_args, **keywords)
             arg_id = 0
             if hasattr(func, "wrapper"):
+                func_id = func.wrapper.func_id
                 if not _pruning.enforcing:
                     # _pruning = ctx.global_context.pruning
                     print("_called_func_id", _called_func_id)
@@ -400,6 +406,7 @@ class CallTransformer:
                         if hasattr(arg, "id"):
                             calling_name = arg.id
                             called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
+                            # called_name = _pruning.child_name_by_caller_name_by_func_id[func_id][calling_name]
                             if called_name in called_unpruned:
                                 # print('caller unprune', calling_name)
                                 to_unprune.add(calling_name)
@@ -416,7 +423,51 @@ class CallTransformer:
                     print("to_unprune", ctx.func.func, to_unprune)
                     _pruning = ctx.global_context.pruning
                     # if not _pruning.enforcing:
-                    _pruning.used_parameters_by_func_id[ctx.func.func_id].update(to_unprune)
+                    _pruning.used_parameters_by_func_id[_my_func_id].update(to_unprune)
+
+                    called_needed = _pruning.used_parameters_by_func_id[_called_func_id]
+                    print("called_needed", called_needed)
+                    # new_args = []
+                    child_arg_id = 0
+                    child_metas: list[ArgMetadata] = node.func.ptr.wrapper.arg_metas_expanded
+                    # child_metas: list[ArgMetadata] = cast(ArgMetadata, node.func.ptr.wrapper.arg_metas_expanded)
+                    # child_metas_pruned = []
+                    # for _child in child_metas:
+                    #     print('child.name', _child.name)
+                    #     if _child.name.startswith("__ti_"):
+                    #         if _child.name in called_needed:
+                    #             print("in called needed")
+                    #             child_metas_pruned.append(_child)
+                    #     else:
+                    #         print('not ti')
+                    #         child_metas_pruned.append(_child)
+                    # print("child_metas_pruned", [c.name for c in child_metas_pruned])
+                    # child_metas = child_metas_pruned
+                    our_name_by_child_name = {}
+                    child_name_by_our_name = {}
+                    for i, arg in enumerate(node.args):
+                        print(i, ast.dump(arg)[:50], child_metas[child_arg_id].name)
+                        if hasattr(arg, "id"):
+                            calling_name = arg.id
+                            if calling_name.startswith("__ti_"):
+                                print('calling_name', calling_name)
+                                called_name = child_metas[child_arg_id].name
+                                print('called_name', called_name)
+                                if called_name in called_needed:
+                                    print('called_name', called_name)
+                                    # print('called_neeeded', called_needed)
+                                    our_name_by_child_name[called_name] = calling_name
+                                    child_name_by_our_name[calling_name] = called_name
+                                    # new_args.append(py_args[i])
+                            # else:
+                            #     new_args.append(py_args[i])
+                        # else:
+                        #     new_args.append(py_args[i])
+                        child_arg_id += 1
+                    print('our_name_by_child_name', our_name_by_child_name)
+                    _pruning.caller_name_by_child_name_by_func_id[func_id] = our_name_by_child_name
+                    _pruning.child_name_by_caller_name_by_func_id[func_id] = child_name_by_our_name
+
         # except TypeError as e:
         #     module = inspect.getmodule(func)
         #     error_msg = re.sub(r"\bExpr\b", "GsTaichi Expression", str(e))
