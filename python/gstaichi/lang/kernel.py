@@ -379,6 +379,7 @@ class Kernel(FuncBase):
 
         range_begin = 0 if used_py_dataclass_parameters is None else 1
         for _pass in range(range_begin, 2):
+            print("===================== pass", _pass)
             used_py_dataclass_parameters_by_key_enforcing = None
             enforcing_dataclass_parameters = _pass >= 1
             if _pass == 1:
@@ -423,6 +424,8 @@ class Kernel(FuncBase):
             if _pass == 1:
                 assert key not in self.materialized_kernels
                 self.materialized_kernels[key] = gstaichi_kernel
+            else:
+                print("used_py_dataclass_parameters collecting", used_py_dataclass_parameters)
 
     def launch_kernel(self, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
         assert len(args) == len(self.arg_metas), f"{len(self.arg_metas)} arguments needed but {len(args)} provided"
