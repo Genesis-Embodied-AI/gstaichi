@@ -98,10 +98,12 @@ def expand_func_arguments(
         if dataclasses.is_dataclass(argument.annotation):
             for field in dataclasses.fields(argument.annotation):
                 child_name = create_flat_name(argument.name, field.name)
+                print('child_name', child_name)
                 if (
                     used_py_dataclasses_parameters_enforcing is not None
                     and child_name not in used_py_dataclasses_parameters_enforcing
                 ):
+                    print(' - skip')
                     continue
                 if dataclasses.is_dataclass(field.type):
                     new_arg = ArgMetadata(

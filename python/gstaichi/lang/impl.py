@@ -1172,6 +1172,9 @@ def static(x, *xs) -> Any:
         return x
     if isinstance(x, (FunctionType, MethodType, BoundGsTaichiCallable, GsTaichiCallable)):
         return x
+    print("x", x, "xs", xs)
+    import ast
+    print(ast.dump(x, indent=2))
     raise ValueError(f"Input to ti.static must be compile-time constants or global pointers, instead of {type(x)}")
 
 

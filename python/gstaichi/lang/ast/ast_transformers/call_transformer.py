@@ -303,7 +303,7 @@ class CallTransformer:
                 node.violates_pure = True
                 node.violates_pure_reason = kw.value.violates_pure_reason
 
-        args = []
+        py_args = []
         for arg in node.args:
             if isinstance(arg, ast.Starred):
                 arg_list = arg.ptr
@@ -312,9 +312,9 @@ class CallTransformer:
                     arg_list = [Expr(x) for x in ctx.ast_builder.expand_exprs([arg_list.ptr])]
 
                 for i in arg_list:
-                    args.append(i)
+                    py_args.append(i)
             else:
-                args.append(arg.ptr)
+                py_args.append(arg.ptr)
         keywords = dict(ChainMap(*[keyword.ptr for keyword in node.keywords]))
         func = node.func.ptr
 
@@ -323,32 +323,59 @@ class CallTransformer:
 
         if isinstance(node.func, ast.Attribute) and isinstance(node.func.value.ptr, str) and node.func.attr == "format":
             raw_string = node.func.value.ptr
-            args = CallTransformer._canonicalize_formatted_string(raw_string, *args, **keywords)
-            node.ptr = impl.ti_format(*args)
+            py_args = CallTransformer._canonicalize_formatted_string(raw_string, *py_args, **keywords)
+            node.ptr = impl.ti_format(*py_args)
             return node.ptr
 
         if id(func) == id(Matrix) or id(func) == id(Vector):
-            node.ptr = matrix.make_matrix(*args, **keywords)
+            node.ptr = matrix.make_matrix(*py_args, **keywords)
             return node.ptr
 
-        if CallTransformer._build_call_if_is_builtin(ctx, node, args, keywords):
+        if CallTransformer._build_call_if_is_builtin(ctx, node, py_args, keywords):
             return node.ptr
 
-        if CallTransformer._build_call_if_is_type(ctx, node, args, keywords):
+        if CallTransformer._build_call_if_is_type(ctx, node, py_args, keywords):
             return node.ptr
 
         if hasattr(node.func, "caller"):
-            node.ptr = func(node.func.caller, *args, **keywords)
+            node.ptr = func(node.func.caller, *py_args, **keywords)
             return node.ptr
 
         CallTransformer._warn_if_is_external_func(ctx, node)
         # try:
         if True:
-            node.ptr = func(*args, **keywords)
-            arg_id = 0
             if hasattr(func, "wrapper"):
                 _pruning = ctx.global_context.pruning
                 _called_func_id = func.wrapper.func_id
+                print("potentially calling", ast.dump(node.func)[:20], "with args", py_args, "keywords", keywords)
+                print("calling", ast.dump(node.func)[:20], "with args", py_args, "keywords", keywords)
+                if _pruning.enforcing:
+                    called_needed = _pruning.used_parameters_by_func_id[_called_func_id]
+                    print("called_needed", called_needed)
+                    new_args = []
+                    child_arg_id = 0
+                    for i, arg in enumerate(node.args):
+                        print(i, ast.dump(arg)[:50], node.func.ptr.wrapper.arg_metas_expanded[child_arg_id].name)
+                        if hasattr(arg, "id"):
+                            calling_name = arg.id
+                            if calling_name.startswith("__ti_"):
+                                print('calling_name', calling_name)
+                                called_name = node.func.ptr.wrapper.arg_metas_expanded[child_arg_id].name
+                                print('called_name', called_name)
+                                if called_name in called_needed:
+                                    new_args.append(py_args[i])
+                            else:
+                                new_args.append(py_args[i])
+                        else:
+                            new_args.append(py_args[i])
+                        child_arg_id += 1
+                    print('new_args', new_args)
+                    py_args = new_args
+
+            node.ptr = func(*py_args, **keywords)
+            arg_id = 0
+            if hasattr(func, "wrapper"):
+                # _pruning = ctx.global_context.pruning
                 print("_called_func_id", _called_func_id)
                 called_unpruned = _pruning.used_parameters_by_func_id[_called_func_id]
                 to_unprune: set[str] = set()

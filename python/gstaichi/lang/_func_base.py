@@ -263,12 +263,25 @@ class FuncBase:
         )
         return tree, ctx
 
-    def process_args(self, global_context: ASTTransformerGlobalContext, is_pyfunc: bool, is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
+    def process_args(self, global_context: ASTTransformerGlobalContext | None, is_pyfunc: bool, is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
         """
         - for functions, expand dataclass arg_metas
         - fuse incoming args and kwargs into a single list of args
+
+        for kernels, global_context is None. We aren't compiling yet
         """
+        print("process_args", self.func)
+        print("args")
+        for arg in args:
+            print("- ", arg)
+        print("kwargs")
+        for k, v in kwargs.items():
+            print(f"- {k}: {v}")
+        print("arg metas:")
+        for am in self.arg_metas:
+            print("- ", am.name, am.annotation)
         if is_func and not is_pyfunc:
+            print('is func and not pyfunc')
             current_kernel = global_context.current_kernel
             if typing.TYPE_CHECKING:
                 assert current_kernel is not None
@@ -276,23 +289,41 @@ class FuncBase:
             used_by_dataclass_parameters_enforcing = None
             if _pruning.enforcing:
                 used_by_dataclass_parameters_enforcing = global_context.pruning.used_parameters_by_func_id[self.func_id]
+            print("used_by_dataclass_parameters_enforcing", used_by_dataclass_parameters_enforcing)
             self.arg_metas_expanded = _kernel_impl_dataclass.expand_func_arguments(
                 used_by_dataclass_parameters_enforcing,
                 self.arg_metas,
             )
         else:
+            print('kernel')
             self.arg_metas_expanded = list(self.arg_metas)
+        print("arg metas_expanded:")
+        for am in self.arg_metas_expanded:
+            print("- ", am.name, am.annotation)
+
+        arg_metas_pruned = self.arg_metas_expanded
+        if global_context is not None:
+            _pruning = global_context.pruning
+            used_parameters = _pruning.used_parameters_by_func_id[self.func_id]
+            print('global context not none')
+            if _pruning.enforcing:
+                arg_metas_pruned = []
+                print('enforcing')
+                for meta in self.arg_metas_expanded:
+                    if meta.name in used_parameters:
+                        arg_metas_pruned.append(meta)
+        print('arg_metas_pruned', arg_metas_pruned, len(arg_metas_pruned))
 
         num_args = len(args)
-        num_arg_metas = len(self.arg_metas_expanded)
+        num_arg_metas = len(arg_metas_pruned)
         if num_args > num_arg_metas:
             arg_str = ", ".join(map(str, args))
-            expected_str = ", ".join(f"{arg.name} : {arg.annotation}" for arg in self.arg_metas_expanded)
+            expected_str = ", ".join(f"{arg.name} : {arg.annotation}" for arg in arg_metas_pruned)
             msg_l = []
             msg_l.append(f"Too many arguments. Expected ({expected_str}), got ({arg_str}).")
             for i in range(num_args):
                 if i < num_arg_metas:
-                    msg_l.append(f" - {i} arg meta: {self.arg_metas_expanded[i].name} arg type: {type(args[i])}")
+                    msg_l.append(f" - {i} arg meta: {arg_metas_pruned[i].name} arg type: {type(args[i])}")
                 else:
                     msg_l.append(f" - {i} arg meta: <out of arg metas> arg type: {type(args[i])}")
             msg_l.append(f"In function: {self.func}")
@@ -302,11 +333,11 @@ class FuncBase:
         if not (kwargs or num_arg_metas > num_args):
             return args
 
-        fused_args: list[Any] = [*args, *[arg_meta.default for arg_meta in self.arg_metas_expanded[num_args:]]]
+        fused_args: list[Any] = [*args, *[arg_meta.default for arg_meta in arg_metas_pruned[num_args:]]]
         if kwargs:
             num_invalid_kwargs_args = len(kwargs)
             for i in range(num_args, num_arg_metas):
-                arg_meta = self.arg_metas_expanded[i]
+                arg_meta = arg_metas_pruned[i]
                 value = kwargs.get(arg_meta.name, _ARG_EMPTY)
                 if value is not _ARG_EMPTY:
                     fused_args[i] = value
@@ -315,7 +346,7 @@ class FuncBase:
                     raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
             if num_invalid_kwargs_args:
                 for key, value in kwargs.items():
-                    for i, arg_meta in enumerate(self.arg_metas_expanded):
+                    for i, arg_meta in enumerate(arg_metas_pruned):
                         if key == arg_meta.name:
                             if i < num_args:
                                 raise GsTaichiSyntaxError(f"Multiple values for argument '{key}'.")
@@ -325,7 +356,7 @@ class FuncBase:
         else:
             for i in range(num_args, num_arg_metas):
                 if fused_args[i] is _ARG_EMPTY:
-                    arg_meta = self.arg_metas_expanded[i]
+                    arg_meta = arg_metas_pruned[i]
                     raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
 
         return tuple(fused_args)

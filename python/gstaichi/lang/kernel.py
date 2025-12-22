@@ -510,8 +510,8 @@ class Kernel(FuncBase):
         self.raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
 
         runtime = impl.get_runtime()
-        global_context = runtime._current_global_context
-        args = self.process_args(is_func=False, is_pyfunc=False, args=args, kwargs=kwargs, global_context=global_context)
+        # global_context = runtime._current_global_context
+        args = self.process_args(is_func=False, is_pyfunc=False, args=args, kwargs=kwargs, global_context=None)
 
         # Transform the primal kernel to forward mode grad kernel
         # then recover to primal when exiting the forward mode manager
