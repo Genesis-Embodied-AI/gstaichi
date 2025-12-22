@@ -222,6 +222,8 @@ class CallTransformer:
         """
         kwargs_new = []
         added_kwargs = []
+        _pruning = ctx.global_context.pruning
+        func_id = ctx.func.func_id
         for i, kwarg in enumerate(kwargs):
             val = kwarg.ptr[kwarg.arg]
             if dataclasses.is_dataclass(val):
@@ -229,8 +231,10 @@ class CallTransformer:
                 for field in dataclasses.fields(dataclass_type):
                     src_name = create_flat_name(kwarg.value.id, field.name)
                     child_name = create_flat_name(kwarg.arg, field.name)
-                    if ctx.enforcing_dataclass_parameters and child_name not in ctx.func.used_py_dataclass_parameters_enforcing:
+                    if _pruning.enforcing and child_name not in _pruning.used_parameters_by_func_id[func_id]:
                         continue
+                    # if ctx.enforcing_dataclass_parameters and child_name not in ctx.func.used_py_dataclass_parameters_enforcing:
+                    #     continue
                     load_ctx = ast.Load()
                     src_node = ast.Name(
                         id=src_name,
