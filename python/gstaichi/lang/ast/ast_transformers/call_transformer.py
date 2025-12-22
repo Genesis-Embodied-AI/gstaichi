@@ -21,7 +21,7 @@ from gstaichi.lang import (
 from gstaichi.lang import ops as ti_ops
 from gstaichi.lang._dataclass_util import create_flat_name
 from gstaichi.lang.ast.ast_transformer_utils import (
-    ASTTransformerContext,
+    ASTTransformerFuncContext,
     get_decorator,
 )
 from gstaichi.lang.exception import (
@@ -36,7 +36,7 @@ from gstaichi.types import primitive_types
 
 class CallTransformer:
     @staticmethod
-    def _build_call_if_is_builtin(ctx: ASTTransformerContext, node, args, keywords):
+    def _build_call_if_is_builtin(ctx: ASTTransformerFuncContext, node, args, keywords):
         from gstaichi.lang import matrix_ops  # pylint: disable=C0415
 
         func = node.func.ptr
@@ -66,7 +66,7 @@ class CallTransformer:
         return False
 
     @staticmethod
-    def _build_call_if_is_type(ctx: ASTTransformerContext, node, args, keywords):
+    def _build_call_if_is_type(ctx: ASTTransformerFuncContext, node, args, keywords):
         func = node.func.ptr
         if id(func) in primitive_types.type_ids:
             if len(args) != 1 or keywords:
@@ -84,7 +84,7 @@ class CallTransformer:
         return False
 
     @staticmethod
-    def _is_external_func(ctx: ASTTransformerContext, func) -> bool:
+    def _is_external_func(ctx: ASTTransformerFuncContext, func) -> bool:
         if ctx.is_in_static_scope():  # allow external function in static scope
             return False
         if hasattr(func, "_is_gstaichi_function") or hasattr(func, "_is_wrapped_kernel"):  # gstaichi func/kernel
@@ -94,7 +94,7 @@ class CallTransformer:
         return True
 
     @staticmethod
-    def _warn_if_is_external_func(ctx: ASTTransformerContext, node):
+    def _warn_if_is_external_func(ctx: ASTTransformerFuncContext, node):
         func = node.func.ptr
         if not CallTransformer._is_external_func(ctx, func):
             return
@@ -167,7 +167,7 @@ class CallTransformer:
 
     @staticmethod
     def _expand_Call_dataclass_args(
-        ctx: ASTTransformerContext, args: tuple[ast.stmt, ...]
+        ctx: ASTTransformerFuncContext, args: tuple[ast.stmt, ...]
     ) -> tuple[tuple[ast.stmt, ...], tuple[ast.stmt, ...]]:
         """
         We require that each node has a .ptr attribute added to it, that contains
@@ -209,7 +209,7 @@ class CallTransformer:
 
     @staticmethod
     def _expand_Call_dataclass_kwargs(
-        ctx: ASTTransformerContext, kwargs: list[ast.keyword]
+        ctx: ASTTransformerFuncContext, kwargs: list[ast.keyword]
     ) -> tuple[list[ast.keyword], list[ast.keyword]]:
         """
         We require that each node has a .ptr attribute added to it, that contains
@@ -257,7 +257,7 @@ class CallTransformer:
         return added_kwargs, kwargs_new
 
     @staticmethod
-    def build_Call(ctx: ASTTransformerContext, node: ast.Call, build_stmt, build_stmts) -> Any | None:
+    def build_Call(ctx: ASTTransformerFuncContext, node: ast.Call, build_stmt, build_stmts) -> Any | None:
         """
         example ast:
         Call(func=Name(id='f2', ctx=Load()), args=[Name(id='my_struct_ab', ctx=Load())], keywords=[])
