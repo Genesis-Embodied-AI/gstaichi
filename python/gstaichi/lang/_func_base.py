@@ -23,6 +23,7 @@ from gstaichi.lang import _kernel_impl_dataclass, impl
 from gstaichi.lang._ndarray import Ndarray
 from gstaichi.lang._wrap_inspect import get_source_info_and_src
 from gstaichi.lang.ast import ASTTransformerFuncContext
+from .ast.ast_transformer_utils import ASTTransformerGlobalContext
 from gstaichi.lang.exception import (
     GsTaichiRuntimeError,
     GsTaichiRuntimeTypeError,
@@ -77,7 +78,7 @@ class FuncBase:
         self.arg_metas_expanded: list[ArgMetadata] = []
         self.orig_arguments: list[ArgMetadata] = []
         self.return_type = None
-        self.current_kernel: "Kernel | None" = None
+        # self.current_kernel: "Kernel | None" = None
 
         self.check_parameter_annotations()
 
@@ -205,11 +206,20 @@ class FuncBase:
         func_body = tree.body[0]
         func_body.decorator_list = []  # type: ignore , kick that can down the road...
 
+        runtime = impl.get_runtime()
+
         if current_kernel is not None:  # Kernel
             current_kernel.kernel_function_info = function_source_info
-        if current_kernel is None:
-            current_kernel = impl.get_runtime()._current_kernel
+            global_context = ASTTransformerGlobalContext(current_kernel=current_kernel)
+            runtime._current_global_context = global_context
+        else: # Func
+            # current_kernel = runtime._current_kernel
+            global_context = runtime._current_global_context
+            assert global_context is not None
+            current_kernel = global_context.current_kernel
+
         assert current_kernel is not None
+        assert global_context is not None
         current_kernel.visited_functions.add(function_source_info)
 
         autodiff_mode = current_kernel.autodiff_mode
@@ -233,6 +243,7 @@ class FuncBase:
         args_instance_key = current_kernel.currently_compiling_materialize_key
         assert args_instance_key is not None
         ctx = ASTTransformerFuncContext(
+            global_context=runtime._current_global_context,
             template_slot_locations=template_slot_locations,
             is_kernel=is_kernel,
             is_pure=is_pure,
@@ -257,13 +268,13 @@ class FuncBase:
         )
         return tree, ctx
 
-    def process_args(self, is_pyfunc: bool, is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
+    def process_args(self, global_context: ASTTransformerGlobalContext, is_pyfunc: bool, is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
         """
         - for functions, expand dataclass arg_metas
         - fuse incoming args and kwargs into a single list of args
         """
         if is_func and not is_pyfunc:
-            current_kernel = self.current_kernel
+            current_kernel = global_context.current_kernel
             if typing.TYPE_CHECKING:
                 assert current_kernel is not None
             currently_compiling_materialize_key = current_kernel.currently_compiling_materialize_key

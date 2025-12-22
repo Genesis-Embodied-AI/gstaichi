@@ -190,7 +190,7 @@ class ASTGenerator:
         self.current_kernel.kernel_cpp = kernel_cxx
         ctx = self.ctx
         self.runtime.inside_kernel = True
-        self.runtime._current_kernel = self.current_kernel
+        # self.runtime._current_kernel = self.current_kernel
         assert self.runtime._compiling_callable is None
         self.runtime._compiling_callable = kernel_cxx
         try:
@@ -209,7 +209,9 @@ class ASTGenerator:
                     raise GsTaichiSyntaxError("Kernel has a return type but does not have a return statement")
         finally:
             self.current_kernel.runtime.inside_kernel = False
-            self.current_kernel.runtime._current_kernel = None
+            self.runtime._current_global_context = None
+            # self.current_kernel.runtime._current_kernel = None
+            # self.current_kernel
             self.current_kernel.runtime._compiling_callable = None
 
     def _dump_ast(self) -> None:
@@ -559,7 +561,9 @@ class Kernel(FuncBase):
     def __call__(self, *args, **kwargs) -> Any:
         self.raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
 
-        args = self.process_args(is_func=False, is_pyfunc=False, args=args, kwargs=kwargs)
+        runtime = impl.get_runtime()
+        global_context = runtime._current_global_context
+        args = self.process_args(is_func=False, is_pyfunc=False, args=args, kwargs=kwargs, global_context=global_context)
 
         # Transform the primal kernel to forward mode grad kernel
         # then recover to primal when exiting the forward mode manager

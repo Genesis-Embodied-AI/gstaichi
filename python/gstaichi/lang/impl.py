@@ -72,6 +72,7 @@ from gstaichi.types.primitive_types import (
 
 if TYPE_CHECKING:
     from gstaichi.lang._ndarray import Ndarray
+    from .ast.ast_transformer_utils import ASTTransformerGlobalContext
 
 
 @gstaichi_scope
@@ -343,7 +344,8 @@ class PyGsTaichi:
         self.src_info_stack = []
         self.inside_kernel: bool = False
         self._compiling_callable: KernelCxx | Kernel | Function | None = None
-        self._current_kernel: "Kernel | None" = None
+        self._current_global_context: "ASTTransformerGlobalContext | None" = None
+        # self._current_kernel: "Kernel | None" = None
         self.global_vars = []
         self.grad_vars = []
         self.dual_vars = []
@@ -378,13 +380,13 @@ class PyGsTaichi:
             raise GsTaichiRuntimeError("_prog attribute not initialized. Maybe you forgot to call `ti.init()` first?")
         return self._prog
 
-    @property
-    def current_kernel(self) -> Kernel:
-        if self._current_kernel is None:
-            raise GsTaichiRuntimeError(
-                "_current_kernel attribute not initialized. Maybe you forgot to call `ti.init()` first?"
-            )
-        return self._current_kernel
+    # @property
+    # def current_kernel(self) -> Kernel:
+    #     if self._current_kernel is None:
+    #         raise GsTaichiRuntimeError(
+    #             "_current_kernel attribute not initialized. Maybe you forgot to call `ti.init()` first?"
+    #         )
+    #     return self._current_kernel
 
     def initialize_fields_builder(self, builder):
         self.unfinalized_fields_builder[builder] = get_traceback(2)
