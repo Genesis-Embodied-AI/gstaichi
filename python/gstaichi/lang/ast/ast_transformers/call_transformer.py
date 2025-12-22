@@ -9,7 +9,7 @@ import re
 import warnings
 from ast import unparse
 from collections import ChainMap
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 
@@ -32,6 +32,7 @@ from gstaichi.lang.expr import Expr
 from gstaichi.lang.matrix import Matrix, Vector
 from gstaichi.lang.util import is_gstaichi_class
 from gstaichi.types import primitive_types
+from ...kernel_arguments import ArgMetadata
 
 
 class CallTransformer:
@@ -353,13 +354,27 @@ class CallTransformer:
                     print("called_needed", called_needed)
                     new_args = []
                     child_arg_id = 0
+                    child_metas: list[ArgMetadata] = node.func.ptr.wrapper.arg_metas_expanded
+                    # child_metas: list[ArgMetadata] = cast(ArgMetadata, node.func.ptr.wrapper.arg_metas_expanded)
+                    child_metas_pruned = []
+                    for _child in child_metas:
+                        print('child.name', _child.name)
+                        if _child.name.startswith("__ti_"):
+                            if _child.name in called_needed:
+                                print("in called needed")
+                                child_metas_pruned.append(_child)
+                        else:
+                            print('not ti')
+                            child_metas_pruned.append(_child)
+                    print("child_metas_pruned", [c.name for c in child_metas_pruned])
+                    child_metas = child_metas_pruned
                     for i, arg in enumerate(node.args):
-                        print(i, ast.dump(arg)[:50], node.func.ptr.wrapper.arg_metas_expanded[child_arg_id].name)
+                        print(i, ast.dump(arg)[:50], child_metas[child_arg_id].name)
                         if hasattr(arg, "id"):
                             calling_name = arg.id
                             if calling_name.startswith("__ti_"):
                                 print('calling_name', calling_name)
-                                called_name = node.func.ptr.wrapper.arg_metas_expanded[child_arg_id].name
+                                called_name = child_metas[child_arg_id].name
                                 print('called_name', called_name)
                                 if called_name in called_needed:
                                     new_args.append(py_args[i])
