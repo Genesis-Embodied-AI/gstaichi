@@ -348,7 +348,6 @@ class CallTransformer:
                 _pruning = ctx.global_context.pruning
                 _called_func_id = func.wrapper.func_id
                 print("potentially calling", ast.dump(node.func)[:20], "with args", py_args, "keywords", keywords)
-                print("calling", ast.dump(node.func)[:20], "with args", py_args, "keywords", keywords)
                 if _pruning.enforcing:
                     called_needed = _pruning.used_parameters_by_func_id[_called_func_id]
                     print("called_needed", called_needed)
@@ -372,34 +371,36 @@ class CallTransformer:
                     print('new_args', new_args)
                     py_args = new_args
 
+                print("calling", ast.dump(node.func)[:20], "with args", py_args, "keywords", keywords)
             node.ptr = func(*py_args, **keywords)
             arg_id = 0
             if hasattr(func, "wrapper"):
-                # _pruning = ctx.global_context.pruning
-                print("_called_func_id", _called_func_id)
-                called_unpruned = _pruning.used_parameters_by_func_id[_called_func_id]
-                to_unprune: set[str] = set()
-                for i, arg in enumerate(node.args):
-                    print(i, ast.dump(arg)[:50], node.func.ptr.wrapper.arg_metas_expanded[arg_id].name)
-                    if hasattr(arg, "id"):
-                        calling_name = arg.id
+                if not _pruning.enforcing:
+                    # _pruning = ctx.global_context.pruning
+                    print("_called_func_id", _called_func_id)
+                    called_unpruned = _pruning.used_parameters_by_func_id[_called_func_id]
+                    to_unprune: set[str] = set()
+                    for i, arg in enumerate(node.args):
+                        print(i, ast.dump(arg)[:50], node.func.ptr.wrapper.arg_metas_expanded[arg_id].name)
+                        if hasattr(arg, "id"):
+                            calling_name = arg.id
+                            called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
+                            if called_name in called_unpruned:
+                                # print('caller unprune', calling_name)
+                                to_unprune.add(calling_name)
+                        arg_id += 1
+                    # print("kwargs")
+                    for i, arg in enumerate(node.keywords):
+                        # print(i, "calling arg", ast.dump(arg)[:100], "arg meta", node.func.ptr.wrapper.arg_metas_expanded[arg_id].name)
+                        calling_name = arg.value.id
                         called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
                         if called_name in called_unpruned:
                             # print('caller unprune', calling_name)
                             to_unprune.add(calling_name)
-                    arg_id += 1
-                # print("kwargs")
-                for i, arg in enumerate(node.keywords):
-                    # print(i, "calling arg", ast.dump(arg)[:100], "arg meta", node.func.ptr.wrapper.arg_metas_expanded[arg_id].name)
-                    calling_name = arg.value.id
-                    called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
-                    if called_name in called_unpruned:
-                        # print('caller unprune', calling_name)
-                        to_unprune.add(calling_name)
-                    arg_id += 1
-                print("to_unprune", ctx.func.func, to_unprune)
-                _pruning = ctx.global_context.pruning
-                if not _pruning.enforcing:
+                        arg_id += 1
+                    print("to_unprune", ctx.func.func, to_unprune)
+                    _pruning = ctx.global_context.pruning
+                    # if not _pruning.enforcing:
                     _pruning.used_parameters_by_func_id[ctx.func.func_id].update(to_unprune)
         # except TypeError as e:
         #     module = inspect.getmodule(func)

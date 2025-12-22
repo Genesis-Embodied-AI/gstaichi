@@ -302,16 +302,16 @@ class FuncBase:
             print("- ", am.name, am.annotation)
 
         arg_metas_pruned = self.arg_metas_expanded
-        if global_context is not None:
-            _pruning = global_context.pruning
-            used_parameters = _pruning.used_parameters_by_func_id[self.func_id]
-            print('global context not none')
-            if _pruning.enforcing:
-                arg_metas_pruned = []
-                print('enforcing')
-                for meta in self.arg_metas_expanded:
-                    if meta.name in used_parameters:
-                        arg_metas_pruned.append(meta)
+        # if global_context is not None:
+        #     _pruning = global_context.pruning
+        #     used_parameters = _pruning.used_parameters_by_func_id[self.func_id]
+        #     print('global context not none')
+        #     if _pruning.enforcing:
+        #         arg_metas_pruned = []
+        #         print('enforcing')
+        #         for meta in self.arg_metas_expanded:
+        #             if not meta.name.startswith("__ti_") or meta.name in used_parameters:
+        #                 arg_metas_pruned.append(meta)
         print('arg_metas_pruned', arg_metas_pruned, len(arg_metas_pruned))
 
         num_args = len(args)
