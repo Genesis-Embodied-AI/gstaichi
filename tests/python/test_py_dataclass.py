@@ -1599,27 +1599,37 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
         _f1_with_flag: ti.types.NDArray[ti.f32, 2]
         _unused: ti.types.NDArray[ti.f32, 2]
 
-    my_struct = MyStruct(
-        _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
-        _f1_no_flag=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
-        _f1_with_flag=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
-        _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
-    )
+    def make_struct():
+        my_struct = MyStruct(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1_no_flag=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1_with_flag=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct
 
     @ti.func
     def f1(flag: ti.template(), struct_f1: MyStruct):
         if ti.static(flag):
-            struct_f1._f1_with_flag[0, 0]
+            struct_f1._f1_with_flag[0, 0] = 101
         else:
-            struct_f1._f1_no_flag[0, 0]
+            struct_f1._f1_no_flag[0, 0] = 102
 
     @ti.kernel
     def k1(flag: ti.Template, struct_k1: MyStruct):
-        struct_k1._k1[0, 0]
+        struct_k1._k1[0, 0] = 100
         f1(flag, struct_k1)
 
     print("-----------------")
+    my_struct = make_struct()
     k1(False, my_struct)
+    assert my_struct._f1_with_flag == 101
+    assert my_struct._k1 == 100
+    assert my_struct._f1_no_flag == 0
     print("-----------------")
+    my_struct = make_struct()
     k1(True, my_struct)
+    assert my_struct._f1_with_flag == 0
+    assert my_struct._k1 == 100
+    assert my_struct._f1_no_flag == 102
     print("-----------------")
