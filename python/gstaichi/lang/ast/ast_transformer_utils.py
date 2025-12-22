@@ -185,7 +185,7 @@ class ASTTransformerContext:
         global_vars: dict[str, Any],
         template_vars: dict[str, Any],
         is_pure: bool,
-        argument_data,
+        py_args: tuple[Any, ...],
         file: str,
         src: list[str],
         start_lineno: int,
@@ -212,7 +212,7 @@ class ASTTransformerContext:
         self.global_vars: dict[str, Any] = global_vars
         self.template_vars: dict[str, Any] = template_vars
         self.is_pure: bool = is_pure
-        self.argument_data = argument_data
+        self.py_args: tuple[Any, ...] = py_args
         self.return_data: tuple[Any, ...] | Any | None = None
         self.file: str = file
         self.src: list[str] = src

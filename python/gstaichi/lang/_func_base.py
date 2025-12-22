@@ -240,7 +240,7 @@ class FuncBase:
             arg_features=arg_features,
             global_vars=global_vars,
             template_vars=template_vars,
-            argument_data=args,
+            py_args=args,
             src=src,
             start_lineno=function_source_info.start_lineno,
             end_lineno=function_source_info.end_lineno,
