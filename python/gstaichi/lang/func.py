@@ -103,7 +103,7 @@ class Func(FuncBase):
             py_args=args,
             ast_builder=current_kernel.ast_builder(),
             is_real_function=self.is_real_function,
-            enforcing_dataclass_parameters=current_kernel.enforcing_dataclass_parameters,
+            # enforcing_dataclass_parameters=current_kernel.enforcing_dataclass_parameters,
             # used_py_dataclass_parameters_enforcing=used_by_dataclass_parameters_enforcing,
         )
 

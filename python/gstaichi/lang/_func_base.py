@@ -192,7 +192,7 @@ class FuncBase:
     def get_tree_and_ctx(
         self,
         py_args: tuple[Any, ...],
-        enforcing_dataclass_parameters: bool,
+        # enforcing_dataclass_parameters: bool,
         # used_py_dataclass_parameters_enforcing: set[str] | None,
         template_slot_locations=(),
         is_kernel: bool = True,
@@ -269,7 +269,7 @@ class FuncBase:
             #     args_instance_key
             # ],
             # used_py_dataclass_parameters_enforcing=used_py_dataclass_parameters_enforcing,
-            enforcing_dataclass_parameters=enforcing_dataclass_parameters,
+            # enforcing_dataclass_parameters=enforcing_dataclass_parameters,
         )
         return tree, ctx
 
@@ -282,11 +282,15 @@ class FuncBase:
             current_kernel = global_context.current_kernel
             if typing.TYPE_CHECKING:
                 assert current_kernel is not None
-            currently_compiling_materialize_key = current_kernel.currently_compiling_materialize_key
-            if typing.TYPE_CHECKING:
-                assert currently_compiling_materialize_key is not None
+            # currently_compiling_materialize_key = current_kernel.currently_compiling_materialize_key
+            # if typing.TYPE_CHECKING:
+            #     assert currently_compiling_materialize_key is not None
+            _pruning = global_context.pruning
+            used_by_dataclass_parameters_enforcing = None
+            if _pruning.enforcing:
+                used_by_dataclass_parameters_enforcing = global_context.pruning.used_parameters_by_func_id[self.func_id]
             self.arg_metas_expanded = _kernel_impl_dataclass.expand_func_arguments(
-                current_kernel.used_py_dataclass_parameters_by_key_enforcing.get(currently_compiling_materialize_key),
+                used_by_dataclass_parameters_enforcing,
                 self.arg_metas,
             )
         else:

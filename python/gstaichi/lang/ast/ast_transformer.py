@@ -77,8 +77,9 @@ class ASTTransformer(Builder):
     @staticmethod
     def build_Name(ctx: ASTTransformerFuncContext, node: ast.Name):
         # print("build_Name", ast.dump(node), "expanding_dataclass_call_parameters", ctx.expanding_dataclass_call_parameters)
+        _pruning = ctx.global_context.pruning
         if (
-            not ctx.enforcing_dataclass_parameters
+            not _pruning.enforcing
             and not ctx.expanding_dataclass_call_parameters
             and node.id.startswith("__ti_")
         ):

@@ -201,7 +201,7 @@ class ASTTransformerFuncContext:
         is_real_function: bool,
         autodiff_mode: AutodiffMode,
         raise_on_templated_floats: bool,
-        enforcing_dataclass_parameters: bool,
+        # enforcing_dataclass_parameters: bool,
         # during 1st pass, we collect the names of used parameters
         # used_py_dataclass_parameters_collecting: set[str],
         # during 2nd pass, we only handle these names
@@ -249,7 +249,7 @@ class ASTTransformerFuncContext:
         # self.used_py_dataclass_parameters_collecting = used_py_dataclass_parameters_collecting
         # self.used_py_dataclass_parameters_collecting: set[str] = set()
         # self.used_py_dataclass_parameters_enforcing = used_py_dataclass_parameters_enforcing
-        self.enforcing_dataclass_parameters: bool = enforcing_dataclass_parameters
+        # self.enforcing_dataclass_parameters: bool = enforcing_dataclass_parameters
         self.expanding_dataclass_call_parameters: bool = False
 
         self.adstack_enabled: bool = (

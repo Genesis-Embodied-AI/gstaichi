@@ -175,6 +175,8 @@ class CallTransformer:
         """
         args_new = []
         added_args = []
+        _pruning = ctx.global_context.pruning
+        func_id = ctx.func.func_id
         for arg in args:
             val = arg.ptr
             if dataclasses.is_dataclass(val):
@@ -184,7 +186,7 @@ class CallTransformer:
                         child_name = create_flat_name(arg.id, field.name)
                     except Exception as e:
                         raise RuntimeError(f"Exception whilst processing {field.name} in {type(dataclass_type)}") from e
-                    if ctx.enforcing_dataclass_parameters and child_name not in ctx.func.used_py_dataclass_parameters:
+                    if _pruning.enforcing and child_name not in _pruning.used_parameters_by_func_id[func_id]:
                         continue
                     load_ctx = ast.Load()
                     arg_node = ast.Name(
@@ -342,7 +344,7 @@ class CallTransformer:
         CallTransformer._warn_if_is_external_func(ctx, node)
         # try:
         if True:
-            parent_params = ctx.func.used_py_dataclass_parameters_collecting
+            # parent_params = ctx.func.used_py_dataclass_parameters_collecting
             node.ptr = func(*args, **keywords)
             arg_id = 0
             if hasattr(func, "wrapper"):
@@ -368,8 +370,9 @@ class CallTransformer:
                     arg_id += 1
                 print("to_unprune", ctx.func.func, to_unprune)
                 # ctx.used_py_dataclass_parameters_enforcing
-                if not ctx.enforcing_dataclass_parameters:
-                    ctx.func.used_py_dataclass_parameters_collecting.update(to_unprune)
+                _pruning = ctx.global_context.pruning
+                if not _pruning.enforcing:
+                    _pruning.used_parameters_by_func_id[ctx.func.func_id].update(to_unprune)
                 # print("updated ctx.func.used_py_dataclass_parameters", ctx.func.used_py_dataclass_parameters)
             # print("ctx.used_py_dataclass_parameters_collecting", ctx.used_py_dataclass_parameters_collecting)
             # print("build_Call node.func.ptr.wrapper.arg_metas_expanded  ", node.func.ptr.wrapper.arg_metas_expanded)
