@@ -53,8 +53,6 @@ class Func(FuncBase):
         self.is_real_function = is_real_function
         self.cxx_function_by_id: dict[int, FunctionCxx] = {}
         self.has_print = False
-        # Used during compilation. Assumes only one compilation at a time (single-threaded).
-        self.current_kernel: Kernel | None = None
         # enforcing_dataclass_parameters
         # Used during compilation. Assumes only one compilation at a time (single-threaded).
         # Value invalid outside of kernel compilation.
