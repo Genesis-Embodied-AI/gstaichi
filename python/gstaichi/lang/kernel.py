@@ -281,6 +281,15 @@ class Kernel(FuncBase):
         self.compiled_kernel_data_by_key: dict[CompiledKernelKeyType, CompiledKernelData] = {}
         self._last_compiled_kernel_data: CompiledKernelData | None = None  # for dev/debug
 
+        # next two parameters are ONLY used at kernel launch time,
+        # NOT for compilation. (for compilation, global_context.pruning is used).
+        # These parameters here are used to filter args passed into the already-compiled kernel.
+        # used_py_dataclass_parameters_by_key_enforcing will also be serialized with fast cache.
+        # used_py_dataclass_parameters_by_key_enforcing_dotted will be reconstructed on load from
+        # fast cache.
+        self.used_py_dataclass_parameters_by_key_enforcing: dict[CompiledKernelKeyType, set[str]] = {}
+        self.used_py_dataclass_parameters_by_key_enforcing_dotted: dict[CompiledKernelKeyType, set[tuple[str, ...]]] = {}
+
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
         self.fe_ll_cache_observations: FeLlCacheObservations = FeLlCacheObservations()
 
@@ -360,6 +369,7 @@ class Kernel(FuncBase):
                 arg_features=arg_features,
                 current_kernel=self,
                 pruning=pruning,
+                currently_compiling_materialize_key=key,
             )
 
             if self.autodiff_mode != _NONE:
@@ -383,8 +393,12 @@ class Kernel(FuncBase):
                 print("used_py_dataclass_parameters collecting:")
                 for func_id, used_parameters in pruning.used_parameters_by_func_id.items():
                     print(func_id, used_parameters)
-
-    def launch_kernel(self, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
+                # _key = ctx.global_context.currently_compiling_materialize_key
+                self.used_py_dataclass_parameters_by_key_enforcing[key] = pruning.used_parameters_by_func_id[-1]
+                self.used_py_dataclass_parameters_by_key_enforcing_dotted[key] = set(
+                    [tuple(p.split("__ti_")[1:]) for p in self.used_py_dataclass_parameters_by_key_enforcing[key]]
+                )
+    def launch_kernel(self, key, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
         assert len(args) == len(self.arg_metas), f"{len(self.arg_metas)} arguments needed but {len(args)} provided"
 
         callbacks: list[Callable[[], None]] = []
@@ -404,7 +418,7 @@ class Kernel(FuncBase):
                     i_out += 1
                     continue
                 num_args_, is_launch_ctx_cacheable_ = self._recursive_set_args(
-                    used_py_dataclass_parameters_enforcing_dotted,
+                    self.used_py_dataclass_parameters_by_key_enforcing_dotted[key],
                     (self.arg_metas[i_in].name,),
                     launch_ctx,
                     launch_ctx_buffer,
@@ -459,7 +473,7 @@ class Kernel(FuncBase):
                         compile_result.cache_key,
                         self.fast_checksum,
                         self.visited_functions,
-                        self.used_py_dataclass_parameters_by_key_enforcing[self.currently_compiling_materialize_key],
+                        self.used_py_dataclass_parameters_by_key_enforcing[key],
                     )
                     self.src_ll_cache_observations.cache_stored = True
             self._last_compiled_kernel_data = compiled_kernel_data
@@ -509,7 +523,7 @@ class Kernel(FuncBase):
     def __call__(self, *args, **kwargs) -> Any:
         self.raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
 
-        runtime = impl.get_runtime()
+        # runtime = impl.get_runtime()
         # global_context = runtime._current_global_context
         args = self.process_args(is_func=False, is_pyfunc=False, args=args, kwargs=kwargs, global_context=None)
 
@@ -535,7 +549,7 @@ class Kernel(FuncBase):
         key = self.ensure_compiled(*args)
         kernel_cpp = self.materialized_kernels[key]
         compiled_kernel_data = self.compiled_kernel_data_by_key.get(key, None)
-        ret = self.launch_kernel(kernel_cpp, compiled_kernel_data, *args)
+        ret = self.launch_kernel(key, kernel_cpp, compiled_kernel_data, *args)
         if compiled_kernel_data is None:
             assert self._last_compiled_kernel_data is not None
             self.compiled_kernel_data_by_key[key] = self._last_compiled_kernel_data

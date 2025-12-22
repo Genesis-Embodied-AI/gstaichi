@@ -198,6 +198,7 @@ class FuncBase:
         is_real_function: bool = False,
         current_kernel: "Kernel | None" = None,  # has value when called from Kernel.materialize
         pruning: "Pruning | None" = None,  # has value when called from Kernel.materialize
+        currently_compiling_materialize_key = None,  # has value when called from Kernel.materialize
     ) -> tuple[ast.Module, ASTTransformerFuncContext]:
         function_source_info, src = get_source_info_and_src(self.func)
         src = [textwrap.fill(line, tabsize=4, width=9999) for line in src]
@@ -213,7 +214,9 @@ class FuncBase:
             # pruning = Pruning()
             global_context = ASTTransformerGlobalContext(
                 current_kernel=current_kernel,
-                pruning=pruning)
+                pruning=pruning,
+                currently_compiling_materialize_key=currently_compiling_materialize_key
+            )
             runtime._current_global_context = global_context
         else: # Func
             global_context = runtime._current_global_context

@@ -176,9 +176,10 @@ class PureViolation:
 
 
 class ASTTransformerGlobalContext:
-    def __init__(self, current_kernel: "Kernel", pruning: "Pruning") -> None:
+    def __init__(self, current_kernel: "Kernel", pruning: "Pruning", currently_compiling_materialize_key) -> None:
         self.current_kernel: "Kernel" = current_kernel
         self.pruning: "Pruning" = pruning
+        self.currently_compiling_materialize_key = currently_compiling_materialize_key
 
 
 class ASTTransformerFuncContext:
