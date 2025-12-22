@@ -1620,6 +1620,16 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
         struct_k1._k1[0, 0] = 100
         f1(flag, struct_k1)
 
+    # TODO: make sure it only compiles twice: once for False, once for True
+    print("-----------------")
+    my_struct = make_struct()
+    k1(False, my_struct)
+    print("my_struct._k1", my_struct._k1.to_numpy())
+    print("my_struct._f1_with_flag", my_struct._f1_with_flag.to_numpy())
+    print("my_struct._f1_no_flag", my_struct._f1_no_flag.to_numpy())
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1_no_flag[0, 0] == 102
+    assert my_struct._f1_with_flag[0, 0] == 0
     print("-----------------")
     my_struct = make_struct()
     k1(False, my_struct)
@@ -1635,4 +1645,13 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
     assert my_struct._k1[0, 0] == 100
     assert my_struct._f1_no_flag[0, 0] == 0
     assert my_struct._f1_with_flag[0, 0] == 101
+    print("-----------------")
+    my_struct = make_struct()
+    k1(False, my_struct)
+    print("my_struct._k1", my_struct._k1.to_numpy())
+    print("my_struct._f1_with_flag", my_struct._f1_with_flag.to_numpy())
+    print("my_struct._f1_no_flag", my_struct._f1_no_flag.to_numpy())
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1_no_flag[0, 0] == 102
+    assert my_struct._f1_with_flag[0, 0] == 0
     print("-----------------")
