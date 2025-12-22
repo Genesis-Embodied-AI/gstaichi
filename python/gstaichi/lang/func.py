@@ -55,6 +55,16 @@ class Func(FuncBase):
         self.has_print = False
         # Used during compilation. Assumes only one compilation at a time (single-threaded).
         self.current_kernel: Kernel | None = None
+        # enforcing_dataclass_parameters
+        # Used during compilation. Assumes only one compilation at a time (single-threaded).
+        # Value invalid outside of kernel compilation.
+        # Note that we assume that if a single function is called multiple times during a
+        # specific kernel compilation, then the used py dataclass parameters are invariant
+        # across those calls.
+        self.used_py_dataclass_parameters_collecting: set[str] = set()
+        # self.used_py_dataclass_parameters_enforcing: None | set[str] = None
+        # self.used_py_dataclass_parameters_with_prefixes: set[str] = set()
+        self.used_py_dataclass_parameters_enforcing: set[str] | None = None
 
     def __call__(self: "Func", *args, **kwargs) -> Any:
         self.current_kernel = impl.get_runtime().current_kernel if impl.inside_kernel() else None
@@ -79,15 +89,17 @@ class Func(FuncBase):
             return self.func_call_rvalue(key=key, args=args)
         current_args_key = self.current_kernel.currently_compiling_materialize_key
         assert current_args_key is not None
-        used_by_dataclass_parameters_enforcing = self.current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(
-            current_args_key
-        )
+        # used_by_dataclass_parameters_enforcing = self.current_kernel.used_py_dataclass_parameters_by_key_enforcing.get(
+        #     current_args_key
+        # )
+
         tree, ctx = self.get_tree_and_ctx(
             is_kernel=False,
             args=args,
             ast_builder=self.current_kernel.ast_builder(),
             is_real_function=self.is_real_function,
-            used_py_dataclass_parameters_enforcing=used_by_dataclass_parameters_enforcing,
+            enforcing_dataclass_parameters=self.current_kernel.enforcing_dataclass_parameters,
+            # used_py_dataclass_parameters_enforcing=used_by_dataclass_parameters_enforcing,
         )
 
         struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
