@@ -525,12 +525,12 @@ class Kernel(FuncBase):
     # For small kernels (< 3us), the performance can be pretty sensitive to overhead in __call__
     # Thus this part needs to be fast. (i.e. < 3us on a 4 GHz x64 CPU)
     @_shell_pop_print
-    def __call__(self, *args, **kwargs) -> Any:
+    def __call__(self, *py_args, **kwargs) -> Any:
         self.raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
 
         # runtime = impl.get_runtime()
         # global_context = runtime._current_global_context
-        args = self.process_args(is_func=False, is_pyfunc=False, args=args, kwargs=kwargs, global_context=None)
+        py_args = self.process_args(is_func=False, is_pyfunc=False, py_args=py_args, kwargs=kwargs, global_context=None)
 
         # Transform the primal kernel to forward mode grad kernel
         # then recover to primal when exiting the forward mode manager
@@ -546,15 +546,15 @@ class Kernel(FuncBase):
 
         # No need to capture grad kernels because they are already bound with their primal kernels
         if self.autodiff_mode in (_NONE, _VALIDATION) and self.runtime.target_tape and not self.runtime.grad_replaced:
-            self.runtime.target_tape.insert(self, args)
+            self.runtime.target_tape.insert(self, py_args)
 
         if self.autodiff_mode != _NONE and impl.current_cfg().opt_level == 0:
             _logging.warn("""opt_level = 1 is enforced to enable gradient computation.""")
             impl.current_cfg().opt_level = 1
-        key = self.ensure_compiled(*args)
+        key = self.ensure_compiled(*py_args)
         kernel_cpp = self.materialized_kernels[key]
         compiled_kernel_data = self.compiled_kernel_data_by_key.get(key, None)
-        ret = self.launch_kernel(key, kernel_cpp, compiled_kernel_data, *args)
+        ret = self.launch_kernel(key, kernel_cpp, compiled_kernel_data, *py_args)
         if compiled_kernel_data is None:
             assert self._last_compiled_kernel_data is not None
             self.compiled_kernel_data_by_key[key] = self._last_compiled_kernel_data

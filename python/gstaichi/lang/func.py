@@ -54,29 +54,29 @@ class Func(FuncBase):
         self.cxx_function_by_id: dict[int, FunctionCxx] = {}
         self.has_print = False
 
-    def __call__(self: "Func", *args, **kwargs) -> Any:
+    def __call__(self: "Func", *py_args, **kwargs) -> Any:
         runtime = impl.get_runtime()
         global_context = runtime._current_global_context
         current_kernel = global_context.current_kernel if global_context is not None else None
-        args = self.process_args(is_func=True, is_pyfunc=self.pyfunc, args=args, kwargs=kwargs, global_context=global_context)
+        py_args = self.process_args(is_func=True, is_pyfunc=self.pyfunc, py_args=py_args, kwargs=kwargs, global_context=global_context)
 
         if not impl.inside_kernel():
             if not self.pyfunc:
                 raise GsTaichiSyntaxError("GsTaichi functions cannot be called from Python-scope.")
-            return self.func(*args)
+            return self.func(*py_args)
 
         if self.is_real_function:
             if self.current_kernel.autodiff_mode != _NONE:
                 raise GsTaichiSyntaxError("Real function in gradient kernels unsupported.")
-            instance_id, arg_features = self.mapper.lookup(impl.current_cfg().raise_on_templated_floats, args)
+            instance_id, arg_features = self.mapper.lookup(impl.current_cfg().raise_on_templated_floats, py_args)
             key = FunctionKey(self.func.__name__, self.func_id, instance_id)
             if key.instance_id not in self.compiled:
-                self.do_compile(key=key, args=args, arg_features=arg_features)
-            return self.func_call_rvalue(key=key, args=args)
+                self.do_compile(key=key, args=py_args, arg_features=arg_features)
+            return self.func_call_rvalue(key=key, args=py_args)
 
         tree, ctx = self.get_tree_and_ctx(
             is_kernel=False,
-            py_args=args,
+            py_args=py_args,
             ast_builder=current_kernel.ast_builder(),
             is_real_function=self.is_real_function,
         )

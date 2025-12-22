@@ -265,7 +265,7 @@ class FuncBase:
         )
         return tree, ctx
 
-    def process_args(self, global_context: ASTTransformerGlobalContext | None, is_pyfunc: bool, is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
+    def process_args(self, global_context: ASTTransformerGlobalContext | None, is_pyfunc: bool, is_func: bool, py_args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
         """
         - for functions, expand dataclass arg_metas
         - fuse incoming args and kwargs into a single list of args
@@ -274,7 +274,7 @@ class FuncBase:
         """
         print("process_args", self.func)
         print("args")
-        for arg in args:
+        for arg in py_args:
             print("- ", arg)
         print("kwargs")
         for k, v in kwargs.items():
@@ -316,28 +316,28 @@ class FuncBase:
         #                 arg_metas_pruned.append(meta)
         print('arg_metas_pruned', arg_metas_pruned, len(arg_metas_pruned))
 
-        num_args = len(args)
+        num_args = len(py_args)
         num_arg_metas = len(arg_metas_pruned)
         if num_args > num_arg_metas:
-            arg_str = ", ".join(map(str, args))
+            arg_str = ", ".join(map(str, py_args))
             expected_str = ", ".join(f"{arg.name} : {arg.annotation}" for arg in arg_metas_pruned)
             msg_l = []
             msg_l.append(f"Too many arguments. Expected ({expected_str}), got ({arg_str}).")
             for i in range(num_args):
                 if i < num_arg_metas:
-                    msg_l.append(f" - {i} arg meta: {arg_metas_pruned[i].name} arg type: {type(args[i])}")
+                    msg_l.append(f" - {i} arg meta: {arg_metas_pruned[i].name} arg type: {type(py_args[i])}")
                 else:
-                    msg_l.append(f" - {i} arg meta: <out of arg metas> arg type: {type(args[i])}")
+                    msg_l.append(f" - {i} arg meta: <out of arg metas> arg type: {type(py_args[i])}")
             msg_l.append(f"In function: {self.func}")
             raise GsTaichiSyntaxError("\n".join(msg_l))
 
         # Early return without further processing if possible for efficiency. This is by far the most common scenario.
         if not (kwargs or num_arg_metas > num_args):
-            return args
+            return py_args
 
         print("num_args", num_args, "num_arg_metas", num_arg_metas)
 
-        fused_args: list[Any] = [*args, *[arg_meta.default for arg_meta in arg_metas_pruned[num_args:]]]
+        fused_args: list[Any] = [*py_args, *[arg_meta.default for arg_meta in arg_metas_pruned[num_args:]]]
         if kwargs:
             num_invalid_kwargs_args = len(kwargs)
             for i in range(num_args, num_arg_metas):
