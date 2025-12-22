@@ -54,6 +54,8 @@ from ._kernel_types import (
     LaunchStats,
     SrcLlCacheObservations,
 )
+from ._pruning import Pruning
+
 
 # Define proxies for fast lookup
 _NONE, _VALIDATION = AutodiffMode.NONE, AutodiffMode.VALIDATION
@@ -384,6 +386,7 @@ class Kernel(FuncBase):
         kernel_name = f"{self.func.__name__}_c{self.kernel_counter}_{key[1]}"
         _logging.trace(f"Materializing kernel {kernel_name} in {self.autodiff_mode}...")
 
+        pruning = Pruning()
         range_begin = 0 if used_py_dataclass_parameters is None else 1
         for _pass in range(range_begin, 2):
             print("===================== pass", _pass)
@@ -408,6 +411,7 @@ class Kernel(FuncBase):
                 template_slot_locations=self.template_slot_locations,
                 arg_features=arg_features,
                 current_kernel=self,
+                pruning=pruning,
                 # enforcing_dataclass_parameters=enforcing_dataclass_parameters,
                 # used_py_dataclass_parameters_enforcing=used_py_dataclass_parameters_by_key_enforcing,
             )
