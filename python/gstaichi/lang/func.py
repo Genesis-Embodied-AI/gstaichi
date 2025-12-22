@@ -1,6 +1,9 @@
 from typing import TYPE_CHECKING, Any, Callable
 
 from gstaichi._lib import core as _ti_core
+from gstaichi._lib.core.gstaichi_python import (
+    Function as FunctionCxx,
+)
 from gstaichi._lib.core.gstaichi_python import FunctionKey
 from gstaichi.lang import _kernel_impl_dataclass, impl, ops
 from gstaichi.lang.any_array import AnyArray
@@ -27,8 +30,7 @@ from ._func_base import FuncBase
 if TYPE_CHECKING:
     from .kernel import Kernel
 
-
-# Define proxies for fast lookup
+# Define proxy for fast lookup
 _NONE = AutodiffMode.NONE
 
 
@@ -38,19 +40,20 @@ class Func(FuncBase):
     def __init__(self, _func: Callable, _classfunc=False, _pyfunc=False, is_real_function=False) -> None:
         super().__init__(
             func=_func,
-            classfunc=_classfunc,
+            is_classfunc=_classfunc,
             is_kernel=False,
-            classkernel=False,
+            is_classkernel=False,
             is_real_function=is_real_function,
         )
         self.func_id = Func.function_counter
         Func.function_counter += 1
-        self.compiled = {}
+        self.compiled: dict[int, Callable] = {}  # only for real funcs
         self.classfunc = _classfunc
         self.pyfunc = _pyfunc
         self.is_real_function = is_real_function
-        self.gstaichi_functions = {}  # The |Function| class in C++
+        self.cxx_function_by_id: dict[int, FunctionCxx] = {}
         self.has_print = False
+        # Used during compilation. Assumes only one compilation at a time (single-threaded).
         self.current_kernel: Kernel | None = None
 
     def __call__(self: "Func", *args, **kwargs) -> Any:
@@ -69,7 +72,7 @@ class Func(FuncBase):
                 self.current_kernel = None
                 raise GsTaichiSyntaxError("Real function in gradient kernels unsupported.")
             instance_id, arg_features = self.mapper.lookup(impl.current_cfg().raise_on_templated_floats, args)
-            key = _ti_core.FunctionKey(self.func.__name__, self.func_id, instance_id)
+            key = FunctionKey(self.func.__name__, self.func_id, instance_id)
             if key.instance_id not in self.compiled:
                 self.do_compile(key=key, args=args, arg_features=arg_features)
             self.current_kernel = None
@@ -95,6 +98,7 @@ class Func(FuncBase):
         if not self.is_real_function:
             if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
                 raise GsTaichiSyntaxError("Function has a return type but does not have a return statement")
+
         return ret
 
     def func_call_rvalue(self, key: FunctionKey, args: tuple[Any, ...]) -> Any:
@@ -121,7 +125,7 @@ class Func(FuncBase):
         compiling_callable = impl.get_runtime().compiling_callable
         assert compiling_callable is not None
         func_call = compiling_callable.ast_builder().insert_func_call(
-            self.gstaichi_functions[key.instance_id], non_template_args, dbg_info
+            self.cxx_function_by_id[key.instance_id], non_template_args, dbg_info
         )
         if self.return_type is None:
             return None
@@ -130,13 +134,7 @@ class Func(FuncBase):
 
         for i, return_type in enumerate(self.return_type):
             if id(return_type) in primitive_types.type_ids:
-                ret.append(
-                    Expr(
-                        _ti_core.make_get_element_expr(
-                            func_call.ptr, (i,), _ti_core.DebugInfo(impl.get_runtime().get_current_src_info())
-                        )
-                    )
-                )
+                ret.append(Expr(_ti_core.make_get_element_expr(func_call.ptr, (i,), dbg_info)))
             elif isinstance(return_type, (StructType, MatrixType)):
                 ret.append(return_type.from_gstaichi_object(func_call, (i,)))
             else:
@@ -146,6 +144,9 @@ class Func(FuncBase):
         return tuple(ret)
 
     def do_compile(self, key: FunctionKey, args: tuple[Any, ...], arg_features: tuple[Any, ...]) -> None:
+        """
+        only for real func
+        """
         tree, ctx = self.get_tree_and_ctx(
             is_kernel=False,
             args=args,
@@ -162,6 +163,6 @@ class Func(FuncBase):
             transform_tree(tree, ctx)
             impl.get_runtime()._compiling_callable = old_callable
 
-        self.gstaichi_functions[key.instance_id] = fn
+        self.cxx_function_by_id[key.instance_id] = fn
         self.compiled[key.instance_id] = func_body
-        self.gstaichi_functions[key.instance_id].set_function_body(func_body)
+        self.cxx_function_by_id[key.instance_id].set_function_body(func_body)

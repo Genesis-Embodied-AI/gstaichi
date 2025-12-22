@@ -13,10 +13,7 @@ from dataclasses import (
 
 # Must import 'partial' directly instead of the entire module to avoid attribute lookup overhead.
 from functools import partial
-from typing import TYPE_CHECKING, Any, Callable, DefaultDict, Type, TypeAlias
-
-# Must import 'ReferenceType' directly instead of the entire module to avoid attribute lookup overhead.
-from weakref import ReferenceType
+from typing import TYPE_CHECKING, Any, Callable, DefaultDict, Type
 
 import numpy as np
 
@@ -49,7 +46,7 @@ if TYPE_CHECKING:
 from gstaichi.types.enums import Layout
 from gstaichi.types.utils import is_signed
 
-from ._kernel_types import _KernelBatchedArgType
+from ._kernel_types import KernelBatchedArgType
 from ._template_mapper import TemplateMapper
 
 if TYPE_CHECKING:
@@ -58,11 +55,9 @@ if TYPE_CHECKING:
 MAX_ARG_NUM = 512
 
 # Define proxies for fast lookup
-_FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = _KernelBatchedArgType
+_FLOAT, _INT, _UINT, _TI_ARRAY, _TI_ARRAY_WITH_GRAD = KernelBatchedArgType
 _ARG_EMPTY = inspect.Parameter.empty
 _arch_cuda = _ti_core.Arch.cuda
-
-ArgsHash: TypeAlias = tuple[int, ...]
 
 
 class FuncBase:
@@ -70,14 +65,14 @@ class FuncBase:
     Base class for Kernels and Funcs
     """
 
-    def __init__(self, func, is_kernel: bool, classkernel: bool, classfunc: bool, is_real_function: bool) -> None:
+    def __init__(self, func, is_kernel: bool, is_classkernel: bool, is_classfunc: bool, is_real_function: bool) -> None:
         self.func = func
         self.is_kernel = is_kernel
         self.is_real_function = is_real_function
         # TODO: rename classkernel and classfunc to is_classkernel and is_classfunc
         # TODO: merge is_classkernel and is_classfunc?
-        self.classkernel = classkernel
-        self.classfunc = classfunc
+        self.is_classkernel = is_classkernel
+        self.is_classfunc = is_classfunc
         self.arg_metas: list[ArgMetadata] = []
         self.arg_metas_expanded: list[ArgMetadata] = []
         self.orig_arguments: list[ArgMetadata] = []
@@ -128,7 +123,7 @@ class FuncBase:
                 raise GsTaichiSyntaxError('GsTaichi kernels only support "positional or keyword" parameters')
             annotation = param.annotation
             if param.annotation is inspect.Parameter.empty:
-                if i == 0 and (self.classkernel or self.classfunc):  # The |self| parameter
+                if i == 0 and (self.is_classkernel or self.is_classfunc):  # The |self| parameter
                     annotation = template()
                 elif self.is_kernel or self.is_real_function:
                     raise GsTaichiSyntaxError("GsTaichi kernels parameters must be type annotated")
@@ -325,6 +320,7 @@ class FuncBase:
                 if fused_args[i] is _ARG_EMPTY:
                     arg_meta = self.arg_metas_expanded[i]
                     raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
+
         return tuple(fused_args)
 
     def _get_global_vars(self, _func: Callable) -> dict[str, Any]:
@@ -352,19 +348,11 @@ class FuncBase:
         return int(x)
 
     @staticmethod
-    def destroy_callback(kernel_ref: ReferenceType["Kernel"], ref: ReferenceType):
-        maybe_kernel = kernel_ref()
-        if maybe_kernel is not None:
-            maybe_kernel._launch_ctx_cache.clear()
-            maybe_kernel._launch_ctx_cache_tracker.clear()
-            maybe_kernel._prog_weakref = None
-
-    @staticmethod
     def _recursive_set_args(
         used_py_dataclass_parameters: set[tuple[str, ...]],
         py_dataclass_basename: tuple[str, ...],
         launch_ctx: KernelLaunchContext,
-        launch_ctx_buffer: DefaultDict[_KernelBatchedArgType, list[tuple]],
+        launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]],
         needed_arg_type: Type,
         provided_arg_type: Type,
         v: Any,
