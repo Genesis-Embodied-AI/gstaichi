@@ -210,14 +210,13 @@ class FuncBase:
         runtime = impl.get_runtime()
 
         if current_kernel is not None:  # Kernel
+            assert pruning is not None
             current_kernel.kernel_function_info = function_source_info
-            # pruning = Pruning()
             global_context = ASTTransformerGlobalContext(
                 current_kernel=current_kernel,
                 pruning=pruning,
                 currently_compiling_materialize_key=currently_compiling_materialize_key
             )
-            runtime._current_global_context = global_context
         else: # Func
             global_context = runtime._current_global_context
             assert global_context is not None
@@ -246,7 +245,7 @@ class FuncBase:
         raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
 
         ctx = ASTTransformerFuncContext(
-            global_context=runtime._current_global_context,
+            global_context=global_context,
             template_slot_locations=template_slot_locations,
             is_kernel=is_kernel,
             is_pure=is_pure,
@@ -285,9 +284,9 @@ class FuncBase:
             print("- ", am.name, am.annotation)
         if is_func and not is_pyfunc:
             print('is func and not pyfunc')
+            assert global_context is not None
             current_kernel = global_context.current_kernel
-            if typing.TYPE_CHECKING:
-                assert current_kernel is not None
+            assert current_kernel is not None
             _pruning = global_context.pruning
             used_by_dataclass_parameters_enforcing = None
             if _pruning.enforcing:
@@ -335,6 +334,8 @@ class FuncBase:
         # Early return without further processing if possible for efficiency. This is by far the most common scenario.
         if not (kwargs or num_arg_metas > num_args):
             return args
+
+        print("num_args", num_args, "num_arg_metas", num_arg_metas)
 
         fused_args: list[Any] = [*args, *[arg_meta.default for arg_meta in arg_metas_pruned[num_args:]]]
         if kwargs:

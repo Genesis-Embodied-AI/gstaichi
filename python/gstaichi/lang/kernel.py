@@ -357,6 +357,7 @@ class Kernel(FuncBase):
 
         pruning = Pruning(kernel_used_parameters=_used_py_dataclass_parameters)
         range_begin = 0 if _used_py_dataclass_parameters is None else 1
+        runtime = impl.get_runtime()
         for _pass in range(range_begin, 2):
             print("===================== pass", _pass)
             if _pass >= 1:
@@ -371,10 +372,12 @@ class Kernel(FuncBase):
                 pruning=pruning,
                 currently_compiling_materialize_key=key,
             )
+            runtime._current_global_context = ctx.global_context
 
             if self.autodiff_mode != _NONE:
                 KernelSimplicityASTChecker(self.func).visit(tree)
 
+            print("constructing astgeneraotr globalcotext", ctx.global_context)
             gstaichi_ast_generator = ASTGenerator(
                 ctx=ctx,
                 kernel_name=kernel_name,
@@ -398,6 +401,8 @@ class Kernel(FuncBase):
                 self.used_py_dataclass_parameters_by_key_enforcing_dotted[key] = set(
                     [tuple(p.split("__ti_")[1:]) for p in self.used_py_dataclass_parameters_by_key_enforcing[key]]
                 )
+            runtime._current_global_context = None
+
     def launch_kernel(self, key, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
         assert len(args) == len(self.arg_metas), f"{len(self.arg_metas)} arguments needed but {len(args)} provided"
 
