@@ -177,7 +177,7 @@ class PureViolation:
 class ASTTransformerContext:
     def __init__(
         self,
-        excluded_parameters,
+        template_slot_locations,
         end_lineno: int,
         is_kernel: bool,
         func: "FuncBase",
@@ -205,7 +205,7 @@ class ASTTransformerContext:
         self.func = func
         self.local_scopes: list[dict[str, Any]] = []
         self.loop_scopes: List[LoopScopeAttribute] = []
-        self.excluded_parameters = excluded_parameters
+        self.template_slot_locations = template_slot_locations
         self.is_kernel = is_kernel
         self.arg_features = arg_features
         self.returns = None
