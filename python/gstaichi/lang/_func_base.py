@@ -80,7 +80,6 @@ class FuncBase:
         self.arg_metas_expanded: list[ArgMetadata] = []
         self.orig_arguments: list[ArgMetadata] = []
         self.return_type = None
-        # self.current_kernel: "Kernel | None" = None
 
         self.check_parameter_annotations()
 
@@ -192,8 +191,6 @@ class FuncBase:
     def get_tree_and_ctx(
         self,
         py_args: tuple[Any, ...],
-        # enforcing_dataclass_parameters: bool,
-        # used_py_dataclass_parameters_enforcing: set[str] | None,
         template_slot_locations=(),
         is_kernel: bool = True,
         arg_features=None,
@@ -219,7 +216,6 @@ class FuncBase:
                 pruning=pruning)
             runtime._current_global_context = global_context
         else: # Func
-            # current_kernel = runtime._current_kernel
             global_context = runtime._current_global_context
             assert global_context is not None
             current_kernel = global_context.current_kernel
@@ -246,8 +242,6 @@ class FuncBase:
 
         raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
 
-        # args_instance_key = current_kernel.currently_compiling_materialize_key
-        # assert args_instance_key is not None
         ctx = ASTTransformerFuncContext(
             global_context=runtime._current_global_context,
             template_slot_locations=template_slot_locations,
@@ -266,11 +260,6 @@ class FuncBase:
             is_real_function=is_real_function,
             autodiff_mode=autodiff_mode,
             raise_on_templated_floats=raise_on_templated_floats,
-            # used_py_dataclass_parameters_collecting=current_kernel.used_py_dataclass_parameters_by_key_collecting[
-            #     args_instance_key
-            # ],
-            # used_py_dataclass_parameters_enforcing=used_py_dataclass_parameters_enforcing,
-            # enforcing_dataclass_parameters=enforcing_dataclass_parameters,
         )
         return tree, ctx
 
@@ -283,9 +272,6 @@ class FuncBase:
             current_kernel = global_context.current_kernel
             if typing.TYPE_CHECKING:
                 assert current_kernel is not None
-            # currently_compiling_materialize_key = current_kernel.currently_compiling_materialize_key
-            # if typing.TYPE_CHECKING:
-            #     assert currently_compiling_materialize_key is not None
             _pruning = global_context.pruning
             used_by_dataclass_parameters_enforcing = None
             if _pruning.enforcing:
