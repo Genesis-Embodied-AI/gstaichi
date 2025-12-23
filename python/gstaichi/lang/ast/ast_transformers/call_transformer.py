@@ -184,6 +184,7 @@ class CallTransformer:
             val = arg.ptr
             if dataclasses.is_dataclass(val):
                 dataclass_type = val
+                print('_pruning.used_parameters_by_func_id[func_id]', _pruning.used_parameters_by_func_id[func_id])
                 for field in dataclasses.fields(dataclass_type):
                     try:
                         child_name = create_flat_name(arg.id, field.name)
@@ -293,13 +294,13 @@ class CallTransformer:
             build_stmts(ctx, node.args)
             build_stmts(ctx, node.keywords)
 
-            print('node.args', [n.id for n in node.args])
+            # print('node.args', [n.id for n in node.args])
             added_args, node.args = CallTransformer._expand_Call_dataclass_args(ctx, node.args)
-            print('node.args', [n.id for n in node.args])
+            # print('node.args', [n.id for n in node.args])
             # print('node.args', node.args)
-            print('added_args', added_args)
+            # print('added_args', added_args)
             added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(ctx, node.keywords)
-            print('added_keywords', added_keywords)
+            # print('added_keywords', added_keywords)
 
             # create variables for the now-expanded dataclass members
             # we don't want to include these in the list of variables to not prune
