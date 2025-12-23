@@ -26,7 +26,6 @@ class Pruning:
         self.dotted_by_func_id: dict[int, tuple[str, ...]] | None = None
         if kernel_used_parameters is not None:
             self.used_parameters_by_func_id[-1].update(kernel_used_parameters)
-        # self.caller_name_by_child_name_by_func_id: dict[int, dict[str, str]] = defaultdict(dict)
         self.child_name_by_caller_name_by_func_id: dict[int, dict[str, str]] = defaultdict(dict)
 
     def mark_used(self, func_id: int, parameter_flat_name: str) -> None:
