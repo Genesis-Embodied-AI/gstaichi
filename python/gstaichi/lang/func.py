@@ -66,7 +66,8 @@ class Func(FuncBase):
             return self.func(*py_args)
 
         if self.is_real_function:
-            if self.current_kernel.autodiff_mode != _NONE:
+            assert current_kernel is not None
+            if current_kernel.autodiff_mode != _NONE:
                 raise GsTaichiSyntaxError("Real function in gradient kernels unsupported.")
             instance_id, arg_features = self.mapper.lookup(impl.current_cfg().raise_on_templated_floats, py_args)
             key = FunctionKey(self.func.__name__, self.func_id, instance_id)
@@ -139,10 +140,10 @@ class Func(FuncBase):
         """
         tree, ctx = self.get_tree_and_ctx(
             is_kernel=False,
-            args=args,
+            py_args=args,
             arg_features=arg_features,
             is_real_function=self.is_real_function,
-            used_py_dataclass_parameters_enforcing=None,
+            # used_py_dataclass_parameters_enforcing=None,
         )
         fn = impl.get_runtime().prog.create_function(key)
 
