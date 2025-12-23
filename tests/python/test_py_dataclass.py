@@ -1381,10 +1381,6 @@ def test_pruning_with_arg_rename() -> None:
     def f1(new_struct_name: MyStruct):
         new_struct_name.used[0, 0]
 
-    # @ti.func
-    # def f1(my_struct: MyStruct):
-    #     my_struct.used[0, 0]
-
     @ti.kernel
     def k1(my_struct: MyStruct):
         f1(my_struct)
@@ -1489,12 +1485,12 @@ def test_pruning_with_recursive_func() -> None:
         if ti.static(depth) == 0:
             struc_f1.a[0, 0]
             f1(1, struc_f1)
-        # elif ti.static(depth) == 1:
-        #     struc_f1.b[0, 0]
-        #     f1(2, struc_f1)
+        elif ti.static(depth) == 1:
+            struc_f1.b[0, 0]
+            f1(2, struc_f1)
         elif ti.static(depth) == 2:
             struc_f1.c[0, 0]
-            # f1(2, struc_f1)
+            f1(2, struc_f1)
 
     @ti.kernel
     def k1(struct_k1: MyStruct):
