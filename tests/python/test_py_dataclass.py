@@ -1354,19 +1354,27 @@ def test_pruning_with_keyword_rename() -> None:
         used: ti.types.NDArray[ti.f32, 2]
         not_used: ti.types.NDArray[ti.f32, 2]
 
-    my_struct_outside = MyStruct(
-        used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1))
-    )
+    def create_struct():
+        my_struct_outside = MyStruct(
+            used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1))
+        )
+        return my_struct_outside
 
     @ti.func
     def f1(new_struct_name: MyStruct):
-        new_struct_name.used[0, 0]
+        new_struct_name.used[0, 0] = 100
 
     @ti.kernel
     def k1(my_struct: MyStruct):
         f1(new_struct_name=my_struct)
 
+    my_struct_outside = create_struct()
     k1(my_struct=my_struct_outside)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 1
+    assert my_struct_outside.used[0, 0] == 100
+    assert my_struct_outside.not_used[0, 0] == 0
 
 
 @test_utils.test()
@@ -1376,21 +1384,31 @@ def test_pruning_with_arg_rename() -> None:
         used: ti.types.NDArray[ti.f32, 2]
         not_used: ti.types.NDArray[ti.f32, 2]
 
-    my_struct = MyStruct(used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1)))
+    def create_struct():
+        return MyStruct(used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1)))
 
     @ti.func
     def f1(new_struct_name: MyStruct):
-        new_struct_name.used[0, 0]
+        new_struct_name.used[0, 0] = 100
 
     @ti.kernel
     def k1(my_struct: MyStruct):
         f1(my_struct)
 
-    print("-----------------")
+    my_struct = create_struct()
     k1(my_struct=my_struct)
-    print("-----------------")
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 1
+    assert my_struct.used[0, 0] == 100
+    assert my_struct.not_used[0, 0] == 0
+
+    my_struct = create_struct()
     k1(my_struct=my_struct)
-    print("-----------------")
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 1
+    assert my_struct.used[0, 0] == 100
+    assert my_struct.not_used[0, 0] == 0
 
 
 @test_utils.test()
@@ -1400,24 +1418,34 @@ def test_pruning_with_arg_kwargs_rename() -> None:
         used: ti.types.NDArray[ti.f32, 2]
         not_used: ti.types.NDArray[ti.f32, 2]
 
-    my_struct1 = MyStruct(used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1)))
-    my_struct2 = MyStruct(used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1)))
-    my_struct3 = MyStruct(used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1)))
-    my_struct4 = MyStruct(used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1)))
+    def create_structs():
+        my_struct1 = MyStruct(
+            used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1))
+        )
+        my_struct2 = MyStruct(
+            used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1))
+        )
+        my_struct3 = MyStruct(
+            used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1))
+        )
+        my_struct4 = MyStruct(
+            used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1))
+        )
+        return my_struct1, my_struct2, my_struct3, my_struct4
 
     @ti.func
     def g1(struc3_g1: MyStruct):
         # should be used:
         # struc3_g1.used
-        struc3_g1.used[0, 0]
+        struc3_g1.used[0, 0] = 102
 
     @ti.func
     def f2(a3: ti.i32, struct_f2: MyStruct, b3: ti.i32, d3: ti.i32, struct2_f2: MyStruct, c3: ti.i32):
         # should be used:
         # struct_f2.used
         # struct2_f2.useds
-        struct_f2.used[0, 0]
-        struct2_f2.used[0, 0]
+        struct_f2.used[0, 0] = 100
+        struct2_f2.used[0, 0] = 101
 
     @ti.func
     def f1(a2: ti.i32, struct_f1: MyStruct, b2: ti.i32, d2: ti.i32, struct2_f1: MyStruct, c2: ti.i32):
@@ -1452,16 +1480,41 @@ def test_pruning_with_arg_kwargs_rename() -> None:
         # struct4_k1.used
         g1(struct4_k1)
 
-    print("-----------------")
     # should be used:
     # my_struct1.used
     # my_struct2.used
     # my_struct3.used
     # my_struct4.used
-    k1(1, my_struct1, 2, d=5, struct2_k1=my_struct2, c=3, struct3_k1=my_struct3, struct4_k1=my_struct4)
-    print("-----------------")
-    k1(1, my_struct1, 2, d=5, struct2_k1=my_struct2, c=3, struct3_k1=my_struct3, struct4_k1=my_struct4)
-    print("-----------------")
+    s1, s2, s3, s4 = create_structs()
+    k1(1, s1, 2, d=5, struct2_k1=s2, c=3, struct3_k1=s3, struct4_k1=s4)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
+    assert s1.used[0, 0] == 100
+    assert s2.used[0, 0] == 101
+    assert s3.used[0, 0] == 102
+    assert s4.used[0, 0] == 102
+
+    assert s1.not_used[0, 0] == 0
+    assert s2.not_used[0, 0] == 0
+    assert s3.not_used[0, 0] == 0
+    assert s4.not_used[0, 0] == 0
+
+    s1, s2, s3, s4 = create_structs()
+    k1(1, s1, 2, d=5, struct2_k1=s2, c=3, struct3_k1=s3, struct4_k1=s4)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
+
+    assert s1.used[0, 0] == 100
+    assert s2.used[0, 0] == 101
+    assert s3.used[0, 0] == 102
+    assert s4.used[0, 0] == 102
+
+    assert s1.not_used[0, 0] == 0
+    assert s2.not_used[0, 0] == 0
+    assert s3.not_used[0, 0] == 0
+    assert s4.not_used[0, 0] == 0
 
 
 @pytest.mark.xfail(reason="calling sub functions with different templated values seems unsupported currently")
@@ -1474,34 +1527,48 @@ def test_pruning_with_recursive_func() -> None:
         c: ti.types.NDArray[ti.f32, 2]
         d: ti.types.NDArray[ti.f32, 2]
 
-    my_struct = MyStruct(
-        a=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
-        b=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
-        c=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
-        d=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
-    )
+    def create_struct():
+        my_struct = MyStruct(
+            a=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            b=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            c=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            d=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct
 
     @ti.func
     def f1(depth: ti.template(), struc_f1: MyStruct):
         if ti.static(depth) == 0:
-            struc_f1.a[0, 0]
+            struc_f1.a[0, 0] = 100
             f1(1, struc_f1)
         elif ti.static(depth) == 1:
-            struc_f1.b[0, 0]
+            struc_f1.b[0, 0] = 101
             f1(2, struc_f1)
         elif ti.static(depth) == 2:
-            struc_f1.c[0, 0]
+            struc_f1.c[0, 0] = 102
             f1(2, struc_f1)
 
     @ti.kernel
     def k1(struct_k1: MyStruct):
         f1(0, struct_k1)
 
-    print("-----------------")
+    my_struct = create_struct()
     k1(my_struct)
-    print("-----------------")
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 3
+    assert my_struct.a[0, 0] == 100
+    assert my_struct.b[0, 0] == 101
+    assert my_struct.c[0, 0] == 102
+
+    my_struct = create_struct()
     k1(my_struct)
-    print("-----------------")
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 3
+    assert my_struct.a[0, 0] == 100
+    assert my_struct.b[0, 0] == 101
+    assert my_struct.c[0, 0] == 102
 
 
 @test_utils.test()
@@ -1524,45 +1591,62 @@ def test_pruning_reuse_func_same_kernel() -> None:
         _k1: ti.types.NDArray[ti.f32, 2]
         _unused: ti.types.NDArray[ti.f32, 2]
 
-    my_struct = MyStruct(
-        _f3=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
-        _f2b=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
-        _f2a=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
-        _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
-        _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
-        _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
-    )
+    def create_struct():
+        my_struct = MyStruct(
+            _f3=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f2b=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f2a=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct
 
     @ti.func
     def f3(struc_f3: MyStruct):
-        struc_f3._f3[0, 0]
+        struc_f3._f3[0, 0] = 104
         f2b(struc_f3)
 
     @ti.func
     def f2b(struc_f2b: MyStruct):
-        struc_f2b._f2b[0, 0]
+        struc_f2b._f2b[0, 0] = 103
 
     @ti.func
     def f2a(struc_f2a: MyStruct):
-        struc_f2a._f2a[0, 0]
+        struc_f2a._f2a[0, 0] = 102
         f2b(struc_f2a)
 
     @ti.func
     def f1(struc_f1: MyStruct):
-        struc_f1._f1[0, 0]
+        struc_f1._f1[0, 0] = 101
         f2a(struc_f1)
         f3(struc_f1)
 
     @ti.kernel
     def k1(struct_k1: MyStruct):
-        struct_k1._k1[0, 0]
+        struct_k1._k1[0, 0] = 100
         f1(struct_k1)
 
-    print("-----------------")
+    my_struct = create_struct()
     k1(my_struct)
-    print("-----------------")
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 5
+    assert my_struct._f1[0, 0] == 101
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f2a[0, 0] == 102
+    assert my_struct._f2b[0, 0] == 103
+    assert my_struct._f3[0, 0] == 104
+
+    my_struct = create_struct()
     k1(my_struct)
-    print("-----------------")
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 5
+    assert my_struct._f1[0, 0] == 101
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f2a[0, 0] == 102
+    assert my_struct._f2b[0, 0] == 103
+    assert my_struct._f3[0, 0] == 104
 
 
 @test_utils.test()
@@ -1609,12 +1693,18 @@ def test_pruning_reuse_func_across_kernels() -> None:
 
     my_struct = make_struct()
     k1(my_struct)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
     assert my_struct._k1[0, 0] == 101
     assert my_struct._f1_with_flag[0, 0] == 0
     assert my_struct._f1_no_flag[0, 0] == 103
 
     my_struct = make_struct()
     k2(my_struct)
+    k2_primal: Kernel = k2._primal
+    kernel_args_count_by_type = k2_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
     assert my_struct._k2[0, 0] == 100
     assert my_struct._f1_with_flag[0, 0] == 102
     assert my_struct._f1_no_flag[0, 0] == 0
@@ -1658,10 +1748,12 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
     my_struct = make_struct()
     k1(False, my_struct)
     k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
     assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
     assert my_struct._k1[0, 0] == 100
     assert my_struct._f1_no_flag[0, 0] == 102
     assert my_struct._f1_with_flag[0, 0] == 0
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
     assert sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])) == [
         "",
         "__ti_struct_k1",
@@ -1671,10 +1763,12 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
 
     my_struct = make_struct()
     k1(False, my_struct)
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
     assert k1_primal.launch_observations.found_kernel_in_materialize_cache
     assert my_struct._k1[0, 0] == 100
     assert my_struct._f1_no_flag[0, 0] == 102
     assert my_struct._f1_with_flag[0, 0] == 0
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
     assert sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])) == [
         "",
         "__ti_struct_k1",
@@ -1684,10 +1778,12 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
 
     my_struct = make_struct()
     k1(True, my_struct)
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
     assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
     assert my_struct._k1[0, 0] == 100
     assert my_struct._f1_no_flag[0, 0] == 0
     assert my_struct._f1_with_flag[0, 0] == 101
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
     assert sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])) == [
         "",
         "__ti_struct_k1",
@@ -1697,10 +1793,12 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
 
     my_struct = make_struct()
     k1(False, my_struct)
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
     assert k1_primal.launch_observations.found_kernel_in_materialize_cache
     assert my_struct._k1[0, 0] == 100
     assert my_struct._f1_no_flag[0, 0] == 102
     assert my_struct._f1_with_flag[0, 0] == 0
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
     assert sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])) == [
         "",
         "__ti_struct_k1",
@@ -1710,10 +1808,12 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
 
     my_struct = make_struct()
     k1(True, my_struct)
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
     assert k1_primal.launch_observations.found_kernel_in_materialize_cache
     assert my_struct._k1[0, 0] == 100
     assert my_struct._f1_no_flag[0, 0] == 0
     assert my_struct._f1_with_flag[0, 0] == 101
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
     assert sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])) == [
         "",
         "__ti_struct_k1",
