@@ -714,20 +714,16 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_try_load_fastcache</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">key</span><span class="p">:</span> <span class="s2">&quot;CompiledKernelKeyType&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">frontend_cache_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="c1"># used_py_dataclass_parameters: set[str] | None = None</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">src_ll_cache</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">gstaichi_callable</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">gstaichi_callable</span><span class="o">.</span><span class="n">is_pure</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;is pure&quot;</span><span class="p">)</span>
             <span class="n">kernel_source_info</span><span class="p">,</span> <span class="n">_src</span> <span class="o">=</span> <span class="n">get_source_info_and_src</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span> <span class="o">=</span> <span class="n">src_hasher</span><span class="o">.</span><span class="n">create_cache_key</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">raise_on_templated_floats</span><span class="p">,</span> <span class="n">kernel_source_info</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span>
             <span class="p">)</span>
             <span class="n">used_py_dataclass_parameters</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;have fast checksum&quot;</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">src_ll_cache_observations</span><span class="o">.</span><span class="n">cache_key_generated</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="n">used_py_dataclass_parameters</span><span class="p">,</span> <span class="n">frontend_cache_key</span> <span class="o">=</span> <span class="n">src_hasher</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">used_py_dataclass_parameters</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">frontend_cache_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;loaded front end cache key&quot;</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">src_ll_cache_observations</span><span class="o">.</span><span class="n">cache_validated</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="n">prog</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">prog</span>
                 <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -738,17 +734,10 @@
                     <span class="n">prog</span><span class="o">.</span><span class="n">get_device_caps</span><span class="p">(),</span>
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">compiled_kernel_data_by_key</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;got compiled kernel data&quot;</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">src_ll_cache_observations</span><span class="o">.</span><span class="n">cache_loaded</span> <span class="o">=</span> <span class="kc">True</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;loaded used_py_dataclass_parameters&quot;</span><span class="p">,</span> <span class="n">used_py_dataclass_parameters</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_enforcing</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">used_py_dataclass_parameters</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_enforcing_dotted</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
                         <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;__ti_&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:])</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">used_py_dataclass_parameters</span><span class="p">]</span>
-                    <span class="p">)</span>
-                    <span class="nb">print</span><span class="p">(</span>
-                        <span class="s2">&quot;loaded used_py_dataclass_parameters_by_key_enforcing_dotted for key&quot;</span><span class="p">,</span>
-                        <span class="n">key</span><span class="p">,</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_enforcing_dotted</span><span class="p">[</span><span class="n">key</span><span class="p">],</span>
                     <span class="p">)</span>
                     <span class="k">return</span> <span class="n">used_py_dataclass_parameters</span>
 
@@ -759,33 +748,26 @@
             <span class="c1"># this is only printed when ti.init(print_non_pure=..) is True. And it is</span>
             <span class="c1"># confusing to set that to True, and see nothing printed.</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[NOT_PURE] Debug information: not pure: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="c1"># return used_py_dataclass_parameters</span>
         <span class="k">return</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="Kernel.materialize">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.materialize">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">materialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="s2">&quot;CompiledKernelKeyType | None&quot;</span><span class="p">,</span> <span class="n">py_args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">arg_features</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;materilie kernel&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">autodiff_mode</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">materialized_kernels</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;key&quot;</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="s2">&quot; in materizlied kernels ✅&quot;</span><span class="p">)</span>
             <span class="k">return</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;key&quot;</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="s2">&quot; not in materizlied kernels ❌&quot;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">materialize</span><span class="p">()</span>
         <span class="n">_used_py_dataclass_parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_try_load_fastcache</span><span class="p">(</span><span class="n">py_args</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;_used_py_dataclass_parameters&quot;</span><span class="p">,</span> <span class="n">_used_py_dataclass_parameters</span><span class="p">)</span>
         <span class="n">kernel_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">_c</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_counter</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="n">_logging</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Materializing kernel </span><span class="si">{</span><span class="n">kernel_name</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">autodiff_mode</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
 
         <span class="n">pruning</span> <span class="o">=</span> <span class="n">Pruning</span><span class="p">(</span><span class="n">kernel_used_parameters</span><span class="o">=</span><span class="n">_used_py_dataclass_parameters</span><span class="p">)</span>
         <span class="n">range_begin</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">_used_py_dataclass_parameters</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">1</span>
         <span class="n">runtime</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;materialize py_args&quot;</span><span class="p">,</span> <span class="n">py_args</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">_pass</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">range_begin</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;===================== pass&quot;</span><span class="p">,</span> <span class="n">_pass</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">_pass</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">pruning</span><span class="o">.</span><span class="n">enforce</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">_pass</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -803,7 +785,6 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">autodiff_mode</span> <span class="o">!=</span> <span class="n">_NONE</span><span class="p">:</span>
                 <span class="n">KernelSimplicityASTChecker</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">visit</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
 
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;constructing astgeneraotr globalcotext&quot;</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">global_context</span><span class="p">)</span>
             <span class="n">gstaichi_ast_generator</span> <span class="o">=</span> <span class="n">ASTGenerator</span><span class="p">(</span>
                 <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span>
                 <span class="n">kernel_name</span><span class="o">=</span><span class="n">kernel_name</span><span class="p">,</span>
@@ -819,48 +800,21 @@
                 <span class="k">assert</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">materialized_kernels</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">materialized_kernels</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">gstaichi_kernel</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;used_py_dataclass_parameters collecting:&quot;</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">func_id</span><span class="p">,</span> <span class="n">used_parameters</span> <span class="ow">in</span> <span class="n">pruning</span><span class="o">.</span><span class="n">used_parameters_by_func_id</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="n">func_id</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">used_parameters</span><span class="p">)))</span>
-                <span class="c1"># _key = ctx.global_context.currently_compiling_materialize_key</span>
-                <span class="c1"># self.used_py_dataclass_parameters_by_key_enforcing[key] = pruning.used_parameters_by_func_id[-1]</span>
-                <span class="k">for</span> <span class="n">_func_id</span><span class="p">,</span> <span class="n">used_parameters</span> <span class="ow">in</span> <span class="n">pruning</span><span class="o">.</span><span class="n">used_parameters_by_func_id</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                    <span class="c1"># self.used_py_dataclass_parameters_by_key_enforcing[key] = set()</span>
+                <span class="k">for</span> <span class="n">used_parameters</span> <span class="ow">in</span> <span class="n">pruning</span><span class="o">.</span><span class="n">used_parameters_by_func_id</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
                     <span class="n">new_used_parameters</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
                     <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">used_parameters</span><span class="p">:</span>
                         <span class="n">split_param</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;__ti_&quot;</span><span class="p">)</span>
                         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">split_param</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
                             <span class="n">joined</span> <span class="o">=</span> <span class="s2">&quot;__ti_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">split_param</span><span class="p">[:</span><span class="n">i</span><span class="p">])</span>
-                            <span class="c1"># print(&quot;joined&quot;, joined)</span>
                             <span class="k">if</span> <span class="n">joined</span> <span class="ow">in</span> <span class="n">new_used_parameters</span><span class="p">:</span>
                                 <span class="k">break</span>
                             <span class="n">new_used_parameters</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">joined</span><span class="p">)</span>
                     <span class="n">used_parameters</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
                     <span class="n">used_parameters</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">new_used_parameters</span><span class="p">)</span>
-                    <span class="c1"># if joined in self.used_py_dataclass_parameters_by_key_enforcing[key]:</span>
-                    <span class="c1">#     break</span>
-                    <span class="c1"># self.used_py_dataclass_parameters_by_key_enforcing[key].add(joined)</span>
-
-                <span class="c1"># self.used_py_dataclass_parameters_by_key_enforcing[key] = set()</span>
-                <span class="c1"># for param in pruning.used_parameters_by_func_id[-1]:</span>
-                <span class="c1">#     split_param = param.split(&quot;__ti_&quot;)</span>
-                <span class="c1">#     for i in range(len(split_param), 0, -1):</span>
-                <span class="c1">#         joined = &quot;__ti_&quot;.join(split_param[:i])</span>
-                <span class="c1">#         print(&#39;joined&#39;, joined)</span>
-                <span class="c1">#         if joined in self.used_py_dataclass_parameters_by_key_enforcing[key]:</span>
-                <span class="c1">#             break</span>
-                <span class="c1">#         self.used_py_dataclass_parameters_by_key_enforcing[key].add(joined)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_enforcing</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">pruning</span><span class="o">.</span><span class="n">used_parameters_by_func_id</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-                <span class="nb">print</span><span class="p">(</span>
-                    <span class="s2">&quot;self.used_py_dataclass_parameters_by_key_enforcing[key]&quot;</span><span class="p">,</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_enforcing</span><span class="p">[</span><span class="n">key</span><span class="p">],</span>
-                <span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_enforcing_dotted</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
                     <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;__ti_&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:])</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_enforcing</span><span class="p">[</span><span class="n">key</span><span class="p">]]</span>
                 <span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
             <span class="n">runtime</span><span class="o">.</span><span class="n">_current_global_context</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
@@ -988,7 +942,6 @@
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">raise</span> <span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)(</span><span class="sa">f</span><span class="s2">&quot;exception while trying to ensure compiled </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="si">}</span><span class="s2">:</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">instance_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">autodiff_mode</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ensure compiled py_args&quot;</span><span class="p">,</span> <span class="n">py_args</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">materialize</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">py_args</span><span class="o">=</span><span class="n">py_args</span><span class="p">,</span> <span class="n">arg_features</span><span class="o">=</span><span class="n">arg_features</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">key</span></div>
 
@@ -997,13 +950,8 @@
     <span class="c1"># Thus this part needs to be fast. (i.e. &lt; 3us on a 4 GHz x64 CPU)</span>
     <span class="nd">@_shell_pop_print</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">py_args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;__calll__ args&quot;</span><span class="p">,</span> <span class="n">py_args</span><span class="p">,</span> <span class="s2">&quot;kwargs&quot;</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">raise_on_templated_floats</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span><span class="o">.</span><span class="n">raise_on_templated_floats</span>
-
-        <span class="c1"># runtime = impl.get_runtime()</span>
-        <span class="c1"># global_context = runtime._current_global_context</span>
         <span class="n">py_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_args</span><span class="p">(</span><span class="n">is_func</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_pyfunc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">py_args</span><span class="o">=</span><span class="n">py_args</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">global_context</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;py_args after process args&quot;</span><span class="p">,</span> <span class="n">py_args</span><span class="p">)</span>
 
         <span class="c1"># Transform the primal kernel to forward mode grad kernel</span>
         <span class="c1"># then recover to primal when exiting the forward mode manager</span>

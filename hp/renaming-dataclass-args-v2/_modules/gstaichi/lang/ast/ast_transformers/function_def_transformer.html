@@ -455,9 +455,7 @@
         <span class="k">assert</span> <span class="n">compiling_callable</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">compiling_callable</span><span class="o">.</span><span class="n">finalize_rets</span><span class="p">()</span>
 
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;transform as kernel&quot;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">args</span><span class="p">)):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- i&quot;</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
             <span class="n">arg_meta</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
             <span class="n">FunctionDefTransformer</span><span class="o">.</span><span class="n">_transform_kernel_arg</span><span class="p">(</span>
                 <span class="n">ctx</span><span class="p">,</span>
