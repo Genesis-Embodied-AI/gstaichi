@@ -208,6 +208,7 @@ class CallTransformer:
                         added_args.append(arg_node)
             else:
                 args_new.append(arg)
+        print("args_new", [n.id for n in args_new])
         return tuple(added_args), tuple(args_new)
 
     @staticmethod
