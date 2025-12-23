@@ -313,20 +313,16 @@ class Kernel(FuncBase):
 
     def _try_load_fastcache(self, args: tuple[Any, ...], key: "CompiledKernelKeyType") -> set[str] | None:
         frontend_cache_key: str | None = None
-        # used_py_dataclass_parameters: set[str] | None = None
         if self.runtime.src_ll_cache and self.gstaichi_callable and self.gstaichi_callable.is_pure:
-            print("is pure")
             kernel_source_info, _src = get_source_info_and_src(self.func)
             self.fast_checksum = src_hasher.create_cache_key(
                 self.raise_on_templated_floats, kernel_source_info, args, self.arg_metas
             )
             used_py_dataclass_parameters = None
             if self.fast_checksum:
-                print("have fast checksum")
                 self.src_ll_cache_observations.cache_key_generated = True
                 used_py_dataclass_parameters, frontend_cache_key = src_hasher.load(self.fast_checksum)
             if used_py_dataclass_parameters is not None and frontend_cache_key is not None:
-                print("loaded front end cache key")
                 self.src_ll_cache_observations.cache_validated = True
                 prog = impl.get_runtime().prog
                 assert self.fast_checksum is not None
@@ -337,17 +333,10 @@ class Kernel(FuncBase):
                     prog.get_device_caps(),
                 )
                 if self.compiled_kernel_data_by_key[key]:
-                    print("got compiled kernel data")
                     self.src_ll_cache_observations.cache_loaded = True
-                    print("loaded used_py_dataclass_parameters", used_py_dataclass_parameters)
                     self.used_py_dataclass_parameters_by_key_enforcing[key] = used_py_dataclass_parameters
                     self.used_py_dataclass_parameters_by_key_enforcing_dotted[key] = set(
                         [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_parameters]
-                    )
-                    print(
-                        "loaded used_py_dataclass_parameters_by_key_enforcing_dotted for key",
-                        key,
-                        self.used_py_dataclass_parameters_by_key_enforcing_dotted[key],
                     )
                     return used_py_dataclass_parameters
 
@@ -358,31 +347,24 @@ class Kernel(FuncBase):
             # this is only printed when ti.init(print_non_pure=..) is True. And it is
             # confusing to set that to True, and see nothing printed.
             print(f"[NOT_PURE] Debug information: not pure: {self.func.__name__}")
-        # return used_py_dataclass_parameters
         return None
 
     def materialize(self, key: "CompiledKernelKeyType | None", py_args: tuple[Any, ...], arg_features=None):
-        print("materilie kernel", self, id(self))
         if key is None:
             key = (self.func, 0, self.autodiff_mode)
         self.fast_checksum = None
         if key in self.materialized_kernels:
-            print("key", key, " in materizlied kernels ✅")
             return
-        print("key", key, " not in materizlied kernels ❌")
 
         self.runtime.materialize()
         _used_py_dataclass_parameters = self._try_load_fastcache(py_args, key)
-        print("_used_py_dataclass_parameters", _used_py_dataclass_parameters)
         kernel_name = f"{self.func.__name__}_c{self.kernel_counter}_{key[1]}"
         _logging.trace(f"Materializing kernel {kernel_name} in {self.autodiff_mode}...")
 
         pruning = Pruning(kernel_used_parameters=_used_py_dataclass_parameters)
         range_begin = 0 if _used_py_dataclass_parameters is None else 1
         runtime = impl.get_runtime()
-        print("materialize py_args", py_args)
         for _pass in range(range_begin, 2):
-            print("===================== pass", _pass)
             if _pass >= 1:
                 pruning.enforce()
             if _pass == 1:
@@ -400,7 +382,6 @@ class Kernel(FuncBase):
             if self.autodiff_mode != _NONE:
                 KernelSimplicityASTChecker(self.func).visit(tree)
 
-            print("constructing astgeneraotr globalcotext", ctx.global_context)
             gstaichi_ast_generator = ASTGenerator(
                 ctx=ctx,
                 kernel_name=kernel_name,
@@ -416,48 +397,21 @@ class Kernel(FuncBase):
                 assert key not in self.materialized_kernels
                 self.materialized_kernels[key] = gstaichi_kernel
             else:
-                print("used_py_dataclass_parameters collecting:")
-                for func_id, used_parameters in pruning.used_parameters_by_func_id.items():
-                    print(func_id, sorted(list(used_parameters)))
-                # _key = ctx.global_context.currently_compiling_materialize_key
-                # self.used_py_dataclass_parameters_by_key_enforcing[key] = pruning.used_parameters_by_func_id[-1]
-                for _func_id, used_parameters in pruning.used_parameters_by_func_id.items():
-                    # self.used_py_dataclass_parameters_by_key_enforcing[key] = set()
+                for used_parameters in pruning.used_parameters_by_func_id.values():
                     new_used_parameters = set()
                     for param in used_parameters:
                         split_param = param.split("__ti_")
                         for i in range(len(split_param), 0, -1):
                             joined = "__ti_".join(split_param[:i])
-                            # print("joined", joined)
                             if joined in new_used_parameters:
                                 break
                             new_used_parameters.add(joined)
                     used_parameters.clear()
                     used_parameters.update(new_used_parameters)
-                    # if joined in self.used_py_dataclass_parameters_by_key_enforcing[key]:
-                    #     break
-                    # self.used_py_dataclass_parameters_by_key_enforcing[key].add(joined)
-
-                # self.used_py_dataclass_parameters_by_key_enforcing[key] = set()
-                # for param in pruning.used_parameters_by_func_id[-1]:
-                #     split_param = param.split("__ti_")
-                #     for i in range(len(split_param), 0, -1):
-                #         joined = "__ti_".join(split_param[:i])
-                #         print('joined', joined)
-                #         if joined in self.used_py_dataclass_parameters_by_key_enforcing[key]:
-                #             break
-                #         self.used_py_dataclass_parameters_by_key_enforcing[key].add(joined)
                 self.used_py_dataclass_parameters_by_key_enforcing[key] = pruning.used_parameters_by_func_id[-1]
-                print(
-                    "self.used_py_dataclass_parameters_by_key_enforcing[key]",
-                    self.used_py_dataclass_parameters_by_key_enforcing[key],
-                )
                 self.used_py_dataclass_parameters_by_key_enforcing_dotted[key] = set(
                     [tuple(p.split("__ti_")[1:]) for p in self.used_py_dataclass_parameters_by_key_enforcing[key]]
                 )
-                print("")
-                print("")
-                print("")
             runtime._current_global_context = None
 
     def launch_kernel(self, key, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
