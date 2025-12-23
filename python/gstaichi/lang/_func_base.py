@@ -72,7 +72,6 @@ class FuncBase:
         self.func_id = func_id
         self.is_kernel = is_kernel
         self.is_real_function = is_real_function
-        # TODO: rename classkernel and classfunc to is_classkernel and is_classfunc
         # TODO: merge is_classkernel and is_classfunc?
         self.is_classkernel = is_classkernel
         self.is_classfunc = is_classfunc
