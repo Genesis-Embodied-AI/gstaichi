@@ -404,14 +404,16 @@ class CallTransformer:
                         "_pruning.child_name_by_caller_name_by_func_id[func_id]",
                         _pruning.child_name_by_caller_name_by_func_id[func_id],
                     )
+                    print('node.args')
                     for i, arg in enumerate(node.args):
-                        # print(i, ast.dump(arg)[:50], child_metas[child_arg_id].name)
+                        print('-', i, ast.dump(arg)[:50], child_metas[child_arg_id].name)
                         if hasattr(arg, "id"):
                             calling_name = arg.id
+                            print('calling name', calling_name)
                             if calling_name.startswith("__ti_"):
                                 called_name = _pruning.child_name_by_caller_name_by_func_id[func_id].get(calling_name)
                                 # called_name = child_metas[child_arg_id].name
-                                if called_name is not None and called_name in called_needed:
+                                if called_name is not None and (called_name in called_needed or not called_name.startswith("__ti_")):
                                     print("before call ", calling_name, "=>", called_name)
                                     new_args.append(py_args[i])
                             else:
@@ -491,7 +493,7 @@ class CallTransformer:
                             calling_name = arg.id
                             if calling_name.startswith("__ti_"):
                                 called_name = child_metas[child_arg_id].name
-                                if called_name in called_needed:
+                                if called_name in called_needed or not called_name.startswith("__ti_"):
                                     print("- arg after ", calling_name, "=>", called_name)
                                     # print('called_name', called_name)
                                     # print('called_neeeded', called_needed)
