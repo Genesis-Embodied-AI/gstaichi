@@ -572,6 +572,25 @@ def test_src_ll_cache_dupe_kernels(tmp_path: pathlib.Path) -> None:
     assert a[0] == 222
 
 
+@pytest.mark.parametrize("run_id", [1, 2, 3])
+@test_utils.test()
+def test_pure_run_multiple(run_id: int) -> None:
+    a = 2
+
+    # @ti.kernel
+    # def k1():
+    #     print(a)
+
+    # k1()
+
+    @ti.pure
+    @ti.kernel
+    def k1b(a: ti.i32):
+        print(a)
+
+    k1b(a)
+
+
 # The following lines are critical for subprocess-using tests to work. If they are missing, the tests will
 # incorrectly pass, without doing anything.
 if __name__ == "__main__":
