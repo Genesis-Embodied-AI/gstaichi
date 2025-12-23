@@ -272,16 +272,16 @@ class FuncBase:
 
         for kernels, global_context is None. We aren't compiling yet
         """
-        print("[[[[[[[[[[[[[[[[[[[[ process_args", self.func)
-        print("args")
-        for arg in py_args:
-            print("- ", arg)
-        print("kwargs")
-        for k, v in kwargs.items():
-            print(f"- {k}: {v}")
-        print("arg metas:")
-        for am in self.arg_metas:
-            print("- ", am.name, am.annotation)
+        # print("[[[[[[[[[[[[[[[[[[[[ process_args", self.func)
+        # print("args")
+        # for arg in py_args:
+        #     print("- ", arg)
+        # print("kwargs")
+        # for k, v in kwargs.items():
+        #     print(f"- {k}: {v}")
+        # print("arg metas:")
+        # for am in self.arg_metas:
+        #     print("- ", am.name, am.annotation)
         if is_func and not is_pyfunc:
             print('is func and not pyfunc')
             assert global_context is not None
@@ -299,9 +299,9 @@ class FuncBase:
         else:
             print('kernel')
             self.arg_metas_expanded = list(self.arg_metas)
-        print("arg metas_expanded:")
-        for am in self.arg_metas_expanded:
-            print("- ", am.name, am.annotation)
+        # print("arg metas_expanded:")
+        # for am in self.arg_metas_expanded:
+        #     print("- ", am.name, am.annotation)
 
         arg_metas_pruned = self.arg_metas_expanded
         # if global_context is not None:
@@ -314,7 +314,7 @@ class FuncBase:
         #         for meta in self.arg_metas_expanded:
         #             if not meta.name.startswith("__ti_") or meta.name in used_parameters:
         #                 arg_metas_pruned.append(meta)
-        print('arg_metas_pruned', arg_metas_pruned, len(arg_metas_pruned))
+        # print('arg_metas_pruned', arg_metas_pruned, len(arg_metas_pruned))
 
         num_args = len(py_args)
         num_arg_metas = len(arg_metas_pruned)
