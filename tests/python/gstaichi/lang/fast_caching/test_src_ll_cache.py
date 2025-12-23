@@ -577,11 +577,11 @@ def test_src_ll_cache_dupe_kernels(tmp_path: pathlib.Path) -> None:
 def test_pure_run_multiple(run_id: int) -> None:
     a = 2
 
-    # @ti.kernel
-    # def k1():
-    #     print(a)
+    @ti.kernel
+    def k1():
+        print(a)
 
-    # k1()
+    k1()
 
     @ti.pure
     @ti.kernel
