@@ -530,7 +530,6 @@ class Kernel(FuncBase):
         except Exception as e:
             raise type(e)(f"exception while trying to ensure compiled {self.func}:\n{e}") from e
         key = (self.func, instance_id, self.autodiff_mode)
-        print("ensure compiled py_args", py_args)
         self.materialize(key=key, py_args=py_args, arg_features=arg_features)
         return key
 
@@ -538,13 +537,8 @@ class Kernel(FuncBase):
     # Thus this part needs to be fast. (i.e. < 3us on a 4 GHz x64 CPU)
     @_shell_pop_print
     def __call__(self, *py_args, **kwargs) -> Any:
-        print("__calll__ args", py_args, "kwargs", kwargs)
         self.raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
-
-        # runtime = impl.get_runtime()
-        # global_context = runtime._current_global_context
         py_args = self.process_args(is_func=False, is_pyfunc=False, py_args=py_args, kwargs=kwargs, global_context=None)
-        print("py_args after process args", py_args)
 
         # Transform the primal kernel to forward mode grad kernel
         # then recover to primal when exiting the forward mode manager

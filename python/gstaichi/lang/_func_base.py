@@ -280,7 +280,6 @@ class FuncBase:
         for kernels, global_context is None. We aren't compiling yet
         """
         if is_func and not is_pyfunc:
-            print("is func and not pyfunc")
             assert global_context is not None
             current_kernel = global_context.current_kernel
             assert current_kernel is not None
