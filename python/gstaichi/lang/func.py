@@ -27,7 +27,6 @@ from gstaichi.types.enums import AutodiffMode
 
 from ._func_base import FuncBase
 
-
 # Define proxy for fast lookup
 _NONE = AutodiffMode.NONE
 

@@ -54,6 +54,7 @@ from ._kernel_types import (
     CompiledKernelKeyType,
     FeLlCacheObservations,
     KernelBatchedArgType,
+    LaunchObservations,
     LaunchStats,
     SrcLlCacheObservations,
 )
@@ -296,6 +297,7 @@ class Kernel(FuncBase):
 
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
         self.fe_ll_cache_observations: FeLlCacheObservations = FeLlCacheObservations()
+        self.launch_observations = LaunchObservations()
 
         self.launch_context_buffer_cache = LaunchContextBufferCache()
 
@@ -560,6 +562,7 @@ class Kernel(FuncBase):
         key = self.ensure_compiled(*py_args)
         kernel_cpp = self.materialized_kernels[key]
         compiled_kernel_data = self.compiled_kernel_data_by_key.get(key, None)
+        self.launch_observations.found_kernel_in_materialize_cache = compiled_kernel_data is not None
         ret = self.launch_kernel(key, kernel_cpp, compiled_kernel_data, *py_args)
         if compiled_kernel_data is None:
             assert self._last_compiled_kernel_data is not None

@@ -8,6 +8,7 @@ import pytest
 
 import gstaichi as ti
 from gstaichi.lang._kernel_types import KernelBatchedArgType
+from gstaichi.lang.impl import Kernel
 
 from tests import test_utils
 
@@ -1646,38 +1647,38 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
         struct_k1._k1[0, 0] = 100
         f1(flag, struct_k1)
 
-    # TODO: make sure it only compiles twice: once for False, once for True
-    print("-----------------")
     my_struct = make_struct()
     k1(False, my_struct)
-    print("my_struct._k1", my_struct._k1.to_numpy())
-    print("my_struct._f1_with_flag", my_struct._f1_with_flag.to_numpy())
-    print("my_struct._f1_no_flag", my_struct._f1_no_flag.to_numpy())
+    k1_primal: Kernel = k1._primal
+    assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
     assert my_struct._k1[0, 0] == 100
     assert my_struct._f1_no_flag[0, 0] == 102
     assert my_struct._f1_with_flag[0, 0] == 0
-    print("-----------------")
+
     my_struct = make_struct()
     k1(False, my_struct)
-    print("my_struct._k1", my_struct._k1.to_numpy())
-    print("my_struct._f1_with_flag", my_struct._f1_with_flag.to_numpy())
-    print("my_struct._f1_no_flag", my_struct._f1_no_flag.to_numpy())
+    assert k1_primal.launch_observations.found_kernel_in_materialize_cache
     assert my_struct._k1[0, 0] == 100
     assert my_struct._f1_no_flag[0, 0] == 102
     assert my_struct._f1_with_flag[0, 0] == 0
-    print("-----------------")
+
     my_struct = make_struct()
     k1(True, my_struct)
+    assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
     assert my_struct._k1[0, 0] == 100
     assert my_struct._f1_no_flag[0, 0] == 0
     assert my_struct._f1_with_flag[0, 0] == 101
-    print("-----------------")
+
     my_struct = make_struct()
     k1(False, my_struct)
-    print("my_struct._k1", my_struct._k1.to_numpy())
-    print("my_struct._f1_with_flag", my_struct._f1_with_flag.to_numpy())
-    print("my_struct._f1_no_flag", my_struct._f1_no_flag.to_numpy())
+    assert k1_primal.launch_observations.found_kernel_in_materialize_cache
     assert my_struct._k1[0, 0] == 100
     assert my_struct._f1_no_flag[0, 0] == 102
     assert my_struct._f1_with_flag[0, 0] == 0
-    print("-----------------")
+
+    my_struct = make_struct()
+    k1(True, my_struct)
+    assert k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1_no_flag[0, 0] == 0
+    assert my_struct._f1_with_flag[0, 0] == 101
