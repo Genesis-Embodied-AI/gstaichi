@@ -39,21 +39,18 @@ from gstaichi.types import (
     template,
 )
 
-from ._pruning import Pruning
 from .ast.ast_transformer_utils import ASTTransformerGlobalContext
 
 if TYPE_CHECKING:
     from gstaichi._lib.core.gstaichi_python import ASTBuilder
 
+    from ._pruning import Pruning
     from .kernel import Kernel
 from gstaichi.types.enums import Layout
 from gstaichi.types.utils import is_signed
 
 from ._kernel_types import KernelBatchedArgType
 from ._template_mapper import TemplateMapper
-
-if TYPE_CHECKING:
-    from .kernel import Kernel
 
 MAX_ARG_NUM = 512
 
