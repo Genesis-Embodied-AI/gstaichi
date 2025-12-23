@@ -1141,6 +1141,12 @@ def test_prune_used_leaves_fastcache1(tmp_path: Path):
 
         @ti.func
         def f1(md1: MyDataclass1, md2: MyDataclass2) -> None:
+            # used:
+            # __ti_md1__ti_used3
+            # __ti_md2__ti_used1
+            # __ti_md2__ti_used2
+            # __ti_md2__ti_used3
+            # __ti_md1__ti_nested1__ti_n1
             md1.used3[0] = 123
             md2.used1[5] = 555
             md2.used2[5] = 444
@@ -1149,6 +1155,14 @@ def test_prune_used_leaves_fastcache1(tmp_path: Path):
 
         @ti.kernel(fastcache=True)
         def k1(md1: MyDataclass1, md2: MyDataclass2, trigger_static: ti.Template) -> None:
+            # used:
+            # __ti_md1__ti_used1
+            # __ti_md1__ti_used2
+            # __ti_md1__ti_used3
+            # __ti_md2__ti_used1
+            # __ti_md2__ti_used2
+            # __ti_md2__ti_used3
+            # __ti_md1__ti_nested1__ti_n1
             md1.used1[0] = 222
             md1.used1[1] = md1.used2[0]
             f1(md1, md2)
