@@ -2,12 +2,13 @@
 
 import ast
 import dataclasses
+import inspect
 import operator
 import re
 import warnings
 from ast import unparse
 from collections import ChainMap
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from gstaichi.lang import (
     expr,
@@ -20,18 +21,13 @@ from gstaichi.lang.ast.ast_transformer_utils import (
     ASTTransformerFuncContext,
     get_decorator,
 )
-from gstaichi.lang.exception import (
-    GsTaichiSyntaxError,
-)
+from gstaichi.lang.exception import GsTaichiSyntaxError, GsTaichiTypeError
 from gstaichi.lang.expr import Expr
 from gstaichi.lang.matrix import Matrix, Vector
 from gstaichi.lang.util import is_gstaichi_class
 from gstaichi.types import primitive_types
 
 from ...kernel_arguments import ArgMetadata
-
-if TYPE_CHECKING:
-    pass
 
 
 class CallTransformer:
@@ -344,7 +340,7 @@ class CallTransformer:
 
         CallTransformer._warn_if_is_external_func(ctx, node)
         try:
-            if hasattr(func, "wrapper"):
+            if hasattr(func, "wrapper") and hasattr(func.wrapper, "func_id"):
                 _pruning = ctx.global_context.pruning
                 _called_func_id = func.wrapper.func_id
                 _my_func_id = ctx.func.func_id
