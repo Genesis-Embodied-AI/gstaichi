@@ -1322,7 +1322,7 @@ def test_pruning_with_keyword_rename() -> None:
         used: ti.types.NDArray[ti.f32, 2]
         not_used: ti.types.NDArray[ti.f32, 2]
 
-    my_struct = MyStruct(used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1)))
+    my_struct_outside = MyStruct(used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1)))
 
     @ti.func
     def f1(new_struct_name: MyStruct):
@@ -1332,7 +1332,7 @@ def test_pruning_with_keyword_rename() -> None:
     def k1(my_struct: MyStruct):
         f1(new_struct_name=my_struct)
 
-    k1(my_struct=my_struct)
+    k1(my_struct=my_struct_outside)
 
 
 @test_utils.test()

@@ -224,6 +224,7 @@ class CallTransformer:
         added_kwargs = []
         _pruning = ctx.global_context.pruning
         func_id = ctx.func.func_id
+        print('ctx.func', ctx.func.func)
         for i, kwarg in enumerate(kwargs):
             val = kwarg.ptr[kwarg.arg]
             if dataclasses.is_dataclass(val):
@@ -231,10 +232,9 @@ class CallTransformer:
                 for field in dataclasses.fields(dataclass_type):
                     src_name = create_flat_name(kwarg.value.id, field.name)
                     child_name = create_flat_name(kwarg.arg, field.name)
-                    if _pruning.enforcing and child_name not in _pruning.used_parameters_by_func_id[func_id]:
+                    print('child_name', child_name, 'src_name', src_name, '_pruning.used_parameters_by_func_id[func_id]', _pruning.used_parameters_by_func_id[func_id])
+                    if _pruning.enforcing and src_name not in _pruning.used_parameters_by_func_id[func_id]:
                         continue
-                    # if ctx.enforcing_dataclass_parameters and child_name not in ctx.func.used_py_dataclass_parameters_enforcing:
-                    #     continue
                     load_ctx = ast.Load()
                     src_node = ast.Name(
                         id=src_name,
@@ -284,7 +284,9 @@ class CallTransformer:
             build_stmts(ctx, node.keywords)
 
             added_args, node.args = CallTransformer._expand_Call_dataclass_args(ctx, node.args)
+            print('added_args', added_args)
             added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(ctx, node.keywords)
+            print('added_keywords', added_keywords)
 
             # create variables for the now-expanded dataclass members
             # we don't want to include these in the list of variables to not prune
@@ -323,6 +325,7 @@ class CallTransformer:
             else:
                 py_args.append(arg.ptr)
         keywords = dict(ChainMap(*[keyword.ptr for keyword in node.keywords]))
+        print("keywords", keywords)
         func = node.func.ptr
 
         if id(func) in [id(print), id(impl.ti_print)]:
@@ -392,6 +395,9 @@ class CallTransformer:
                         else:
                             new_args.append(py_args[i])
                         child_arg_id += 1
+                    
+                    for i, arg in enumerate(node.keywords):
+                        print('keyword arg', ast.dump(arg))
                     print('new_args', new_args)
                     py_args = new_args
 
@@ -456,6 +462,29 @@ class CallTransformer:
                             if calling_name.startswith("__ti_"):
                                 print('calling_name', calling_name)
                                 called_name = child_metas[child_arg_id].name
+                                print('called_name', called_name)
+                                if called_name in called_needed:
+                                    print('called_name', called_name)
+                                    # print('called_neeeded', called_needed)
+                                    our_name_by_child_name[called_name] = calling_name
+                                    child_name_by_our_name[calling_name] = called_name
+                                    # new_args.append(py_args[i])
+                            # else:
+                            #     new_args.append(py_args[i])
+                        # else:
+                        #     new_args.append(py_args[i])
+                        child_arg_id += 1
+                    print('XXXXXX keywords')
+                    for i, arg in enumerate(node.keywords):
+                        print('-', i, ast.dump(arg))
+                        print('.   ', child_metas[child_arg_id].name)
+                        if True:
+                        # if hasattr(arg, "id"):
+                            calling_name = arg.value.id
+                            if calling_name.startswith("__ti_"):
+                                print('calling_name', calling_name)
+                                # called_name = child_metas[child_arg_id].name
+                                called_name = arg.arg
                                 print('called_name', called_name)
                                 if called_name in called_needed:
                                     print('called_name', called_name)

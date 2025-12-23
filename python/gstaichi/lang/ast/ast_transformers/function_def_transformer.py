@@ -141,7 +141,9 @@ class FunctionDefTransformer:
         assert compiling_callable is not None
         compiling_callable.finalize_rets()
 
+        print('transform as kernel')
         for i in range(len(args.args)):
+            print('- i', i, ctx.func.arg_metas[i])
             arg_meta = ctx.func.arg_metas[i]
             FunctionDefTransformer._transform_kernel_arg(
                 ctx,
