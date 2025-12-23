@@ -179,6 +179,7 @@ class CallTransformer:
             val = arg.ptr
             if dataclasses.is_dataclass(val):
                 dataclass_type = val
+                print('ctx.used_py_dataclass_parameters_enforcing', ctx.used_py_dataclass_parameters_enforcing)
                 for field in dataclasses.fields(dataclass_type):
                     try:
                         child_name = create_flat_name(arg.id, field.name)
@@ -188,6 +189,7 @@ class CallTransformer:
                         ctx.used_py_dataclass_parameters_enforcing is not None
                         and child_name not in ctx.used_py_dataclass_parameters_enforcing
                     ):
+                        print('skipped on enforcement', child_name)
                         continue
                     load_ctx = ast.Load()
                     arg_node = ast.Name(
@@ -200,6 +202,7 @@ class CallTransformer:
                     )
                     if dataclasses.is_dataclass(field.type):
                         arg_node.ptr = field.type
+                        print('recursive call _expand_Call_dataclass_args on ', ast.dump(arg_node))
                         _added_args, _args_new = CallTransformer._expand_Call_dataclass_args(ctx, (arg_node,))
                         args_new.extend(_args_new)
                         added_args.extend(_added_args)
