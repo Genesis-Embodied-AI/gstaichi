@@ -367,7 +367,9 @@ class CallTransformer:
                             calling_name = arg.id
                             if calling_name.startswith("__ti_"):
                                 called_name = _pruning.child_name_by_caller_name_by_func_id[func_id].get(calling_name)
-                                if called_name is not None and (called_name in called_needed or not called_name.startswith("__ti_")):
+                                if called_name is not None and (
+                                    called_name in called_needed or not called_name.startswith("__ti_")
+                                ):
                                     new_args.append(py_args[i])
                             else:
                                 new_args.append(py_args[i])
