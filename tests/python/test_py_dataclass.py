@@ -53,7 +53,7 @@ def test_ndarray_struct_kwargs():
 
     @ti.func
     def s4(a: ti.types.NDArray[ti.i32, 1], b: ti.types.NDArray[ti.i32, 1]) -> None:
-        # []
+        # note: no used py dataclass parameters
         a[1] += 888
         b[2] += 999
 
