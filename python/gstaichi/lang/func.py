@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Callable
+from typing import Any, Callable
 
 from gstaichi._lib import core as _ti_core
 from gstaichi._lib.core.gstaichi_python import (
@@ -27,8 +27,6 @@ from gstaichi.types.enums import AutodiffMode
 
 from ._func_base import FuncBase
 
-if TYPE_CHECKING:
-    pass
 
 # Define proxy for fast lookup
 _NONE = AutodiffMode.NONE
