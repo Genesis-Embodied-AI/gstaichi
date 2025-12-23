@@ -396,12 +396,25 @@ class Kernel(FuncBase):
             else:
                 print("used_py_dataclass_parameters collecting:")
                 for func_id, used_parameters in pruning.used_parameters_by_func_id.items():
-                    print(func_id, used_parameters)
+                    print(func_id, sorted(list(used_parameters)))
                 # _key = ctx.global_context.currently_compiling_materialize_key
-                self.used_py_dataclass_parameters_by_key_enforcing[key] = pruning.used_parameters_by_func_id[-1]
+                # self.used_py_dataclass_parameters_by_key_enforcing[key] = pruning.used_parameters_by_func_id[-1]
+                self.used_py_dataclass_parameters_by_key_enforcing[key] = set()
+                for param in pruning.used_parameters_by_func_id[-1]:
+                    split_param = param.split("__ti_")
+                    for i in range(len(split_param), 0, -1):
+                        joined = "__ti_".join(split_param[:i])
+                        print('joined', joined)
+                        if joined in self.used_py_dataclass_parameters_by_key_enforcing[key]:
+                            break
+                        self.used_py_dataclass_parameters_by_key_enforcing[key].add(joined)
+                print("self.used_py_dataclass_parameters_by_key_enforcing[key]", self.used_py_dataclass_parameters_by_key_enforcing[key])
                 self.used_py_dataclass_parameters_by_key_enforcing_dotted[key] = set(
                     [tuple(p.split("__ti_")[1:]) for p in self.used_py_dataclass_parameters_by_key_enforcing[key]]
                 )
+                print('')
+                print('')
+                print('')
             runtime._current_global_context = None
 
     def launch_kernel(self, key, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
