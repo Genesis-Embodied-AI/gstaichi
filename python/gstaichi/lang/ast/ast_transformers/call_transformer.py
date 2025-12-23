@@ -453,11 +453,12 @@ class CallTransformer:
                     # print("kwargs")
                     for i, arg in enumerate(node.keywords):
                         # print(i, "calling arg", ast.dump(arg)[:100], "arg meta", node.func.ptr.wrapper.arg_metas_expanded[arg_id].name)
-                        calling_name = arg.value.id
-                        called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
-                        if called_name in called_unpruned:
-                            # print('caller unprune', calling_name)
-                            to_unprune.add(calling_name)
+                        if hasattr(arg.value, "id"):
+                            calling_name = arg.value.id
+                            called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
+                            if called_name in called_unpruned:
+                                # print('caller unprune', calling_name)
+                                to_unprune.add(calling_name)
                         arg_id += 1
                     print("to_unprune", ctx.func.func, to_unprune)
                     _pruning = ctx.global_context.pruning
@@ -506,18 +507,18 @@ class CallTransformer:
                         # print('-', i, ast.dump(arg))
                         # print('.   ', child_metas[child_arg_id].name)
                         if True:
-                            # if hasattr(arg, "id"):
-                            calling_name = arg.value.id
-                            if calling_name.startswith("__ti_"):
-                                # called_name = child_metas[child_arg_id].name
-                                called_name = arg.arg
-                                if called_name in called_needed:
-                                    print("- keyword after, ", calling_name, "=>", called_name)
-                                    # print('called_name', called_name)
-                                    # print('called_neeeded', called_needed)
-                                    # our_name_by_child_name[called_name] = calling_name
-                                    child_name_by_our_name[calling_name] = called_name
-                                    # new_args.append(py_args[i])
+                            if hasattr(arg, "id"):
+                                calling_name = arg.value.id
+                                if calling_name.startswith("__ti_"):
+                                    # called_name = child_metas[child_arg_id].name
+                                    called_name = arg.arg
+                                    if called_name in called_needed:
+                                        print("- keyword after, ", calling_name, "=>", called_name)
+                                        # print('called_name', called_name)
+                                        # print('called_neeeded', called_needed)
+                                        # our_name_by_child_name[called_name] = calling_name
+                                        child_name_by_our_name[calling_name] = called_name
+                                        # new_args.append(py_args[i])
                             # else:
                             #     new_args.append(py_args[i])
                         # else:
