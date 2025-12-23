@@ -53,11 +53,15 @@ def test_ndarray_struct_kwargs():
 
     @ti.func
     def s4(a: ti.types.NDArray[ti.i32, 1], b: ti.types.NDArray[ti.i32, 1]) -> None:
+        # []
         a[1] += 888
         b[2] += 999
 
     @ti.func
     def s3(z3: ti.types.NDArray[ti.i32, 1], my_struct3: MyStruct, bar3: ti.types.NDArray[ti.i32, 1]) -> None:
+        # __ti_my_struct3__ti_a
+        # __ti_my_struct3__ti_b
+        # __ti_my_struct3__ti_c
         z3[25] += 90
         my_struct3.a[47] += 42
         my_struct3.b[49] += 43
@@ -67,6 +71,9 @@ def test_ndarray_struct_kwargs():
 
     @ti.func
     def s2(z3: ti.types.NDArray[ti.i32, 1], my_struct3: MyStruct, bar3: ti.types.NDArray[ti.i32, 1]) -> None:
+        # __ti_my_struct3__ti_a
+        # __ti_my_struct3__ti_b
+        # __ti_my_struct3__ti_c
         z3[24] += 89
         my_struct3.a[46] += 32
         my_struct3.b[48] += 33
@@ -76,6 +83,9 @@ def test_ndarray_struct_kwargs():
 
     @ti.func
     def s1(z2: ti.types.NDArray[ti.i32, 1], my_struct2: MyStruct, bar2: ti.types.NDArray[ti.i32, 1]) -> None:
+        # __ti_my_struct2__ti_a
+        # __ti_my_struct2__ti_b
+        # __ti_my_struct2__ti_c
         z2[22] += 88
         my_struct2.a[45] += 22
         my_struct2.b[47] += 23
@@ -85,6 +95,9 @@ def test_ndarray_struct_kwargs():
 
     @ti.kernel
     def k1(z: ti.types.NDArray[ti.i32, 1], my_struct: MyStruct, bar: ti.types.NDArray[ti.i32, 1]) -> None:
+        # __ti_my_struct__ti_a
+        # __ti_my_struct__ti_b
+        # __ti_my_struct__ti_c
         z[33] += 2
         my_struct.a[35] += 3
         my_struct.b[37] += 5
