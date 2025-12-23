@@ -28,7 +28,7 @@ from gstaichi.types.enums import AutodiffMode
 from ._func_base import FuncBase
 
 if TYPE_CHECKING:
-    from .kernel import Kernel
+    pass
 
 # Define proxy for fast lookup
 _NONE = AutodiffMode.NONE
@@ -44,7 +44,7 @@ class Func(FuncBase):
             is_kernel=False,
             is_classkernel=False,
             is_real_function=is_real_function,
-            func_id = Func.function_counter
+            func_id=Func.function_counter,
         )
         Func.function_counter += 1
         self.compiled: dict[int, Callable] = {}  # only for real funcs
@@ -58,7 +58,9 @@ class Func(FuncBase):
         runtime = impl.get_runtime()
         global_context = runtime._current_global_context
         current_kernel = global_context.current_kernel if global_context is not None else None
-        py_args = self.process_args(is_func=True, is_pyfunc=self.pyfunc, py_args=py_args, kwargs=kwargs, global_context=global_context)
+        py_args = self.process_args(
+            is_func=True, is_pyfunc=self.pyfunc, py_args=py_args, kwargs=kwargs, global_context=global_context
+        )
 
         if not impl.inside_kernel():
             if not self.pyfunc:

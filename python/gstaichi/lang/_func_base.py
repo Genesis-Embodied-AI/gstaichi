@@ -23,7 +23,6 @@ from gstaichi.lang import _kernel_impl_dataclass, impl
 from gstaichi.lang._ndarray import Ndarray
 from gstaichi.lang._wrap_inspect import get_source_info_and_src
 from gstaichi.lang.ast import ASTTransformerFuncContext
-from .ast.ast_transformer_utils import ASTTransformerGlobalContext
 from gstaichi.lang.exception import (
     GsTaichiRuntimeError,
     GsTaichiRuntimeTypeError,
@@ -39,7 +38,9 @@ from gstaichi.types import (
     sparse_matrix_builder,
     template,
 )
+
 from ._pruning import Pruning
+from .ast.ast_transformer_utils import ASTTransformerGlobalContext
 
 if TYPE_CHECKING:
     from gstaichi._lib.core.gstaichi_python import ASTBuilder
@@ -67,7 +68,9 @@ class FuncBase:
     Base class for Kernels and Funcs
     """
 
-    def __init__(self, func, func_id: int, is_kernel: bool, is_classkernel: bool, is_classfunc: bool, is_real_function: bool) -> None:
+    def __init__(
+        self, func, func_id: int, is_kernel: bool, is_classkernel: bool, is_classfunc: bool, is_real_function: bool
+    ) -> None:
         self.func = func
         self.func_id = func_id
         self.is_kernel = is_kernel
@@ -198,7 +201,7 @@ class FuncBase:
         is_real_function: bool = False,
         current_kernel: "Kernel | None" = None,  # has value when called from Kernel.materialize
         pruning: "Pruning | None" = None,  # has value when called from Kernel.materialize
-        currently_compiling_materialize_key = None,  # has value when called from Kernel.materialize
+        currently_compiling_materialize_key=None,  # has value when called from Kernel.materialize
     ) -> tuple[ast.Module, ASTTransformerFuncContext]:
         function_source_info, src = get_source_info_and_src(self.func)
         src = [textwrap.fill(line, tabsize=4, width=9999) for line in src]
@@ -215,9 +218,9 @@ class FuncBase:
             global_context = ASTTransformerGlobalContext(
                 current_kernel=current_kernel,
                 pruning=pruning,
-                currently_compiling_materialize_key=currently_compiling_materialize_key
+                currently_compiling_materialize_key=currently_compiling_materialize_key,
             )
-        else: # Func
+        else:  # Func
             global_context = runtime._current_global_context
             assert global_context is not None
             current_kernel = global_context.current_kernel
@@ -265,7 +268,14 @@ class FuncBase:
         )
         return tree, ctx
 
-    def process_args(self, global_context: ASTTransformerGlobalContext | None, is_pyfunc: bool, is_func: bool, py_args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
+    def process_args(
+        self,
+        global_context: ASTTransformerGlobalContext | None,
+        is_pyfunc: bool,
+        is_func: bool,
+        py_args: tuple[Any, ...],
+        kwargs,
+    ) -> tuple[Any, ...]:
         """
         - for functions, expand dataclass arg_metas
         - fuse incoming args and kwargs into a single list of args
@@ -283,7 +293,7 @@ class FuncBase:
         # for am in self.arg_metas:
         #     print("- ", am.name, am.annotation)
         if is_func and not is_pyfunc:
-            print('is func and not pyfunc')
+            print("is func and not pyfunc")
             assert global_context is not None
             current_kernel = global_context.current_kernel
             assert current_kernel is not None
@@ -297,7 +307,7 @@ class FuncBase:
                 self.arg_metas,
             )
         else:
-            print('kernel')
+            print("kernel")
             self.arg_metas_expanded = list(self.arg_metas)
         # print("arg metas_expanded:")
         # for am in self.arg_metas_expanded:
@@ -338,13 +348,13 @@ class FuncBase:
         print("num_args", num_args, "num_arg_metas", num_arg_metas)
 
         fused_args: list[Any] = [*py_args, *[arg_meta.default for arg_meta in arg_metas_pruned[num_args:]]]
-        print('process args fused_args', fused_args)
+        print("process args fused_args", fused_args)
         if kwargs:
             num_invalid_kwargs_args = len(kwargs)
             for i in range(num_args, num_arg_metas):
                 arg_meta = arg_metas_pruned[i]
                 value = kwargs.get(arg_meta.name, _ARG_EMPTY)
-                print('- i', i, 'arg_meta', arg_meta, 'value', value)
+                print("- i", i, "arg_meta", arg_meta, "value", value)
                 if value is not _ARG_EMPTY:
                     fused_args[i] = value
                     num_invalid_kwargs_args -= 1

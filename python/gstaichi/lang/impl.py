@@ -72,6 +72,7 @@ from gstaichi.types.primitive_types import (
 
 if TYPE_CHECKING:
     from gstaichi.lang._ndarray import Ndarray
+
     from .ast.ast_transformer_utils import ASTTransformerGlobalContext
 
 
@@ -1174,6 +1175,7 @@ def static(x, *xs) -> Any:
         return x
     print("x", x, "xs", xs)
     import ast
+
     print(ast.dump(x, indent=2))
     raise ValueError(f"Input to ti.static must be compile-time constants or global pointers, instead of {type(x)}")
 

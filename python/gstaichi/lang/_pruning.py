@@ -15,6 +15,7 @@ class Pruning:
 
     Note that we unify handling of func and kernel by using func_id -1 to denote kernel.
     """
+
     def __init__(self, kernel_used_parameters: set[str] | None) -> None:
         self.enforcing: bool = False
         # func_id -1 means kernel
@@ -43,7 +44,5 @@ class Pruning:
         assert self.enforcing
         dotted_by_func_id = {}
         for func_id, used_parameters in self.used_parameters_by_func_id.items():
-            dotted_by_func_id[func_id] = set(
-                [tuple(p.split("__ti_")[1:]) for p in used_parameters]
-            )
+            dotted_by_func_id[func_id] = set([tuple(p.split("__ti_")[1:]) for p in used_parameters])
         self.dotted_by_func_id = dotted_by_func_id

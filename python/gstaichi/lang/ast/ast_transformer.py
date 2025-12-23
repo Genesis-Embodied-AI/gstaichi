@@ -78,12 +78,8 @@ class ASTTransformer(Builder):
     def build_Name(ctx: ASTTransformerFuncContext, node: ast.Name):
         # print("build_Name", ast.dump(node), "expanding_dataclass_call_parameters", ctx.expanding_dataclass_call_parameters)
         _pruning = ctx.global_context.pruning
-        if (
-            not _pruning.enforcing
-            and not ctx.expanding_dataclass_call_parameters
-            and node.id.startswith("__ti_")
-        ):
-            print('func_id', ctx.func.func_id)
+        if not _pruning.enforcing and not ctx.expanding_dataclass_call_parameters and node.id.startswith("__ti_"):
+            print("func_id", ctx.func.func_id)
             ctx.global_context.pruning.mark_used(ctx.func.func_id, node.id)
         node.violates_pure, node.ptr, node.violates_pure_reason = ctx.get_var_by_name(node.id)
         if isinstance(node, (ast.stmt, ast.expr)) and isinstance(node.ptr, Expr):
@@ -161,7 +157,9 @@ class ASTTransformer(Builder):
         return None
 
     @staticmethod
-    def build_assign_unpack(ctx: ASTTransformerFuncContext, node_target: list | ast.Tuple, values, is_static_assign: bool):
+    def build_assign_unpack(
+        ctx: ASTTransformerFuncContext, node_target: list | ast.Tuple, values, is_static_assign: bool
+    ):
         """Build the unpack assignments like this: (target1, target2) = (value1, value2).
         The function should be called only if the node target is a tuple.
 

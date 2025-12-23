@@ -27,7 +27,10 @@ from gstaichi.lang.ast import (
     KernelSimplicityASTChecker,
     transform_tree,
 )
-from gstaichi.lang.ast.ast_transformer_utils import ASTTransformerFuncContext, ReturnStatus
+from gstaichi.lang.ast.ast_transformer_utils import (
+    ASTTransformerFuncContext,
+    ReturnStatus,
+)
 from gstaichi.lang.exception import (
     GsTaichiRuntimeTypeError,
     GsTaichiSyntaxError,
@@ -55,7 +58,6 @@ from ._kernel_types import (
     SrcLlCacheObservations,
 )
 from ._pruning import Pruning
-
 
 # Define proxies for fast lookup
 _NONE, _VALIDATION = AutodiffMode.NONE, AutodiffMode.VALIDATION
@@ -288,7 +290,9 @@ class Kernel(FuncBase):
         # used_py_dataclass_parameters_by_key_enforcing_dotted will be reconstructed on load from
         # fast cache.
         self.used_py_dataclass_parameters_by_key_enforcing: dict[CompiledKernelKeyType, set[str]] = {}
-        self.used_py_dataclass_parameters_by_key_enforcing_dotted: dict[CompiledKernelKeyType, set[tuple[str, ...]]] = {}
+        self.used_py_dataclass_parameters_by_key_enforcing_dotted: dict[CompiledKernelKeyType, set[tuple[str, ...]]] = (
+            {}
+        )
 
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
         self.fe_ll_cache_observations: FeLlCacheObservations = FeLlCacheObservations()
@@ -311,18 +315,18 @@ class Kernel(FuncBase):
         frontend_cache_key: str | None = None
         # used_py_dataclass_parameters: set[str] | None = None
         if self.runtime.src_ll_cache and self.gstaichi_callable and self.gstaichi_callable.is_pure:
-            print('is pure')
+            print("is pure")
             kernel_source_info, _src = get_source_info_and_src(self.func)
             self.fast_checksum = src_hasher.create_cache_key(
                 self.raise_on_templated_floats, kernel_source_info, args, self.arg_metas
             )
             used_py_dataclass_parameters = None
             if self.fast_checksum:
-                print('have fast checksum')
+                print("have fast checksum")
                 self.src_ll_cache_observations.cache_key_generated = True
                 used_py_dataclass_parameters, frontend_cache_key = src_hasher.load(self.fast_checksum)
             if used_py_dataclass_parameters is not None and frontend_cache_key is not None:
-                print('loaded front end cache key')
+                print("loaded front end cache key")
                 self.src_ll_cache_observations.cache_validated = True
                 prog = impl.get_runtime().prog
                 assert self.fast_checksum is not None
@@ -333,17 +337,21 @@ class Kernel(FuncBase):
                     prog.get_device_caps(),
                 )
                 if self.compiled_kernel_data_by_key[key]:
-                    print('got compiled kernel data')
+                    print("got compiled kernel data")
                     self.src_ll_cache_observations.cache_loaded = True
-                    print('loaded used_py_dataclass_parameters', used_py_dataclass_parameters)
+                    print("loaded used_py_dataclass_parameters", used_py_dataclass_parameters)
                     self.used_py_dataclass_parameters_by_key_enforcing[key] = used_py_dataclass_parameters
                     self.used_py_dataclass_parameters_by_key_enforcing_dotted[key] = set(
                         [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_parameters]
                     )
-                    print('loaded used_py_dataclass_parameters_by_key_enforcing_dotted for key', key, self.used_py_dataclass_parameters_by_key_enforcing_dotted[key])
+                    print(
+                        "loaded used_py_dataclass_parameters_by_key_enforcing_dotted for key",
+                        key,
+                        self.used_py_dataclass_parameters_by_key_enforcing_dotted[key],
+                    )
                     return used_py_dataclass_parameters
                 else:
-                    print('couldnt load from cache')
+                    print("couldnt load from cache")
                     # used_py_dataclass_parameters = None
         elif self.gstaichi_callable and not self.gstaichi_callable.is_pure and self.runtime.print_non_pure:
             # The bit in caps should not be modified without updating corresponding test
@@ -361,13 +369,13 @@ class Kernel(FuncBase):
             key = (self.func, 0, self.autodiff_mode)
         self.fast_checksum = None
         if key in self.materialized_kernels:
-            print('key', key, ' in materizlied kernels ✅')
+            print("key", key, " in materizlied kernels ✅")
             return
-        print('key', key, ' not in materizlied kernels ❌')
+        print("key", key, " not in materizlied kernels ❌")
 
         self.runtime.materialize()
         _used_py_dataclass_parameters = self._try_load_fastcache(py_args, key)
-        print('_used_py_dataclass_parameters', _used_py_dataclass_parameters)
+        print("_used_py_dataclass_parameters", _used_py_dataclass_parameters)
         kernel_name = f"{self.func.__name__}_c{self.kernel_counter}_{key[1]}"
         _logging.trace(f"Materializing kernel {kernel_name} in {self.autodiff_mode}...")
 
@@ -422,15 +430,15 @@ class Kernel(FuncBase):
                         split_param = param.split("__ti_")
                         for i in range(len(split_param), 0, -1):
                             joined = "__ti_".join(split_param[:i])
-                            print('joined', joined)
+                            print("joined", joined)
                             if joined in new_used_parameters:
                                 break
                             new_used_parameters.add(joined)
                     used_parameters.clear()
                     used_parameters.update(new_used_parameters)
-                            # if joined in self.used_py_dataclass_parameters_by_key_enforcing[key]:
-                            #     break
-                            # self.used_py_dataclass_parameters_by_key_enforcing[key].add(joined)
+                    # if joined in self.used_py_dataclass_parameters_by_key_enforcing[key]:
+                    #     break
+                    # self.used_py_dataclass_parameters_by_key_enforcing[key].add(joined)
 
                 # self.used_py_dataclass_parameters_by_key_enforcing[key] = set()
                 # for param in pruning.used_parameters_by_func_id[-1]:
@@ -442,13 +450,16 @@ class Kernel(FuncBase):
                 #             break
                 #         self.used_py_dataclass_parameters_by_key_enforcing[key].add(joined)
                 self.used_py_dataclass_parameters_by_key_enforcing[key] = pruning.used_parameters_by_func_id[-1]
-                print("self.used_py_dataclass_parameters_by_key_enforcing[key]", self.used_py_dataclass_parameters_by_key_enforcing[key])
+                print(
+                    "self.used_py_dataclass_parameters_by_key_enforcing[key]",
+                    self.used_py_dataclass_parameters_by_key_enforcing[key],
+                )
                 self.used_py_dataclass_parameters_by_key_enforcing_dotted[key] = set(
                     [tuple(p.split("__ti_")[1:]) for p in self.used_py_dataclass_parameters_by_key_enforcing[key]]
                 )
-                print('')
-                print('')
-                print('')
+                print("")
+                print("")
+                print("")
             runtime._current_global_context = None
 
     def launch_kernel(self, key, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
@@ -567,7 +578,7 @@ class Kernel(FuncBase):
         except Exception as e:
             raise type(e)(f"exception while trying to ensure compiled {self.func}:\n{e}") from e
         key = (self.func, instance_id, self.autodiff_mode)
-        print('ensure compiled py_args', py_args)
+        print("ensure compiled py_args", py_args)
         self.materialize(key=key, py_args=py_args, arg_features=arg_features)
         return key
 

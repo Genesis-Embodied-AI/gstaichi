@@ -4,10 +4,13 @@ import dataclasses
 import pytest
 
 import gstaichi as ti
-from gstaichi.lang.ast.ast_transformer_utils import ASTTransformerFuncContext, ASTTransformerGlobalContext
-from gstaichi.lang.ast.ast_transformers.call_transformer import CallTransformer
-from gstaichi.lang._pruning import Pruning
 from gstaichi.lang._func_base import FuncBase
+from gstaichi.lang._pruning import Pruning
+from gstaichi.lang.ast.ast_transformer_utils import (
+    ASTTransformerFuncContext,
+    ASTTransformerGlobalContext,
+)
+from gstaichi.lang.ast.ast_transformers.call_transformer import CallTransformer
 
 from tests import test_utils
 
