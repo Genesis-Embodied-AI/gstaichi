@@ -161,7 +161,6 @@ class CallTransformer:
                 args.append(["__ti_fmt_value__", new_arg, spec])
             else:
                 args.append(new_arg)
-        # put the formatted string as the first argument to make ti.format() happy
         args.insert(0, re.sub(r"{.*?}", "{}", raw_string))
         return args
 
@@ -181,18 +180,11 @@ class CallTransformer:
             val = arg.ptr
             if dataclasses.is_dataclass(val):
                 dataclass_type = val
-                print("_pruning.used_parameters_by_func_id[func_id]", _pruning.used_parameters_by_func_id[func_id])
                 for field in dataclasses.fields(dataclass_type):
                     try:
                         child_name = create_flat_name(arg.id, field.name)
                     except Exception as e:
                         raise RuntimeError(f"Exception whilst processing {field.name} in {type(dataclass_type)}") from e
-                    # if dataclasses.is_dataclass(field.type):
-                    #     arg_node.ptr = field.type
-                    #     _added_args, _args_new = CallTransformer._expand_Call_dataclass_args(ctx, (arg_node,))
-                    #     args_new.extend(_args_new)
-                    #     added_args.extend(_added_args)
-                    #     continue
                     if _pruning.enforcing and child_name not in _pruning.used_parameters_by_func_id[func_id]:
                         continue
                     load_ctx = ast.Load()
@@ -210,14 +202,10 @@ class CallTransformer:
                         args_new.extend(_args_new)
                         added_args.extend(_added_args)
                     else:
-                        # if _pruning.enforcing and child_name not in _pruning.used_parameters_by_func_id[func_id]:
-                        #     # print()
-                        #     continue
                         args_new.append(arg_node)
                         added_args.append(arg_node)
             else:
                 args_new.append(arg)
-        print("added_args", [n.id for n in added_args])
         return tuple(added_args), tuple(args_new)
 
     @staticmethod
@@ -298,13 +286,8 @@ class CallTransformer:
             build_stmts(ctx, node.args)
             build_stmts(ctx, node.keywords)
 
-            # print('node.args', [n.id for n in node.args])
             added_args, node.args = CallTransformer._expand_Call_dataclass_args(ctx, node.args)
-            # print('node.args', [n.id for n in node.args])
-            # print('node.args', node.args)
-            # print('added_args', added_args)
             added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(ctx, node.keywords)
-            # print('added_keywords', added_keywords)
 
             # create variables for the now-expanded dataclass members
             # we don't want to include these in the list of variables to not prune
@@ -342,9 +325,7 @@ class CallTransformer:
                     py_args.append(i)
             else:
                 py_args.append(arg.ptr)
-        print("node.keywords", node.keywords)
         keywords = dict(ChainMap(*[keyword.ptr for keyword in node.keywords]))
-        print("keywords", keywords)
         func = node.func.ptr
 
         if id(func) in [id(print), id(impl.ti_print)]:
@@ -371,181 +352,102 @@ class CallTransformer:
             return node.ptr
 
         CallTransformer._warn_if_is_external_func(ctx, node)
-        # try:
-        if True:
+        try:
             if hasattr(func, "wrapper"):
                 _pruning = ctx.global_context.pruning
                 _called_func_id = func.wrapper.func_id
                 _my_func_id = ctx.func.func_id
                 func_id = func.wrapper.func_id
-                print("potentially calling", ast.dump(node.func)[:20], "with args", py_args, "keywords", keywords)
                 if _pruning.enforcing:
                     called_needed = _pruning.used_parameters_by_func_id[_called_func_id]
-                    print("called_needed", called_needed)
                     new_args = []
                     child_arg_id = 0
                     child_metas: list[ArgMetadata] = node.func.ptr.wrapper.arg_metas_expanded
-                    # child_metas: list[ArgMetadata] = cast(ArgMetadata, node.func.ptr.wrapper.arg_metas_expanded)
                     child_metas_pruned = []
                     for _child in child_metas:
-                        print("build_Call child.name", _child.name, end="")
                         if _child.name.startswith("__ti_"):
                             if _child.name in called_needed:
-                                print(" ✅")
                                 child_metas_pruned.append(_child)
-                            else:
-                                print(" ❌")
                         else:
-                            print(" 🔵")
                             child_metas_pruned.append(_child)
-                    print("child_metas_pruned", [c.name for c in child_metas_pruned])
                     child_metas = child_metas_pruned
-                    print(
-                        "_pruning.child_name_by_caller_name_by_func_id[func_id]",
-                        _pruning.child_name_by_caller_name_by_func_id[func_id],
-                    )
-                    print('node.args')
                     for i, arg in enumerate(node.args):
-                        print('-', i, ast.dump(arg)[:50], child_metas[child_arg_id].name)
                         if hasattr(arg, "id"):
                             calling_name = arg.id
-                            print('calling name', calling_name)
                             if calling_name.startswith("__ti_"):
                                 called_name = _pruning.child_name_by_caller_name_by_func_id[func_id].get(calling_name)
-                                # called_name = child_metas[child_arg_id].name
                                 if called_name is not None and (called_name in called_needed or not called_name.startswith("__ti_")):
-                                    print("before call ", calling_name, "=>", called_name)
                                     new_args.append(py_args[i])
                             else:
                                 new_args.append(py_args[i])
                         else:
                             new_args.append(py_args[i])
                         child_arg_id += 1
-
-                    for i, arg in enumerate(node.keywords):
-                        # new_args.append(arg)
-                        print("keyword arg", ast.dump(arg))
-                    print("new_args", new_args)
                     py_args = new_args
 
-                print("calling", ast.dump(node.func)[:20], "with args", py_args, "keywords", keywords)
-            print("")
-            print("")
-            print("ooooooooooooooooooooooooooooooooooooooooo")
             node.ptr = func(*py_args, **keywords)
-            print("(after call to )", ast.dump(node.func)[:20])
+
             arg_id = 0
             if hasattr(func, "wrapper"):
                 func_id = func.wrapper.func_id
                 if not _pruning.enforcing:
-                    # _pruning = ctx.global_context.pruning
-                    print("_called_func_id", _called_func_id)
                     called_unpruned = _pruning.used_parameters_by_func_id[_called_func_id]
                     to_unprune: set[str] = set()
                     for i, arg in enumerate(node.args):
-                        print(i, ast.dump(arg)[:50], node.func.ptr.wrapper.arg_metas_expanded[arg_id].name)
                         if hasattr(arg, "id"):
                             calling_name = arg.id
                             called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
-                            # called_name = _pruning.child_name_by_caller_name_by_func_id[func_id][calling_name]
                             if called_name in called_unpruned:
-                                # print('caller unprune', calling_name)
                                 to_unprune.add(calling_name)
                         arg_id += 1
-                    # print("kwargs")
                     for i, arg in enumerate(node.keywords):
-                        # print(i, "calling arg", ast.dump(arg)[:100], "arg meta", node.func.ptr.wrapper.arg_metas_expanded[arg_id].name)
                         if hasattr(arg.value, "id"):
                             calling_name = arg.value.id
                             called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
                             if called_name in called_unpruned:
-                                # print('caller unprune', calling_name)
                                 to_unprune.add(calling_name)
                         arg_id += 1
-                    print("to_unprune", ctx.func.func, to_unprune)
                     _pruning = ctx.global_context.pruning
-                    # if not _pruning.enforcing:
                     _pruning.used_parameters_by_func_id[_my_func_id].update(to_unprune)
 
                     called_needed = _pruning.used_parameters_by_func_id[_called_func_id]
-                    print("called_needed", called_needed)
-                    # new_args = []
                     child_arg_id = 0
                     child_metas: list[ArgMetadata] = node.func.ptr.wrapper.arg_metas_expanded
-                    # child_metas: list[ArgMetadata] = cast(ArgMetadata, node.func.ptr.wrapper.arg_metas_expanded)
-                    # child_metas_pruned = []
-                    # for _child in child_metas:
-                    #     print('child.name', _child.name)
-                    #     if _child.name.startswith("__ti_"):
-                    #         if _child.name in called_needed:
-                    #             print("in called needed")
-                    #             child_metas_pruned.append(_child)
-                    #     else:
-                    #         print('not ti')
-                    #         child_metas_pruned.append(_child)
-                    # print("child_metas_pruned", [c.name for c in child_metas_pruned])
-                    # child_metas = child_metas_pruned
-                    # our_name_by_child_name = {}
                     child_name_by_our_name = _pruning.child_name_by_caller_name_by_func_id[func_id]
                     for i, arg in enumerate(node.args):
-                        # print(i, ast.dump(arg)[:50], child_metas[child_arg_id].name)
                         if hasattr(arg, "id"):
                             calling_name = arg.id
                             if calling_name.startswith("__ti_"):
                                 called_name = child_metas[child_arg_id].name
                                 if called_name in called_needed or not called_name.startswith("__ti_"):
-                                    print("- arg after ", calling_name, "=>", called_name)
-                                    # print('called_name', called_name)
-                                    # print('called_neeeded', called_needed)
-                                    # our_name_by_child_name[called_name] = calling_name
                                     child_name_by_our_name[calling_name] = called_name
-                                    # new_args.append(py_args[i])
-                            # else:
-                            #     new_args.append(py_args[i])
-                        # else:
-                        #     new_args.append(py_args[i])
                         child_arg_id += 1
                     for i, arg in enumerate(node.keywords):
-                        # print('-', i, ast.dump(arg))
-                        # print('.   ', child_metas[child_arg_id].name)
                         if True:
                             if hasattr(arg, "id"):
                                 calling_name = arg.value.id
                                 if calling_name.startswith("__ti_"):
-                                    # called_name = child_metas[child_arg_id].name
                                     called_name = arg.arg
                                     if called_name in called_needed:
-                                        print("- keyword after, ", calling_name, "=>", called_name)
-                                        # print('called_name', called_name)
-                                        # print('called_neeeded', called_needed)
-                                        # our_name_by_child_name[called_name] = calling_name
                                         child_name_by_our_name[calling_name] = called_name
-                                        # new_args.append(py_args[i])
-                            # else:
-                            #     new_args.append(py_args[i])
-                        # else:
-                        #     new_args.append(py_args[i])
                         child_arg_id += 1
-                    print("child_name_by_our_name", child_name_by_our_name)
-                    # _pruning.caller_name_by_child_name_by_func_id[func_id] = our_name_by_child_name
                     _pruning.child_name_by_caller_name_by_func_id[func_id] = child_name_by_our_name
-
-        # except TypeError as e:
-        #     module = inspect.getmodule(func)
-        #     error_msg = re.sub(r"\bExpr\b", "GsTaichi Expression", str(e))
-        #     func_name = getattr(func, "__name__", func.__class__.__name__)
-        #     msg = f"TypeError when calling `{func_name}`: {error_msg}."
-        #     if CallTransformer._is_external_func(ctx, node.func.ptr):
-        #         args_has_expr = any([isinstance(arg, Expr) for arg in args])
-        #         if args_has_expr and (module == math or module == np):
-        #             exec_str = f"from gstaichi import {func.__name__}"
-        #             try:
-        #                 exec(exec_str, {})
-        #             except:
-        #                 pass
-        #             else:
-        #                 msg += f"\nDid you mean to use `ti.{func.__name__}` instead of `{module.__name__}.{func.__name__}`?"
-        #     raise GsTaichiTypeError(msg)
+        except TypeError as e:
+            module = inspect.getmodule(func)
+            error_msg = re.sub(r"\bExpr\b", "GsTaichi Expression", str(e))
+            func_name = getattr(func, "__name__", func.__class__.__name__)
+            msg = f"TypeError when calling `{func_name}`: {error_msg}."
+            if CallTransformer._is_external_func(ctx, node.func.ptr):
+                args_has_expr = any([isinstance(arg, Expr) for arg in args])
+                if args_has_expr and (module == math or module == np):
+                    exec_str = f"from gstaichi import {func.__name__}"
+                    try:
+                        exec(exec_str, {})
+                    except:
+                        pass
+                    else:
+                        msg += f"\nDid you mean to use `ti.{func.__name__}` instead of `{module.__name__}.{func.__name__}`?"
+            raise GsTaichiTypeError(msg)
 
         if getattr(func, "_is_gstaichi_function", False):
             ctx.func.has_print |= func.wrapper.has_print
