@@ -79,7 +79,6 @@ def extract_struct_locals_from_context(ctx: ASTTransformerFuncContext) -> set[st
         if dataclasses.is_dataclass(parameter.annotation):
             for field in dataclasses.fields(parameter.annotation):
                 child_name = create_flat_name(param_name, field.name)
-                # child_name = f"__ti_{param_name}__ti_{field.name}"
                 if dataclasses.is_dataclass(field.type):
                     _populate_struct_locals_from_params_dict(child_name, struct_locals, field.type)
                     continue
@@ -98,12 +97,10 @@ def expand_func_arguments(
         if dataclasses.is_dataclass(argument.annotation):
             for field in dataclasses.fields(argument.annotation):
                 child_name = create_flat_name(argument.name, field.name)
-                print("child_name", child_name)
                 if (
                     used_py_dataclasses_parameters_enforcing is not None
                     and child_name not in used_py_dataclasses_parameters_enforcing
                 ):
-                    print(" - skip")
                     continue
                 if dataclasses.is_dataclass(field.type):
                     new_arg = ArgMetadata(

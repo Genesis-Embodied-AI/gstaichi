@@ -279,16 +279,6 @@ class FuncBase:
 
         for kernels, global_context is None. We aren't compiling yet
         """
-        # print("[[[[[[[[[[[[[[[[[[[[ process_args", self.func)
-        # print("args")
-        # for arg in py_args:
-        #     print("- ", arg)
-        # print("kwargs")
-        # for k, v in kwargs.items():
-        #     print(f"- {k}: {v}")
-        # print("arg metas:")
-        # for am in self.arg_metas:
-        #     print("- ", am.name, am.annotation)
         if is_func and not is_pyfunc:
             print("is func and not pyfunc")
             assert global_context is not None
@@ -298,31 +288,14 @@ class FuncBase:
             used_by_dataclass_parameters_enforcing = None
             if _pruning.enforcing:
                 used_by_dataclass_parameters_enforcing = global_context.pruning.used_parameters_by_func_id[self.func_id]
-            print("used_by_dataclass_parameters_enforcing", used_by_dataclass_parameters_enforcing)
             self.arg_metas_expanded = _kernel_impl_dataclass.expand_func_arguments(
                 used_by_dataclass_parameters_enforcing,
                 self.arg_metas,
             )
         else:
-            print("kernel")
             self.arg_metas_expanded = list(self.arg_metas)
-        # print("arg metas_expanded:")
-        # for am in self.arg_metas_expanded:
-        #     print("- ", am.name, am.annotation)
 
         arg_metas_pruned = self.arg_metas_expanded
-        # if global_context is not None:
-        #     _pruning = global_context.pruning
-        #     used_parameters = _pruning.used_parameters_by_func_id[self.func_id]
-        #     print('global context not none')
-        #     if _pruning.enforcing:
-        #         arg_metas_pruned = []
-        #         print('enforcing')
-        #         for meta in self.arg_metas_expanded:
-        #             if not meta.name.startswith("__ti_") or meta.name in used_parameters:
-        #                 arg_metas_pruned.append(meta)
-        # print('arg_metas_pruned', arg_metas_pruned, len(arg_metas_pruned))
-
         num_args = len(py_args)
         num_arg_metas = len(arg_metas_pruned)
         if num_args > num_arg_metas:
@@ -342,16 +315,12 @@ class FuncBase:
         if not (kwargs or num_arg_metas > num_args):
             return py_args
 
-        print("num_args", num_args, "num_arg_metas", num_arg_metas)
-
         fused_args: list[Any] = [*py_args, *[arg_meta.default for arg_meta in arg_metas_pruned[num_args:]]]
-        print("process args fused_args", fused_args)
         if kwargs:
             num_invalid_kwargs_args = len(kwargs)
             for i in range(num_args, num_arg_metas):
                 arg_meta = arg_metas_pruned[i]
                 value = kwargs.get(arg_meta.name, _ARG_EMPTY)
-                print("- i", i, "arg_meta", arg_meta, "value", value)
                 if value is not _ARG_EMPTY:
                     fused_args[i] = value
                     num_invalid_kwargs_args -= 1
