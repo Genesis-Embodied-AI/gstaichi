@@ -4,8 +4,10 @@ import dataclasses
 import pytest
 
 import gstaichi as ti
-from gstaichi.lang.ast.ast_transformer_utils import ASTTransformerFuncContext
+from gstaichi.lang.ast.ast_transformer_utils import ASTTransformerFuncContext, ASTTransformerGlobalContext
 from gstaichi.lang.ast.ast_transformers.call_transformer import CallTransformer
+from gstaichi.lang._pruning import Pruning
+from gstaichi.lang._func_base import FuncBase
 
 from tests import test_utils
 
@@ -77,9 +79,25 @@ def test_expand_Call_dataclass_args(args_in: tuple[ast.stmt, ...], expected_args
         arg.col_offset = 1
         arg.end_col_offset = 2
 
+    pruning = Pruning(kernel_used_parameters=None)
+
+    class MockGlobalContext(ASTTransformerGlobalContext):
+        def __init__(self):
+            self.pruning = pruning
+
+    mock_global_context = MockGlobalContext()
+
+    class MockFunc(FuncBase):
+        def __init__(self) -> None:
+            self.func_id = 1
+
+    mock_func = MockFunc()
+
     class MockContext(ASTTransformerFuncContext):
         def __init__(self):
             self.used_py_dataclass_parameters_enforcing = None
+            self.global_context = mock_global_context
+            self.func = mock_func
 
     ctx = MockContext()
     args_added, args_out = CallTransformer._expand_Call_dataclass_args(ctx, args_in)
