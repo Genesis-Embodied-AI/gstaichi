@@ -272,7 +272,7 @@ class FuncBase:
 
         for kernels, global_context is None. We aren't compiling yet
         """
-        print("process_args", self.func)
+        print("[[[[[[[[[[[[[[[[[[[[ process_args", self.func)
         print("args")
         for arg in py_args:
             print("- ", arg)
@@ -338,11 +338,13 @@ class FuncBase:
         print("num_args", num_args, "num_arg_metas", num_arg_metas)
 
         fused_args: list[Any] = [*py_args, *[arg_meta.default for arg_meta in arg_metas_pruned[num_args:]]]
+        print('process args fused_args', fused_args)
         if kwargs:
             num_invalid_kwargs_args = len(kwargs)
             for i in range(num_args, num_arg_metas):
                 arg_meta = arg_metas_pruned[i]
                 value = kwargs.get(arg_meta.name, _ARG_EMPTY)
+                print('- i', i, 'arg_meta', arg_meta, 'value', value)
                 if value is not _ARG_EMPTY:
                     fused_args[i] = value
                     num_invalid_kwargs_args -= 1

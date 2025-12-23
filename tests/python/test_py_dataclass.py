@@ -1386,9 +1386,6 @@ def test_pruning_with_arg_kwargs_rename() -> None:
         # should be used:
         # struct_f2.used
         # struct2_f2.useds
-        #
-        # new_struct_name.used[0, 0]
-        # my_struct2_renamed.used[0, 0]
         struct_f2.used[0, 0]
         struct2_f2.used[0, 0]
 

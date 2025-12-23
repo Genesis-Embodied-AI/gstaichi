@@ -324,6 +324,7 @@ class CallTransformer:
                     py_args.append(i)
             else:
                 py_args.append(arg.ptr)
+        print('node.keywords', node.keywords)
         keywords = dict(ChainMap(*[keyword.ptr for keyword in node.keywords]))
         print("keywords", keywords)
         func = node.func.ptr
@@ -397,12 +398,17 @@ class CallTransformer:
                         child_arg_id += 1
                     
                     for i, arg in enumerate(node.keywords):
+                        # new_args.append(arg)
                         print('keyword arg', ast.dump(arg))
                     print('new_args', new_args)
                     py_args = new_args
 
                 print("calling", ast.dump(node.func)[:20], "with args", py_args, "keywords", keywords)
+            print("")
+            print("")
+            print("ooooooooooooooooooooooooooooooooooooooooo")
             node.ptr = func(*py_args, **keywords)
+            print("(after call to )", ast.dump(node.func)[:20])
             arg_id = 0
             if hasattr(func, "wrapper"):
                 func_id = func.wrapper.func_id
@@ -453,8 +459,8 @@ class CallTransformer:
                     #         child_metas_pruned.append(_child)
                     # print("child_metas_pruned", [c.name for c in child_metas_pruned])
                     # child_metas = child_metas_pruned
-                    our_name_by_child_name = {}
-                    child_name_by_our_name = {}
+                    # our_name_by_child_name = {}
+                    child_name_by_our_name = _pruning.child_name_by_caller_name_by_func_id[func_id]
                     for i, arg in enumerate(node.args):
                         print(i, ast.dump(arg)[:50], child_metas[child_arg_id].name)
                         if hasattr(arg, "id"):
@@ -466,7 +472,7 @@ class CallTransformer:
                                 if called_name in called_needed:
                                     print('called_name', called_name)
                                     # print('called_neeeded', called_needed)
-                                    our_name_by_child_name[called_name] = calling_name
+                                    # our_name_by_child_name[called_name] = calling_name
                                     child_name_by_our_name[calling_name] = called_name
                                     # new_args.append(py_args[i])
                             # else:
@@ -489,7 +495,7 @@ class CallTransformer:
                                 if called_name in called_needed:
                                     print('called_name', called_name)
                                     # print('called_neeeded', called_needed)
-                                    our_name_by_child_name[called_name] = calling_name
+                                    # our_name_by_child_name[called_name] = calling_name
                                     child_name_by_our_name[calling_name] = called_name
                                     # new_args.append(py_args[i])
                             # else:
@@ -497,8 +503,8 @@ class CallTransformer:
                         # else:
                         #     new_args.append(py_args[i])
                         child_arg_id += 1
-                    print('our_name_by_child_name', our_name_by_child_name)
-                    _pruning.caller_name_by_child_name_by_func_id[func_id] = our_name_by_child_name
+                    print('child_name_by_our_name', child_name_by_our_name)
+                    # _pruning.caller_name_by_child_name_by_func_id[func_id] = our_name_by_child_name
                     _pruning.child_name_by_caller_name_by_func_id[func_id] = child_name_by_our_name
 
         # except TypeError as e:
