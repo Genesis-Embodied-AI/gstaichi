@@ -143,7 +143,6 @@ class Func(FuncBase):
             py_args=args,
             arg_features=arg_features,
             is_real_function=self.is_real_function,
-            # used_py_dataclass_parameters_enforcing=None,
         )
         fn = impl.get_runtime().prog.create_function(key)
 
