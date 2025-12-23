@@ -350,9 +350,7 @@ class Kernel(FuncBase):
                         self.used_py_dataclass_parameters_by_key_enforcing_dotted[key],
                     )
                     return used_py_dataclass_parameters
-                else:
-                    print("couldnt load from cache")
-                    # used_py_dataclass_parameters = None
+
         elif self.gstaichi_callable and not self.gstaichi_callable.is_pure and self.runtime.print_non_pure:
             # The bit in caps should not be modified without updating corresponding test
             # freetext can be freely modified.
