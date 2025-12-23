@@ -126,6 +126,9 @@ Module Contents
       :type:  gstaichi.lang._kernel_types.FeLlCacheObservations
 
 
+   .. py:attribute:: launch_observations
+
+
    .. py:attribute:: launch_context_buffer_cache
 
 

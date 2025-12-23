@@ -310,7 +310,7 @@
                 <article class="bd-article">
                   
   <h1>Source code for gstaichi.lang.func</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi._lib</span><span class="w"> </span><span class="kn">import</span> <span class="n">core</span> <span class="k">as</span> <span class="n">_ti_core</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi._lib.core.gstaichi_python</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -338,9 +338,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.types.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutodiffMode</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">._func_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">FuncBase</span>
-
-<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="k">pass</span>
 
 <span class="c1"># Define proxy for fast lookup</span>
 <span class="n">_NONE</span> <span class="o">=</span> <span class="n">AutodiffMode</span><span class="o">.</span><span class="n">NONE</span>
@@ -485,7 +482,6 @@
             <span class="n">py_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
             <span class="n">arg_features</span><span class="o">=</span><span class="n">arg_features</span><span class="p">,</span>
             <span class="n">is_real_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">is_real_function</span><span class="p">,</span>
-            <span class="c1"># used_py_dataclass_parameters_enforcing=None,</span>
         <span class="p">)</span>
         <span class="n">fn</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">prog</span><span class="o">.</span><span class="n">create_function</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
 
