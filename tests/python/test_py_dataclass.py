@@ -59,6 +59,7 @@ def test_ndarray_struct_kwargs():
 
     @ti.func
     def s3(z3: ti.types.NDArray[ti.i32, 1], my_struct3: MyStruct, bar3: ti.types.NDArray[ti.i32, 1]) -> None:
+        # used py dataclass variables:
         # __ti_my_struct3__ti_a
         # __ti_my_struct3__ti_b
         # __ti_my_struct3__ti_c
@@ -71,6 +72,7 @@ def test_ndarray_struct_kwargs():
 
     @ti.func
     def s2(z3: ti.types.NDArray[ti.i32, 1], my_struct3: MyStruct, bar3: ti.types.NDArray[ti.i32, 1]) -> None:
+        # used py dataclass variables:
         # __ti_my_struct3__ti_a
         # __ti_my_struct3__ti_b
         # __ti_my_struct3__ti_c
@@ -83,6 +85,7 @@ def test_ndarray_struct_kwargs():
 
     @ti.func
     def s1(z2: ti.types.NDArray[ti.i32, 1], my_struct2: MyStruct, bar2: ti.types.NDArray[ti.i32, 1]) -> None:
+        # used py dataclass variables:
         # __ti_my_struct2__ti_a
         # __ti_my_struct2__ti_b
         # __ti_my_struct2__ti_c
@@ -95,6 +98,7 @@ def test_ndarray_struct_kwargs():
 
     @ti.kernel
     def k1(z: ti.types.NDArray[ti.i32, 1], my_struct: MyStruct, bar: ti.types.NDArray[ti.i32, 1]) -> None:
+        # used py dataclass variables:
         # __ti_my_struct__ti_a
         # __ti_my_struct__ti_b
         # __ti_my_struct__ti_c
