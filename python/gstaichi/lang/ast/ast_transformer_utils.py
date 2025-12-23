@@ -200,7 +200,6 @@ class ASTTransformerFuncContext:
         is_real_function: bool,
         autodiff_mode: AutodiffMode,
         raise_on_templated_floats: bool,
-        # arg_metas_by_function
     ):
         from gstaichi import extension  # pylint: disable=import-outside-toplevel
 
