@@ -283,6 +283,7 @@ class Kernel(FuncBase):
         self.kernel_function_info: FunctionSourceInfo | None = None
         self.compiled_kernel_data_by_key: dict[CompiledKernelKeyType, CompiledKernelData] = {}
         self._last_compiled_kernel_data: CompiledKernelData | None = None  # for dev/debug
+        self._last_launch_key = None  # for dev/debug
 
         # next two parameters are ONLY used at kernel launch time,
         # NOT for compilation. (for compilation, global_context.pruning is used).
@@ -560,6 +561,7 @@ class Kernel(FuncBase):
             _logging.warn("""opt_level = 1 is enforced to enable gradient computation.""")
             impl.current_cfg().opt_level = 1
         key = self.ensure_compiled(*py_args)
+        self._last_launch_key = key
         kernel_cpp = self.materialized_kernels[key]
         compiled_kernel_data = self.compiled_kernel_data_by_key.get(key, None)
         self.launch_observations.found_kernel_in_materialize_cache = compiled_kernel_data is not None
