@@ -367,8 +367,6 @@ class Kernel(FuncBase):
         for _pass in range(range_begin, 2):
             if _pass >= 1:
                 pruning.enforce()
-            if _pass == 1:
-                ...
             tree, ctx = self.get_tree_and_ctx(
                 py_args=py_args,
                 template_slot_locations=self.template_slot_locations,
