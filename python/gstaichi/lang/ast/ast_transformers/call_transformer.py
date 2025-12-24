@@ -214,8 +214,8 @@ class CallTransformer:
         """
         kwargs_new = []
         added_kwargs = []
-        _pruning = ctx.global_context.pruning
-        func_id = ctx.func.func_id
+        # _pruning = ctx.global_context.pruning
+        # func_id = ctx.func.func_id
         ctx.debug("_expand_Call_dataclass_kwargs")
         indent = "  "
         for i, kwarg in enumerate(kwargs):
