@@ -1,12 +1,13 @@
 from collections import defaultdict
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from .kernel_arguments import ArgMetadata
 
 if TYPE_CHECKING:
-    from .ast.ast_transformer_utils import ASTTransformerFuncContext
-    from ._gstaichi_callable import GsTaichiCallable
     import ast
+
+    from ._gstaichi_callable import GsTaichiCallable
+    from .ast.ast_transformer_utils import ASTTransformerFuncContext
 
 
 class Pruning:
@@ -108,7 +109,9 @@ class Pruning:
             child_arg_id += 1
         self.child_name_by_caller_name_by_func_id[func_id] = child_name_by_our_name
 
-    def filter_call_args(self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node: "ast.Call", py_args: list[Any]) -> list[Any]:
+    def filter_call_args(
+        self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node: "ast.Call", py_args: list[Any]
+    ) -> list[Any]:
         """
         used in build_Call, before making the call, in pass 1
 
@@ -132,7 +135,7 @@ class Pruning:
                 child_metas_pruned.append(_child)
         child_metas = child_metas_pruned
         for i, arg in enumerate(node.args):
-            import ast
+
             if hasattr(arg, "id"):
                 calling_name = arg.id  # type: ignore
                 if calling_name.startswith("__ti_"):

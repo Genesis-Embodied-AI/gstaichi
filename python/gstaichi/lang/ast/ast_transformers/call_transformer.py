@@ -26,6 +26,7 @@ from gstaichi.lang.expr import Expr
 from gstaichi.lang.matrix import Matrix, Vector
 from gstaichi.lang.util import is_gstaichi_class
 from gstaichi.types import primitive_types
+
 from ..._gstaichi_callable import GsTaichiCallable
 
 
@@ -205,7 +206,9 @@ class CallTransformer:
 
     @staticmethod
     def _expand_Call_dataclass_kwargs(
-        ctx: ASTTransformerFuncContext, kwargs: list[ast.keyword], called_needed: set[str] | None,
+        ctx: ASTTransformerFuncContext,
+        kwargs: list[ast.keyword],
+        called_needed: set[str] | None,
     ) -> tuple[list[ast.keyword], list[ast.keyword]]:
         """
         We require that each node has a .ptr attribute added to it, that contains
@@ -244,7 +247,9 @@ class CallTransformer:
                     )
                     if dataclasses.is_dataclass(field.type):
                         kwarg_node.ptr = {child_name: field.type}
-                        _added_kwargs, _kwargs_new = CallTransformer._expand_Call_dataclass_kwargs(ctx, [kwarg_node], called_needed)
+                        _added_kwargs, _kwargs_new = CallTransformer._expand_Call_dataclass_kwargs(
+                            ctx, [kwarg_node], called_needed
+                        )
                         kwargs_new.extend(_kwargs_new)
                         added_kwargs.extend(_added_kwargs)
                     else:
@@ -283,7 +288,9 @@ class CallTransformer:
                 called_needed = _pruning.used_parameters_by_func_id[_called_func_id]
 
             added_args, node.args = CallTransformer._expand_Call_dataclass_args(ctx, node.args)
-            added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(ctx, node.keywords, called_needed)
+            added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(
+                ctx, node.keywords, called_needed
+            )
 
             # create variables for the now-expanded dataclass members
             # we don't want to include these in the list of variables to not prune

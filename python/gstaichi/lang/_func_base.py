@@ -197,7 +197,7 @@ class FuncBase:
         is_real_function: bool = False,
         current_kernel: "Kernel | None" = None,  # has value when called from Kernel.materialize
         pruning: "Pruning | None" = None,  # has value when called from Kernel.materialize
-        currently_compiling_materialize_key = None,  # has value when called from Kernel.materialize
+        currently_compiling_materialize_key=None,  # has value when called from Kernel.materialize
         pass_idx: int | None = None,  # has value when called from Kernel.materialize
     ) -> tuple[ast.Module, ASTTransformerFuncContext]:
         function_source_info, src = get_source_info_and_src(self.func)
