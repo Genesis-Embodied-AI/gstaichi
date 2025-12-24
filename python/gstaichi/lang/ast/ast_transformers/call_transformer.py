@@ -226,7 +226,9 @@ class CallTransformer:
                     src_name = create_flat_name(kwarg.value.id, field.name)
                     child_name = create_flat_name(kwarg.arg, field.name)
                     ctx.debug(indent, "-", kwarg, src_name, "=>", child_name)
-                    if called_needed and child_name not in called_needed:
+                    # Note: using `called_needed` instead of `called_needed is not None` will cause
+                    # a bug, when it is empty set.
+                    if called_needed is not None and child_name not in called_needed:
                     # if _pruning.enforcing and src_name not in _pruning.used_parameters_by_func_id[func_id]:
                         ctx.debug(indent * 2, "=> skip")
                         continue

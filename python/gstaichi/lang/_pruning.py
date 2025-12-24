@@ -170,44 +170,44 @@ class Pruning:
         py_args = new_args
         return py_args
 
-    def filter_keywords(self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node: "ast.Call", added_keywords: "list[keyword]") -> "list[keyword]":
-        """
-        Filter results of expand dataclasses, in build_Call
-        """
-        ctx.debug("filter_call_kwargs")
+    # def filter_keywords(self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node: "ast.Call", added_keywords: "list[keyword]") -> "list[keyword]":
+    #     """
+    #     Filter results of expand dataclasses, in build_Call
+    #     """
+    #     ctx.debug("filter_call_kwargs")
 
-        if not (hasattr(func, "wrapper") and hasattr(func.wrapper, "func_id")):
-            ctx.debug("doesnt have wrapper or func_id")
-            return keywords
+    #     if not (hasattr(func, "wrapper") and hasattr(func.wrapper, "func_id")):
+    #         ctx.debug("doesnt have wrapper or func_id")
+    #         return keywords
 
-        _called_func_id = func.wrapper.func_id  # type: ignore
-        func_id = func.wrapper.func_id  # type: ignore
-        called_needed = self.used_parameters_by_func_id[_called_func_id]
+    #     _called_func_id = func.wrapper.func_id  # type: ignore
+    #     func_id = func.wrapper.func_id  # type: ignore
+    #     called_needed = self.used_parameters_by_func_id[_called_func_id]
 
-        ctx.debug("filter call args called needed")
-        for needed in sorted(called_needed):
-            ctx.debug("- ", needed)
-        ctx.debug("filter call args, child_name_by_our_name:")
-        for our_name, child_name in sorted(self.child_name_by_caller_name_by_func_id[func_id].items()):
-            ctx.debug('- ', our_name, '=>', child_name)
+    #     ctx.debug("filter call args called needed")
+    #     for needed in sorted(called_needed):
+    #         ctx.debug("- ", needed)
+    #     ctx.debug("filter call args, child_name_by_our_name:")
+    #     for our_name, child_name in sorted(self.child_name_by_caller_name_by_func_id[func_id].items()):
+    #         ctx.debug('- ', our_name, '=>', child_name)
 
-        ctx.debug("keywords")
-        indent = "  "
-        pruned_keywords = []
-        for keyword in keywords:
-            import ast
-            child_name = keyword.arg
-            our_name = keyword.value.id
-            ctx.debug(indent, "-", our_name, "->", child_name, ast.dump(keyword))
-            if child_name in called_needed:
-                pruned_keywords.append(keyword)
-            # child_name = 
+    #     ctx.debug("keywords")
+    #     indent = "  "
+    #     pruned_keywords = []
+    #     for keyword in keywords:
+    #         import ast
+    #         child_name = keyword.arg
+    #         our_name = keyword.value.id
+    #         ctx.debug(indent, "-", our_name, "->", child_name, ast.dump(keyword))
+    #         if child_name in called_needed:
+    #             pruned_keywords.append(keyword)
+    #         # child_name = 
 
-        return pruned_keywords
+    #     return pruned_keywords
 
-        # pruned_py_kwargs = {}
-        # indent = "  "
-        # for name, kwarg in py_kwargs.items():
-        #     ctx.debug(indent, "-", name, kwarg)
-        #     pruned_py_kwargs[name] = kwarg
-        # return pruned_py_kwargs
+    #     # pruned_py_kwargs = {}
+    #     # indent = "  "
+    #     # for name, kwarg in py_kwargs.items():
+    #     #     ctx.debug(indent, "-", name, kwarg)
+    #     #     pruned_py_kwargs[name] = kwarg
+    #     # return pruned_py_kwargs
