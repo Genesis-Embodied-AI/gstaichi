@@ -1820,3 +1820,60 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
         "__ti_struct_k1__ti__f1_with_flag",
         "__ti_struct_k1__ti__k1",
     ]
+
+
+@test_utils.test()
+def test_pruning_kwargs_same_param_names_diff_names() -> None:
+    """
+    In this test, we call functions from one parent, passing the same struct
+    with same name, and with different name
+    """
+
+    @dataclasses.dataclass
+    class MyStruct:
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _f2a: ti.types.NDArray[ti.f32, 2]
+        _f2b: ti.types.NDArray[ti.f32, 2]
+        _unused: ti.types.NDArray[ti.f32, 2]
+
+    def make_struct():
+        my_struct = MyStruct(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f2a=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f2b=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct
+
+    @ti.func
+    def f2a(struct_f2a: MyStruct):
+        struct_f2a._f2a[0, 0] += 3
+
+    @ti.func
+    def f2b(struct_f2b: MyStruct):
+        struct_f2b._f2b[0, 0] += 5
+
+    @ti.func
+    def f1(struct_f1: MyStruct):
+        struct_f1._f1[0, 0] = 101
+        f2a(struct_f2a=struct_f1)
+        f2a(struct_f2a=struct_f1)
+        f2b(struct_f2b=struct_f1)
+
+    @ti.kernel
+    def k1(struct_k1: MyStruct):
+        struct_k1._k1[0, 0] = 100
+        f1(struct_f1=struct_k1)
+
+    my_struct = make_struct()
+    k1(my_struct)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1[0, 0] == 101
+    assert my_struct._f2a[0, 0] == 6
+    assert my_struct._f2b[0, 0] == 5
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
