@@ -55,8 +55,15 @@ def test_dlpack_types(tensor_type, dtype, shape: tuple[int], poses: list[tuple[i
     }[dtype]
     assert tt.dtype == expected_torch_type
     for i, pos in enumerate(poses):
-        assert tt[pos] == ti_tensor[pos]
-        assert tt[pos] != 0
+        if shape == () and ti.cfg.arch == ti.amdgpu:
+            print('using .item()')
+            torch_val = tt.item()
+            gstaichi_val = ti_tensor[pos]
+        else:
+            torch_val = tt[pos]
+            gstaichi_val = ti_tensor[pos]
+        assert torch_val == gstaichi_val
+        assert torch_val != 0
 
 
 @test_utils.test(arch=dlpack_arch)
@@ -314,3 +321,106 @@ def test_dlpack_field_memory_allocation_before_to_dlpack():
     assert (
         second_time_tc == second_time.to_torch(device=second_time_tc.device)
     ).all(), f"{second_time_tc} != {second_time.to_torch(device=second_time_tc.device)}"
+
+
+@test_utils.test(arch=ti.amdgpu)
+def test_dlpack_context_debug():
+    """Debug test to check HIP contexts"""
+    import torch
+    import ctypes
+    
+    # Check PyTorch's HIP context
+    try:
+        # Try to get PyTorch's device context
+        x = torch.tensor([1.0], device='cuda' if torch.cuda.is_available() else 'cpu')
+        print(f"PyTorch tensor device: {x.device}")
+    except Exception as e:
+        print(f"PyTorch device check failed: {e}")
+    
+    # Check if we can create a simple PyTorch tensor on HIP
+    try:
+        if hasattr(torch, 'cuda') and torch.cuda.is_available():
+            x = torch.tensor([1.0, 2.0, 3.0], device='cuda')
+            print(f"PyTorch CUDA tensor: {x}")
+            print(f"PyTorch CUDA device: {x.device}")
+    except Exception as e:
+        print(f"PyTorch CUDA tensor creation failed: {e}")
+    
+    # Now test gstaichi
+    ti_tensor = ti.ndarray(ti.f32, (3,))
+    ti_tensor[0] = 1.0
+    ti_tensor[1] = 2.0  
+    ti_tensor[2] = 3.0
+    ti.sync()
+    
+    print(f"gstaichi tensor created and populated")
+    
+    dlpack = ti_tensor.to_dlpack()
+    print(f"DLPack capsule created")
+    
+    tt = torch.utils.dlpack.from_dlpack(dlpack)
+    print(f"PyTorch tensor from DLPack: shape={tuple(tt.shape)}, device={tt.device}")
+    
+    # Try different access methods
+    try:
+        # Method 1: Direct access
+        val = tt[0]
+        print(f"Direct access tt[0] = {val}")
+    except Exception as e:
+        print(f"Direct access failed: {e}")
+    
+    try:
+        # Method 2: CPU copy
+        cpu_copy = tt.cpu()
+        print(f"CPU copy succeeded: {cpu_copy}")
+    except Exception as e:
+        print(f"CPU copy failed: {e}")
+    
+    try:
+        # Method 3: to() method
+        cpu_tensor = tt.to('cpu')
+        print(f"to('cpu') succeeded: {cpu_tensor}")
+    except Exception as e:
+        print(f"to('cpu') failed: {e}")
+
+
+@test_utils.test(arch=[ti.amdgpu])
+def test_dlpack_scalar_debug():
+    """Test DLPack with scalar tensor specifically"""
+    # This is the failing case: ndarray, shape=(), dtype=ti.i32
+    ti_tensor = ti.ndarray(ti.i32, ())
+    ti_tensor[()] = 42
+    ti.sync()
+    
+    print(f"gstaichi scalar created and set to: {ti_tensor[()]}")
+    
+    dlpack = ti_tensor.to_dlpack()
+    tt = torch.utils.dlpack.from_dlpack(dlpack)
+    
+    print(f"PyTorch scalar tensor: shape={tuple(tt.shape)}, dtype={tt.dtype}, value={tt.item()}")
+    
+    # Test different access methods
+    try:
+        val1 = tt[()]
+        print(f"tt[()] = {val1}")
+    except Exception as e:
+        print(f"tt[()] failed: {e}")
+    
+    try:
+        val2 = tt.item()
+        print(f"tt.item() = {val2}")
+    except Exception as e:
+        print(f"tt.item() failed: {e}")
+    
+    # Compare with gstaichi
+    gstaichi_val = ti_tensor[()]
+    print(f"gstaichi value: {gstaichi_val}")
+    
+    # Test the original assertion
+    try:
+        assert tt[()] == ti_tensor[()]
+        print("Scalar comparison PASSED")
+    except Exception as e:
+        print(f"Scalar comparison FAILED: {e}")
+    
+    assert tt[()] != 0

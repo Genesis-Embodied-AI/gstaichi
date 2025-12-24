@@ -9,6 +9,7 @@
 #endif  // TI_WITH_CUDA
 #if TI_WITH_AMDGPU
 #include "gstaichi/rhi/amdgpu/amdgpu_device.h"
+#include "gstaichi/rhi/amdgpu/amdgpu_context.h"
 #endif  // TI_WITH_AMDGPU
 #if TI_WITH_METAL
 #include "gstaichi/rhi/metal/metal_device.h"
@@ -198,6 +199,14 @@ pybind11::capsule field_to_dlpack(Program *program,
   Arch arch = program->compile_config().arch;
   validate_arch(arch);
 
+  #if TI_WITH_AMDGPU
+  std::unique_ptr<AMDGPUContext::ContextGuard> amdgpu_guard;
+  if (arch_is_amdgpu(arch)) {
+    amdgpu_guard = std::make_unique<AMDGPUContext::ContextGuard>(
+        &AMDGPUContext::get_instance());
+  }
+  #endif
+
   int tree_id = snode->get_snode_tree_id();
   DevicePtr tree_device_ptr = program->get_snode_tree_device_ptr(tree_id);
 
@@ -285,6 +294,14 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
                                     Ndarray *ndarray) {
   Arch arch = program->compile_config().arch;
   validate_arch(arch);
+
+  #if TI_WITH_AMDGPU
+  std::unique_ptr<AMDGPUContext::ContextGuard> amdgpu_guard;
+  if (arch_is_amdgpu(arch)) {
+    amdgpu_guard = std::make_unique<AMDGPUContext::ContextGuard>(
+        &AMDGPUContext::get_instance());
+  }
+  #endif
 
   auto *owner_holder = new pybind11::object(owner);
 
