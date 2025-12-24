@@ -358,6 +358,7 @@ class FuncBase:
                     fused_args[i] = value
                     num_invalid_kwargs_args -= 1
                 elif fused_args[i] is _ARG_EMPTY:
+                    debug(f"ERROR: Missing argument '{arg_meta.name}'.")
                     raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
             if num_invalid_kwargs_args:
                 for key, value in kwargs.items():
@@ -373,6 +374,7 @@ class FuncBase:
             for i in range(num_args, num_arg_metas):
                 if fused_args[i] is _ARG_EMPTY:
                     arg_meta = arg_metas_pruned[i]
+                    debug(f"ERROR: Missing argument '{arg_meta.name}'.")
                     raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
 
         debug("(end process args)")
