@@ -26,6 +26,7 @@ from gstaichi.lang.expr import Expr
 from gstaichi.lang.matrix import Matrix, Vector
 from gstaichi.lang.util import is_gstaichi_class
 from gstaichi.types import primitive_types
+from ..._gstaichi_callable import GsTaichiCallable
 
 
 class CallTransformer:
@@ -204,7 +205,7 @@ class CallTransformer:
 
     @staticmethod
     def _expand_Call_dataclass_kwargs(
-        ctx: ASTTransformerFuncContext, kwargs: list[ast.keyword]
+        ctx: ASTTransformerFuncContext, kwargs: list[ast.keyword], called_needed: set[str] | None,
     ) -> tuple[list[ast.keyword], list[ast.keyword]]:
         """
         We require that each node has a .ptr attribute added to it, that contains
@@ -212,8 +213,6 @@ class CallTransformer:
         """
         kwargs_new = []
         added_kwargs = []
-        _pruning = ctx.global_context.pruning
-        func_id = ctx.func.func_id
         for i, kwarg in enumerate(kwargs):
             val = kwarg.ptr[kwarg.arg]
             if dataclasses.is_dataclass(val):
@@ -221,7 +220,9 @@ class CallTransformer:
                 for field in dataclasses.fields(dataclass_type):
                     src_name = create_flat_name(kwarg.value.id, field.name)
                     child_name = create_flat_name(kwarg.arg, field.name)
-                    if _pruning.enforcing and src_name not in _pruning.used_parameters_by_func_id[func_id]:
+                    # Note: using `called_needed` instead of `called_needed is not None` will cause
+                    # a bug, when it is empty set.
+                    if called_needed is not None and child_name not in called_needed:
                         continue
                     load_ctx = ast.Load()
                     src_node = ast.Name(
@@ -243,7 +244,7 @@ class CallTransformer:
                     )
                     if dataclasses.is_dataclass(field.type):
                         kwarg_node.ptr = {child_name: field.type}
-                        _added_kwargs, _kwargs_new = CallTransformer._expand_Call_dataclass_kwargs(ctx, [kwarg_node])
+                        _added_kwargs, _kwargs_new = CallTransformer._expand_Call_dataclass_kwargs(ctx, [kwarg_node], called_needed)
                         kwargs_new.extend(_kwargs_new)
                         added_kwargs.extend(_added_kwargs)
                     else:
@@ -264,6 +265,8 @@ class CallTransformer:
                 build_stmt(ctx, node.func)
                 build_stmts(ctx, node.args)
                 build_stmts(ctx, node.keywords)
+            func = node.func.ptr
+            func_type = type(func)
         else:
             build_stmt(ctx, node.func)
             # creates variable for the dataclass itself (as well as other variables,
@@ -271,8 +274,16 @@ class CallTransformer:
             build_stmts(ctx, node.args)
             build_stmts(ctx, node.keywords)
 
+            func = node.func.ptr
+            func_type = type(func)
+            _pruning = ctx.global_context.pruning
+            called_needed = None
+            if _pruning.enforcing and func_type is GsTaichiCallable:
+                _called_func_id = func.wrapper.func_id  # type: ignore
+                called_needed = _pruning.used_parameters_by_func_id[_called_func_id]
+
             added_args, node.args = CallTransformer._expand_Call_dataclass_args(ctx, node.args)
-            added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(ctx, node.keywords)
+            added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(ctx, node.keywords, called_needed)
 
             # create variables for the now-expanded dataclass members
             # we don't want to include these in the list of variables to not prune
@@ -287,6 +298,8 @@ class CallTransformer:
                 build_stmt(ctx, arg)
             ctx.expanding_dataclass_call_parameters = False
 
+        # check for pure violations
+        # we have to do this after building the statements
         # if any arg violates pure, then node also violates pure
         for arg in node.args:
             if arg.violates_pure:
@@ -310,30 +323,29 @@ class CallTransformer:
                     py_args.append(i)
             else:
                 py_args.append(arg.ptr)
-        keywords = dict(ChainMap(*[keyword.ptr for keyword in node.keywords]))
-        func = node.func.ptr
+        py_kwargs = dict(ChainMap(*[keyword.ptr for keyword in node.keywords]))
 
         if id(func) in [id(print), id(impl.ti_print)]:
             ctx.func.has_print = True
 
         if isinstance(node.func, ast.Attribute) and isinstance(node.func.value.ptr, str) and node.func.attr == "format":
             raw_string = node.func.value.ptr
-            py_args = CallTransformer._canonicalize_formatted_string(raw_string, *py_args, **keywords)
+            py_args = CallTransformer._canonicalize_formatted_string(raw_string, *py_args, **py_kwargs)
             node.ptr = impl.ti_format(*py_args)
             return node.ptr
 
         if id(func) == id(Matrix) or id(func) == id(Vector):
-            node.ptr = matrix.make_matrix(*py_args, **keywords)
+            node.ptr = matrix.make_matrix(*py_args, **py_kwargs)
             return node.ptr
 
-        if CallTransformer._build_call_if_is_builtin(ctx, node, py_args, keywords):
+        if CallTransformer._build_call_if_is_builtin(ctx, node, py_args, py_kwargs):
             return node.ptr
 
-        if CallTransformer._build_call_if_is_type(ctx, node, py_args, keywords):
+        if CallTransformer._build_call_if_is_type(ctx, node, py_args, py_kwargs):
             return node.ptr
 
         if hasattr(node.func, "caller"):
-            node.ptr = func(node.func.caller, *py_args, **keywords)
+            node.ptr = func(node.func.caller, *py_args, **py_kwargs)
             return node.ptr
 
         CallTransformer._warn_if_is_external_func(ctx, node)
@@ -342,7 +354,7 @@ class CallTransformer:
             if _pruning.enforcing:
                 py_args = _pruning.filter_call_args(ctx, func, node, py_args)
 
-            node.ptr = func(*py_args, **keywords)
+            node.ptr = func(*py_args, **py_kwargs)
 
             if not _pruning.enforcing:
                 _pruning.record_after_call(ctx, func, node)

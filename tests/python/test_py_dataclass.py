@@ -1053,9 +1053,9 @@ def test_prune_used_leaves1():
     assert u1[0] == 222
     assert u3[0] == 123
     assert u1[1] == 333
-    assert u1[2] == 0
     assert u1b[5] == 555
     assert n1[0] == 777
+    assert u1[2] == 0
 
     u1[0] = 0
     u1[1] = 0
@@ -1129,6 +1129,11 @@ def test_prune_used_leaves2():
     assert u1b[0] == 555
     assert u2b[0] == 444
     assert u3b[0] == 333
+
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    print(sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])))
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 7  # +1 for envs_idx
 
 
 @test_utils.test()
@@ -1755,7 +1760,6 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
     assert my_struct._f1_with_flag[0, 0] == 0
     assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
     assert sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])) == [
-        "",
         "__ti_struct_k1",
         "__ti_struct_k1__ti__f1_no_flag",
         "__ti_struct_k1__ti__k1",
@@ -1770,7 +1774,6 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
     assert my_struct._f1_with_flag[0, 0] == 0
     assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
     assert sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])) == [
-        "",
         "__ti_struct_k1",
         "__ti_struct_k1__ti__f1_no_flag",
         "__ti_struct_k1__ti__k1",
@@ -1785,7 +1788,6 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
     assert my_struct._f1_with_flag[0, 0] == 101
     assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
     assert sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])) == [
-        "",
         "__ti_struct_k1",
         "__ti_struct_k1__ti__f1_with_flag",
         "__ti_struct_k1__ti__k1",
@@ -1800,7 +1802,6 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
     assert my_struct._f1_with_flag[0, 0] == 0
     assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
     assert sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])) == [
-        "",
         "__ti_struct_k1",
         "__ti_struct_k1__ti__f1_no_flag",
         "__ti_struct_k1__ti__k1",
@@ -1815,8 +1816,146 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
     assert my_struct._f1_with_flag[0, 0] == 101
     assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
     assert sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])) == [
-        "",
         "__ti_struct_k1",
         "__ti_struct_k1__ti__f1_with_flag",
         "__ti_struct_k1__ti__k1",
     ]
+
+
+@test_utils.test()
+def test_pruning_kwargs_same_param_names_diff_names() -> None:
+    """
+    In this test, we call functions from one parent, passing the same struct
+    with same name, and with different name
+    """
+
+    @dataclasses.dataclass
+    class MyStruct:
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _f2a: ti.types.NDArray[ti.f32, 2]
+        _f2b: ti.types.NDArray[ti.f32, 2]
+        _unused: ti.types.NDArray[ti.f32, 2]
+
+    def make_struct():
+        my_struct = MyStruct(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f2a=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f2b=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct
+
+    @ti.func
+    def f2a(struct_f2a: MyStruct):
+        struct_f2a._f2a[0, 0] += 3
+
+    @ti.func
+    def f2b(struct_f2b: MyStruct):
+        struct_f2b._f2b[0, 0] += 5
+
+    @ti.func
+    def f1(struct_f1: MyStruct):
+        struct_f1._f1[0, 0] = 101
+        f2a(struct_f2a=struct_f1)
+        f2a(struct_f2a=struct_f1)
+        f2b(struct_f2b=struct_f1)
+
+    @ti.kernel
+    def k1(struct_k1: MyStruct):
+        struct_k1._k1[0, 0] = 100
+        f1(struct_f1=struct_k1)
+
+    my_struct = make_struct()
+    k1(my_struct)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1[0, 0] == 101
+    assert my_struct._f2a[0, 0] == 6
+    assert my_struct._f2b[0, 0] == 5
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
+
+
+@pytest.mark.xfail(reason="cannot use * when calling ti.func")
+@test_utils.test()
+def test_pruning_func_return_star_to_another() -> None:
+    """
+    Using the tuple return from one fucntion as the args to
+    another
+    """
+
+    @ti.func
+    def return_params(a: ti.i32):
+        return a + 1, a + 5
+
+    @ti.func
+    def f2(t: ti.types.NDArray[ti.i32, 1], a: ti.i32, b: ti.i32) -> None:
+        t[0] = a
+        t[1] = b
+    
+    @ti.kernel
+    def k1(t: ti.types.NDArray[ti.i32, 1], a: ti.i32) -> None:
+        f2(t, *return_params(a))
+
+    t = ti.ndarray(ti.i32, (10,))
+    k1(t, 3)
+    assert t[0] == 4
+    assert t[0] == 8
+
+
+@pytest.mark.xfail(reason="cannot use * when calling ti.func")
+@test_utils.test()
+def test_pruning_func_return_star_to_another_two_step() -> None:
+    """
+    Using the tuple return from one fucntion as the args to
+    another
+    """
+
+    @ti.func
+    def return_params(a: ti.i32):
+        return a + 1, a + 5
+
+    @ti.func
+    def f2(t: ti.types.NDArray[ti.i32, 1], a: ti.i32, b: ti.i32) -> None:
+        t[0] = a
+        t[1] = b
+    
+    @ti.kernel
+    def k1(t: ti.types.NDArray[ti.i32, 1], a: ti.i32) -> None:
+        res = return_params(a)
+        f2(t, *res)
+
+    t = ti.ndarray(ti.i32, (10,))
+    k1(t, 3)
+    assert t[0] == 4
+    assert t[0] == 8
+
+
+@test_utils.test()
+def test_pruning_func_return_star_to_another_explicit_vars() -> None:
+    """
+    Using the tuple return from one fucntion as the args to
+    another
+    """
+
+    @ti.func
+    def return_params(a: ti.i32):
+        return a + 1, a + 5
+
+    @ti.func
+    def f2(t: ti.types.NDArray[ti.i32, 1], a: ti.i32, b: ti.i32) -> None:
+        t[0] = a
+        t[1] = b
+    
+    @ti.kernel
+    def k1(t: ti.types.NDArray[ti.i32, 1], a: ti.i32) -> None:
+        b, c = return_params(a)
+        f2(t, b, c)
+
+    t = ti.ndarray(ti.i32, (10,))
+    k1(t, 3)
+    assert t[0] == 4
+    assert t[1] == 8
