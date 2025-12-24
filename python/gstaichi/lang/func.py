@@ -64,9 +64,6 @@ class Func(FuncBase):
         global_context = runtime._current_global_context
         current_kernel = global_context.current_kernel if global_context is not None else None
         assert current_kernel is not None
-        py_args = self.process_args(
-            is_func=True, is_pyfunc=self.pyfunc, py_args=py_args, kwargs=kwargs, global_context=global_context
-        )
 
         if not impl.inside_kernel():
             if not self.pyfunc:
@@ -84,10 +81,26 @@ class Func(FuncBase):
 
         tree, ctx = self.get_tree_and_ctx(
             is_kernel=False,
-            py_args=py_args,
+            # py_args=py_args,
             ast_builder=current_kernel.ast_builder(),
             is_real_function=self.is_real_function,
         )
+
+        py_args = self.process_args(
+            is_func=True, is_pyfunc=self.pyfunc, py_args=py_args, kwargs=kwargs, global_context=global_context
+        )
+        ctx.py_args = py_args
+
+        template_vars = {}
+        if self.is_real_function:
+            self._populate_global_vars_for_templates(
+                template_slot_locations=self.template_slot_locations,
+                argument_metas=self.arg_metas,
+                global_vars=template_vars,
+                fn=self.func,
+                py_args=py_args,
+            )
+        ctx.template_vars = template_vars
 
         struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
 

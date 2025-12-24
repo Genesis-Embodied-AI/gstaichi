@@ -377,7 +377,7 @@ class Kernel(FuncBase):
             if _pass >= 1:
                 pruning.enforce()
             tree, ctx = self.get_tree_and_ctx(
-                py_args=py_args,
+                # py_args=py_args,
                 template_slot_locations=self.template_slot_locations,
                 arg_features=arg_features,
                 current_kernel=self,
@@ -385,6 +385,19 @@ class Kernel(FuncBase):
                 currently_compiling_materialize_key=key,
             )
             runtime._current_global_context = ctx.global_context
+
+            ctx.py_args = py_args
+
+            template_vars = {}
+            if self.is_real_function:
+                self._populate_global_vars_for_templates(
+                    template_slot_locations=self.template_slot_locations,
+                    argument_metas=self.arg_metas,
+                    global_vars=template_vars,
+                    fn=self.func,
+                    py_args=py_args,
+                )
+            ctx.template_vars = template_vars
 
             if self.autodiff_mode != _NONE:
                 KernelSimplicityASTChecker(self.func).visit(tree)

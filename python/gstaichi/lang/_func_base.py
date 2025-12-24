@@ -189,7 +189,7 @@ class FuncBase:
 
     def get_tree_and_ctx(
         self,
-        py_args: tuple[Any, ...],
+        # py_args: tuple[Any, ...],
         template_slot_locations=(),
         is_kernel: bool = True,
         arg_features=None,
@@ -231,16 +231,6 @@ class FuncBase:
         is_pure = gstaichi_callable is not None and gstaichi_callable.is_pure
         global_vars = self._get_global_vars(self.func)
 
-        template_vars = {}
-        if is_kernel or is_real_function:
-            self._populate_global_vars_for_templates(
-                template_slot_locations=self.template_slot_locations,
-                argument_metas=self.arg_metas,
-                global_vars=template_vars,
-                fn=self.func,
-                py_args=py_args,
-            )
-
         raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
 
         ctx = ASTTransformerFuncContext(
@@ -251,8 +241,8 @@ class FuncBase:
             func=self,
             arg_features=arg_features,
             global_vars=global_vars,
-            template_vars=template_vars,
-            py_args=py_args,
+            template_vars={},
+            # py_args=py_args,
             src=src,
             start_lineno=function_source_info.start_lineno,
             end_lineno=function_source_info.end_lineno,
