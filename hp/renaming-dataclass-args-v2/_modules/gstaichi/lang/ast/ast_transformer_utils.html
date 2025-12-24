@@ -587,7 +587,9 @@
 <div class="viewcode-block" id="ASTTransformerGlobalContext">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerGlobalContext">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ASTTransformerGlobalContext</span><span class="p">:</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current_kernel</span><span class="p">:</span> <span class="s2">&quot;Kernel&quot;</span><span class="p">,</span> <span class="n">pruning</span><span class="p">:</span> <span class="s2">&quot;Pruning&quot;</span><span class="p">,</span> <span class="n">currently_compiling_materialize_key</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">current_kernel</span><span class="p">:</span> <span class="s2">&quot;Kernel&quot;</span><span class="p">,</span> <span class="n">pruning</span><span class="p">:</span> <span class="s2">&quot;Pruning&quot;</span><span class="p">,</span> <span class="n">currently_compiling_materialize_key</span><span class="p">,</span> <span class="n">pass_idx</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <div class="viewcode-block" id="ASTTransformerGlobalContext.current_kernel">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerGlobalContext.current_kernel">[docs]</a>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span><span class="p">:</span> <span class="s2">&quot;Kernel&quot;</span> <span class="o">=</span> <span class="n">current_kernel</span></div>
@@ -599,6 +601,10 @@
 <div class="viewcode-block" id="ASTTransformerGlobalContext.currently_compiling_materialize_key">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerGlobalContext.currently_compiling_materialize_key">[docs]</a>
         <span class="bp">self</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span> <span class="o">=</span> <span class="n">currently_compiling_materialize_key</span></div>
+
+<div class="viewcode-block" id="ASTTransformerGlobalContext.pass_idx">
+<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerGlobalContext.pass_idx">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pass_idx</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">pass_idx</span></div>
 </div>
 
 
