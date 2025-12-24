@@ -1877,3 +1877,85 @@ def test_pruning_kwargs_same_param_names_diff_names() -> None:
     assert my_struct._f2a[0, 0] == 6
     assert my_struct._f2b[0, 0] == 5
     assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
+
+
+@pytest.mark.xfail(reason="cannot use * when calling ti.func")
+@test_utils.test()
+def test_pruning_func_return_star_to_another() -> None:
+    """
+    Using the tuple return from one fucntion as the args to
+    another
+    """
+
+    @ti.func
+    def return_params(a: ti.i32):
+        return a + 1, a + 5
+
+    @ti.func
+    def f2(t: ti.types.NDArray[ti.i32, 1], a: ti.i32, b: ti.i32) -> None:
+        t[0] = a
+        t[1] = b
+    
+    @ti.kernel
+    def k1(t: ti.types.NDArray[ti.i32, 1], a: ti.i32) -> None:
+        f2(t, *return_params(a))
+
+    t = ti.ndarray(ti.i32, (10,))
+    k1(t, 3)
+    assert t[0] == 4
+    assert t[0] == 8
+
+
+@pytest.mark.xfail(reason="cannot use * when calling ti.func")
+@test_utils.test()
+def test_pruning_func_return_star_to_another_two_step() -> None:
+    """
+    Using the tuple return from one fucntion as the args to
+    another
+    """
+
+    @ti.func
+    def return_params(a: ti.i32):
+        return a + 1, a + 5
+
+    @ti.func
+    def f2(t: ti.types.NDArray[ti.i32, 1], a: ti.i32, b: ti.i32) -> None:
+        t[0] = a
+        t[1] = b
+    
+    @ti.kernel
+    def k1(t: ti.types.NDArray[ti.i32, 1], a: ti.i32) -> None:
+        res = return_params(a)
+        f2(t, *res)
+
+    t = ti.ndarray(ti.i32, (10,))
+    k1(t, 3)
+    assert t[0] == 4
+    assert t[0] == 8
+
+
+@test_utils.test()
+def test_pruning_func_return_star_to_another_explicit_vars() -> None:
+    """
+    Using the tuple return from one fucntion as the args to
+    another
+    """
+
+    @ti.func
+    def return_params(a: ti.i32):
+        return a + 1, a + 5
+
+    @ti.func
+    def f2(t: ti.types.NDArray[ti.i32, 1], a: ti.i32, b: ti.i32) -> None:
+        t[0] = a
+        t[1] = b
+    
+    @ti.kernel
+    def k1(t: ti.types.NDArray[ti.i32, 1], a: ti.i32) -> None:
+        b, c = return_params(a)
+        f2(t, b, c)
+
+    t = ti.ndarray(ti.i32, (10,))
+    k1(t, 3)
+    assert t[0] == 4
+    assert t[1] == 8
