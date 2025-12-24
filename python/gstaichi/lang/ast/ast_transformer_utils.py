@@ -257,7 +257,7 @@ class ASTTransformerFuncContext:
         full_path = os.path.join(base_path, *self.call_chain) + ".txt"
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
         with open(full_path, "a") as f:
-            f.write(" ".join([str(arg) for arg in args]))
+            f.write(" ".join([str(arg) for arg in args]) + "\n")
         # print('full_path', full_path)
         # print(".".join(self.call_chain), *args)
 

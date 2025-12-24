@@ -57,7 +57,7 @@ class Func(FuncBase):
 
     def call_with_call_chain(self: "Func", call_chain: tuple[str, ...], *py_args, **kwargs) -> Any:
         call_chain = (*call_chain, self.func.__name__)
-        print('Func.__call__', ".".join(call_chain)) # , 'py_args', py_args, 'kwargs', kwargs)
+        # print('Func.__call__', ".".join(call_chain)) # , 'py_args', py_args, 'kwargs', kwargs)
         # print('call_chain', call_chain)
         self.call_chain = call_chain
         runtime = impl.get_runtime()

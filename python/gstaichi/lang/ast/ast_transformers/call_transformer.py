@@ -181,6 +181,7 @@ class CallTransformer:
                     except Exception as e:
                         raise RuntimeError(f"Exception whilst processing {field.name} in {type(dataclass_type)}") from e
                     if _pruning.enforcing and child_name not in _pruning.used_parameters_by_func_id[func_id]:
+                        ctx.debug("_expand_Call_dataclass_args skip", child_name)
                         continue
                     load_ctx = ast.Load()
                     arg_node = ast.Name(
@@ -223,6 +224,7 @@ class CallTransformer:
                     src_name = create_flat_name(kwarg.value.id, field.name)
                     child_name = create_flat_name(kwarg.arg, field.name)
                     if _pruning.enforcing and src_name not in _pruning.used_parameters_by_func_id[func_id]:
+                        ctx.debug("_expand_Call_dataclass_kwargs skip", src_name, "=>", child_name)
                         continue
                     load_ctx = ast.Load()
                     src_node = ast.Name(
@@ -343,16 +345,15 @@ class CallTransformer:
             if _pruning.enforcing:
                 py_args = _pruning.filter_call_args(ctx, func, node, py_args)
 
-            # print(ast.dump(node.func))
-            # type_func = type(ctx.func)
-            # if type_func == Ker
-            # print('calling', node.func.id, 'calling chain', ctx.func.call_chain)
-            # ctx.func.callin
-            # print
-            # print('calling', 'with ', ctx.func.call_chain, *py_args, **keywords)
-            # print('func', func, type(func))
             func_type = type(func)
             if func_type is GsTaichiCallable:
+                ctx.debug("calling into", func.fn)
+                ctx.debug('args:')
+                for _arg in py_args:
+                    ctx.debug("-", _arg)
+                ctx.debug("keywords")
+                for _name, _arg in keywords.items():
+                    ctx.debug("- ", _name, "=", _arg)
                 node.ptr = func.call_with_call_chain(ctx.func.call_chain, *py_args, **keywords)
             else:
                 node.ptr = func(*py_args, **keywords)
