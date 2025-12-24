@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from .ast.ast_transformer_utils import ASTTransformerFuncContext
     from ._gstaichi_callable import GsTaichiCallable
     import ast
+    from ast import keyword
 
 
 class Pruning:
@@ -124,10 +125,10 @@ class Pruning:
         if not (hasattr(func, "wrapper") and hasattr(func.wrapper, "func_id")):
             return py_args
 
-        _pruning = ctx.global_context.pruning
+        # _pruning = ctx.global_context.pruning
         _called_func_id = func.wrapper.func_id  # type: ignore
         func_id = func.wrapper.func_id  # type: ignore
-        called_needed = _pruning.used_parameters_by_func_id[_called_func_id]
+        called_needed = self.used_parameters_by_func_id[_called_func_id]
         new_args = []
         child_arg_id = 0
         child_metas: list[ArgMetadata] = node.func.ptr.wrapper.arg_metas_expanded  # type: ignore
@@ -137,7 +138,7 @@ class Pruning:
         for needed in sorted(called_needed):
             ctx.debug("- ", needed)
         ctx.debug("filter call args, child_name_by_our_name:")
-        for our_name, child_name in sorted(_pruning.child_name_by_caller_name_by_func_id[func_id].items()):
+        for our_name, child_name in sorted(self.child_name_by_caller_name_by_func_id[func_id].items()):
             ctx.debug('- ', our_name, '=>', child_name)
         for _child in child_metas:
             if _child.name.startswith("__ti_"):
@@ -154,7 +155,7 @@ class Pruning:
                 ctx.debug(".  => has id")
                 calling_name = arg.id  # type: ignore
                 if calling_name.startswith("__ti_"):
-                    called_name = _pruning.child_name_by_caller_name_by_func_id[func_id].get(calling_name)
+                    called_name = self.child_name_by_caller_name_by_func_id[func_id].get(calling_name)
                     ctx.debug(".   => ", called_name)
                     if called_name is not None and (
                         called_name in called_needed or not called_name.startswith("__ti_")
@@ -169,11 +170,44 @@ class Pruning:
         py_args = new_args
         return py_args
 
-    def filter_call_kwargs(self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node: "ast.Call", py_kwargs: dict[str, Any]) -> dict[str, Any]:
-        pruned_py_kwargs = {}
+    def filter_keywords(self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node: "ast.Call", added_keywords: "list[keyword]") -> "list[keyword]":
+        """
+        Filter results of expand dataclasses, in build_Call
+        """
         ctx.debug("filter_call_kwargs")
+
+        if not (hasattr(func, "wrapper") and hasattr(func.wrapper, "func_id")):
+            ctx.debug("doesnt have wrapper or func_id")
+            return keywords
+
+        _called_func_id = func.wrapper.func_id  # type: ignore
+        func_id = func.wrapper.func_id  # type: ignore
+        called_needed = self.used_parameters_by_func_id[_called_func_id]
+
+        ctx.debug("filter call args called needed")
+        for needed in sorted(called_needed):
+            ctx.debug("- ", needed)
+        ctx.debug("filter call args, child_name_by_our_name:")
+        for our_name, child_name in sorted(self.child_name_by_caller_name_by_func_id[func_id].items()):
+            ctx.debug('- ', our_name, '=>', child_name)
+
+        ctx.debug("keywords")
         indent = "  "
-        for name, kwarg in py_kwargs.items():
-            ctx.debug(indent, "-", name, kwarg)
-            pruned_py_kwargs[name] = kwarg
-        return pruned_py_kwargs
+        pruned_keywords = []
+        for keyword in keywords:
+            import ast
+            child_name = keyword.arg
+            our_name = keyword.value.id
+            ctx.debug(indent, "-", our_name, "->", child_name, ast.dump(keyword))
+            if child_name in called_needed:
+                pruned_keywords.append(keyword)
+            # child_name = 
+
+        return pruned_keywords
+
+        # pruned_py_kwargs = {}
+        # indent = "  "
+        # for name, kwarg in py_kwargs.items():
+        #     ctx.debug(indent, "-", name, kwarg)
+        #     pruned_py_kwargs[name] = kwarg
+        # return pruned_py_kwargs
