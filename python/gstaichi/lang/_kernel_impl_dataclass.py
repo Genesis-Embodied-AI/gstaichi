@@ -6,7 +6,7 @@ from typing import Any
 from gstaichi.lang import util
 from gstaichi.lang._dataclass_util import create_flat_name
 from gstaichi.lang.ast import (
-    ASTTransformerContext,
+    ASTTransformerFuncContext,
 )
 from gstaichi.lang.kernel_arguments import ArgMetadata
 
@@ -61,7 +61,7 @@ def _populate_struct_locals_from_params_dict(basename: str, struct_locals, struc
             struct_locals.add(child_name)
 
 
-def extract_struct_locals_from_context(ctx: ASTTransformerContext) -> set[str]:
+def extract_struct_locals_from_context(ctx: ASTTransformerFuncContext) -> set[str]:
     """
     Provides meta information for later tarnsformation of nodes in AST
 

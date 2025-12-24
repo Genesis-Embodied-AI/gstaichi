@@ -22,7 +22,7 @@ from gstaichi._lib.core.gstaichi_python import KernelLaunchContext
 from gstaichi.lang import _kernel_impl_dataclass, impl
 from gstaichi.lang._ndarray import Ndarray
 from gstaichi.lang._wrap_inspect import get_source_info_and_src
-from gstaichi.lang.ast import ASTTransformerContext
+from gstaichi.lang.ast import ASTTransformerFuncContext
 from gstaichi.lang.exception import (
     GsTaichiRuntimeError,
     GsTaichiRuntimeTypeError,
@@ -195,7 +195,7 @@ class FuncBase:
         ast_builder: "ASTBuilder | None" = None,
         is_real_function: bool = False,
         current_kernel: "Kernel | None" = None,
-    ) -> tuple[ast.Module, ASTTransformerContext]:
+    ) -> tuple[ast.Module, ASTTransformerFuncContext]:
         function_source_info, src = get_source_info_and_src(self.func)
         src = [textwrap.fill(line, tabsize=4, width=9999) for line in src]
         tree = ast.parse(textwrap.dedent("\n".join(src)))
@@ -230,7 +230,7 @@ class FuncBase:
 
         args_instance_key = current_kernel.currently_compiling_materialize_key
         assert args_instance_key is not None
-        ctx = ASTTransformerContext(
+        ctx = ASTTransformerFuncContext(
             excluded_parameters=excluded_parameters,
             is_kernel=is_kernel,
             is_pure=is_pure,

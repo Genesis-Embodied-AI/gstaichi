@@ -27,7 +27,10 @@ from gstaichi.lang.ast import (
     KernelSimplicityASTChecker,
     transform_tree,
 )
-from gstaichi.lang.ast.ast_transformer_utils import ASTTransformerContext, ReturnStatus
+from gstaichi.lang.ast.ast_transformer_utils import (
+    ASTTransformerFuncContext,
+    ReturnStatus,
+)
 from gstaichi.lang.exception import (
     GsTaichiRuntimeTypeError,
     GsTaichiSyntaxError,
@@ -159,7 +162,7 @@ class LaunchContextBufferCache:
 class ASTGenerator:
     def __init__(
         self,
-        ctx: ASTTransformerContext,
+        ctx: ASTTransformerFuncContext,
         kernel_name: str,
         current_kernel: "Kernel",
         only_parse_function_def: bool,

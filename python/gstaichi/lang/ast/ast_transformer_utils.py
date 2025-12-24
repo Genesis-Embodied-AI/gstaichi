@@ -27,7 +27,7 @@ AutodiffMode = _ti_core.AutodiffMode
 
 
 class Builder:
-    def __call__(self, ctx: "ASTTransformerContext", node: ast.AST):
+    def __call__(self, ctx: "ASTTransformerFuncContext", node: ast.AST):
         method_name = "build_" + node.__class__.__name__
         method = getattr(self, method_name, None)
         try:
@@ -172,7 +172,7 @@ class PureViolation:
     var_name: str
 
 
-class ASTTransformerContext:
+class ASTTransformerFuncContext:
     def __init__(
         self,
         excluded_parameters,
@@ -394,7 +394,7 @@ class ASTTransformerContext:
         return msg
 
 
-def get_decorator(ctx: ASTTransformerContext, node) -> str:
+def get_decorator(ctx: ASTTransformerFuncContext, node) -> str:
     if not isinstance(node, ast.Call):
         return ""
     for wanted, name in [
