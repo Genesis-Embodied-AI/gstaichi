@@ -161,6 +161,7 @@ class FuncBase:
                 self.template_slot_locations.append(i)
 
     def debug(self, *args) -> None:
+        # print("FuncBase.debug")
         base_path = "logs"
         import os
         full_path = os.path.join(base_path, *self.call_chain) + ".txt"
@@ -317,17 +318,17 @@ class FuncBase:
         arg_metas_pruned = self.arg_metas_expanded
         num_args = len(py_args)
         num_arg_metas = len(arg_metas_pruned)
-        debug("process args num_args", num_args, "num_arg_metas", num_arg_metas)
-        indent = "  "
-        debug(indent, "args:")
-        for arg in py_args:
-            debug(indent * 2, "-", arg)
-        debug(indent, "kwargs:")
-        for name, arg in kwargs.items():
-            debug(indent * 2, "-", name, "=", arg)
-        debug(indent, "arg_metas_expanded:")
-        for arg in self.arg_metas_expanded:
-            debug(indent * 2, "-", arg)
+        # debug("process args num_args", num_args, "num_arg_metas", num_arg_metas)
+        # indent = "  "
+        # debug(indent, "args:")
+        # for arg in py_args:
+        #     debug(indent * 2, "-", arg)
+        # debug(indent, "kwargs:")
+        # for name, arg in kwargs.items():
+        #     debug(indent * 2, "-", name, "=", arg)
+        # debug(indent, "arg_metas_expanded:")
+        # for arg in self.arg_metas_expanded:
+        #     debug(indent * 2, "-", arg)
         if num_args > num_arg_metas:
             arg_str = ", ".join(map(str, py_args))
             expected_str = ", ".join(f"{arg.name} : {arg.annotation}" for arg in arg_metas_pruned)
