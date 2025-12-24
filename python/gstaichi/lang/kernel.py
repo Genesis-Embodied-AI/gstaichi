@@ -408,7 +408,7 @@ class Kernel(FuncBase):
                     new_used_parameters = set()
                     for param in used_parameters:
                         split_param = param.split("__ti_")
-                        for i in range(len(split_param), 0, -1):
+                        for i in range(len(split_param), 1, -1):
                             joined = "__ti_".join(split_param[:i])
                             if joined in new_used_parameters:
                                 break
