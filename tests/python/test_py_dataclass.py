@@ -1760,7 +1760,6 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
     assert my_struct._f1_with_flag[0, 0] == 0
     assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
     assert sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])) == [
-        "",
         "__ti_struct_k1",
         "__ti_struct_k1__ti__f1_no_flag",
         "__ti_struct_k1__ti__k1",
@@ -1775,7 +1774,6 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
     assert my_struct._f1_with_flag[0, 0] == 0
     assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
     assert sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])) == [
-        "",
         "__ti_struct_k1",
         "__ti_struct_k1__ti__f1_no_flag",
         "__ti_struct_k1__ti__k1",
@@ -1790,7 +1788,6 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
     assert my_struct._f1_with_flag[0, 0] == 101
     assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
     assert sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])) == [
-        "",
         "__ti_struct_k1",
         "__ti_struct_k1__ti__f1_with_flag",
         "__ti_struct_k1__ti__k1",
@@ -1805,7 +1802,6 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
     assert my_struct._f1_with_flag[0, 0] == 0
     assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
     assert sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])) == [
-        "",
         "__ti_struct_k1",
         "__ti_struct_k1__ti__f1_no_flag",
         "__ti_struct_k1__ti__k1",
@@ -1820,7 +1816,6 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
     assert my_struct._f1_with_flag[0, 0] == 101
     assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
     assert sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])) == [
-        "",
         "__ti_struct_k1",
         "__ti_struct_k1__ti__f1_with_flag",
         "__ti_struct_k1__ti__k1",
