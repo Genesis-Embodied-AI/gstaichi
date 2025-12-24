@@ -1053,9 +1053,9 @@ def test_prune_used_leaves1():
     assert u1[0] == 222
     assert u3[0] == 123
     assert u1[1] == 333
-    assert u1[2] == 0
     assert u1b[5] == 555
     assert n1[0] == 777
+    assert u1[2] == 0
 
     u1[0] = 0
     u1[1] = 0
@@ -1129,6 +1129,11 @@ def test_prune_used_leaves2():
     assert u1b[0] == 555
     assert u2b[0] == 444
     assert u3b[0] == 333
+
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    print(sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])))
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 7  # +1 for envs_idx
 
 
 @test_utils.test()
