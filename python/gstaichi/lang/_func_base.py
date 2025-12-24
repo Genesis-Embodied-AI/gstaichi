@@ -79,6 +79,7 @@ class FuncBase:
         self.arg_metas_expanded: list[ArgMetadata] = []
         self.orig_arguments: list[ArgMetadata] = []
         self.return_type = None
+        self.call_chain: tuple[str, ...] = ()
 
         self.check_parameter_annotations()
 
@@ -158,6 +159,14 @@ class FuncBase:
         for i, arg in enumerate(self.arg_metas):
             if arg.annotation == template or isinstance(arg.annotation, template):
                 self.template_slot_locations.append(i)
+
+    def debug(self, *args) -> None:
+        base_path = "logs"
+        import os
+        full_path = os.path.join(base_path, *self.call_chain) + ".txt"
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        with open(full_path, "a") as f:
+            f.write(" ".join([str(arg) for arg in args]) + "\n")
 
     def _populate_global_vars_for_templates(
         self,
@@ -272,6 +281,7 @@ class FuncBase:
         is_func: bool,
         py_args: tuple[Any, ...],
         kwargs,
+        debug_fn: Callable | None = None,
     ) -> tuple[Any, ...]:
         """
         - for functions, expand dataclass arg_metas
@@ -279,7 +289,12 @@ class FuncBase:
 
         for kernels, global_context is None. We aren't compiling yet
         """
-        print("process args is func", is_func, self.func)
+
+        def debug(*args) -> None:
+            if debug_fn is not None:
+                debug_fn(*args)
+
+        # print("process args is func", is_func, self.func)
         if is_func and not is_pyfunc:
             assert global_context is not None
             current_kernel = global_context.current_kernel
@@ -298,6 +313,17 @@ class FuncBase:
         arg_metas_pruned = self.arg_metas_expanded
         num_args = len(py_args)
         num_arg_metas = len(arg_metas_pruned)
+        debug("process args num_args", num_args, "num_arg_metas", num_arg_metas)
+        indent = "  "
+        debug(indent, "args:")
+        for arg in py_args:
+            debug(indent * 2, "-", arg)
+        debug(indent, "kwargs:")
+        for name, arg in kwargs.items():
+            debug(indent * 2, "-", name, "=", arg)
+        debug(indent, "arg_metas_expanded:")
+        for arg in self.arg_metas_expanded:
+            debug(indent * 2, "-", arg)
         if num_args > num_arg_metas:
             arg_str = ", ".join(map(str, py_args))
             expected_str = ", ".join(f"{arg.name} : {arg.annotation}" for arg in arg_metas_pruned)
@@ -313,6 +339,8 @@ class FuncBase:
 
         # Early return without further processing if possible for efficiency. This is by far the most common scenario.
         if not (kwargs or num_arg_metas > num_args):
+            debug("(end process args)")
+            debug("")
             return py_args
 
         fused_args: list[Any] = [*py_args, *[arg_meta.default for arg_meta in arg_metas_pruned[num_args:]]]
@@ -341,6 +369,8 @@ class FuncBase:
                     arg_meta = arg_metas_pruned[i]
                     raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
 
+        debug("(end process args)")
+        debug("")
         return tuple(fused_args)
 
     def _get_global_vars(self, _func: Callable) -> dict[str, Any]:

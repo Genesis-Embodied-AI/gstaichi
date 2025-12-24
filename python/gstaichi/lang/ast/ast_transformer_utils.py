@@ -258,8 +258,6 @@ class ASTTransformerFuncContext:
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
         with open(full_path, "a") as f:
             f.write(" ".join([str(arg) for arg in args]) + "\n")
-        # print('full_path', full_path)
-        # print(".".join(self.call_chain), *args)
 
     # e.g.: FunctionDef, Module, Global
     def variable_scope_guard(self):
