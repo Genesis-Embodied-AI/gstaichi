@@ -285,6 +285,9 @@ class Kernel(FuncBase):
         self._last_compiled_kernel_data: CompiledKernelData | None = None  # for dev/debug
         self._last_launch_key = None  # for dev/debug
 
+        self.call_chain = (_func.__name__,)
+        # print('kernel calling chain', self.call_chain)
+
         # next two parameters are ONLY used at kernel launch time,
         # NOT for compilation. (for compilation, global_context.pruning is used).
         # These parameters here are used to filter args passed into the already-compiled kernel.
@@ -368,6 +371,9 @@ class Kernel(FuncBase):
         range_begin = 0 if _used_py_dataclass_parameters is None else 1
         runtime = impl.get_runtime()
         for _pass in range(range_begin, 2):
+            print('')
+            print('')
+            print("======================= pass", _pass, self.func)
             if _pass >= 1:
                 pruning.enforce()
             tree, ctx = self.get_tree_and_ctx(

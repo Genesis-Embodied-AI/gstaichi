@@ -26,6 +26,7 @@ from gstaichi.lang.expr import Expr
 from gstaichi.lang.matrix import Matrix, Vector
 from gstaichi.lang.util import is_gstaichi_class
 from gstaichi.types import primitive_types
+from ..._gstaichi_callable import GsTaichiCallable
 
 
 class CallTransformer:
@@ -342,7 +343,19 @@ class CallTransformer:
             if _pruning.enforcing:
                 py_args = _pruning.filter_call_args(ctx, func, node, py_args)
 
-            node.ptr = func(*py_args, **keywords)
+            # print(ast.dump(node.func))
+            # type_func = type(ctx.func)
+            # if type_func == Ker
+            # print('calling', node.func.id, 'calling chain', ctx.func.call_chain)
+            # ctx.func.callin
+            # print
+            # print('calling', 'with ', ctx.func.call_chain, *py_args, **keywords)
+            # print('func', func, type(func))
+            func_type = type(func)
+            if func_type is GsTaichiCallable:
+                node.ptr = func.call_with_call_chain(ctx.func.call_chain, *py_args, **keywords)
+            else:
+                node.ptr = func(*py_args, **keywords)
 
             if not _pruning.enforcing:
                 _pruning.record_after_call(ctx, func, node)

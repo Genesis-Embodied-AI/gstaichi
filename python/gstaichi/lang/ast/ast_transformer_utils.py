@@ -200,6 +200,7 @@ class ASTTransformerFuncContext:
         is_real_function: bool,
         autodiff_mode: AutodiffMode,
         raise_on_templated_floats: bool,
+        call_chain: tuple[str, ...],
     ):
         from gstaichi import extension  # pylint: disable=import-outside-toplevel
 
@@ -240,6 +241,7 @@ class ASTTransformerFuncContext:
         self.loop_depth: int = 0
         self.raise_on_templated_floats = raise_on_templated_floats
         self.expanding_dataclass_call_parameters: bool = False
+        self.call_chain: tuple[str, ...] = call_chain
 
         self.adstack_enabled: bool = (
             _ti_core.is_extension_supported(
@@ -248,6 +250,16 @@ class ASTTransformerFuncContext:
             )
             and impl.current_cfg().ad_stack_experimental_enabled
         )
+
+    def debug(self, *args) -> None:
+        base_path = "logs"
+        import os
+        full_path = os.path.join(base_path, *self.call_chain) + ".txt"
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        with open(full_path, "a") as f:
+            f.write(" ".join([str(arg) for arg in args]))
+        # print('full_path', full_path)
+        # print(".".join(self.call_chain), *args)
 
     # e.g.: FunctionDef, Module, Global
     def variable_scope_guard(self):

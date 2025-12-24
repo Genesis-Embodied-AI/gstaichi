@@ -261,6 +261,7 @@ class FuncBase:
             is_real_function=is_real_function,
             autodiff_mode=autodiff_mode,
             raise_on_templated_floats=raise_on_templated_floats,
+            call_chain=self.call_chain,
         )
         return tree, ctx
 

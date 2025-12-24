@@ -92,7 +92,11 @@ class GsTaichiCallable:
         self.is_pure: bool = False
         update_wrapper(self, fn)
 
+    def call_with_call_chain(self, call_chain: tuple[str, ...], *args, **kwargs):
+        return self.wrapper.call_with_call_chain(call_chain, *args, **kwargs)
+
     def __call__(self, *args, **kwargs):
+        # print('call_chain', call_chain)
         return self.wrapper.__call__(*args, **kwargs)
 
     def __get__(self, instance, owner):

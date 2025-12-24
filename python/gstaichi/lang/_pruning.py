@@ -1,7 +1,12 @@
 from collections import defaultdict
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from .kernel_arguments import ArgMetadata
+
+if TYPE_CHECKING:
+    from .ast.ast_transformer_utils import ASTTransformerFuncContext
+    from ._gstaichi_callable import GsTaichiCallable
+    import ast
 
 
 class Pruning:
@@ -49,7 +54,7 @@ class Pruning:
             dotted_by_func_id[func_id] = set([tuple(p.split("__ti_")[1:]) for p in used_parameters])
         self.dotted_by_func_id = dotted_by_func_id
 
-    def filter_call_args(self, ctx, func, node, py_args: list[Any]) -> list[Any]:
+    def filter_call_args(self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node: "ast.Call", py_args: list[Any]) -> list[Any]:
         """
         used in build_Call, before making the call, in pass 1
         """
@@ -57,13 +62,14 @@ class Pruning:
             return py_args
 
         _pruning = ctx.global_context.pruning
-        _called_func_id = func.wrapper.func_id
-        func_id = func.wrapper.func_id
+        _called_func_id = func.wrapper.func_id  # type: ignore
+        func_id = func.wrapper.func_id  # type: ignore
         called_needed = _pruning.used_parameters_by_func_id[_called_func_id]
         new_args = []
         child_arg_id = 0
-        child_metas: list[ArgMetadata] = node.func.ptr.wrapper.arg_metas_expanded
+        child_metas: list[ArgMetadata] = node.func.ptr.wrapper.arg_metas_expanded  # type: ignore
         child_metas_pruned = []
+        ctx.debug("filter call args", ctx.func.func, "called needed", sorted(list(called_needed)))
         for _child in child_metas:
             if _child.name.startswith("__ti_"):
                 if _child.name in called_needed:
@@ -73,7 +79,7 @@ class Pruning:
         child_metas = child_metas_pruned
         for i, arg in enumerate(node.args):
             if hasattr(arg, "id"):
-                calling_name = arg.id
+                calling_name = arg.id  # type: ignore
                 if calling_name.startswith("__ti_"):
                     called_name = _pruning.child_name_by_caller_name_by_func_id[func_id].get(calling_name)
                     if called_name is not None and (
@@ -88,7 +94,7 @@ class Pruning:
         py_args = new_args
         return py_args
 
-    def record_after_call(self, ctx, func, node) -> None:
+    def record_after_call(self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node) -> None:
         """
         called from build_Call, after making the call, in pass 0
         """
@@ -97,8 +103,8 @@ class Pruning:
 
         arg_id = 0
         _my_func_id = ctx.func.func_id
-        _called_func_id = func.wrapper.func_id
-        func_id = func.wrapper.func_id
+        _called_func_id = func.wrapper.func_id  # type: ignore
+        func_id = func.wrapper.func_id  # type: ignore
         called_unpruned = self.used_parameters_by_func_id[_called_func_id]
         to_unprune: set[str] = set()
         for i, arg in enumerate(node.args):
@@ -139,3 +145,4 @@ class Pruning:
                         child_name_by_our_name[calling_name] = called_name
             child_arg_id += 1
         self.child_name_by_caller_name_by_func_id[func_id] = child_name_by_our_name
+        ctx.debug("record after call", func.wrapper.func, "child_name_by_our_name", child_name_by_our_name)

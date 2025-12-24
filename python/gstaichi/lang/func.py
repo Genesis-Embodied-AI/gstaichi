@@ -50,8 +50,16 @@ class Func(FuncBase):
         self.is_real_function = is_real_function
         self.cxx_function_by_id: dict[int, FunctionCxx] = {}
         self.has_print = False
+        self.call_chain: tuple[str, ...] = ()
 
     def __call__(self: "Func", *py_args, **kwargs) -> Any:
+        return self.call_with_call_chain(('<unknown',), *py_args, **kwargs)
+
+    def call_with_call_chain(self: "Func", call_chain: tuple[str, ...], *py_args, **kwargs) -> Any:
+        call_chain = (*call_chain, self.func.__name__)
+        print('Func.__call__', ".".join(call_chain)) # , 'py_args', py_args, 'kwargs', kwargs)
+        # print('call_chain', call_chain)
+        self.call_chain = call_chain
         runtime = impl.get_runtime()
         global_context = runtime._current_global_context
         current_kernel = global_context.current_kernel if global_context is not None else None
