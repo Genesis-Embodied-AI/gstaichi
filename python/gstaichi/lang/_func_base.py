@@ -362,6 +362,7 @@ class FuncBase:
                                 raise GsTaichiSyntaxError(f"Multiple values for argument '{key}'.")
                             break
                     else:
+                        debug(f"ERROR: Unexpected argument '{key}'.")
                         raise GsTaichiSyntaxError(f"Unexpected argument '{key}'.")
         else:
             for i in range(num_args, num_arg_metas):
