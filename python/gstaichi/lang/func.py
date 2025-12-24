@@ -55,7 +55,6 @@ class Func(FuncBase):
         runtime = impl.get_runtime()
         global_context = runtime._current_global_context
         current_kernel = global_context.current_kernel if global_context is not None else None
-        assert current_kernel is not None
         py_args = self.process_args(
             is_func=True, is_pyfunc=self.pyfunc, py_args=py_args, kwargs=kwargs, global_context=global_context
         )
@@ -65,6 +64,7 @@ class Func(FuncBase):
                 raise GsTaichiSyntaxError("GsTaichi functions cannot be called from Python-scope.")
             return self.func(*py_args)
 
+        assert current_kernel is not None
         if self.is_real_function:
             if current_kernel.autodiff_mode != _NONE:
                 raise GsTaichiSyntaxError("Real function in gradient kernels unsupported.")
