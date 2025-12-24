@@ -174,15 +174,17 @@ class PureViolation:
 
 
 class ASTTransformerGlobalContext:
-    def __init__(self, current_kernel: "Kernel", pruning: "Pruning", currently_compiling_materialize_key) -> None:
+    def __init__(self, current_kernel: "Kernel", pruning: "Pruning", currently_compiling_materialize_key, pass_idx: int) -> None:
         self.current_kernel: "Kernel" = current_kernel
         self.pruning: "Pruning" = pruning
         self.currently_compiling_materialize_key = currently_compiling_materialize_key
+        self.pass_idx: int = pass_idx
 
 
 class ASTTransformerFuncContext:
     def __init__(
         self,
+        # pass_idx: int, 
         global_context: ASTTransformerGlobalContext,
         template_slot_locations,
         end_lineno: int,
@@ -242,6 +244,9 @@ class ASTTransformerFuncContext:
         self.raise_on_templated_floats = raise_on_templated_floats
         self.expanding_dataclass_call_parameters: bool = False
         self.call_chain: tuple[str, ...] = call_chain
+        # self.pass_idx = pass_idx
+        self.debug("===================================")
+        self.debug("PASS", global_context.pass_idx)
 
         self.adstack_enabled: bool = (
             _ti_core.is_extension_supported(

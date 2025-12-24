@@ -168,3 +168,12 @@ class Pruning:
             child_arg_id += 1
         py_args = new_args
         return py_args
+
+    def filter_call_kwargs(self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node: "ast.Call", py_kwargs: dict[str, Any]) -> dict[str, Any]:
+        pruned_py_kwargs = {}
+        ctx.debug("filter_call_kwargs")
+        indent = "  "
+        for name, kwarg in py_kwargs.items():
+            ctx.debug(indent, "-", name, kwarg)
+            pruned_py_kwargs[name] = kwarg
+        return pruned_py_kwargs

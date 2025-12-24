@@ -216,6 +216,8 @@ class CallTransformer:
         added_kwargs = []
         _pruning = ctx.global_context.pruning
         func_id = ctx.func.func_id
+        ctx.debug("_expand_Call_dataclass_kwargs")
+        indent = "  "
         for i, kwarg in enumerate(kwargs):
             val = kwarg.ptr[kwarg.arg]
             if dataclasses.is_dataclass(val):
@@ -223,9 +225,11 @@ class CallTransformer:
                 for field in dataclasses.fields(dataclass_type):
                     src_name = create_flat_name(kwarg.value.id, field.name)
                     child_name = create_flat_name(kwarg.arg, field.name)
-                    if _pruning.enforcing and src_name not in _pruning.used_parameters_by_func_id[func_id]:
-                        ctx.debug("_expand_Call_dataclass_kwargs skip", src_name, "=>", child_name)
-                        continue
+                    ctx.debug(indent, "-", kwarg, src_name, "=>", child_name)
+                    # if _pruning.enforcing and src_name not in _pruning.used_parameters_by_func_id[func_id]:
+                    #     # ctx.debug("_expand_Call_dataclass_kwargs skip", src_name, "=>", child_name)
+                    #     ctx.debug(indent * 2, "=> skip")
+                    #     continue
                     load_ctx = ast.Load()
                     src_node = ast.Name(
                         id=src_name,
@@ -313,7 +317,7 @@ class CallTransformer:
                     py_args.append(i)
             else:
                 py_args.append(arg.ptr)
-        keywords = dict(ChainMap(*[keyword.ptr for keyword in node.keywords]))
+        py_kwargs = dict(ChainMap(*[keyword.ptr for keyword in node.keywords]))
         func = node.func.ptr
 
         if id(func) in [id(print), id(impl.ti_print)]:
@@ -321,22 +325,22 @@ class CallTransformer:
 
         if isinstance(node.func, ast.Attribute) and isinstance(node.func.value.ptr, str) and node.func.attr == "format":
             raw_string = node.func.value.ptr
-            py_args = CallTransformer._canonicalize_formatted_string(raw_string, *py_args, **keywords)
+            py_args = CallTransformer._canonicalize_formatted_string(raw_string, *py_args, **py_kwargs)
             node.ptr = impl.ti_format(*py_args)
             return node.ptr
 
         if id(func) == id(Matrix) or id(func) == id(Vector):
-            node.ptr = matrix.make_matrix(*py_args, **keywords)
+            node.ptr = matrix.make_matrix(*py_args, **py_kwargs)
             return node.ptr
 
-        if CallTransformer._build_call_if_is_builtin(ctx, node, py_args, keywords):
+        if CallTransformer._build_call_if_is_builtin(ctx, node, py_args, py_kwargs):
             return node.ptr
 
-        if CallTransformer._build_call_if_is_type(ctx, node, py_args, keywords):
+        if CallTransformer._build_call_if_is_type(ctx, node, py_args, py_kwargs):
             return node.ptr
 
         if hasattr(node.func, "caller"):
-            node.ptr = func(node.func.caller, *py_args, **keywords)
+            node.ptr = func(node.func.caller, *py_args, **py_kwargs)
             return node.ptr
 
         CallTransformer._warn_if_is_external_func(ctx, node)
@@ -344,6 +348,7 @@ class CallTransformer:
             _pruning = ctx.global_context.pruning
             if _pruning.enforcing:
                 py_args = _pruning.filter_call_args(ctx, func, node, py_args)
+                py_kwargs = _pruning.filter_call_kwargs(ctx, func, node, py_kwargs)
 
             func_type = type(func)
             if func_type is GsTaichiCallable:
@@ -352,11 +357,11 @@ class CallTransformer:
                 for _arg in py_args:
                     ctx.debug("-", _arg)
                 ctx.debug("keywords")
-                for _name, _arg in keywords.items():
+                for _name, _arg in py_kwargs.items():
                     ctx.debug("- ", _name, "=", _arg)
-                node.ptr = func.call_with_call_chain(ctx.func.call_chain, *py_args, **keywords)
+                node.ptr = func.call_with_call_chain(ctx.func.call_chain, *py_args, **py_kwargs)
             else:
-                node.ptr = func(*py_args, **keywords)
+                node.ptr = func(*py_args, **py_kwargs)
 
             if not _pruning.enforcing:
                 _pruning.record_after_call(ctx, func, node)

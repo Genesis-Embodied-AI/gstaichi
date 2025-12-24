@@ -206,7 +206,8 @@ class FuncBase:
         is_real_function: bool = False,
         current_kernel: "Kernel | None" = None,  # has value when called from Kernel.materialize
         pruning: "Pruning | None" = None,  # has value when called from Kernel.materialize
-        currently_compiling_materialize_key=None,  # has value when called from Kernel.materialize
+        currently_compiling_materialize_key = None,  # has value when called from Kernel.materialize
+        pass_idx: int | None = None,  # has value when called from Kernel.materialize
     ) -> tuple[ast.Module, ASTTransformerFuncContext]:
         function_source_info, src = get_source_info_and_src(self.func)
         src = [textwrap.fill(line, tabsize=4, width=9999) for line in src]
@@ -219,8 +220,10 @@ class FuncBase:
 
         if current_kernel is not None:  # Kernel
             assert pruning is not None
+            assert pass_idx is not None
             current_kernel.kernel_function_info = function_source_info
             global_context = ASTTransformerGlobalContext(
+                pass_idx=pass_idx,
                 current_kernel=current_kernel,
                 pruning=pruning,
                 currently_compiling_materialize_key=currently_compiling_materialize_key,
@@ -253,6 +256,7 @@ class FuncBase:
         raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
 
         ctx = ASTTransformerFuncContext(
+            # pass_idx=pass_idx,
             global_context=global_context,
             template_slot_locations=template_slot_locations,
             is_kernel=is_kernel,
