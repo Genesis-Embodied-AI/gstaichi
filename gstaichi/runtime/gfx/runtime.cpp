@@ -707,6 +707,7 @@ GfxRuntime::RegisterParams run_codegen(
   params.arch = arch;
   params.caps = caps;
   params.enable_spv_opt = compile_config.external_optimization_level > 0;
+  params.compile_config = &compile_config;
   spirv::KernelCodegen codegen(params);
   GfxRuntime::RegisterParams res;
   codegen.run(res.kernel_attribs, res.task_spirv_source_codes);

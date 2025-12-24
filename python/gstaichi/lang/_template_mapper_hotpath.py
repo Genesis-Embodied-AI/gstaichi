@@ -30,7 +30,7 @@ A direct consequence of this breaking type checking because pyright is not able 
 
 import weakref
 from dataclasses import _FIELD, _FIELDS
-from typing import Any, Callable, Union
+from typing import Any, Union
 
 from gstaichi._lib import core as _ti_core
 from gstaichi.lang._dataclass_util import create_flat_name
@@ -47,10 +47,6 @@ from gstaichi.types import (
     sparse_matrix_builder,
     template,
 )
-from gstaichi.types.enums import AutodiffMode
-
-CompiledKernelKeyType = tuple[Callable, int, AutodiffMode]
-
 
 AnnotationType = Union[
     template,
@@ -89,10 +85,10 @@ def _extract_arg(raise_on_templated_floats: bool, arg: Any, annotation: Annotati
             # TODO(zhanlue): replacing "tuple(args)" with "hash of argument values"
             # This can resolve the following issues:
             # 1. Invalid weak-ref will leave a dead(dangling) entry in both caches: "self.mapping" and "self.compiled_functions"
-            # 2. Different argument instances with same type and same value, will get templatized into seperate kernels.
+            # 2. Different argument instances with same type and same value, will get templatized into separate kernels.
             return weakref.ref(arg)
 
-        # [Primitive arguments] Return the value
+        # Return value directly for other types, i.e. primitive types and all ti.Field-derived classes
         if raise_on_templated_floats and arg_type is float:
             raise ValueError("Floats not allowed as templated types.")
         return arg

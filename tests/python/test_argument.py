@@ -6,6 +6,16 @@ from tests import test_utils
 
 
 @test_utils.test(debug=True)
+def test_kernel_position_only_args():
+    @ti.kernel
+    def foo(a: ti.i32, b: ti.i32):
+        assert a == 1
+        assert b == 2
+
+    foo(1, 2)
+
+
+@test_utils.test(debug=True)
 def test_kernel_keyword_args():
     @ti.kernel
     def foo(a: ti.i32, b: ti.i32):

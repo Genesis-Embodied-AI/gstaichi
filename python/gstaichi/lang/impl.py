@@ -24,8 +24,9 @@ from gstaichi.lang.exception import (
 )
 from gstaichi.lang.expr import Expr, make_expr_group
 from gstaichi.lang.field import Field, ScalarField
+from gstaichi.lang.kernel import Kernel
 from gstaichi.lang.kernel_arguments import SparseMatrixProxy
-from gstaichi.lang.kernel_impl import BoundGsTaichiCallable, GsTaichiCallable, Kernel
+from gstaichi.lang.kernel_impl import BoundGsTaichiCallable, GsTaichiCallable
 from gstaichi.lang.matrix import (
     Matrix,
     MatrixField,
@@ -519,10 +520,10 @@ class PyGsTaichi:
         self._check_gradient_field_not_placed("dual")
         self._check_matrix_field_member_shape()
         self._calc_matrix_field_dynamic_index_stride()
-        self.global_vars = []
-        self.grad_vars = []
-        self.dual_vars = []
-        self.matrix_fields = []
+        self.global_vars.clear()
+        self.grad_vars.clear()
+        self.dual_vars.clear()
+        self.matrix_fields.clear()
 
     def _register_signal_handlers(self):
         if self._signal_handler_registry is None:
