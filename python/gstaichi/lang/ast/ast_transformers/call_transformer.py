@@ -225,12 +225,14 @@ class CallTransformer:
                 for field in dataclasses.fields(dataclass_type):
                     src_name = create_flat_name(kwarg.value.id, field.name)
                     child_name = create_flat_name(kwarg.arg, field.name)
-                    ctx.debug(indent, "-", kwarg, src_name, "=>", child_name)
+                    if ctx.filter_name(src_name):
+                        ctx.debug(indent, "-", kwarg, src_name, "=>", child_name)
                     # Note: using `called_needed` instead of `called_needed is not None` will cause
                     # a bug, when it is empty set.
                     if called_needed is not None and child_name not in called_needed:
                     # if _pruning.enforcing and src_name not in _pruning.used_parameters_by_func_id[func_id]:
-                        ctx.debug(indent * 2, "=> skip")
+                        if ctx.filter_name(src_name):
+                            ctx.debug(indent * 2, "=> skip")
                         continue
                     load_ctx = ast.Load()
                     src_node = ast.Name(
@@ -391,7 +393,8 @@ class CallTransformer:
                     ctx.debug("-", _arg)
                 ctx.debug("keywords")
                 for _name, _arg in py_kwargs.items():
-                    ctx.debug("- ", _name, "=", _arg)
+                    if ctx.filter_name(_name):
+                        ctx.debug("- ", _name, "=", _arg)
                 node.ptr = func.call_with_call_chain(ctx.func.call_chain, *py_args, **py_kwargs)
             else:
                 node.ptr = func(*py_args, **py_kwargs)

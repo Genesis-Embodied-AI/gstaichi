@@ -64,17 +64,27 @@ class Pruning:
         if not hasattr(func, "wrapper"):
             return
 
+        func_name = func.fn.__name__
+        ctx.debug('record_after_call()', func_name)
+
         arg_id = 0
         _my_func_id = ctx.func.func_id
         _called_func_id = func.wrapper.func_id  # type: ignore
         func_id = func.wrapper.func_id  # type: ignore
         called_unpruned = self.used_parameters_by_func_id[_called_func_id]
+        ctx.debug("called_unpruned:")
+        for name in called_unpruned:
+            if ctx.filter_name(name):
+                ctx.debug("-", name)
         to_unprune: set[str] = set()
+        ctx.debug("unpruning:")
         for i, arg in enumerate(node.args):
             if hasattr(arg, "id"):
                 calling_name = arg.id
                 called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
                 if called_name in called_unpruned:
+                    if ctx.filter_name(calling_name):
+                        ctx.debug("- unpruning", calling_name, "=>", called_name)
                     to_unprune.add(calling_name)
             arg_id += 1
         for arg in node.keywords:
@@ -83,12 +93,16 @@ class Pruning:
                 called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
                 if called_name in called_unpruned:
                     to_unprune.add(calling_name)
+                    if ctx.filter_name(calling_name):
+                        ctx.debug("- unpruning", calling_name)
             arg_id += 1
+        ctx.debug("(after unpruning)")
 
         self.used_parameters_by_func_id[_my_func_id].update(to_unprune)
         ctx.debug("record after call, used_parameters:")
         for param in sorted(self.used_parameters_by_func_id[_my_func_id]):
-            ctx.debug("-", param)
+            if ctx.filter_name(param):
+                ctx.debug("-", param)
 
         called_needed = self.used_parameters_by_func_id[_called_func_id]
         child_arg_id = 0
@@ -114,7 +128,9 @@ class Pruning:
         # ctx.debug("record after call", func.wrapper.func, "child_name_by_our_name", child_name_by_our_name)
         ctx.debug("record after call, child_name_by_our_name:")
         for our_name, child_name in sorted(child_name_by_our_name.items()):
-            ctx.debug('- ', our_name, '=>', child_name)
+            if ctx.filter_name(our_name):
+                ctx.debug('- ', our_name, '=>', child_name)
+        ctx.debug('(after record_after_call()', func_name, ")")
 
     def filter_call_args(self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node: "ast.Call", py_args: list[Any]) -> list[Any]:
         """
@@ -134,12 +150,16 @@ class Pruning:
         child_metas: list[ArgMetadata] = node.func.ptr.wrapper.arg_metas_expanded  # type: ignore
         child_metas_pruned = []
         # ctx.debug("filter call args", ctx.func.func, "called needed", sorted(list(called_needed)))
+        func_name = func.fn.__name__
+        ctx.debug('filter_call_args()', func_name)
         ctx.debug("filter call args called needed")
         for needed in sorted(called_needed):
-            ctx.debug("- ", needed)
+            if ctx.filter_name(needed):
+                ctx.debug("- ", needed)
         ctx.debug("filter call args, child_name_by_our_name:")
         for our_name, child_name in sorted(self.child_name_by_caller_name_by_func_id[func_id].items()):
-            ctx.debug('- ', our_name, '=>', child_name)
+            if ctx.filter_name(our_name):
+                ctx.debug('- ', our_name, '=>', child_name)
         for _child in child_metas:
             if _child.name.startswith("__ti_"):
                 if _child.name in called_needed:
@@ -150,13 +170,18 @@ class Pruning:
         ctx.debug("enumerating args before call:")
         for i, arg in enumerate(node.args):
             import ast
-            ctx.debug("-", i, ast.dump(arg)[:50])
+            dumped_arg = ast.dump(arg)[:80]
+            dump = ctx.filter_name(dumped_arg)
+            if dump:
+                ctx.debug("-", i, ast.dump(arg)[:50])
             if hasattr(arg, "id"):
-                ctx.debug(".  => has id")
+                if dump:
+                    ctx.debug(".  => has id")
                 calling_name = arg.id  # type: ignore
                 if calling_name.startswith("__ti_"):
                     called_name = self.child_name_by_caller_name_by_func_id[func_id].get(calling_name)
-                    ctx.debug(".   => ", called_name)
+                    if dump:
+                        ctx.debug(".   => ", called_name)
                     if called_name is not None and (
                         called_name in called_needed or not called_name.startswith("__ti_")
                     ):
@@ -164,10 +189,12 @@ class Pruning:
                 else:
                     new_args.append(py_args[i])
             else:
-                ctx.debug(".  => NO id")
+                if dump:
+                    ctx.debug(".  => NO id")
                 new_args.append(py_args[i])
             child_arg_id += 1
         py_args = new_args
+        ctx.debug('(end filter_call_args()', func_name, ")")
         return py_args
 
     # def filter_keywords(self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node: "ast.Call", added_keywords: "list[keyword]") -> "list[keyword]":

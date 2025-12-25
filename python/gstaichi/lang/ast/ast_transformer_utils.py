@@ -31,6 +31,8 @@ class Builder:
     def __call__(self, ctx: "ASTTransformerFuncContext", node: ast.AST):
         method_name = "build_" + node.__class__.__name__
         method = getattr(self, method_name, None)
+        indent = len(ctx.call_chain) * "  "
+        # ctx.debug(indent, method_name, ast.dump(node)[:50])
         try:
             if method is None:
                 error_msg = f'Unsupported node "{node.__class__.__name__}"'
@@ -255,6 +257,10 @@ class ASTTransformerFuncContext:
             )
             and impl.current_cfg().ad_stack_experimental_enabled
         )
+
+    def filter_name(self, name: str) -> bool:
+        return self.func.filter_name(name)
+        # return "geoms_info" in name and "pos" in name
 
     def debug(self, *args) -> None:
         base_path = "logs"

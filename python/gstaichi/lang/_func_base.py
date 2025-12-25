@@ -160,6 +160,9 @@ class FuncBase:
             if arg.annotation == template or isinstance(arg.annotation, template):
                 self.template_slot_locations.append(i)
 
+    def filter_name(self, name: str) -> bool:
+        return "geoms_info" in name and "pos" in name
+
     def debug(self, *args) -> None:
         # print("FuncBase.debug")
         base_path = "logs"
@@ -326,10 +329,12 @@ class FuncBase:
                 debug(indent * 2, "-", arg)
             debug(indent, "kwargs:")
             for name, arg in kwargs.items():
-                debug(indent * 2, "-", name, "=", arg)
+                if self.filter_name(name):
+                    debug(indent * 2, "-", name, "=", arg)
             debug(indent, "arg_metas_expanded:")
             for arg in self.arg_metas_expanded:
-                debug(indent * 2, "-", arg)
+                if self.filter_name(arg.name):
+                    debug(indent * 2, "-", arg)
         if num_args > num_arg_metas:
             arg_str = ", ".join(map(str, py_args))
             expected_str = ", ".join(f"{arg.name} : {arg.annotation}" for arg in arg_metas_pruned)
