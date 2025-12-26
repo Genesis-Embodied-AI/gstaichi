@@ -1895,7 +1895,7 @@ def test_pruning_func_return_star_to_another() -> None:
     def f2(t: ti.types.NDArray[ti.i32, 1], a: ti.i32, b: ti.i32) -> None:
         t[0] = a
         t[1] = b
-    
+
     @ti.kernel
     def k1(t: ti.types.NDArray[ti.i32, 1], a: ti.i32) -> None:
         f2(t, *return_params(a))
@@ -1922,7 +1922,7 @@ def test_pruning_func_return_star_to_another_two_step() -> None:
     def f2(t: ti.types.NDArray[ti.i32, 1], a: ti.i32, b: ti.i32) -> None:
         t[0] = a
         t[1] = b
-    
+
     @ti.kernel
     def k1(t: ti.types.NDArray[ti.i32, 1], a: ti.i32) -> None:
         res = return_params(a)
@@ -1949,7 +1949,7 @@ def test_pruning_func_return_star_to_another_explicit_vars() -> None:
     def f2(t: ti.types.NDArray[ti.i32, 1], a: ti.i32, b: ti.i32) -> None:
         t[0] = a
         t[1] = b
-    
+
     @ti.kernel
     def k1(t: ti.types.NDArray[ti.i32, 1], a: ti.i32) -> None:
         b, c = return_params(a)

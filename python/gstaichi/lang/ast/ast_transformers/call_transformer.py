@@ -28,6 +28,8 @@ from gstaichi.lang.util import is_gstaichi_class
 from gstaichi.types import primitive_types
 from ..._gstaichi_callable import GsTaichiCallable
 
+from ..._gstaichi_callable import GsTaichiCallable
+
 
 class CallTransformer:
     @staticmethod

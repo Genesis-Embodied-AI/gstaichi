@@ -75,6 +75,7 @@ class Func(FuncBase):
                 raise GsTaichiSyntaxError("GsTaichi functions cannot be called from Python-scope.")
             return self.func(*py_args)
 
+        assert current_kernel is not None
         if self.is_real_function:
             if current_kernel.autodiff_mode != _NONE:
                 raise GsTaichiSyntaxError("Real function in gradient kernels unsupported.")
