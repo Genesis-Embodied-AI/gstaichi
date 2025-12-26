@@ -178,6 +178,9 @@ class ASTGenerator:
         self.tree = tree
         self.only_parse_function_def = only_parse_function_def
         self.dump_ast = dump_ast
+    """
+    only_parse_function_def will be set when running from fast cache.
+    """
 
     # Do not change the name of 'gstaichi_ast_generator'
     # The warning system needs this identifier to remove unnecessary messages
@@ -204,6 +207,11 @@ class ASTGenerator:
                 struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
             else:
                 struct_locals = _pruning.used_parameters_by_func_id[ctx.func.func_id]
+            ctx.debug("struct_locals")
+            for _l in struct_locals:
+                if ctx.filter_name(_l):
+                    ctx.debug("-", _l)
+            ctx.debug("(end struct_locals)")
             tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(self.tree, struct_locals=struct_locals)
             ctx.only_parse_function_def = self.only_parse_function_def
             transform_tree(tree, ctx)
