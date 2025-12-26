@@ -339,7 +339,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_gstaichi_class</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">primitive_types</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">..._gstaichi_callable</span><span class="w"> </span><span class="kn">import</span> <span class="n">GsTaichiCallable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..._gstaichi_callable</span><span class="w"> </span><span class="kn">import</span> <span class="n">BoundGsTaichiCallable</span><span class="p">,</span> <span class="n">GsTaichiCallable</span>
 
 
 <div class="viewcode-block" id="CallTransformer">
@@ -581,6 +581,7 @@
 <span class="sd">        example ast:</span>
 <span class="sd">        Call(func=Name(id=&#39;f2&#39;, ctx=Load()), args=[Name(id=&#39;my_struct_ab&#39;, ctx=Load())], keywords=[])</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">is_func_base_wrapper</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="n">get_decorator</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;static&quot;</span><span class="p">,</span> <span class="s2">&quot;static_assert&quot;</span><span class="p">]:</span>
             <span class="k">with</span> <span class="n">ctx</span><span class="o">.</span><span class="n">static_scope_guard</span><span class="p">():</span>
                 <span class="n">build_stmt</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
@@ -597,9 +598,10 @@
 
             <span class="n">func</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">ptr</span>
             <span class="n">func_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+            <span class="n">is_func_base_wrapper</span> <span class="o">=</span> <span class="n">func_type</span> <span class="ow">is</span> <span class="n">GsTaichiCallable</span> <span class="ow">or</span> <span class="n">func_type</span> <span class="ow">is</span> <span class="n">BoundGsTaichiCallable</span>
             <span class="n">_pruning</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">global_context</span><span class="o">.</span><span class="n">pruning</span>
             <span class="n">called_needed</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="k">if</span> <span class="n">_pruning</span><span class="o">.</span><span class="n">enforcing</span> <span class="ow">and</span> <span class="n">func_type</span> <span class="ow">is</span> <span class="n">GsTaichiCallable</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">_pruning</span><span class="o">.</span><span class="n">enforcing</span> <span class="ow">and</span> <span class="n">is_func_base_wrapper</span><span class="p">:</span>
                 <span class="n">_called_func_id</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="n">wrapper</span><span class="o">.</span><span class="n">func_id</span>  <span class="c1"># type: ignore</span>
                 <span class="n">called_needed</span> <span class="o">=</span> <span class="n">_pruning</span><span class="o">.</span><span class="n">used_parameters_by_func_id</span><span class="p">[</span><span class="n">_called_func_id</span><span class="p">]</span>
 
@@ -612,6 +614,10 @@
             <span class="c1"># we don&#39;t want to include these in the list of variables to not prune</span>
             <span class="c1"># since these will contain *all* declared fields, instead of all used fields</span>
             <span class="c1"># so we set expanding_dataclass_call_parameters to True during this expansion</span>
+            <span class="c1"># We don&#39;t build these until this point in the function, because we need</span>
+            <span class="c1"># to prune when enforcing is True, and to do that, we need to know what to prune,</span>
+            <span class="c1"># which we get from the child func, and so we want to have filtered out all the</span>
+            <span class="c1"># cases first where we aren&#39;t calling a ti.func</span>
             <span class="n">ctx</span><span class="o">.</span><span class="n">expanding_dataclass_call_parameters</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">added_args</span><span class="p">:</span>
                 <span class="k">assert</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="s2">&quot;ptr&quot;</span><span class="p">)</span>
