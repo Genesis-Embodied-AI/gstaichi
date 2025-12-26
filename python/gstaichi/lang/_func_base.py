@@ -282,7 +282,7 @@ class FuncBase:
         )
         return tree, ctx
 
-    def process_args(
+    def fuse_args(
         self,
         global_context: ASTTransformerGlobalContext | None,
         is_pyfunc: bool,
@@ -294,6 +294,16 @@ class FuncBase:
         """
         - for functions, expand dataclass arg_metas
         - fuse incoming args and kwargs into a single list of args
+
+        The output of this function is arguments which are:
+        - a sequence (not a dict)
+        - fused args + kwargs
+        - in the exact same order as self.arg_metas_expanded
+            - and with the exact same number of elements
+
+        GsTaichi doesn't allow defaults, so we don't need to consider default options here,
+        but if we did, we'd still have output exactly matching the order and size of
+        self.arg_metas_expanded, just with some of the values coming from defaults.
 
         for kernels, global_context is None. We aren't compiling yet
         """
