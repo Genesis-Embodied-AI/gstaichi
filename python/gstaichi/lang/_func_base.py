@@ -165,7 +165,7 @@ class FuncBase:
         # return ("geoms_info" in name or "geoms_state" in name) and "pos" in name
 
     def debug(self, *args) -> None:
-        return
+        # return
         # print("FuncBase.debug")
         base_path = "logs"
         import os

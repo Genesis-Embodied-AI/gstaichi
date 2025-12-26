@@ -270,6 +270,9 @@ class CallTransformer:
         example ast:
         Call(func=Name(id='f2', ctx=Load()), args=[Name(id='my_struct_ab', ctx=Load())], keywords=[])
         """
+        ctx.debug("")
+        ctx.debug("--------------------------")
+        ctx.debug("build_Call", ast.dump(node.func, indent=2))
         is_func_base_wrapper = False
         if get_decorator(ctx, node) in ["static", "static_assert"]:
             with ctx.static_scope_guard():
@@ -279,13 +282,13 @@ class CallTransformer:
             func = node.func.ptr
             func_type = type(func)
         else:
-            ctx.debug("local scopes")
-            for i, scope in enumerate(ctx.local_scopes):
-                ctx.debug("scope", i)
-                for k, v in sorted(scope.items()):
-                    if ctx.filter_name(k):
-                        ctx.debug("-", k)
-            ctx.debug("(end local scopes)")
+            # ctx.debug("local scopes")
+            # for i, scope in enumerate(ctx.local_scopes):
+            #     ctx.debug("scope", i)
+            #     for k, v in sorted(scope.items()):
+            #         if ctx.filter_name(k):
+            #             ctx.debug("-", k)
+            # ctx.debug("(end local scopes)")
 
             build_stmt(ctx, node.func)
             # creates variable for the dataclass itself (as well as other variables,
@@ -302,6 +305,7 @@ class CallTransformer:
             # ctx.debug("(end local scopes)")
 
             func = node.func.ptr
+            ctx.debug("func", func, type(func))
             func_type = type(func)
             is_func_base_wrapper = func_type is GsTaichiCallable or func_type is BoundGsTaichiCallable
             if is_func_base_wrapper:
@@ -312,6 +316,8 @@ class CallTransformer:
                 # ctx.debug("keywords")
                 # for _name, _arg in py_kwargs.items():
                 #     ctx.debug("- ", _name, "=", _arg)
+            else:
+                ctx.debug("NOT a GsTaichiCallable")
 
             _pruning = ctx.global_context.pruning
             called_needed = None
@@ -320,6 +326,23 @@ class CallTransformer:
                 _called_func_id = func.wrapper.func_id  # type: ignore
                 # func_id = func.wrapper.func_id  # type: ignore
                 called_needed = _pruning.used_parameters_by_func_id[_called_func_id]
+            if called_needed is not None:
+                ctx.debug("called needed")
+                for needed in sorted(called_needed):
+                    ctx.debug("-", needed)
+                ctx.debug("(after called needed)")
+            else:
+                ctx.debug("called needed is None")
+
+            ctx.debug("BEFORE _expand_Call_dataclass_kwargs")
+            ctx.debug("BEFOREnode.args for call:")
+            for i, arg in enumerate(node.args):
+                ctx.debug(" -", i, arg)
+            ctx.debug("(BEFORE node.args for call)")
+            ctx.debug("BEFORE node.keywords for call:")
+            for i, keyword in enumerate(node.keywords):
+                ctx.debug(" -", i, getattr(keyword.value, "id", "<no id>"))
+            ctx.debug("(BEFORE node.keywords for call)")
 
             added_args, node.args = CallTransformer._expand_Call_dataclass_args(ctx, node.args)
             added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(ctx, node.keywords, called_needed)
