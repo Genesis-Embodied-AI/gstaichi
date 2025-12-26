@@ -335,6 +335,11 @@ class FuncBase:
         else:
             self.arg_metas_expanded = list(self.arg_metas)
 
+        debug("fuse_args arg_metas_expanded:")
+        for i, arg_meta in enumerate(self.arg_metas_expanded):
+            debug("- ", i, arg_meta.name)
+        debug("(end fuse_args arg_metas_expanded)")
+
         arg_metas_pruned = self.arg_metas_expanded
         num_args = len(py_args)
         num_arg_metas = len(arg_metas_pruned)
@@ -420,11 +425,6 @@ class FuncBase:
                     errors_l.append(f"Missing argument '{arg_meta.name}'.")
                     continue
                     # raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
-
-        debug("fuse_args arg_metas_expanded:")
-        for i, arg_meta in enumerate(self.arg_metas_expanded):
-            debug("- ", i, arg_meta.name)
-        debug("(end fuse_args arg_metas_expanded)")
 
         if len(errors_l) > 0:
             debug("\n".join(errors_l))
