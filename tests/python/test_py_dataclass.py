@@ -2123,7 +2123,7 @@ def test_pruning_kwargs_swap_order_bound_callable() -> None:
             ...
 
         @ti.func
-        def f1(struct1_f1: MyStruct1, struct2_f1: MyStruct2):
+        def f1(self, struct1_f1: MyStruct1, struct2_f1: MyStruct2):
             struct1_f1._f1[0, 0] = 102
             struct2_f1._f1[0, 0] = 103
 
