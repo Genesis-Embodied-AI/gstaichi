@@ -106,7 +106,7 @@ class Pruning:
                         ctx.debug("- unpruning arg id", arg_id, calling_name, "=>", called_name)
                     to_unprune.add(calling_name)
             arg_id += 1
-        # note that our own arg_metas ordering will in general NOT match that of the child's. That's
+        # Note that our own arg_metas ordering will in general NOT match that of the child's. That's
         # because our ordering is based on the order in which we pass arguments to the function, but the
         # child's ordering is based on the ordering of their declaration; and these orderings might not
         # match.
