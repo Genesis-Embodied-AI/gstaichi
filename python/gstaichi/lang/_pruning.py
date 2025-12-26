@@ -72,7 +72,7 @@ class Pruning:
         func_id = func.wrapper.func_id  # type: ignore
         called_unpruned = self.used_parameters_by_func_id[_called_func_id]
         ctx.debug("called_unpruned:")
-        for name in called_unpruned:
+        for name in sorted(called_unpruned):
             if ctx.filter_name(name):
                 ctx.debug("-", name)
         to_unprune: set[str] = set()
@@ -101,7 +101,7 @@ class Pruning:
             if hasattr(arg, "id"):
                 calling_name = arg.id
                 called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
-                if called_name in called_unpruned:
+                if called_name in sorted(called_unpruned):
                     if ctx.filter_name(calling_name):
                         ctx.debug("- unpruning arg id", arg_id, calling_name, "=>", called_name)
                     to_unprune.add(calling_name)
