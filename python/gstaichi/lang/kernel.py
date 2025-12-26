@@ -179,6 +179,10 @@ class ASTGenerator:
         self.only_parse_function_def = only_parse_function_def
         self.dump_ast = dump_ast
 
+    """
+    only_parse_function_def will be set when running from fast cache.
+    """
+
     # Do not change the name of 'gstaichi_ast_generator'
     # The warning system needs this identifier to remove unnecessary messages
     def __call__(self, kernel_cxx: KernelCxx):
@@ -204,6 +208,8 @@ class ASTGenerator:
                 struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
             else:
                 struct_locals = _pruning.used_parameters_by_func_id[ctx.func.func_id]
+            # struct locals are the expanded py dataclass fields that we will write to
+            # local variables, and will then be available to use in build_Call, later.
             tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(self.tree, struct_locals=struct_locals)
             ctx.only_parse_function_def = self.only_parse_function_def
             transform_tree(tree, ctx)
@@ -540,7 +546,7 @@ class Kernel(FuncBase):
     @_shell_pop_print
     def __call__(self, *py_args, **kwargs) -> Any:
         self.raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
-        py_args = self.process_args(is_func=False, is_pyfunc=False, py_args=py_args, kwargs=kwargs, global_context=None)
+        py_args = self.fuse_args(is_func=False, is_pyfunc=False, py_args=py_args, kwargs=kwargs, global_context=None)
 
         # Transform the primal kernel to forward mode grad kernel
         # then recover to primal when exiting the forward mode manager

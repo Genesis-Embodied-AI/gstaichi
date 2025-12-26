@@ -27,7 +27,7 @@ from gstaichi.lang.matrix import Matrix, Vector
 from gstaichi.lang.util import is_gstaichi_class
 from gstaichi.types import primitive_types
 
-from ..._gstaichi_callable import GsTaichiCallable
+from ..._gstaichi_callable import BoundGsTaichiCallable, GsTaichiCallable
 
 
 class CallTransformer:
@@ -265,6 +265,7 @@ class CallTransformer:
         example ast:
         Call(func=Name(id='f2', ctx=Load()), args=[Name(id='my_struct_ab', ctx=Load())], keywords=[])
         """
+        is_func_base_wrapper = False
         if get_decorator(ctx, node) in ["static", "static_assert"]:
             with ctx.static_scope_guard():
                 build_stmt(ctx, node.func)
@@ -281,9 +282,10 @@ class CallTransformer:
 
             func = node.func.ptr
             func_type = type(func)
+            is_func_base_wrapper = func_type is GsTaichiCallable or func_type is BoundGsTaichiCallable
             _pruning = ctx.global_context.pruning
             called_needed = None
-            if _pruning.enforcing and func_type is GsTaichiCallable:
+            if _pruning.enforcing and is_func_base_wrapper:
                 _called_func_id = func.wrapper.func_id  # type: ignore
                 called_needed = _pruning.used_parameters_by_func_id[_called_func_id]
 
@@ -296,6 +298,10 @@ class CallTransformer:
             # we don't want to include these in the list of variables to not prune
             # since these will contain *all* declared fields, instead of all used fields
             # so we set expanding_dataclass_call_parameters to True during this expansion
+            # We don't build these until this point in the function, because we need
+            # to prune when enforcing is True, and to do that, we need to know what to prune,
+            # which we get from the child func, and so we want to have filtered out all the
+            # cases first where we aren't calling a ti.func
             ctx.expanding_dataclass_call_parameters = True
             for arg in added_args:
                 assert not hasattr(arg, "ptr")

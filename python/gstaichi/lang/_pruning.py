@@ -1,3 +1,4 @@
+from ast import Starred
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
@@ -64,23 +65,32 @@ class Pruning:
         if not hasattr(func, "wrapper"):
             return
 
-        arg_id = 0
+        func_name = func.fn.__name__
         _my_func_id = ctx.func.func_id
         _called_func_id = func.wrapper.func_id  # type: ignore
         func_id = func.wrapper.func_id  # type: ignore
         called_unpruned = self.used_parameters_by_func_id[_called_func_id]
         to_unprune: set[str] = set()
+        arg_id = 0
+        has_self = len(node.args) + len(node.keywords) + 1 == len(node.func.ptr.wrapper.arg_metas_expanded)
+        self_offset = 1 if has_self else 0
         for i, arg in enumerate(node.args):
             if hasattr(arg, "id"):
                 calling_name = arg.id
-                called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
+                called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id + self_offset].name
                 if called_name in called_unpruned:
                     to_unprune.add(calling_name)
             arg_id += 1
+        # Note that our own arg_metas ordering will in general NOT match that of the child's. That's
+        # because our ordering is based on the order in which we pass arguments to the function, but the
+        # child's ordering is based on the ordering of their declaration; and these orderings might not
+        # match.
+        # Luckily, for keywords, we don't need to look at the child's metas, because we can get the
+        # child's name directly from our own keyword node.
         for arg in node.keywords:
             if hasattr(arg.value, "id"):
                 calling_name = arg.value.id
-                called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
+                called_name = arg.arg
                 if called_name in called_unpruned:
                     to_unprune.add(calling_name)
             arg_id += 1
@@ -95,7 +105,7 @@ class Pruning:
             if hasattr(arg, "id"):
                 calling_name = arg.id
                 if calling_name.startswith("__ti_"):
-                    called_name = child_metas[child_arg_id].name
+                    called_name = child_metas[child_arg_id + self_offset].name
                     if called_name in called_needed or not called_name.startswith("__ti_"):
                         child_name_by_our_name[calling_name] = called_name
             child_arg_id += 1
@@ -136,6 +146,13 @@ class Pruning:
         child_metas = child_metas_pruned
         for i, arg in enumerate(node.args):
 
+            is_starred = type(arg) is Starred
+            if is_starred:
+                assert i == len(node.args) - 1 and len(node.keywords) == 0
+                # we'll just dump the rest of the py_args in:
+                new_args.extend(py_args[i:])
+                child_arg_id += len(py_args[i:])
+                break
             if hasattr(arg, "id"):
                 calling_name = arg.id  # type: ignore
                 if calling_name.startswith("__ti_"):

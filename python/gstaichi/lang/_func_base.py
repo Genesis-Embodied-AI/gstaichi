@@ -267,7 +267,7 @@ class FuncBase:
         )
         return tree, ctx
 
-    def process_args(
+    def fuse_args(
         self,
         global_context: ASTTransformerGlobalContext | None,
         is_pyfunc: bool,
@@ -279,7 +279,26 @@ class FuncBase:
         - for functions, expand dataclass arg_metas
         - fuse incoming args and kwargs into a single list of args
 
-        for kernels, global_context is None. We aren't compiling yet
+        The output of this function is arguments which are:
+        - a sequence (not a dict)
+        - fused args + kwargs
+        - in the exact same order as self.arg_metas_expanded
+            - and with the exact same number of elements
+
+        GsTaichi doesn't allow defaults, so we don't need to consider default options here,
+        but if we did, we'd still have output exactly matching the order and size of
+        self.arg_metas_expanded, just with some of the values coming from defaults.
+
+        for kernels, global_context is None. We aren't compiling yet. This is only called once
+        per launch, but it is called every launch, even if we already compiled.
+
+        For funcs, this is only called during compilation, once per pass.
+
+        For kernels, the args are NOT expanded at this point, and pruning changes nothing.
+
+        For funcs, the args are expanded at the start of this function
+        - first pass, no pruning
+        - second pass - with enforcing on - the expanded parameters are pruned
         """
         if is_func and not is_pyfunc:
             assert global_context is not None
@@ -316,33 +335,36 @@ class FuncBase:
         if not (kwargs or num_arg_metas > num_args):
             return py_args
 
-        fused_args: list[Any] = [*py_args, *[arg_meta.default for arg_meta in arg_metas_pruned[num_args:]]]
+        fused_py_args: list[Any] = [*py_args, *[arg_meta.default for arg_meta in arg_metas_pruned[num_args:]]]
+        errors_l: list[str] = []
         if kwargs:
             num_invalid_kwargs_args = len(kwargs)
             for i in range(num_args, num_arg_metas):
                 arg_meta = arg_metas_pruned[i]
-                value = kwargs.get(arg_meta.name, _ARG_EMPTY)
-                if value is not _ARG_EMPTY:
-                    fused_args[i] = value
+                py_arg = kwargs.get(arg_meta.name, _ARG_EMPTY)
+                if py_arg is not _ARG_EMPTY:
+                    fused_py_args[i] = py_arg
                     num_invalid_kwargs_args -= 1
-                elif fused_args[i] is _ARG_EMPTY:
-                    raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
+                elif fused_py_args[i] is _ARG_EMPTY:
+                    errors_l.append(f"Missing argument '{arg_meta.name}'.")
+                    continue
             if num_invalid_kwargs_args:
-                for key, value in kwargs.items():
+                for key, py_arg in kwargs.items():
                     for i, arg_meta in enumerate(arg_metas_pruned):
                         if key == arg_meta.name:
                             if i < num_args:
-                                raise GsTaichiSyntaxError(f"Multiple values for argument '{key}'.")
+                                errors_l.append(f"Multiple values for argument '{key}'.")
                             break
                     else:
-                        raise GsTaichiSyntaxError(f"Unexpected argument '{key}'.")
+                        errors_l.append(f"Unexpected argument '{key}'.")
         else:
             for i in range(num_args, num_arg_metas):
-                if fused_args[i] is _ARG_EMPTY:
+                if fused_py_args[i] is _ARG_EMPTY:
                     arg_meta = arg_metas_pruned[i]
-                    raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
+                    errors_l.append(f"Missing argument '{arg_meta.name}'.")
+                    continue
 
-        return tuple(fused_args)
+        return tuple(fused_py_args)
 
     def _get_global_vars(self, _func: Callable) -> dict[str, Any]:
         # Discussions: https://github.com/taichi-dev/gstaichi/issues/282

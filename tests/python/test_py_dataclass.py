@@ -1959,3 +1959,269 @@ def test_pruning_func_return_star_to_another_explicit_vars() -> None:
     k1(t, 3)
     assert t[0] == 4
     assert t[1] == 8
+
+
+@test_utils.test()
+def test_pruning_pass_element_of_tensor_of_dataclass() -> None:
+    """
+    Using the tuple return from one fucntion as the args to
+    another
+    """
+
+    vec3 = ti.types.vector(3, ti.f32)
+
+    @dataclasses.dataclass
+    class MyStruct:
+        _unused0: ti.types.NDArray[vec3, 2]
+        _k1: ti.types.NDArray[vec3, 2]
+        _unused0b: ti.types.NDArray[vec3, 2]
+        _f1: ti.types.NDArray[vec3, 2]
+        _unused1: ti.types.NDArray[vec3, 2]
+        _in: ti.types.NDArray[vec3, 2]
+        _unused2: ti.types.NDArray[vec3, 2]
+        _out: ti.types.NDArray[vec3, 2]
+        _unused3: ti.types.NDArray[vec3, 2]
+
+    def make_struct():
+        my_struct = MyStruct(
+            _unused0=ti.ndarray(dtype=vec3, shape=(1, 1)),
+            _k1=ti.ndarray(dtype=vec3, shape=(1, 1)),
+            _unused0b=ti.ndarray(dtype=vec3, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=vec3, shape=(1, 1)),
+            _unused1=ti.ndarray(dtype=vec3, shape=(1, 1)),
+            _in=ti.ndarray(dtype=vec3, shape=(1, 1)),
+            _unused2=ti.ndarray(dtype=vec3, shape=(1, 1)),
+            _out=ti.ndarray(dtype=vec3, shape=(1, 1)),
+            _unused3=ti.ndarray(dtype=vec3, shape=(1, 1)),
+        )
+        return my_struct
+
+    @ti.func
+    def f2(_in: vec3) -> vec3:
+        return _in + 5.0
+
+    @ti.func
+    def f1(struct_f1: MyStruct):
+        struct_f1._f1[0, 0] = 101
+        struct_f1._out[0, 0] = f2(struct_f1._in[0, 0])
+
+    @ti.kernel
+    def k1(struct_k1: MyStruct):
+        struct_k1._k1[0, 0] = 100
+        f1(struct_f1=struct_k1)
+
+    my_struct = make_struct()
+    k1(my_struct)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct._k1[0, 0][0] == 100
+    assert my_struct._f1[0, 0][0] == 101
+    assert my_struct._out[0, 0][0] == 5
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
+
+
+@test_utils.test()
+def test_pruning_kwargs_swap_order() -> None:
+    """
+    In this test, we call into a kwargs function with the kwargs in a different
+    order than in the child function declaration; and different number of params
+    in each struct
+    """
+
+    @dataclasses.dataclass
+    class MyStruct1:
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _unused1: ti.types.NDArray[ti.f32, 2]
+        _unused2: ti.types.NDArray[ti.f32, 2]
+
+    @dataclasses.dataclass
+    class MyStruct2:
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _unused: ti.types.NDArray[ti.f32, 2]
+
+    def make_structs():
+        my_struct1 = MyStruct1(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused2=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        my_struct2 = MyStruct2(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct1, my_struct2
+
+    @ti.func
+    def f1(struct1_f1: MyStruct1, struct2_f1: MyStruct2):
+        struct1_f1._f1[0, 0] = 102
+        struct2_f1._f1[0, 0] = 103
+
+    @ti.kernel
+    def k1(struct1_k1: MyStruct1, struct2_k1: MyStruct2):
+        struct1_k1._k1[0, 0] = 100
+        struct2_k1._k1[0, 0] = 101
+        f1(struct2_f1=struct2_k1, struct1_f1=struct1_k1)
+
+    my_struct1, my_struct2 = make_structs()
+    k1(my_struct1, my_struct2)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct1._k1[0, 0] == 100
+    assert my_struct2._k1[0, 0] == 101
+    assert my_struct1._f1[0, 0] == 102
+    assert my_struct2._f1[0, 0] == 103
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
+
+
+@test_utils.test()
+def test_pruning_kwargs_swap_order_bound_callable() -> None:
+    """
+    In this test, we call into a kwargs function with the kwargs in a different
+    order than in the child function declaration; and different number of params
+    in each struct.
+
+    Compared to test_pruning_kwargs_swap_order, we use a data oriented object, with
+    the function on that
+    """
+
+    @dataclasses.dataclass
+    class MyStruct1:
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _unused1: ti.types.NDArray[ti.f32, 2]
+        _unused2: ti.types.NDArray[ti.f32, 2]
+
+    @dataclasses.dataclass
+    class MyStruct2:
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _unused: ti.types.NDArray[ti.f32, 2]
+
+    def make_structs():
+        my_struct1 = MyStruct1(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused2=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        my_struct2 = MyStruct2(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct1, my_struct2
+
+    @ti.data_oriented
+    class MyDataOriented:
+        def __init__(self) -> None: ...
+
+        @ti.func
+        def f1(self, struct1_f1: MyStruct1, struct2_f1: MyStruct2):
+            struct1_f1._f1[0, 0] = 102
+            struct2_f1._f1[0, 0] = 103
+
+    @ti.kernel
+    def k1(my_data_oriented: ti.Template, struct1_k1: MyStruct1, struct2_k1: MyStruct2):
+        struct1_k1._k1[0, 0] = 100
+        struct2_k1._k1[0, 0] = 101
+        my_data_oriented.f1(struct2_f1=struct2_k1, struct1_f1=struct1_k1)
+
+    my_struct1, my_struct2 = make_structs()
+    my_data_oriented = MyDataOriented()
+    k1(my_data_oriented, my_struct1, my_struct2)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct1._k1[0, 0] == 100
+    assert my_struct2._k1[0, 0] == 101
+    assert my_struct1._f1[0, 0] == 102
+    assert my_struct2._f1[0, 0] == 103
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
+
+
+@test_utils.test()
+def test_pruning_args_bound_callable() -> None:
+    @dataclasses.dataclass
+    class MyStruct1:
+        _k1: ti.types.NDArray[ti.f32, 1]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _unused1: ti.types.NDArray[ti.f32, 4]
+        _unused2: ti.types.NDArray[ti.f32, 4]
+
+    @dataclasses.dataclass
+    class MyStruct2:
+        _k1: ti.types.NDArray[ti.f32, 1]
+        _f1: ti.types.NDArray[ti.f32, 3]
+        _unused: ti.types.NDArray[ti.f32, 4]
+
+    def make_structs():
+        my_struct1 = MyStruct1(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused1=ti.ndarray(dtype=ti.f32, shape=(1, 1, 1, 1)),
+            _unused2=ti.ndarray(dtype=ti.f32, shape=(1, 1, 1, 1)),
+        )
+        my_struct2 = MyStruct2(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1, 1, 1)),
+        )
+        return my_struct1, my_struct2
+
+    @ti.data_oriented
+    class MyDataOriented:
+        def __init__(self) -> None: ...
+
+        @ti.func
+        def f1(self, struct1_f1: MyStruct1, struct2_f1: MyStruct2):
+            struct1_f1._f1[0, 0] = 102
+            struct2_f1._f1[0, 0, 0] = 103
+
+    @ti.kernel
+    def k1(my_data_oriented: ti.Template, struct1_k1: MyStruct1, struct2_k1: MyStruct2):
+        struct1_k1._k1[0] = 100
+        struct2_k1._k1[0] = 101
+        my_data_oriented.f1(struct1_k1, struct2_k1)
+
+    my_struct1, my_struct2 = make_structs()
+    my_data_oriented = MyDataOriented()
+    k1(my_data_oriented, my_struct1, my_struct2)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct1._k1[0] == 100
+    assert my_struct2._k1[0] == 101
+    assert my_struct1._f1[0, 0] == 102
+    assert my_struct2._f1[0, 0, 0] == 103
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
+
+
+@test_utils.test()
+def test_pruning_star_args() -> None:
+    """
+    Designed to test
+    https://github.com/Genesis-Embodied-AI/Genesis/blob/2d98bbb786e94b3f6c4e7171c87b4ff31ff3ccdf/tests/test_utils.py#L103
+    scenario
+    """
+
+    @ti.func
+    def f1(a: ti.types.NDArray[ti.i32, 1], b: ti.i32, c: ti.i32):
+        a[0] = b
+        a[1] = c
+
+    @ti.kernel
+    def k1(a: ti.types.NDArray[ti.i32, 1]) -> None:
+        f1(a, *star_args)
+
+    star_args = [3, 5]
+
+    a = ti.ndarray(ti.i32, (10,))
+    k1(a)
+    assert a[0] == 3
+    assert a[1] == 5
