@@ -97,10 +97,16 @@ class Pruning:
         # because of the way calling with sequential args works.
         # We need to look at the child's declaration - via metas - in order to get the name they use.
         # We can't tell their name just by looking at our own metas.
+        #
+        # One issue is when calling data-oriented methods, there will be a `self`. We'll detect this
+        # by seeing if the childs arg_metas_expanded is exactly 1 longer than len(node.args) + len(node.kwargs)
+        ctx.debug("len node.args", len(node.args), "len node.keywords", len(node.keywords), "len child metas", len(node.func.ptr.wrapper.arg_metas_expanded))
+        has_self = len(node.args) + len(node.keywords) + 1 == len(node.func.ptr.wrapper.arg_metas_expanded)
+        self_offset = 1 if has_self else 0
         for i, arg in enumerate(node.args):
             if hasattr(arg, "id"):
                 calling_name = arg.id
-                called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
+                called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id + self_offset].name
                 if called_name in sorted(called_unpruned):
                     if ctx.filter_name(calling_name):
                         ctx.debug("- unpruning arg id", arg_id, calling_name, "=>", called_name)
@@ -137,7 +143,7 @@ class Pruning:
             if hasattr(arg, "id"):
                 calling_name = arg.id
                 if calling_name.startswith("__ti_"):
-                    called_name = child_metas[child_arg_id].name
+                    called_name = child_metas[child_arg_id + self_offset].name
                     if called_name in called_needed or not called_name.startswith("__ti_"):
                         child_name_by_our_name[calling_name] = called_name
             child_arg_id += 1
