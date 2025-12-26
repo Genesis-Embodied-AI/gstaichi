@@ -161,9 +161,11 @@ class FuncBase:
                 self.template_slot_locations.append(i)
 
     def filter_name(self, name: str) -> bool:
-        return ("geoms_info" in name or "geoms_state" in name) and "pos" in name
+        return True
+        # return ("geoms_info" in name or "geoms_state" in name) and "pos" in name
 
     def debug(self, *args) -> None:
+        return
         # print("FuncBase.debug")
         base_path = "logs"
         import os
