@@ -421,8 +421,10 @@ class CallTransformer:
 
                 for i in arg_list:
                     py_args.append(i)
+                    ctx.debug("adding starred py arg", i, type(i))
             else:
                 py_args.append(arg.ptr)
+        ctx.debug("len py args after adding starred", len(py_args))
         py_kwargs = dict(ChainMap(*[keyword.ptr for keyword in node.keywords]))
 
         if id(func) in [id(print), id(impl.ti_print)]:
@@ -449,11 +451,14 @@ class CallTransformer:
             return node.ptr
 
         CallTransformer._warn_if_is_external_func(ctx, node)
-        try:
+        # try:
+        if True:
             _pruning = ctx.global_context.pruning
+            ctx.debug("len py args before filter_call_args", len(py_args))
             if _pruning.enforcing:
                 py_args = _pruning.filter_call_args(ctx, func, node, py_args)
                 # py_kwargs = _pruning.filter_call_kwargs(ctx, func, node, py_kwargs)
+            ctx.debug("len py args after filter_call_args", len(py_args))
 
             func_type = type(func)
             if is_func_base_wrapper:
@@ -486,8 +491,8 @@ class CallTransformer:
                             # print('shape', shape, type(shape), dir(shape))
                         ctx.debug("- ", _name, "=", _arg_type.__name__, shape)
                 if func_type is BoundGsTaichiCallable:
-                    print('py_args', py_args)
-                    print('py_kwargs', py_kwargs)
+                    # print('py_args', py_args)
+                    # print('py_kwargs', py_kwargs)
                     # adsff
                     node.ptr = func(*py_args, **py_kwargs)
                     # node.ptr = func.call_with_call_chain(ctx.func.call_chain, *py_args, **py_kwargs)
@@ -498,22 +503,22 @@ class CallTransformer:
 
             if not _pruning.enforcing:
                 _pruning.record_after_call(ctx, func, node)
-        except TypeError as e:
-            module = inspect.getmodule(func)
-            error_msg = re.sub(r"\bExpr\b", "GsTaichi Expression", str(e))
-            func_name = getattr(func, "__name__", func.__class__.__name__)
-            msg = f"TypeError when calling `{func_name}`: {error_msg}."
-            if CallTransformer._is_external_func(ctx, node.func.ptr):
-                args_has_expr = any([isinstance(arg, Expr) for arg in args])
-                if args_has_expr and (module == math or module == np):
-                    exec_str = f"from gstaichi import {func.__name__}"
-                    try:
-                        exec(exec_str, {})
-                    except:
-                        pass
-                    else:
-                        msg += f"\nDid you mean to use `ti.{func.__name__}` instead of `{module.__name__}.{func.__name__}`?"
-            raise GsTaichiTypeError(msg)
+        # except TypeError as e:
+        #     module = inspect.getmodule(func)
+        #     error_msg = re.sub(r"\bExpr\b", "GsTaichi Expression", str(e))
+        #     func_name = getattr(func, "__name__", func.__class__.__name__)
+        #     msg = f"TypeError when calling `{func_name}`: {error_msg}."
+        #     if CallTransformer._is_external_func(ctx, node.func.ptr):
+        #         args_has_expr = any([isinstance(arg, Expr) for arg in args])
+        #         if args_has_expr and (module == math or module == np):
+        #             exec_str = f"from gstaichi import {func.__name__}"
+        #             try:
+        #                 exec(exec_str, {})
+        #             except:
+        #                 pass
+        #             else:
+        #                 msg += f"\nDid you mean to use `ti.{func.__name__}` instead of `{module.__name__}.{func.__name__}`?"
+        #     raise GsTaichiTypeError(msg)
 
         if getattr(func, "_is_gstaichi_function", False):
             ctx.func.has_print |= func.wrapper.has_print
