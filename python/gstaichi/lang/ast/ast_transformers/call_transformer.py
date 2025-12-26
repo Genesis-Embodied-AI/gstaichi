@@ -307,6 +307,14 @@ class CallTransformer:
             added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(ctx, node.keywords, called_needed)
 
             ctx.debug("after _expand_Call_dataclass_kwargs")
+            ctx.debug("node.args for call:")
+            for i, arg in enumerate(node.args):
+                ctx.debug(" -", i, arg)
+            ctx.debug("(after node.args for call)")
+            ctx.debug("node.keywords for call:")
+            for i, keyword in enumerate(node.keywords):
+                ctx.debug(" -", i, getattr(keyword.value, "id", "<no id>"))
+            ctx.debug("(after node.keywords for call)")
 
             # create variables for the now-expanded dataclass members
             # we don't want to include these in the list of variables to not prune

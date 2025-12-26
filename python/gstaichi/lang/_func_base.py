@@ -161,7 +161,7 @@ class FuncBase:
                 self.template_slot_locations.append(i)
 
     def filter_name(self, name: str) -> bool:
-        return "geoms_info" in name and "pos" in name
+        return ("geoms_info" in name or "geoms_state" in name) and "pos" in name
 
     def debug(self, *args) -> None:
         # print("FuncBase.debug")
@@ -331,20 +331,26 @@ class FuncBase:
         arg_metas_pruned = self.arg_metas_expanded
         num_args = len(py_args)
         num_arg_metas = len(arg_metas_pruned)
-        if is_func and not is_pyfunc:
-            debug("process args num_args", num_args, "num_arg_metas", num_arg_metas)
-            indent = "  "
-            debug(indent, "args:")
-            for arg in py_args:
-                debug(indent * 2, "-", arg)
-            debug(indent, "kwargs:")
-            for name, arg in kwargs.items():
-                if self.filter_name(name):
-                    debug(indent * 2, "-", name, "=", arg)
-            debug(indent, "arg_metas_expanded:")
-            for arg in self.arg_metas_expanded:
-                if self.filter_name(arg.name):
-                    debug(indent * 2, "-", arg)
+        # if is_func and not is_pyfunc:
+            # debug("fuse args num_args", num_args, "num_arg_metas", num_arg_metas)
+            # indent = "  "
+            # debug(indent, "args:")
+            # for i, arg in enumerate(py_args):
+            #     arg_meta = '<None>'
+            #     if i < len(self.arg_metas_expanded):
+            #         arg_meta = self.arg_metas_expanded[i].name
+            #     debug(indent * 2, "-", i, arg, 'meta', arg_meta)
+            # debug(indent, "kwargs:")
+            # for i, (name, arg) in enumerate(kwargs.items()):
+            #     arg_meta = '<None>'
+            #     if i + len(py_args) < len(self.arg_metas_expanded):
+            #         arg_meta = self.arg_metas_expanded[i + len(py_args)].name
+            #     if self.filter_name(name) or True:
+            #         debug(indent * 2, "-", i + len(py_args), name, "=", type(arg), 'meta', arg_meta)
+            # debug(indent, "arg_metas_expanded:")
+            # for i, arg in enumerate(self.arg_metas_expanded):
+            #     if self.filter_name(arg.name) or True:
+            #         debug(indent * 2, "-", i, arg.name)
         if num_args > num_arg_metas:
             arg_str = ", ".join(map(str, py_args))
             expected_str = ", ".join(f"{arg.name} : {arg.annotation}" for arg in arg_metas_pruned)
@@ -365,7 +371,9 @@ class FuncBase:
             return py_args
 
         fused_py_args: list[Any] = [*py_args, *[arg_meta.default for arg_meta in arg_metas_pruned[num_args:]]]
+        # fused_metas: list[ArgMetadata] = arg_metas_pruned[:num_args]
         errors_l: list[str] = []
+        kwarg_name_to_meta_idx = {}
         if kwargs:
             num_invalid_kwargs_args = len(kwargs)
             for i in range(num_args, num_arg_metas):
@@ -373,6 +381,7 @@ class FuncBase:
                 py_arg = kwargs.get(arg_meta.name, _ARG_EMPTY)
                 if py_arg is not _ARG_EMPTY:
                     fused_py_args[i] = py_arg
+                    # fused_metas.append(arg_meta)
                     num_invalid_kwargs_args -= 1
                     kwarg_name_to_meta_idx[arg_meta.name, i]
                 elif fused_py_args[i] is _ARG_EMPTY:

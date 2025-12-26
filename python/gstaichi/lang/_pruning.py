@@ -67,7 +67,6 @@ class Pruning:
         func_name = func.fn.__name__
         ctx.debug('record_after_call()', func_name)
 
-        arg_id = 0
         _my_func_id = ctx.func.func_id
         _called_func_id = func.wrapper.func_id  # type: ignore
         func_id = func.wrapper.func_id  # type: ignore
@@ -77,14 +76,30 @@ class Pruning:
             if ctx.filter_name(name):
                 ctx.debug("-", name)
         to_unprune: set[str] = set()
+        ctx.debug("child arg metas expanded:")
+        for i, arg_meta in enumerate(node.func.ptr.wrapper.arg_metas_expanded):
+            if ctx.filter_name(arg_meta.name):
+                ctx.debug("- arg meta idx", i, "name", arg_meta.name)
+        ctx.debug("(after child arg metas expanded)")
+        ctx.debug("")
+        ctx.debug("_pruning record after call node.args")
+        for i, arg in enumerate(node.args):
+            ctx.debug("   -", i, getattr(arg, "id", "<no id>"), "=>", node.func.ptr.wrapper.arg_metas_expanded[i].name)
+        ctx.debug("(after _pruning record after call node.args)")
+        ctx.debug("_pruning record after call node.keywords")
+        for i, arg in enumerate(node.keywords):
+            ctx.debug("   -", i, getattr(arg.value, "id", "<no id>"), "=>", node.func.ptr.wrapper.arg_metas_expanded[i + len(node.args)].name)
+        ctx.debug("(after _pruning record after call node.keywords)")
+        ctx.debug("")
         ctx.debug("unpruning:")
+        arg_id = 0
         for i, arg in enumerate(node.args):
             if hasattr(arg, "id"):
                 calling_name = arg.id
                 called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
                 if called_name in called_unpruned:
                     if ctx.filter_name(calling_name):
-                        ctx.debug("- unpruning", calling_name, "=>", called_name)
+                        ctx.debug("- unpruning arg id", arg_id, calling_name, "=>", called_name)
                     to_unprune.add(calling_name)
             arg_id += 1
         for arg in node.keywords:
@@ -94,7 +109,7 @@ class Pruning:
                 if called_name in called_unpruned:
                     to_unprune.add(calling_name)
                     if ctx.filter_name(calling_name):
-                        ctx.debug("- unpruning", calling_name)
+                        ctx.debug("- unpruning keyword arg_id", arg_id, calling_name, "=>", called_name)
             arg_id += 1
         ctx.debug("(after unpruning)")
 
@@ -124,6 +139,11 @@ class Pruning:
                     if called_name in called_needed:
                         child_name_by_our_name[calling_name] = called_name
             child_arg_id += 1
+        # ctx.debug("child name by our name")
+        # for our_name, child_name in child_name_by_our_name.items():
+        #     if ctx.filter_name(our_name) or ctx.filter_name(child_name):
+        #         ctx.debug("-", our_name, "=>", child_name)
+        # ctx.debug("(after child name by our name)")
         self.child_name_by_caller_name_by_func_id[func_id] = child_name_by_our_name
         # ctx.debug("record after call", func.wrapper.func, "child_name_by_our_name", child_name_by_our_name)
         ctx.debug("record after call, child_name_by_our_name:")
