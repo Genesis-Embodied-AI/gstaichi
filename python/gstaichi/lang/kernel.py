@@ -207,6 +207,8 @@ class ASTGenerator:
                 struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
             else:
                 struct_locals = _pruning.used_parameters_by_func_id[ctx.func.func_id]
+            # struct locals are the expanded py dataclass fields that we will write to
+            # local variables, and will then be available to use in build_Call, later.
             ctx.debug("struct_locals")
             for _l in struct_locals:
                 if ctx.filter_name(_l):
