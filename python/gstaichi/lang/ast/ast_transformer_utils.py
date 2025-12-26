@@ -33,7 +33,8 @@ class Builder:
         method = getattr(self, method_name, None)
         indent = len(ctx.call_chain) * "  "
         # ctx.debug(indent, method_name, ast.dump(node)[:50])
-        try:
+        # try:
+        if True:
             if method is None:
                 error_msg = f'Unsupported node "{node.__class__.__name__}"'
                 raise GsTaichiSyntaxError(error_msg)
@@ -45,26 +46,26 @@ class Builder:
                     node.violates_pure = False
                     node.violates_pure_reason = None
                 return res
-        except Exception as e:
-            stack_trace = traceback.format_exc()
-            if impl.get_runtime().print_full_traceback:
-                raise e
-            if ctx.raised or not isinstance(node, (ast.stmt, ast.expr)):
-                raise e.with_traceback(None)
-            ctx.raised = True
-            e = handle_exception_from_cpp(e)
-            if not isinstance(e, GsTaichiCompilationError):
-                msg = ctx.get_pos_info(node) + traceback.format_exc()
-                raise GsTaichiCompilationError(msg) from None
-            msg = f"""gstaichi stack trace:
-===
-{stack_trace}
-===
+        # except Exception as e:
+        #     stack_trace = traceback.format_exc()
+        #     if impl.get_runtime().print_full_traceback:
+        #         raise e
+        #     if ctx.raised or not isinstance(node, (ast.stmt, ast.expr)):
+        #         raise e.with_traceback(None)
+        #     ctx.raised = True
+        #     e = handle_exception_from_cpp(e)
+        #     if not isinstance(e, GsTaichiCompilationError):
+        #         msg = ctx.get_pos_info(node) + traceback.format_exc()
+        #         raise GsTaichiCompilationError(msg) from None
+        #     msg = f"""gstaichi stack trace:
+# ===
+# {stack_trace}
+# ===
 
-Your code:
-{ctx.get_pos_info(node)}{e}
-"""
-            raise type(e)(msg) from None
+# Your code:
+# {ctx.get_pos_info(node)}{e}
+# """
+#             raise type(e)(msg) from None
 
 
 class VariableScopeGuard:

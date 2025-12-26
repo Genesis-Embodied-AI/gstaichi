@@ -20,6 +20,7 @@ import numpy as np
 from gstaichi._lib import core as _ti_core
 from gstaichi._lib.core.gstaichi_python import KernelLaunchContext
 from gstaichi.lang import _kernel_impl_dataclass, impl
+from gstaichi.lang.any_array import AnyArray
 from gstaichi.lang._ndarray import Ndarray
 from gstaichi.lang._wrap_inspect import get_source_info_and_src
 from gstaichi.lang.ast import ASTTransformerFuncContext
@@ -344,10 +345,17 @@ class FuncBase:
         else:
             self.arg_metas_expanded = list(self.arg_metas)
 
-        debug("fuse_args arg_metas_expanded:")
+        debug("fuse_args arg_metas_expanded v2:")
         for i, arg_meta in enumerate(self.arg_metas_expanded):
-            debug("- ", i, arg_meta.name)
-        debug("(end fuse_args arg_metas_expanded)")
+            py_obj_type_name = "<out of py_args>"
+            shape = None
+            if i < len(py_args):
+                py_obj_type = type(py_args[i])
+                py_obj_type_name = py_obj_type.__name__
+                if py_obj_type is AnyArray:
+                    shape = py_args[i].shape
+            debug("- ", i, arg_meta.name, py_obj_type_name, shape)
+        debug("(end fuse_args arg_metas_expanded v2)")
 
         arg_metas_pruned = self.arg_metas_expanded
         num_args = len(py_args)

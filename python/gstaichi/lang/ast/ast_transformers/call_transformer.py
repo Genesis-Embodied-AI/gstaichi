@@ -21,6 +21,7 @@ from gstaichi.lang.ast.ast_transformer_utils import (
     ASTTransformerFuncContext,
     get_decorator,
 )
+from gstaichi.lang.any_array import AnyArray
 from gstaichi.lang.exception import GsTaichiSyntaxError, GsTaichiTypeError
 from gstaichi.lang.expr import Expr
 from gstaichi.lang.matrix import Matrix, Vector
@@ -181,8 +182,9 @@ class CallTransformer:
                     except Exception as e:
                         raise RuntimeError(f"Exception whilst processing {field.name} in {type(dataclass_type)}") from e
                     if _pruning.enforcing and child_name not in _pruning.used_parameters_by_func_id[func_id]:
-                        ctx.debug("_expand_Call_dataclass_args skip", child_name)
+                        # ctx.debug("_expand_Call_dataclass_args skip", child_name)
                         continue
+                        # ctx.debug("_expand_Call_dataclass_args skip", child_name)
                     load_ctx = ast.Load()
                     arg_node = ast.Name(
                         id=child_name,
@@ -451,16 +453,39 @@ class CallTransformer:
                 # py_kwargs = _pruning.filter_call_kwargs(ctx, func, node, py_kwargs)
 
             func_type = type(func)
-            if is_func_base_wrapper and False:
+            if is_func_base_wrapper:
                 ctx.debug("calling into", func.fn)
+                # print('func.wrapper', func.wrapper, func.wrapper.func, type(func.wrapper))
+                metas = func.wrapper.arg_metas_expanded
+                # print('metas', metas)
                 ctx.debug('args:')
-                for _arg in py_args:
-                    ctx.debug("-", _arg)
+                for i, _arg in enumerate(py_args):
+                    arg_type = type(_arg)
+                    shape = None
+                    meta_name = '<out of metas>'
+                    if i < len(metas):
+                        meta_name = metas[i].name
+                    if arg_type is AnyArray:
+                        shape = _arg.shape
+                    else:
+                        try:
+                            shape = _arg.get_shape()
+                        except:
+                            ...
+                    ctx.debug("-", i, type(_arg).__name__, shape, 'meta', meta_name)
                 ctx.debug("keywords")
                 for _name, _arg in py_kwargs.items():
                     if ctx.filter_name(_name):
-                        ctx.debug("- ", _name, "=", _arg)
-                node.ptr = func.call_with_call_chain(ctx.func.call_chain, *py_args, **py_kwargs)
+                        _arg_type = type(_arg)
+                        shape = None
+                        if _arg_type is AnyArray:
+                            shape = _arg.shape
+                            # print('shape', shape, type(shape), dir(shape))
+                        ctx.debug("- ", _name, "=", _arg_type.__name__, shape)
+                if func_type is BoundGsTaichiCallable:
+                    node.ptr = func(*py_args, **py_kwargs)
+                else:
+                    node.ptr = func.call_with_call_chain(ctx.func.call_chain, *py_args, **py_kwargs)
             else:
                 node.ptr = func(*py_args, **py_kwargs)
 

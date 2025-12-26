@@ -492,7 +492,8 @@ class Kernel(FuncBase):
             if is_launch_ctx_cacheable and args_hash is not None:
                 self.launch_context_buffer_cache.cache(t_kernel, args_hash, launch_ctx, launch_ctx_buffer)
 
-        try:
+        # try:
+        if True:
             prog = impl.get_runtime().prog
             if not compiled_kernel_data:
                 # Store Taichi program config and device cap for efficiency because they are used at multiple places
@@ -513,11 +514,11 @@ class Kernel(FuncBase):
                     self.src_ll_cache_observations.cache_stored = True
             self._last_compiled_kernel_data = compiled_kernel_data
             prog.launch_kernel(compiled_kernel_data, launch_ctx)
-        except Exception as e:
-            e = handle_exception_from_cpp(e)
-            if impl.get_runtime().print_full_traceback:
-                raise e
-            raise e from None
+        # except Exception as e:
+        #     e = handle_exception_from_cpp(e)
+        #     if impl.get_runtime().print_full_traceback:
+        #         raise e
+        #     raise e from None
 
         for callback in callbacks:
             callback()

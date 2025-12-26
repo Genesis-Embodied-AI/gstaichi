@@ -82,15 +82,15 @@ class Pruning:
             ctx.debug("- arg meta idx", i, "name", arg_meta.name)
         ctx.debug("(after child arg metas expanded)")
         ctx.debug("")
-        ctx.debug("_pruning record after call node.args")
-        for i, arg in enumerate(node.args):
-            ctx.debug("   -", i, getattr(arg, "id", "<no id>"), "=>", node.func.ptr.wrapper.arg_metas_expanded[i].name)
-        ctx.debug("(after _pruning record after call node.args)")
-        ctx.debug("_pruning record after call node.keywords")
-        for i, arg in enumerate(node.keywords):
-            ctx.debug("   -", i, getattr(arg.value, "id", "<no id>"), "=>", node.func.ptr.wrapper.arg_metas_expanded[i + len(node.args)].name)
-        ctx.debug("(after _pruning record after call node.keywords)")
-        ctx.debug("")
+        # ctx.debug("_pruning record after call node.args")
+        # for i, arg in enumerate(node.args):
+        #     ctx.debug("   -", i, getattr(arg, "id", "<no id>"), "=>", node.func.ptr.wrapper.arg_metas_expanded[i].name)
+        # ctx.debug("(after _pruning record after call node.args)")
+        # ctx.debug("_pruning record after call node.keywords")
+        # for i, arg in enumerate(node.keywords):
+        #     ctx.debug("   -", i, getattr(arg.value, "id", "<no id>"), "=>", node.func.ptr.wrapper.arg_metas_expanded[i + len(node.args)].name)
+        # ctx.debug("(after _pruning record after call node.keywords)")
+        # ctx.debug("")
         ctx.debug("unpruning:")
         arg_id = 0
         # node.args ordering will match that of the called function's metas_expanded,
@@ -202,8 +202,18 @@ class Pruning:
             import ast
             dumped_arg = ast.dump(arg)[:80]
             dump = ctx.filter_name(dumped_arg)
-            if dump:
-                ctx.debug("-", i, ast.dump(arg)[:50])
+            is_starred = arg is ast.Starred
+            # we'll just ignore starred argumetns:
+            # - if they contain py datasturts, not allowed
+            # - otherwise, we can ignore
+            # Also, let's require any *starred at the end of the parameters
+            # (which is consistent with test_utils.test_utils_geom_taichi_vs_tensor_consistency)
+            # ctx.debug("is_starred", is_starred)
+            if is_starred:
+                assert i == len(node.args) - 1
+                break
+            # if dump:
+            #     ctx.debug("-", i, ast.dump(arg)[:50])
             if hasattr(arg, "id"):
                 if dump:
                     ctx.debug(".  => has id")
