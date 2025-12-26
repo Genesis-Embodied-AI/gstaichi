@@ -285,7 +285,7 @@ class CallTransformer:
                 ctx.debug("scope", i)
                 for k, v in scope.items():
                     if ctx.filter_name(k):
-                        ctx.debug("-", k, v)
+                        ctx.debug("-", k)
             ctx.debug("(end local scopes)")
 
             build_stmt(ctx, node.func)
@@ -294,13 +294,13 @@ class CallTransformer:
             build_stmts(ctx, node.args)
             build_stmts(ctx, node.keywords)
 
-            ctx.debug("local scopes")
-            for i, scope in enumerate(ctx.local_scopes):
-                ctx.debug("scope", i)
-                for k, v in scope.items():
-                    if ctx.filter_name(k):
-                        ctx.debug("-", k, v)
-            ctx.debug("(end local scopes)")
+            # ctx.debug("local scopes")
+            # for i, scope in enumerate(ctx.local_scopes):
+            #     ctx.debug("scope", i)
+            #     for k, v in scope.items():
+            #         if ctx.filter_name(k):
+            #             ctx.debug("-", k)
+            # ctx.debug("(end local scopes)")
 
             func = node.func.ptr
             func_type = type(func)
@@ -334,13 +334,13 @@ class CallTransformer:
                 ctx.debug(" -", i, getattr(keyword.value, "id", "<no id>"))
             ctx.debug("(after node.keywords for call)")
 
-            ctx.debug("local scopes")
-            for i, scope in enumerate(ctx.local_scopes):
-                ctx.debug("scope", i)
-                for k, v in scope.items():
-                    if ctx.filter_name(k):
-                        ctx.debug("-", k, v)
-            ctx.debug("(end local scopes)")
+            # ctx.debug("local scopes")
+            # for i, scope in enumerate(ctx.local_scopes):
+            #     ctx.debug("scope", i)
+            #     for k, v in scope.items():
+            #         if ctx.filter_name(k):
+            #             ctx.debug("-", k, v)
+            # ctx.debug("(end local scopes)")
 
             # ctx.debug("global vars")
             # for k, v in ctx.global_vars.items():
