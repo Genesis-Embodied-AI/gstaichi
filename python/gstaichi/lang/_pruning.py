@@ -102,6 +102,7 @@ class Pruning:
         # by seeing if the childs arg_metas_expanded is exactly 1 longer than len(node.args) + len(node.kwargs)
         ctx.debug("len node.args", len(node.args), "len node.keywords", len(node.keywords), "len child metas", len(node.func.ptr.wrapper.arg_metas_expanded))
         has_self = len(node.args) + len(node.keywords) + 1 == len(node.func.ptr.wrapper.arg_metas_expanded)
+        ctx.debug("has self", has_self)
         self_offset = 1 if has_self else 0
         for i, arg in enumerate(node.args):
             if hasattr(arg, "id"):
@@ -109,7 +110,8 @@ class Pruning:
                 called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id + self_offset].name
                 if called_name in sorted(called_unpruned):
                     if ctx.filter_name(calling_name):
-                        ctx.debug("- unpruning arg id", arg_id, calling_name, "=>", called_name)
+                        import ast
+                        ctx.debug("- unpruning arg id", arg_id, calling_name, "=>", called_name, ast.dump(arg))
                     to_unprune.add(calling_name)
             arg_id += 1
         # Note that our own arg_metas ordering will in general NOT match that of the child's. That's

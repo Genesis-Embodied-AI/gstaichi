@@ -172,6 +172,7 @@ class CallTransformer:
         added_args = []
         _pruning = ctx.global_context.pruning
         func_id = ctx.func.func_id
+        # ctx.debug("_expand_Call_dataclass_args")
         for arg in args:
             val = arg.ptr
             if dataclasses.is_dataclass(val):
@@ -185,6 +186,8 @@ class CallTransformer:
                         # ctx.debug("_expand_Call_dataclass_args skip", child_name)
                         continue
                         # ctx.debug("_expand_Call_dataclass_args skip", child_name)
+                    # if ctx.filter_name(src_name):
+                    #     ctx.debug(indent, "-", child_name)
                     load_ctx = ast.Load()
                     arg_node = ast.Name(
                         id=child_name,
@@ -227,15 +230,15 @@ class CallTransformer:
                 for field in dataclasses.fields(dataclass_type):
                     src_name = create_flat_name(kwarg.value.id, field.name)
                     child_name = create_flat_name(kwarg.arg, field.name)
-                    if ctx.filter_name(src_name):
-                        ctx.debug(indent, "-", kwarg, src_name, "=>", child_name)
                     # Note: using `called_needed` instead of `called_needed is not None` will cause
                     # a bug, when it is empty set.
                     if called_needed is not None and child_name not in called_needed:
                     # if _pruning.enforcing and src_name not in _pruning.used_parameters_by_func_id[func_id]:
-                        if ctx.filter_name(src_name):
-                            ctx.debug(indent * 2, "=> skip")
+                        # if ctx.filter_name(src_name):
+                        #     ctx.debug(indent * 2, "=> skip")
                         continue
+                    if ctx.filter_name(src_name):
+                        ctx.debug(indent, "-", kwarg, src_name, "=>", child_name)
                     load_ctx = ast.Load()
                     src_node = ast.Name(
                         id=src_name,
@@ -339,7 +342,7 @@ class CallTransformer:
             ctx.debug("BEFORE _expand_Call_dataclass_kwargs")
             ctx.debug("BEFOREnode.args for call:")
             for i, arg in enumerate(node.args):
-                ctx.debug(" -", i, arg)
+                ctx.debug(" -", i, ast.dump(arg))
             ctx.debug("(BEFORE node.args for call)")
             ctx.debug("BEFORE node.keywords for call:")
             for i, keyword in enumerate(node.keywords):
@@ -352,7 +355,7 @@ class CallTransformer:
             ctx.debug("after _expand_Call_dataclass_kwargs")
             ctx.debug("node.args for call:")
             for i, arg in enumerate(node.args):
-                ctx.debug(" -", i, arg)
+                ctx.debug(" -", i, ast.dump(arg))
             ctx.debug("(after node.args for call)")
             ctx.debug("node.keywords for call:")
             for i, keyword in enumerate(node.keywords):
@@ -483,7 +486,11 @@ class CallTransformer:
                             # print('shape', shape, type(shape), dir(shape))
                         ctx.debug("- ", _name, "=", _arg_type.__name__, shape)
                 if func_type is BoundGsTaichiCallable:
+                    print('py_args', py_args)
+                    print('py_kwargs', py_kwargs)
+                    # adsff
                     node.ptr = func(*py_args, **py_kwargs)
+                    # node.ptr = func.call_with_call_chain(ctx.func.call_chain, *py_args, **py_kwargs)
                 else:
                     node.ptr = func.call_with_call_chain(ctx.func.call_chain, *py_args, **py_kwargs)
             else:
