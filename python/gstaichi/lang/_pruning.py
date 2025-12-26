@@ -210,15 +210,18 @@ class Pruning:
             import ast
             dumped_arg = ast.dump(arg)[:80]
             dump = ctx.filter_name(dumped_arg)
-            is_starred = arg is ast.Starred
-            # we'll just ignore starred argumetns:
-            # - if they contain py datasturts, not allowed
-            # - otherwise, we can ignore
+            is_starred = type(arg) is ast.Starred
+            # Starred arguments are all just lumped together into the ptr for the Starred
+            # node. We'll just pass them through.
+            # we'll forbid py dataclasses in *args.
             # Also, let's require any *starred at the end of the parameters
             # (which is consistent with test_utils.test_utils_geom_taichi_vs_tensor_consistency)
             # ctx.debug("is_starred", is_starred)
             if is_starred:
-                assert i == len(node.args) - 1
+                assert i == len(node.args) - 1 and len(node.keywords) == 0
+                # we'll just dump the rest of the py_args in:
+                new_args.extend(py_args[i:])
+                child_arg_id += len(py_args[i:])
                 break
             if dump:
                 ctx.debug("-", i, ast.dump(arg)[:50])
