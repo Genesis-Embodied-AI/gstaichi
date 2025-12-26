@@ -310,9 +310,10 @@ class FuncBase:
         but if we did, we'd still have output exactly matching the order and size of
         self.arg_metas_expanded, just with some of the values coming from defaults.
 
-        for kernels, global_context is None. We aren't compiling yet
+        for kernels, global_context is None. We aren't compiling yet. This is only called once
+        per launch, but it is called every launch, even if we already compiled.
 
-        For funcs, this is called during compilation, once per pass.
+        For funcs, this is only called during compilation, once per pass.
         """
 
         def debug(*args) -> None:
