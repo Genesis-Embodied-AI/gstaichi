@@ -2202,3 +2202,22 @@ def test_pruning_args_bound_callable() -> None:
     assert my_struct1._f1[0, 0] == 102
     assert my_struct2._f1[0, 0, 0] == 103
     assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
+
+
+@test_utils.test()
+def test_pruning_star_args() -> None:
+    @ti.func
+    def f1(a: ti.types.NDArray[ti.i32, 1], b: ti.i32, c: ti.i32):
+        a[0] = b
+        a[1] = c
+
+    @ti.kernel
+    def k1(a: ti.types.NDArray[ti.i32, 1]) -> None:
+        f1(a, *star_args)
+
+    star_args = [3, 5]
+
+    a = ti.ndarray(ti.i32, (10,))
+    k1(a)
+    assert a[0] == 3
+    assert a[1] == 5
