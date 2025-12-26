@@ -360,42 +360,63 @@ class FuncBase:
 
         # Early return without further processing if possible for efficiency. This is by far the most common scenario.
         if not (kwargs or num_arg_metas > num_args):
-            debug("(end process args)")
-            debug("")
+            # debug("(end fuse args)")
+            # debug("")
             return py_args
 
-        fused_args: list[Any] = [*py_args, *[arg_meta.default for arg_meta in arg_metas_pruned[num_args:]]]
+        fused_py_args: list[Any] = [*py_args, *[arg_meta.default for arg_meta in arg_metas_pruned[num_args:]]]
+        errors_l: list[str] = []
         if kwargs:
             num_invalid_kwargs_args = len(kwargs)
             for i in range(num_args, num_arg_metas):
                 arg_meta = arg_metas_pruned[i]
-                value = kwargs.get(arg_meta.name, _ARG_EMPTY)
-                if value is not _ARG_EMPTY:
-                    fused_args[i] = value
+                py_arg = kwargs.get(arg_meta.name, _ARG_EMPTY)
+                if py_arg is not _ARG_EMPTY:
+                    fused_py_args[i] = py_arg
                     num_invalid_kwargs_args -= 1
-                elif fused_args[i] is _ARG_EMPTY:
-                    debug(f"ERROR: Missing argument '{arg_meta.name}'.")
-                    raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
+                    kwarg_name_to_meta_idx[arg_meta.name, i]
+                elif fused_py_args[i] is _ARG_EMPTY:
+                    debug(f"ERROR: fuse args: Missing argument '{arg_meta.name}'.")
+                    # raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
+                    errors_l.append(f"Missing argument '{arg_meta.name}'.")
+                    continue
             if num_invalid_kwargs_args:
-                for key, value in kwargs.items():
+                for key, py_arg in kwargs.items():
                     for i, arg_meta in enumerate(arg_metas_pruned):
                         if key == arg_meta.name:
                             if i < num_args:
-                                raise GsTaichiSyntaxError(f"Multiple values for argument '{key}'.")
+                                debug(f"ERROR: fuse args: Multiple values for argument '{key}'.")
+                                errors_l.append(f"Multiple values for argument '{key}'.")
+                                # raise GsTaichiSyntaxError(f"Multiple values for argument '{key}'.")
                             break
                     else:
-                        debug(f"ERROR: Unexpected argument '{key}'.")
-                        raise GsTaichiSyntaxError(f"Unexpected argument '{key}'.")
+                        errors_l.append(f"Unexpected argument '{key}'.")
+                        debug(f"ERROR: fuse args: Unexpected argument '{key}'.")
+                        # raise GsTaichiSyntaxError(f"Unexpected argument '{key}'.")
+            # if len(errors_l) > 0:
+            #     raise GsTaichiSyntaxError("\n".join(errors_l))
         else:
+            # errors_l: list[str] = []
             for i in range(num_args, num_arg_metas):
-                if fused_args[i] is _ARG_EMPTY:
+                if fused_py_args[i] is _ARG_EMPTY:
                     arg_meta = arg_metas_pruned[i]
-                    debug(f"ERROR: Missing argument '{arg_meta.name}'.")
-                    raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
+                    debug(f"ERROR: fuse args: Missing argument '{arg_meta.name}'.")
+                    errors_l.append(f"Missing argument '{arg_meta.name}'.")
+                    continue
+                    # raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
 
-        debug("(end process args)")
-        debug("")
-        return tuple(fused_args)
+        # debug("fused arg metas:")
+        # for arg_meta in fused_metas:
+        #     debug("- ", arg_meta.name)
+        # debug("(end fused arg metas)")
+
+        if len(errors_l) > 0:
+            debug("\n".join(errors_l))
+            raise GsTaichiSyntaxError("\n".join(errors_l))
+
+        # debug("(end fuse args)")
+        # debug("")
+        return tuple(fused_py_args)
 
     def _get_global_vars(self, _func: Callable) -> dict[str, Any]:
         # Discussions: https://github.com/taichi-dev/gstaichi/issues/282
