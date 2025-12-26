@@ -247,8 +247,8 @@ class ASTTransformerFuncContext:
         self.expanding_dataclass_call_parameters: bool = False
         self.call_chain: tuple[str, ...] = call_chain
         # self.pass_idx = pass_idx
-        self.debug("===================================")
-        self.debug("PASS", global_context.pass_idx)
+        # self.debug("===================================")
+        # self.debug("PASS", global_context.pass_idx)
 
         self.adstack_enabled: bool = (
             _ti_core.is_extension_supported(

@@ -65,6 +65,10 @@ class Func(FuncBase):
         current_kernel = global_context.current_kernel if global_context is not None else None
         assert current_kernel is not None
 
+        self.debug("===================================")
+        assert global_context is not None
+        self.debug("PASS", global_context.pass_idx)
+
         py_args = self.fuse_args(
             debug_fn=self.debug,
             is_func=True, is_pyfunc=self.pyfunc, py_args=py_args, kwargs=kwargs, global_context=global_context

@@ -217,6 +217,11 @@ class FuncBase:
         src = [textwrap.fill(line, tabsize=4, width=9999) for line in src]
         tree = ast.parse(textwrap.dedent("\n".join(src)))
 
+        if is_kernel:
+            self.debug("===================================")
+            # assert global_context is not None
+            self.debug("PASS", pass_idx)
+
         func_body = tree.body[0]
         func_body.decorator_list = []  # type: ignore , kick that can down the road...
 
@@ -306,6 +311,8 @@ class FuncBase:
         self.arg_metas_expanded, just with some of the values coming from defaults.
 
         for kernels, global_context is None. We aren't compiling yet
+
+        For funcs, this is called during compilation, once per pass.
         """
 
         def debug(*args) -> None:
@@ -383,7 +390,7 @@ class FuncBase:
                     fused_py_args[i] = py_arg
                     # fused_metas.append(arg_meta)
                     num_invalid_kwargs_args -= 1
-                    kwarg_name_to_meta_idx[arg_meta.name, i]
+                    kwarg_name_to_meta_idx[arg_meta.name] = i
                 elif fused_py_args[i] is _ARG_EMPTY:
                     debug(f"ERROR: fuse args: Missing argument '{arg_meta.name}'.")
                     # raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
@@ -414,10 +421,10 @@ class FuncBase:
                     continue
                     # raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
 
-        # debug("fused arg metas:")
-        # for arg_meta in fused_metas:
-        #     debug("- ", arg_meta.name)
-        # debug("(end fused arg metas)")
+        debug("fuse_args arg_metas_expanded:")
+        for i, arg_meta in enumerate(self.arg_metas_expanded):
+            debug("- ", i, arg_meta.name)
+        debug("(end fuse_args arg_metas_expanded)")
 
         if len(errors_l) > 0:
             debug("\n".join(errors_l))

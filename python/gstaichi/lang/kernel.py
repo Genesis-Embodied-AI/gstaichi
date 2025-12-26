@@ -374,6 +374,7 @@ class Kernel(FuncBase):
             print('')
             print('')
             print("======================= pass", _pass, self.func)
+
             if _pass >= 1:
                 pruning.enforce()
             tree, ctx = self.get_tree_and_ctx(
