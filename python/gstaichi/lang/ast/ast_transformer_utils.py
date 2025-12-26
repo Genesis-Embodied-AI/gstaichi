@@ -369,7 +369,7 @@ class ASTTransformerFuncContext:
         try:
             return False, getattr(builtins, name), None
         except AttributeError:
-            self.debug("ERROR:", f'Name "{name}" is not defined')
+            self.debug(f"ERROR: Name {name} is not defined")
             raise GsTaichiNameError(f'Name "{name}" is not defined')
 
     def get_pos_info(self, node: ast.AST) -> str:
