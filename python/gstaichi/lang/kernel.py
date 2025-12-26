@@ -210,7 +210,7 @@ class ASTGenerator:
             # struct locals are the expanded py dataclass fields that we will write to
             # local variables, and will then be available to use in build_Call, later.
             ctx.debug("struct_locals")
-            for _l in struct_locals:
+            for _l in sorted(struct_locals):
                 if ctx.filter_name(_l):
                     ctx.debug("-", _l)
             ctx.debug("(end struct_locals)")
