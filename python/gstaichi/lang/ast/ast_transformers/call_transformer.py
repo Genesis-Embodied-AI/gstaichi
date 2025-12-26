@@ -270,6 +270,7 @@ class CallTransformer:
         example ast:
         Call(func=Name(id='f2', ctx=Load()), args=[Name(id='my_struct_ab', ctx=Load())], keywords=[])
         """
+        is_func_base_wrapper = False
         if get_decorator(ctx, node) in ["static", "static_assert"]:
             with ctx.static_scope_guard():
                 build_stmt(ctx, node.func)
@@ -427,7 +428,7 @@ class CallTransformer:
                 # py_kwargs = _pruning.filter_call_kwargs(ctx, func, node, py_kwargs)
 
             func_type = type(func)
-            if is_func_base_wrapper:
+            if is_func_base_wrapper and False:
                 ctx.debug("calling into", func.fn)
                 ctx.debug('args:')
                 for _arg in py_args:
