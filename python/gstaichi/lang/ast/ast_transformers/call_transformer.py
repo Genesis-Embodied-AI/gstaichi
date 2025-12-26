@@ -283,7 +283,7 @@ class CallTransformer:
             ctx.debug("local scopes")
             for i, scope in enumerate(ctx.local_scopes):
                 ctx.debug("scope", i)
-                for k, v in scope.items():
+                for k, v in sorted(scope.items()):
                     if ctx.filter_name(k):
                         ctx.debug("-", k)
             ctx.debug("(end local scopes)")
