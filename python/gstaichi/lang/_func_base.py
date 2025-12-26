@@ -314,6 +314,12 @@ class FuncBase:
         per launch, but it is called every launch, even if we already compiled.
 
         For funcs, this is only called during compilation, once per pass.
+
+        For kernels, the args are NOT expanded at this point, and pruning changes nothing.
+
+        For funcs, the args are expanded at the start of this function
+        - first pass, no pruning
+        - second pass - with enforcing on - the expanded parameters are pruned
         """
 
         def debug(*args) -> None:
