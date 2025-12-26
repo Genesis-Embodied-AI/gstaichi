@@ -19,7 +19,7 @@ from gstaichi.lang import (
 from gstaichi.lang import ops as ti_ops
 from gstaichi.lang._dataclass_util import create_flat_name
 from gstaichi.lang.ast.ast_transformer_utils import (
-    ASTTransformerContext,
+    ASTTransformerFuncContext,
 )
 from gstaichi.lang.exception import (
     GsTaichiSyntaxError,
@@ -33,7 +33,7 @@ from gstaichi.types import annotations, ndarray_type, primitive_types
 class FunctionDefTransformer:
     @staticmethod
     def _decl_and_create_variable(
-        ctx: ASTTransformerContext,
+        ctx: ASTTransformerFuncContext,
         annotation: Any,
         name: str,
         this_arg_features: tuple[tuple[Any, ...], ...] | None,
@@ -80,7 +80,7 @@ class FunctionDefTransformer:
 
     @staticmethod
     def _transform_kernel_arg(
-        ctx: ASTTransformerContext,
+        ctx: ASTTransformerFuncContext,
         argument_name: str,
         argument_type: Any,
         this_arg_features: tuple[Any, ...],
@@ -130,7 +130,7 @@ class FunctionDefTransformer:
             ctx.create_variable(argument_name, obj)
 
     @staticmethod
-    def _transform_as_kernel(ctx: ASTTransformerContext, node: ast.FunctionDef, args: ast.arguments) -> None:
+    def _transform_as_kernel(ctx: ASTTransformerFuncContext, node: ast.FunctionDef, args: ast.arguments) -> None:
         assert ctx.func is not None
         assert ctx.arg_features is not None
         if node.returns is not None:
@@ -157,7 +157,7 @@ class FunctionDefTransformer:
 
     @staticmethod
     def _transform_func_arg(
-        ctx: ASTTransformerContext,
+        ctx: ASTTransformerFuncContext,
         argument_name: str,
         argument_type: Any,
         data: Any,
@@ -249,7 +249,7 @@ class FunctionDefTransformer:
         return None
 
     @staticmethod
-    def _transform_as_func(ctx: ASTTransformerContext, node: ast.FunctionDef, args: ast.arguments) -> None:
+    def _transform_as_func(ctx: ASTTransformerFuncContext, node: ast.FunctionDef, args: ast.arguments) -> None:
         # pylint: disable=import-outside-toplevel
         from gstaichi.lang.kernel_impl import Func
 
@@ -266,9 +266,9 @@ class FunctionDefTransformer:
 
     @staticmethod
     def build_FunctionDef(
-        ctx: ASTTransformerContext,
+        ctx: ASTTransformerFuncContext,
         node: ast.FunctionDef,
-        build_stmts: Callable[[ASTTransformerContext, list[ast.stmt]], None],
+        build_stmts: Callable[[ASTTransformerFuncContext, list[ast.stmt]], None],
     ) -> None:
         if ctx.visited_funcdef:
             raise GsTaichiSyntaxError(
