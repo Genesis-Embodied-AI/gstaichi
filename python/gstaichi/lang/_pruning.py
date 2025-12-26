@@ -78,8 +78,8 @@ class Pruning:
         to_unprune: set[str] = set()
         ctx.debug("child arg metas expanded:")
         for i, arg_meta in enumerate(node.func.ptr.wrapper.arg_metas_expanded):
-            if ctx.filter_name(arg_meta.name):
-                ctx.debug("- arg meta idx", i, "name", arg_meta.name)
+            # if ctx.filter_name(arg_meta.name):
+            ctx.debug("- arg meta idx", i, "name", arg_meta.name)
         ctx.debug("(after child arg metas expanded)")
         ctx.debug("")
         ctx.debug("_pruning record after call node.args")
@@ -93,6 +93,10 @@ class Pruning:
         ctx.debug("")
         ctx.debug("unpruning:")
         arg_id = 0
+        # node.args ordering will match that of the called function's metas_expanded,
+        # because of the way calling with sequential args works.
+        # We need to look at the child's declaration - via metas - in order to get the name they use.
+        # We can't tell their name just by looking at our own metas.
         for i, arg in enumerate(node.args):
             if hasattr(arg, "id"):
                 calling_name = arg.id
@@ -102,10 +106,16 @@ class Pruning:
                         ctx.debug("- unpruning arg id", arg_id, calling_name, "=>", called_name)
                     to_unprune.add(calling_name)
             arg_id += 1
+        # note that our own arg_metas ordering will in general NOT match that of the child's. That's
+        # because our ordering is based on the order in which we pass arguments to the function, but the
+        # child's ordering is based on the ordering of their declaration; and these orderings might not
+        # match.
+        # Luckily, for keywords, we don't need to look at the child's metas, because we can get the
+        # child's name directly from our own keyword node.
         for arg in node.keywords:
             if hasattr(arg.value, "id"):
                 calling_name = arg.value.id
-                called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
+                called_name = arg.arg
                 if called_name in called_unpruned:
                     to_unprune.add(calling_name)
                     if ctx.filter_name(calling_name):
