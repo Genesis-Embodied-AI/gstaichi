@@ -26,9 +26,7 @@ from gstaichi.lang.expr import Expr
 from gstaichi.lang.matrix import Matrix, Vector
 from gstaichi.lang.util import is_gstaichi_class
 from gstaichi.types import primitive_types
-from ..._gstaichi_callable import GsTaichiCallable
-
-from ..._gstaichi_callable import GsTaichiCallable
+from ..._gstaichi_callable import GsTaichiCallable, BoundGsTaichiCallable
 
 
 class CallTransformer:
@@ -304,7 +302,8 @@ class CallTransformer:
 
             func = node.func.ptr
             func_type = type(func)
-            if func_type is GsTaichiCallable:
+            is_func_base_wrapper = func_type is GsTaichiCallable or func_type is BoundGsTaichiCallable
+            if is_func_base_wrapper:
                 ctx.debug("preparing to call into GsTaichiCallable", func.fn)
                 # ctx.debug('args:')
                 # for _arg in py_args:
@@ -315,7 +314,7 @@ class CallTransformer:
 
             _pruning = ctx.global_context.pruning
             called_needed = None
-            if _pruning.enforcing and func_type is GsTaichiCallable:
+            if _pruning.enforcing and is_func_base_wrapper:
                 # added_keywords = _pruning.filter_keywords(ctx, func, node, added_keywords)
                 _called_func_id = func.wrapper.func_id  # type: ignore
                 # func_id = func.wrapper.func_id  # type: ignore
@@ -428,7 +427,7 @@ class CallTransformer:
                 # py_kwargs = _pruning.filter_call_kwargs(ctx, func, node, py_kwargs)
 
             func_type = type(func)
-            if func_type is GsTaichiCallable:
+            if is_func_base_wrapper:
                 ctx.debug("calling into", func.fn)
                 ctx.debug('args:')
                 for _arg in py_args:
