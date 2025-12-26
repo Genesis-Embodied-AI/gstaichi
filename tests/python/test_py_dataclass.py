@@ -2019,3 +2019,61 @@ def test_pruning_pass_element_of_tensor_of_dataclass() -> None:
     assert my_struct._f1[0, 0][0] == 101
     assert my_struct._out[0, 0][0] == 5
     assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
+
+
+@test_utils.test()
+def test_pruning_kwargs_swap_order() -> None:
+    """
+    In this test, we call into a kwargs function with the kwargs in a different
+    order than in the child function declaration; and different number of params
+    in each struct
+    """
+
+    @dataclasses.dataclass
+    class MyStruct1:
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _unused1: ti.types.NDArray[ti.f32, 2]
+        _unused2: ti.types.NDArray[ti.f32, 2]
+
+    @dataclasses.dataclass
+    class MyStruct2:
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _unused: ti.types.NDArray[ti.f32, 2]
+
+    def make_structs():
+        my_struct1 = MyStruct1(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused2=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        my_struct2 = MyStruct2(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct1, my_struct2
+
+    @ti.func
+    def f1(struct1_f1: MyStruct1, struct2_f1: MyStruct2):
+        struct1_f1._f1[0, 0] = 102
+        struct2_f1._f1[0, 0] = 103
+
+    @ti.kernel
+    def k1(struct1_k1: MyStruct1, struct2_k1: MyStruct2):
+        struct1_k1._k1[0, 0] = 100
+        struct2_k1._k1[0, 0] = 101
+        f1(struct2_f1=struct2_k1, struct1_f1=struct1_k1)
+
+    my_struct1, my_struct2 = make_structs()
+    k1(my_struct1, my_struct2)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct1._k1[0, 0] == 100
+    assert my_struct2._k1[0, 0] == 101
+    assert my_struct1._f1[0, 0] == 102
+    assert my_struct2._f1[0, 0] == 103
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
