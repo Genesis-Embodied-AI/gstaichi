@@ -212,16 +212,16 @@ class Pruning:
             if is_starred:
                 assert i == len(node.args) - 1
                 break
-            # if dump:
-            #     ctx.debug("-", i, ast.dump(arg)[:50])
+            if dump:
+                ctx.debug("-", i, ast.dump(arg)[:50])
             if hasattr(arg, "id"):
-                if dump:
-                    ctx.debug(".  => has id")
+                # if dump:
+                #     ctx.debug(".  => has id")
                 calling_name = arg.id  # type: ignore
                 if calling_name.startswith("__ti_"):
                     called_name = self.child_name_by_caller_name_by_func_id[func_id].get(calling_name)
                     if dump:
-                        ctx.debug(".   => ", called_name)
+                        ctx.debug("    => ", called_name)
                     if called_name is not None and (
                         called_name in called_needed or not called_name.startswith("__ti_")
                     ):
@@ -229,8 +229,8 @@ class Pruning:
                 else:
                     new_args.append(py_args[i])
             else:
-                if dump:
-                    ctx.debug(".  => NO id")
+                # if dump:
+                #     ctx.debug("   => NO id")
                 new_args.append(py_args[i])
             child_arg_id += 1
         py_args = new_args

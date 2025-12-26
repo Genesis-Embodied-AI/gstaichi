@@ -345,17 +345,31 @@ class FuncBase:
         else:
             self.arg_metas_expanded = list(self.arg_metas)
 
-        debug("fuse_args arg_metas_expanded v2:")
-        for i, arg_meta in enumerate(self.arg_metas_expanded):
-            py_obj_type_name = "<out of py_args>"
-            shape = None
-            if i < len(py_args):
-                py_obj_type = type(py_args[i])
-                py_obj_type_name = py_obj_type.__name__
-                if py_obj_type is AnyArray:
-                    shape = py_args[i].shape
-            debug("- ", i, arg_meta.name, py_obj_type_name, shape)
-        debug("(end fuse_args arg_metas_expanded v2)")
+        # debug("fuse_args arg_metas_expanded v2:")
+        # for i, arg_meta in enumerate(self.arg_metas_expanded):
+        #     py_obj_type_name = "<out of py_args>"
+        #     shape = None
+        #     if i < len(py_args):
+        #         py_obj_type = type(py_args[i])
+        #         py_obj_type_name = py_obj_type.__name__
+        #         if py_obj_type is AnyArray:
+        #             shape = py_args[i].shape
+        #     debug("- ", i, arg_meta.name, py_obj_type_name, shape)
+        # debug("(end fuse_args arg_metas_expanded v2)")
+
+        def dump_fused_args(fused_py_args):
+            debug("fuse_args arg_metas_expanded v2:")
+            for i, arg_meta in enumerate(self.arg_metas_expanded):
+                py_obj_type_name = "<out of py_args>"
+                shape = None
+                if i < len(fused_py_args):
+                    py_arg = fused_py_args[i]
+                    py_obj_type = type(py_arg)
+                    py_obj_type_name = py_obj_type.__name__
+                    if py_obj_type is AnyArray:
+                        shape = py_arg.shape
+                debug("- ", i, arg_meta.name, py_obj_type_name, shape)
+            debug("(end fuse_args arg_metas_expanded v2)")
 
         arg_metas_pruned = self.arg_metas_expanded
         num_args = len(py_args)
@@ -397,6 +411,7 @@ class FuncBase:
         if not (kwargs or num_arg_metas > num_args):
             # debug("(end fuse args)")
             # debug("")
+            dump_fused_args(py_args)
             return py_args
 
         fused_py_args: list[Any] = [*py_args, *[arg_meta.default for arg_meta in arg_metas_pruned[num_args:]]]
@@ -442,6 +457,8 @@ class FuncBase:
                     errors_l.append(f"Missing argument '{arg_meta.name}'.")
                     continue
                     # raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
+
+        dump_fused_args(fused_py_args)
 
         if len(errors_l) > 0:
             debug("\n".join(errors_l))
