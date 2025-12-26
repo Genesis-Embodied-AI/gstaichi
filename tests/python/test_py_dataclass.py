@@ -2206,6 +2206,11 @@ def test_pruning_args_bound_callable() -> None:
 
 @test_utils.test()
 def test_pruning_star_args() -> None:
+    """
+    Designed to test
+    https://github.com/Genesis-Embodied-AI/Genesis/blob/2d98bbb786e94b3f6c4e7171c87b4ff31ff3ccdf/tests/test_utils.py#L103
+    scenario
+    """
     @ti.func
     def f1(a: ti.types.NDArray[ti.i32, 1], b: ti.i32, c: ti.i32):
         a[0] = b
