@@ -280,11 +280,27 @@ class CallTransformer:
             func = node.func.ptr
             func_type = type(func)
         else:
+            ctx.debug("local scopes")
+            for i, scope in enumerate(ctx.local_scopes):
+                ctx.debug("scope", i)
+                for k, v in scope.items():
+                    if ctx.filter_name(k):
+                        ctx.debug("-", k, v)
+            ctx.debug("(end local scopes)")
+
             build_stmt(ctx, node.func)
             # creates variable for the dataclass itself (as well as other variables,
             # not related to dataclasses). Necessary for calling further child functions
             build_stmts(ctx, node.args)
             build_stmts(ctx, node.keywords)
+
+            ctx.debug("local scopes")
+            for i, scope in enumerate(ctx.local_scopes):
+                ctx.debug("scope", i)
+                for k, v in scope.items():
+                    if ctx.filter_name(k):
+                        ctx.debug("-", k, v)
+            ctx.debug("(end local scopes)")
 
             func = node.func.ptr
             func_type = type(func)
@@ -318,6 +334,20 @@ class CallTransformer:
                 ctx.debug(" -", i, getattr(keyword.value, "id", "<no id>"))
             ctx.debug("(after node.keywords for call)")
 
+            ctx.debug("local scopes")
+            for i, scope in enumerate(ctx.local_scopes):
+                ctx.debug("scope", i)
+                for k, v in scope.items():
+                    if ctx.filter_name(k):
+                        ctx.debug("-", k, v)
+            ctx.debug("(end local scopes)")
+
+            # ctx.debug("global vars")
+            # for k, v in ctx.global_vars.items():
+            #     if ctx.filter_name(k):
+            #         ctx.debug("-", k, v)
+            # ctx.debug("(end global vars)")
+
             # create variables for the now-expanded dataclass members
             # we don't want to include these in the list of variables to not prune
             # since these will contain *all* declared fields, instead of all used fields
@@ -326,6 +356,7 @@ class CallTransformer:
             # to prune when enforcing is True, and to do that, we need to know what to prune,
             # which we get from the child func, and so we want to have filtered out all the
             # cases first where we aren't calling a ti.func
+            ctx.debug("expanding dataclass call parameters")
             ctx.expanding_dataclass_call_parameters = True
             for arg in added_args:
                 assert not hasattr(arg, "ptr")
@@ -334,6 +365,7 @@ class CallTransformer:
                 assert not hasattr(arg, "ptr")
                 build_stmt(ctx, arg)
             ctx.expanding_dataclass_call_parameters = False
+            ctx.debug("(after expanding dataclass call parameters)")
 
         # check for pure violations
         # we have to do this after building the statements
