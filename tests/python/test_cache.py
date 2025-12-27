@@ -179,11 +179,11 @@ def test_fastcache(tmp_path: pathlib.Path, monkeypatch):
     ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
     is_valid = False
 
-    def launch_kernel(self, t_kernel, compiled_kernel_data, *args):
+    def launch_kernel(self, key, t_kernel, compiled_kernel_data, *args):
         nonlocal is_valid
         is_valid = True
         assert compiled_kernel_data is None
-        return launch_kernel_orig(self, t_kernel, compiled_kernel_data, *args)
+        return launch_kernel_orig(self, key, t_kernel, compiled_kernel_data, *args)
 
     monkeypatch.setattr("gstaichi.lang.kernel_impl.Kernel.launch_kernel", launch_kernel)
 
@@ -205,11 +205,11 @@ def test_fastcache(tmp_path: pathlib.Path, monkeypatch):
     ti_init_same_arch(offline_cache_file_path=str(tmp_path), offline_cache=True)
     is_valid = False
 
-    def launch_kernel(self, t_kernel, compiled_kernel_data, *args):
+    def launch_kernel(self, key, t_kernel, compiled_kernel_data, *args):
         nonlocal is_valid
         is_valid = True
         assert compiled_kernel_data is not None
-        return launch_kernel_orig(self, t_kernel, compiled_kernel_data, *args)
+        return launch_kernel_orig(self, key, t_kernel, compiled_kernel_data, *args)
 
     monkeypatch.setattr("gstaichi.lang.kernel_impl.Kernel.launch_kernel", launch_kernel)
 

@@ -3,15 +3,12 @@
 import ast
 import dataclasses
 import inspect
-import math
 import operator
 import re
 import warnings
 from ast import unparse
 from collections import ChainMap
 from typing import Any
-
-import numpy as np
 
 from gstaichi.lang import (
     expr,
@@ -24,14 +21,13 @@ from gstaichi.lang.ast.ast_transformer_utils import (
     ASTTransformerFuncContext,
     get_decorator,
 )
-from gstaichi.lang.exception import (
-    GsTaichiSyntaxError,
-    GsTaichiTypeError,
-)
+from gstaichi.lang.exception import GsTaichiSyntaxError, GsTaichiTypeError
 from gstaichi.lang.expr import Expr
 from gstaichi.lang.matrix import Matrix, Vector
 from gstaichi.lang.util import is_gstaichi_class
 from gstaichi.types import primitive_types
+
+from ..._gstaichi_callable import BoundGsTaichiCallable, GsTaichiCallable
 
 
 class CallTransformer:
@@ -161,7 +157,6 @@ class CallTransformer:
                 args.append(["__ti_fmt_value__", new_arg, spec])
             else:
                 args.append(new_arg)
-        # put the formatted string as the first argument to make ti.format() happy
         args.insert(0, re.sub(r"{.*?}", "{}", raw_string))
         return args
 
@@ -175,6 +170,8 @@ class CallTransformer:
         """
         args_new = []
         added_args = []
+        _pruning = ctx.global_context.pruning
+        func_id = ctx.func.func_id
         for arg in args:
             val = arg.ptr
             if dataclasses.is_dataclass(val):
@@ -184,10 +181,7 @@ class CallTransformer:
                         child_name = create_flat_name(arg.id, field.name)
                     except Exception as e:
                         raise RuntimeError(f"Exception whilst processing {field.name} in {type(dataclass_type)}") from e
-                    if (
-                        ctx.used_py_dataclass_parameters_enforcing is not None
-                        and child_name not in ctx.used_py_dataclass_parameters_enforcing
-                    ):
+                    if _pruning.enforcing and child_name not in _pruning.used_parameters_by_func_id[func_id]:
                         continue
                     load_ctx = ast.Load()
                     arg_node = ast.Name(
@@ -212,7 +206,9 @@ class CallTransformer:
 
     @staticmethod
     def _expand_Call_dataclass_kwargs(
-        ctx: ASTTransformerFuncContext, kwargs: list[ast.keyword]
+        ctx: ASTTransformerFuncContext,
+        kwargs: list[ast.keyword],
+        called_needed: set[str] | None,
     ) -> tuple[list[ast.keyword], list[ast.keyword]]:
         """
         We require that each node has a .ptr attribute added to it, that contains
@@ -227,10 +223,9 @@ class CallTransformer:
                 for field in dataclasses.fields(dataclass_type):
                     src_name = create_flat_name(kwarg.value.id, field.name)
                     child_name = create_flat_name(kwarg.arg, field.name)
-                    if (
-                        ctx.used_py_dataclass_parameters_enforcing is not None
-                        and child_name not in ctx.used_py_dataclass_parameters_enforcing
-                    ):
+                    # Note: using `called_needed` instead of `called_needed is not None` will cause
+                    # a bug, when it is empty set.
+                    if called_needed is not None and child_name not in called_needed:
                         continue
                     load_ctx = ast.Load()
                     src_node = ast.Name(
@@ -252,7 +247,9 @@ class CallTransformer:
                     )
                     if dataclasses.is_dataclass(field.type):
                         kwarg_node.ptr = {child_name: field.type}
-                        _added_kwargs, _kwargs_new = CallTransformer._expand_Call_dataclass_kwargs(ctx, [kwarg_node])
+                        _added_kwargs, _kwargs_new = CallTransformer._expand_Call_dataclass_kwargs(
+                            ctx, [kwarg_node], called_needed
+                        )
                         kwargs_new.extend(_kwargs_new)
                         added_kwargs.extend(_added_kwargs)
                     else:
@@ -268,22 +265,44 @@ class CallTransformer:
         example ast:
         Call(func=Name(id='f2', ctx=Load()), args=[Name(id='my_struct_ab', ctx=Load())], keywords=[])
         """
+        is_func_base_wrapper = False
+        # split them off into locals, otherwise iterated function calls, with different pruning,
+        # will break, if we modify node.args/node.keywords in-place
+        args, keywords = node.args, node.keywords
         if get_decorator(ctx, node) in ["static", "static_assert"]:
             with ctx.static_scope_guard():
                 build_stmt(ctx, node.func)
-                build_stmts(ctx, node.args)
-                build_stmts(ctx, node.keywords)
+                build_stmts(ctx, args)
+                build_stmts(ctx, keywords)
+            func = node.func.ptr
+            func_type = type(func)
         else:
             build_stmt(ctx, node.func)
             # creates variable for the dataclass itself (as well as other variables,
             # not related to dataclasses). Necessary for calling further child functions
-            build_stmts(ctx, node.args)
-            build_stmts(ctx, node.keywords)
+            build_stmts(ctx, args)
+            build_stmts(ctx, keywords)
 
-            added_args, node.args = CallTransformer._expand_Call_dataclass_args(ctx, node.args)
-            added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(ctx, node.keywords)
+            func = node.func.ptr
+            func_type = type(func)
+            is_func_base_wrapper = func_type is GsTaichiCallable or func_type is BoundGsTaichiCallable
+            _pruning = ctx.global_context.pruning
+            called_needed = None
+            if _pruning.enforcing and is_func_base_wrapper:
+                _called_func_id = func.wrapper.func_id  # type: ignore
+                called_needed = _pruning.used_parameters_by_func_id[_called_func_id]
+
+            added_args, args = CallTransformer._expand_Call_dataclass_args(ctx, args)
+            added_keywords, keywords = CallTransformer._expand_Call_dataclass_kwargs(ctx, keywords, called_needed)
 
             # create variables for the now-expanded dataclass members
+            # we don't want to include these in the list of variables to not prune
+            # since these will contain *all* declared fields, instead of all used fields
+            # so we set expanding_dataclass_call_parameters to True during this expansion
+            # We don't build these until this point in the function, because we need
+            # to prune when enforcing is True, and to do that, we need to know what to prune,
+            # which we get from the child func, and so we want to have filtered out all the
+            # cases first where we aren't calling a ti.func
             ctx.expanding_dataclass_call_parameters = True
             for arg in added_args:
                 assert not hasattr(arg, "ptr")
@@ -293,19 +312,21 @@ class CallTransformer:
                 build_stmt(ctx, arg)
             ctx.expanding_dataclass_call_parameters = False
 
+        # check for pure violations
+        # we have to do this after building the statements
         # if any arg violates pure, then node also violates pure
-        for arg in node.args:
+        for arg in args:
             if arg.violates_pure:
                 node.violates_pure_reason = arg.violates_pure_reason
                 node.violates_pure = True
 
-        for kw in node.keywords:
+        for kw in keywords:
             if kw.value.violates_pure:
                 node.violates_pure = True
                 node.violates_pure_reason = kw.value.violates_pure_reason
 
-        args = []
-        for arg in node.args:
+        py_args = []
+        for arg in args:
             if isinstance(arg, ast.Starred):
                 arg_list = arg.ptr
                 if isinstance(arg_list, Expr) and arg_list.is_tensor():
@@ -313,38 +334,44 @@ class CallTransformer:
                     arg_list = [Expr(x) for x in ctx.ast_builder.expand_exprs([arg_list.ptr])]
 
                 for i in arg_list:
-                    args.append(i)
+                    py_args.append(i)
             else:
-                args.append(arg.ptr)
-        keywords = dict(ChainMap(*[keyword.ptr for keyword in node.keywords]))
-        func = node.func.ptr
+                py_args.append(arg.ptr)
+        py_kwargs = dict(ChainMap(*[keyword.ptr for keyword in keywords]))
 
         if id(func) in [id(print), id(impl.ti_print)]:
             ctx.func.has_print = True
 
         if isinstance(node.func, ast.Attribute) and isinstance(node.func.value.ptr, str) and node.func.attr == "format":
             raw_string = node.func.value.ptr
-            args = CallTransformer._canonicalize_formatted_string(raw_string, *args, **keywords)
-            node.ptr = impl.ti_format(*args)
+            py_args = CallTransformer._canonicalize_formatted_string(raw_string, *py_args, **py_kwargs)
+            node.ptr = impl.ti_format(*py_args)
             return node.ptr
 
         if id(func) == id(Matrix) or id(func) == id(Vector):
-            node.ptr = matrix.make_matrix(*args, **keywords)
+            node.ptr = matrix.make_matrix(*py_args, **py_kwargs)
             return node.ptr
 
-        if CallTransformer._build_call_if_is_builtin(ctx, node, args, keywords):
+        if CallTransformer._build_call_if_is_builtin(ctx, node, py_args, py_kwargs):
             return node.ptr
 
-        if CallTransformer._build_call_if_is_type(ctx, node, args, keywords):
+        if CallTransformer._build_call_if_is_type(ctx, node, py_args, py_kwargs):
             return node.ptr
 
         if hasattr(node.func, "caller"):
-            node.ptr = func(node.func.caller, *args, **keywords)
+            node.ptr = func(node.func.caller, *py_args, **py_kwargs)
             return node.ptr
 
         CallTransformer._warn_if_is_external_func(ctx, node)
         try:
-            node.ptr = func(*args, **keywords)
+            _pruning = ctx.global_context.pruning
+            if _pruning.enforcing:
+                py_args = _pruning.filter_call_args(ctx, func, node, args, keywords, py_args)
+
+            node.ptr = func(*py_args, **py_kwargs)
+
+            if not _pruning.enforcing:
+                _pruning.record_after_call(ctx, func, node, args, keywords)
         except TypeError as e:
             module = inspect.getmodule(func)
             error_msg = re.sub(r"\bExpr\b", "GsTaichi Expression", str(e))

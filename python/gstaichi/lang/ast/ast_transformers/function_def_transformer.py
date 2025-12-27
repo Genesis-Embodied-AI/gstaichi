@@ -85,14 +85,13 @@ class FunctionDefTransformer:
         argument_type: Any,
         this_arg_features: tuple[Any, ...],
     ) -> None:
+        _pruning = ctx.global_context.pruning
+        func_id = ctx.func.func_id
         if dataclasses.is_dataclass(argument_type):
             ctx.create_variable(argument_name, argument_type)
             for field_idx, field in enumerate(dataclasses.fields(argument_type)):
                 flat_name = create_flat_name(argument_name, field.name)
-                if (
-                    ctx.used_py_dataclass_parameters_enforcing
-                    and flat_name not in ctx.used_py_dataclass_parameters_enforcing
-                ):
+                if _pruning.enforcing and flat_name not in _pruning.used_parameters_by_func_id[func_id]:
                     continue
                 # if a field is a dataclass, then feed back into process_kernel_arg recursively
                 if dataclasses.is_dataclass(field.type):
@@ -254,10 +253,10 @@ class FunctionDefTransformer:
         from gstaichi.lang.kernel_impl import Func
 
         assert isinstance(ctx.func, Func)
-        assert ctx.argument_data is not None
-        for data_i, data in enumerate(ctx.argument_data):
-            argument = ctx.func.arg_metas_expanded[data_i]
-            FunctionDefTransformer._transform_func_arg(ctx, argument.name, argument.annotation, data)
+        assert ctx.py_args is not None
+        for py_arg_i, py_arg in enumerate(ctx.py_args):
+            argument = ctx.func.arg_metas_expanded[py_arg_i]
+            FunctionDefTransformer._transform_func_arg(ctx, argument.name, argument.annotation, py_arg)
 
         # deal with dataclasses
         for v in ctx.func.orig_arguments:
@@ -289,7 +288,7 @@ class FunctionDefTransformer:
             return None
 
         if not ctx.is_kernel:  # ti.func
-            assert ctx.argument_data is not None
+            assert ctx.py_args is not None
             assert ctx.func is not None
             if ctx.is_real_function:
                 FunctionDefTransformer._transform_as_kernel(ctx, node, args)

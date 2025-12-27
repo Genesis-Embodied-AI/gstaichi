@@ -73,6 +73,8 @@ from gstaichi.types.primitive_types import (
 if TYPE_CHECKING:
     from gstaichi.lang._ndarray import Ndarray
 
+    from .ast.ast_transformer_utils import ASTTransformerGlobalContext
+
 
 @gstaichi_scope
 def expr_init_shared_array(shape, element_type):
@@ -343,7 +345,7 @@ class PyGsTaichi:
         self.src_info_stack = []
         self.inside_kernel: bool = False
         self._compiling_callable: KernelCxx | Kernel | Function | None = None
-        self._current_kernel: "Kernel | None" = None
+        self._current_global_context: "ASTTransformerGlobalContext | None" = None
         self.global_vars = []
         self.grad_vars = []
         self.dual_vars = []
@@ -377,14 +379,6 @@ class PyGsTaichi:
         if self._prog is None:
             raise GsTaichiRuntimeError("_prog attribute not initialized. Maybe you forgot to call `ti.init()` first?")
         return self._prog
-
-    @property
-    def current_kernel(self) -> Kernel:
-        if self._current_kernel is None:
-            raise GsTaichiRuntimeError(
-                "_current_kernel attribute not initialized. Maybe you forgot to call `ti.init()` first?"
-            )
-        return self._current_kernel
 
     def initialize_fields_builder(self, builder):
         self.unfinalized_fields_builder[builder] = get_traceback(2)
@@ -1170,15 +1164,19 @@ def static(x, *xs) -> Any:
         or x is None
     ):
         return x
+
     if isinstance(x, (np.bool_, np.integer, np.floating)):
         return x
 
     if isinstance(x, AnyArray):
         return x
+
     if isinstance(x, Field):
         return x
+
     if isinstance(x, (FunctionType, MethodType, BoundGsTaichiCallable, GsTaichiCallable)):
         return x
+
     raise ValueError(f"Input to ti.static must be compile-time constants or global pointers, instead of {type(x)}")
 
 

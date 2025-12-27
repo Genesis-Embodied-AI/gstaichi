@@ -39,18 +39,18 @@ from gstaichi.types import (
     template,
 )
 
+from .ast.ast_transformer_utils import ASTTransformerGlobalContext
+
 if TYPE_CHECKING:
     from gstaichi._lib.core.gstaichi_python import ASTBuilder
 
+    from ._pruning import Pruning
     from .kernel import Kernel
 from gstaichi.types.enums import Layout
 from gstaichi.types.utils import is_signed
 
 from ._kernel_types import KernelBatchedArgType
 from ._template_mapper import TemplateMapper
-
-if TYPE_CHECKING:
-    from .kernel import Kernel
 
 MAX_ARG_NUM = 512
 
@@ -65,8 +65,11 @@ class FuncBase:
     Base class for Kernels and Funcs
     """
 
-    def __init__(self, func, is_kernel: bool, is_classkernel: bool, is_classfunc: bool, is_real_function: bool) -> None:
+    def __init__(
+        self, func, func_id: int, is_kernel: bool, is_classkernel: bool, is_classfunc: bool, is_real_function: bool
+    ) -> None:
         self.func = func
+        self.func_id = func_id
         self.is_kernel = is_kernel
         self.is_real_function = is_real_function
         # TODO: merge is_classkernel and is_classfunc?
@@ -76,7 +79,6 @@ class FuncBase:
         self.arg_metas_expanded: list[ArgMetadata] = []
         self.orig_arguments: list[ArgMetadata] = []
         self.return_type = None
-        self.current_kernel: "Kernel | None" = None
 
         self.check_parameter_annotations()
 
@@ -187,14 +189,16 @@ class FuncBase:
 
     def get_tree_and_ctx(
         self,
-        args: tuple[Any, ...],
-        used_py_dataclass_parameters_enforcing: set[str] | None,
-        excluded_parameters=(),
+        py_args: tuple[Any, ...],
+        template_slot_locations=(),
         is_kernel: bool = True,
         arg_features=None,
         ast_builder: "ASTBuilder | None" = None,
         is_real_function: bool = False,
-        current_kernel: "Kernel | None" = None,
+        current_kernel: "Kernel | None" = None,  # has value when called from Kernel.materialize
+        pruning: "Pruning | None" = None,  # has value when called from Kernel.materialize
+        currently_compiling_materialize_key=None,  # has value when called from Kernel.materialize
+        pass_idx: int | None = None,  # has value when called from Kernel.materialize
     ) -> tuple[ast.Module, ASTTransformerFuncContext]:
         function_source_info, src = get_source_info_and_src(self.func)
         src = [textwrap.fill(line, tabsize=4, width=9999) for line in src]
@@ -203,11 +207,25 @@ class FuncBase:
         func_body = tree.body[0]
         func_body.decorator_list = []  # type: ignore , kick that can down the road...
 
+        runtime = impl.get_runtime()
+
         if current_kernel is not None:  # Kernel
+            assert pruning is not None
+            assert pass_idx is not None
             current_kernel.kernel_function_info = function_source_info
-        if current_kernel is None:
-            current_kernel = impl.get_runtime()._current_kernel
+            global_context = ASTTransformerGlobalContext(
+                pass_idx=pass_idx,
+                current_kernel=current_kernel,
+                pruning=pruning,
+                currently_compiling_materialize_key=currently_compiling_materialize_key,
+            )
+        else:  # Func
+            global_context = runtime._current_global_context
+            assert global_context is not None
+            current_kernel = global_context.current_kernel
+
         assert current_kernel is not None
+        assert global_context is not None
         current_kernel.visited_functions.add(function_source_info)
 
         autodiff_mode = current_kernel.autodiff_mode
@@ -223,22 +241,21 @@ class FuncBase:
                 argument_metas=self.arg_metas,
                 global_vars=template_vars,
                 fn=self.func,
-                py_args=args,
+                py_args=py_args,
             )
 
         raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
 
-        args_instance_key = current_kernel.currently_compiling_materialize_key
-        assert args_instance_key is not None
         ctx = ASTTransformerFuncContext(
-            excluded_parameters=excluded_parameters,
+            global_context=global_context,
+            template_slot_locations=template_slot_locations,
             is_kernel=is_kernel,
             is_pure=is_pure,
             func=self,
             arg_features=arg_features,
             global_vars=global_vars,
             template_vars=template_vars,
-            argument_data=args,
+            py_args=py_args,
             src=src,
             start_lineno=function_source_info.start_lineno,
             end_lineno=function_source_info.end_lineno,
@@ -247,78 +264,110 @@ class FuncBase:
             is_real_function=is_real_function,
             autodiff_mode=autodiff_mode,
             raise_on_templated_floats=raise_on_templated_floats,
-            used_py_dataclass_parameters_collecting=current_kernel.used_py_dataclass_leaves_by_key_collecting[
-                args_instance_key
-            ],
-            used_py_dataclass_parameters_enforcing=used_py_dataclass_parameters_enforcing,
         )
         return tree, ctx
 
-    def process_args(self, is_pyfunc: bool, is_func: bool, args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
+    def fuse_args(
+        self,
+        global_context: ASTTransformerGlobalContext | None,
+        is_pyfunc: bool,
+        is_func: bool,
+        py_args: tuple[Any, ...],
+        kwargs,
+    ) -> tuple[Any, ...]:
         """
         - for functions, expand dataclass arg_metas
         - fuse incoming args and kwargs into a single list of args
+
+        The output of this function is arguments which are:
+        - a sequence (not a dict)
+        - fused args + kwargs
+        - in the exact same order as self.arg_metas_expanded
+            - and with the exact same number of elements
+
+        GsTaichi doesn't allow defaults, so we don't need to consider default options here,
+        but if we did, we'd still have output exactly matching the order and size of
+        self.arg_metas_expanded, just with some of the values coming from defaults.
+
+        for kernels, global_context is None. We aren't compiling yet. This is only called once
+        per launch, but it is called every launch, even if we already compiled.
+
+        For funcs, this is only called during compilation, once per pass.
+
+        For kernels, the args are NOT expanded at this point, and pruning changes nothing.
+
+        For funcs, the args are expanded at the start of this function
+        - first pass, no pruning
+        - second pass - with enforcing on - the expanded parameters are pruned
         """
         if is_func and not is_pyfunc:
-            current_kernel = self.current_kernel
-            if typing.TYPE_CHECKING:
-                assert current_kernel is not None
-            currently_compiling_materialize_key = current_kernel.currently_compiling_materialize_key
-            if typing.TYPE_CHECKING:
-                assert currently_compiling_materialize_key is not None
+            assert global_context is not None
+            current_kernel = global_context.current_kernel
+            assert current_kernel is not None
+            _pruning = global_context.pruning
+            used_by_dataclass_parameters_enforcing = None
+            if _pruning.enforcing:
+                used_by_dataclass_parameters_enforcing = global_context.pruning.used_parameters_by_func_id[self.func_id]
             self.arg_metas_expanded = _kernel_impl_dataclass.expand_func_arguments(
-                current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(currently_compiling_materialize_key),
+                used_by_dataclass_parameters_enforcing,
                 self.arg_metas,
             )
         else:
             self.arg_metas_expanded = list(self.arg_metas)
 
-        num_args = len(args)
-        num_arg_metas = len(self.arg_metas_expanded)
+        arg_metas_pruned = self.arg_metas_expanded
+        num_args = len(py_args)
+        num_arg_metas = len(arg_metas_pruned)
         if num_args > num_arg_metas:
-            arg_str = ", ".join(map(str, args))
-            expected_str = ", ".join(f"{arg.name} : {arg.annotation}" for arg in self.arg_metas_expanded)
+            arg_str = ", ".join(map(str, py_args))
+            expected_str = ", ".join(f"{arg.name} : {arg.annotation}" for arg in arg_metas_pruned)
             msg_l = []
             msg_l.append(f"Too many arguments. Expected ({expected_str}), got ({arg_str}).")
             for i in range(num_args):
                 if i < num_arg_metas:
-                    msg_l.append(f" - {i} arg meta: {self.arg_metas_expanded[i].name} arg type: {type(args[i])}")
+                    msg_l.append(f" - {i} arg meta: {arg_metas_pruned[i].name} arg type: {type(py_args[i])}")
                 else:
-                    msg_l.append(f" - {i} arg meta: <out of arg metas> arg type: {type(args[i])}")
+                    msg_l.append(f" - {i} arg meta: <out of arg metas> arg type: {type(py_args[i])}")
             msg_l.append(f"In function: {self.func}")
             raise GsTaichiSyntaxError("\n".join(msg_l))
 
         # Early return without further processing if possible for efficiency. This is by far the most common scenario.
         if not (kwargs or num_arg_metas > num_args):
-            return args
+            return py_args
 
-        fused_args: list[Any] = [*args, *[arg_meta.default for arg_meta in self.arg_metas_expanded[num_args:]]]
+        fused_py_args: list[Any] = [*py_args, *[arg_meta.default for arg_meta in arg_metas_pruned[num_args:]]]
+        errors_l: list[str] = []
         if kwargs:
             num_invalid_kwargs_args = len(kwargs)
             for i in range(num_args, num_arg_metas):
-                arg_meta = self.arg_metas_expanded[i]
-                value = kwargs.get(arg_meta.name, _ARG_EMPTY)
-                if value is not _ARG_EMPTY:
-                    fused_args[i] = value
+                arg_meta = arg_metas_pruned[i]
+                py_arg = kwargs.get(arg_meta.name, _ARG_EMPTY)
+                if py_arg is not _ARG_EMPTY:
+                    fused_py_args[i] = py_arg
                     num_invalid_kwargs_args -= 1
-                elif fused_args[i] is _ARG_EMPTY:
-                    raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
+                elif fused_py_args[i] is _ARG_EMPTY:
+                    errors_l.append(f"Missing argument '{arg_meta.name}'.")
+                    continue
             if num_invalid_kwargs_args:
-                for key, value in kwargs.items():
-                    for i, arg_meta in enumerate(self.arg_metas_expanded):
+                for key, py_arg in kwargs.items():
+                    for i, arg_meta in enumerate(arg_metas_pruned):
                         if key == arg_meta.name:
                             if i < num_args:
-                                raise GsTaichiSyntaxError(f"Multiple values for argument '{key}'.")
+                                errors_l.append(f"Multiple values for argument '{key}'.")
                             break
                     else:
-                        raise GsTaichiSyntaxError(f"Unexpected argument '{key}'.")
+                        errors_l.append(f"Unexpected argument '{key}'.")
         else:
             for i in range(num_args, num_arg_metas):
-                if fused_args[i] is _ARG_EMPTY:
-                    arg_meta = self.arg_metas_expanded[i]
-                    raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
+                if fused_py_args[i] is _ARG_EMPTY:
+                    arg_meta = arg_metas_pruned[i]
+                    errors_l.append(f"Missing argument '{arg_meta.name}'.")
+                    continue
 
-        return tuple(fused_args)
+        if len(errors_l) > 0:
+            raise GsTaichiSyntaxError("\n".join(errors_l))
+
+        return tuple(fused_py_args)
 
     def _get_global_vars(self, _func: Callable) -> dict[str, Any]:
         # Discussions: https://github.com/taichi-dev/gstaichi/issues/282
