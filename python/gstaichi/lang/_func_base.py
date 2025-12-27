@@ -71,6 +71,8 @@ class FuncBase:
     ) -> None:
         self.func = func
         self.func_id = func_id
+        if "detect" in self.func.__name__:
+            print("func", func_id, self.func)
         self.is_kernel = is_kernel
         self.is_real_function = is_real_function
         # TODO: merge is_classkernel and is_classfunc?
@@ -166,7 +168,7 @@ class FuncBase:
         # return ("geoms_info" in name or "geoms_state" in name) and "pos" in name
 
     def debug(self, *args) -> None:
-        return
+        # return
         # print("FuncBase.debug")
         base_path = "logs"
         import os
@@ -326,8 +328,11 @@ class FuncBase:
         """
 
         def debug(*args) -> None:
+            # print("debug_fn", debug_fn)
             if debug_fn is not None:
                 debug_fn(*args)
+
+            
 
         # print("process args is func", is_func, self.func)
         if is_func and not is_pyfunc:
@@ -336,6 +341,10 @@ class FuncBase:
             assert current_kernel is not None
             _pruning = global_context.pruning
             used_by_dataclass_parameters_enforcing = None
+            debug("fuse args used_parameters_by_func_id")
+            for needed in sorted(global_context.pruning.used_parameters_by_func_id[self.func_id]):
+                debug("-", needed)
+            debug("(after fuse args used_parameters_by_func_id)")
             if _pruning.enforcing:
                 used_by_dataclass_parameters_enforcing = global_context.pruning.used_parameters_by_func_id[self.func_id]
             self.arg_metas_expanded = _kernel_impl_dataclass.expand_func_arguments(

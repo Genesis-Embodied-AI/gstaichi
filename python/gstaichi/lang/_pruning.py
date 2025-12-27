@@ -26,6 +26,7 @@ class Pruning:
     """
 
     def __init__(self, kernel_used_parameters: set[str] | None) -> None:
+        # self.ctx = ctx
         self.enforcing: bool = False
         # func_id -1 means kernel
         self.used_parameters_by_func_id: dict[int, set[str]] = defaultdict(set)
@@ -34,11 +35,12 @@ class Pruning:
             self.used_parameters_by_func_id[-1].update(kernel_used_parameters)
         self.child_name_by_caller_name_by_func_id: dict[int, dict[str, str]] = defaultdict(dict)
 
-    def mark_used(self, func_id: int, parameter_flat_name: str) -> None:
+    def mark_used(self, ctx: "ASTTransformerFuncContext", func_id: int, parameter_flat_name: str) -> None:
         """
         func_id None means kernel
         """
         assert not self.enforcing
+        ctx.debug("mark used", func_id, parameter_flat_name)
         self.used_parameters_by_func_id[func_id].add(parameter_flat_name)
 
     def enforce(self) -> None:

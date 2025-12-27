@@ -105,6 +105,12 @@ class Func(FuncBase):
             if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
                 raise GsTaichiSyntaxError("Function has a return type but does not have a return statement")
 
+        self.debug("end of func call. used_parameters_by_func_id:")
+        func_id = self.func_id
+        for needed in sorted(global_context.pruning.used_parameters_by_func_id[func_id]):
+            self.debug("-", needed)
+        self.debug("(after end of func call. used_parameters_by_func_id)")
+
         return ret
 
     def func_call_rvalue(self, key: FunctionKey, args: tuple[Any, ...]) -> Any:
