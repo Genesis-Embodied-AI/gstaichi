@@ -2119,8 +2119,7 @@ def test_pruning_kwargs_swap_order_bound_callable() -> None:
 
     @ti.data_oriented
     class MyDataOriented:
-        def __init__(self) -> None:
-            ...
+        def __init__(self) -> None: ...
 
         @ti.func
         def f1(self, struct1_f1: MyStruct1, struct2_f1: MyStruct2):
@@ -2177,8 +2176,7 @@ def test_pruning_args_bound_callable() -> None:
 
     @ti.data_oriented
     class MyDataOriented:
-        def __init__(self) -> None:
-            ...
+        def __init__(self) -> None: ...
 
         @ti.func
         def f1(self, struct1_f1: MyStruct1, struct2_f1: MyStruct2):
@@ -2211,6 +2209,7 @@ def test_pruning_star_args() -> None:
     https://github.com/Genesis-Embodied-AI/Genesis/blob/2d98bbb786e94b3f6c4e7171c87b4ff31ff3ccdf/tests/test_utils.py#L103
     scenario
     """
+
     @ti.func
     def f1(a: ti.types.NDArray[ti.i32, 1], b: ti.i32, c: ti.i32):
         a[0] = b
@@ -2234,6 +2233,7 @@ def test_pruning_iterate_function() -> None:
     Designed to test
     https://github.com/Genesis-Embodied-AI/Genesis/blob/6d344d0d4c46b7c9de98442bc4d09f9f9bfa541b/genesis/engine/couplers/sap_coupler.py#L631
     """
+
     @dataclasses.dataclass
     class MyStruct:
         _k1: ti.types.NDArray[ti.f32, 2]

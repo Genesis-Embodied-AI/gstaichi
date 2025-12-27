@@ -1,13 +1,13 @@
 from collections import defaultdict
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from .kernel_arguments import ArgMetadata
 
 if TYPE_CHECKING:
-    from .ast.ast_transformer_utils import ASTTransformerFuncContext
-    from ._gstaichi_callable import GsTaichiCallable
     import ast
-    from ast import keyword
+
+    from ._gstaichi_callable import GsTaichiCallable
+    from .ast.ast_transformer_utils import ASTTransformerFuncContext
 
 
 class Pruning:
@@ -57,7 +57,9 @@ class Pruning:
             dotted_by_func_id[func_id] = set([tuple(p.split("__ti_")[1:]) for p in used_parameters])
         self.dotted_by_func_id = dotted_by_func_id
 
-    def record_after_call(self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node, node_args, node_keywords) -> None:
+    def record_after_call(
+        self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node, node_args, node_keywords
+    ) -> None:
         """
         called from build_Call, after making the call, in pass 0
 
@@ -67,7 +69,7 @@ class Pruning:
             return
 
         func_name = func.fn.__name__
-        ctx.debug('record_after_call()', func_name)
+        ctx.debug("record_after_call()", func_name)
 
         _my_func_id = ctx.func.func_id
         _called_func_id = func.wrapper.func_id  # type: ignore
@@ -102,7 +104,14 @@ class Pruning:
         #
         # One issue is when calling data-oriented methods, there will be a `self`. We'll detect this
         # by seeing if the childs arg_metas_expanded is exactly 1 longer than len(node.args) + len(node.kwargs)
-        ctx.debug("len node.args", len(node_args), "len node.keywords", len(node_keywords), "len child metas", len(node.func.ptr.wrapper.arg_metas_expanded))
+        ctx.debug(
+            "len node.args",
+            len(node_args),
+            "len node.keywords",
+            len(node_keywords),
+            "len child metas",
+            len(node.func.ptr.wrapper.arg_metas_expanded),
+        )
         has_self = len(node_args) + len(node_keywords) + 1 == len(node.func.ptr.wrapper.arg_metas_expanded)
         ctx.debug("has self", has_self)
         self_offset = 1 if has_self else 0
@@ -113,6 +122,7 @@ class Pruning:
                 if called_name in sorted(called_unpruned):
                     if ctx.filter_name(calling_name):
                         import ast
+
                         ctx.debug("- unpruning arg id", arg_id, calling_name, "=>", called_name, ast.dump(arg))
                     to_unprune.add(calling_name)
             arg_id += 1
@@ -169,10 +179,18 @@ class Pruning:
         ctx.debug("record after call, child_name_by_our_name:")
         for our_name, child_name in sorted(child_name_by_our_name.items()):
             if ctx.filter_name(our_name):
-                ctx.debug('- ', our_name, '=>', child_name)
-        ctx.debug('(after record_after_call()', func_name, ")")
+                ctx.debug("- ", our_name, "=>", child_name)
+        ctx.debug("(after record_after_call()", func_name, ")")
 
-    def filter_call_args(self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node: "ast.Call", node_args, node_keywords, py_args: list[Any]) -> list[Any]:
+    def filter_call_args(
+        self,
+        ctx: "ASTTransformerFuncContext",
+        func: "GsTaichiCallable",
+        node: "ast.Call",
+        node_args,
+        node_keywords,
+        py_args: list[Any],
+    ) -> list[Any]:
         """
         used in build_Call, before making the call, in pass 1
 
@@ -191,7 +209,7 @@ class Pruning:
         child_metas_pruned = []
         # ctx.debug("filter call args", ctx.func.func, "called needed", sorted(list(called_needed)))
         func_name = func.fn.__name__
-        ctx.debug('filter_call_args()', func_name)
+        ctx.debug("filter_call_args()", func_name)
         ctx.debug("filter call args called needed")
         for needed in sorted(called_needed):
             if ctx.filter_name(needed):
@@ -199,7 +217,7 @@ class Pruning:
         ctx.debug("filter call args, child_name_by_our_name:")
         for our_name, child_name in sorted(self.child_name_by_caller_name_by_func_id[func_id].items()):
             if ctx.filter_name(our_name):
-                ctx.debug('- ', our_name, '=>', child_name)
+                ctx.debug("- ", our_name, "=>", child_name)
         for _child in child_metas:
             if _child.name.startswith("__ti_"):
                 if _child.name in called_needed:
@@ -210,6 +228,7 @@ class Pruning:
         ctx.debug("enumerating node.args before call:")
         for i, arg in enumerate(node_args):
             import ast
+
             dumped_arg = ast.dump(arg)[:80]
             dump = ctx.filter_name(dumped_arg)
             is_starred = type(arg) is ast.Starred
@@ -248,7 +267,7 @@ class Pruning:
                 new_args.append(py_args[i])
             child_arg_id += 1
         py_args = new_args
-        ctx.debug('(end filter_call_args()', func_name, ")")
+        ctx.debug("(end filter_call_args()", func_name, ")")
         return py_args
 
     # def filter_keywords(self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node: "ast.Call", added_keywords: "list[keyword]") -> "list[keyword]":
@@ -282,7 +301,7 @@ class Pruning:
     #         ctx.debug(indent, "-", our_name, "->", child_name, ast.dump(keyword))
     #         if child_name in called_needed:
     #             pruned_keywords.append(keyword)
-    #         # child_name = 
+    #         # child_name =
 
     #     return pruned_keywords
 

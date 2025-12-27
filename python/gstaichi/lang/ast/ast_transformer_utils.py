@@ -3,7 +3,6 @@
 import ast
 import builtins
 import dataclasses
-import traceback
 from enum import Enum
 from textwrap import TextWrapper
 from typing import TYPE_CHECKING, Any, List
@@ -14,10 +13,8 @@ from gstaichi.lang import impl
 from gstaichi.lang._ndrange import ndrange
 from gstaichi.lang.ast.symbol_resolver import ASTResolver
 from gstaichi.lang.exception import (
-    GsTaichiCompilationError,
     GsTaichiNameError,
     GsTaichiSyntaxError,
-    handle_exception_from_cpp,
 )
 
 if TYPE_CHECKING:
@@ -58,6 +55,8 @@ class Builder:
         #         msg = ctx.get_pos_info(node) + traceback.format_exc()
         #         raise GsTaichiCompilationError(msg) from None
         #     msg = f"""gstaichi stack trace:
+
+
 # ===
 # {stack_trace}
 # ===
@@ -177,7 +176,9 @@ class PureViolation:
 
 
 class ASTTransformerGlobalContext:
-    def __init__(self, current_kernel: "Kernel", pruning: "Pruning", currently_compiling_materialize_key, pass_idx: int) -> None:
+    def __init__(
+        self, current_kernel: "Kernel", pruning: "Pruning", currently_compiling_materialize_key, pass_idx: int
+    ) -> None:
         self.current_kernel: "Kernel" = current_kernel
         self.pruning: "Pruning" = pruning
         self.currently_compiling_materialize_key = currently_compiling_materialize_key
@@ -187,7 +188,7 @@ class ASTTransformerGlobalContext:
 class ASTTransformerFuncContext:
     def __init__(
         self,
-        # pass_idx: int, 
+        # pass_idx: int,
         global_context: ASTTransformerGlobalContext,
         template_slot_locations,
         end_lineno: int,
@@ -266,6 +267,7 @@ class ASTTransformerFuncContext:
     def debug(self, *args) -> None:
         base_path = "logs"
         import os
+
         full_path = os.path.join(base_path, *self.call_chain) + ".txt"
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
         with open(full_path, "a") as f:

@@ -53,7 +53,7 @@ class Func(FuncBase):
         self.call_chain: tuple[str, ...] = ()
 
     def __call__(self: "Func", *py_args, **kwargs) -> Any:
-        return self.call_with_call_chain(('<unknown',), *py_args, **kwargs)
+        return self.call_with_call_chain(("<unknown",), *py_args, **kwargs)
 
     def call_with_call_chain(self: "Func", call_chain: tuple[str, ...], *py_args, **kwargs) -> Any:
         func_name = self.func.__qualname__
@@ -72,7 +72,11 @@ class Func(FuncBase):
 
         py_args = self.fuse_args(
             debug_fn=self.debug,
-            is_func=True, is_pyfunc=self.pyfunc, py_args=py_args, kwargs=kwargs, global_context=global_context
+            is_func=True,
+            is_pyfunc=self.pyfunc,
+            py_args=py_args,
+            kwargs=kwargs,
+            global_context=global_context,
         )
 
         if not impl.inside_kernel():

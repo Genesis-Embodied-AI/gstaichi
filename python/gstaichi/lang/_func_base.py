@@ -20,9 +20,9 @@ import numpy as np
 from gstaichi._lib import core as _ti_core
 from gstaichi._lib.core.gstaichi_python import KernelLaunchContext
 from gstaichi.lang import _kernel_impl_dataclass, impl
-from gstaichi.lang.any_array import AnyArray
 from gstaichi.lang._ndarray import Ndarray
 from gstaichi.lang._wrap_inspect import get_source_info_and_src
+from gstaichi.lang.any_array import AnyArray
 from gstaichi.lang.ast import ASTTransformerFuncContext
 from gstaichi.lang.exception import (
     GsTaichiRuntimeError,
@@ -172,6 +172,7 @@ class FuncBase:
         # print("FuncBase.debug")
         base_path = "logs"
         import os
+
         full_path = os.path.join(base_path, *self.call_chain) + ".txt"
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
         with open(full_path, "a") as f:
@@ -215,7 +216,7 @@ class FuncBase:
         is_real_function: bool = False,
         current_kernel: "Kernel | None" = None,  # has value when called from Kernel.materialize
         pruning: "Pruning | None" = None,  # has value when called from Kernel.materialize
-        currently_compiling_materialize_key = None,  # has value when called from Kernel.materialize
+        currently_compiling_materialize_key=None,  # has value when called from Kernel.materialize
         pass_idx: int | None = None,  # has value when called from Kernel.materialize
     ) -> tuple[ast.Module, ASTTransformerFuncContext]:
         function_source_info, src = get_source_info_and_src(self.func)
@@ -332,8 +333,6 @@ class FuncBase:
             if debug_fn is not None:
                 debug_fn(*args)
 
-            
-
         # print("process args is func", is_func, self.func)
         if is_func and not is_pyfunc:
             assert global_context is not None
@@ -384,25 +383,25 @@ class FuncBase:
         num_args = len(py_args)
         num_arg_metas = len(arg_metas_pruned)
         # if is_func and not is_pyfunc:
-            # debug("fuse args num_args", num_args, "num_arg_metas", num_arg_metas)
-            # indent = "  "
-            # debug(indent, "args:")
-            # for i, arg in enumerate(py_args):
-            #     arg_meta = '<None>'
-            #     if i < len(self.arg_metas_expanded):
-            #         arg_meta = self.arg_metas_expanded[i].name
-            #     debug(indent * 2, "-", i, arg, 'meta', arg_meta)
-            # debug(indent, "kwargs:")
-            # for i, (name, arg) in enumerate(kwargs.items()):
-            #     arg_meta = '<None>'
-            #     if i + len(py_args) < len(self.arg_metas_expanded):
-            #         arg_meta = self.arg_metas_expanded[i + len(py_args)].name
-            #     if self.filter_name(name) or True:
-            #         debug(indent * 2, "-", i + len(py_args), name, "=", type(arg), 'meta', arg_meta)
-            # debug(indent, "arg_metas_expanded:")
-            # for i, arg in enumerate(self.arg_metas_expanded):
-            #     if self.filter_name(arg.name) or True:
-            #         debug(indent * 2, "-", i, arg.name)
+        # debug("fuse args num_args", num_args, "num_arg_metas", num_arg_metas)
+        # indent = "  "
+        # debug(indent, "args:")
+        # for i, arg in enumerate(py_args):
+        #     arg_meta = '<None>'
+        #     if i < len(self.arg_metas_expanded):
+        #         arg_meta = self.arg_metas_expanded[i].name
+        #     debug(indent * 2, "-", i, arg, 'meta', arg_meta)
+        # debug(indent, "kwargs:")
+        # for i, (name, arg) in enumerate(kwargs.items()):
+        #     arg_meta = '<None>'
+        #     if i + len(py_args) < len(self.arg_metas_expanded):
+        #         arg_meta = self.arg_metas_expanded[i + len(py_args)].name
+        #     if self.filter_name(name) or True:
+        #         debug(indent * 2, "-", i + len(py_args), name, "=", type(arg), 'meta', arg_meta)
+        # debug(indent, "arg_metas_expanded:")
+        # for i, arg in enumerate(self.arg_metas_expanded):
+        #     if self.filter_name(arg.name) or True:
+        #         debug(indent * 2, "-", i, arg.name)
         if num_args > num_arg_metas:
             arg_str = ", ".join(map(str, py_args))
             expected_str = ", ".join(f"{arg.name} : {arg.annotation}" for arg in arg_metas_pruned)
