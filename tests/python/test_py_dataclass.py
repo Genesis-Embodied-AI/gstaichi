@@ -2226,3 +2226,52 @@ def test_pruning_star_args() -> None:
     k1(a)
     assert a[0] == 3
     assert a[1] == 5
+
+
+@test_utils.test()
+def test_pruning_iterate_function() -> None:
+    """
+    Designed to test
+    https://github.com/Genesis-Embodied-AI/Genesis/blob/6d344d0d4c46b7c9de98442bc4d09f9f9bfa541b/genesis/engine/couplers/sap_coupler.py#L631
+    """
+    @dataclasses.dataclass
+    class MyStruct:
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _f2: ti.types.NDArray[ti.f32, 2]
+        _unused: ti.types.NDArray[ti.f32, 2]
+
+    def make_struct():
+        my_struct = MyStruct(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f2=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct
+
+    @ti.func
+    def f1(struct: MyStruct):
+        struct._f1[0, 0] = 101
+
+    @ti.func
+    def f2(struct: MyStruct):
+        struct._f2[0, 0] = 102
+
+    functions = [f1, f2]
+
+    @ti.kernel
+    def k1(struct_k1: MyStruct):
+        struct_k1._k1[0, 0] = 100
+        for fn in ti.static(functions):
+            fn(struct=struct_k1)
+
+    my_struct = make_struct()
+    k1(struct_k1=my_struct)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1[0, 0] == 101
+    assert my_struct._f2[0, 0] == 102
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
