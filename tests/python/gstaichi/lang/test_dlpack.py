@@ -10,14 +10,6 @@ dlpack_arch = [ti.cpu, ti.cuda, ti.metal]
 dlpack_ineligible_arch = [ti.vulkan]
 
 
-@pytest.fixture
-def metal_xfail():
-    from gstaichi.lang import impl
-
-    if impl.current_cfg().arch == ti.metal:
-        pytest.xfail(reason="dlpack for field hasn't been supported on Metal backend yet.")
-
-
 def ti_to_torch(ti_tensor: ti.types.NDArray) -> torch.Tensor:
     cap = ti_tensor.to_dlpack()
     torch_tensor = torch.utils.dlpack.from_dlpack(cap)
@@ -147,16 +139,12 @@ def test_dlpack_2_arrays(tensor_type):
     b[0] = 222
     ti.sync()
 
-    # first field has offset 0, so no issues on metal
+    # first field has offset 0
     a_cap = a.to_dlpack()
     a_t = torch.utils.dlpack.from_dlpack(a_cap)
 
-    # second field has non-zero offset, so should throw exception on Metal
-    if tensor_type == ti.field and ti.cfg.arch == ti.metal:
-        # TODO: fix to_dlpack on Metal fields
-        with pytest.raises(RuntimeError):  # check doesnt seg fault...
-            b.to_dlpack()
-        pytest.xfail(reason="to_dlpack not currently supported on Metal fields")
+    # second field has non-zero offset, so we are testing
+    # non-zero offsets
     b_cap = b.to_dlpack()
     b_t = torch.utils.dlpack.from_dlpack(b_cap)
     assert a_t[0] == 123
@@ -209,11 +197,11 @@ def test_dlpack_field_multiple_tree_nodes():
 
     a_t = ti_to_torch(a)
 
-    if tensor_type == ti.field and ti.cfg.arch == ti.metal:
-        # TODO: fix to_dlpack on Metal fields
-        with pytest.raises(RuntimeError):  # check doesnt seg fault...
-            b.to_dlpack()
-        pytest.xfail(reason="to_dlpack not currently supported on Metal fields")
+    # if tensor_type == ti.field and ti.cfg.arch == ti.metal:
+    #     # TODO: fix to_dlpack on Metal fields
+    #     with pytest.raises(RuntimeError):  # check doesnt seg fault...
+    #         b.to_dlpack()
+    #     pytest.xfail(reason="to_dlpack not currently supported on Metal fields")
 
     b_t = ti_to_torch(b)
     c_t = ti_to_torch(c)
@@ -230,7 +218,7 @@ def test_dlpack_field_multiple_tree_nodes():
 @test_utils.test(arch=dlpack_arch)
 @pytest.mark.parametrize("dtype", [ti.i32, ti.i64, ti.f32, ti.f64, ti.u1, ti.i8, ti.types.vector(3, ti.i32)])
 @pytest.mark.parametrize("shape", [3, 1, 4, 5, 7, 2])
-def test_dlpack_mixed_types_memory_alignment_field(dtype, shape: tuple[int], metal_xfail) -> None:
+def test_dlpack_mixed_types_memory_alignment_field(dtype, shape: tuple[int]) -> None:
     """
     Note: The mixed type here means that within a single SNode tree, fields use different data types (for example, curr_cnt in ti.i32 and pos in ti.i64). This leads to memory alignment issues and mismatched SNode offsets.
     """
@@ -251,7 +239,7 @@ def test_dlpack_mixed_types_memory_alignment_field(dtype, shape: tuple[int], met
 
 
 @test_utils.test(arch=dlpack_arch)
-def test_dlpack_multiple_mixed_types_memory_alignment_field(metal_xfail) -> None:
+def test_dlpack_multiple_mixed_types_memory_alignment_field() -> None:
     dtypes = [ti.i32, ti.i64, ti.f32, ti.f64, ti.u1, ti.i8, ti.types.vector(3, ti.i32)]
     shapes = [3, 1, 4, 5, 7, 2, 3]
     fields = []
@@ -273,7 +261,7 @@ def test_dlpack_multiple_mixed_types_memory_alignment_field(metal_xfail) -> None
 
 
 @test_utils.test(arch=dlpack_arch)
-def test_dlpack_joints_case_memory_alignment_field(metal_xfail) -> None:
+def test_dlpack_joints_case_memory_alignment_field() -> None:
     links_is_fixed = ti.field(dtype=ti.u1, shape=(1,))
     joints_n_dofs = ti.field(dtype=ti.i32, shape=(1,))
 

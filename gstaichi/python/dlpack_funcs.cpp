@@ -21,7 +21,7 @@ void validate_arch(Arch arch) {
   }
 }
 
-std::tuple<void *, DLDeviceType, bool> get_raw_ptr(Arch arch,
+std::tuple<void *, DLDeviceType> get_raw_ptr(Arch arch,
                                                    Program *program,
                                                    DeviceAllocation dev_alloc) {
   void *raw_ptr = nullptr;
