@@ -186,12 +186,18 @@ pybind11::capsule field_to_dlpack(Program *program,
   int tree_id = snode->get_snode_tree_id();
   DevicePtr tree_device_ptr = program->get_snode_tree_device_ptr(tree_id);
 
+  if (tree_device_ptr.device == nullptr || tree_device_ptr.alloc_id == 0) {
+    TI_ERROR(
+        "Field memory is not allocated. Please run 'ti.sync' before "
+        "'to_dlpack'.")
+  }
+
   int field_in_tree_offset = program->get_field_in_tree_offset(tree_id, snode);
 
   void *raw_ptr = nullptr;
   DLDeviceType device_type = DLDeviceType::kDLCPU;
-  std::tie(raw_ptr, device_type) = get_raw_ptr(arch, program, tree_device_ptr);
-  raw_ptr = (void *)((uint64_t)raw_ptr + field_in_tree_offset);
+  std::tie(raw_ptr, device_type) =
+      get_raw_ptr(arch, program, tree_device_ptr);
 
   DataType dt = snode->dt;
 
@@ -230,7 +236,7 @@ pybind11::capsule field_to_dlpack(Program *program,
   dl_tensor.dtype = DLDataType{data_type_code, element_bits, 1};
   dl_tensor.shape = shape;
   dl_tensor.strides = strides;
-  dl_tensor.byte_offset = 0;
+  dl_tensor.byte_offset = field_in_tree_offset;
 
   managed_tensor->deleter = [](DLManagedTensor *self) {
     if (self->dl_tensor.shape != nullptr) {
@@ -258,7 +264,8 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
 
   DLDeviceType device_type = DLDeviceType::kDLCPU;
   void *raw_ptr = nullptr;
-  std::tie(raw_ptr, device_type) = get_raw_ptr(arch, program, devalloc);
+  std::tie(raw_ptr, device_type) =
+      get_raw_ptr(arch, program, devalloc);
 
   std::vector<int> ndarray_shape = ndarray->total_shape();
   int ndim = ndarray_shape.size();
