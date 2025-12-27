@@ -364,6 +364,9 @@ class FuncBase:
                     errors_l.append(f"Missing argument '{arg_meta.name}'.")
                     continue
 
+        if len(errors_l) > 0:
+            raise GsTaichiSyntaxError("\n".join(errors_l))
+
         return tuple(fused_py_args)
 
     def _get_global_vars(self, _func: Callable) -> dict[str, Any]:
