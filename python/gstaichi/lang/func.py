@@ -71,7 +71,7 @@ class Func(FuncBase):
             if self.current_kernel.autodiff_mode != _NONE:
                 self.current_kernel = None
                 raise GsTaichiSyntaxError("Real function in gradient kernels unsupported.")
-            instance_id, arg_features = self.mapper.lookup(impl.current_cfg().raise_on_templated_floats, args)
+            instance_id, arg_features = self.mapper.lookup(impl.current_cfg().raise_on_templated_floats, py_args)
             key = FunctionKey(self.func.__name__, self.func_id, instance_id)
             if key.instance_id not in self.compiled:
                 self.do_compile(key=key, args=py_args, arg_features=arg_features)
