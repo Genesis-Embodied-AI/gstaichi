@@ -105,16 +105,6 @@ void compile_to_offloads(IRNode *ir,
   irpass::analysis::verify(ir);
   dump_ir("after_simplify_I");
 
-  if (dump_ir_env != nullptr) {
-    std::filesystem::path filename =
-        IR_DUMP_DIR / (kernel->name + "_after_simplify_I.ll");
-    if (std::ofstream out_file(filename.string()); out_file) {
-      std::string outString;
-      irpass::print(ir, &outString);
-      out_file << outString;
-    }
-  }
-
   irpass::handle_external_ptr_boundary(ir, config);
 
   if (is_extension_supported(config.arch, Extension::mesh)) {
