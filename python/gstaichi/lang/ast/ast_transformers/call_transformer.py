@@ -279,11 +279,14 @@ class CallTransformer:
         ctx.debug("--------------------------")
         ctx.debug("build_Call", ast.dump(node.func, indent=2))
         is_func_base_wrapper = False
+        # split them off into locals, otherwise iterated function calls, with different pruning,
+        # will break, if we modify node.args/node.keywords in-place
+        args, keywords = node.args, node.keywords
         if get_decorator(ctx, node) in ["static", "static_assert"]:
             with ctx.static_scope_guard():
                 build_stmt(ctx, node.func)
-                build_stmts(ctx, node.args)
-                build_stmts(ctx, node.keywords)
+                build_stmts(ctx, args)
+                build_stmts(ctx, keywords)
             func = node.func.ptr
             func_type = type(func)
         else:
@@ -298,8 +301,8 @@ class CallTransformer:
             build_stmt(ctx, node.func)
             # creates variable for the dataclass itself (as well as other variables,
             # not related to dataclasses). Necessary for calling further child functions
-            build_stmts(ctx, node.args)
-            build_stmts(ctx, node.keywords)
+            build_stmts(ctx, args)
+            build_stmts(ctx, keywords)
 
             # ctx.debug("local scopes")
             # for i, scope in enumerate(ctx.local_scopes):
@@ -341,24 +344,24 @@ class CallTransformer:
 
             ctx.debug("BEFORE _expand_Call_dataclass_kwargs")
             ctx.debug("BEFOREnode.args for call:")
-            for i, arg in enumerate(node.args):
+            for i, arg in enumerate(args):
                 ctx.debug(" -", i, ast.dump(arg))
             ctx.debug("(BEFORE node.args for call)")
             ctx.debug("BEFORE node.keywords for call:")
-            for i, keyword in enumerate(node.keywords):
+            for i, keyword in enumerate(keywords):
                 ctx.debug(" -", i, getattr(keyword.value, "id", "<no id>"))
             ctx.debug("(BEFORE node.keywords for call)")
 
-            added_args, node.args = CallTransformer._expand_Call_dataclass_args(ctx, node.args)
-            added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(ctx, node.keywords, called_needed)
+            added_args, args = CallTransformer._expand_Call_dataclass_args(ctx, args)
+            added_keywords, keywords = CallTransformer._expand_Call_dataclass_kwargs(ctx, keywords, called_needed)
 
             ctx.debug("after _expand_Call_dataclass_kwargs")
             ctx.debug("node.args for call:")
-            for i, arg in enumerate(node.args):
+            for i, arg in enumerate(args):
                 ctx.debug(" -", i, ast.dump(arg))
             ctx.debug("(after node.args for call)")
             ctx.debug("node.keywords for call:")
-            for i, keyword in enumerate(node.keywords):
+            for i, keyword in enumerate(keywords):
                 ctx.debug(" -", i, getattr(keyword.value, "id", "<no id>"))
             ctx.debug("(after node.keywords for call)")
 
@@ -398,21 +401,21 @@ class CallTransformer:
         # check for pure violations
         # we have to do this after building the statements
         # if any arg violates pure, then node also violates pure
-        for arg in node.args:
+        for arg in args:
             if arg.violates_pure:
                 node.violates_pure_reason = arg.violates_pure_reason
                 node.violates_pure = True
 
         # ctx.debug("scanning keywords for pure violations")
         # indent = "  "
-        for kw in node.keywords:
+        for kw in keywords:
             # ctx.debug(indent, "-", ast.dump(kw)[:50], )
             if kw.value.violates_pure:
                 node.violates_pure = True
                 node.violates_pure_reason = kw.value.violates_pure_reason
 
         py_args = []
-        for arg in node.args:
+        for arg in args:
             if isinstance(arg, ast.Starred):
                 arg_list = arg.ptr
                 if isinstance(arg_list, Expr) and arg_list.is_tensor():
@@ -425,7 +428,7 @@ class CallTransformer:
             else:
                 py_args.append(arg.ptr)
         ctx.debug("len py args after adding starred", len(py_args))
-        py_kwargs = dict(ChainMap(*[keyword.ptr for keyword in node.keywords]))
+        py_kwargs = dict(ChainMap(*[keyword.ptr for keyword in keywords]))
 
         if id(func) in [id(print), id(impl.ti_print)]:
             ctx.func.has_print = True
@@ -456,7 +459,7 @@ class CallTransformer:
             _pruning = ctx.global_context.pruning
             ctx.debug("len py args before filter_call_args", len(py_args))
             if _pruning.enforcing:
-                py_args = _pruning.filter_call_args(ctx, func, node, py_args)
+                py_args = _pruning.filter_call_args(ctx, func, node, args, keywords, py_args)
                 # py_kwargs = _pruning.filter_call_kwargs(ctx, func, node, py_kwargs)
             ctx.debug("len py args after filter_call_args", len(py_args))
 
@@ -502,7 +505,7 @@ class CallTransformer:
                 node.ptr = func(*py_args, **py_kwargs)
 
             if not _pruning.enforcing:
-                _pruning.record_after_call(ctx, func, node)
+                _pruning.record_after_call(ctx, func, node, args, keywords)
         # except TypeError as e:
         #     module = inspect.getmodule(func)
         #     error_msg = re.sub(r"\bExpr\b", "GsTaichi Expression", str(e))

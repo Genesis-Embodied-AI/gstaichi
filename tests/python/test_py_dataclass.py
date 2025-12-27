@@ -2274,4 +2274,4 @@ def test_pruning_iterate_function() -> None:
     assert my_struct._k1[0, 0] == 100
     assert my_struct._f1[0, 0] == 101
     assert my_struct._f2[0, 0] == 102
-    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 3
