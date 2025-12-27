@@ -315,12 +315,15 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">ast</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">operator</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">ast</span><span class="w"> </span><span class="kn">import</span> <span class="n">unparse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChainMap</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">expr</span><span class="p">,</span>
@@ -333,13 +336,14 @@
     <span class="n">ASTTransformerFuncContext</span><span class="p">,</span>
     <span class="n">get_decorator</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.exception</span><span class="w"> </span><span class="kn">import</span> <span class="n">GsTaichiSyntaxError</span><span class="p">,</span> <span class="n">GsTaichiTypeError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.exception</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GsTaichiSyntaxError</span><span class="p">,</span>
+    <span class="n">GsTaichiTypeError</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.expr</span><span class="w"> </span><span class="kn">import</span> <span class="n">Expr</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.matrix</span><span class="w"> </span><span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">Vector</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_gstaichi_class</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">primitive_types</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">..._gstaichi_callable</span><span class="w"> </span><span class="kn">import</span> <span class="n">BoundGsTaichiCallable</span><span class="p">,</span> <span class="n">GsTaichiCallable</span>
 
 
 <div class="viewcode-block" id="CallTransformer">
@@ -471,6 +475,7 @@
                 <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="s2">&quot;__ti_fmt_value__&quot;</span><span class="p">,</span> <span class="n">new_arg</span><span class="p">,</span> <span class="n">spec</span><span class="p">])</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_arg</span><span class="p">)</span>
+        <span class="c1"># put the formatted string as the first argument to make ti.format() happy</span>
         <span class="n">args</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;{.*?}&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">raw_string</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">args</span>
 
@@ -484,8 +489,6 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">args_new</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">added_args</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">_pruning</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">global_context</span><span class="o">.</span><span class="n">pruning</span>
-        <span class="n">func_id</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">func_id</span>
         <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
             <span class="n">val</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">ptr</span>
             <span class="k">if</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">is_dataclass</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
@@ -495,7 +498,10 @@
                         <span class="n">child_name</span> <span class="o">=</span> <span class="n">create_flat_name</span><span class="p">(</span><span class="n">arg</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
                     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Exception whilst processing </span><span class="si">{</span><span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">dataclass_type</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-                    <span class="k">if</span> <span class="n">_pruning</span><span class="o">.</span><span class="n">enforcing</span> <span class="ow">and</span> <span class="n">child_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_pruning</span><span class="o">.</span><span class="n">used_parameters_by_func_id</span><span class="p">[</span><span class="n">func_id</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="n">ctx</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_enforcing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                        <span class="ow">and</span> <span class="n">child_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_enforcing</span>
+                    <span class="p">):</span>
                         <span class="k">continue</span>
                     <span class="n">load_ctx</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">Load</span><span class="p">()</span>
                     <span class="n">arg_node</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span>
@@ -520,9 +526,7 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_expand_Call_dataclass_kwargs</span><span class="p">(</span>
-        <span class="n">ctx</span><span class="p">:</span> <span class="n">ASTTransformerFuncContext</span><span class="p">,</span>
-        <span class="n">kwargs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">keyword</span><span class="p">],</span>
-        <span class="n">called_needed</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ctx</span><span class="p">:</span> <span class="n">ASTTransformerFuncContext</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">keyword</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">keyword</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">keyword</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        We require that each node has a .ptr attribute added to it, that contains</span>
@@ -537,9 +541,10 @@
                 <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">fields</span><span class="p">(</span><span class="n">dataclass_type</span><span class="p">):</span>
                     <span class="n">src_name</span> <span class="o">=</span> <span class="n">create_flat_name</span><span class="p">(</span><span class="n">kwarg</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
                     <span class="n">child_name</span> <span class="o">=</span> <span class="n">create_flat_name</span><span class="p">(</span><span class="n">kwarg</span><span class="o">.</span><span class="n">arg</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-                    <span class="c1"># Note: using `called_needed` instead of `called_needed is not None` will cause</span>
-                    <span class="c1"># a bug, when it is empty set.</span>
-                    <span class="k">if</span> <span class="n">called_needed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">child_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">called_needed</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="n">ctx</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_enforcing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                        <span class="ow">and</span> <span class="n">child_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_enforcing</span>
+                    <span class="p">):</span>
                         <span class="k">continue</span>
                     <span class="n">load_ctx</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">Load</span><span class="p">()</span>
                     <span class="n">src_node</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span>
@@ -561,9 +566,7 @@
                     <span class="p">)</span>
                     <span class="k">if</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">is_dataclass</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">type</span><span class="p">):</span>
                         <span class="n">kwarg_node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="p">{</span><span class="n">child_name</span><span class="p">:</span> <span class="n">field</span><span class="o">.</span><span class="n">type</span><span class="p">}</span>
-                        <span class="n">_added_kwargs</span><span class="p">,</span> <span class="n">_kwargs_new</span> <span class="o">=</span> <span class="n">CallTransformer</span><span class="o">.</span><span class="n">_expand_Call_dataclass_kwargs</span><span class="p">(</span>
-                            <span class="n">ctx</span><span class="p">,</span> <span class="p">[</span><span class="n">kwarg_node</span><span class="p">],</span> <span class="n">called_needed</span>
-                        <span class="p">)</span>
+                        <span class="n">_added_kwargs</span><span class="p">,</span> <span class="n">_kwargs_new</span> <span class="o">=</span> <span class="n">CallTransformer</span><span class="o">.</span><span class="n">_expand_Call_dataclass_kwargs</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="p">[</span><span class="n">kwarg_node</span><span class="p">])</span>
                         <span class="n">kwargs_new</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_kwargs_new</span><span class="p">)</span>
                         <span class="n">added_kwargs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_added_kwargs</span><span class="p">)</span>
                     <span class="k">else</span><span class="p">:</span>
@@ -581,44 +584,22 @@
 <span class="sd">        example ast:</span>
 <span class="sd">        Call(func=Name(id=&#39;f2&#39;, ctx=Load()), args=[Name(id=&#39;my_struct_ab&#39;, ctx=Load())], keywords=[])</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">is_func_base_wrapper</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="c1"># split them off into locals, otherwise iterated function calls, with different pruning,</span>
-        <span class="c1"># will break, if we modify node.args/node.keywords in-place</span>
-        <span class="n">args</span><span class="p">,</span> <span class="n">keywords</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">keywords</span>
         <span class="k">if</span> <span class="n">get_decorator</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;static&quot;</span><span class="p">,</span> <span class="s2">&quot;static_assert&quot;</span><span class="p">]:</span>
             <span class="k">with</span> <span class="n">ctx</span><span class="o">.</span><span class="n">static_scope_guard</span><span class="p">():</span>
                 <span class="n">build_stmt</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
-                <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
-                <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">keywords</span><span class="p">)</span>
-            <span class="n">func</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">ptr</span>
-            <span class="n">func_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+                <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+                <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">build_stmt</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
             <span class="c1"># creates variable for the dataclass itself (as well as other variables,</span>
             <span class="c1"># not related to dataclasses). Necessary for calling further child functions</span>
-            <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
-            <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">keywords</span><span class="p">)</span>
+            <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+            <span class="n">build_stmts</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>
 
-            <span class="n">func</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">ptr</span>
-            <span class="n">func_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
-            <span class="n">is_func_base_wrapper</span> <span class="o">=</span> <span class="n">func_type</span> <span class="ow">is</span> <span class="n">GsTaichiCallable</span> <span class="ow">or</span> <span class="n">func_type</span> <span class="ow">is</span> <span class="n">BoundGsTaichiCallable</span>
-            <span class="n">_pruning</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">global_context</span><span class="o">.</span><span class="n">pruning</span>
-            <span class="n">called_needed</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="k">if</span> <span class="n">_pruning</span><span class="o">.</span><span class="n">enforcing</span> <span class="ow">and</span> <span class="n">is_func_base_wrapper</span><span class="p">:</span>
-                <span class="n">_called_func_id</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="n">wrapper</span><span class="o">.</span><span class="n">func_id</span>  <span class="c1"># type: ignore</span>
-                <span class="n">called_needed</span> <span class="o">=</span> <span class="n">_pruning</span><span class="o">.</span><span class="n">used_parameters_by_func_id</span><span class="p">[</span><span class="n">_called_func_id</span><span class="p">]</span>
-
-            <span class="n">added_args</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="n">CallTransformer</span><span class="o">.</span><span class="n">_expand_Call_dataclass_args</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
-            <span class="n">added_keywords</span><span class="p">,</span> <span class="n">keywords</span> <span class="o">=</span> <span class="n">CallTransformer</span><span class="o">.</span><span class="n">_expand_Call_dataclass_kwargs</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">keywords</span><span class="p">,</span> <span class="n">called_needed</span><span class="p">)</span>
+            <span class="n">added_args</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">CallTransformer</span><span class="o">.</span><span class="n">_expand_Call_dataclass_args</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+            <span class="n">added_keywords</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">keywords</span> <span class="o">=</span> <span class="n">CallTransformer</span><span class="o">.</span><span class="n">_expand_Call_dataclass_kwargs</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>
 
             <span class="c1"># create variables for the now-expanded dataclass members</span>
-            <span class="c1"># we don&#39;t want to include these in the list of variables to not prune</span>
-            <span class="c1"># since these will contain *all* declared fields, instead of all used fields</span>
-            <span class="c1"># so we set expanding_dataclass_call_parameters to True during this expansion</span>
-            <span class="c1"># We don&#39;t build these until this point in the function, because we need</span>
-            <span class="c1"># to prune when enforcing is True, and to do that, we need to know what to prune,</span>
-            <span class="c1"># which we get from the child func, and so we want to have filtered out all the</span>
-            <span class="c1"># cases first where we aren&#39;t calling a ti.func</span>
             <span class="n">ctx</span><span class="o">.</span><span class="n">expanding_dataclass_call_parameters</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">added_args</span><span class="p">:</span>
                 <span class="k">assert</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="s2">&quot;ptr&quot;</span><span class="p">)</span>
@@ -628,21 +609,19 @@
                 <span class="n">build_stmt</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span>
             <span class="n">ctx</span><span class="o">.</span><span class="n">expanding_dataclass_call_parameters</span> <span class="o">=</span> <span class="kc">False</span>
 
-        <span class="c1"># check for pure violations</span>
-        <span class="c1"># we have to do this after building the statements</span>
         <span class="c1"># if any arg violates pure, then node also violates pure</span>
-        <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">violates_pure</span><span class="p">:</span>
                 <span class="n">node</span><span class="o">.</span><span class="n">violates_pure_reason</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">violates_pure_reason</span>
                 <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">True</span>
 
-        <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">keywords</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">keywords</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">kw</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">violates_pure</span><span class="p">:</span>
                 <span class="n">node</span><span class="o">.</span><span class="n">violates_pure</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="n">node</span><span class="o">.</span><span class="n">violates_pure_reason</span> <span class="o">=</span> <span class="n">kw</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">violates_pure_reason</span>
 
-        <span class="n">py_args</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Starred</span><span class="p">):</span>
                 <span class="n">arg_list</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">ptr</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg_list</span><span class="p">,</span> <span class="n">Expr</span><span class="p">)</span> <span class="ow">and</span> <span class="n">arg_list</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">():</span>
@@ -650,44 +629,38 @@
                     <span class="n">arg_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">Expr</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">ast_builder</span><span class="o">.</span><span class="n">expand_exprs</span><span class="p">([</span><span class="n">arg_list</span><span class="o">.</span><span class="n">ptr</span><span class="p">])]</span>
 
                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">arg_list</span><span class="p">:</span>
-                    <span class="n">py_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                    <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">py_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg</span><span class="o">.</span><span class="n">ptr</span><span class="p">)</span>
-        <span class="n">py_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">ChainMap</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">keyword</span><span class="o">.</span><span class="n">ptr</span> <span class="k">for</span> <span class="n">keyword</span> <span class="ow">in</span> <span class="n">keywords</span><span class="p">]))</span>
+                <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg</span><span class="o">.</span><span class="n">ptr</span><span class="p">)</span>
+        <span class="n">keywords</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">ChainMap</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">keyword</span><span class="o">.</span><span class="n">ptr</span> <span class="k">for</span> <span class="n">keyword</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">keywords</span><span class="p">]))</span>
+        <span class="n">func</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">ptr</span>
 
         <span class="k">if</span> <span class="nb">id</span><span class="p">(</span><span class="n">func</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="nb">print</span><span class="p">),</span> <span class="nb">id</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">ti_print</span><span class="p">)]:</span>
             <span class="n">ctx</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">has_print</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">Attribute</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">attr</span> <span class="o">==</span> <span class="s2">&quot;format&quot;</span><span class="p">:</span>
             <span class="n">raw_string</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">ptr</span>
-            <span class="n">py_args</span> <span class="o">=</span> <span class="n">CallTransformer</span><span class="o">.</span><span class="n">_canonicalize_formatted_string</span><span class="p">(</span><span class="n">raw_string</span><span class="p">,</span> <span class="o">*</span><span class="n">py_args</span><span class="p">,</span> <span class="o">**</span><span class="n">py_kwargs</span><span class="p">)</span>
-            <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">ti_format</span><span class="p">(</span><span class="o">*</span><span class="n">py_args</span><span class="p">)</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="n">CallTransformer</span><span class="o">.</span><span class="n">_canonicalize_formatted_string</span><span class="p">(</span><span class="n">raw_string</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">keywords</span><span class="p">)</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">ti_format</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr</span>
 
         <span class="k">if</span> <span class="nb">id</span><span class="p">(</span><span class="n">func</span><span class="p">)</span> <span class="o">==</span> <span class="nb">id</span><span class="p">(</span><span class="n">Matrix</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">id</span><span class="p">(</span><span class="n">func</span><span class="p">)</span> <span class="o">==</span> <span class="nb">id</span><span class="p">(</span><span class="n">Vector</span><span class="p">):</span>
-            <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">make_matrix</span><span class="p">(</span><span class="o">*</span><span class="n">py_args</span><span class="p">,</span> <span class="o">**</span><span class="n">py_kwargs</span><span class="p">)</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">make_matrix</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">keywords</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr</span>
 
-        <span class="k">if</span> <span class="n">CallTransformer</span><span class="o">.</span><span class="n">_build_call_if_is_builtin</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">py_args</span><span class="p">,</span> <span class="n">py_kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">CallTransformer</span><span class="o">.</span><span class="n">_build_call_if_is_builtin</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">keywords</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr</span>
 
-        <span class="k">if</span> <span class="n">CallTransformer</span><span class="o">.</span><span class="n">_build_call_if_is_type</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">py_args</span><span class="p">,</span> <span class="n">py_kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">CallTransformer</span><span class="o">.</span><span class="n">_build_call_if_is_type</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">keywords</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr</span>
 
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="s2">&quot;caller&quot;</span><span class="p">):</span>
-            <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">caller</span><span class="p">,</span> <span class="o">*</span><span class="n">py_args</span><span class="p">,</span> <span class="o">**</span><span class="n">py_kwargs</span><span class="p">)</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">caller</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">keywords</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr</span>
 
         <span class="n">CallTransformer</span><span class="o">.</span><span class="n">_warn_if_is_external_func</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">_pruning</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">global_context</span><span class="o">.</span><span class="n">pruning</span>
-            <span class="k">if</span> <span class="n">_pruning</span><span class="o">.</span><span class="n">enforcing</span><span class="p">:</span>
-                <span class="n">py_args</span> <span class="o">=</span> <span class="n">_pruning</span><span class="o">.</span><span class="n">filter_call_args</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">keywords</span><span class="p">,</span> <span class="n">py_args</span><span class="p">)</span>
-
-            <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">py_args</span><span class="p">,</span> <span class="o">**</span><span class="n">py_kwargs</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">_pruning</span><span class="o">.</span><span class="n">enforcing</span><span class="p">:</span>
-                <span class="n">_pruning</span><span class="o">.</span><span class="n">record_after_call</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">keywords</span><span class="p">)</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">keywords</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">module</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmodule</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
             <span class="n">error_msg</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\bExpr\b&quot;</span><span class="p">,</span> <span class="s2">&quot;GsTaichi Expression&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>

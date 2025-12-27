@@ -400,6 +400,8 @@
 </li>
       <li><a href="autoapi/gstaichi/lang/kernel_arguments/index.html#gstaichi.lang.kernel_arguments.ArgMetadata">ArgMetadata (class in gstaichi.lang.kernel_arguments)</a>
 </li>
+      <li><a href="autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.argument_data">argument_data (gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext attribute)</a>
+</li>
       <li><a href="autoapi/gstaichi/lang/misc/index.html#gstaichi.lang.misc.arm64">arm64 (in module gstaichi.lang.misc)</a>
 </li>
       <li><a href="autoapi/gstaichi/lang/matrix/index.html#gstaichi.lang.matrix.MatrixNdarray.arr">arr (gstaichi.lang.matrix.MatrixNdarray attribute)</a>
@@ -429,8 +431,6 @@
       <li><a href="autoapi/gstaichi/lang/ast/ast_transformer/index.html#gstaichi.lang.ast.ast_transformer.ASTTransformer">ASTTransformer (class in gstaichi.lang.ast.ast_transformer)</a>
 </li>
       <li><a href="autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext">ASTTransformerFuncContext (class in gstaichi.lang.ast.ast_transformer_utils)</a>
-</li>
-      <li><a href="autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerGlobalContext">ASTTransformerGlobalContext (class in gstaichi.lang.ast.ast_transformer_utils)</a>
 </li>
       <li><a href="autoapi/gstaichi/lang/ops/index.html#gstaichi.lang.ops.atan2">atan2() (in module gstaichi.lang.ops)</a>
 </li>
@@ -720,7 +720,7 @@
 </li>
       <li><a href="autoapi/gstaichi/profiler/kernel_metrics/index.html#gstaichi.profiler.kernel_metrics.CuptiMetric">CuptiMetric (class in gstaichi.profiler.kernel_metrics)</a>
 </li>
-      <li><a href="autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerGlobalContext.current_kernel">current_kernel (gstaichi.lang.ast.ast_transformer_utils.ASTTransformerGlobalContext attribute)</a>
+      <li><a href="autoapi/gstaichi/lang/func/index.html#gstaichi.lang.func.Func.current_kernel">current_kernel (gstaichi.lang.func.Func attribute)</a>
 
       <ul>
         <li><a href="autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.ASTGenerator.current_kernel">(gstaichi.lang.kernel.ASTGenerator attribute)</a>
@@ -732,7 +732,7 @@
 </li>
       <li><a href="autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.current_scope">current_scope() (gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext method)</a>
 </li>
-      <li><a href="autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerGlobalContext.currently_compiling_materialize_key">currently_compiling_materialize_key (gstaichi.lang.ast.ast_transformer_utils.ASTTransformerGlobalContext attribute)</a>
+      <li><a href="autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.currently_compiling_materialize_key">currently_compiling_materialize_key (gstaichi.lang.kernel.Kernel attribute)</a>
 </li>
       <li><a href="autoapi/gstaichi/lang/func/index.html#gstaichi.lang.func.Func.cxx_function_by_id">cxx_function_by_id (gstaichi.lang.func.Func attribute)</a>
 </li>
@@ -872,6 +872,8 @@
 </li>
       <li><a href="autoapi/gstaichi/lang/struct/index.html#gstaichi.lang.struct.Struct.entries">entries (gstaichi.lang.struct.Struct property)</a>
 </li>
+      <li><a href="autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.excluded_parameters">excluded_parameters (gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext attribute)</a>
+</li>
       <li><a href="autoapi/gstaichi/lang/simt/subgroup/index.html#gstaichi.lang.simt.subgroup.exclusive_add">exclusive_add() (in module gstaichi.lang.simt.subgroup)</a>
 </li>
   </ul></td>
@@ -1010,6 +1012,8 @@
 </li>
       <li><a href="autoapi/gstaichi/lang/func/index.html#gstaichi.lang.func.Func.func_call_rvalue">func_call_rvalue() (gstaichi.lang.func.Func method)</a>
 </li>
+      <li><a href="autoapi/gstaichi/lang/func/index.html#gstaichi.lang.func.Func.func_id">func_id (gstaichi.lang.func.Func attribute)</a>
+</li>
       <li><a href="autoapi/gstaichi/lang/func/index.html#gstaichi.lang.func.Func.function_counter">function_counter (gstaichi.lang.func.Func attribute)</a>
 </li>
       <li><a href="autoapi/gstaichi/lang/ast/ast_transformers/function_def_transformer/index.html#gstaichi.lang.ast.ast_transformers.function_def_transformer.FunctionDefTransformer">FunctionDefTransformer (class in gstaichi.lang.ast.ast_transformers.function_def_transformer)</a>
@@ -1063,8 +1067,6 @@
       <li><a href="autoapi/gstaichi/lang/kernel_arguments/index.html#gstaichi.lang.kernel_arguments.get_type_for_kernel_args">get_type_for_kernel_args() (in module gstaichi.lang.kernel_arguments)</a>
 </li>
       <li><a href="autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.get_var_by_name">get_var_by_name() (gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext method)</a>
-</li>
-      <li><a href="autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.global_context">global_context (gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext attribute)</a>
 </li>
       <li><a href="autoapi/gstaichi/lang/misc/index.html#gstaichi.lang.misc.global_thread_idx">global_thread_idx() (in module gstaichi.lang.misc)</a>
 
@@ -1289,8 +1291,6 @@
         <li><a href="autoapi/gstaichi/lang/matrix_ops/index.html#module-gstaichi.lang.matrix_ops">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     gstaichi.lang.matrix_ops_utils
 
@@ -1298,6 +1298,8 @@
         <li><a href="autoapi/gstaichi/lang/matrix_ops_utils/index.html#module-gstaichi.lang.matrix_ops_utils">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     gstaichi.lang.mesh
 
@@ -1807,8 +1809,6 @@
 </li>
       <li><a href="autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.launch_kernel">launch_kernel() (gstaichi.lang.kernel.Kernel method)</a>
 </li>
-      <li><a href="autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.launch_observations">launch_observations (gstaichi.lang.kernel.Kernel attribute)</a>
-</li>
       <li><a href="autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.LaunchContextBufferCache">LaunchContextBufferCache (class in gstaichi.lang.kernel)</a>
 </li>
       <li><a href="autoapi/gstaichi/lang/matrix/index.html#gstaichi.lang.matrix.MatrixNdarray.layout">layout (gstaichi.lang.matrix.MatrixNdarray attribute)</a>
@@ -2262,8 +2262,6 @@
         <li><a href="autoapi/gstaichi/lang/snode/index.html#gstaichi.lang.snode.SNode.parent">(gstaichi.lang.snode.SNode method)</a>
 </li>
       </ul></li>
-      <li><a href="autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerGlobalContext.pass_idx">pass_idx (gstaichi.lang.ast.ast_transformer_utils.ASTTransformerGlobalContext attribute)</a>
-</li>
       <li><a href="autoapi/gstaichi/math/mathimpl/index.html#gstaichi.math.mathimpl.pi">pi (in module gstaichi.math.mathimpl)</a>
 </li>
       <li><a href="autoapi/gstaichi/lang/field/index.html#gstaichi.lang.field.BitpackedFields.place">place() (gstaichi.lang.field.BitpackedFields method)</a>
@@ -2290,10 +2288,10 @@
 </li>
       <li><a href="autoapi/gstaichi/profiler/kernel_profiler/index.html#gstaichi.profiler.kernel_profiler.print_kernel_profiler_info">print_kernel_profiler_info() (in module gstaichi.profiler.kernel_profiler)</a>
 </li>
-      <li><a href="autoapi/gstaichi/profiler/memory_profiler/index.html#gstaichi.profiler.memory_profiler.print_memory_profiler_info">print_memory_profiler_info() (in module gstaichi.profiler.memory_profiler)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/gstaichi/profiler/memory_profiler/index.html#gstaichi.profiler.memory_profiler.print_memory_profiler_info">print_memory_profiler_info() (in module gstaichi.profiler.memory_profiler)</a>
+</li>
       <li><a href="autoapi/gstaichi/profiler/scoped_profiler/index.html#gstaichi.profiler.scoped_profiler.print_scoped_profiler_info">print_scoped_profiler_info() (in module gstaichi.profiler.scoped_profiler)</a>
 </li>
       <li><a href="autoapi/gstaichi/linalg/sparse_matrix/index.html#gstaichi.linalg.sparse_matrix.SparseMatrixBuilder.print_triplets">print_triplets() (gstaichi.linalg.sparse_matrix.SparseMatrixBuilder method)</a>
@@ -2306,8 +2304,6 @@
 </li>
       <li><a href="autoapi/gstaichi/lang/ast/ast_transformer/index.html#gstaichi.lang.ast.ast_transformer.ASTTransformer.process_listcomp">process_listcomp() (gstaichi.lang.ast.ast_transformer.ASTTransformer static method)</a>
 </li>
-      <li><a href="autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerGlobalContext.pruning">pruning (gstaichi.lang.ast.ast_transformer_utils.ASTTransformerGlobalContext attribute)</a>
-</li>
       <li><a href="autoapi/gstaichi/lang/kernel_arguments/index.html#gstaichi.lang.kernel_arguments.SparseMatrixEntry.ptr">ptr (gstaichi.lang.kernel_arguments.SparseMatrixEntry attribute)</a>
 
       <ul>
@@ -2319,8 +2315,6 @@
 </li>
       </ul></li>
       <li><a href="autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.PureViolation">PureViolation (class in gstaichi.lang.ast.ast_transformer_utils)</a>
-</li>
-      <li><a href="autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.py_args">py_args (gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext attribute)</a>
 </li>
       <li><a href="autoapi/gstaichi/lang/shell/index.html#gstaichi.lang.shell.pybuf_enabled">pybuf_enabled (in module gstaichi.lang.shell)</a>, <a href="autoapi/gstaichi/lang/shell/index.html#id0">[1]</a>
 </li>
@@ -2688,8 +2682,6 @@
 </li>
       <li><a href="autoapi/gstaichi/types/annotations/index.html#gstaichi.types.annotations.template">template (in module gstaichi.types.annotations)</a>
 </li>
-      <li><a href="autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.template_slot_locations">template_slot_locations (gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext attribute)</a>
-</li>
       <li><a href="autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.template_vars">template_vars (gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext attribute)</a>
 </li>
       <li><a href="autoapi/gstaichi/lang/simt/block/index.html#gstaichi.lang.simt.block.thread_idx">thread_idx() (in module gstaichi.lang.simt.block)</a>
@@ -2782,19 +2774,27 @@
 </li>
       <li><a href="autoapi/gstaichi/types/primitive_types/index.html#gstaichi.types.primitive_types.uint32">uint32 (in module gstaichi.types.primitive_types)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/gstaichi/types/primitive_types/index.html#gstaichi.types.primitive_types.uint64">uint64 (in module gstaichi.types.primitive_types)</a>
 </li>
       <li><a href="autoapi/gstaichi/types/primitive_types/index.html#gstaichi.types.primitive_types.uint8">uint8 (in module gstaichi.types.primitive_types)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/gstaichi/lang/simt/warp/index.html#gstaichi.lang.simt.warp.unique">unique() (in module gstaichi.lang.simt.warp)</a>
 </li>
       <li><a href="autoapi/gstaichi/lang/matrix/index.html#gstaichi.lang.matrix.Matrix.unit">unit() (gstaichi.lang.matrix.Matrix static method)</a>
 </li>
-      <li><a href="autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.used_py_dataclass_parameters_by_key_enforcing">used_py_dataclass_parameters_by_key_enforcing (gstaichi.lang.kernel.Kernel attribute)</a>
+      <li><a href="autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.used_py_dataclass_leaves_by_key_collecting">used_py_dataclass_leaves_by_key_collecting (gstaichi.lang.kernel.Kernel attribute)</a>
 </li>
-      <li><a href="autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.used_py_dataclass_parameters_by_key_enforcing_dotted">used_py_dataclass_parameters_by_key_enforcing_dotted (gstaichi.lang.kernel.Kernel attribute)</a>
+      <li><a href="autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.used_py_dataclass_leaves_by_key_enforcing">used_py_dataclass_leaves_by_key_enforcing (gstaichi.lang.kernel.Kernel attribute)</a>
+</li>
+      <li><a href="autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.used_py_dataclass_leaves_by_key_enforcing_dotted">used_py_dataclass_leaves_by_key_enforcing_dotted (gstaichi.lang.kernel.Kernel attribute)</a>
+</li>
+      <li><a href="autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.ASTGenerator.used_py_dataclass_parameters">used_py_dataclass_parameters (gstaichi.lang.kernel.ASTGenerator attribute)</a>
+</li>
+      <li><a href="autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.used_py_dataclass_parameters_collecting">used_py_dataclass_parameters_collecting (gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext attribute)</a>
+</li>
+      <li><a href="autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.used_py_dataclass_parameters_enforcing">used_py_dataclass_parameters_enforcing (gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext attribute)</a>
 </li>
       <li><a href="autoapi/gstaichi/math/mathimpl/index.html#gstaichi.math.mathimpl.uvec2">uvec2 (in module gstaichi.math.mathimpl)</a>
 </li>

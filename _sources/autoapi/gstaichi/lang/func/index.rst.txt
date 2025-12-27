@@ -28,6 +28,11 @@ Module Contents
 
 
 
+   .. py:attribute:: func_id
+      :value: 0
+
+
+
    .. py:attribute:: compiled
       :type:  dict[int, Callable]
 
@@ -53,6 +58,12 @@ Module Contents
 
    .. py:attribute:: has_print
       :value: False
+
+
+
+   .. py:attribute:: current_kernel
+      :type:  gstaichi.lang.kernel.Kernel | None
+      :value: None
 
 
 
