@@ -254,10 +254,10 @@ class FunctionDefTransformer:
         from gstaichi.lang.kernel_impl import Func
 
         assert isinstance(ctx.func, Func)
-        assert ctx.argument_data is not None
-        for data_i, data in enumerate(ctx.argument_data):
-            argument = ctx.func.arg_metas_expanded[data_i]
-            FunctionDefTransformer._transform_func_arg(ctx, argument.name, argument.annotation, data)
+        assert ctx.py_args is not None
+        for py_arg_i, py_arg in enumerate(ctx.py_args):
+            argument = ctx.func.arg_metas_expanded[py_arg_i]
+            FunctionDefTransformer._transform_func_arg(ctx, argument.name, argument.annotation, py_arg)
 
         # deal with dataclasses
         for v in ctx.func.orig_arguments:
@@ -289,7 +289,7 @@ class FunctionDefTransformer:
             return None
 
         if not ctx.is_kernel:  # ti.func
-            assert ctx.argument_data is not None
+            assert ctx.py_args is not None
             assert ctx.func is not None
             if ctx.is_real_function:
                 FunctionDefTransformer._transform_as_kernel(ctx, node, args)

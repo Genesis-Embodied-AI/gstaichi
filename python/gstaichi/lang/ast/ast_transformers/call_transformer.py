@@ -273,6 +273,7 @@ class CallTransformer:
                 build_stmt(ctx, node.func)
                 build_stmts(ctx, node.args)
                 build_stmts(ctx, node.keywords)
+            func = node.func.ptr
         else:
             build_stmt(ctx, node.func)
             # creates variable for the dataclass itself (as well as other variables,
@@ -280,6 +281,7 @@ class CallTransformer:
             build_stmts(ctx, node.args)
             build_stmts(ctx, node.keywords)
 
+            func = node.func.ptr
             added_args, node.args = CallTransformer._expand_Call_dataclass_args(ctx, node.args)
             added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(ctx, node.keywords)
 
@@ -304,7 +306,7 @@ class CallTransformer:
                 node.violates_pure = True
                 node.violates_pure_reason = kw.value.violates_pure_reason
 
-        args = []
+        py_args = []
         for arg in node.args:
             if isinstance(arg, ast.Starred):
                 arg_list = arg.ptr
@@ -313,38 +315,37 @@ class CallTransformer:
                     arg_list = [Expr(x) for x in ctx.ast_builder.expand_exprs([arg_list.ptr])]
 
                 for i in arg_list:
-                    args.append(i)
+                    py_args.append(i)
             else:
-                args.append(arg.ptr)
-        keywords = dict(ChainMap(*[keyword.ptr for keyword in node.keywords]))
-        func = node.func.ptr
+                py_args.append(arg.ptr)
+        py_kwargs = dict(ChainMap(*[keyword.ptr for keyword in node.keywords]))
 
         if id(func) in [id(print), id(impl.ti_print)]:
             ctx.func.has_print = True
 
         if isinstance(node.func, ast.Attribute) and isinstance(node.func.value.ptr, str) and node.func.attr == "format":
             raw_string = node.func.value.ptr
-            args = CallTransformer._canonicalize_formatted_string(raw_string, *args, **keywords)
-            node.ptr = impl.ti_format(*args)
+            py_args = CallTransformer._canonicalize_formatted_string(raw_string, *py_args, **py_kwargs)
+            node.ptr = impl.ti_format(*py_args)
             return node.ptr
 
         if id(func) == id(Matrix) or id(func) == id(Vector):
-            node.ptr = matrix.make_matrix(*args, **keywords)
+            node.ptr = matrix.make_matrix(*py_args, **py_kwargs)
             return node.ptr
 
-        if CallTransformer._build_call_if_is_builtin(ctx, node, args, keywords):
+        if CallTransformer._build_call_if_is_builtin(ctx, node, py_args, py_kwargs):
             return node.ptr
 
-        if CallTransformer._build_call_if_is_type(ctx, node, args, keywords):
+        if CallTransformer._build_call_if_is_type(ctx, node, py_args, py_kwargs):
             return node.ptr
 
         if hasattr(node.func, "caller"):
-            node.ptr = func(node.func.caller, *args, **keywords)
+            node.ptr = func(node.func.caller, *py_args, **py_kwargs)
             return node.ptr
 
         CallTransformer._warn_if_is_external_func(ctx, node)
         try:
-            node.ptr = func(*args, **keywords)
+            node.ptr = func(*py_args, **py_kwargs)
         except TypeError as e:
             module = inspect.getmodule(func)
             error_msg = re.sub(r"\bExpr\b", "GsTaichi Expression", str(e))
