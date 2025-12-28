@@ -596,7 +596,7 @@
         <span class="n">global_vars</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
         <span class="n">template_vars</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
         <span class="n">is_pure</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
-        <span class="n">argument_data</span><span class="p">,</span>
+        <span class="n">py_args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
         <span class="n">file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">src</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
         <span class="n">start_lineno</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -613,7 +613,7 @@
 
 <div class="viewcode-block" id="ASTTransformerFuncContext.func">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.func">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">:</span> <span class="s2">&quot;FuncBase&quot;</span> <span class="o">=</span> <span class="n">func</span></div>
 
 <div class="viewcode-block" id="ASTTransformerFuncContext.local_scopes">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.local_scopes">[docs]</a>
@@ -629,11 +629,11 @@
 
 <div class="viewcode-block" id="ASTTransformerFuncContext.is_kernel">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.is_kernel">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">is_kernel</span> <span class="o">=</span> <span class="n">is_kernel</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_kernel</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">is_kernel</span></div>
 
 <div class="viewcode-block" id="ASTTransformerFuncContext.arg_features">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.arg_features">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">arg_features</span> <span class="o">=</span> <span class="n">arg_features</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arg_features</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="n">arg_features</span></div>
 
 <div class="viewcode-block" id="ASTTransformerFuncContext.returns">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.returns">[docs]</a>
@@ -641,19 +641,19 @@
 
 <div class="viewcode-block" id="ASTTransformerFuncContext.global_vars">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.global_vars">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">global_vars</span> <span class="o">=</span> <span class="n">global_vars</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">global_vars</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">global_vars</span></div>
 
 <div class="viewcode-block" id="ASTTransformerFuncContext.template_vars">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.template_vars">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">template_vars</span> <span class="o">=</span> <span class="n">template_vars</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">template_vars</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">template_vars</span></div>
 
 <div class="viewcode-block" id="ASTTransformerFuncContext.is_pure">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.is_pure">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">is_pure</span> <span class="o">=</span> <span class="n">is_pure</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_pure</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">is_pure</span></div>
 
-<div class="viewcode-block" id="ASTTransformerFuncContext.argument_data">
-<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.argument_data">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">argument_data</span> <span class="o">=</span> <span class="n">argument_data</span></div>
+<div class="viewcode-block" id="ASTTransformerFuncContext.py_args">
+<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.py_args">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">py_args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">py_args</span></div>
 
 <div class="viewcode-block" id="ASTTransformerFuncContext.return_data">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.return_data">[docs]</a>
@@ -661,15 +661,15 @@
 
 <div class="viewcode-block" id="ASTTransformerFuncContext.file">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.file">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">file</span> <span class="o">=</span> <span class="n">file</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">file</span></div>
 
 <div class="viewcode-block" id="ASTTransformerFuncContext.src">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.src">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">src</span> <span class="o">=</span> <span class="n">src</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">src</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">src</span></div>
 
 <div class="viewcode-block" id="ASTTransformerFuncContext.indent">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.indent">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">indent</span> <span class="o">=</span> <span class="mi">0</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">indent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span></div>
 
         <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">src</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
             <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s2">&quot; &quot;</span><span class="p">:</span>

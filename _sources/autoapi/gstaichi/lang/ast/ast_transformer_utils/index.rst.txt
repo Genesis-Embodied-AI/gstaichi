@@ -168,9 +168,10 @@ Module Contents
       :type:  str
 
 
-.. py:class:: ASTTransformerFuncContext(excluded_parameters, end_lineno: int, is_kernel: bool, func: gstaichi.lang._func_base.FuncBase, arg_features: list[tuple[Any, Ellipsis]] | None, global_vars: dict[str, Any], template_vars: dict[str, Any], is_pure: bool, argument_data, file: str, src: list[str], start_lineno: int, ast_builder: gstaichi._lib.core.gstaichi_python.ASTBuilder | None, is_real_function: bool, autodiff_mode: AutodiffMode, raise_on_templated_floats: bool, used_py_dataclass_parameters_collecting: set[str], used_py_dataclass_parameters_enforcing: set[str] | None)
+.. py:class:: ASTTransformerFuncContext(excluded_parameters, end_lineno: int, is_kernel: bool, func: gstaichi.lang._func_base.FuncBase, arg_features: list[tuple[Any, Ellipsis]] | None, global_vars: dict[str, Any], template_vars: dict[str, Any], is_pure: bool, py_args: tuple[Any, Ellipsis], file: str, src: list[str], start_lineno: int, ast_builder: gstaichi._lib.core.gstaichi_python.ASTBuilder | None, is_real_function: bool, autodiff_mode: AutodiffMode, raise_on_templated_floats: bool, used_py_dataclass_parameters_collecting: set[str], used_py_dataclass_parameters_enforcing: set[str] | None)
 
    .. py:attribute:: func
+      :type:  gstaichi.lang._func_base.FuncBase
 
 
    .. py:attribute:: local_scopes
@@ -189,9 +190,11 @@ Module Contents
 
 
    .. py:attribute:: is_kernel
+      :type:  bool
 
 
    .. py:attribute:: arg_features
+      :type:  list[tuple[Any, Ellipsis]]
 
 
    .. py:attribute:: returns
@@ -200,15 +203,19 @@ Module Contents
 
 
    .. py:attribute:: global_vars
+      :type:  dict[str, Any]
 
 
    .. py:attribute:: template_vars
+      :type:  dict[str, Any]
 
 
    .. py:attribute:: is_pure
+      :type:  bool
 
 
-   .. py:attribute:: argument_data
+   .. py:attribute:: py_args
+      :type:  tuple[Any, Ellipsis]
 
 
    .. py:attribute:: return_data
@@ -218,12 +225,15 @@ Module Contents
 
 
    .. py:attribute:: file
+      :type:  str
 
 
    .. py:attribute:: src
+      :type:  list[str]
 
 
    .. py:attribute:: indent
+      :type:  int
       :value: 0
 
 
