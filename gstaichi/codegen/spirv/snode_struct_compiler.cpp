@@ -89,6 +89,7 @@ class StructCompiler {
       std::size_t cell_stride = 0;
       for (auto &[snode_size, i] : element_strides) {
         auto &ch = sn->ch[i];
+        cell_stride = align_up(cell_stride, snode_size);
         auto child_offset = cell_stride;
         auto *ch_snode = ch.get();
         cell_stride += snode_size;
