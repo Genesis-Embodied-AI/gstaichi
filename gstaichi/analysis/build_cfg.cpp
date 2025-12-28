@@ -125,6 +125,11 @@ class CFGBuilder : public IRVisitor {
     continues_in_current_loop_.push_back(new_node(current_stmt_id_ + 1));
   }
 
+  void visit(BreakStmt *stmt) override {
+    // Don't put BreakStmt in any CFGNodes.
+    breaks_in_current_loop_.push_back(new_node(current_stmt_id_ + 1));
+  }
+
   /**
    * Structure:
    *

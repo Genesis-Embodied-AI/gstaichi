@@ -1612,12 +1612,12 @@ void ASTBuilder::insert_break_stmt(const DebugInfo &dbg_info) {
   if (loop_state_stack_.back() == Outermost) {
     throw GsTaichiSyntaxError("Cannot break in the outermost loop");
   }
-  this->insert(Stmt::make<FrontendBreakStmt>(0, dbg_info));
+  this->insert(Stmt::make<FrontendBreakStmt>(0, false, dbg_info));
 }
 
 void ASTBuilder::insert_function_break_stmt(int loop_depth,
                                             const DebugInfo &dbg_info) {
-  this->insert(Stmt::make<FrontendBreakStmt>(loop_depth, dbg_info));
+  this->insert(Stmt::make<FrontendBreakStmt>(loop_depth, true, dbg_info));
 }
 
 void ASTBuilder::insert_continue_stmt(const DebugInfo &dbg_info) {

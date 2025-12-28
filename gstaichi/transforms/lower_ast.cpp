@@ -147,15 +147,17 @@ class LowerAST : public IRVisitor {
 
   void visit(FrontendBreakStmt *stmt) override {
     // Check if this is a function return (generalized break)
-    if (stmt->function_loop_depth > 0) {
-      // This is a break from a function return - convert to BreakStmt
+    if (stmt->from_function_return && stmt->function_loop_depth > 0) {
+      // This is a break from a function return with nested loops
+      // Convert to BreakStmt IR node to break out of nested loops
       auto brk = Stmt::make<BreakStmt>();
       auto *brk_ptr = static_cast<BreakStmt *>(brk.get());
       brk_ptr->from_function_return = true;
       brk_ptr->levels_up = stmt->function_loop_depth + 1;
       stmt->parent->replace_with(stmt, std::move(brk));
     } else {
-      // Regular break - use while control
+      // Regular break or function return with no nested loops
+      // Use while control to break the while-true loop
       auto while_stmt = capturing_loop_->as<WhileStmt>();
       VecStatement stmts;
       auto const_true = stmts.push_back<ConstStmt>(TypedConstant((int32)0));

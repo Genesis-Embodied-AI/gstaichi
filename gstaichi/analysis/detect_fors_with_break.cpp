@@ -19,6 +19,11 @@ class DetectForsWithBreak : public BasicStmtVisitor {
   }
 
   void visit(FrontendBreakStmt *stmt) override {
+    // Allow breaks from function returns - they target outer scopes
+    // and will be resolved during lowering/offloading
+    if (stmt->from_function_return) {
+      return;
+    }
     TI_ASSERT_INFO(loop_stack.size() != 0, "break statement out of loop scope");
     auto loop = loop_stack.back();
     if (loop->is<FrontendForStmt>())

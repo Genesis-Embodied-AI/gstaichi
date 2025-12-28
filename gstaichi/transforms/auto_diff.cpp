@@ -247,6 +247,10 @@ class IdentifyIndependentBlocks : public BasicStmtVisitor {
     TI_ERROR("ContinueStmt is not supported in AutoDiff.");
   }
 
+  void visit(BreakStmt *stmt) override {
+    TI_ERROR("BreakStmt is not supported in AutoDiff.");
+  }
+
   void visit(WhileControlStmt *stmt) override {
     TI_ERROR("WhileControlStmt (break) is not supported in AutoDiff.");
   }
@@ -1092,6 +1096,10 @@ class ADTransform : public IRVisitor {
   }
 
   void visit(ContinueStmt *stmt) override {
+    TI_NOT_IMPLEMENTED;
+  }
+
+  void visit(BreakStmt *stmt) override {
     TI_NOT_IMPLEMENTED;
   }
 

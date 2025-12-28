@@ -274,12 +274,17 @@ class FrontendBreakStmt : public Stmt {
  public:
   // The loop this break should target (set during inlining)
   Stmt *scope = nullptr;
-  // Number of function loop levels to unwind (0 for regular break)
+  // Number of function loop levels to unwind
   int function_loop_depth = 0;
+  // True if this break is from a ti.func return (needs special handling)
+  bool from_function_return = false;
 
   explicit FrontendBreakStmt(int function_loop_depth = 0,
+                             bool from_function_return = false,
                              const DebugInfo &dbg_info = DebugInfo())
-      : Stmt(dbg_info), function_loop_depth(function_loop_depth) {
+      : Stmt(dbg_info), 
+        function_loop_depth(function_loop_depth),
+        from_function_return(from_function_return) {
   }
 
   bool is_container_statement() const override {

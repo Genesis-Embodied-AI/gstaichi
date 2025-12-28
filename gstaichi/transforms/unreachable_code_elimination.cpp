@@ -20,6 +20,11 @@ class UselessContinueEliminator : public IRVisitor {
     modified = true;
   }
 
+  void visit(BreakStmt *stmt) override {
+    stmt->parent->erase(stmt);
+    modified = true;
+  }
+
   void visit(IfStmt *if_stmt) override {
     if (if_stmt->true_statements && if_stmt->true_statements->size())
       if_stmt->true_statements->back()->accept(this);
