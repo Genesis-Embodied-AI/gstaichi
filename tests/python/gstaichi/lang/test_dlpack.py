@@ -236,7 +236,7 @@ def test_dlpack_mixed_types_memory_alignment_field(dtype, shape: tuple[int]) -> 
 @test_utils.test(arch=dlpack_arch)
 def test_dlpack_multiple_mixed_types_memory_alignment_field() -> None:
     vtype = ti.i32 if ti.cfg.arch == ti.metal else ti.i64
-    dtypes = [ti.i32, ti.f32, i.u1, ti.i8, ti.types.vector(3, ti.i32)]
+    dtypes = [ti.i32, ti.f32, ti.u1, ti.i8, ti.types.vector(3, ti.i32)]
     if ti.cfg.arch != ti.metal:
         dtypes.extend([ti.i64, ti.f64])
     shapes = [3, 1, 4, 5, 7, 2, 3]
