@@ -22,8 +22,8 @@ void validate_arch(Arch arch) {
 }
 
 std::tuple<void *, DLDeviceType> get_raw_ptr(Arch arch,
-                                                   Program *program,
-                                                   DeviceAllocation dev_alloc) {
+                                             Program *program,
+                                             DeviceAllocation dev_alloc) {
   void *raw_ptr = nullptr;
   DLDeviceType device_type = DLDeviceType::kDLCPU;
   if (arch_is_cpu(arch)) {
@@ -167,6 +167,40 @@ int64_t *calc_strides(int64_t *shape, int full_ndim) {
   return strides;
 }
 
+bool check_torch_version_lte(int major, int minor, int patch) {
+  try {
+    pybind11::module_ torch = pybind11::module_::import("torch");
+    std::string version = torch.attr("__version__").cast<std::string>();
+
+    // Parse version string (e.g., "2.9.1" or "2.9.1+cu118")
+    int vmajor = 0, vminor = 0, vpatch = 0;
+    sscanf(version.c_str(), "%d.%d.%d", &vmajor, &vminor, &vpatch);
+
+    if (vmajor < major)
+      return true;
+    if (vmajor > major)
+      return false;
+    if (vminor < minor)
+      return true;
+    if (vminor > minor)
+      return false;
+    return vpatch <= patch;
+  } catch (...) {
+    // torch not available, skip check
+    return false;
+  }
+}
+
+bool is_torch_version_lte(int major, int minor, int patch) {
+  static bool checked = false;
+  static bool result = false;
+  if (!checked) {
+    result = check_torch_version_lte(major, minor, patch);
+    checked = true;
+  }
+  return result;
+}
+
 pybind11::capsule field_to_dlpack(Program *program,
                                   SNode *snode,
                                   int element_ndim,
@@ -189,11 +223,16 @@ pybind11::capsule field_to_dlpack(Program *program,
   }
 
   int field_in_tree_offset = program->get_field_in_tree_offset(tree_id, snode);
+  if (arch_is_metal(arch) && field_in_tree_offset != 0 &&
+      is_torch_version_lte(2, 9, 1)) {
+    TI_ERROR(
+        "DLPack conversion with fields is not supported on Metal "
+        "with PyTorch <= 2.9.1.");
+  }
 
   void *raw_ptr = nullptr;
   DLDeviceType device_type = DLDeviceType::kDLCPU;
-  std::tie(raw_ptr, device_type) =
-      get_raw_ptr(arch, program, tree_device_ptr);
+  std::tie(raw_ptr, device_type) = get_raw_ptr(arch, program, tree_device_ptr);
 
   DataType dt = snode->dt;
 
@@ -260,8 +299,7 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
 
   DLDeviceType device_type = DLDeviceType::kDLCPU;
   void *raw_ptr = nullptr;
-  std::tie(raw_ptr, device_type) =
-      get_raw_ptr(arch, program, devalloc);
+  std::tie(raw_ptr, device_type) = get_raw_ptr(arch, program, devalloc);
 
   std::vector<int> ndarray_shape = ndarray->total_shape();
   int ndim = ndarray_shape.size();
