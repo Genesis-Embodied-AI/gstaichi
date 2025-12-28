@@ -21,6 +21,35 @@ void validate_arch(Arch arch) {
   }
 }
 
+bool check_torch_version_lte(int major, int minor, int patch) {
+  pybind11::module_ torch = pybind11::module_::import("torch");
+  std::string version = torch.attr("__version__").cast<std::string>();
+
+  // Parse version string (e.g., "2.9.1" or "2.9.1+cu118")
+  int vmajor = 0, vminor = 0, vpatch = 0;
+  sscanf(version.c_str(), "%d.%d.%d", &vmajor, &vminor, &vpatch);
+
+  if (vmajor < major)
+    return true;
+  if (vmajor > major)
+    return false;
+  if (vminor < minor)
+    return true;
+  if (vminor > minor)
+    return false;
+  return vpatch <= patch;
+}
+
+bool torch_supports_byte_offset() {
+  static bool supports = false;
+  static bool result = false;
+  if (!checked) {
+    supports = !check_torch_version_lte(2, 9, 1);
+    checked = true;
+  }
+  return result;
+}
+
 std::tuple<void *, DLDeviceType> get_raw_ptr(Arch arch,
                                              Program *program,
                                              DeviceAllocation dev_alloc) {
@@ -167,35 +196,6 @@ int64_t *calc_strides(int64_t *shape, int full_ndim) {
   return strides;
 }
 
-bool check_torch_version_lte(int major, int minor, int patch) {
-  pybind11::module_ torch = pybind11::module_::import("torch");
-  std::string version = torch.attr("__version__").cast<std::string>();
-
-  // Parse version string (e.g., "2.9.1" or "2.9.1+cu118")
-  int vmajor = 0, vminor = 0, vpatch = 0;
-  sscanf(version.c_str(), "%d.%d.%d", &vmajor, &vminor, &vpatch);
-
-  if (vmajor < major)
-    return true;
-  if (vmajor > major)
-    return false;
-  if (vminor < minor)
-    return true;
-  if (vminor > minor)
-    return false;
-  return vpatch <= patch;
-}
-
-bool is_torch_version_ok() {
-  static bool checked = false;
-  static bool result = false;
-  if (!checked) {
-    result = !check_torch_version_lte(2, 9, 1);
-    checked = true;
-  }
-  return result;
-}
-
 pybind11::capsule field_to_dlpack(Program *program,
                                   SNode *snode,
                                   int element_ndim,
@@ -218,11 +218,19 @@ pybind11::capsule field_to_dlpack(Program *program,
   }
 
   int field_in_tree_offset = program->get_field_in_tree_offset(tree_id, snode);
-  if (arch_is_metal(arch) && field_in_tree_offset != 0 &&
-      !is_torch_version_ok()) {
-    TI_ERROR(
-        "DLPack conversion with fields is not supported on Metal "
-        "with PyTorch <= 2.9.1.");
+  int byte_offset = 0;
+  if (field_in_tree_offset >= 0) {
+    if (torch_supports_byte_offset()) {
+      byte_offset = field_in_tree_offset;
+    } else {
+      if (arch_is_metal(arch)) {
+        TI_ERROR(
+            "DLPack conversion with fields is not supported on Metal "
+            "with PyTorch <= 2.9.1.");
+      }
+      raw_ptr =
+          reinterpret_cast<void *>((uint64_t)raw_ptr + field_in_tree_offset);
+    }
   }
 
   void *raw_ptr = nullptr;
@@ -266,7 +274,7 @@ pybind11::capsule field_to_dlpack(Program *program,
   dl_tensor.dtype = DLDataType{data_type_code, element_bits, 1};
   dl_tensor.shape = shape;
   dl_tensor.strides = strides;
-  dl_tensor.byte_offset = field_in_tree_offset;
+  dl_tensor.byte_offset = byte_offset;
 
   managed_tensor->deleter = [](DLManagedTensor *self) {
     if (self->dl_tensor.shape != nullptr) {
