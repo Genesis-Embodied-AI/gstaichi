@@ -218,6 +218,11 @@ pybind11::capsule field_to_dlpack(Program *program,
   }
 
   int field_in_tree_offset = program->get_field_in_tree_offset(tree_id, snode);
+
+  void *raw_ptr = nullptr;
+  DLDeviceType device_type = DLDeviceType::kDLCPU;
+  std::tie(raw_ptr, device_type) = get_raw_ptr(arch, program, tree_device_ptr);
+
   int byte_offset = 0;
   if (field_in_tree_offset >= 0) {
     if (torch_supports_byte_offset()) {
@@ -232,10 +237,6 @@ pybind11::capsule field_to_dlpack(Program *program,
           reinterpret_cast<void *>((uint64_t)raw_ptr + field_in_tree_offset);
     }
   }
-
-  void *raw_ptr = nullptr;
-  DLDeviceType device_type = DLDeviceType::kDLCPU;
-  std::tie(raw_ptr, device_type) = get_raw_ptr(arch, program, tree_device_ptr);
 
   DataType dt = snode->dt;
 
