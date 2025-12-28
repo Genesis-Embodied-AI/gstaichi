@@ -470,7 +470,7 @@ class ASTTransformer(Builder):
                     )
             else:  # For ti.func, emit break to exit the while-true wrapper
                 if ctx.ast_builder is not None:
-                    # The function body is wrapped in while-true, so break exits it
+                    # The function body is wrapped in while-true
                     # Use function_break with loop_depth to handle nested loops
                     ctx.ast_builder.insert_function_break_stmt(ctx.loop_depth, _ti_core.DebugInfo(ctx.get_pos_info(node)))
             return None

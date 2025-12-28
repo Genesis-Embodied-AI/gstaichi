@@ -94,7 +94,17 @@ class Func(FuncBase):
         struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
 
         tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
+        
+        # For inlined functions, wrap in a while-true loop so breaks (from returns) work
+        dbg_info = _ti_core.DebugInfo(impl.get_runtime().get_current_src_info())
+        ctx.ast_builder.begin_frontend_while(Expr(1, dtype=primitive_types.i32).ptr, dbg_info)
+        
         ret = transform_tree(tree, ctx)
+        
+        # Insert break at end of function to exit the while-true wrapper
+        ctx.ast_builder.insert_break_stmt(dbg_info)
+        ctx.ast_builder.pop_scope()  # End while
+        
         self.current_kernel = None
         if not self.is_real_function:
             if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
