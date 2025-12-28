@@ -194,12 +194,6 @@ def test_dlpack_field_multiple_tree_nodes():
 
     a_t = ti_to_torch(a)
 
-    # if tensor_type == ti.field and ti.cfg.arch == ti.metal:
-    #     # TODO: fix to_dlpack on Metal fields
-    #     with pytest.raises(RuntimeError):  # check doesnt seg fault...
-    #         b.to_dlpack()
-    #     pytest.xfail(reason="to_dlpack not currently supported on Metal fields")
-
     b_t = ti_to_torch(b)
     c_t = ti_to_torch(c)
     d_t = ti_to_torch(d)
@@ -219,12 +213,16 @@ def test_dlpack_mixed_types_memory_alignment_field(dtype, shape: tuple[int]) -> 
     """
     Note: The mixed type here means that within a single SNode tree, fields use different data types (for example, curr_cnt in ti.i32 and pos in ti.i64). This leads to memory alignment issues and mismatched SNode offsets.
     """
-    curr_field = ti.field(dtype, shape)
-    pos = ti.field(ti.types.vector(3, ti.i64), shape=(1,))
+    if ti.cfg.arch == ti.metal and dtype in [ti.i64, ti.f64]:
+        pytest.skip(reason="64-bit types not supported on Metal")
+    vtype = ti.i32 if ti.cfg.arch == ti.metal else ti.i64
+
+    _curr_field = ti.field(dtype, shape)
+    pos = ti.field(ti.types.vector(3, vtype), shape=(1,))
 
     @ti.kernel
     def kernel_update_render_fields(pos: ti.template()):
-        pos[0] = ti.Vector([1, 2, 3], dt=ti.i64)
+        pos[0] = ti.Vector([1, 2, 3], dt=vtype)
 
     kernel_update_render_fields(pos)
     ti.sync()
@@ -237,16 +235,19 @@ def test_dlpack_mixed_types_memory_alignment_field(dtype, shape: tuple[int]) -> 
 
 @test_utils.test(arch=dlpack_arch)
 def test_dlpack_multiple_mixed_types_memory_alignment_field() -> None:
-    dtypes = [ti.i32, ti.i64, ti.f32, ti.f64, ti.u1, ti.i8, ti.types.vector(3, ti.i32)]
+    vtype = ti.i32 if ti.cfg.arch == ti.metal else ti.i64
+    dtypes = [ti.i32, ti.f32, i.u1, ti.i8, ti.types.vector(3, ti.i32)]
+    if ti.cfg.arch != ti.metal:
+        dtypes.extend([ti.i64, ti.f64])
     shapes = [3, 1, 4, 5, 7, 2, 3]
     fields = []
     for dtype, shape in zip(dtypes, shapes):
         fields.append(ti.field(dtype, shape))
-    pos = ti.field(ti.types.vector(3, ti.i64), shape=(1,))
+    pos = ti.field(ti.types.vector(3, vtype), shape=(1,))
 
     @ti.kernel
     def kernel_update_render_fields(pos: ti.template()):
-        pos[0] = ti.Vector([1, 2, 3], dt=ti.i64)
+        pos[0] = ti.Vector([1, 2, 3], dt=vtype)
 
     kernel_update_render_fields(pos)
     ti.sync()
@@ -259,7 +260,7 @@ def test_dlpack_multiple_mixed_types_memory_alignment_field() -> None:
 
 @test_utils.test(arch=dlpack_arch)
 def test_dlpack_joints_case_memory_alignment_field() -> None:
-    links_is_fixed = ti.field(dtype=ti.u1, shape=(1,))
+    _links_is_fixed = ti.field(dtype=ti.u1, shape=(1,))
     joints_n_dofs = ti.field(dtype=ti.i32, shape=(1,))
 
     @ti.kernel
