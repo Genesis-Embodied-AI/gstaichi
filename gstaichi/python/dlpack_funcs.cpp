@@ -41,13 +41,13 @@ bool check_torch_version_lte(int major, int minor, int patch) {
 }
 
 bool torch_supports_byte_offset() {
+  static bool checked = false;
   static bool supports = false;
-  static bool result = false;
   if (!checked) {
     supports = !check_torch_version_lte(2, 9, 1);
     checked = true;
   }
-  return result;
+  return supports;
 }
 
 std::tuple<void *, DLDeviceType> get_raw_ptr(Arch arch,
