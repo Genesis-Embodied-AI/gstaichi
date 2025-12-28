@@ -140,13 +140,10 @@ def test_dlpack_2_arrays(tensor_type):
     ti.sync()
 
     # first field has offset 0
-    a_cap = a.to_dlpack()
-    a_t = torch.utils.dlpack.from_dlpack(a_cap)
-
     # second field has non-zero offset, so we are testing
     # non-zero offsets
-    b_cap = b.to_dlpack()
-    b_t = torch.utils.dlpack.from_dlpack(b_cap)
+    a_t = ti_to_torch(a)
+    b_t = ti_to_torch(b)
     assert a_t[0] == 123
     assert b_t[0] == 222
 
