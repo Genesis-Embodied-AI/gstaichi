@@ -92,6 +92,8 @@ class TaskCodegen : public IRVisitor {
   void visit(WhileControlStmt *stmt) override;
   void visit(ContinueStmt *stmt) override;
 
+  void visit(BreakStmt *stmt) override;
+
  private:
   void emit_headers();
   void generate_serial_kernel(OffloadedStmt *stmt);

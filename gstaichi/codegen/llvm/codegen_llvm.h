@@ -49,6 +49,7 @@ class TaskCodeGenLLVM : public IRVisitor, public LLVMModuleBuilder {
   std::vector<llvm::BasicBlock *> loop_reentry_stack;
   // Mainly for supporting break stmt
   llvm::BasicBlock *current_while_after_loop;
+  std::vector<llvm::BasicBlock *> loop_after_stack;
   llvm::FunctionType *task_function_type;
   std::unordered_map<Stmt *, llvm::Value *> llvm_val;
   llvm::Function *func;
@@ -207,6 +208,8 @@ class TaskCodeGenLLVM : public IRVisitor, public LLVMModuleBuilder {
   void visit(WhileControlStmt *stmt) override;
 
   void visit(ContinueStmt *stmt) override;
+
+  void visit(BreakStmt *stmt) override;
 
   void visit(WhileStmt *stmt) override;
 

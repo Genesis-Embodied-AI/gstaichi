@@ -1122,6 +1122,34 @@ void TaskCodeGenLLVM::visit(ContinueStmt *stmt) {
   builder->SetInsertPoint(after_continue);
 }
 
+void TaskCodeGenLLVM::visit(BreakStmt *stmt) {
+  using namespace llvm;
+  auto stmt_in_off_range_for = [stmt]() {
+    TI_ASSERT(stmt->scope != nullptr);
+    if (auto *offl = stmt->scope->cast<OffloadedStmt>(); offl) {
+      TI_ASSERT(offl->task_type == OffloadedStmt::TaskType::range_for ||
+                offl->task_type == OffloadedStmt::TaskType::struct_for);
+      return offl->task_type == OffloadedStmt::TaskType::range_for;
+    }
+    return false;
+  };
+  if (stmt_in_off_range_for()) {
+    builder->CreateRetVoid();
+  } else {
+    // Find the loop exit block levels_up levels up
+    TI_ASSERT(!loop_after_stack.empty());
+    int target_level = loop_after_stack.size() - stmt->levels_up;
+    TI_ASSERT(target_level >= 0);
+    llvm::BasicBlock *target_after = loop_after_stack[target_level];
+    builder->CreateBr(target_after);
+  }
+  // Stmts after break are useless, so we switch the insertion point to
+  // /dev/null. In LLVM IR, the "after_break" label shows "No predecessors!".
+  BasicBlock *after_break =
+      BasicBlock::Create(*llvm_context, "after_break", func);
+  builder->SetInsertPoint(after_break);
+}
+
 void TaskCodeGenLLVM::visit(WhileStmt *stmt) {
   using namespace llvm;
   BasicBlock *body = BasicBlock::Create(*llvm_context, "while_loop_body", func);
@@ -1135,10 +1163,12 @@ void TaskCodeGenLLVM::visit(WhileStmt *stmt) {
       BasicBlock::Create(*llvm_context, "after_while", func);
   auto walg = make_while_after_loop_guard(this);
   current_while_after_loop = after_loop;
+  loop_after_stack.push_back(after_loop);
 
   stmt->body->accept(this);
 
   loop_reentry_stack.pop_back();
+  loop_after_stack.pop_back();
 
   if (!returned) {
     builder->CreateBr(body);  // jump to head
@@ -1225,12 +1255,15 @@ void TaskCodeGenLLVM::create_naive_range_for(RangeForStmt *for_stmt) {
       // The continue stmt should jump to the loop-increment block!
       current_loop_reentry = loop_inc;
       loop_reentry_stack.push_back(loop_inc);
+      // The break stmt should jump to the after_loop block!
+      loop_after_stack.push_back(after_loop);
       // body cfg
       builder->SetInsertPoint(body);
 
       for_stmt->body->accept(this);
 
       loop_reentry_stack.pop_back();
+      loop_after_stack.pop_back();
     }
     if (!returned) {
       builder->CreateBr(loop_inc);

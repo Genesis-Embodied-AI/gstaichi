@@ -122,6 +122,25 @@ class ContinueStmt : public Stmt {
   TI_DEFINE_ACCEPT_AND_CLONE;
 };
 
+class BreakStmt : public Stmt {
+ public:
+  // This is the loop on which this break stmt has effects. It can be either
+  // an offloaded task, or a for/while loop inside the kernel.
+  Stmt *scope;
+  // Number of loop levels to break up (1 = current loop, 2 = parent loop,
+  // etc.)
+  int levels_up;
+  // True if this break is from a ti.func return (needs special scoping)
+  bool from_function_return;
+
+  BreakStmt() : scope(nullptr), levels_up(1), from_function_return(false) {
+    TI_STMT_REG_FIELDS;
+  }
+
+  TI_STMT_DEF_FIELDS(scope);
+  TI_DEFINE_ACCEPT_AND_CLONE;
+};
+
 /**
  * A decoration statement. The decorated "operands" will keep this decoration.
  */

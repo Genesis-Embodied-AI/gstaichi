@@ -365,6 +365,19 @@ class IRPrinter : public IRVisitor {
     dbg_info_printer_(stmt);
   }
 
+  void visit(BreakStmt *stmt) override {
+    if (stmt->scope) {
+      // Once scope is resolved, it's just a break (regardless of origin)
+      print("{} break (scope={})", stmt->name(), stmt->scope->name());
+    } else if (stmt->from_function_return && stmt->levels_up > 0) {
+      // No scope yet, but has unwind depth - show as unwind
+      print("{} break_unwind (depth={})", stmt->name(), stmt->levels_up);
+    } else {
+      print("{} break", stmt->name());
+    }
+    dbg_info_printer_(stmt);
+  }
+
   void visit(FrontendFuncCallStmt *stmt) override {
     std::string args;
     for (int i = 0; i < stmt->args.exprs.size(); i++) {

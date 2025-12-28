@@ -1785,6 +1785,26 @@ void TaskCodegen::visit(ContinueStmt *stmt) {
                       // which should be eliminated
 }
 
+void TaskCodegen::visit(BreakStmt *stmt) {
+  auto stmt_in_off_for = [stmt]() {
+    TI_ASSERT(stmt->scope != nullptr);
+    if (auto *offl = stmt->scope->cast<OffloadedStmt>(); offl) {
+      TI_ASSERT(offl->task_type == OffloadedStmt::TaskType::range_for ||
+                offl->task_type == OffloadedStmt::TaskType::struct_for);
+      return true;
+    }
+    return false;
+  };
+
+  if (stmt_in_off_for()) {
+    // Return means end THIS main loop and start next loop, not exit kernel
+    ir_->make_inst(spv::OpBranch, return_label());
+  } else {
+    ir_->make_inst(spv::OpBranch, current_merge_label());
+  }
+  gen_label_ = true;
+}
+
 void TaskCodegen::emit_headers() {
   /*
   for (int root = 0; root < compiled_structs_.size(); ++root) {

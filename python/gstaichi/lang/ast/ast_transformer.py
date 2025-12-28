@@ -471,7 +471,8 @@ class ASTTransformer(Builder):
             else:  # For ti.func, emit break to exit the while-true wrapper
                 if ctx.ast_builder is not None:
                     # The function body is wrapped in while-true, so break exits it
-                    ctx.ast_builder.insert_break_stmt(_ti_core.DebugInfo(ctx.get_pos_info(node)))
+                    # Use function_break with loop_depth to handle nested loops
+                    ctx.ast_builder.insert_function_break_stmt(ctx.loop_depth, _ti_core.DebugInfo(ctx.get_pos_info(node)))
             return None
         if ctx.is_kernel or ctx.is_real_function:
             # TODO: check if it's at the end of a kernel, throw GsTaichiSyntaxError if not
