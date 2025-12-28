@@ -168,34 +168,29 @@ int64_t *calc_strides(int64_t *shape, int full_ndim) {
 }
 
 bool check_torch_version_lte(int major, int minor, int patch) {
-  try {
-    pybind11::module_ torch = pybind11::module_::import("torch");
-    std::string version = torch.attr("__version__").cast<std::string>();
+  pybind11::module_ torch = pybind11::module_::import("torch");
+  std::string version = torch.attr("__version__").cast<std::string>();
 
-    // Parse version string (e.g., "2.9.1" or "2.9.1+cu118")
-    int vmajor = 0, vminor = 0, vpatch = 0;
-    sscanf(version.c_str(), "%d.%d.%d", &vmajor, &vminor, &vpatch);
+  // Parse version string (e.g., "2.9.1" or "2.9.1+cu118")
+  int vmajor = 0, vminor = 0, vpatch = 0;
+  sscanf(version.c_str(), "%d.%d.%d", &vmajor, &vminor, &vpatch);
 
-    if (vmajor < major)
-      return true;
-    if (vmajor > major)
-      return false;
-    if (vminor < minor)
-      return true;
-    if (vminor > minor)
-      return false;
-    return vpatch <= patch;
-  } catch (...) {
-    // torch not available, skip check
+  if (vmajor < major)
+    return true;
+  if (vmajor > major)
     return false;
-  }
+  if (vminor < minor)
+    return true;
+  if (vminor > minor)
+    return false;
+  return vpatch <= patch;
 }
 
-bool is_torch_version_lte(int major, int minor, int patch) {
+bool is_torch_version_ok() {
   static bool checked = false;
   static bool result = false;
   if (!checked) {
-    result = check_torch_version_lte(major, minor, patch);
+    result = !check_torch_version_lte(2, 9, 1);
     checked = true;
   }
   return result;
@@ -224,7 +219,7 @@ pybind11::capsule field_to_dlpack(Program *program,
 
   int field_in_tree_offset = program->get_field_in_tree_offset(tree_id, snode);
   if (arch_is_metal(arch) && field_in_tree_offset != 0 &&
-      is_torch_version_lte(2, 9, 1)) {
+      !is_torch_version_ok()) {
     TI_ERROR(
         "DLPack conversion with fields is not supported on Metal "
         "with PyTorch <= 2.9.1.");
