@@ -9,43 +9,43 @@
 
 namespace gstaichi::lang {
 
-// Convert unstructured continues (function returns through nested loops)
+// Convert unstructured continues and breaks (function returns through nested loops)
 // into structured control flow using flag variables for SPIRV compatibility
 //
 // Background:
 // - When a ti.func contains a return statement inside a nested loop, and that
-//   function is called from within a kernel loop, the return needs to continue
-//   the kernel loop (not the inner function loop)
-// - After inlining, this becomes a ContinueStmt with scope pointing to the
-//   kernel/offload loop, but physically inside a nested loop
-// - SPIRV does not support jumping out of nested loops with a single continue
+//   function is called from within a kernel loop, the return needs to continue/break
+//   the outer loop (not the inner function loop)
+// - After inlining, this becomes a ContinueStmt/BreakStmt with scope pointing to the
+//   outer loop, but physically inside a nested inner loop
+// - SPIRV does not support jumping out of nested loops with a single continue/break
 //
 // Solution:
-// - Replace: continue(outer_loop) inside inner_loop
-// - With: flag=true; continue(inner_loop); then after inner_loop: if(flag)
-// continue(outer_loop)
+// - Replace: continue/break(outer_loop) inside inner_loop
+// - With: flag=true; continue/break(inner_loop); then after inner_loop: if(flag)
+// continue/break(outer_loop)
 //
-// Example transformation:
-//   for b in range(4):           // outer (offload) loop
-//     for j in range(3):         // inner loop
+// Example transformation for break:
+//   while-true {              // outer (function wrapper)
+//     for j in range(3):      // inner loop
 //       if cond:
 //         do_stuff()
-//         continue(outer)        // <- Problem: can't jump out of nested loop
-//         in SPIRV
+//         break(while-true)   // <- Problem: can't jump out of nested loop in SPIRV
 //     more_stuff()
+//   }
 //
 // Becomes:
 //   flag = false
-//   for b in range(4):
-//     flag = false              // reset for each outer iteration
+//   while-true {
 //     for j in range(3):
 //       if cond:
 //         do_stuff()
 //         flag = true
-//         continue(inner)       // <- break out of inner loop
+//         break(for-j)        // <- break out of inner loop
 //     if flag:
-//       continue(outer)         // <- now continue outer loop
-//     more_stuff()              // <- skipped when flag is true
+//       break(while-true)     // <- now break outer loop
+//     more_stuff()            // <- skipped when flag is true
+//   }
 class StructureContinues {
  public:
   static bool run(IRNode *root) {
@@ -137,11 +137,37 @@ class StructureContinues {
           return false;
         });
 
-    TI_INFO(
-        "[structure_continues] Found {} continues to restructure in offload",
-        continues.size());
+    // Find all breaks that need restructuring (targeting outer loops from inside inner loops)
+    auto breaks = irpass::analysis::gather_statements(
+        offload->body.get(), [](Stmt *s) {
+          auto *brk = s->cast<BreakStmt>();
+          if (!brk || !brk->scope) {
+            return false;
+          }
 
-    if (continues.empty()) {
+          TI_INFO("[structure_continues]   Found break: scope={}", 
+                  (void *)brk->scope);
+
+          // Check if this break targets an outer loop while being inside an inner loop
+          auto *inner_loop = find_innermost_loop(brk);
+          if (inner_loop && inner_loop != brk->scope) {
+            // The break is inside inner_loop but targets brk->scope (an outer loop)
+            TI_INFO(
+                "[structure_continues]     inner_loop={}, targets outer scope",
+                (void *)inner_loop);
+            TI_INFO(
+                "[structure_continues]     -> This break needs restructuring!");
+            return true;
+          }
+
+          return false;
+        });
+
+    TI_INFO(
+        "[structure_continues] Found {} continues and {} breaks to restructure in offload",
+        continues.size(), breaks.size());
+
+    if (continues.empty() && breaks.empty()) {
       return false;
     }
 
@@ -151,6 +177,15 @@ class StructureContinues {
       auto *inner_loop = find_innermost_loop(cont_stmt);
       if (inner_loop) {
         loop_to_continues[inner_loop].push_back(cont_stmt);
+      }
+    }
+
+    // Group breaks by their innermost loop
+    std::unordered_map<Stmt *, std::vector<Stmt *>> loop_to_breaks;
+    for (auto *brk_stmt : breaks) {
+      auto *inner_loop = find_innermost_loop(brk_stmt);
+      if (inner_loop) {
+        loop_to_breaks[inner_loop].push_back(brk_stmt);
       }
     }
 
@@ -169,12 +204,36 @@ class StructureContinues {
       auto false_const = Stmt::make<ConstStmt>(TypedConstant(false));
       auto *false_ptr = false_const.get();
       offload->body->insert(std::move(false_const), 1);
-      offload->body->insert(Stmt::make<LocalStoreStmt>(flag_var, false_ptr), 2);
+      offload->body->insert(
+          Stmt::make<LocalStoreStmt>(flag_var, false_ptr), 2);
 
       // Transform each continue in this loop
       for (auto *cont_stmt : loop_continues) {
         transform_continue(cont_stmt->as<ContinueStmt>(), flag_var, inner_loop,
-                           offload);
+                          offload);
+      }
+
+      // Remember to add flag check after this loop
+      loops_and_flags.push_back({inner_loop, flag_var});
+    }
+
+    // Process each loop that has breaks
+    for (auto &[inner_loop, loop_breaks] : loop_to_breaks) {
+      // Create flag variable for this loop
+      auto flag_alloca = Stmt::make<AllocaStmt>(PrimitiveType::u1);
+      auto *flag_var = flag_alloca.get();
+      offload->body->insert(std::move(flag_alloca), 0);
+
+      // Initialize flag to false
+      auto false_const = Stmt::make<ConstStmt>(TypedConstant(false));
+      auto *false_ptr = false_const.get();
+      offload->body->insert(std::move(false_const), 1);
+      offload->body->insert(
+          Stmt::make<LocalStoreStmt>(flag_var, false_ptr), 2);
+
+      // Transform each break in this loop
+      for (auto *brk_stmt : loop_breaks) {
+        transform_break(brk_stmt->as<BreakStmt>(), flag_var, inner_loop);
       }
 
       // Remember to add flag check after this loop
@@ -182,9 +241,29 @@ class StructureContinues {
     }
 
     // Add flag checks after loops (in reverse order to avoid index issues)
+    // For continues: add checks in offload body to continue the offload loop
+    // For breaks: add checks in the parent block to break the outer loop
     for (auto it = loops_and_flags.rbegin(); it != loops_and_flags.rend();
          ++it) {
-      add_flag_check_after_loop(it->first, it->second, offload);
+      auto *inner_loop = it->first;
+      auto *flag_var = it->second;
+      
+      // Check if this is from a break or continue by looking at what was transformed
+      // For now, assume all in this list are from continues (targeting offload)
+      bool is_from_continue = false;
+      for (auto *cont_stmt : continues) {
+        if (find_innermost_loop(cont_stmt) == inner_loop) {
+          is_from_continue = true;
+          break;
+        }
+      }
+      
+      if (is_from_continue) {
+        add_flag_check_after_loop(inner_loop, flag_var, offload);
+      } else {
+        // For breaks, add flag check in the parent block
+        add_flag_check_for_break(inner_loop, flag_var);
+      }
     }
 
     return true;
@@ -217,6 +296,34 @@ class StructureContinues {
     replacement.push_back(std::move(inner_continue));
 
     parent_block->replace_with(cont, std::move(replacement));
+  }
+
+  static void transform_break(BreakStmt *brk,
+                              Stmt *flag_var,
+                              Stmt *inner_loop) {
+    // Strategy: Replace the break with structured control flow
+    // 1. Set flag = true
+    // 2. Break out of the inner loop
+
+    auto *parent_block = brk->parent;
+
+    TI_INFO("Transforming break: inner_loop={}, outer_scope={}",
+            (void *)inner_loop, (void *)brk->scope);
+
+    VecStatement replacement;
+
+    // Set flag = true
+    auto true_const = Stmt::make<ConstStmt>(TypedConstant(true));
+    auto *true_ptr = true_const.get();
+    replacement.push_back(std::move(true_const));
+    replacement.push_back(Stmt::make<LocalStoreStmt>(flag_var, true_ptr));
+
+    // Create a break that breaks out of the inner loop
+    auto inner_break = Stmt::make<BreakStmt>();
+    inner_break->as<BreakStmt>()->scope = inner_loop;
+    replacement.push_back(std::move(inner_break));
+
+    parent_block->replace_with(brk, std::move(replacement));
   }
 
   static void add_flag_check_after_loop(Stmt *loop,
@@ -267,6 +374,62 @@ class StructureContinues {
         break;
       }
     }
+  }
+
+  static void add_flag_check_for_break(Stmt *inner_loop, Stmt *flag_var) {
+    // For breaks, we need to add the flag check in the parent block
+    // (e.g., the while-true wrapper) right after the inner loop
+
+    // Find the parent block (should be the while-true or other outer loop's body)
+    auto *parent_block = inner_loop->parent;
+    if (!parent_block) {
+      TI_WARN("Cannot find parent block for inner_loop");
+      return;
+    }
+
+    // Find the position of inner_loop in the parent block
+    auto &stmts = parent_block->statements;
+    size_t loop_pos = 0;
+    bool found = false;
+    for (size_t i = 0; i < stmts.size(); i++) {
+      if (stmts[i].get() == inner_loop) {
+        loop_pos = i;
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      TI_WARN("Cannot find inner_loop in parent block");
+      return;
+    }
+
+    TI_INFO("Adding flag check after inner loop at position {} in parent block", 
+            loop_pos);
+
+    // Create flag check: if (flag) { break(outer_loop) }
+    auto flag_load = Stmt::make<LocalLoadStmt>(flag_var);
+    auto *flag_val = flag_load.get();
+
+    // The break should target the parent loop (e.g., while-true)
+    // We need to find what the original break was targeting
+    // For now, create a break targeting the parent's parent loop
+    auto *outer_loop = parent_block->parent_stmt();
+    auto outer_break = Stmt::make<BreakStmt>();
+    if (outer_loop) {
+      outer_break->as<BreakStmt>()->scope = outer_loop;
+    }
+
+    auto if_stmt = Stmt::make<IfStmt>(flag_val);
+    auto if_body_block = std::make_unique<Block>();
+    if_body_block->insert(std::move(outer_break), 0);
+    if_stmt->as<IfStmt>()->set_true_statements(std::move(if_body_block));
+
+    // Insert after the loop
+    parent_block->insert(std::move(if_stmt), loop_pos + 1);
+    parent_block->insert(std::move(flag_load), loop_pos + 1);
+
+    TI_INFO("Inserted flag check after inner loop");
   }
 
   static bool contains_stmt(Stmt *haystack, Stmt *needle) {
