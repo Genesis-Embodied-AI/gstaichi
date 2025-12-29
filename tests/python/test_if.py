@@ -263,11 +263,13 @@ def test_func_if_return_void_false_branch(in_val: int, expected: int):
     @ti.kernel
     def k1(a: ti.types.NDArray) -> None:
         f1(a)
+        a[2] = 5
 
     a = ti.ndarray(ti.i32, (10,))
     a[0] = in_val
     k1(a)
     assert a[1] == expected
+    assert a[2] == 5
 
 
 @pytest.mark.parametrize(
@@ -292,11 +294,13 @@ def test_func_if_return_void_both_branches(in_val: int, expected: int):
     @ti.kernel
     def k1(a: ti.types.NDArray) -> None:
         f1(a)
+        a[2] = 5
 
     a = ti.ndarray(ti.i32, (10,))
     a[0] = in_val
     k1(a)
     assert a[1] == expected
+    assert a[2] == 5
 
 
 # Function tests - value return
@@ -461,11 +465,13 @@ def test_func_multiple_ifs_return_void(in_val: int, expected: int):
     @ti.kernel
     def k1(a: ti.types.NDArray) -> None:
         f1(a)
+        a[2] = 5
 
     a = ti.ndarray(ti.i32, (10,))
     a[0] = in_val
     k1(a)
     assert a[1] == expected
+    assert a[2] == 5
 
 
 @pytest.mark.parametrize(
