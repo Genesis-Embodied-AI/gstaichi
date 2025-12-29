@@ -541,6 +541,9 @@ bool structure_function_return_breaks(IRNode *root) {
       continue;
     }
     
+    // IMPORTANT: Save the original scope BEFORE we replace the break statement
+    auto *orig_scope = brk->as<BreakStmt>()->scope;
+    
     // Create a flag variable before the inner loop
     auto *inner_loop_parent = inner_loop->parent;
     size_t loop_pos = 0;
@@ -589,8 +592,7 @@ bool structure_function_return_breaks(IRNode *root) {
     auto *flag_val = inner_loop_parent->statements[loop_pos + 1].get();
     
     auto outer_break = Stmt::make<BreakStmt>();
-    auto *orig_scope = static_cast<BreakStmt*>(brk)->scope;  // Save original scope before brk is deleted
-    outer_break->as<BreakStmt>()->scope = orig_scope;
+    outer_break->as<BreakStmt>()->scope = orig_scope;  // Use saved scope
     
     auto if_stmt = Stmt::make<IfStmt>(flag_val);
     auto if_body = std::make_unique<Block>();

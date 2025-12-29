@@ -95,15 +95,20 @@ class Func(FuncBase):
 
         tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
         
-        # For inlined functions, wrap in a while-true loop so breaks (from returns) work
+        # For inlined void functions, wrap in a while-true loop so breaks (from returns) work
+        # Functions with return values use the normal return mechanism
         dbg_info = _ti_core.DebugInfo(impl.get_runtime().get_current_src_info())
-        ctx.ast_builder.begin_frontend_while(Expr(1, dtype=primitive_types.i32).ptr, dbg_info)
+        needs_while_wrapper = not self.is_real_function and self.return_type is None
+        
+        if needs_while_wrapper:
+            ctx.ast_builder.begin_frontend_while(Expr(1, dtype=primitive_types.i32).ptr, dbg_info)
         
         ret = transform_tree(tree, ctx)
         
-        # Insert break at end of function to exit the while-true wrapper
-        ctx.ast_builder.insert_break_stmt(dbg_info)
-        ctx.ast_builder.pop_scope()  # End while
+        if needs_while_wrapper:
+            # Insert break at end of function to exit the while-true wrapper
+            ctx.ast_builder.insert_break_stmt(dbg_info)
+            ctx.ast_builder.pop_scope()  # End while
         
         self.current_kernel = None
         if not self.is_real_function:
