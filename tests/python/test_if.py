@@ -890,6 +890,7 @@ def test_if_func_inner_loop_return_void() -> None:
     def k1(a: ti.types.NDArray) -> None:
         for b in range(N):
             f1(a, b)
+        a[9] = 11
 
     a = ti.ndarray(ti.i32, (10,))
     for i in range(2):
@@ -905,3 +906,4 @@ def test_if_func_inner_loop_return_void() -> None:
         for j in range(N):
             assert a[1 + j] == expected
             print("res i", i, f"a[{1 + j}]", a[1 + j])
+        assert a[9] == 11
