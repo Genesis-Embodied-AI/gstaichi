@@ -706,14 +706,18 @@ class AssociateContinueScope : public BasicStmtVisitor {
   void visit(WhileStmt *stmt) override {
     auto *old_loop = cur_internal_loop_;
     cur_internal_loop_ = stmt;
+    internal_loop_stack_.push_back(stmt);
     Parent::visit(stmt);
+    internal_loop_stack_.pop_back();
     cur_internal_loop_ = old_loop;
   }
 
   void visit(RangeForStmt *stmt) override {
     auto *old_loop = cur_internal_loop_;
     cur_internal_loop_ = stmt;
+    internal_loop_stack_.push_back(stmt);
     Parent::visit(stmt);
+    internal_loop_stack_.pop_back();
     cur_internal_loop_ = old_loop;
   }
 
@@ -769,23 +773,25 @@ class AssociateContinueScope : public BasicStmtVisitor {
   void visit(BreakStmt *stmt) override {
     if (stmt->scope == nullptr) {
       if (stmt->from_function_return) {
-        // For breaks from function returns: use levels_up to determine target
-        // levels_up=1: just exit function, target current loop
-        // levels_up=2+: exit function + skip inner loops, target outer loop
-        if (stmt->levels_up == 1 && cur_internal_loop_ != nullptr) {
-          // Simple case: no inner loops in function, target current loop
-          stmt->scope = cur_internal_loop_;
-          modified_ = true;
-        } else if (cur_offloaded_stmt_ != nullptr &&
-                   (cur_offloaded_stmt_->task_type ==
-                        OffloadedStmt::TaskType::range_for ||
-                    cur_offloaded_stmt_->task_type ==
-                        OffloadedStmt::TaskType::struct_for)) {
-          // Complex case: inner loops in function, target offloaded loop
-          stmt->scope = cur_offloaded_stmt_;
-          modified_ = true;
+        // For breaks from function returns: use levels_up to find target loop
+        // levels_up indicates how many loop levels to break out of
+        if (!internal_loop_stack_.empty()) {
+          int target_index = (int)internal_loop_stack_.size() - stmt->levels_up;
+          if (target_index >= 0) {
+            // Target a specific loop in the stack
+            stmt->scope = internal_loop_stack_[target_index];
+            modified_ = true;
+          } else if (cur_offloaded_stmt_ != nullptr &&
+                     (cur_offloaded_stmt_->task_type ==
+                          OffloadedStmt::TaskType::range_for ||
+                      cur_offloaded_stmt_->task_type ==
+                          OffloadedStmt::TaskType::struct_for)) {
+            // levels_up exceeds internal loops, target offloaded loop
+            stmt->scope = cur_offloaded_stmt_;
+            modified_ = true;
+          }
         }
-        // else: no loop to break, will be converted to ReturnStmt
+        // else: no loop to break
       } else if (cur_internal_loop_ != nullptr) {
         stmt->scope = cur_internal_loop_;
         modified_ = true;
@@ -826,6 +832,7 @@ class AssociateContinueScope : public BasicStmtVisitor {
   bool modified_;
   OffloadedStmt *cur_offloaded_stmt_;
   Stmt *cur_internal_loop_;
+  std::vector<Stmt *> internal_loop_stack_;
 };
 
 }  // namespace
