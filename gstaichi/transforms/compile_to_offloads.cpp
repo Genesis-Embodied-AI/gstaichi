@@ -65,6 +65,15 @@ void compile_to_offloads(IRNode *ir,
   if (start_from_ast) {
     irpass::frontend_type_check(ir);
     irpass::lower_ast(ir);
+    // Associate continue/break scopes immediately after lowering AST
+    // This must happen before any simplification passes that might eliminate
+    // breaks/continues based on incorrect scope information
+    irpass::associate_continue_scope(ir, config);
+    print("Associated continue scope");
+    // Structure breaks from function returns before simplification
+    // This prevents CFG optimization from incorrectly eliminating them
+    irpass::structure_function_return_breaks(ir);
+    print("Structured function-return breaks");
   }
 
   dump_ir("gstaichi1");
@@ -253,11 +262,11 @@ void offload_to_executable(IRNode *ir,
     print("Demote mesh statements");
   }
 
-  // Structure continues for SPIRV-based backends (Metal, Vulkan)
-  if (arch_uses_spirv(config.arch)) {
-    irpass::structure_continues(ir, config);
-    print("Structure continues");
-  }
+  // Structure continues/breaks for SPIRV-based backends (Metal, Vulkan)
+  // Also run for all backends to handle function returns that become breaks
+  // targeting outer loops from inside inner loops
+  irpass::structure_continues(ir, config);
+  print("Structure continues/breaks");
 
   irpass::demote_atomics(ir, config);
   print("Atomics demoted II");

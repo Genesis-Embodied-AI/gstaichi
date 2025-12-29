@@ -117,6 +117,7 @@ bool determine_ad_stack_size(IRNode *root, const CompileConfig &config);
 bool constant_fold(IRNode *root);
 void associate_continue_scope(IRNode *root, const CompileConfig &config);
 bool structure_continues(IRNode *root, const CompileConfig &config);
+bool structure_function_return_breaks(IRNode *root);
 void offload(IRNode *root, const CompileConfig &config);
 bool transform_statements(
     IRNode *root,

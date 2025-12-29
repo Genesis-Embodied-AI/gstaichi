@@ -771,15 +771,21 @@ class AssociateContinueScope : public BasicStmtVisitor {
   }
 
   void visit(BreakStmt *stmt) override {
+    TI_INFO("[AssociateContinueScope] Visiting BreakStmt: scope={}, from_function_return={}, levels_up={}",
+            (void*)stmt->scope, stmt->from_function_return, stmt->levels_up);
+    TI_INFO("[AssociateContinueScope]   internal_loop_stack_.size()={}", internal_loop_stack_.size());
     if (stmt->scope == nullptr) {
       if (stmt->from_function_return) {
         // For breaks from function returns: use levels_up to find target loop
         // levels_up indicates how many loop levels to break out of
         if (!internal_loop_stack_.empty()) {
           int target_index = (int)internal_loop_stack_.size() - stmt->levels_up;
+          TI_INFO("[AssociateContinueScope]   target_index={}", target_index);
           if (target_index >= 0) {
             // Target a specific loop in the stack
             stmt->scope = internal_loop_stack_[target_index];
+            TI_INFO("[AssociateContinueScope]   -> Set scope to loop at index {}: {}", 
+                    target_index, (void*)stmt->scope);
             modified_ = true;
           } else if (cur_offloaded_stmt_ != nullptr &&
                      (cur_offloaded_stmt_->task_type ==
@@ -788,15 +794,18 @@ class AssociateContinueScope : public BasicStmtVisitor {
                           OffloadedStmt::TaskType::struct_for)) {
             // levels_up exceeds internal loops, target offloaded loop
             stmt->scope = cur_offloaded_stmt_;
+            TI_INFO("[AssociateContinueScope]   -> Set scope to offloaded: {}", (void*)stmt->scope);
             modified_ = true;
           }
         }
         // else: no loop to break
       } else if (cur_internal_loop_ != nullptr) {
         stmt->scope = cur_internal_loop_;
+        TI_INFO("[AssociateContinueScope]   -> Set scope to cur_internal_loop: {}", (void*)stmt->scope);
         modified_ = true;
       } else {
         stmt->scope = cur_offloaded_stmt_;
+        TI_INFO("[AssociateContinueScope]   -> Set scope to offloaded: {}", (void*)stmt->scope);
         modified_ = true;
       }
     }
@@ -856,7 +865,9 @@ void offload(IRNode *root, const CompileConfig &config) {
                                    stmt_to_offloaded, &offloaded_ranges);
   }
   insert_gc(root, config);
-  associate_continue_scope(root, config);
+  // Note: associate_continue_scope now runs earlier in the compilation pipeline
+  // (right after lower_ast in compile_to_offloads.cpp) to ensure break/continue
+  // scopes are set before any simplification passes
 }
 
 }  // namespace irpass

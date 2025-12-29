@@ -475,6 +475,138 @@ bool structure_continues(IRNode *root, const CompileConfig &config) {
   return StructureContinues::run(root);
 }
 
+// Simpler pass for non-offloaded IR: structure breaks from function returns
+// that target outer loops from inside inner loops. This must run BEFORE
+// simplification to prevent CFG optimization from incorrectly eliminating them.
+bool structure_function_return_breaks(IRNode *root) {
+  TI_AUTO_PROF;
+  TI_INFO("[structure_function_return_breaks] Starting");
+  
+  bool modified = false;
+  
+  // Find all breaks with from_function_return==true that target non-immediate parent loops
+  auto breaks = irpass::analysis::gather_statements(root, [](Stmt *s) {
+    auto *brk = s->cast<BreakStmt>();
+    if (!brk || !brk->from_function_return || !brk->scope) {
+      return false;
+    }
+    
+    // Find the innermost loop containing this break
+    Block *current = brk->parent;
+    Stmt *innermost_loop = nullptr;
+    while (current != nullptr) {
+      auto *parent_stmt = current->parent_stmt();
+      if (parent_stmt && (parent_stmt->is<RangeForStmt>() || 
+                         parent_stmt->is<WhileStmt>())) {
+        innermost_loop = parent_stmt;
+        break;
+      }
+      if (parent_stmt) {
+        current = parent_stmt->parent;
+      } else {
+        break;
+      }
+    }
+    
+    // If the break targets a loop that's not the innermost, it needs restructuring
+    if (innermost_loop && innermost_loop != brk->scope) {
+      TI_INFO("[structure_function_return_breaks] Found break targeting outer loop");
+      return true;
+    }
+    
+    return false;
+  });
+  
+  TI_INFO("[structure_function_return_breaks] Found {} breaks to restructure", breaks.size());
+  
+  for (auto *brk : breaks) {
+    // Find the innermost loop
+    Block *current = brk->parent;
+    Stmt *inner_loop = nullptr;
+    while (current != nullptr) {
+      auto *parent_stmt = current->parent_stmt();
+      if (parent_stmt && (parent_stmt->is<RangeForStmt>() || 
+                         parent_stmt->is<WhileStmt>())) {
+        inner_loop = parent_stmt;
+        break;
+      }
+      if (parent_stmt) {
+        current = parent_stmt->parent;
+      } else {
+        break;
+      }
+    }
+    
+    if (!inner_loop) {
+      continue;
+    }
+    
+    // Create a flag variable before the inner loop
+    auto *inner_loop_parent = inner_loop->parent;
+    size_t loop_pos = 0;
+    for (size_t i = 0; i < inner_loop_parent->statements.size(); i++) {
+      if (inner_loop_parent->statements[i].get() == inner_loop) {
+        loop_pos = i;
+        break;
+      }
+    }
+    
+    // Create flag variable
+    auto flag_var = Stmt::make<AllocaStmt>(PrimitiveType::u1);
+    inner_loop_parent->insert(std::move(flag_var), loop_pos);
+    auto *flag_ptr = inner_loop_parent->statements[loop_pos].get();
+    loop_pos++; // Adjust for inserted statement
+    
+    // Initialize flag to false
+    auto false_const = Stmt::make<ConstStmt>(TypedConstant(false));
+    inner_loop_parent->insert(std::move(false_const), loop_pos);
+    auto *false_ptr = inner_loop_parent->statements[loop_pos].get();
+    loop_pos++;
+    
+    auto init_store = Stmt::make<LocalStoreStmt>(flag_ptr, false_ptr);
+    inner_loop_parent->insert(std::move(init_store), loop_pos);
+    loop_pos++;
+    
+    // Replace the break with: flag=true; break(inner_loop)
+    auto *brk_parent = brk->parent;
+    VecStatement replacement;
+    
+    auto true_const = Stmt::make<ConstStmt>(TypedConstant(true));
+    replacement.push_back(std::move(true_const));
+    auto *true_ptr = replacement.back().get();
+    
+    replacement.push_back(Stmt::make<LocalStoreStmt>(flag_ptr, true_ptr));
+    
+    auto inner_break = Stmt::make<BreakStmt>();
+    inner_break->as<BreakStmt>()->scope = inner_loop;
+    replacement.push_back(std::move(inner_break));
+    
+    brk_parent->replace_with(brk, std::move(replacement));
+    
+    // Add flag check after the inner loop: if (flag) break(outer_loop)
+    auto flag_load = Stmt::make<LocalLoadStmt>(flag_ptr);
+    inner_loop_parent->insert(std::move(flag_load), loop_pos + 1);
+    auto *flag_val = inner_loop_parent->statements[loop_pos + 1].get();
+    
+    auto outer_break = Stmt::make<BreakStmt>();
+    auto *orig_scope = static_cast<BreakStmt*>(brk)->scope;  // Save original scope before brk is deleted
+    outer_break->as<BreakStmt>()->scope = orig_scope;
+    
+    auto if_stmt = Stmt::make<IfStmt>(flag_val);
+    auto if_body = std::make_unique<Block>();
+    if_body->insert(std::move(outer_break), 0);
+    if_stmt->as<IfStmt>()->set_true_statements(std::move(if_body));
+    
+    inner_loop_parent->insert(std::move(if_stmt), loop_pos + 2);
+    
+    modified = true;
+    TI_INFO("[structure_function_return_breaks] Restructured break");
+  }
+  
+  TI_INFO("[structure_function_return_breaks] Modified: {}", modified);
+  return modified;
+}
+
 }  // namespace irpass
 
 }  // namespace gstaichi::lang
