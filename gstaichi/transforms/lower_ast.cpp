@@ -146,6 +146,8 @@ class LowerAST : public IRVisitor {
   }
 
   void visit(FrontendBreakStmt *stmt) override {
+    TI_INFO("[DIAGNOSTIC] Visiting FrontendBreakStmt: from_function_return={}, function_loop_depth={}", 
+            stmt->from_function_return, stmt->function_loop_depth);
     // Check if this is a function return (generalized break)
     if (stmt->from_function_return && stmt->function_loop_depth > 0) {
       // This is a break from a function return with nested loops
@@ -158,15 +160,21 @@ class LowerAST : public IRVisitor {
     } else {
       // Regular break or function return with no nested loops
       // Use while control to break the while-true loop
+      TI_INFO("[DIAGNOSTIC] Converting to WhileControlStmt, capturing_loop_={}", (void*)capturing_loop_);
+      if (!capturing_loop_) {
+        TI_ERROR("[DIAGNOSTIC] FrontendBreakStmt encountered but capturing_loop_ is null! This should not happen.");
+      }
       auto while_stmt = capturing_loop_->as<WhileStmt>();
       VecStatement stmts;
       auto const_true = stmts.push_back<ConstStmt>(TypedConstant((int32)0));
       stmts.push_back<WhileControlStmt>(while_stmt->mask, const_true);
       stmt->parent->replace_with(stmt, std::move(stmts));
     }
+    TI_INFO("[DIAGNOSTIC] Completed visiting FrontendBreakStmt");
   }
 
   void visit(FrontendContinueStmt *stmt) override {
+    TI_INFO("[DIAGNOSTIC] Visiting FrontendContinueStmt: function_loop_depth={}", stmt->function_loop_depth);
     // For now, treat all as continues - the scope resolution will handle it
     auto cont = Stmt::make<ContinueStmt>();
     auto *cont_ptr = static_cast<ContinueStmt *>(cont.get());
@@ -177,6 +185,7 @@ class LowerAST : public IRVisitor {
     }
 
     stmt->parent->replace_with(stmt, std::move(cont));
+    TI_INFO("[DIAGNOSTIC] Completed visiting FrontendContinueStmt");
   }
 
   void visit(FrontendWhileStmt *stmt) override {
@@ -557,8 +566,13 @@ class LowerAST : public IRVisitor {
   }
 
   static void run(IRNode *node) {
-    LowerAST inst(irpass::analysis::detect_fors_with_break(node));
+    TI_INFO("[DIAGNOSTIC LowerAST::run] Starting detect_fors_with_break");
+    auto detected = irpass::analysis::detect_fors_with_break(node);
+    TI_INFO("[DIAGNOSTIC LowerAST::run] Completed detect_fors_with_break, found {} fors", detected.size());
+    LowerAST inst(detected);
+    TI_INFO("[DIAGNOSTIC LowerAST::run] Starting node->accept");
     node->accept(&inst);
+    TI_INFO("[DIAGNOSTIC LowerAST::run] Completed node->accept");
   }
 };
 
@@ -566,7 +580,9 @@ namespace irpass {
 
 void lower_ast(IRNode *root) {
   TI_AUTO_PROF;
+  TI_INFO("[DIAGNOSTIC lower_ast] Starting LowerAST::run");
   LowerAST::run(root);
+  TI_INFO("[DIAGNOSTIC lower_ast] Completed LowerAST::run");
 }
 
 }  // namespace irpass

@@ -852,9 +852,13 @@ class AssociateContinueScope : public BasicStmtVisitor {
 
 }  // namespace
 void associate_continue_scope(IRNode *root, const CompileConfig &config) {
+  TI_INFO("[DIAGNOSTIC associate_continue_scope] Starting");
   AssociateContinueScope::run(root);
+  TI_INFO("[DIAGNOSTIC associate_continue_scope] Completed AssociateContinueScope::run");
   type_check(root, config);
+  TI_INFO("[DIAGNOSTIC associate_continue_scope] Completed type_check");
   re_id(root);
+  TI_INFO("[DIAGNOSTIC associate_continue_scope] Completed re_id");
 }
 
 void offload(IRNode *root, const CompileConfig &config) {

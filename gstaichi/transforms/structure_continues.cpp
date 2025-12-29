@@ -520,8 +520,19 @@ bool structure_function_return_breaks(IRNode *root) {
   TI_INFO("[structure_function_return_breaks] Found {} breaks to restructure", breaks.size());
   
   for (auto *brk : breaks) {
+    // Validate the break statement is still valid (not erased)
+    if (!brk || brk->erased) {
+      TI_INFO("[structure_function_return_breaks] Skipping erased break");
+      continue;
+    }
+    
     // Find the innermost loop
     Block *current = brk->parent;
+    if (!current) {
+      TI_INFO("[structure_function_return_breaks] Skipping break with null parent");
+      continue;
+    }
+    
     Stmt *inner_loop = nullptr;
     while (current != nullptr) {
       auto *parent_stmt = current->parent_stmt();

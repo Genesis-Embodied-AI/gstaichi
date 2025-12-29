@@ -98,7 +98,14 @@ class Func(FuncBase):
         # For inlined void functions, wrap in a while-true loop so breaks (from returns) work
         # Functions with return values use the normal return mechanism
         dbg_info = _ti_core.DebugInfo(impl.get_runtime().get_current_src_info())
-        needs_while_wrapper = not self.is_real_function and self.return_type is None
+        # Only wrap in while-true if:
+        # 1. Not a real function (is inlined)
+        # 2. Explicitly annotated as void (return_type is explicitly None)
+        # For unannotated functions, we can't know until after compilation if they have returns
+        needs_while_wrapper = not self.is_real_function and self.return_type is not None and len(self.return_type) == 0
+        
+        import sys
+        print(f"[DIAGNOSTIC func.py] Function compilation: is_real={self.is_real_function}, return_type={self.return_type}, needs_while_wrapper={needs_while_wrapper}", file=sys.stderr)
         
         if needs_while_wrapper:
             ctx.ast_builder.begin_frontend_while(Expr(1, dtype=primitive_types.i32).ptr, dbg_info)

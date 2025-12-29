@@ -468,8 +468,9 @@ class ASTTransformer(Builder):
                     ctx.ast_builder.create_kernel_exprgroup_return(
                         expr.make_expr_group([]), _ti_core.DebugInfo(ctx.get_pos_info(node))
                     )
-            else:  # For ti.func, emit break to exit the while-true wrapper
-                if ctx.ast_builder is not None:
+            elif not ctx.is_real_function:  # For ti.func void returns, emit break to exit the while-true wrapper
+                # Only emit break if function has no return type (void function wrapped in while-true)
+                if ctx.func.return_type is None and ctx.ast_builder is not None:
                     # The function body is wrapped in while-true
                     # Use function_break with loop_depth to handle nested loops
                     ctx.ast_builder.insert_function_break_stmt(ctx.loop_depth, _ti_core.DebugInfo(ctx.get_pos_info(node)))
