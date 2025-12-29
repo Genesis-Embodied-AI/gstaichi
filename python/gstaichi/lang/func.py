@@ -98,11 +98,16 @@ class Func(FuncBase):
         # For inlined void functions, wrap in a while-true loop so breaks (from returns) work
         # Functions with return values use the normal return mechanism
         dbg_info = _ti_core.DebugInfo(impl.get_runtime().get_current_src_info())
-        # Only wrap in while-true if:
+        # Wrap in while-true if:
         # 1. Not a real function (is inlined)
-        # 2. Explicitly annotated as void (return_type is explicitly None)
-        # For unannotated functions, we can't know until after compilation if they have returns
-        needs_while_wrapper = not self.is_real_function and self.return_type is not None and len(self.return_type) == 0
+        # 2. Either has no return type annotation (None) OR explicitly void (empty tuple)
+        # We'll verify later if it actually returned a value
+        is_potentially_void = (
+            self.return_type is None or 
+            (len(self.return_type) == 0) or 
+            (len(self.return_type) == 1 and self.return_type[0] is None)
+        )
+        needs_while_wrapper = not self.is_real_function and is_potentially_void
         
         import sys
         print(f"[DIAGNOSTIC func.py] Function compilation: is_real={self.is_real_function}, return_type={self.return_type}, needs_while_wrapper={needs_while_wrapper}", file=sys.stderr)
@@ -113,8 +118,12 @@ class Func(FuncBase):
         ret = transform_tree(tree, ctx)
         
         if needs_while_wrapper:
-            # Insert break at end of function to exit the while-true wrapper
-            ctx.ast_builder.insert_break_stmt(dbg_info)
+            # Only insert break if function didn't return a value
+            # If ctx.returned == ReturnedValue, the function has a return statement with a value
+            # so we shouldn't insert a break (the while-true wrapper was unnecessary but harmless)
+            if ctx.returned != ReturnStatus.ReturnedValue:
+                # Insert break at end of function to exit the while-true wrapper
+                ctx.ast_builder.insert_break_stmt(dbg_info)
             ctx.ast_builder.pop_scope()  # End while
         
         self.current_kernel = None
