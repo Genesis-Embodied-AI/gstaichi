@@ -219,7 +219,7 @@ def test_kernel_if_return_value_both_branches(in_val: int, expected: int):
         (1, 5),
     ],
 )
-@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
+@test_utils.test()
 def test_func_if_return_void_true_branch(in_val: int, expected: int):
     @ti.func
     def f1(a: ti.types.NDArray[ti.i32, 1]) -> None:
@@ -249,7 +249,7 @@ def test_func_if_return_void_true_branch(in_val: int, expected: int):
         (1, 2),
     ],
 )
-@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
+@test_utils.test()
 def test_func_if_return_void_false_branch(in_val: int, expected: int):
     @ti.func
     def f1(a: ti.types.NDArray[ti.i32, 1]) -> None:
@@ -279,7 +279,7 @@ def test_func_if_return_void_false_branch(in_val: int, expected: int):
         (1, 3),
     ],
 )
-@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
+@test_utils.test()
 def test_func_if_return_void_both_branches(in_val: int, expected: int):
     @ti.func
     def f1(a: ti.types.NDArray[ti.i32, 1]) -> None:
@@ -450,7 +450,7 @@ def test_kernel_multiple_ifs_return_value(in_val: int, expected: int):
         (2, 3),
     ],
 )
-@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
+@test_utils.test()
 def test_func_multiple_ifs_return_void(in_val: int, expected: int):
     @ti.func
     def f1(a: ti.types.NDArray[ti.i32, 1]) -> None:
@@ -839,7 +839,7 @@ def test_kernel_dynamic_range_for_if_return_void(n: int, threshold: int, expecte
     assert a[1] == expected
 
 
-@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
+@test_utils.test()
 def test_if_func_for_loop_return_void() -> None:
     N = 4
 
