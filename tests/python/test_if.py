@@ -873,7 +873,7 @@ def test_if_func_for_loop_return_void() -> None:
             print("res i", i, f"a[{1 + j}]", a[1 + j])
 
 
-@test_utils.test(offline_cache=False, advanced_optimization=False, print_kernel_llvm_ir=True)
+@test_utils.test()
 def test_if_func_inner_loop_return_void() -> None:
     """Test return inside inner loop of ti.func - should continue kernel loop, not inner func loop"""
     N = 4

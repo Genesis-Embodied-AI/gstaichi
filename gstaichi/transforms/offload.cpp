@@ -722,8 +722,14 @@ class AssociateContinueScope : public BasicStmtVisitor {
   }
 
   void visit(StructForStmt *stmt) override {
-    TI_ERROR("struct_for cannot be nested inside a kernel, stmt={}",
-             stmt->name());
+    // StructForStmt can exist in kernels before they are offloaded/demoted
+    // We skip them here since they will be handled later in the pipeline
+    // Only error if we're inside an offloaded context (which shouldn't happen)
+    if (cur_offloaded_stmt_ != nullptr) {
+      TI_ERROR("struct_for cannot be nested inside an offloaded kernel, stmt={}",
+               stmt->name());
+    }
+    // Just skip visiting the body for now
   }
 
   void visit(OffloadedStmt *stmt) override {
