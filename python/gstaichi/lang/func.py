@@ -109,9 +109,6 @@ class Func(FuncBase):
         )
         needs_while_wrapper = not self.is_real_function and is_potentially_void
         
-        import sys
-        print(f"[DIAGNOSTIC func.py] Function compilation: is_real={self.is_real_function}, return_type={self.return_type}, needs_while_wrapper={needs_while_wrapper}", file=sys.stderr)
-        
         if needs_while_wrapper:
             ctx.ast_builder.begin_frontend_while(Expr(1, dtype=primitive_types.i32).ptr, dbg_info)
         

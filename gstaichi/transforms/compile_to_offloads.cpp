@@ -63,22 +63,17 @@ void compile_to_offloads(IRNode *ir,
   dump_ir("from_ast");
 
   if (start_from_ast) {
-    TI_INFO("[DIAGNOSTIC] Starting frontend passes");
     irpass::frontend_type_check(ir);
-    TI_INFO("[DIAGNOSTIC] Completed frontend_type_check");
     irpass::lower_ast(ir);
-    TI_INFO("[DIAGNOSTIC] Completed lower_ast");
     // Associate continue/break scopes immediately after lowering AST
     // This must happen before any simplification passes that might eliminate
     // breaks/continues based on incorrect scope information
     irpass::associate_continue_scope(ir, config);
     print("Associated continue scope");
-    TI_INFO("[DIAGNOSTIC] Completed associate_continue_scope");
     // Structure breaks from function returns before simplification
     // This prevents CFG optimization from incorrectly eliminating them
     irpass::structure_function_return_breaks(ir);
     print("Structured function-return breaks");
-    TI_INFO("[DIAGNOSTIC] Completed structure_function_return_breaks");
   }
 
   dump_ir("gstaichi1");
