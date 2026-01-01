@@ -354,7 +354,7 @@ if (TI_WITH_AMDGPU)
     file(GLOB AMDGPU_BC_FILES_ROCM5X ${CMAKE_SOURCE_DIR}/external/amdgpu_libdevice_rocm5x/*.bc)
     install(FILES ${AMDGPU_BC_FILES_ROCM5X}
             DESTINATION ${INSTALL_LIB_DIR}/runtime_rocm5x)
-    
+
     # Install ROCm 7.0 libdevice files (for CDNA: gfx9xx, gfx12xx)
     file(GLOB AMDGPU_BC_FILES_ROCM70 ${CMAKE_SOURCE_DIR}/external/amdgpu_libdevice_rocm70/*.bc)
     install(FILES ${AMDGPU_BC_FILES_ROCM70}

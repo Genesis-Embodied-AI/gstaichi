@@ -630,11 +630,11 @@ void GsTaichiLLVMContext::link_module_with_amdgpu_libdevice(
   std::ifstream test_file(lib_dir + isa_file);
 
   if (!test_file.good()) {
-      TI_ERROR(
-          "AMDGPU ISA version file {} not found for {} and no fallback "
-          "available. Please ensure ROCm device libraries are properly "
-          "installed.",
-          isa_file, mcpu);
+    TI_ERROR(
+        "AMDGPU ISA version file {} not found for {} and no fallback "
+        "available. Please ensure ROCm device libraries are properly "
+        "installed.",
+        isa_file, mcpu);
   }
 
   std::string libdevice_files[] = {"ocml.bc",
