@@ -54,16 +54,12 @@ def test_dlpack_types(tensor_type, dtype, shape: tuple[int], poses: list[tuple[i
         ti.u1: torch.bool,
     }[dtype]
     assert tt.dtype == expected_torch_type
+    if ti.cfg.arch == ti.amdgpu:
+        # can't run torch kernels on AWS AMD GPU
+        tt = tt.cpu()
     for i, pos in enumerate(poses):
-        if shape == () and ti.cfg.arch == ti.amdgpu:
-            print('using .item()')
-            torch_val = tt.item()
-            gstaichi_val = ti_tensor[pos]
-        else:
-            torch_val = tt[pos]
-            gstaichi_val = ti_tensor[pos]
-        assert torch_val == gstaichi_val
-        assert torch_val != 0
+        assert tt[pos] == ti_tensor[pos]
+        assert tt[pos] != 0
 
 
 @test_utils.test(arch=dlpack_arch)
@@ -79,7 +75,10 @@ def test_dlpack_ndarray_mem_stays_alloced() -> None:
         return tt
 
     t = create_tensor((3, 2), ti.i32)
-    # will crash if memory already deleted
+    # accessing memory will crash if memory already deleted
+    if ti.cfg.arch == ti.amdgpu:
+        # can't run torch kernels on AWS AMD GPU
+        t = t.cpu()
     assert t[0, 0] == 0
 
 
@@ -106,6 +105,9 @@ def test_dlpack_vec3(tensor_type):
     a[1, 0] = (11, 12, 13)
     ti.sync()
     tt = ti_to_torch(a)
+    if ti.cfg.arch == ti.amdgpu:
+        # can't run torch kernels on AWS AMD GPU
+        tt = tt.cpu()
     assert tuple(tt.shape) == (10, 3, 3)
     assert tt.dtype == torch.float32
     assert tt[0, 0, 0] == 5
@@ -128,6 +130,9 @@ def test_dlpack_mat2x3(tensor_type):
     a[0, 1] = ((7, 8, 21), (9, 10, 22))
     a[1, 0] = ((11, 12, 23), (13, 14, 23))
     tt = ti_to_torch(a)
+    if ti.cfg.arch == ti.amdgpu:
+        # can't run torch kernels on AWS AMD GPU
+        tt = tt.cpu()
     assert tuple(tt.shape) == (10, 3, 2, 3)
     assert tt.dtype == torch.float32
     assert tt[0, 0, 0, 0] == 5
@@ -166,6 +171,12 @@ def test_dlpack_2_arrays(tensor_type):
         pytest.xfail(reason="to_dlpack not currently supported on Metal fields")
     b_cap = b.to_dlpack()
     b_t = torch.utils.dlpack.from_dlpack(b_cap)
+
+    if ti.cfg.arch == ti.amdgpu:
+        # can't run torch kernels on AWS AMD GPU
+        a_t = a_t.cpu()
+        b_t = b_t.cpu()
+
     assert a_t[0] == 123
     assert b_t[0] == 222
 
@@ -178,7 +189,7 @@ def test_dlpack_non_sequenced_axes():
     # call ti.sync())
     ti.sync()
     with pytest.raises(RuntimeError):
-        tt = ti_to_torch(field_ikj)
+        ti_to_torch(field_ikj)
 
 
 @test_utils.test(arch=dlpack_arch)
@@ -227,6 +238,14 @@ def test_dlpack_field_multiple_tree_nodes():
     d_t = ti_to_torch(d)
     e_t = ti_to_torch(e)
 
+    if ti.cfg.arch == ti.amdgpu:
+        # can't run torch kernels on AWS AMD GPU
+        a_t = a_t.cpu()
+        b_t = b_t.cpu()
+        c_t = c_t.cpu()
+        d_t = d_t.cpu()
+        e_t = e_t.cpu()
+
     assert a_t[0] == 123
     assert b_t[0] == 222
     assert c_t[0] == 333
@@ -241,7 +260,7 @@ def test_dlpack_mixed_types_memory_alignment_field(dtype, shape: tuple[int], met
     """
     Note: The mixed type here means that within a single SNode tree, fields use different data types (for example, curr_cnt in ti.i32 and pos in ti.i64). This leads to memory alignment issues and mismatched SNode offsets.
     """
-    curr_field = ti.field(dtype, shape)
+    _curr_field = ti.field(dtype, shape)
     pos = ti.field(ti.types.vector(3, ti.i64), shape=(1,))
 
     @ti.kernel
@@ -281,7 +300,7 @@ def test_dlpack_multiple_mixed_types_memory_alignment_field(metal_xfail) -> None
 
 @test_utils.test(arch=dlpack_arch)
 def test_dlpack_joints_case_memory_alignment_field(metal_xfail) -> None:
-    links_is_fixed = ti.field(dtype=ti.u1, shape=(1,))
+    _links_is_fixed = ti.field(dtype=ti.u1, shape=(1,))
     joints_n_dofs = ti.field(dtype=ti.i32, shape=(1,))
 
     @ti.kernel
@@ -308,6 +327,8 @@ def test_dlpack_joints_case_memory_alignment_field(metal_xfail) -> None:
 
 @test_utils.test(arch=dlpack_arch)
 def test_dlpack_field_memory_allocation_before_to_dlpack():
+    if ti.cfg.arch == ti.amdgpu:
+        pytest.xfail(reason="Cannot run torch kernels on AMDGPU CI")
     first_time = ti.field(dtype=ti.i32, shape=(1,))
     first_time_tc = torch.utils.dlpack.from_dlpack(first_time.to_dlpack())
 
@@ -321,106 +342,3 @@ def test_dlpack_field_memory_allocation_before_to_dlpack():
     assert (
         second_time_tc == second_time.to_torch(device=second_time_tc.device)
     ).all(), f"{second_time_tc} != {second_time.to_torch(device=second_time_tc.device)}"
-
-
-@test_utils.test(arch=ti.amdgpu)
-def test_dlpack_context_debug():
-    """Debug test to check HIP contexts"""
-    import torch
-    import ctypes
-    
-    # Check PyTorch's HIP context
-    try:
-        # Try to get PyTorch's device context
-        x = torch.tensor([1.0], device='cuda' if torch.cuda.is_available() else 'cpu')
-        print(f"PyTorch tensor device: {x.device}")
-    except Exception as e:
-        print(f"PyTorch device check failed: {e}")
-    
-    # Check if we can create a simple PyTorch tensor on HIP
-    try:
-        if hasattr(torch, 'cuda') and torch.cuda.is_available():
-            x = torch.tensor([1.0, 2.0, 3.0], device='cuda')
-            print(f"PyTorch CUDA tensor: {x}")
-            print(f"PyTorch CUDA device: {x.device}")
-    except Exception as e:
-        print(f"PyTorch CUDA tensor creation failed: {e}")
-    
-    # Now test gstaichi
-    ti_tensor = ti.ndarray(ti.f32, (3,))
-    ti_tensor[0] = 1.0
-    ti_tensor[1] = 2.0  
-    ti_tensor[2] = 3.0
-    ti.sync()
-    
-    print(f"gstaichi tensor created and populated")
-    
-    dlpack = ti_tensor.to_dlpack()
-    print(f"DLPack capsule created")
-    
-    tt = torch.utils.dlpack.from_dlpack(dlpack)
-    print(f"PyTorch tensor from DLPack: shape={tuple(tt.shape)}, device={tt.device}")
-    
-    # Try different access methods
-    try:
-        # Method 1: Direct access
-        val = tt[0]
-        print(f"Direct access tt[0] = {val}")
-    except Exception as e:
-        print(f"Direct access failed: {e}")
-    
-    try:
-        # Method 2: CPU copy
-        cpu_copy = tt.cpu()
-        print(f"CPU copy succeeded: {cpu_copy}")
-    except Exception as e:
-        print(f"CPU copy failed: {e}")
-    
-    try:
-        # Method 3: to() method
-        cpu_tensor = tt.to('cpu')
-        print(f"to('cpu') succeeded: {cpu_tensor}")
-    except Exception as e:
-        print(f"to('cpu') failed: {e}")
-
-
-@test_utils.test(arch=[ti.amdgpu])
-def test_dlpack_scalar_debug():
-    """Test DLPack with scalar tensor specifically"""
-    # This is the failing case: ndarray, shape=(), dtype=ti.i32
-    ti_tensor = ti.ndarray(ti.i32, ())
-    ti_tensor[()] = 42
-    ti.sync()
-    
-    print(f"gstaichi scalar created and set to: {ti_tensor[()]}")
-    
-    dlpack = ti_tensor.to_dlpack()
-    tt = torch.utils.dlpack.from_dlpack(dlpack)
-    
-    print(f"PyTorch scalar tensor: shape={tuple(tt.shape)}, dtype={tt.dtype}, value={tt.item()}")
-    
-    # Test different access methods
-    try:
-        val1 = tt[()]
-        print(f"tt[()] = {val1}")
-    except Exception as e:
-        print(f"tt[()] failed: {e}")
-    
-    try:
-        val2 = tt.item()
-        print(f"tt.item() = {val2}")
-    except Exception as e:
-        print(f"tt.item() failed: {e}")
-    
-    # Compare with gstaichi
-    gstaichi_val = ti_tensor[()]
-    print(f"gstaichi value: {gstaichi_val}")
-    
-    # Test the original assertion
-    try:
-        assert tt[()] == ti_tensor[()]
-        print("Scalar comparison PASSED")
-    except Exception as e:
-        print(f"Scalar comparison FAILED: {e}")
-    
-    assert tt[()] != 0
