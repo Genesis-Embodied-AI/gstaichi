@@ -21,7 +21,7 @@ from gstaichi.lang import (
 from gstaichi.lang import ops as ti_ops
 from gstaichi.lang._dataclass_util import create_flat_name
 from gstaichi.lang.ast.ast_transformer_utils import (
-    ASTTransformerContext,
+    ASTTransformerFuncContext,
     get_decorator,
 )
 from gstaichi.lang.exception import (
@@ -36,7 +36,7 @@ from gstaichi.types import primitive_types
 
 class CallTransformer:
     @staticmethod
-    def _build_call_if_is_builtin(ctx: ASTTransformerContext, node, args, keywords):
+    def _build_call_if_is_builtin(ctx: ASTTransformerFuncContext, node, args, keywords):
         from gstaichi.lang import matrix_ops  # pylint: disable=C0415
 
         func = node.func.ptr
@@ -66,7 +66,7 @@ class CallTransformer:
         return False
 
     @staticmethod
-    def _build_call_if_is_type(ctx: ASTTransformerContext, node, args, keywords):
+    def _build_call_if_is_type(ctx: ASTTransformerFuncContext, node, args, keywords):
         func = node.func.ptr
         if id(func) in primitive_types.type_ids:
             if len(args) != 1 or keywords:
@@ -84,7 +84,7 @@ class CallTransformer:
         return False
 
     @staticmethod
-    def _is_external_func(ctx: ASTTransformerContext, func) -> bool:
+    def _is_external_func(ctx: ASTTransformerFuncContext, func) -> bool:
         if ctx.is_in_static_scope():  # allow external function in static scope
             return False
         if hasattr(func, "_is_gstaichi_function") or hasattr(func, "_is_wrapped_kernel"):  # gstaichi func/kernel
@@ -94,7 +94,7 @@ class CallTransformer:
         return True
 
     @staticmethod
-    def _warn_if_is_external_func(ctx: ASTTransformerContext, node):
+    def _warn_if_is_external_func(ctx: ASTTransformerFuncContext, node):
         func = node.func.ptr
         if not CallTransformer._is_external_func(ctx, func):
             return
@@ -167,7 +167,7 @@ class CallTransformer:
 
     @staticmethod
     def _expand_Call_dataclass_args(
-        ctx: ASTTransformerContext, args: tuple[ast.stmt, ...]
+        ctx: ASTTransformerFuncContext, args: tuple[ast.stmt, ...]
     ) -> tuple[tuple[ast.stmt, ...], tuple[ast.stmt, ...]]:
         """
         We require that each node has a .ptr attribute added to it, that contains
@@ -212,7 +212,7 @@ class CallTransformer:
 
     @staticmethod
     def _expand_Call_dataclass_kwargs(
-        ctx: ASTTransformerContext, kwargs: list[ast.keyword]
+        ctx: ASTTransformerFuncContext, kwargs: list[ast.keyword]
     ) -> tuple[list[ast.keyword], list[ast.keyword]]:
         """
         We require that each node has a .ptr attribute added to it, that contains
@@ -263,7 +263,7 @@ class CallTransformer:
         return added_kwargs, kwargs_new
 
     @staticmethod
-    def build_Call(ctx: ASTTransformerContext, node: ast.Call, build_stmt, build_stmts) -> Any | None:
+    def build_Call(ctx: ASTTransformerFuncContext, node: ast.Call, build_stmt, build_stmts) -> Any | None:
         """
         example ast:
         Call(func=Name(id='f2', ctx=Load()), args=[Name(id='my_struct_ab', ctx=Load())], keywords=[])
@@ -273,6 +273,7 @@ class CallTransformer:
                 build_stmt(ctx, node.func)
                 build_stmts(ctx, node.args)
                 build_stmts(ctx, node.keywords)
+            func = node.func.ptr
         else:
             build_stmt(ctx, node.func)
             # creates variable for the dataclass itself (as well as other variables,
@@ -280,6 +281,7 @@ class CallTransformer:
             build_stmts(ctx, node.args)
             build_stmts(ctx, node.keywords)
 
+            func = node.func.ptr
             added_args, node.args = CallTransformer._expand_Call_dataclass_args(ctx, node.args)
             added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(ctx, node.keywords)
 
@@ -304,7 +306,7 @@ class CallTransformer:
                 node.violates_pure = True
                 node.violates_pure_reason = kw.value.violates_pure_reason
 
-        args = []
+        py_args = []
         for arg in node.args:
             if isinstance(arg, ast.Starred):
                 arg_list = arg.ptr
@@ -313,38 +315,37 @@ class CallTransformer:
                     arg_list = [Expr(x) for x in ctx.ast_builder.expand_exprs([arg_list.ptr])]
 
                 for i in arg_list:
-                    args.append(i)
+                    py_args.append(i)
             else:
-                args.append(arg.ptr)
-        keywords = dict(ChainMap(*[keyword.ptr for keyword in node.keywords]))
-        func = node.func.ptr
+                py_args.append(arg.ptr)
+        py_kwargs = dict(ChainMap(*[keyword.ptr for keyword in node.keywords]))
 
         if id(func) in [id(print), id(impl.ti_print)]:
             ctx.func.has_print = True
 
         if isinstance(node.func, ast.Attribute) and isinstance(node.func.value.ptr, str) and node.func.attr == "format":
             raw_string = node.func.value.ptr
-            args = CallTransformer._canonicalize_formatted_string(raw_string, *args, **keywords)
-            node.ptr = impl.ti_format(*args)
+            py_args = CallTransformer._canonicalize_formatted_string(raw_string, *py_args, **py_kwargs)
+            node.ptr = impl.ti_format(*py_args)
             return node.ptr
 
         if id(func) == id(Matrix) or id(func) == id(Vector):
-            node.ptr = matrix.make_matrix(*args, **keywords)
+            node.ptr = matrix.make_matrix(*py_args, **py_kwargs)
             return node.ptr
 
-        if CallTransformer._build_call_if_is_builtin(ctx, node, args, keywords):
+        if CallTransformer._build_call_if_is_builtin(ctx, node, py_args, py_kwargs):
             return node.ptr
 
-        if CallTransformer._build_call_if_is_type(ctx, node, args, keywords):
+        if CallTransformer._build_call_if_is_type(ctx, node, py_args, py_kwargs):
             return node.ptr
 
         if hasattr(node.func, "caller"):
-            node.ptr = func(node.func.caller, *args, **keywords)
+            node.ptr = func(node.func.caller, *py_args, **py_kwargs)
             return node.ptr
 
         CallTransformer._warn_if_is_external_func(ctx, node)
         try:
-            node.ptr = func(*args, **keywords)
+            node.ptr = func(*py_args, **py_kwargs)
         except TypeError as e:
             module = inspect.getmodule(func)
             error_msg = re.sub(r"\bExpr\b", "GsTaichi Expression", str(e))

@@ -27,7 +27,10 @@ from gstaichi.lang.ast import (
     KernelSimplicityASTChecker,
     transform_tree,
 )
-from gstaichi.lang.ast.ast_transformer_utils import ASTTransformerContext, ReturnStatus
+from gstaichi.lang.ast.ast_transformer_utils import (
+    ASTTransformerFuncContext,
+    ReturnStatus,
+)
 from gstaichi.lang.exception import (
     GsTaichiRuntimeTypeError,
     GsTaichiSyntaxError,
@@ -159,7 +162,7 @@ class LaunchContextBufferCache:
 class ASTGenerator:
     def __init__(
         self,
-        ctx: ASTTransformerContext,
+        ctx: ASTTransformerFuncContext,
         kernel_name: str,
         current_kernel: "Kernel",
         only_parse_function_def: bool,
@@ -343,7 +346,7 @@ class Kernel(FuncBase):
             print(f"[NOT_PURE] Debug information: not pure: {self.func.__name__}")
         return used_py_dataclass_parameters
 
-    def materialize(self, key: "CompiledKernelKeyType | None", args: tuple[Any, ...], arg_features=None):
+    def materialize(self, key: "CompiledKernelKeyType | None", py_args: tuple[Any, ...], arg_features=None):
         if key is None:
             key = (self.func, 0, self.autodiff_mode)
         self.fast_checksum = None
@@ -352,7 +355,7 @@ class Kernel(FuncBase):
             return
 
         self.runtime.materialize()
-        used_py_dataclass_parameters = self._try_load_fastcache(args, key)
+        used_py_dataclass_parameters = self._try_load_fastcache(py_args, key)
         kernel_name = f"{self.func.__name__}_c{self.kernel_counter}_{key[1]}"
         _logging.trace(f"Materializing kernel {kernel_name} in {self.autodiff_mode}...")
 
@@ -374,7 +377,7 @@ class Kernel(FuncBase):
                     [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_leaves_by_key_enforcing]
                 )
             tree, ctx = self.get_tree_and_ctx(
-                args=args,
+                py_args=py_args,
                 excluded_parameters=self.template_slot_locations,
                 arg_features=arg_features,
                 current_kernel=self,
@@ -518,22 +521,22 @@ class Kernel(FuncBase):
             return launch_ctx.get_struct_ret_float(indices)
         raise GsTaichiRuntimeTypeError(f"Invalid return type on index={indices}")
 
-    def ensure_compiled(self, *args: tuple[Any, ...]) -> tuple[Callable, int, AutodiffMode]:
+    def ensure_compiled(self, *py_args: tuple[Any, ...]) -> tuple[Callable, int, AutodiffMode]:
         try:
-            instance_id, arg_features = self.mapper.lookup(self.raise_on_templated_floats, args)
+            instance_id, arg_features = self.mapper.lookup(self.raise_on_templated_floats, py_args)
         except Exception as e:
             raise type(e)(f"exception while trying to ensure compiled {self.func}:\n{e}") from e
         key = (self.func, instance_id, self.autodiff_mode)
-        self.materialize(key=key, args=args, arg_features=arg_features)
+        self.materialize(key=key, py_args=py_args, arg_features=arg_features)
         return key
 
     # For small kernels (< 3us), the performance can be pretty sensitive to overhead in __call__
     # Thus this part needs to be fast. (i.e. < 3us on a 4 GHz x64 CPU)
     @_shell_pop_print
-    def __call__(self, *args, **kwargs) -> Any:
+    def __call__(self, *py_args, **kwargs) -> Any:
         self.raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
 
-        args = self.process_args(is_func=False, is_pyfunc=False, args=args, kwargs=kwargs)
+        py_args = self.fuse_args(is_func=False, is_pyfunc=False, py_args=py_args, kwargs=kwargs)
 
         # Transform the primal kernel to forward mode grad kernel
         # then recover to primal when exiting the forward mode manager
@@ -549,15 +552,15 @@ class Kernel(FuncBase):
 
         # No need to capture grad kernels because they are already bound with their primal kernels
         if self.autodiff_mode in (_NONE, _VALIDATION) and self.runtime.target_tape and not self.runtime.grad_replaced:
-            self.runtime.target_tape.insert(self, args)
+            self.runtime.target_tape.insert(self, py_args)
 
         if self.autodiff_mode != _NONE and impl.current_cfg().opt_level == 0:
             _logging.warn("""opt_level = 1 is enforced to enable gradient computation.""")
             impl.current_cfg().opt_level = 1
-        key = self.ensure_compiled(*args)
+        key = self.ensure_compiled(*py_args)
         kernel_cpp = self.materialized_kernels[key]
         compiled_kernel_data = self.compiled_kernel_data_by_key.get(key, None)
-        ret = self.launch_kernel(kernel_cpp, compiled_kernel_data, *args)
+        ret = self.launch_kernel(kernel_cpp, compiled_kernel_data, *py_args)
         if compiled_kernel_data is None:
             assert self._last_compiled_kernel_data is not None
             self.compiled_kernel_data_by_key[key] = self._last_compiled_kernel_data

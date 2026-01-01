@@ -28,10 +28,38 @@ void validate_arch(Arch arch) {
   }
 }
 
-std::tuple<void *, DLDeviceType, bool> get_raw_ptr(Arch arch,
-                                                   Program *program,
-                                                   DeviceAllocation dev_alloc) {
-  bool pointer_arithmetic_ok = true;
+bool check_torch_version_lte(int major, int minor, int patch) {
+  pybind11::module_ torch = pybind11::module_::import("torch");
+  std::string version = torch.attr("__version__").cast<std::string>();
+
+  // Parse version string (e.g., "2.9.1" or "2.9.1+cu118")
+  int vmajor = 0, vminor = 0, vpatch = 0;
+  sscanf(version.c_str(), "%d.%d.%d", &vmajor, &vminor, &vpatch);
+
+  if (vmajor < major)
+    return true;
+  if (vmajor > major)
+    return false;
+  if (vminor < minor)
+    return true;
+  if (vminor > minor)
+    return false;
+  return vpatch <= patch;
+}
+
+bool torch_supports_byte_offset() {
+  static bool checked = false;
+  static bool supports = false;
+  if (!checked) {
+    supports = !check_torch_version_lte(2, 9, 1);
+    checked = true;
+  }
+  return supports;
+}
+
+std::tuple<void *, DLDeviceType> get_raw_ptr(Arch arch,
+                                             Program *program,
+                                             DeviceAllocation dev_alloc) {
   void *raw_ptr = nullptr;
   DLDeviceType device_type = DLDeviceType::kDLCPU;
   if (arch_is_cpu(arch)) {
@@ -75,7 +103,6 @@ std::tuple<void *, DLDeviceType, bool> get_raw_ptr(Arch arch,
     if (result != RhiResult::success || raw_ptr == nullptr) {
       MTLBuffer_id mtl_buffer = memory.mtl_buffer();
       raw_ptr = mtl_buffer;
-      pointer_arithmetic_ok = false;
     }
   }
 #endif  // TI_WITH_METAL
@@ -83,7 +110,7 @@ std::tuple<void *, DLDeviceType, bool> get_raw_ptr(Arch arch,
   if (raw_ptr == nullptr) {
     TI_ERROR("Unsupported device type for DLPack conversion");
   }
-  return std::make_tuple(raw_ptr, device_type, pointer_arithmetic_ok);
+  return std::make_tuple(raw_ptr, device_type);
 }
 
 std::pair<uint8_t, uint8_t> get_type_info(Arch arch, DataType dt) {
@@ -220,17 +247,20 @@ pybind11::capsule field_to_dlpack(Program *program,
 
   void *raw_ptr = nullptr;
   DLDeviceType device_type = DLDeviceType::kDLCPU;
-  bool pointer_arithmetic_ok = true;
-  std::tie(raw_ptr, device_type, pointer_arithmetic_ok) =
-      get_raw_ptr(arch, program, tree_device_ptr);
-  if (field_in_tree_offset != 0) {
-    if (pointer_arithmetic_ok) {
+  std::tie(raw_ptr, device_type) = get_raw_ptr(arch, program, tree_device_ptr);
+
+  int byte_offset = 0;
+  if (field_in_tree_offset >= 0) {
+    if (torch_supports_byte_offset()) {
+      byte_offset = field_in_tree_offset;
+    } else {
+      if (arch_is_metal(arch)) {
+        TI_ERROR(
+            "DLPack conversion with fields is not supported on Metal "
+            "with PyTorch <= 2.9.1.");
+      }
       raw_ptr =
           reinterpret_cast<void *>((uint64_t)raw_ptr + field_in_tree_offset);
-    } else {
-      TI_ERROR(
-          "to_dlpack is not supported for Metal SNode fields with non-zero "
-          "offset");
     }
   }
 
@@ -271,9 +301,7 @@ pybind11::capsule field_to_dlpack(Program *program,
   dl_tensor.dtype = DLDataType{data_type_code, element_bits, 1};
   dl_tensor.shape = shape;
   dl_tensor.strides = strides;
-  // FIXME: use instead of pointer arithmetic once
-  // https://github.com/pytorch/pytorch/pull/168193 merged and released.
-  dl_tensor.byte_offset = 0;
+  dl_tensor.byte_offset = byte_offset;
 
   managed_tensor->deleter = [](DLManagedTensor *self) {
     if (self->dl_tensor.shape != nullptr) {
@@ -309,9 +337,7 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
 
   DLDeviceType device_type = DLDeviceType::kDLCPU;
   void *raw_ptr = nullptr;
-  bool _pointer_arithmetic_ok = true;
-  std::tie(raw_ptr, device_type, _pointer_arithmetic_ok) =
-      get_raw_ptr(arch, program, devalloc);
+  std::tie(raw_ptr, device_type) = get_raw_ptr(arch, program, devalloc);
 
   std::vector<int> ndarray_shape = ndarray->total_shape();
   int ndim = ndarray_shape.size();

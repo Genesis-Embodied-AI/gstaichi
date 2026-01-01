@@ -4,7 +4,8 @@ set -ex
 
 pip install --prefer-binary --group test
 pip install -r requirements_test_xdist.txt
-pip install torch
+# TODO: revert to stable torch after 2.9.2 release
+pip install --pre --upgrade torch --index-url https://download.pytorch.org/whl/nightly/cpu
 find . -name '*.bc'
 ls -lh build/
 export TI_LIB_DIR="$(python -c 'import gstaichi as ti; print(ti.__path__[0])' | tail -n 1)/_lib/runtime"
