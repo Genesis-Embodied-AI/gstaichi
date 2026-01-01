@@ -199,13 +199,13 @@ pybind11::capsule field_to_dlpack(Program *program,
   Arch arch = program->compile_config().arch;
   validate_arch(arch);
 
-  #if TI_WITH_AMDGPU
+#if TI_WITH_AMDGPU
   std::unique_ptr<AMDGPUContext::ContextGuard> amdgpu_guard;
   if (arch_is_amdgpu(arch)) {
     amdgpu_guard = std::make_unique<AMDGPUContext::ContextGuard>(
         &AMDGPUContext::get_instance());
   }
-  #endif
+#endif
 
   int tree_id = snode->get_snode_tree_id();
   DevicePtr tree_device_ptr = program->get_snode_tree_device_ptr(tree_id);
@@ -295,13 +295,13 @@ pybind11::capsule ndarray_to_dlpack(Program *program,
   Arch arch = program->compile_config().arch;
   validate_arch(arch);
 
-  #if TI_WITH_AMDGPU
+#if TI_WITH_AMDGPU
   std::unique_ptr<AMDGPUContext::ContextGuard> amdgpu_guard;
   if (arch_is_amdgpu(arch)) {
     amdgpu_guard = std::make_unique<AMDGPUContext::ContextGuard>(
         &AMDGPUContext::get_instance());
   }
-  #endif
+#endif
 
   auto *owner_holder = new pybind11::object(owner);
 

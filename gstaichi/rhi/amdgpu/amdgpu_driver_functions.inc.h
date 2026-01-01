@@ -11,8 +11,13 @@ PER_AMDGPU_FUNCTION(device_get_attribute,
 PER_AMDGPU_FUNCTION(device_get_prop, hipGetDeviceProperties, void *, void *);
 PER_AMDGPU_FUNCTION(device_get_name, hipDeviceGetName, char *, int, void *);
 PER_AMDGPU_FUNCTION(device_get, hipDeviceGet, void *, void *);
-PER_AMDGPU_FUNCTION(device_primary_ctx_retain, hipDevicePrimaryCtxRetain, void **, void *);
-PER_AMDGPU_FUNCTION(device_primary_ctx_release, hipDevicePrimaryCtxRelease, void *);
+PER_AMDGPU_FUNCTION(device_primary_ctx_retain,
+                    hipDevicePrimaryCtxRetain,
+                    void **,
+                    void *);
+PER_AMDGPU_FUNCTION(device_primary_ctx_release,
+                    hipDevicePrimaryCtxRelease,
+                    void *);
 
 // Context management
 PER_AMDGPU_FUNCTION(context_create, hipCtxCreate, void *, int, void *);

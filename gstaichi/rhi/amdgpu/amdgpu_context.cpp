@@ -29,7 +29,7 @@ AMDGPUContext::AMDGPUContext()
   // Use primary context instead of creating a new one for PyTorch interop
   driver_.device_primary_ctx_retain(&context_, device_);
   TI_TRACE("AMDGPU: Retained primary context: {}", context_);
- 
+
   // Verify we're using the primary context
   void *current_ctx = nullptr;
   driver_.context_get_current(&current_ctx);
