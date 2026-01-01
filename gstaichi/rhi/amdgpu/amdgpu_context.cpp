@@ -26,6 +26,7 @@ AMDGPUContext::AMDGPUContext()
   TI_TRACE("Using AMDGPU device [id=0]: {}", name);
 
   driver_.device_primary_ctx_retain(&context_, device_);
+  driver_.context_set_current(context_);
   TI_TRACE("AMDGPU: Retained primary context: {}", context_);
 
   const auto GB = std::pow(1024.0, 3.0);
@@ -176,6 +177,9 @@ void AMDGPUContext::launch(void *func,
     profiler_amdgpu->trace(task_handle, valid ? primal_task_name : task_name,
                            func, grid_dim, block_dim, 0);
   }
+
+  auto context_guard = AMDGPUContext::get_instance().get_guard();
+
   auto pack_size = get_args_byte(arg_sizes);
   char *packed_arg = (char *)std::malloc(pack_size);
   pack_args(arg_pointers, arg_sizes, packed_arg);
