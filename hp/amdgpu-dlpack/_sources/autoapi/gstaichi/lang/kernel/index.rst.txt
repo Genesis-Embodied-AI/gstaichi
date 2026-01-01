@@ -25,7 +25,7 @@ Module Contents
    .. py:method:: populate_launch_ctx_from_cache(args_hash: gstaichi.lang._kernel_types.ArgsHash, launch_ctx: gstaichi._lib.core.gstaichi_python.KernelLaunchContext) -> bool
 
 
-.. py:class:: ASTGenerator(ctx: gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext, kernel_name: str, current_kernel: Kernel, only_parse_function_def: bool, tree: ast.Module, used_py_dataclass_parameters: set[str] | None, dump_ast: bool)
+.. py:class:: ASTGenerator(ctx: gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext, kernel_name: str, current_kernel: Kernel, only_parse_function_def: bool, tree: ast.Module, used_py_dataclass_parameters: set[str] | None, dump_ast: bool)
 
    .. py:attribute:: runtime
 
@@ -148,7 +148,7 @@ Module Contents
    .. py:method:: reset() -> None
 
 
-   .. py:method:: materialize(key: CompiledKernelKeyType | None, args: tuple[Any, Ellipsis], arg_features=None)
+   .. py:method:: materialize(key: CompiledKernelKeyType | None, py_args: tuple[Any, Ellipsis], arg_features=None)
 
 
    .. py:method:: launch_kernel(t_kernel: gstaichi._lib.core.gstaichi_python.KernelCxx, compiled_kernel_data: gstaichi._lib.core.gstaichi_python.CompiledKernelData | None, *args) -> Any
@@ -157,6 +157,6 @@ Module Contents
    .. py:method:: construct_kernel_ret(launch_ctx: gstaichi._lib.core.gstaichi_python.KernelLaunchContext, ret_type: Any, indices: tuple[int, Ellipsis])
 
 
-   .. py:method:: ensure_compiled(*args: tuple[Any, Ellipsis]) -> tuple[Callable, int, gstaichi.types.enums.AutodiffMode]
+   .. py:method:: ensure_compiled(*py_args: tuple[Any, Ellipsis]) -> tuple[Callable, int, gstaichi.types.enums.AutodiffMode]
 
 

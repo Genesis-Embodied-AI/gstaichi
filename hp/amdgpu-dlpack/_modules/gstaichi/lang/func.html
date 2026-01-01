@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gstaichi.lang.func &#8212; GsTaichi 4.5.1 documentation</title>
+    <title>gstaichi.lang.func &#8212; GsTaichi 4.6.1 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../_static/documentation_options.js?v=fa8d1881"></script>
+    <script src="../../../_static/documentation_options.js?v=68f2c66a"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -59,7 +59,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="4.5.1" />
+  <meta name="docsearch:version" content="4.6.1" />
   </head>
   
   
@@ -121,7 +121,7 @@
   
   
   
-    <p class="title logo__title">GsTaichi 4.5.1 documentation</p>
+    <p class="title logo__title">GsTaichi 4.6.1 documentation</p>
   
 </a></div>
     
@@ -397,14 +397,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span><span class="p">:</span> <span class="n">Kernel</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="s2">&quot;Func&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="s2">&quot;Func&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">py_args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">current_kernel</span> <span class="k">if</span> <span class="n">impl</span><span class="o">.</span><span class="n">inside_kernel</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span>
-        <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_args</span><span class="p">(</span><span class="n">is_func</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_pyfunc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pyfunc</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">py_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fuse_args</span><span class="p">(</span><span class="n">is_func</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_pyfunc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pyfunc</span><span class="p">,</span> <span class="n">py_args</span><span class="o">=</span><span class="n">py_args</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">impl</span><span class="o">.</span><span class="n">inside_kernel</span><span class="p">():</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">pyfunc</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="s2">&quot;GsTaichi functions cannot be called from Python-scope.&quot;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">py_args</span><span class="p">)</span>
 
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
@@ -412,12 +412,12 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span><span class="o">.</span><span class="n">autodiff_mode</span> <span class="o">!=</span> <span class="n">_NONE</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span> <span class="o">=</span> <span class="kc">None</span>
                 <span class="k">raise</span> <span class="n">GsTaichiSyntaxError</span><span class="p">(</span><span class="s2">&quot;Real function in gradient kernels unsupported.&quot;</span><span class="p">)</span>
-            <span class="n">instance_id</span><span class="p">,</span> <span class="n">arg_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapper</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span><span class="o">.</span><span class="n">raise_on_templated_floats</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+            <span class="n">instance_id</span><span class="p">,</span> <span class="n">arg_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapper</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">current_cfg</span><span class="p">()</span><span class="o">.</span><span class="n">raise_on_templated_floats</span><span class="p">,</span> <span class="n">py_args</span><span class="p">)</span>
             <span class="n">key</span> <span class="o">=</span> <span class="n">FunctionKey</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">func_id</span><span class="p">,</span> <span class="n">instance_id</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">instance_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">compiled</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">do_compile</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">arg_features</span><span class="o">=</span><span class="n">arg_features</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">do_compile</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">py_args</span><span class="p">,</span> <span class="n">arg_features</span><span class="o">=</span><span class="n">arg_features</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">func_call_rvalue</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">func_call_rvalue</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">py_args</span><span class="p">)</span>
         <span class="n">current_args_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span>
         <span class="k">assert</span> <span class="n">current_args_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">used_by_dataclass_parameters_enforcing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
@@ -425,7 +425,7 @@
         <span class="p">)</span>
         <span class="n">tree</span><span class="p">,</span> <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tree_and_ctx</span><span class="p">(</span>
             <span class="n">is_kernel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+            <span class="n">py_args</span><span class="o">=</span><span class="n">py_args</span><span class="p">,</span>
             <span class="n">ast_builder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span><span class="o">.</span><span class="n">ast_builder</span><span class="p">(),</span>
             <span class="n">is_real_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">is_real_function</span><span class="p">,</span>
             <span class="n">used_py_dataclass_parameters_enforcing</span><span class="o">=</span><span class="n">used_by_dataclass_parameters_enforcing</span><span class="p">,</span>
@@ -495,7 +495,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">tree</span><span class="p">,</span> <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tree_and_ctx</span><span class="p">(</span>
             <span class="n">is_kernel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+            <span class="n">py_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
             <span class="n">arg_features</span><span class="o">=</span><span class="n">arg_features</span><span class="p">,</span>
             <span class="n">is_real_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">is_real_function</span><span class="p">,</span>
             <span class="n">used_py_dataclass_parameters_enforcing</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
