@@ -607,7 +607,22 @@ void GsTaichiLLVMContext::link_module_with_amdgpu_libdevice(
     std::unique_ptr<llvm::Module> &module) {
   TI_ASSERT(arch_ == Arch::amdgpu);
 #if defined(TI_WITH_AMDGPU)
-  auto isa_version = AMDGPUContext::get_instance().get_mcpu().substr(3, 4);
+  auto mcpu = AMDGPUContext::get_instance().get_mcpu();
+  auto isa_version = mcpu.substr(3, 4);
+
+  // Determine which libdevice directory to use based on architecture
+  // RDNA (gfx10xx, gfx11xx) uses ROCm 5.x libraries
+  // CDNA (gfx9xx, gfx12xx) uses ROCm 7.0 libraries
+  std::string libdevice_subdir = "";
+  if (mcpu.substr(0, 5) == "gfx10" || mcpu.substr(0, 5) == "gfx11") {
+    // RDNA/RDNA2/RDNA3 architectures (V520, RX 6000/7000 series)
+    libdevice_subdir = "_rocm5x";
+    TI_TRACE("Using ROCm 5.x libdevice for RDNA architecture: {}", mcpu);
+  } else {
+    // CDNA architectures (MI100, MI200, MI300)
+    libdevice_subdir = "_rocm70";
+    TI_TRACE("Using ROCm 7.0 libdevice for CDNA architecture: {}", mcpu);
+  }
   std::string libdevice_files[] = {"ocml.bc",
                                    "oclc_wavefrontsize64_off.bc",
                                    "ockl.bc",
@@ -620,7 +635,6 @@ void GsTaichiLLVMContext::link_module_with_amdgpu_libdevice(
                                    "opencl.bc"};
 
   for (auto &libdevice : libdevice_files) {
-    std::string lib_dir = runtime_lib_dir() + "/";
     auto libdevice_module = module_from_bitcode_file(lib_dir + libdevice,
                                                      get_this_thread_context());
 
