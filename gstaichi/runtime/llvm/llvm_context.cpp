@@ -624,7 +624,7 @@ void GsTaichiLLVMContext::link_module_with_amdgpu_libdevice(
     TI_TRACE("Using ROCm 7.0 libdevice for CDNA architecture: {}", mcpu);
   }
 
-  // Check if the ISA version file exists, otherwise try fallbacks
+  // Check if the ISA version file exists
   std::string lib_dir = runtime_lib_dir() + libdevice_subdir + "/";
   std::string isa_file = "oclc_isa_version_" + isa_version + ".bc";
   std::ifstream test_file(lib_dir + isa_file);
