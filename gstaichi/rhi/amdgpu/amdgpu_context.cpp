@@ -25,16 +25,8 @@ AMDGPUContext::AMDGPUContext()
 
   TI_TRACE("Using AMDGPU device [id=0]: {}", name);
 
-  // driver_.context_create(&context_, 0, device_);
-  // Use primary context instead of creating a new one for PyTorch interop
   driver_.device_primary_ctx_retain(&context_, device_);
   TI_TRACE("AMDGPU: Retained primary context: {}", context_);
-
-  // Verify we're using the primary context
-  void *current_ctx = nullptr;
-  driver_.context_get_current(&current_ctx);
-  TI_TRACE("AMDGPU: Current context after retain: {}", current_ctx);
-  TI_TRACE("AMDGPU: Contexts match: {}", (context_ == current_ctx));
 
   const auto GB = std::pow(1024.0, 3.0);
   TI_TRACE("Total memory {:.2f} GB; free memory {:.2f} GB",
