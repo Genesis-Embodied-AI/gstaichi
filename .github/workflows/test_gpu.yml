@@ -170,20 +170,20 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+      - name: install torch
+        # do this now, otherwise gstaichi install will install non-rocm version instead
+        run: |
+          pip install --upgrade torch --index-url https://download.pytorch.org/whl/rocm6.4
       - name: install gstaichi
         run: |
           set -x
           mkdir -p dist
           mv *.whl dist/
           pip install dist/*.whl
-      - name: install torch and requirements_test.txt
+      - name: install test requirements
         run: |
-          pip install torch --index-url https://download.pytorch.org/whl/rocm6.4
           pip install --group test
           pip install -r requirements_test_xdist.txt
       - name: run tests
         run: |
-          # Next 2 lines are kind of hacky
-          # export PATH=$PATH:$HOME/.cache/ti-build-cache/llvm-20.1.0-x86-202511141226/bin
-          # chmod +x $HOME/.cache/ti-build-cache/llvm-20.1.0-x86-202511141226/bin/ld.lld
           python tests/run_tests.py -t 4 -r 1 -v --arch amdgpu
