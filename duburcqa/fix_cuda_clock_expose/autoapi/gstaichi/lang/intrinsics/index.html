@@ -421,7 +421,7 @@
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.intrinsics.clock" title="gstaichi.lang.intrinsics.clock"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clock</span></code></a>()</p></td>
-<td><p>Returns the value of a per-multiprocessor counter that is incremented every clock cycle.</p></td>
+<td><p>Returns the value of a hardware counter that is incremented every clock cycle.</p></td>
 </tr>
 </tbody>
 </table>
@@ -432,10 +432,21 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="gstaichi.lang.intrinsics.clock">
 <span class="sig-prename descclassname"><span class="pre">gstaichi.lang.intrinsics.</span></span><span class="sig-name descname"><span class="pre">clock</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/gstaichi/lang/intrinsics.html#clock"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.intrinsics.clock" title="Link to this definition">#</a></dt>
-<dd><p>Returns the value of a per-multiprocessor counter that is incremented every clock cycle.</p>
-<p>It returns 0 for unsupported arch instead of raising an exception since failure is harmless.</p>
-<p>See official CUDA documentation for details:
-<a class="reference external" href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#time-function">https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#time-function</a></p>
+<dd><p>Returns the value of a hardware counter that is incremented every clock cycle.</p>
+<p>Supported backends:
+- CUDA: Per-streaming-multiprocessor cycle counter.</p>
+<blockquote>
+<div><p>See <a class="reference external" href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#time-function">https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#time-function</a></p>
+</div></blockquote>
+<ul class="simple">
+<li><p>AMDGPU: GPU timestamp counter</p></li>
+<li><p>Vulkan: Device clock (requires VK_KHR_shader_clock support, else returns 0)</p></li>
+<li><p>CPU (x64/arm64): Processor timestamp counter</p></li>
+</ul>
+<p>Unsupported backends (returns 0):
+- Metal</p>
+<p>Note: The counter frequency and semantics may vary across backends.
+Use this for relative timing measurements within the same backend.</p>
 </dd></dl>
 
 </section>

@@ -320,16 +320,31 @@
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/intrinsics/index.html#gstaichi.lang.intrinsics.clock">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">clock</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Returns the value of a per-multiprocessor counter that is incremented every clock cycle.</span>
+<span class="sd">    Returns the value of a hardware counter that is incremented every clock cycle.</span>
 
-<span class="sd">    It returns 0 for unsupported arch instead of raising an exception since failure is harmless.</span>
+<span class="sd">    Supported backends:</span>
+<span class="sd">    - CUDA: Per-streaming-multiprocessor cycle counter.</span>
+<span class="sd">      See https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#time-function</span>
+<span class="sd">    - AMDGPU: GPU timestamp counter</span>
+<span class="sd">    - Vulkan: Device clock (requires VK_KHR_shader_clock support, else returns 0)</span>
+<span class="sd">    - CPU (x64/arm64): Processor timestamp counter</span>
 
-<span class="sd">    See official CUDA documentation for details:</span>
-<span class="sd">    https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#time-function</span>
+<span class="sd">    Unsupported backends (returns 0):</span>
+<span class="sd">    - Metal</span>
+
+<span class="sd">    Note: The counter frequency and semantics may vary across backends.</span>
+<span class="sd">    Use this for relative timing measurements within the same backend.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">arch</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">prog</span><span class="o">.</span><span class="n">config</span><span class="p">()</span><span class="o">.</span><span class="n">arch</span>
     <span class="k">if</span> <span class="n">arch</span> <span class="o">==</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">cuda</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">impl</span><span class="o">.</span><span class="n">call_internal</span><span class="p">(</span><span class="s2">&quot;cuda_clock_i64&quot;</span><span class="p">,</span> <span class="n">with_runtime_context</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">arch</span> <span class="o">==</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">amdgpu</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">impl</span><span class="o">.</span><span class="n">call_internal</span><span class="p">(</span><span class="s2">&quot;amdgpu_clock_i64&quot;</span><span class="p">,</span> <span class="n">with_runtime_context</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">arch</span> <span class="o">==</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">vulkan</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">impl</span><span class="o">.</span><span class="n">call_internal</span><span class="p">(</span><span class="s2">&quot;spirv_clock_i64&quot;</span><span class="p">,</span> <span class="n">with_runtime_context</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">arch</span> <span class="o">==</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">x64</span> <span class="ow">or</span> <span class="n">arch</span> <span class="o">==</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">arm64</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">impl</span><span class="o">.</span><span class="n">call_internal</span><span class="p">(</span><span class="s2">&quot;cpu_clock_i64&quot;</span><span class="p">,</span> <span class="n">with_runtime_context</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="c1"># No-op if not supported</span>
     <span class="k">return</span> <span class="mi">0</span></div>
 
 
