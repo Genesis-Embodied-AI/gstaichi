@@ -74,7 +74,7 @@ def test_torch_ad_gpu():
         return
 
     if is_v520_amdgpu():
-        pytest.mark.xfail(reason="cannot use torch .zero_like() on v520")
+        pytest.skip(reason="cannot use torch .zero_like() on v520")
 
     device = torch.device("cuda:0")
     n = 32
