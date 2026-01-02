@@ -320,7 +320,7 @@ def test_dlpack_joints_case_memory_alignment_field() -> None:
 @test_utils.test(arch=dlpack_arch)
 def test_dlpack_field_memory_allocation_before_to_dlpack():
     if is_v520_amdgpu():
-        pytest.xfail(reason="can't run torch accessor kernels on v520")
+        pytest.skip(reason="can't run torch accessor kernels on v520")
     first_time = ti.field(dtype=ti.i32, shape=(1,))
     first_time_tc = torch.utils.dlpack.from_dlpack(first_time.to_dlpack())
 
