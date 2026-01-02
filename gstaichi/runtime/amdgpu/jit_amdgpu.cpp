@@ -217,7 +217,8 @@ std::string JITSessionAMDGPU::compile_module_to_hsaco(
   if (std::system(lld_cmd.c_str()))
     TI_ERROR(
         fmt::format("Generate {} Error. Make sure ld.lld is available in your "
-                    "ROCm installation.",
+                    "ROCm installation, and add path to ROCm path to ROCM_PATH "
+                    "if necessary.",
                     hsaco_filename));
 
   std::string hsaco_str = load_hsaco(hsaco_path);
