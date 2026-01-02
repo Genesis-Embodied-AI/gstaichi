@@ -320,6 +320,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi</span><span class="w"> </span><span class="kn">import</span> <span class="n">_logging</span><span class="p">,</span> <span class="n">_snode</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi._lib</span><span class="w"> </span><span class="kn">import</span> <span class="n">core</span> <span class="k">as</span> <span class="n">_ti_core</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi._lib.core.gstaichi_python</span><span class="w"> </span><span class="kn">import</span> <span class="n">Extension</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi._lib.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_os_name</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang</span><span class="w"> </span><span class="kn">import</span> <span class="n">impl</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.expr</span><span class="w"> </span><span class="kn">import</span> <span class="n">Expr</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.impl</span><span class="w"> </span><span class="kn">import</span> <span class="n">axes</span><span class="p">,</span> <span class="n">get_runtime</span>
@@ -824,6 +825,9 @@
         <span class="n">arch</span> <span class="o">=</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">arch_from_name</span><span class="p">(</span><span class="n">env_arch</span><span class="p">)</span>
     <span class="n">cfg</span><span class="o">.</span><span class="n">arch</span> <span class="o">=</span> <span class="n">adaptive_arch_select</span><span class="p">(</span><span class="n">arch</span><span class="p">,</span> <span class="n">enable_fallback</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[GsTaichi] Starting on arch=</span><span class="si">{</span><span class="n">_ti_core</span><span class="o">.</span><span class="n">arch_name</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">arch</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">arch</span> <span class="o">==</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">amdgpu</span> <span class="ow">and</span> <span class="n">get_os_name</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;win&quot;</span><span class="p">:</span>
+        <span class="n">_logging</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;AMDGPU support on Windows is experimental and may not work as expected.&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">_test_mode</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">spec_cfg</span>
