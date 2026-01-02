@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>gstaichi.lang.ast.ast_transformers.call_transformer &#8212; GsTaichi 4.3.2 documentation</title>
+    <title>gstaichi.lang.ast.ast_transformers.call_transformer &#8212; GsTaichi 4.6.1 documentation</title>
   
   
   
@@ -43,7 +43,7 @@
   <link rel="preload" as="script" href="../../../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../../../../../_static/documentation_options.js?v=32fb297c"></script>
+    <script src="../../../../../../_static/documentation_options.js?v=68f2c66a"></script>
     <script src="../../../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -62,7 +62,7 @@
     <link rel="prev" title="gstaichi.lang.ast.ast_transformers" href="../index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="4.3.2" />
+  <meta name="docsearch:version" content="4.6.1" />
   </head>
   
   
@@ -124,7 +124,7 @@
   
   
   
-    <p class="title logo__title">GsTaichi 4.3.2 documentation</p>
+    <p class="title logo__title">GsTaichi 4.6.1 documentation</p>
   
 </a></div>
     
@@ -284,7 +284,10 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../exception/index.html">gstaichi.lang.exception</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../expr/index.html">gstaichi.lang.expr</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../field/index.html">gstaichi.lang.field</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../func/index.html">gstaichi.lang.func</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../impl/index.html">gstaichi.lang.impl</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../intrinsics/index.html">gstaichi.lang.intrinsics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../kernel/index.html">gstaichi.lang.kernel</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../kernel_arguments/index.html">gstaichi.lang.kernel_arguments</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../kernel_impl/index.html">gstaichi.lang.kernel_impl</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../matrix/index.html">gstaichi.lang.matrix</a></li>
@@ -299,7 +302,6 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../simt/block/index.html">gstaichi.lang.simt.block</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../simt/grid/index.html">gstaichi.lang.simt.grid</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../simt/subgroup/index.html">gstaichi.lang.simt.subgroup</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../simt/timer/index.html">gstaichi.lang.simt.timer</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../simt/warp/index.html">gstaichi.lang.simt.warp</a></li>
 </ul>
 </details></li>
@@ -438,7 +440,7 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">gstaichi.lang.ast.ast_transformers.call_transformer.</span></span><span class="sig-name descname"><span class="pre">CallTransformer</span></span><a class="reference internal" href="../../../../../../_modules/gstaichi/lang/ast/ast_transformers/call_transformer.html#CallTransformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.ast.ast_transformers.call_transformer.CallTransformer" title="Link to this definition">#</a></dt>
 <dd><dl class="py method">
 <dt class="sig sig-object py" id="gstaichi.lang.ast.ast_transformers.call_transformer.CallTransformer.build_Call">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">build_Call</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext" title="gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext"><span class="pre">gstaichi.lang.ast.ast_transformer_utils.ASTTransformerContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">node</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ast.Call</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_stmt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_stmts</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../../_modules/gstaichi/lang/ast/ast_transformers/call_transformer.html#CallTransformer.build_Call"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.ast.ast_transformers.call_transformer.CallTransformer.build_Call" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">build_Call</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext" title="gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext"><span class="pre">gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">node</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ast.Call</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_stmt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_stmts</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../../_modules/gstaichi/lang/ast/ast_transformers/call_transformer.html#CallTransformer.build_Call"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.ast.ast_transformers.call_transformer.CallTransformer.build_Call" title="Link to this definition">#</a></dt>
 <dd><p>example ast:
 Call(func=Name(id=’f2’, ctx=Load()), args=[Name(id=’my_struct_ab’, ctx=Load())], keywords=[])</p>
 </dd></dl>

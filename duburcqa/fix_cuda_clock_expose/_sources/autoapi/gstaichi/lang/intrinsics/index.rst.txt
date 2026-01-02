@@ -1,0 +1,27 @@
+gstaichi.lang.intrinsics
+========================
+
+.. py:module:: gstaichi.lang.intrinsics
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   gstaichi.lang.intrinsics.clock
+
+
+Module Contents
+---------------
+
+.. py:function:: clock()
+
+   Returns the value of a per-multiprocessor counter that is incremented every clock cycle.
+
+   It returns 0 for unsupported arch instead of raising an exception since failure is harmless.
+
+   See official CUDA documentation for details:
+   https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#time-function
+
+

@@ -13,7 +13,6 @@ Submodules
    /autoapi/gstaichi/lang/simt/block/index
    /autoapi/gstaichi/lang/simt/grid/index
    /autoapi/gstaichi/lang/simt/subgroup/index
-   /autoapi/gstaichi/lang/simt/timer/index
    /autoapi/gstaichi/lang/simt/warp/index
 
 
