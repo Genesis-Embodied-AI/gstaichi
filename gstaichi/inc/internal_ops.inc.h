@@ -18,7 +18,7 @@ PER_INTERNAL_OP(do_nothing)
 PER_INTERNAL_OP(refresh_counter)
 PER_INTERNAL_OP(test_internal_func_args)
 
-// Vulkan/SPIRV
+// SPIRV
 PER_INTERNAL_OP(workgroupBarrier)
 PER_INTERNAL_OP(workgroupMemoryBarrier)
 PER_INTERNAL_OP(localInvocationId)
