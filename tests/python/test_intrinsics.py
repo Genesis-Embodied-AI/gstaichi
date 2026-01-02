@@ -51,12 +51,12 @@ def test_clock_accuracy():
     def foo():
         ti.loop_config(block_dim=1)
         for i in range(32):
-            start = ti.clock()
+            start = ti.clock_counter()
             x = ti.random() * 0.5 + 0.5
             for j in range((i + 1) * 2000):
                 x = ti.sin(x * 1.0001 + j * 1e-6) + 1.2345
             if x < 10.0:
-                a[i] = ti.clock() - start
+                a[i] = ti.clock_counter() - start
 
     foo()
 
