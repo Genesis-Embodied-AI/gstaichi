@@ -211,6 +211,14 @@ i64 cuda_clock_i64() {
   return 0;
 }
 
+i64 amdgpu_clock_i64() {
+  return 0;
+}
+
+i64 cpu_clock_i64() {
+  return 0;
+}
+
 void system_memfence() {
 }
 

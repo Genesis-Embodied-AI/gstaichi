@@ -606,6 +606,8 @@ void VulkanDeviceCreator::create_logical_device(bool manual_create) {
       enabled_extensions.push_back(ext.extensionName);
     } else if (name == VK_KHR_16BIT_STORAGE_EXTENSION_NAME) {
       enabled_extensions.push_back(ext.extensionName);
+    } else if (name == VK_KHR_SHADER_CLOCK_EXTENSION_NAME) {
+      enabled_extensions.push_back(ext.extensionName);
     } else if (std::find(params_.additional_device_extensions.begin(),
                          params_.additional_device_extensions.end(),
                          name) != params_.additional_device_extensions.end()) {
@@ -847,6 +849,21 @@ void VulkanDeviceCreator::create_logical_device(bool manual_create) {
       pNextEnd = &dynamic_rendering_feature.pNext;
     }
     */
+
+    // Shader clock
+    if (CHECK_EXTENSION(VK_KHR_SHADER_CLOCK_EXTENSION_NAME)) {
+      VkPhysicalDeviceShaderClockFeaturesKHR shader_clock_feature{};
+      shader_clock_feature.sType =
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CLOCK_FEATURES_KHR;
+      features2.pNext = &shader_clock_feature;
+      vkGetPhysicalDeviceFeatures2KHR(physical_device_, &features2);
+
+      if (shader_clock_feature.shaderDeviceClock) {
+        caps.set(DeviceCapability::spirv_has_shader_clock, true);
+      }
+      *pNextEnd = &shader_clock_feature;
+      pNextEnd = &shader_clock_feature.pNext;
+    }
 
     // TODO: add atomic min/max feature
   }

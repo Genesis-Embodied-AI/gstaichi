@@ -328,7 +328,12 @@ void Operations::init_internals() {
 #define CUDA_MATCH_SYNC(name, dt) \
   PLAIN_OP(cuda_match_##name##_sync_##dt, u32, false, u32, dt)
 
+  // Clock intrinsics (per-backend)
   PLAIN_OP(cuda_clock_i64, i64, false);
+  PLAIN_OP(amdgpu_clock_i64, i64, false);
+  PLAIN_OP(spirv_clock_i64, i64, false);
+  PLAIN_OP(cpu_clock_i64, i64, false);
+
   PLAIN_OP(block_barrier, i32_void, false);
   PLAIN_OP(block_barrier_and_i32, i32, false, i32);
   PLAIN_OP(block_barrier_or_i32, i32, false, i32);
