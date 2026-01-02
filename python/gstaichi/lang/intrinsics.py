@@ -24,11 +24,11 @@ def clock():
     arch = impl.get_runtime().prog.config().arch
     if arch == _ti_core.cuda:
         return impl.call_internal("cuda_clock_i64", with_runtime_context=False)
-    elif arch == _ti_core.amdgpu:
+    if arch == _ti_core.amdgpu:
         return impl.call_internal("amdgpu_clock_i64", with_runtime_context=False)
-    elif arch == _ti_core.vulkan:
+    if arch == _ti_core.vulkan:
         return impl.call_internal("spirv_clock_i64", with_runtime_context=False)
-    elif arch == _ti_core.x64 or arch == _ti_core.arm64:
+    if arch == _ti_core.x64 or arch == _ti_core.arm64:
         return impl.call_internal("cpu_clock_i64", with_runtime_context=False)
     # No-op if not supported
     return 0
