@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pytest
 import torch
@@ -14,6 +15,10 @@ def ti_to_torch(ti_tensor: ti.types.NDArray) -> torch.Tensor:
     cap = ti_tensor.to_dlpack()
     torch_tensor = torch.utils.dlpack.from_dlpack(cap)
     return torch_tensor
+
+
+def is_v520_amdgpu():
+    return os.environ.get("TI_AMDGPU_V520", None) == "1" and ti.cfg.arch == ti.amdgpu
 
 
 @test_utils.test(arch=dlpack_arch)
@@ -68,7 +73,7 @@ def test_dlpack_ndarray_mem_stays_alloced() -> None:
 
     t = create_tensor((3, 2), ti.i32)
     # accessing memory will crash if memory already deleted
-    if ti.cfg.arch == ti.amdgpu:
+    if is_v520_amdgpu():
         # can't run torch kernels on AWS AMD GPU
         t = t.cpu()
     assert t[0, 0] == 0
@@ -97,8 +102,8 @@ def test_dlpack_vec3(tensor_type):
     a[1, 0] = (11, 12, 13)
     ti.sync()
     tt = ti_to_torch(a)
-    if ti.cfg.arch == ti.amdgpu:
-        # can't run torch kernels on AWS AMD GPU
+    if is_v520_amdgpu():
+        # can't run torch accessor kernels on v520
         tt = tt.cpu()
     assert tuple(tt.shape) == (10, 3, 3)
     assert tt.dtype == torch.float32
@@ -122,8 +127,8 @@ def test_dlpack_mat2x3(tensor_type):
     a[0, 1] = ((7, 8, 21), (9, 10, 22))
     a[1, 0] = ((11, 12, 23), (13, 14, 23))
     tt = ti_to_torch(a)
-    if ti.cfg.arch == ti.amdgpu:
-        # can't run torch kernels on AWS AMD GPU
+    if is_v520_amdgpu():
+        # can't run torch accessor kernels on v520
         tt = tt.cpu()
     assert tuple(tt.shape) == (10, 3, 2, 3)
     assert tt.dtype == torch.float32
@@ -157,8 +162,8 @@ def test_dlpack_2_arrays(tensor_type):
     a_t = ti_to_torch(a)
     b_t = ti_to_torch(b)
 
-    if ti.cfg.arch == ti.amdgpu:
-        # can't run torch kernels on AWS AMD GPU
+    if is_v520_amdgpu():
+        # can't run torch accessor kernels on v520
         a_t = a_t.cpu()
         b_t = b_t.cpu()
 
@@ -217,8 +222,8 @@ def test_dlpack_field_multiple_tree_nodes():
     d_t = ti_to_torch(d)
     e_t = ti_to_torch(e)
 
-    if ti.cfg.arch == ti.amdgpu:
-        # can't run torch kernels on AWS AMD GPU
+    if is_v520_amdgpu():
+        # can't run torch accessor kernels on v520
         a_t = a_t.cpu()
         b_t = b_t.cpu()
         c_t = c_t.cpu()
@@ -313,8 +318,8 @@ def test_dlpack_joints_case_memory_alignment_field() -> None:
 
 @test_utils.test(arch=dlpack_arch)
 def test_dlpack_field_memory_allocation_before_to_dlpack():
-    if ti.cfg.arch == ti.amdgpu:
-        pytest.xfail(reason="Cannot run torch kernels on AMDGPU CI")
+    if is_v520_amdgpu():
+        pytest.xfail(reason="can't run torch accessor kernels on v520")
     first_time = ti.field(dtype=ti.i32, shape=(1,))
     first_time_tc = torch.utils.dlpack.from_dlpack(first_time.to_dlpack())
 
