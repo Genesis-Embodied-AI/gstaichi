@@ -6,22 +6,25 @@ from tests import test_utils
 def _arch_supports_clock(arch):
     """Check if the given architecture supports the clock intrinsic."""
     # Vulkan support depends on VK_KHR_shader_clock extension availability
-    return arch in (ti.cuda, ti.amdgpu, ti.vulkan, ti.x64, ti.arm64)
+    if arch == ti.vulkan:
+        return ti._lib.core.is_extension_supported(ti.vulkan, ti.extension.int64)
+    return arch in (ti.cuda, ti.amdgpu, ti.x64, ti.arm64)
 
 
 @test_utils.test()
 def test_clock():
     arch = ti.lang.impl.get_runtime().prog.config().arch
-    dtype = ti.i64 if ti._lib.core.is_extension_supported(arch, ti.extension.data64) else ti.i32
+
+    dtype = ti.i64 if ti.lang.is_extension_enabled(ti.extension.int64) else ti.i32
     a = ti.field(dtype=dtype, shape=32)
 
     @ti.kernel
     def foo():
-        ti.loop_config(parallelize=1, block_dim=1)
+        ti.loop_config(serialize=True, block_dim=1)
         for i in range(32):
             start = ti.clock()
             x = ti.random()
-            for j in range((i + 1) * 5000):
+            for j in range((i + 1) * 20000):
                 if x > 0.99:
                     x = x / 100
                 else:
