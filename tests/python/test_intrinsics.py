@@ -8,9 +8,8 @@ def _arch_supports_clock(arch):
     if arch == ti.vulkan:
         # Vulkan: check device capability at runtime
         device_caps = ti.lang.impl.get_runtime().prog.get_device_caps()
-        return (
-            device_caps.get(ti._lib.core.DeviceCapability.spirv_has_shader_clock) and
-            device_caps.get(ti._lib.core.DeviceCapability.spirv_has_int64)
+        return device_caps.get(ti._lib.core.DeviceCapability.spirv_has_shader_clock) and device_caps.get(
+            ti._lib.core.DeviceCapability.spirv_has_int64
         )
     # CPU and CUDA/AMDGPU always support int64
     return arch in (ti.cuda, ti.amdgpu, ti.x64, ti.arm64)
