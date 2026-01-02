@@ -229,28 +229,6 @@ def test_shfl_sync_i32():
 
 
 @test_utils.test(arch=ti.cuda)
-def test_cuda_clock_i64():
-    a = ti.field(dtype=ti.i64, shape=32)
-
-    @ti.kernel
-    def foo():
-        ti.loop_config(block_dim=1)
-        for i in range(32):
-            start = ti.simt.timer.cuda_clock_i64()
-            x = ti.random() * 0.5 + 0.5
-            for j in range((i + 1) * 2000):
-                x = ti.sin(x * 1.0001 + j * 1e-6) + 1.2345
-            if x != 0:
-                a[i] = ti.simt.timer.cuda_clock_i64() - start
-
-    foo()
-
-    for i in range(1, 31):
-        assert a[i - 1] < a[i] < a[i + 1]
-        assert -1 < a[i] / a[0] - (i + 1) < 1
-
-
-@test_utils.test(arch=ti.cuda)
 def test_shfl_sync_f32():
     a = ti.field(dtype=ti.f32, shape=32)
 

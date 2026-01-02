@@ -1,5 +1,5 @@
 # type: ignore
 
-from gstaichi.lang.simt import block, grid, subgroup, timer, warp
+from gstaichi.lang.simt import block, grid, subgroup, warp
 
-__all__ = ["warp", "subgroup", "block", "grid", "timer"]
+__all__ = ["warp", "subgroup", "block", "grid"]

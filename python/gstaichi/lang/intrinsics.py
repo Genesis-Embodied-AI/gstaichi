@@ -4,13 +4,13 @@ from gstaichi._lib import core as _ti_core
 from gstaichi.lang import impl
 
 
-def cuda_clock_i64():
+def clock():
     """
     Returns the value of a per-multiprocessor counter that is incremented every clock cycle.
 
     It returns 0 for unsupported arch instead of raising an exception since failure is harmless.
 
-    See official documentation for details:
+    See official CUDA documentation for details:
     https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#time-function
     """
     arch = impl.get_runtime().prog.config().arch
@@ -20,5 +20,5 @@ def cuda_clock_i64():
 
 
 __all__ = [
-    "cuda_clock_i64",
+    "clock",
 ]
