@@ -18,9 +18,12 @@ def test_clock():
         ti.loop_config(parallelize=1, block_dim=1)
         for i in range(32):
             start = ti.clock()
-            x = ti.random() * 0.5 + 0.5
-            for j in range((i + 1) * 400000):
-                x = ti.sin(2.0 * x + j) + 1.0
+            x = ti.random()
+            for j in range((i + 1) * 50000):
+                if x > 0.99:
+                    x = x / 100
+                else:
+                    x = ti.sqrt(x)
             if x != 0:
                 a[i] = ti.clock() - start
 
