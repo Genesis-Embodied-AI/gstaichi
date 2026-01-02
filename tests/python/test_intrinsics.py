@@ -24,7 +24,7 @@ def test_clock():
     def foo():
         ti.loop_config(serialize=True, block_dim=1)
         for i in range(32):
-            start = ti.clock()
+            start = ti.clock_counter()
             x = ti.random()
             for j in range((i + 1) * 20000):
                 if x > 0.99:
@@ -32,7 +32,7 @@ def test_clock():
                 else:
                     x = ti.sqrt(x)
             if x != 0:
-                a[i] = ti.clock() - start
+                a[i] = ti.clock_counter() - start
 
     foo()
 

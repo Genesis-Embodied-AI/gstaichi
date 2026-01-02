@@ -4,22 +4,26 @@ from gstaichi._lib import core as _ti_core
 from gstaichi.lang import impl
 
 
-def clock():
+def clock_counter():
     """
-    Returns the value of a hardware counter that is incremented every clock cycle.
+    Returns the current value of a hardware cycle counter.
+
+    All backends return raw clock cycles or ticks, NOT nanoseconds.
+    The counter frequency varies by hardware and may change dynamically
+    (e.g., due to GPU boost or thermal throttling).
 
     Supported backends:
-    - CUDA: Per-streaming-multiprocessor cycle counter.
+    - CUDA: Per-streaming-multiprocessor cycle counter (increments every SM clock cycle).
       See https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#time-function
-    - AMDGPU: GPU timestamp counter
-    - Vulkan: Device clock (requires VK_KHR_shader_clock support, else returns 0)
-    - CPU (x64/arm64): Processor timestamp counter
+    - AMDGPU: GPU cycle counter
+    - Vulkan: Device clock in cycles (requires VK_KHR_shader_clock, else returns 0)
+    - CPU (x64/arm64): Processor timestamp counter (constant rate on modern CPUs)
 
     Unsupported backends (returns 0):
     - Metal
 
-    Note: The counter frequency and semantics may vary across backends.
-    Use this for relative timing measurements within the same backend.
+    Use this for relative timing measurements within the same backend and run.
+    Comparing cycle counts across different backends or hardware is not meaningful.
     """
     arch = impl.get_runtime().prog.config().arch
     if arch == _ti_core.cuda:
@@ -35,5 +39,5 @@ def clock():
 
 
 __all__ = [
-    "clock",
+    "clock_counter",
 ]

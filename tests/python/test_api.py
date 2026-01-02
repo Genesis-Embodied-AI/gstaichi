@@ -113,7 +113,7 @@ user_api[ti] = [
     "cache_read_only",
     "cast",
     "ceil",
-    "clock",
+    "clock_counter",
     "cos",
     "cpu",
     "cuda",
