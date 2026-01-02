@@ -18,7 +18,7 @@ PER_INTERNAL_OP(do_nothing)
 PER_INTERNAL_OP(refresh_counter)
 PER_INTERNAL_OP(test_internal_func_args)
 
-// Vulkan
+// SPIRV
 PER_INTERNAL_OP(workgroupBarrier)
 PER_INTERNAL_OP(workgroupMemoryBarrier)
 PER_INTERNAL_OP(localInvocationId)
@@ -43,8 +43,10 @@ PER_INTERNAL_OP(subgroupInclusiveMax)
 PER_INTERNAL_OP(subgroupInclusiveAnd)
 PER_INTERNAL_OP(subgroupInclusiveOr)
 PER_INTERNAL_OP(subgroupInclusiveXor)
+PER_INTERNAL_OP(spirv_clock_i64)
 
 // CUDA
+PER_INTERNAL_OP(cuda_clock_i64)
 PER_INTERNAL_OP(block_barrier)
 PER_INTERNAL_OP(block_barrier_and_i32)
 PER_INTERNAL_OP(block_barrier_or_i32)
@@ -65,3 +67,9 @@ PER_INTERNAL_OP(cuda_match_any_sync_i32)
 PER_INTERNAL_OP(cuda_match_all_sync_i32)
 PER_INTERNAL_OP(cuda_active_mask)
 PER_INTERNAL_OP(warp_barrier)
+
+// AMDGPU
+PER_INTERNAL_OP(amdgpu_clock_i64)
+
+// CPU
+PER_INTERNAL_OP(cpu_clock_i64)

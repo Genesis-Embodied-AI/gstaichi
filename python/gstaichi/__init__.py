@@ -23,6 +23,7 @@ from gstaichi._lib.utils import warn_restricted_version
 from gstaichi._logging import *
 from gstaichi._snode import *
 from gstaichi.lang import *  # pylint: disable=W0622 # TODO(archibate): It's `gstaichi.lang.core` overriding `gstaichi.core`
+from gstaichi.lang.intrinsics import *
 from gstaichi.types.annotations import *
 
 # Provide a shortcut to types since they're commonly used.
