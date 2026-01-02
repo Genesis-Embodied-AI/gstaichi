@@ -1577,7 +1577,7 @@ def test_pruning_with_recursive_func() -> None:
 
 
 @test_utils.test()
-def test_pruning_reuse_func_same_kernel() -> None:
+def test_pruning_reuse_func_diff_kernel_parameters() -> None:
     """
     In this test, any vertical call stack doesn't ever
     contain the same function more than once.
@@ -1652,6 +1652,113 @@ def test_pruning_reuse_func_same_kernel() -> None:
     assert my_struct._f2a[0, 0] == 102
     assert my_struct._f2b[0, 0] == 103
     assert my_struct._f3[0, 0] == 104
+
+
+@test_utils.test()
+def test_pruning_reuse_func_same_kernel_call_l1() -> None:
+    @dataclasses.dataclass
+    class MyStruct:
+        _f1b: ti.types.NDArray[ti.f32, 2]
+        _f1a: ti.types.NDArray[ti.f32, 2]
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _unused: ti.types.NDArray[ti.f32, 2]
+
+    def create_struct():
+        my_struct = MyStruct(
+            _f1b=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1a=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct
+
+    @ti.func
+    def f1(flag: ti.template(), struc_f1: MyStruct):
+        if ti.static(flag):
+            struc_f1._f1a[0, 0] = 101
+        else:
+            struc_f1._f1b[0, 0] = 102
+
+    @ti.kernel
+    def k1(struct_k1: MyStruct):
+        struct_k1._k1[0, 0] = 100
+        f1(False, struct_k1)
+        f1(True, struct_k1)
+
+    my_struct = create_struct()
+    k1(my_struct)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 3
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1a[0, 0] == 101
+    assert my_struct._f1b[0, 0] == 102
+
+    my_struct = create_struct()
+    k1(my_struct)
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 3
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1a[0, 0] == 101
+    assert my_struct._f1b[0, 0] == 102
+
+
+@test_utils.test()
+def test_pruning_reuse_func_same_kernel_call_l2() -> None:
+    @dataclasses.dataclass
+    class MyStruct:
+        _f2b: ti.types.NDArray[ti.f32, 2]
+        _f2a: ti.types.NDArray[ti.f32, 2]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _unused: ti.types.NDArray[ti.f32, 2]
+
+    def create_struct():
+        my_struct = MyStruct(
+            _f2b=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f2a=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct
+
+    @ti.func
+    def f2(flag: ti.template(), struc_f2: MyStruct):
+        if ti.static(flag):
+            struc_f2._f2a[0, 0] = 102
+        else:
+            struc_f2._f2b[0, 0] = 103
+
+    @ti.func
+    def f1(struct_f1: MyStruct):
+        struct_f1._f1[0, 0] = 101
+        f2(False, struct_f1)
+        f2(True, struct_f1)
+
+    @ti.kernel
+    def k1(struct_k1: MyStruct):
+        struct_k1._k1[0, 0] = 100
+        f1(struct_k1)
+
+    my_struct = create_struct()
+    k1(my_struct)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1[0, 0] == 101
+    assert my_struct._f2a[0, 0] == 102
+    assert my_struct._f2b[0, 0] == 103
+
+    my_struct = create_struct()
+    k1(my_struct)
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1[0, 0] == 101
+    assert my_struct._f2a[0, 0] == 102
+    assert my_struct._f2b[0, 0] == 103
 
 
 @test_utils.test()
@@ -2265,6 +2372,54 @@ def test_pruning_iterate_function() -> None:
         struct_k1._k1[0, 0] = 100
         for fn in ti.static(functions):
             fn(struct=struct_k1)
+
+    my_struct = make_struct()
+    k1(struct_k1=my_struct)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1[0, 0] == 101
+    assert my_struct._f2[0, 0] == 102
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 3
+
+
+@test_utils.test()
+def test_pruning_iterate_function_no_iterate() -> None:
+    """
+    Designed to test
+    https://github.com/Genesis-Embodied-AI/Genesis/blob/6d344d0d4c46b7c9de98442bc4d09f9f9bfa541b/genesis/engine/couplers/sap_coupler.py#L631
+    """
+
+    @dataclasses.dataclass
+    class MyStruct:
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _f2: ti.types.NDArray[ti.f32, 2]
+        _unused: ti.types.NDArray[ti.f32, 2]
+
+    def make_struct():
+        my_struct = MyStruct(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f2=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct
+
+    @ti.func
+    def f1(struct: MyStruct):
+        struct._f1[0, 0] = 101
+
+    @ti.func
+    def f2(struct: MyStruct):
+        struct._f2[0, 0] = 102
+
+    @ti.kernel
+    def k1(struct_k1: MyStruct):
+        struct_k1._k1[0, 0] = 100
+        f1(struct=struct_k1)
+        f2(struct=struct_k1)
 
     my_struct = make_struct()
     k1(struct_k1=my_struct)
