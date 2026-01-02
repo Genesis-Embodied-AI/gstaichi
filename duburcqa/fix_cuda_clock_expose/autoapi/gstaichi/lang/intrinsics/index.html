@@ -420,8 +420,8 @@
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.intrinsics.clock" title="gstaichi.lang.intrinsics.clock"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clock</span></code></a>()</p></td>
-<td><p>Returns the value of a hardware counter that is incremented every clock cycle.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.intrinsics.clock_counter" title="gstaichi.lang.intrinsics.clock_counter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clock_counter</span></code></a>()</p></td>
+<td><p>Returns the current value of a hardware cycle counter.</p></td>
 </tr>
 </tbody>
 </table>
@@ -430,23 +430,26 @@
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
 <dl class="py function">
-<dt class="sig sig-object py" id="gstaichi.lang.intrinsics.clock">
-<span class="sig-prename descclassname"><span class="pre">gstaichi.lang.intrinsics.</span></span><span class="sig-name descname"><span class="pre">clock</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/gstaichi/lang/intrinsics.html#clock"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.intrinsics.clock" title="Link to this definition">#</a></dt>
-<dd><p>Returns the value of a hardware counter that is incremented every clock cycle.</p>
+<dt class="sig sig-object py" id="gstaichi.lang.intrinsics.clock_counter">
+<span class="sig-prename descclassname"><span class="pre">gstaichi.lang.intrinsics.</span></span><span class="sig-name descname"><span class="pre">clock_counter</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/gstaichi/lang/intrinsics.html#clock_counter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.intrinsics.clock_counter" title="Link to this definition">#</a></dt>
+<dd><p>Returns the current value of a hardware cycle counter.</p>
+<p>All backends return raw clock cycles or ticks, NOT nanoseconds.
+The counter frequency varies by hardware and may change dynamically
+(e.g., due to GPU boost or thermal throttling).</p>
 <p>Supported backends:
-- CUDA: Per-streaming-multiprocessor cycle counter.</p>
+- CUDA: Per-streaming-multiprocessor cycle counter (increments every SM clock cycle).</p>
 <blockquote>
 <div><p>See <a class="reference external" href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#time-function">https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#time-function</a></p>
 </div></blockquote>
 <ul class="simple">
-<li><p>AMDGPU: GPU timestamp counter</p></li>
-<li><p>Vulkan: Device clock (requires VK_KHR_shader_clock support, else returns 0)</p></li>
-<li><p>CPU (x64/arm64): Processor timestamp counter</p></li>
+<li><p>AMDGPU: GPU cycle counter</p></li>
+<li><p>Vulkan: Device clock in cycles (requires VK_KHR_shader_clock, else returns 0)</p></li>
+<li><p>CPU (x64/arm64): Processor timestamp counter (constant rate on modern CPUs)</p></li>
 </ul>
 <p>Unsupported backends (returns 0):
 - Metal</p>
-<p>Note: The counter frequency and semantics may vary across backends.
-Use this for relative timing measurements within the same backend.</p>
+<p>Use this for relative timing measurements within the same backend and run.
+Comparing cycle counts across different backends or hardware is not meaningful.</p>
 </dd></dl>
 
 </section>
@@ -501,7 +504,7 @@ Use this for relative timing measurements within the same backend.</p>
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.intrinsics.clock"><code class="docutils literal notranslate"><span class="pre">clock()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.intrinsics.clock_counter"><code class="docutils literal notranslate"><span class="pre">clock_counter()</span></code></a></li>
 </ul>
 </li>
 </ul>

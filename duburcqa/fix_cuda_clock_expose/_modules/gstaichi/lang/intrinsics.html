@@ -316,24 +316,28 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang</span><span class="w"> </span><span class="kn">import</span> <span class="n">impl</span>
 
 
-<div class="viewcode-block" id="clock">
-<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/intrinsics/index.html#gstaichi.lang.intrinsics.clock">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">clock</span><span class="p">():</span>
+<div class="viewcode-block" id="clock_counter">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/intrinsics/index.html#gstaichi.lang.intrinsics.clock_counter">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">clock_counter</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Returns the value of a hardware counter that is incremented every clock cycle.</span>
+<span class="sd">    Returns the current value of a hardware cycle counter.</span>
+
+<span class="sd">    All backends return raw clock cycles or ticks, NOT nanoseconds.</span>
+<span class="sd">    The counter frequency varies by hardware and may change dynamically</span>
+<span class="sd">    (e.g., due to GPU boost or thermal throttling).</span>
 
 <span class="sd">    Supported backends:</span>
-<span class="sd">    - CUDA: Per-streaming-multiprocessor cycle counter.</span>
+<span class="sd">    - CUDA: Per-streaming-multiprocessor cycle counter (increments every SM clock cycle).</span>
 <span class="sd">      See https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#time-function</span>
-<span class="sd">    - AMDGPU: GPU timestamp counter</span>
-<span class="sd">    - Vulkan: Device clock (requires VK_KHR_shader_clock support, else returns 0)</span>
-<span class="sd">    - CPU (x64/arm64): Processor timestamp counter</span>
+<span class="sd">    - AMDGPU: GPU cycle counter</span>
+<span class="sd">    - Vulkan: Device clock in cycles (requires VK_KHR_shader_clock, else returns 0)</span>
+<span class="sd">    - CPU (x64/arm64): Processor timestamp counter (constant rate on modern CPUs)</span>
 
 <span class="sd">    Unsupported backends (returns 0):</span>
 <span class="sd">    - Metal</span>
 
-<span class="sd">    Note: The counter frequency and semantics may vary across backends.</span>
-<span class="sd">    Use this for relative timing measurements within the same backend.</span>
+<span class="sd">    Use this for relative timing measurements within the same backend and run.</span>
+<span class="sd">    Comparing cycle counts across different backends or hardware is not meaningful.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">arch</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">prog</span><span class="o">.</span><span class="n">config</span><span class="p">()</span><span class="o">.</span><span class="n">arch</span>
     <span class="k">if</span> <span class="n">arch</span> <span class="o">==</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">cuda</span><span class="p">:</span>
@@ -350,7 +354,7 @@
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;clock&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;clock_counter&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 </pre></div>
 
