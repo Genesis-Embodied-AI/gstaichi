@@ -26,7 +26,7 @@ def test_clock():
         for i in range(32):
             start = ti.clock_counter()
             x = ti.random()
-            for j in range((i + 1) * 20000):
+            for j in range((i + 1) * 50000):
                 if x > 0.99:
                     x = x / 100
                 else:
