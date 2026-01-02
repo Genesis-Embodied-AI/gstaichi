@@ -14,7 +14,7 @@ def _arch_supports_clock(arch):
 
 
 @test_utils.test()
-def test_clock():
+def test_clock_monotonic():
     arch = ti.lang.impl.get_runtime().prog.config().arch
 
     dtype = ti.i64 if _arch_supports_clock(arch) else ti.i32
@@ -24,25 +24,40 @@ def test_clock():
     def foo():
         ti.loop_config(serialize=True, block_dim=1)
         for i in range(32):
-            start = ti.clock_counter()
-            x = ti.random()
-            for j in range((i + 1) * 50000):
-                if x > 0.99:
-                    x = x / 100
-                else:
-                    x = ti.sqrt(x)
-            if x != 0:
-                a[i] = ti.clock_counter() - start
+            x = ti.random() * 0.5 + 0.5
+            for j in range((i + 1) * 2000):
+                x = ti.sin(x * 1.0001 + j * 1e-6) + 1.2345
+            if x < 10.0:
+                a[i] = ti.clock_counter()
 
     foo()
 
     if _arch_supports_clock(arch):
         for i in range(1, 31):
             assert a[i - 1] < a[i] < a[i + 1]
-            if arch not in (ti.x64, ti.arm64):
-                # CPU clock is time based, not cycle based
-                assert -1 < a[i] / a[0] - (i + 1) < 1
     else:
         # On unsupported backends, clock returns 0
         for i in range(1, 31):
             assert a[i] == 0
+
+
+@test_utils.test(arch=ti.cuda)
+def test_clock_accuracy():
+    a = ti.field(dtype=ti.i64, shape=32)
+
+    @ti.kernel
+    def foo():
+        ti.loop_config(block_dim=1)
+        for i in range(32):
+            start = ti.clock()
+            x = ti.random() * 0.5 + 0.5
+            for j in range((i + 1) * 2000):
+                x = ti.sin(x * 1.0001 + j * 1e-6) + 1.2345
+            if x < 10.0:
+                a[i] = ti.clock() - start
+
+    foo()
+
+    for i in range(1, 31):
+        assert a[i - 1] < a[i] < a[i + 1]
+        assert -1 < a[i] / a[0] - (i + 1) < 1
