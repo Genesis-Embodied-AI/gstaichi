@@ -9,12 +9,12 @@ def test_clock():
 
     @ti.kernel
     def foo():
-        ti.loop_config(block_dim=1)
+        ti.loop_config(parallelize=1, block_dim=1)
         for i in range(32):
             start = ti.clock()
             x = ti.random() * 0.5 + 0.5
-            for j in range((i + 1) * 2000):
-                x = ti.sin(x * 1.0001 + j * 1e-6) + 1.2345
+            for j in range((i + 1) * 400000):
+                x = ti.sin(2.0 * x + j) + 1.0
             if x != 0:
                 a[i] = ti.clock() - start
 
