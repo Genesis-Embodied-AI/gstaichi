@@ -4,10 +4,12 @@ from tests import test_utils
 
 
 def _arch_supports_clock(arch):
-    """Check if the given architecture supports the clock intrinsic."""
-    # Vulkan support depends on VK_KHR_shader_clock extension availability
+    """Check if the architecture supports the clock intrinsic."""
     if arch == ti.vulkan:
-        return ti._lib.core.is_extension_supported(ti.vulkan, ti.extension.int64)
+        # Vulkan: check device capability at runtime
+        device_caps = ti.lang.impl.get_runtime().prog.get_device_caps()
+        return device_caps.get(ti._lib.core.DeviceCapability.spirv_has_int64) != 0
+    # CPU and CUDA/AMDGPU always support int64
     return arch in (ti.cuda, ti.amdgpu, ti.x64, ti.arm64)
 
 
@@ -15,7 +17,7 @@ def _arch_supports_clock(arch):
 def test_clock():
     arch = ti.lang.impl.get_runtime().prog.config().arch
 
-    dtype = ti.i64 if ti.lang.is_extension_enabled(ti.extension.int64) else ti.i32
+    dtype = ti.i64 if _arch_supports_clock(arch) else ti.i32
     a = ti.field(dtype=dtype, shape=32)
 
     @ti.kernel
