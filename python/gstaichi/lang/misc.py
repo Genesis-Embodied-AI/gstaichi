@@ -8,6 +8,7 @@ from copy import deepcopy as _deepcopy
 from gstaichi import _logging, _snode
 from gstaichi._lib import core as _ti_core
 from gstaichi._lib.core.gstaichi_python import Extension
+from gstaichi._lib.utils import get_os_name
 from gstaichi.lang import impl
 from gstaichi.lang.expr import Expr
 from gstaichi.lang.impl import axes, get_runtime
@@ -432,6 +433,9 @@ def init(
         arch = _ti_core.arch_from_name(env_arch)
     cfg.arch = adaptive_arch_select(arch, enable_fallback)
     print(f"[GsTaichi] Starting on arch={_ti_core.arch_name(cfg.arch)}")
+
+    if cfg.arch == _ti_core.amdgpu and get_os_name() == "win":
+        _logging.warn("AMDGPU support on Windows is experimental and may not work as expected.")
 
     if _test_mode:
         return spec_cfg
