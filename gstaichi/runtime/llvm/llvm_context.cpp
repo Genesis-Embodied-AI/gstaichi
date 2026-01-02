@@ -610,23 +610,9 @@ void GsTaichiLLVMContext::link_module_with_amdgpu_libdevice(
   auto mcpu = AMDGPUContext::get_instance().get_mcpu();
   auto isa_version = mcpu.substr(3, 4);
 
-  // Determine which libdevice directory to use based on architecture
-  // RDNA (gfx10xx, gfx11xx) uses ROCm 5.x libraries
-  // CDNA (gfx9xx, gfx12xx) uses ROCm 7.0 libraries
-  std::string libdevice_subdir = "";
-  if (mcpu.substr(0, 5) == "gfx10" || mcpu.substr(0, 5) == "gfx11") {
-    // RDNA/RDNA2/RDNA3 architectures (V520, RX 6000/7000 series)
-    libdevice_subdir = "_rocm5x";
-    TI_TRACE("Using ROCm 5.x libdevice for RDNA architecture: {}", mcpu);
-  } else {
-    // CDNA architectures (MI100, MI200, MI300)
-    libdevice_subdir = "_rocm70";
-    TI_TRACE("Using ROCm 7.0 libdevice for CDNA architecture: {}", mcpu);
-  }
-
-  // Check if the ISA version file exists
-  std::string lib_dir = runtime_lib_dir() + libdevice_subdir + "/";
-  std::string isa_file = "oclc_isa_version_" + isa_version + ".bc";
+  const std::string libdevice_subdir = "_rocm70";
+  const std::string lib_dir = runtime_lib_dir() + libdevice_subdir + "/";
+  const std::string isa_file = "oclc_isa_version_" + isa_version + ".bc";
   std::ifstream test_file(lib_dir + isa_file);
 
   if (!test_file.good()) {
