@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>gstaichi.lang.ast &#8212; GsTaichi 4.6.0 documentation</title>
+    <title>gstaichi.lang.intrinsics &#8212; GsTaichi 4.6.0 documentation</title>
   
   
   
@@ -55,11 +55,11 @@
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/gstaichi/lang/ast/index';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/gstaichi/lang/intrinsics/index';</script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
-    <link rel="next" title="gstaichi.lang.ast.ast_transformer" href="ast_transformer/index.html" />
-    <link rel="prev" title="gstaichi.lang.any_array" href="../any_array/index.html" />
+    <link rel="next" title="gstaichi.lang.kernel" href="../kernel/index.html" />
+    <link rel="prev" title="gstaichi.lang.impl" href="../impl/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="4.6.0" />
@@ -271,13 +271,13 @@
 <li class="toctree-l2"><a class="reference internal" href="../../experimental/index.html">gstaichi.experimental</a></li>
 <li class="toctree-l2 current active has-children"><a class="reference internal" href="../index.html">gstaichi.lang</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="../any_array/index.html">gstaichi.lang.any_array</a></li>
-<li class="toctree-l3 current active has-children"><a class="current reference internal" href="#">gstaichi.lang.ast</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l4"><a class="reference internal" href="ast_transformer/index.html">gstaichi.lang.ast.ast_transformer</a></li>
-<li class="toctree-l4"><a class="reference internal" href="ast_transformer_utils/index.html">gstaichi.lang.ast.ast_transformer_utils</a></li>
-<li class="toctree-l4"><a class="reference internal" href="ast_transformers/index.html">gstaichi.lang.ast.ast_transformers</a></li>
-<li class="toctree-l4"><a class="reference internal" href="checkers/index.html">gstaichi.lang.ast.checkers</a></li>
-<li class="toctree-l4"><a class="reference internal" href="symbol_resolver/index.html">gstaichi.lang.ast.symbol_resolver</a></li>
-<li class="toctree-l4"><a class="reference internal" href="transform/index.html">gstaichi.lang.ast.transform</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../ast/index.html">gstaichi.lang.ast</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../ast/ast_transformer/index.html">gstaichi.lang.ast.ast_transformer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ast/ast_transformer_utils/index.html">gstaichi.lang.ast.ast_transformer_utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ast/ast_transformers/index.html">gstaichi.lang.ast.ast_transformers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ast/checkers/index.html">gstaichi.lang.ast.checkers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ast/symbol_resolver/index.html">gstaichi.lang.ast.symbol_resolver</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../ast/transform/index.html">gstaichi.lang.ast.transform</a></li>
 </ul>
 </details></li>
 <li class="toctree-l3"><a class="reference internal" href="../common_ops/index.html">gstaichi.lang.common_ops</a></li>
@@ -286,7 +286,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../field/index.html">gstaichi.lang.field</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../func/index.html">gstaichi.lang.func</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../impl/index.html">gstaichi.lang.impl</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../intrinsics/index.html">gstaichi.lang.intrinsics</a></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">gstaichi.lang.intrinsics</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../kernel/index.html">gstaichi.lang.kernel</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../kernel_arguments/index.html">gstaichi.lang.kernel_arguments</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../kernel_impl/index.html">gstaichi.lang.kernel_impl</a></li>
@@ -397,7 +397,7 @@
     
     <li class="breadcrumb-item"><a href="../index.html" class="nav-link">gstaichi.lang</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">gstaichi.lang.ast</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">gstaichi.lang.intrinsics</span></li>
   </ul>
 </nav>
 </div>
@@ -414,20 +414,44 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="module-gstaichi.lang.ast">
-<span id="gstaichi-lang-ast"></span><h1>gstaichi.lang.ast<a class="headerlink" href="#module-gstaichi.lang.ast" title="Link to this heading">#</a></h1>
-<section id="submodules">
-<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">#</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="ast_transformer/index.html">gstaichi.lang.ast.ast_transformer</a></li>
-<li class="toctree-l1"><a class="reference internal" href="ast_transformer_utils/index.html">gstaichi.lang.ast.ast_transformer_utils</a></li>
-<li class="toctree-l1"><a class="reference internal" href="ast_transformers/index.html">gstaichi.lang.ast.ast_transformers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="checkers/index.html">gstaichi.lang.ast.checkers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="symbol_resolver/index.html">gstaichi.lang.ast.symbol_resolver</a></li>
-<li class="toctree-l1"><a class="reference internal" href="transform/index.html">gstaichi.lang.ast.transform</a></li>
-</ul>
+  <section id="module-gstaichi.lang.intrinsics">
+<span id="gstaichi-lang-intrinsics"></span><h1>gstaichi.lang.intrinsics<a class="headerlink" href="#module-gstaichi.lang.intrinsics" title="Link to this heading">#</a></h1>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.intrinsics.clock_counter" title="gstaichi.lang.intrinsics.clock_counter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clock_counter</span></code></a>()</p></td>
+<td><p>Returns the current value of a hardware cycle counter.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="gstaichi.lang.intrinsics.clock_counter">
+<span class="sig-prename descclassname"><span class="pre">gstaichi.lang.intrinsics.</span></span><span class="sig-name descname"><span class="pre">clock_counter</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/gstaichi/lang/intrinsics.html#clock_counter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.intrinsics.clock_counter" title="Link to this definition">#</a></dt>
+<dd><p>Returns the current value of a hardware cycle counter.</p>
+<p>All backends return raw clock cycles or ticks, NOT nanoseconds.
+The counter frequency varies by hardware and may change dynamically
+(e.g., due to GPU boost or thermal throttling).</p>
+<p>Supported backends:
+- CUDA: Per-streaming-multiprocessor cycle counter (increments every SM clock cycle).</p>
+<blockquote>
+<div><p>See <a class="reference external" href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#time-function">https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#time-function</a></p>
+</div></blockquote>
+<ul class="simple">
+<li><p>AMDGPU: GPU cycle counter</p></li>
+<li><p>Vulkan: Device clock in cycles (requires VK_KHR_shader_clock, else returns 0)</p></li>
+<li><p>CPU (x64/arm64): Processor timestamp counter (constant rate on modern CPUs)</p></li>
+</ul>
+<p>Unsupported backends (returns 0):
+- Metal</p>
+<p>Use this for relative timing measurements within the same backend and run.
+Comparing cycle counts across different backends or hardware is not meaningful.</p>
+</dd></dl>
+
 </section>
 </section>
 
@@ -442,20 +466,20 @@
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="../any_array/index.html"
+       href="../impl/index.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">gstaichi.lang.any_array</p>
+        <p class="prev-next-title">gstaichi.lang.impl</p>
       </div>
     </a>
     <a class="right-next"
-       href="ast_transformer/index.html"
+       href="../kernel/index.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">gstaichi.lang.ast.ast_transformer</p>
+        <p class="prev-next-title">gstaichi.lang.kernel</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -478,7 +502,11 @@
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.intrinsics.clock_counter"><code class="docutils literal notranslate"><span class="pre">clock_counter()</span></code></a></li>
+</ul>
+</li>
 </ul>
   </nav></div>
 
@@ -486,7 +514,7 @@
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../../../../_sources/autoapi/gstaichi/lang/ast/index.rst.txt"
+      <li><a href="../../../../_sources/autoapi/gstaichi/lang/intrinsics/index.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div></div>
