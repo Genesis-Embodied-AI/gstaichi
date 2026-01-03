@@ -539,6 +539,7 @@ std::unique_ptr<llvm::Module> GsTaichiLLVMContext::module_from_file(
       patch_intrinsic("block_idx", llvm::Intrinsic::amdgcn_workgroup_id_x);
       patch_intrinsic("block_barrier", llvm::Intrinsic::amdgcn_s_barrier,
                       false);
+      patch_intrinsic("amdgpu_clock_i64", llvm::Intrinsic::amdgcn_s_memtime);
 
       link_module_with_amdgpu_libdevice(module);
       patch_amdgpu_kernel_dim(
@@ -546,6 +547,21 @@ std::unique_ptr<llvm::Module> GsTaichiLLVMContext::module_from_file(
       patch_amdgpu_kernel_dim(
           "grid_dim", llvm::ConstantInt::get(llvm::Type::getInt32Ty(*ctx), 0));
 #endif
+    }
+  }
+
+  // CPU-specific intrinsics
+  if (arch_ == Arch::x64 || arch_ == Arch::arm64) {
+    auto func = module->getFunction("cpu_clock_i64");
+    if (func) {
+      func->deleteBody();
+      auto bb = llvm::BasicBlock::Create(*ctx, "entry", func);
+      IRBuilder<> builder(*ctx);
+      builder.SetInsertPoint(bb);
+      // Use readcyclecounter intrinsic (maps to rdtsc on x86, etc.)
+      builder.CreateRet(
+          builder.CreateIntrinsic(Intrinsic::readcyclecounter, {}, {}));
+      GsTaichiLLVMContext::mark_inline(func);
     }
   }
 

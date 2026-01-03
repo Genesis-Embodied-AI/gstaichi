@@ -74,6 +74,11 @@ void IRBuilder::init_header() {
         .add(spv::CapabilityPhysicalStorageBufferAddresses)
         .commit(&header_);
   }
+  if (caps_->get(cap::spirv_has_shader_clock)) {
+    ib_.begin(spv::OpCapability)
+        .add(spv::CapabilityShaderClockKHR)
+        .commit(&header_);
+  }
 
   ib_.begin(spv::OpExtension)
       .add("SPV_KHR_storage_buffer_storage_class")
@@ -107,6 +112,10 @@ void IRBuilder::init_header() {
     ib_.begin(spv::OpExtension)
         .add("SPV_EXT_shader_atomic_float_min_max")
         .commit(&header_);
+  }
+
+  if (caps_->get(cap::spirv_has_shader_clock)) {
+    ib_.begin(spv::OpExtension).add("SPV_KHR_shader_clock").commit(&header_);
   }
 
   if (caps_->get(cap::spirv_has_physical_storage_buffer)) {
