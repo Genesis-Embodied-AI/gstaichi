@@ -2,6 +2,7 @@ from ast import Starred
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
+from .exception import GsTaichiSyntaxError
 from .kernel_arguments import ArgMetadata
 
 if TYPE_CHECKING:
@@ -163,7 +164,11 @@ class Pruning:
 
             is_starred = type(arg) is Starred
             if is_starred:
-                assert i == len(node.args) - 1 and len(node_keywords) == 0
+                if i != len(node.args) - 1 or len(node_keywords) != 0:
+                    raise GsTaichiSyntaxError(
+                        "STARNOTLAST * args can only be present as the last argument of a function"
+                    )
+
                 # we'll just dump the rest of the py_args in:
                 new_args.extend(py_args[i:])
                 child_arg_id += len(py_args[i:])

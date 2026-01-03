@@ -8,7 +8,7 @@ import pytest
 
 import gstaichi as ti
 from gstaichi.lang._kernel_types import KernelBatchedArgType
-from gstaichi.lang.impl import Kernel
+from gstaichi.lang.impl import GsTaichiSyntaxError, Kernel
 
 from tests import test_utils
 
@@ -2332,6 +2332,44 @@ def test_pruning_star_args() -> None:
     k1(a)
     assert a[0] == 3
     assert a[1] == 5
+
+
+@test_utils.test()
+def test_pruning_star_args_error_not_at_end_another_arg() -> None:
+    @ti.func
+    def f1(a: ti.types.NDArray[ti.i32, 1], b: ti.i32, c: ti.i32, d: ti.i32):
+        a[0] = b
+        a[1] = c
+
+    @ti.kernel
+    def k1(a: ti.types.NDArray[ti.i32, 1]) -> None:
+        f1(a, *star_args, 3)
+
+    star_args = [3, 5]
+
+    a = ti.ndarray(ti.i32, (10,))
+    with pytest.raises(GsTaichiSyntaxError) as e:
+        k1(a)
+    assert "STARNOTLAST" in e.value.args[0]
+
+
+@test_utils.test()
+def test_pruning_star_args_error_not_at_end_kwargs() -> None:
+    @ti.func
+    def f1(a: ti.types.NDArray[ti.i32, 1], b: ti.i32, c: ti.i32, d: ti.i32):
+        a[0] = b
+        a[1] = c
+
+    @ti.kernel
+    def k1(a: ti.types.NDArray[ti.i32, 1]) -> None:
+        f1(a, *star_args, d=3)
+
+    star_args = [3, 5]
+
+    a = ti.ndarray(ti.i32, (10,))
+    with pytest.raises(GsTaichiSyntaxError) as e:
+        k1(a)
+    assert "STARNOTLAST" in e.value.args[0]
 
 
 @test_utils.test()
