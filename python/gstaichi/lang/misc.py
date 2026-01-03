@@ -752,7 +752,7 @@ def is_extension_enabled(ext: Extension) -> bool:
     """
     Directly returns whether extension is enabled, without needing to
     pass in current architecture. Also takes into account config, in the case
-    of adstack
+    of adstack.
     """
     arch = impl.current_cfg().arch
     if ext == extension.adstack:

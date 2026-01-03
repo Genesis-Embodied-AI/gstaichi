@@ -1409,6 +1409,20 @@ void TaskCodegen::visit(InternalFuncStmt *stmt) {
         spv_op, stype,
         ir_->int_immediate_number(ir_->i32_type(), spv::ScopeSubgroup), arg0,
         arg1);
+  } else if (stmt->func_name == "spirv_clock_i64") {
+    // OpReadClockKHR returns a 64-bit unsigned integer
+    // Scope: Device (1) for device-wide clock
+    if (caps_->get(DeviceCapability::spirv_has_shader_clock) &&
+        caps_->get(DeviceCapability::spirv_has_int64)) {
+      spirv::Value clock_val = ir_->make_value(
+          spv::OpReadClockKHR, ir_->u64_type(),
+          ir_->uint_immediate_number(ir_->u32_type(), spv::ScopeDevice));
+      // Cast u64 to i64 as the return type is i64
+      val = ir_->make_value(spv::OpBitcast, ir_->i64_type(), clock_val);
+    } else {
+      // Return 0 if shader clock is not supported
+      val = ir_->int_immediate_number(ir_->i64_type(), 0);
+    }
   }
   ir_->register_value(stmt->raw_name(), val);
 }

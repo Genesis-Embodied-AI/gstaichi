@@ -18,6 +18,7 @@
 #include "gstaichi/ir/statements.h"
 #include "gstaichi/program/extension.h"
 #include "gstaichi/program/ndarray.h"
+#include "gstaichi/rhi/device_capability.h"
 #include "gstaichi/program/matrix.h"
 #include "gstaichi/python/export.h"
 #include "gstaichi/math/svd.h"
@@ -81,6 +82,12 @@ void export_lang(py::module &m) {
 #define PER_EXTENSION(x) .value(#x, Extension::x)
 #include "gstaichi/inc/extensions.inc.h"
 #undef PER_EXTENSION
+      .export_values();
+
+  py::enum_<DeviceCapability>(m, "DeviceCapability", py::arithmetic())
+#define PER_DEVICE_CAPABILITY(x) .value(#x, DeviceCapability::x)
+#include "gstaichi/inc/rhi_constants.inc.h"
+#undef PER_DEVICE_CAPABILITY
       .export_values();
 
   py::enum_<ExternalArrayLayout>(m, "Layout", py::arithmetic())
@@ -353,7 +360,8 @@ void export_lang(py::module &m) {
       .def("reset_snode_access_flag", &ASTBuilder::reset_snode_access_flag);
 
   auto device_capability_config =
-      py::class_<DeviceCapabilityConfig>(m, "DeviceCapabilityConfig");
+      py::class_<DeviceCapabilityConfig>(m, "DeviceCapabilityConfig")
+          .def("get", &DeviceCapabilityConfig::get);
 
   auto compiled_kernel_data =
       py::class_<CompiledKernelData>(m, "CompiledKernelData")
