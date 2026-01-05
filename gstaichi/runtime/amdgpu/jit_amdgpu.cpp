@@ -5,6 +5,9 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 
+#include <fstream>
+#include <cstdlib>
+
 namespace gstaichi {
 namespace lang {
 #if defined(TI_WITH_AMDGPU)
@@ -182,9 +185,41 @@ std::string JITSessionAMDGPU::compile_module_to_hsaco(
   TI_TRACE("Loading module...");
   [[maybe_unused]] auto _ = AMDGPUContext::get_instance().get_lock_guard();
 
-  std::string lld_cmd = "ld.lld -shared " + obj_path + " -o " + hsaco_path;
+  // Try to find ld.lld from ROCm installation, fallback to system PATH
+  std::string lld_executable = "ld.lld";
+  const char *rocm_path = std::getenv("ROCM_PATH");
+  if (rocm_path) {
+    std::string rocm_lld = std::string(rocm_path) + "/llvm/bin/ld.lld";
+    std::ifstream test_lld(rocm_lld);
+    if (test_lld.good()) {
+      lld_executable = rocm_lld;
+    }
+  }
+  // Also try common ROCm installation paths
+  if (lld_executable == "ld.lld") {
+    std::vector<std::string> common_paths = {
+        "/opt/rocm/llvm/bin/ld.lld",
+        "/opt/rocm-7.0.0/llvm/bin/ld.lld",
+        "/opt/rocm-6.0.0/llvm/bin/ld.lld",
+    };
+    for (const auto &path : common_paths) {
+      std::ifstream test_lld(path);
+      if (test_lld.good()) {
+        lld_executable = path;
+        break;
+      }
+    }
+  }
+
+  std::string lld_cmd =
+      lld_executable + " -shared " + obj_path + " -o " + hsaco_path;
+  TI_TRACE("Linking with command: {}", lld_cmd);
   if (std::system(lld_cmd.c_str()))
-    TI_ERROR(fmt::format("Generate {} Error", hsaco_filename));
+    TI_ERROR(
+        fmt::format("Generate {} Error. Make sure ld.lld is available in your "
+                    "ROCm installation, and add path to ROCm path to ROCM_PATH "
+                    "if necessary.",
+                    hsaco_filename));
 
   std::string hsaco_str = load_hsaco(hsaco_path);
 

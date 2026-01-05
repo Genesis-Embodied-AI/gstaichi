@@ -1,3 +1,4 @@
+import os
 import sys
 
 import numpy as np
@@ -10,6 +11,10 @@ from tests import test_utils
 
 if has_pytorch():
     import torch
+
+
+def is_v520_amdgpu():
+    return os.environ.get("TI_AMDGPU_V520", None) == "1" and ti.cfg.arch == ti.amdgpu
 
 
 @pytest.mark.skipif(not has_pytorch(), reason="Pytorch not installed.")
@@ -67,6 +72,9 @@ def test_torch_ad():
 def test_torch_ad_gpu():
     if not torch.cuda.is_available():
         return
+
+    if is_v520_amdgpu():
+        pytest.skip(reason="cannot use torch .zero_like() on v520")
 
     device = torch.device("cuda:0")
     n = 32

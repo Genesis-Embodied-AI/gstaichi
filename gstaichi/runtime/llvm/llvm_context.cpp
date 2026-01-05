@@ -623,7 +623,22 @@ void GsTaichiLLVMContext::link_module_with_amdgpu_libdevice(
     std::unique_ptr<llvm::Module> &module) {
   TI_ASSERT(arch_ == Arch::amdgpu);
 #if defined(TI_WITH_AMDGPU)
-  auto isa_version = AMDGPUContext::get_instance().get_mcpu().substr(3, 4);
+  auto mcpu = AMDGPUContext::get_instance().get_mcpu();
+  auto isa_version = mcpu.substr(3, 4);
+
+  const std::string libdevice_subdir = "_rocm70";
+  const std::string lib_dir = runtime_lib_dir() + libdevice_subdir + "/";
+  const std::string isa_file = "oclc_isa_version_" + isa_version + ".bc";
+  std::ifstream test_file(lib_dir + isa_file);
+
+  if (!test_file.good()) {
+    TI_ERROR(
+        "AMDGPU ISA version file {} not found for {} and no fallback "
+        "available. Please ensure ROCm device libraries are properly "
+        "installed.",
+        isa_file, mcpu);
+  }
+
   std::string libdevice_files[] = {"ocml.bc",
                                    "oclc_wavefrontsize64_off.bc",
                                    "ockl.bc",
@@ -636,7 +651,6 @@ void GsTaichiLLVMContext::link_module_with_amdgpu_libdevice(
                                    "opencl.bc"};
 
   for (auto &libdevice : libdevice_files) {
-    std::string lib_dir = runtime_lib_dir() + "/";
     auto libdevice_module = module_from_bitcode_file(lib_dir + libdevice,
                                                      get_this_thread_context());
 

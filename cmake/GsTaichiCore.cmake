@@ -350,7 +350,8 @@ if (NOT APPLE)
 endif()
 
 if (TI_WITH_AMDGPU)
-    file(GLOB AMDGPU_BC_FILES ${CMAKE_SOURCE_DIR}/external/amdgpu_libdevice/*.bc)
-    install(FILES ${AMDGPU_BC_FILES}
-            DESTINATION ${INSTALL_LIB_DIR}/runtime)
+    # Install ROCm 7.0 libdevice files
+    file(GLOB AMDGPU_BC_FILES_ROCM70 ${CMAKE_SOURCE_DIR}/external/amdgpu_libdevice_rocm70/*.bc)
+    install(FILES ${AMDGPU_BC_FILES_ROCM70}
+            DESTINATION ${INSTALL_LIB_DIR}/runtime_rocm70)
 endif()
