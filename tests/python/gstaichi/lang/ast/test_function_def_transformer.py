@@ -87,7 +87,6 @@ def test_process_func_arg(argument_name: str, argument_type: Any, expected_varia
             self.variables[name] = data
 
     data = dataclass_test_tools.build_struct(argument_type)
-    print("data", data)
     ctx = MockContext()
     FunctionDefTransformer._transform_func_arg(
         ctx,
@@ -95,13 +94,10 @@ def test_process_func_arg(argument_name: str, argument_type: Any, expected_varia
         argument_type,
         data,
     )
-    print("output variables", ctx.variables)
-    print("epected variables", expected_variables)
     # since these should both be flat, we can just loop over both
     assert set(ctx.variables.keys()) == set(expected_variables.keys())
     for k, expected_obj in expected_variables.items():
         if isinstance(expected_obj, ti.types.NDArray):
-            print("checking ndarray")
             actual = ctx.variables[k]
             assert isinstance(actual, (ti.ScalarNdarray,))
             assert len(actual.shape) == expected_obj.ndim
