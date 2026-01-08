@@ -39,6 +39,8 @@ from gstaichi.types import (
     template,
 )
 
+from .ast.ast_transformer_utils import ASTTransformerGlobalContext
+
 if TYPE_CHECKING:
     from gstaichi._lib.core.gstaichi_python import ASTBuilder
 
@@ -203,11 +205,19 @@ class FuncBase:
         func_body = tree.body[0]
         func_body.decorator_list = []  # type: ignore , kick that can down the road...
 
+        runtime = impl.get_runtime()
+
         if current_kernel is not None:  # Kernel
             current_kernel.kernel_function_info = function_source_info
-        if current_kernel is None:
-            current_kernel = impl.get_runtime()._current_kernel
+            global_context = ASTTransformerGlobalContext(
+            )
+        else:  # Func
+            global_context = runtime._current_global_context
+            assert global_context is not None
+            current_kernel = runtime.current_kernel
+
         assert current_kernel is not None
+        assert global_context is not None
         current_kernel.visited_functions.add(function_source_info)
 
         autodiff_mode = current_kernel.autodiff_mode
@@ -231,6 +241,7 @@ class FuncBase:
         args_instance_key = current_kernel.currently_compiling_materialize_key
         assert args_instance_key is not None
         ctx = ASTTransformerFuncContext(
+            global_context=global_context,
             excluded_parameters=excluded_parameters,
             is_kernel=is_kernel,
             is_pure=is_pure,
@@ -254,7 +265,14 @@ class FuncBase:
         )
         return tree, ctx
 
-    def fuse_args(self, is_pyfunc: bool, is_func: bool, py_args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
+    def fuse_args(
+        self,
+        global_context: ASTTransformerGlobalContext | None,
+        is_pyfunc: bool,
+        is_func: bool,
+        py_args: tuple[Any, ...],
+        kwargs,
+    ) -> tuple[Any, ...]:
         """
         - for functions, expand dataclass arg_metas
         - fuse incoming args and kwargs into a single list of args
@@ -287,6 +305,7 @@ class FuncBase:
             currently_compiling_materialize_key = current_kernel.currently_compiling_materialize_key
             if typing.TYPE_CHECKING:
                 assert currently_compiling_materialize_key is not None
+            assert global_context is not None
             self.arg_metas_expanded = _kernel_impl_dataclass.expand_func_arguments(
                 current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(currently_compiling_materialize_key),
                 self.arg_metas,

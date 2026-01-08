@@ -58,7 +58,11 @@ class Func(FuncBase):
 
     def __call__(self: "Func", *py_args, **kwargs) -> Any:
         self.current_kernel = impl.get_runtime().current_kernel if impl.inside_kernel() else None
-        py_args = self.fuse_args(is_func=True, is_pyfunc=self.pyfunc, py_args=py_args, kwargs=kwargs)
+        runtime = impl.get_runtime()
+        global_context = runtime._current_global_context
+        py_args = self.fuse_args(
+            is_func=True, is_pyfunc=self.pyfunc, py_args=py_args, kwargs=kwargs, global_context=global_context
+        )
 
         if not impl.inside_kernel():
             if not self.pyfunc:
@@ -67,6 +71,7 @@ class Func(FuncBase):
 
         assert self.current_kernel is not None
 
+        assert global_context is not None
         if self.is_real_function:
             if self.current_kernel.autodiff_mode != _NONE:
                 self.current_kernel = None

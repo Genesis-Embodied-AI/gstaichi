@@ -73,6 +73,8 @@ from gstaichi.types.primitive_types import (
 if TYPE_CHECKING:
     from gstaichi.lang._ndarray import Ndarray
 
+    from .ast.ast_transformer_utils import ASTTransformerGlobalContext
+
 
 @gstaichi_scope
 def expr_init_shared_array(shape, element_type):
@@ -344,6 +346,7 @@ class PyGsTaichi:
         self.inside_kernel: bool = False
         self._compiling_callable: KernelCxx | Kernel | Function | None = None
         self._current_kernel: "Kernel | None" = None
+        self._current_global_context: "ASTTransformerGlobalContext | None" = None
         self.global_vars = []
         self.grad_vars = []
         self.dual_vars = []

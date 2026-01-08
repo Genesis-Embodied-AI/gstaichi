@@ -213,6 +213,7 @@ class ASTGenerator:
         finally:
             self.current_kernel.runtime.inside_kernel = False
             self.current_kernel.runtime._current_kernel = None
+            self.runtime._current_global_context = None
             self.current_kernel.runtime._compiling_callable = None
 
     def _dump_ast(self) -> None:
@@ -360,6 +361,7 @@ class Kernel(FuncBase):
         _logging.trace(f"Materializing kernel {kernel_name} in {self.autodiff_mode}...")
 
         range_begin = 0 if used_py_dataclass_parameters is None else 1
+        runtime = impl.get_runtime()
         for _pass in range(range_begin, 2):
             used_py_dataclass_leaves_by_key_enforcing = None
             if _pass == 1:
@@ -383,6 +385,7 @@ class Kernel(FuncBase):
                 current_kernel=self,
                 used_py_dataclass_parameters_enforcing=used_py_dataclass_leaves_by_key_enforcing,
             )
+            runtime._current_global_context = ctx.global_context
 
             if self.autodiff_mode != _NONE:
                 KernelSimplicityASTChecker(self.func).visit(tree)
@@ -403,6 +406,7 @@ class Kernel(FuncBase):
             if _pass == 1:
                 assert key not in self.materialized_kernels
                 self.materialized_kernels[key] = gstaichi_kernel
+            runtime._current_global_context = None
 
     def launch_kernel(self, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
         assert len(args) == len(self.arg_metas), f"{len(self.arg_metas)} arguments needed but {len(args)} provided"
@@ -535,8 +539,7 @@ class Kernel(FuncBase):
     @_shell_pop_print
     def __call__(self, *py_args, **kwargs) -> Any:
         self.raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
-
-        py_args = self.fuse_args(is_func=False, is_pyfunc=False, py_args=py_args, kwargs=kwargs)
+        py_args = self.fuse_args(is_func=False, is_pyfunc=False, py_args=py_args, kwargs=kwargs, global_context=None)
 
         # Transform the primal kernel to forward mode grad kernel
         # then recover to primal when exiting the forward mode manager

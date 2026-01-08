@@ -172,9 +172,14 @@ class PureViolation:
     var_name: str
 
 
+class ASTTransformerGlobalContext:
+    ...
+
+
 class ASTTransformerFuncContext:
     def __init__(
         self,
+        global_context: ASTTransformerGlobalContext,
         excluded_parameters,
         end_lineno: int,
         is_kernel: bool,
@@ -198,6 +203,7 @@ class ASTTransformerFuncContext:
     ):
         from gstaichi import extension  # pylint: disable=import-outside-toplevel
 
+        self.global_context: ASTTransformerGlobalContext = global_context
         self.func: "FuncBase" = func
         self.local_scopes: list[dict[str, Any]] = []
         self.loop_scopes: List[LoopScopeAttribute] = []
