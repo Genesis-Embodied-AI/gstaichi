@@ -209,8 +209,7 @@ class FuncBase:
 
         if current_kernel is not None:  # Kernel
             current_kernel.kernel_function_info = function_source_info
-            global_context = ASTTransformerGlobalContext(
-            )
+            global_context = ASTTransformerGlobalContext()
         else:  # Func
             global_context = runtime._current_global_context
             assert global_context is not None

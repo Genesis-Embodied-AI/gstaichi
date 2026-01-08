@@ -172,8 +172,7 @@ class PureViolation:
     var_name: str
 
 
-class ASTTransformerGlobalContext:
-    ...
+class ASTTransformerGlobalContext: ...
 
 
 class ASTTransformerFuncContext:

@@ -80,8 +80,7 @@ def test_expand_Call_dataclass_args(args_in: tuple[ast.stmt, ...], expected_args
         arg.col_offset = 1
         arg.end_col_offset = 2
 
-    class MockGlobalContext(ASTTransformerGlobalContext):
-	    ...
+    class MockGlobalContext(ASTTransformerGlobalContext): ...
 
     mock_global_context = MockGlobalContext()
 
