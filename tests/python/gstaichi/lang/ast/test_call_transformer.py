@@ -81,13 +81,16 @@ def test_expand_Call_dataclass_args(args_in: tuple[ast.stmt, ...], expected_args
         arg.end_col_offset = 2
 
     class MockGlobalContext(ASTTransformerGlobalContext):
-	    ...
+        def __init__(self):
+            # Needed to override the baseclass __init__
+            ...
 
     mock_global_context = MockGlobalContext()
 
     class MockContext(ASTTransformerFuncContext):
         def __init__(self):
             self.used_py_dataclass_parameters_enforcing = None
+            self.global_context = mock_global_context
 
     ctx = MockContext()
     args_added, args_out = CallTransformer._expand_Call_dataclass_args(ctx, args_in)
