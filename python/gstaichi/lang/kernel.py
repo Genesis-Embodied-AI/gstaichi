@@ -375,7 +375,7 @@ class Kernel(FuncBase):
                 )
             tree, ctx = self.get_tree_and_ctx(
                 py_args=py_args,
-                excluded_parameters=self.template_slot_locations,
+                template_slot_locations=self.template_slot_locations,
                 arg_features=arg_features,
                 current_kernel=self,
                 used_py_dataclass_parameters_enforcing=used_py_dataclass_leaves_by_key_enforcing,

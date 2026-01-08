@@ -187,7 +187,7 @@ class FuncBase:
         self,
         py_args: tuple[Any, ...],
         used_py_dataclass_parameters_enforcing: set[str] | None,
-        excluded_parameters=(),
+        template_slot_locations=(),
         is_kernel: bool = True,
         arg_features=None,
         ast_builder: "ASTBuilder | None" = None,
@@ -241,7 +241,7 @@ class FuncBase:
         assert args_instance_key is not None
         ctx = ASTTransformerFuncContext(
             global_context=global_context,
-            excluded_parameters=excluded_parameters,
+            template_slot_locations=template_slot_locations,
             is_kernel=is_kernel,
             is_pure=is_pure,
             func=self,
