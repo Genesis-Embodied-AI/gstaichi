@@ -302,7 +302,9 @@ class FuncBase:
             current_kernel = global_context.current_kernel
             assert current_kernel is not None
             self.arg_metas_expanded = _kernel_impl_dataclass.expand_func_arguments(
-                current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(global_context.currently_compiling_materialize_key),
+                current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(
+                    global_context.currently_compiling_materialize_key
+                ),
                 self.arg_metas,
             )
         else:
