@@ -79,7 +79,6 @@ def extract_struct_locals_from_context(ctx: ASTTransformerFuncContext) -> set[st
         if dataclasses.is_dataclass(parameter.annotation):
             for field in dataclasses.fields(parameter.annotation):
                 child_name = create_flat_name(param_name, field.name)
-                # child_name = f"__ti_{param_name}__ti_{field.name}"
                 if dataclasses.is_dataclass(field.type):
                     _populate_struct_locals_from_params_dict(child_name, struct_locals, field.type)
                     continue

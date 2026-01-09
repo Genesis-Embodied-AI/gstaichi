@@ -39,6 +39,8 @@ from gstaichi.types import (
     template,
 )
 
+from .ast.ast_transformer_utils import ASTTransformerGlobalContext
+
 if TYPE_CHECKING:
     from gstaichi._lib.core.gstaichi_python import ASTBuilder
 
@@ -48,9 +50,6 @@ from gstaichi.types.utils import is_signed
 
 from ._kernel_types import KernelBatchedArgType
 from ._template_mapper import TemplateMapper
-
-if TYPE_CHECKING:
-    from .kernel import Kernel
 
 MAX_ARG_NUM = 512
 
@@ -76,7 +75,6 @@ class FuncBase:
         self.arg_metas_expanded: list[ArgMetadata] = []
         self.orig_arguments: list[ArgMetadata] = []
         self.return_type = None
-        self.current_kernel: "Kernel | None" = None
 
         self.check_parameter_annotations()
 
@@ -194,7 +192,8 @@ class FuncBase:
         arg_features=None,
         ast_builder: "ASTBuilder | None" = None,
         is_real_function: bool = False,
-        current_kernel: "Kernel | None" = None,
+        current_kernel: "Kernel | None" = None,  # has value when called from Kernel.materialize
+        currently_compiling_materialize_key=None,  # has value when called from Kernel.materialize
     ) -> tuple[ast.Module, ASTTransformerFuncContext]:
         function_source_info, src = get_source_info_and_src(self.func)
         src = [textwrap.fill(line, tabsize=4, width=9999) for line in src]
@@ -203,11 +202,21 @@ class FuncBase:
         func_body = tree.body[0]
         func_body.decorator_list = []  # type: ignore , kick that can down the road...
 
+        runtime = impl.get_runtime()
+
         if current_kernel is not None:  # Kernel
             current_kernel.kernel_function_info = function_source_info
-        if current_kernel is None:
-            current_kernel = impl.get_runtime()._current_kernel
+            global_context = ASTTransformerGlobalContext(
+                current_kernel=current_kernel,
+                currently_compiling_materialize_key=currently_compiling_materialize_key,
+            )
+        else:  # Func
+            global_context = runtime._current_global_context
+            assert global_context is not None
+            current_kernel = global_context.current_kernel
+
         assert current_kernel is not None
+        assert global_context is not None
         current_kernel.visited_functions.add(function_source_info)
 
         autodiff_mode = current_kernel.autodiff_mode
@@ -228,9 +237,10 @@ class FuncBase:
 
         raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
 
-        args_instance_key = current_kernel.currently_compiling_materialize_key
+        args_instance_key = global_context.currently_compiling_materialize_key
         assert args_instance_key is not None
         ctx = ASTTransformerFuncContext(
+            global_context=global_context,
             template_slot_locations=template_slot_locations,
             is_kernel=is_kernel,
             is_pure=is_pure,
@@ -254,7 +264,14 @@ class FuncBase:
         )
         return tree, ctx
 
-    def fuse_args(self, is_pyfunc: bool, is_func: bool, py_args: tuple[Any, ...], kwargs) -> tuple[Any, ...]:
+    def fuse_args(
+        self,
+        global_context: ASTTransformerGlobalContext | None,
+        is_pyfunc: bool,
+        is_func: bool,
+        py_args: tuple[Any, ...],
+        kwargs,
+    ) -> tuple[Any, ...]:
         """
         - for functions, expand dataclass arg_metas
         - fuse incoming args and kwargs into a single list of args
@@ -281,14 +298,13 @@ class FuncBase:
         - second pass - with enforcing on - the expanded parameters are pruned
         """
         if is_func and not is_pyfunc:
-            current_kernel = self.current_kernel
-            if typing.TYPE_CHECKING:
-                assert current_kernel is not None
-            currently_compiling_materialize_key = current_kernel.currently_compiling_materialize_key
-            if typing.TYPE_CHECKING:
-                assert currently_compiling_materialize_key is not None
+            assert global_context is not None
+            current_kernel = global_context.current_kernel
+            assert current_kernel is not None
             self.arg_metas_expanded = _kernel_impl_dataclass.expand_func_arguments(
-                current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(currently_compiling_materialize_key),
+                current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(
+                    global_context.currently_compiling_materialize_key
+                ),
                 self.arg_metas,
             )
         else:

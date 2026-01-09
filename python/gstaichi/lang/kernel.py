@@ -193,7 +193,6 @@ class ASTGenerator:
         self.current_kernel.kernel_cpp = kernel_cxx
         ctx = self.ctx
         self.runtime.inside_kernel = True
-        self.runtime._current_kernel = self.current_kernel
         assert self.runtime._compiling_callable is None
         self.runtime._compiling_callable = kernel_cxx
         try:
@@ -212,7 +211,7 @@ class ASTGenerator:
                     raise GsTaichiSyntaxError("Kernel has a return type but does not have a return statement")
         finally:
             self.current_kernel.runtime.inside_kernel = False
-            self.current_kernel.runtime._current_kernel = None
+            self.runtime._current_global_context = None
             self.current_kernel.runtime._compiling_callable = None
 
     def _dump_ast(self) -> None:
@@ -287,7 +286,6 @@ class Kernel(FuncBase):
         # however, for enforcing, we want None if it doesn't exist (we'll use .get() instead of [] )
         self.used_py_dataclass_leaves_by_key_enforcing: dict[CompiledKernelKeyType, set[str]] = {}
         self.used_py_dataclass_leaves_by_key_enforcing_dotted: dict[CompiledKernelKeyType, set[tuple[str, ...]]] = {}
-        self.currently_compiling_materialize_key: CompiledKernelKeyType | None = None
 
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
         self.fe_ll_cache_observations: FeLlCacheObservations = FeLlCacheObservations()
@@ -308,7 +306,6 @@ class Kernel(FuncBase):
         self.used_py_dataclass_leaves_by_key_collecting = defaultdict(set)
         self.used_py_dataclass_leaves_by_key_enforcing = {}
         self.used_py_dataclass_leaves_by_key_enforcing_dotted = {}
-        self.currently_compiling_materialize_key = None
 
     def _try_load_fastcache(self, args: tuple[Any, ...], key: "CompiledKernelKeyType") -> set[str] | None:
         frontend_cache_key: str | None = None
@@ -350,7 +347,6 @@ class Kernel(FuncBase):
         if key is None:
             key = (self.func, 0, self.autodiff_mode)
         self.fast_checksum = None
-        self.currently_compiling_materialize_key = key
         if key in self.materialized_kernels:
             return
 
@@ -360,6 +356,7 @@ class Kernel(FuncBase):
         _logging.trace(f"Materializing kernel {kernel_name} in {self.autodiff_mode}...")
 
         range_begin = 0 if used_py_dataclass_parameters is None else 1
+        runtime = impl.get_runtime()
         for _pass in range(range_begin, 2):
             used_py_dataclass_leaves_by_key_enforcing = None
             if _pass == 1:
@@ -382,7 +379,9 @@ class Kernel(FuncBase):
                 arg_features=arg_features,
                 current_kernel=self,
                 used_py_dataclass_parameters_enforcing=used_py_dataclass_leaves_by_key_enforcing,
+                currently_compiling_materialize_key=key,
             )
+            runtime._current_global_context = ctx.global_context
 
             if self.autodiff_mode != _NONE:
                 KernelSimplicityASTChecker(self.func).visit(tree)
@@ -403,8 +402,9 @@ class Kernel(FuncBase):
             if _pass == 1:
                 assert key not in self.materialized_kernels
                 self.materialized_kernels[key] = gstaichi_kernel
+            runtime._current_global_context = None
 
-    def launch_kernel(self, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
+    def launch_kernel(self, key, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
         assert len(args) == len(self.arg_metas), f"{len(self.arg_metas)} arguments needed but {len(args)} provided"
 
         callbacks: list[Callable[[], None]] = []
@@ -417,10 +417,7 @@ class Kernel(FuncBase):
             is_launch_ctx_cacheable = True
             template_num = 0
             i_out = 0
-            assert self.currently_compiling_materialize_key
-            used_py_dataclass_parameters_enforcing_dotted = self.used_py_dataclass_leaves_by_key_enforcing_dotted[
-                self.currently_compiling_materialize_key
-            ]
+            used_py_dataclass_parameters_enforcing_dotted = self.used_py_dataclass_leaves_by_key_enforcing_dotted[key]
             for i_in, val in enumerate(args):
                 needed_ = self.arg_metas[i_in].annotation
                 if needed_ is template or type(needed_) is template:
@@ -479,12 +476,11 @@ class Kernel(FuncBase):
                 if compile_result.cache_hit:
                     self.fe_ll_cache_observations.cache_hit = True
                 if self.fast_checksum:
-                    assert self.currently_compiling_materialize_key is not None
                     src_hasher.store(
                         compile_result.cache_key,
                         self.fast_checksum,
                         self.visited_functions,
-                        self.used_py_dataclass_leaves_by_key_enforcing[self.currently_compiling_materialize_key],
+                        self.used_py_dataclass_leaves_by_key_enforcing[key],
                     )
                     self.src_ll_cache_observations.cache_stored = True
             self._last_compiled_kernel_data = compiled_kernel_data
@@ -497,8 +493,6 @@ class Kernel(FuncBase):
 
         for callback in callbacks:
             callback()
-
-        self.currently_compiling_materialize_key = None
 
         return_type = self.return_type
         if return_type or self.has_print:
@@ -535,8 +529,7 @@ class Kernel(FuncBase):
     @_shell_pop_print
     def __call__(self, *py_args, **kwargs) -> Any:
         self.raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
-
-        py_args = self.fuse_args(is_func=False, is_pyfunc=False, py_args=py_args, kwargs=kwargs)
+        py_args = self.fuse_args(is_func=False, is_pyfunc=False, py_args=py_args, kwargs=kwargs, global_context=None)
 
         # Transform the primal kernel to forward mode grad kernel
         # then recover to primal when exiting the forward mode manager
@@ -560,7 +553,7 @@ class Kernel(FuncBase):
         key = self.ensure_compiled(*py_args)
         kernel_cpp = self.materialized_kernels[key]
         compiled_kernel_data = self.compiled_kernel_data_by_key.get(key, None)
-        ret = self.launch_kernel(kernel_cpp, compiled_kernel_data, *py_args)
+        ret = self.launch_kernel(key, kernel_cpp, compiled_kernel_data, *py_args)
         if compiled_kernel_data is None:
             assert self._last_compiled_kernel_data is not None
             self.compiled_kernel_data_by_key[key] = self._last_compiled_kernel_data

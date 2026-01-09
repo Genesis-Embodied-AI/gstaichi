@@ -172,9 +172,20 @@ class PureViolation:
     var_name: str
 
 
+class ASTTransformerGlobalContext:
+    def __init__(
+        self,
+        current_kernel: "Kernel",
+        currently_compiling_materialize_key,
+    ) -> None:
+        self.current_kernel: "Kernel" = current_kernel
+        self.currently_compiling_materialize_key = currently_compiling_materialize_key
+
+
 class ASTTransformerFuncContext:
     def __init__(
         self,
+        global_context: ASTTransformerGlobalContext,
         template_slot_locations,
         end_lineno: int,
         is_kernel: bool,
@@ -198,6 +209,7 @@ class ASTTransformerFuncContext:
     ):
         from gstaichi import extension  # pylint: disable=import-outside-toplevel
 
+        self.global_context: ASTTransformerGlobalContext = global_context
         self.func: "FuncBase" = func
         self.local_scopes: list[dict[str, Any]] = []
         self.loop_scopes: List[LoopScopeAttribute] = []

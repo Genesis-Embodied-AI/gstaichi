@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Callable
+from typing import Any, Callable
 
 from gstaichi._lib import core as _ti_core
 from gstaichi._lib.core.gstaichi_python import (
@@ -27,9 +27,6 @@ from gstaichi.types.enums import AutodiffMode
 
 from ._func_base import FuncBase
 
-if TYPE_CHECKING:
-    from .kernel import Kernel
-
 # Define proxy for fast lookup
 _NONE = AutodiffMode.NONE
 
@@ -53,39 +50,39 @@ class Func(FuncBase):
         self.is_real_function = is_real_function
         self.cxx_function_by_id: dict[int, FunctionCxx] = {}
         self.has_print = False
-        # Used during compilation. Assumes only one compilation at a time (single-threaded).
-        self.current_kernel: Kernel | None = None
 
     def __call__(self: "Func", *py_args, **kwargs) -> Any:
-        self.current_kernel = impl.get_runtime().current_kernel if impl.inside_kernel() else None
-        py_args = self.fuse_args(is_func=True, is_pyfunc=self.pyfunc, py_args=py_args, kwargs=kwargs)
+        runtime = impl.get_runtime()
+        global_context = runtime._current_global_context
+        current_kernel = global_context.current_kernel if global_context is not None else None
+        py_args = self.fuse_args(
+            is_func=True, is_pyfunc=self.pyfunc, py_args=py_args, kwargs=kwargs, global_context=global_context
+        )
 
         if not impl.inside_kernel():
             if not self.pyfunc:
                 raise GsTaichiSyntaxError("GsTaichi functions cannot be called from Python-scope.")
             return self.func(*py_args)
 
-        assert self.current_kernel is not None
-
+        assert current_kernel is not None
+        assert global_context is not None
         if self.is_real_function:
-            if self.current_kernel.autodiff_mode != _NONE:
-                self.current_kernel = None
+            if current_kernel.autodiff_mode != _NONE:
                 raise GsTaichiSyntaxError("Real function in gradient kernels unsupported.")
             instance_id, arg_features = self.mapper.lookup(impl.current_cfg().raise_on_templated_floats, py_args)
             key = FunctionKey(self.func.__name__, self.func_id, instance_id)
             if key.instance_id not in self.compiled:
                 self.do_compile(key=key, args=py_args, arg_features=arg_features)
-            self.current_kernel = None
             return self.func_call_rvalue(key=key, args=py_args)
-        current_args_key = self.current_kernel.currently_compiling_materialize_key
+        current_args_key = global_context.currently_compiling_materialize_key
         assert current_args_key is not None
-        used_by_dataclass_parameters_enforcing = self.current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(
+        used_by_dataclass_parameters_enforcing = current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(
             current_args_key
         )
         tree, ctx = self.get_tree_and_ctx(
             is_kernel=False,
             py_args=py_args,
-            ast_builder=self.current_kernel.ast_builder(),
+            ast_builder=current_kernel.ast_builder(),
             is_real_function=self.is_real_function,
             used_py_dataclass_parameters_enforcing=used_by_dataclass_parameters_enforcing,
         )
@@ -94,7 +91,6 @@ class Func(FuncBase):
 
         tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(tree, struct_locals=struct_locals)
         ret = transform_tree(tree, ctx)
-        self.current_kernel = None
         if not self.is_real_function:
             if self.return_type and ctx.returned != ReturnStatus.ReturnedValue:
                 raise GsTaichiSyntaxError("Function has a return type but does not have a return statement")
