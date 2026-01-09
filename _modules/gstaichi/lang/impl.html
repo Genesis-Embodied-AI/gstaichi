@@ -385,6 +385,8 @@
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang._ndarray</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ndarray</span>
 
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.ast.ast_transformer_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ASTTransformerGlobalContext</span>
+
 
 <span class="nd">@gstaichi_scope</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">expr_init_shared_array</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">element_type</span><span class="p">):</span>
@@ -655,7 +657,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">src_info_stack</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">inside_kernel</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_compiling_callable</span><span class="p">:</span> <span class="n">KernelCxx</span> <span class="o">|</span> <span class="n">Kernel</span> <span class="o">|</span> <span class="n">Function</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_current_kernel</span><span class="p">:</span> <span class="s2">&quot;Kernel | None&quot;</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_global_context</span><span class="p">:</span> <span class="s2">&quot;ASTTransformerGlobalContext | None&quot;</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">global_vars</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">grad_vars</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dual_vars</span> <span class="o">=</span> <span class="p">[]</span>
@@ -689,14 +691,6 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prog</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">GsTaichiRuntimeError</span><span class="p">(</span><span class="s2">&quot;_prog attribute not initialized. Maybe you forgot to call `ti.init()` first?&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prog</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">current_kernel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Kernel</span><span class="p">:</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_kernel</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">GsTaichiRuntimeError</span><span class="p">(</span>
-                <span class="s2">&quot;_current_kernel attribute not initialized. Maybe you forgot to call `ti.init()` first?&quot;</span>
-            <span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_kernel</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">initialize_fields_builder</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">builder</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">unfinalized_fields_builder</span><span class="p">[</span><span class="n">builder</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_traceback</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>

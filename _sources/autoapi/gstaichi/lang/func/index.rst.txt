@@ -61,12 +61,6 @@ Module Contents
 
 
 
-   .. py:attribute:: current_kernel
-      :type:  gstaichi.lang.kernel.Kernel | None
-      :value: None
-
-
-
    .. py:method:: func_call_rvalue(key: gstaichi._lib.core.gstaichi_python.FunctionKey, args: tuple[Any, Ellipsis]) -> Any
 
 

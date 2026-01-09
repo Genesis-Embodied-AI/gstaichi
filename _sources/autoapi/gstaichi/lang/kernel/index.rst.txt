@@ -125,12 +125,6 @@ Module Contents
       :type:  dict[gstaichi.lang._kernel_types.CompiledKernelKeyType, set[tuple[str, Ellipsis]]]
 
 
-   .. py:attribute:: currently_compiling_materialize_key
-      :type:  gstaichi.lang._kernel_types.CompiledKernelKeyType | None
-      :value: None
-
-
-
    .. py:attribute:: src_ll_cache_observations
       :type:  gstaichi.lang._kernel_types.SrcLlCacheObservations
 
@@ -151,7 +145,7 @@ Module Contents
    .. py:method:: materialize(key: CompiledKernelKeyType | None, py_args: tuple[Any, Ellipsis], arg_features=None)
 
 
-   .. py:method:: launch_kernel(t_kernel: gstaichi._lib.core.gstaichi_python.KernelCxx, compiled_kernel_data: gstaichi._lib.core.gstaichi_python.CompiledKernelData | None, *args) -> Any
+   .. py:method:: launch_kernel(key, t_kernel: gstaichi._lib.core.gstaichi_python.KernelCxx, compiled_kernel_data: gstaichi._lib.core.gstaichi_python.CompiledKernelData | None, *args) -> Any
 
 
    .. py:method:: construct_kernel_ret(launch_ctx: gstaichi._lib.core.gstaichi_python.KernelLaunchContext, ret_type: Any, indices: tuple[int, Ellipsis])
