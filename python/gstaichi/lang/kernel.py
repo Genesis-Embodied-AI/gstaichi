@@ -359,20 +359,7 @@ class Kernel(FuncBase):
         runtime = impl.get_runtime()
         for _pass in range(range_begin, 2):
             used_py_dataclass_parameters_by_key_enforcing = None
-            if _pass == 1:
-                assert used_py_dataclass_parameters is not None
-                used_py_dataclass_parameters_by_key_enforcing = set()
-                for param in used_py_dataclass_parameters:
-                    split_param = param.split("__ti_")
-                    for i in range(len(split_param), 0, -1):
-                        joined = "__ti_".join(split_param[:i])
-                        if joined in used_py_dataclass_parameters_by_key_enforcing:
-                            break
-                        used_py_dataclass_parameters_by_key_enforcing.add(joined)
-                self.used_py_dataclass_parameters_by_key_enforcing[key] = used_py_dataclass_parameters_by_key_enforcing
-                self.used_py_dataclass_parameters_by_key_enforcing_dotted[key] = set(
-                    [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_parameters_by_key_enforcing]
-                )
+            # if _pass == 1:
             tree, ctx = self.get_tree_and_ctx(
                 py_args=py_args,
                 template_slot_locations=self.template_slot_locations,
@@ -402,6 +389,20 @@ class Kernel(FuncBase):
             if _pass == 1:
                 assert key not in self.materialized_kernels
                 self.materialized_kernels[key] = gstaichi_kernel
+            else:
+                assert used_py_dataclass_parameters is not None
+                used_py_dataclass_parameters_by_key_enforcing = set()
+                for param in used_py_dataclass_parameters:
+                    split_param = param.split("__ti_")
+                    for i in range(len(split_param), 0, -1):
+                        joined = "__ti_".join(split_param[:i])
+                        if joined in used_py_dataclass_parameters_by_key_enforcing:
+                            break
+                        used_py_dataclass_parameters_by_key_enforcing.add(joined)
+                self.used_py_dataclass_parameters_by_key_enforcing[key] = used_py_dataclass_parameters_by_key_enforcing
+                self.used_py_dataclass_parameters_by_key_enforcing_dotted[key] = set(
+                    [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_parameters_by_key_enforcing]
+                )
             runtime._current_global_context = None
 
     def launch_kernel(self, key, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
