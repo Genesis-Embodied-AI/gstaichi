@@ -314,9 +314,6 @@ class CallTransformer:
                 build_stmt(ctx, arg)
             ctx.expanding_dataclass_call_parameters = False
 
-        # check for pure violations
-        # we have to do this after building the statements
-        # if any arg violates pure, then node also violates pure
         for arg in node.args:
             if arg.violates_pure:
                 node.violates_pure_reason = arg.violates_pure_reason
@@ -366,12 +363,8 @@ class CallTransformer:
 
         CallTransformer._warn_if_is_external_func(ctx, node)
         try:
-            _pruning = ctx.global_context.pruning
-            if _pruning.enforcing:
-                py_args = _pruning.filter_call_args(func, node, py_args)
-
             node.ptr = func(*py_args, **py_kwargs)
-
+            _pruning = ctx.global_context.pruning
             if not _pruning.enforcing:
                 _pruning.record_after_call(ctx, func, node)
         except TypeError as e:
