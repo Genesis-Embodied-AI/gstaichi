@@ -941,7 +941,7 @@ def test_template_mapper_cache(use_slots, monkeypatch):
 
 
 @test_utils.test()
-def test_print_used_leaves():
+def test_print_used_parameters():
     @dataclasses.dataclass
     class MyDataclass:
         used1: ti.types.NDArray[ti.i32, 1]
@@ -996,7 +996,7 @@ def test_print_used_leaves():
 
 
 @test_utils.test()
-def test_prune_used_leaves1():
+def test_prune_used_parameters1():
     @dataclasses.dataclass
     class Nested1:
         n1: ti.types.NDArray[ti.i32, 1]
@@ -1074,7 +1074,7 @@ def test_prune_used_leaves1():
 
 
 @test_utils.test()
-def test_prune_used_leaves2():
+def test_prune_used_parameters2():
     @dataclasses.dataclass
     class MyDataclass1:
         used1: ti.types.NDArray[ti.i32, 1]
@@ -1132,12 +1132,12 @@ def test_prune_used_leaves2():
 
     k1_primal: Kernel = k1._primal
     kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
-    print(sorted(list(k1_primal.used_py_dataclass_leaves_by_key_enforcing[k1_primal._last_launch_key])))
+    print(sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])))
     assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 7  # +1 for envs_idx
 
 
 @test_utils.test()
-def test_prune_used_leaves_fastcache1(tmp_path: Path):
+def test_prune_used_parameters_fastcache1(tmp_path: Path):
     arch_name = ti.lang.impl.current_cfg().arch.name
     for _it in range(3):
         ti.init(arch=getattr(ti, arch_name), offline_cache_file_path=str(tmp_path), offline_cache=True)
@@ -1239,7 +1239,7 @@ def test_prune_used_leaves_fastcache1(tmp_path: Path):
 
 
 @test_utils.test()
-def test_prune_used_leaves_fastcache2(tmp_path: Path):
+def test_prune_used_parameters_fastcache2(tmp_path: Path):
     arch_name = ti.lang.impl.current_cfg().arch.name
     for _it in range(3):
         ti.init(arch=getattr(ti, arch_name), offline_cache_file_path=str(tmp_path), offline_cache=True)
@@ -1310,7 +1310,7 @@ def test_prune_used_leaves_fastcache2(tmp_path: Path):
 
 
 @test_utils.test()
-def test_prune_used_leaves_fastcache_no_used(tmp_path: Path):
+def test_prune_used_parameters_fastcache_no_used(tmp_path: Path):
     arch_name = ti.lang.impl.current_cfg().arch.name
     for _it in range(3):
         ti.init(arch=getattr(ti, arch_name), offline_cache_file_path=str(tmp_path), offline_cache=True)
