@@ -78,8 +78,8 @@ class LaunchContextBufferCache:
     # without caching. In this particular case, the function calls corresponds to adding arguments to the current
     # context for this kernel call.
     # A launch context buffer is considered cache-friendly if and only if no direct call to the launch context
-    # where made preemptively during the recursive processing of the arguments, all of leaves of the arguments are
-    # pointers, the address of these pointers cannot change, and the set of leaves is fixed.
+    # where made preemptively during the recursive processing of the arguments, all of parameters of the arguments are
+    # pointers, the address of these pointers cannot change, and the set of parameters is fixed.
     # The lifetime of a cache entry is bound to the lifetime of any of its input arguments: the first being garbage
     # collected will invalidate the entire entry. Moreover, the entire cache registry is bound to the lifetime of
     # the taichi prog itself, which means that calling `ti.reset()` will automatically clear the cache. Note that
