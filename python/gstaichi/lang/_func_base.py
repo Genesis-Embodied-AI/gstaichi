@@ -44,6 +44,7 @@ from .ast.ast_transformer_utils import ASTTransformerGlobalContext
 if TYPE_CHECKING:
     from gstaichi._lib.core.gstaichi_python import ASTBuilder
 
+    from ._pruning import Pruning
     from .kernel import Kernel
 from gstaichi.types.enums import Layout
 from gstaichi.types.utils import is_signed
@@ -64,8 +65,11 @@ class FuncBase:
     Base class for Kernels and Funcs
     """
 
-    def __init__(self, func, is_kernel: bool, is_classkernel: bool, is_classfunc: bool, is_real_function: bool) -> None:
+    def __init__(
+        self, func, func_id: int, is_kernel: bool, is_classkernel: bool, is_classfunc: bool, is_real_function: bool
+    ) -> None:
         self.func = func
+        self.func_id = func_id
         self.is_kernel = is_kernel
         self.is_real_function = is_real_function
         # TODO: merge is_classkernel and is_classfunc?
@@ -186,14 +190,15 @@ class FuncBase:
     def get_tree_and_ctx(
         self,
         py_args: tuple[Any, ...],
-        used_py_dataclass_parameters_enforcing: set[str] | None,
         template_slot_locations=(),
         is_kernel: bool = True,
         arg_features=None,
         ast_builder: "ASTBuilder | None" = None,
         is_real_function: bool = False,
         current_kernel: "Kernel | None" = None,  # has value when called from Kernel.materialize
+        pruning: "Pruning | None" = None,  # has value when called from Kernel.materialize
         currently_compiling_materialize_key=None,  # has value when called from Kernel.materialize
+        pass_idx: int | None = None,  # has value when called from Kernel.materialize
     ) -> tuple[ast.Module, ASTTransformerFuncContext]:
         function_source_info, src = get_source_info_and_src(self.func)
         src = [textwrap.fill(line, tabsize=4, width=9999) for line in src]
@@ -205,9 +210,13 @@ class FuncBase:
         runtime = impl.get_runtime()
 
         if current_kernel is not None:  # Kernel
+            assert pruning is not None
+            assert pass_idx is not None
             current_kernel.kernel_function_info = function_source_info
             global_context = ASTTransformerGlobalContext(
+                pass_idx=pass_idx,
                 current_kernel=current_kernel,
+                pruning=pruning,
                 currently_compiling_materialize_key=currently_compiling_materialize_key,
             )
         else:  # Func
@@ -237,8 +246,6 @@ class FuncBase:
 
         raise_on_templated_floats = impl.current_cfg().raise_on_templated_floats
 
-        args_instance_key = global_context.currently_compiling_materialize_key
-        assert args_instance_key is not None
         ctx = ASTTransformerFuncContext(
             global_context=global_context,
             template_slot_locations=template_slot_locations,
@@ -257,10 +264,6 @@ class FuncBase:
             is_real_function=is_real_function,
             autodiff_mode=autodiff_mode,
             raise_on_templated_floats=raise_on_templated_floats,
-            used_py_dataclass_parameters_collecting=current_kernel.used_py_dataclass_leaves_by_key_collecting[
-                args_instance_key
-            ],
-            used_py_dataclass_parameters_enforcing=used_py_dataclass_parameters_enforcing,
         )
         return tree, ctx
 
@@ -301,10 +304,12 @@ class FuncBase:
             assert global_context is not None
             current_kernel = global_context.current_kernel
             assert current_kernel is not None
+            _pruning = global_context.pruning
+            used_by_dataclass_parameters_enforcing = None
+            if _pruning.enforcing:
+                used_by_dataclass_parameters_enforcing = global_context.pruning.used_parameters_by_func_id[self.func_id]
             self.arg_metas_expanded = _kernel_impl_dataclass.expand_func_arguments(
-                current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(
-                    global_context.currently_compiling_materialize_key
-                ),
+                used_by_dataclass_parameters_enforcing,
                 self.arg_metas,
             )
         else:

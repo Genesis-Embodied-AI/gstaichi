@@ -41,8 +41,8 @@ class Func(FuncBase):
             is_kernel=False,
             is_classkernel=False,
             is_real_function=is_real_function,
+            func_id=Func.function_counter,
         )
-        self.func_id = Func.function_counter
         Func.function_counter += 1
         self.compiled: dict[int, Callable] = {}  # only for real funcs
         self.classfunc = _classfunc
@@ -74,17 +74,11 @@ class Func(FuncBase):
             if key.instance_id not in self.compiled:
                 self.do_compile(key=key, args=py_args, arg_features=arg_features)
             return self.func_call_rvalue(key=key, args=py_args)
-        current_args_key = global_context.currently_compiling_materialize_key
-        assert current_args_key is not None
-        used_by_dataclass_parameters_enforcing = current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(
-            current_args_key
-        )
         tree, ctx = self.get_tree_and_ctx(
             is_kernel=False,
             py_args=py_args,
             ast_builder=current_kernel.ast_builder(),
             is_real_function=self.is_real_function,
-            used_py_dataclass_parameters_enforcing=used_by_dataclass_parameters_enforcing,
         )
 
         struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
@@ -148,7 +142,6 @@ class Func(FuncBase):
             py_args=args,
             arg_features=arg_features,
             is_real_function=self.is_real_function,
-            used_py_dataclass_parameters_enforcing=None,
         )
         fn = impl.get_runtime().prog.create_function(key)
 
