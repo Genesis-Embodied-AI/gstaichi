@@ -99,7 +99,7 @@ class Pruning:
         self.used_parameters_by_func_id[_my_func_id].update(to_unprune)
 
         # Store the mapping between parameter names in our namespace, and in the called function
-        # namespace
+        # namespace.
         called_needed = self.used_parameters_by_func_id[_called_func_id]
         child_arg_id = 0
         child_name_by_our_name = self.child_name_by_caller_name_by_func_id[func_id]
