@@ -95,7 +95,6 @@ class Pruning:
                 if called_name in called_unpruned:
                     to_unprune.add(calling_name)
             arg_id += 1
-
         self.used_parameters_by_func_id[_my_func_id].update(to_unprune)
 
         # Store the mapping between parameter names in our namespace, and in the called function
