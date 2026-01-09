@@ -364,7 +364,14 @@ class CallTransformer:
 
         CallTransformer._warn_if_is_external_func(ctx, node)
         try:
+            _pruning = ctx.global_context.pruning
+            if _pruning.enforcing:
+                py_args = _pruning.filter_call_args(func, node, py_args)
+
             node.ptr = func(*py_args, **py_kwargs)
+
+            if not _pruning.enforcing:
+                _pruning.record_after_call(ctx, func, node)
         except TypeError as e:
             module = inspect.getmodule(func)
             error_msg = re.sub(r"\bExpr\b", "GsTaichi Expression", str(e))

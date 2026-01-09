@@ -58,7 +58,7 @@ class Pruning:
         self.dotted_by_func_id = dotted_by_func_id
 
     def record_after_call(
-        self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node, node_args, node_keywords
+        self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node,
     ) -> None:
         """
         called from build_Call, after making the call, in pass 0
@@ -82,9 +82,9 @@ class Pruning:
         #
         # One issue is when calling data-oriented methods, there will be a `self`. We'll detect this
         # by seeing if the childs arg_metas_expanded is exactly 1 longer than len(node.args) + len(node.kwargs)
-        has_self = len(node_args) + len(node_keywords) + 1 == len(node.func.ptr.wrapper.arg_metas_expanded)
+        has_self = len(node.args) + len(node.keywords) + 1 == len(node.func.ptr.wrapper.arg_metas_expanded)
         self_offset = 1 if has_self else 0
-        for i, arg in enumerate(node_args):
+        for i, arg in enumerate(node.args):
             if hasattr(arg, "id"):
                 calling_name = arg.id
                 called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id + self_offset].name
@@ -97,7 +97,7 @@ class Pruning:
         # match.
         # Luckily, for keywords, we don't need to look at the child's metas, because we can get the
         # child's name directly from our own keyword node.
-        for arg in node_keywords:
+        for arg in node.keywords:
             if hasattr(arg.value, "id"):
                 calling_name = arg.value.id
                 called_name = arg.arg
@@ -111,7 +111,7 @@ class Pruning:
         child_arg_id = 0
         child_metas: list[ArgMetadata] = node.func.ptr.wrapper.arg_metas_expanded
         child_name_by_our_name = self.child_name_by_caller_name_by_func_id[func_id]
-        for i, arg in enumerate(node_args):
+        for i, arg in enumerate(node.args):
             if hasattr(arg, "id"):
                 calling_name = arg.id
                 if calling_name.startswith("__ti_"):
@@ -119,7 +119,7 @@ class Pruning:
                     if called_name in called_needed or not called_name.startswith("__ti_"):
                         child_name_by_our_name[calling_name] = called_name
             child_arg_id += 1
-        for i, arg in enumerate(node_keywords):
+        for i, arg in enumerate(node.keywords):
             if hasattr(arg, "id"):
                 calling_name = arg.value.id
                 if calling_name.startswith("__ti_"):
@@ -133,8 +133,6 @@ class Pruning:
         self,
         func: "GsTaichiCallable",
         node: "ast.Call",
-        node_args,
-        node_keywords,
         py_args: list[Any],
     ) -> list[Any]:
         """
@@ -159,7 +157,7 @@ class Pruning:
             else:
                 child_metas_pruned.append(_child)
         child_metas = child_metas_pruned
-        for i, arg in enumerate(node_args):
+        for i, arg in enumerate(node.args):
             if hasattr(arg, "id"):
                 calling_name = arg.id  # type: ignore
                 if calling_name.startswith("__ti_"):
