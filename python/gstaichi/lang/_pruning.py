@@ -1,8 +1,6 @@
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
-from .kernel_arguments import ArgMetadata
-
 if TYPE_CHECKING:
 
     from ._gstaichi_callable import GsTaichiCallable
