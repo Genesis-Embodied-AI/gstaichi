@@ -54,6 +54,7 @@ from ._kernel_types import (
     CompiledKernelKeyType,
     FeLlCacheObservations,
     KernelBatchedArgType,
+    LaunchObservations,
     LaunchStats,
     SrcLlCacheObservations,
 )
@@ -281,6 +282,8 @@ class Kernel(FuncBase):
         self.kernel_function_info: FunctionSourceInfo | None = None
         self.compiled_kernel_data_by_key: dict[CompiledKernelKeyType, CompiledKernelData] = {}
         self._last_compiled_kernel_data: CompiledKernelData | None = None  # for dev/debug
+        self._last_launch_key = None  # for dev/debug
+
         # for collecting, we'll grab an empty set if it doesnt exist
         self.used_py_dataclass_parameters_by_key_collecting: dict[CompiledKernelKeyType, set[str]] = defaultdict(set)
         # however, for enforcing, we want None if it doesn't exist (we'll use .get() instead of [] )
@@ -291,6 +294,7 @@ class Kernel(FuncBase):
 
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
         self.fe_ll_cache_observations: FeLlCacheObservations = FeLlCacheObservations()
+        self.launch_observations = LaunchObservations()
 
         self.launch_context_buffer_cache = LaunchContextBufferCache()
 
@@ -555,8 +559,10 @@ class Kernel(FuncBase):
             _logging.warn("""opt_level = 1 is enforced to enable gradient computation.""")
             impl.current_cfg().opt_level = 1
         key = self.ensure_compiled(*py_args)
+        self._last_launch_key = key
         kernel_cpp = self.materialized_kernels[key]
         compiled_kernel_data = self.compiled_kernel_data_by_key.get(key, None)
+        self.launch_observations.found_kernel_in_materialize_cache = compiled_kernel_data is not None
         ret = self.launch_kernel(key, kernel_cpp, compiled_kernel_data, *py_args)
         if compiled_kernel_data is None:
             assert self._last_compiled_kernel_data is not None
