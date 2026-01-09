@@ -63,7 +63,7 @@ class Pruning:
         """
         called from build_Call, after making the call, in pass 0
 
-        note that this ONLY handles args, not kwargs
+        note that this handles both args and kwargs
         """
         if not hasattr(func, "wrapper"):
             return
@@ -131,7 +131,6 @@ class Pruning:
 
     def filter_call_args(
         self,
-        ctx: "ASTTransformerFuncContext",
         func: "GsTaichiCallable",
         node: "ast.Call",
         node_args,
