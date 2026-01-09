@@ -74,7 +74,6 @@ class Func(FuncBase):
             if key.instance_id not in self.compiled:
                 self.do_compile(key=key, args=py_args, arg_features=arg_features)
             return self.func_call_rvalue(key=key, args=py_args)
-
         tree, ctx = self.get_tree_and_ctx(
             is_kernel=False,
             py_args=py_args,
