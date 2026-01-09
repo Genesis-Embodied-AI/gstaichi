@@ -29,7 +29,6 @@ class Pruning:
         self.dotted_by_func_id: dict[int, tuple[str, ...]] | None = None
         if kernel_used_parameters is not None:
             self.used_parameters_by_func_id[-1].update(kernel_used_parameters)
-        self.child_name_by_caller_name_by_func_id: dict[int, dict[str, str]] = defaultdict(dict)
 
     def mark_used(self, func_id: int, parameter_flat_name: str) -> None:
         """
@@ -80,7 +79,6 @@ class Pruning:
 
         _my_func_id = ctx.func.func_id
         _called_func_id = func.wrapper.func_id  # type: ignore
-        func_id = func.wrapper.func_id  # type: ignore
 
         # Copy the used parameters from the child function into our own function.
         called_unpruned = self.used_parameters_by_func_id[_called_func_id]
@@ -94,18 +92,3 @@ class Pruning:
                     to_unprune.add(calling_name)
             arg_id += 1
         self.used_parameters_by_func_id[_my_func_id].update(to_unprune)
-
-        # Store the mapping between parameter names in our namespace, and in the called function
-        # namespace. For kwargs we can get this from node.keywords.
-        called_needed = self.used_parameters_by_func_id[_called_func_id]
-        child_arg_id = 0
-        child_name_by_our_name = self.child_name_by_caller_name_by_func_id[func_id]
-        for kwarg in node.keywords:
-            if hasattr(kwarg, "id"):
-                calling_name = kwarg.value.id
-                if calling_name.startswith("__ti_"):
-                    called_name = kwarg.arg
-                    if called_name in called_needed:
-                        child_name_by_our_name[calling_name] = called_name
-            child_arg_id += 1
-        self.child_name_by_caller_name_by_func_id[func_id] = child_name_by_our_name
