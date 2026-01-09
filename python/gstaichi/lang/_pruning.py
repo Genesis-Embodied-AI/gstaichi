@@ -35,7 +35,7 @@ class Pruning:
 
     def mark_used(self, func_id: int, parameter_flat_name: str) -> None:
         """
-        func_id None means kernel
+        func_id -1 means kernel
         """
         assert not self.enforcing
         self.used_parameters_by_func_id[func_id].add(parameter_flat_name)
@@ -48,6 +48,20 @@ class Pruning:
         return parameter_flat_name in self.used_parameters_by_func_id[func_id]
 
     def _calc_dotted(self) -> None:
+        """
+        There are two formats we need:
+        - the internal variable name, like "__ti_struct__ti_some_member"
+            - desigend to not conflict with customer variable names
+            - cannot contain "."
+        - tuple of str, like ("struct", "some_member")
+            - named "dotted", for historical reasons. We should probably rename...
+
+        The latter is called "dotted" because the format used to be "struct.some_member", but
+        was changed to tuple notation. It's used in _recursive_set_args method, as parameter
+        used_py_dataclass_parameters.
+
+        For speed we pre-calculate dotted here.
+        """
         assert self.enforcing
         dotted_by_func_id = {}
         for func_id, used_parameters in self.used_parameters_by_func_id.items():
@@ -62,8 +76,6 @@ class Pruning:
     ) -> None:
         """
         called from build_Call, after making the call, in pass 0
-
-        note that this handles both args and kwargs
         """
         if not hasattr(func, "wrapper"):
             return
