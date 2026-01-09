@@ -84,7 +84,7 @@ class Pruning:
         _called_func_id = func.wrapper.func_id  # type: ignore
         func_id = func.wrapper.func_id  # type: ignore
 
-        # Copy the used parameters from the child function until our own function.
+        # Copy the used parameters from the child function into our own function.
         called_unpruned = self.used_parameters_by_func_id[_called_func_id]
         to_unprune: set[str] = set()
         arg_id = 0
