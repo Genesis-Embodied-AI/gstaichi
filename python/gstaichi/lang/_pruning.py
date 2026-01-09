@@ -88,10 +88,10 @@ class Pruning:
         called_unpruned = self.used_parameters_by_func_id[_called_func_id]
         to_unprune: set[str] = set()
         arg_id = 0
-        for arg in node.keywords:
-            if hasattr(arg.value, "id"):
-                calling_name = arg.value.id
-                called_name = arg.arg
+        for kwarg in node.keywords:
+            if hasattr(kwarg.value, "id"):
+                calling_name = kwarg.value.id
+                called_name = kwarg.arg
                 if called_name in called_unpruned:
                     to_unprune.add(calling_name)
             arg_id += 1
@@ -99,15 +99,15 @@ class Pruning:
         self.used_parameters_by_func_id[_my_func_id].update(to_unprune)
 
         # Store the mapping between parameter names in our namespace, and in the called function
-        # namespace.
+        # namespace. For kwargs we can get this from node.keywords.
         called_needed = self.used_parameters_by_func_id[_called_func_id]
         child_arg_id = 0
         child_name_by_our_name = self.child_name_by_caller_name_by_func_id[func_id]
-        for arg in node.keywords:
-            if hasattr(arg, "id"):
-                calling_name = arg.value.id
+        for kwarg in node.keywords:
+            if hasattr(kwarg, "id"):
+                calling_name = kwarg.value.id
                 if calling_name.startswith("__ti_"):
-                    called_name = arg.arg
+                    called_name = kwarg.arg
                     if called_name in called_needed:
                         child_name_by_our_name[calling_name] = called_name
             child_arg_id += 1
