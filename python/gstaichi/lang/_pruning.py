@@ -71,6 +71,8 @@ class Pruning:
         _my_func_id = ctx.func.func_id
         _called_func_id = func.wrapper.func_id  # type: ignore
         func_id = func.wrapper.func_id  # type: ignore
+
+        # Copy the used parameters from the child function until our own function.
         called_unpruned = self.used_parameters_by_func_id[_called_func_id]
         to_unprune: set[str] = set()
         arg_id = 0
@@ -84,11 +86,12 @@ class Pruning:
 
         self.used_parameters_by_func_id[_my_func_id].update(to_unprune)
 
+        # Store the mapping between parameter names in our namespace, and in the called function
+        # namespace
         called_needed = self.used_parameters_by_func_id[_called_func_id]
         child_arg_id = 0
-        child_metas: list[ArgMetadata] = node.func.ptr.wrapper.arg_metas_expanded
         child_name_by_our_name = self.child_name_by_caller_name_by_func_id[func_id]
-        for i, arg in enumerate(node.keywords):
+        for arg in node.keywords:
             if hasattr(arg, "id"):
                 calling_name = arg.value.id
                 if calling_name.startswith("__ti_"):
