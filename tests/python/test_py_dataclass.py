@@ -1132,7 +1132,7 @@ def test_prune_used_leaves2():
 
     k1_primal: Kernel = k1._primal
     kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
-    print(sorted(list(k1_primal.used_py_dataclass_leaves_by_key_enforcing[k1_primal._last_launch_key])))
+    print(sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])))
     assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 7  # +1 for envs_idx
 
 
@@ -1384,7 +1384,7 @@ def test_pruning_with_keyword_rename() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
+# @pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_with_arg_rename() -> None:
     @dataclasses.dataclass
     class MyStruct:
@@ -1419,7 +1419,7 @@ def test_pruning_with_arg_rename() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
+# @pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_with_arg_kwargs_rename() -> None:
     @dataclasses.dataclass
     class MyStruct:

@@ -289,6 +289,7 @@ class Kernel(FuncBase):
         self.kernel_function_info: FunctionSourceInfo | None = None
         self.compiled_kernel_data_by_key: dict[CompiledKernelKeyType, CompiledKernelData] = {}
         self._last_compiled_kernel_data: CompiledKernelData | None = None  # for dev/debug
+        self._last_launch_key = None  # for dev/debug
 
         # next two parameters are ONLY used at kernel launch time,
         # NOT for compilation. (for compilation, global_context.pruning is used).
