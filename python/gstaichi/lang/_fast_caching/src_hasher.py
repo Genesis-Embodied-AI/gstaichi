@@ -57,14 +57,14 @@ def create_cache_key(
 class CacheValue(BaseModel):
     frontend_cache_key: str
     hashed_function_source_infos: list[HashedFunctionSourceInfo]
-    used_py_dataclass_leaves: set[str]
+    used_py_dataclass_parameters: set[str]
 
 
 def store(
     frontend_cache_key: str,
     fast_cache_key: str,
     function_source_infos: Iterable[FunctionSourceInfo],
-    used_py_dataclass_leaves: set[str],
+    used_py_dataclass_parameters: set[str],
 ) -> None:
     """
     Note that unlike other caches, this cache is not going to store the actual value we want.
@@ -77,7 +77,7 @@ def store(
         - ie the list of function source infos
 
     Update! We are now going to store parameter pruning infomation, which is:
-    - used_py_dataclass_leaves: set[str]
+    - used_py_dataclass_parameters: set[str]
 
     Update 2: we are going to store the cache key used by the c++ kernel cache, so that we can use that
     to retrieve the immutable cached c++ kernel later, rather than, before, we were storing the c++
@@ -91,7 +91,7 @@ def store(
     cache_value_obj = CacheValue(
         frontend_cache_key=frontend_cache_key,
         hashed_function_source_infos=list(hashed_function_source_infos),
-        used_py_dataclass_leaves=used_py_dataclass_leaves,
+        used_py_dataclass_parameters=used_py_dataclass_parameters,
     )
     cache.store(fast_cache_key, cache_value_obj.model_dump_json())
 
@@ -118,7 +118,7 @@ def load(cache_key: str) -> tuple[set[str], str] | tuple[None, None]:
     if cache_value is None:
         return None, None
     if function_hasher.validate_hashed_function_infos(cache_value.hashed_function_source_infos):
-        return cache_value.used_py_dataclass_leaves, cache_value.frontend_cache_key
+        return cache_value.used_py_dataclass_parameters, cache_value.frontend_cache_key
     return None, None
 
 
