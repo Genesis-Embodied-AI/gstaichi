@@ -285,7 +285,9 @@ class Kernel(FuncBase):
         self.used_py_dataclass_parameters_by_key_collecting: dict[CompiledKernelKeyType, set[str]] = defaultdict(set)
         # however, for enforcing, we want None if it doesn't exist (we'll use .get() instead of [] )
         self.used_py_dataclass_parameters_by_key_enforcing: dict[CompiledKernelKeyType, set[str]] = {}
-        self.used_py_dataclass_parameters_by_key_enforcing_dotted: dict[CompiledKernelKeyType, set[tuple[str, ...]]] = {}
+        self.used_py_dataclass_parameters_by_key_enforcing_dotted: dict[CompiledKernelKeyType, set[tuple[str, ...]]] = (
+            {}
+        )
 
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
         self.fe_ll_cache_observations: FeLlCacheObservations = FeLlCacheObservations()
@@ -417,7 +419,9 @@ class Kernel(FuncBase):
             is_launch_ctx_cacheable = True
             template_num = 0
             i_out = 0
-            used_py_dataclass_parameters_enforcing_dotted = self.used_py_dataclass_parameters_by_key_enforcing_dotted[key]
+            used_py_dataclass_parameters_enforcing_dotted = self.used_py_dataclass_parameters_by_key_enforcing_dotted[
+                key
+            ]
             for i_in, val in enumerate(args):
                 needed_ = self.arg_metas[i_in].annotation
                 if needed_ is template or type(needed_) is template:
