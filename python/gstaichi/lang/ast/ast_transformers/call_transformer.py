@@ -314,6 +314,7 @@ class CallTransformer:
                 build_stmt(ctx, arg)
             ctx.expanding_dataclass_call_parameters = False
 
+        # if any arg violates pure, then node also violates pure
         for arg in node.args:
             if arg.violates_pure:
                 node.violates_pure_reason = arg.violates_pure_reason
