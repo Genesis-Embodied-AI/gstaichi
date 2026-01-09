@@ -293,7 +293,9 @@ class CallTransformer:
                 called_needed = _pruning.used_parameters_by_func_id[_called_func_id]
 
             added_args, node.args = CallTransformer._expand_Call_dataclass_args(ctx, node.args)
-            added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(ctx, node.keywords, called_needed)
+            added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(
+                ctx, node.keywords, called_needed
+            )
 
             # create variables for the now-expanded dataclass members
             # we don't want to include these in the list of variables to not prune

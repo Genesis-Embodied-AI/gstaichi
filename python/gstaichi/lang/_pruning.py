@@ -1,8 +1,6 @@
-from ast import Starred
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
-from .exception import GsTaichiSyntaxError
 from .kernel_arguments import ArgMetadata
 
 if TYPE_CHECKING:
@@ -58,7 +56,10 @@ class Pruning:
         self.dotted_by_func_id = dotted_by_func_id
 
     def record_after_call(
-        self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node,
+        self,
+        ctx: "ASTTransformerFuncContext",
+        func: "GsTaichiCallable",
+        node,
     ) -> None:
         """
         called from build_Call, after making the call, in pass 0
