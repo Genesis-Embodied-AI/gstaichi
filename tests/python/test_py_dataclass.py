@@ -1383,7 +1383,6 @@ def test_pruning_with_keyword_rename() -> None:
 
 
 @test_utils.test()
-# @pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_with_arg_rename() -> None:
     @dataclasses.dataclass
     class MyStruct:
@@ -1418,7 +1417,6 @@ def test_pruning_with_arg_rename() -> None:
 
 
 @test_utils.test()
-# @pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_with_arg_kwargs_rename() -> None:
     @dataclasses.dataclass
     class MyStruct:
