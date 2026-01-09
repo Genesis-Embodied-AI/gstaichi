@@ -22,6 +22,7 @@ from gstaichi.lang.exception import (
 
 if TYPE_CHECKING:
     from .._func_base import FuncBase
+    from .._pruning import Pruning
 
 AutodiffMode = _ti_core.AutodiffMode
 

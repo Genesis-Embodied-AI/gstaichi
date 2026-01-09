@@ -8,6 +8,7 @@ import pytest
 
 import gstaichi as ti
 from gstaichi.lang._kernel_types import KernelBatchedArgType
+from gstaichi.lang.impl import GsTaichiSyntaxError, Kernel
 
 from tests import test_utils
 
