@@ -391,8 +391,8 @@
     <span class="c1"># without caching. In this particular case, the function calls corresponds to adding arguments to the current</span>
     <span class="c1"># context for this kernel call.</span>
     <span class="c1"># A launch context buffer is considered cache-friendly if and only if no direct call to the launch context</span>
-    <span class="c1"># where made preemptively during the recursive processing of the arguments, all of leaves of the arguments are</span>
-    <span class="c1"># pointers, the address of these pointers cannot change, and the set of leaves is fixed.</span>
+    <span class="c1"># where made preemptively during the recursive processing of the arguments, all of parameters of the arguments are</span>
+    <span class="c1"># pointers, the address of these pointers cannot change, and the set of parameters is fixed.</span>
     <span class="c1"># The lifetime of a cache entry is bound to the lifetime of any of its input arguments: the first being garbage</span>
     <span class="c1"># collected will invalidate the entire entry. Moreover, the entire cache registry is bound to the lifetime of</span>
     <span class="c1"># the taichi prog itself, which means that calling `ti.reset()` will automatically clear the cache. Note that</span>
@@ -668,18 +668,20 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_last_launch_key</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># for dev/debug</span>
 
         <span class="c1"># for collecting, we&#39;ll grab an empty set if it doesnt exist</span>
-<div class="viewcode-block" id="Kernel.used_py_dataclass_leaves_by_key_collecting">
-<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.used_py_dataclass_leaves_by_key_collecting">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_collecting</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CompiledKernelKeyType</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span></div>
+<div class="viewcode-block" id="Kernel.used_py_dataclass_parameters_by_key_collecting">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.used_py_dataclass_parameters_by_key_collecting">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_collecting</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CompiledKernelKeyType</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span></div>
 
         <span class="c1"># however, for enforcing, we want None if it doesn&#39;t exist (we&#39;ll use .get() instead of [] )</span>
-<div class="viewcode-block" id="Kernel.used_py_dataclass_leaves_by_key_enforcing">
-<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.used_py_dataclass_leaves_by_key_enforcing">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CompiledKernelKeyType</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span></div>
+<div class="viewcode-block" id="Kernel.used_py_dataclass_parameters_by_key_enforcing">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.used_py_dataclass_parameters_by_key_enforcing">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_enforcing</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CompiledKernelKeyType</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span></div>
 
-<div class="viewcode-block" id="Kernel.used_py_dataclass_leaves_by_key_enforcing_dotted">
-<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.used_py_dataclass_leaves_by_key_enforcing_dotted">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing_dotted</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CompiledKernelKeyType</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span></div>
+<div class="viewcode-block" id="Kernel.used_py_dataclass_parameters_by_key_enforcing_dotted">
+<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/kernel/index.html#gstaichi.lang.kernel.Kernel.used_py_dataclass_parameters_by_key_enforcing_dotted">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_enforcing_dotted</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CompiledKernelKeyType</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">{}</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Kernel.src_ll_cache_observations">
@@ -716,9 +718,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_last_compiled_kernel_data</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">src_ll_cache_observations</span> <span class="o">=</span> <span class="n">SrcLlCacheObservations</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fe_ll_cache_observations</span> <span class="o">=</span> <span class="n">FeLlCacheObservations</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_collecting</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing_dotted</span> <span class="o">=</span> <span class="p">{}</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_collecting</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_enforcing</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_enforcing_dotted</span> <span class="o">=</span> <span class="p">{}</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_try_load_fastcache</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">key</span><span class="p">:</span> <span class="s2">&quot;CompiledKernelKeyType&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
@@ -744,8 +746,8 @@
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">compiled_kernel_data_by_key</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">src_ll_cache_observations</span><span class="o">.</span><span class="n">cache_loaded</span> <span class="o">=</span> <span class="kc">True</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">used_py_dataclass_parameters</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing_dotted</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_enforcing</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">used_py_dataclass_parameters</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_enforcing_dotted</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
                         <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;__ti_&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:])</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">used_py_dataclass_parameters</span><span class="p">]</span>
                     <span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">gstaichi_callable</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">gstaichi_callable</span><span class="o">.</span><span class="n">is_pure</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">print_non_pure</span><span class="p">:</span>
@@ -774,27 +776,27 @@
         <span class="n">range_begin</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">used_py_dataclass_parameters</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">1</span>
         <span class="n">runtime</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">_pass</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">range_begin</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
-            <span class="n">used_py_dataclass_leaves_by_key_enforcing</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">used_py_dataclass_parameters_by_key_enforcing</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">if</span> <span class="n">_pass</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="k">assert</span> <span class="n">used_py_dataclass_parameters</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                <span class="n">used_py_dataclass_leaves_by_key_enforcing</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                <span class="n">used_py_dataclass_parameters_by_key_enforcing</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
                 <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">used_py_dataclass_parameters</span><span class="p">:</span>
                     <span class="n">split_param</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;__ti_&quot;</span><span class="p">)</span>
                     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">split_param</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
                         <span class="n">joined</span> <span class="o">=</span> <span class="s2">&quot;__ti_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">split_param</span><span class="p">[:</span><span class="n">i</span><span class="p">])</span>
-                        <span class="k">if</span> <span class="n">joined</span> <span class="ow">in</span> <span class="n">used_py_dataclass_leaves_by_key_enforcing</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">joined</span> <span class="ow">in</span> <span class="n">used_py_dataclass_parameters_by_key_enforcing</span><span class="p">:</span>
                             <span class="k">break</span>
-                        <span class="n">used_py_dataclass_leaves_by_key_enforcing</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">joined</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">used_py_dataclass_leaves_by_key_enforcing</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing_dotted</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
-                    <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;__ti_&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:])</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">used_py_dataclass_leaves_by_key_enforcing</span><span class="p">]</span>
+                        <span class="n">used_py_dataclass_parameters_by_key_enforcing</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">joined</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_enforcing</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">used_py_dataclass_parameters_by_key_enforcing</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_enforcing_dotted</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+                    <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;__ti_&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:])</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">used_py_dataclass_parameters_by_key_enforcing</span><span class="p">]</span>
                 <span class="p">)</span>
             <span class="n">tree</span><span class="p">,</span> <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tree_and_ctx</span><span class="p">(</span>
                 <span class="n">py_args</span><span class="o">=</span><span class="n">py_args</span><span class="p">,</span>
                 <span class="n">template_slot_locations</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">template_slot_locations</span><span class="p">,</span>
                 <span class="n">arg_features</span><span class="o">=</span><span class="n">arg_features</span><span class="p">,</span>
                 <span class="n">current_kernel</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
-                <span class="n">used_py_dataclass_parameters_enforcing</span><span class="o">=</span><span class="n">used_py_dataclass_leaves_by_key_enforcing</span><span class="p">,</span>
+                <span class="n">used_py_dataclass_parameters_enforcing</span><span class="o">=</span><span class="n">used_py_dataclass_parameters_by_key_enforcing</span><span class="p">,</span>
                 <span class="n">currently_compiling_materialize_key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">runtime</span><span class="o">.</span><span class="n">_current_global_context</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">global_context</span>
@@ -811,7 +813,7 @@
                 <span class="n">used_py_dataclass_parameters</span><span class="o">=</span><span class="n">used_py_dataclass_parameters</span><span class="p">,</span>
                 <span class="n">dump_ast</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;TI_DUMP_AST&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span> <span class="ow">and</span> <span class="n">_pass</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">used_py_dataclass_parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_collecting</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="n">used_py_dataclass_parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_collecting</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
             <span class="n">gstaichi_kernel</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">prog</span><span class="o">.</span><span class="n">create_kernel</span><span class="p">(</span>
                 <span class="n">gstaichi_ast_generator</span><span class="p">,</span> <span class="n">kernel_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">autodiff_mode</span>
             <span class="p">)</span>
@@ -836,7 +838,9 @@
             <span class="n">is_launch_ctx_cacheable</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="n">template_num</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">i_out</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="n">used_py_dataclass_parameters_enforcing_dotted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing_dotted</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="n">used_py_dataclass_parameters_enforcing_dotted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_enforcing_dotted</span><span class="p">[</span>
+                <span class="n">key</span>
+            <span class="p">]</span>
             <span class="k">for</span> <span class="n">i_in</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
                 <span class="n">needed_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">arg_metas</span><span class="p">[</span><span class="n">i_in</span><span class="p">]</span><span class="o">.</span><span class="n">annotation</span>
                 <span class="k">if</span> <span class="n">needed_</span> <span class="ow">is</span> <span class="n">template</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">needed_</span><span class="p">)</span> <span class="ow">is</span> <span class="n">template</span><span class="p">:</span>
@@ -899,7 +903,7 @@
                         <span class="n">compile_result</span><span class="o">.</span><span class="n">cache_key</span><span class="p">,</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">fast_checksum</span><span class="p">,</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">visited_functions</span><span class="p">,</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_leaves_by_key_enforcing</span><span class="p">[</span><span class="n">key</span><span class="p">],</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_enforcing</span><span class="p">[</span><span class="n">key</span><span class="p">],</span>
                     <span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">src_ll_cache_observations</span><span class="o">.</span><span class="n">cache_stored</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_last_compiled_kernel_data</span> <span class="o">=</span> <span class="n">compiled_kernel_data</span>
