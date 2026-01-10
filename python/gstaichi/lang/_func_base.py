@@ -358,8 +358,16 @@ class FuncBase:
                     errors_l.append(f"Missing argument '{arg_meta.name}'.")
                     continue
 
-        if len(errors_l) > 0:
-            raise GsTaichiSyntaxError("\n".join(errors_l))
+        if errors_l:
+            if len(errors_l) == 1:
+                raise GsTaichiSyntaxError(errors_l[0])
+            else:
+                primary_, secondaries_ = errors_l[0], errors_l[1:]
+                raise GsTaichiSyntaxError(
+                    f"Primary exception: {primary_}\n"
+                    "\n"
+                    "Additional diagnostic/dev info:\n"
+                    "\n".join(secondaries_))
 
         return tuple(fused_py_args)
 
