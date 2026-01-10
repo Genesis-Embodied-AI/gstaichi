@@ -113,15 +113,15 @@ Module Contents
       :type:  dict[gstaichi.lang._kernel_types.CompiledKernelKeyType, gstaichi._lib.core.gstaichi_python.CompiledKernelData]
 
 
-   .. py:attribute:: used_py_dataclass_leaves_by_key_collecting
+   .. py:attribute:: used_py_dataclass_parameters_by_key_collecting
       :type:  dict[gstaichi.lang._kernel_types.CompiledKernelKeyType, set[str]]
 
 
-   .. py:attribute:: used_py_dataclass_leaves_by_key_enforcing
+   .. py:attribute:: used_py_dataclass_parameters_by_key_enforcing
       :type:  dict[gstaichi.lang._kernel_types.CompiledKernelKeyType, set[str]]
 
 
-   .. py:attribute:: used_py_dataclass_leaves_by_key_enforcing_dotted
+   .. py:attribute:: used_py_dataclass_parameters_by_key_enforcing_dotted
       :type:  dict[gstaichi.lang._kernel_types.CompiledKernelKeyType, set[tuple[str, Ellipsis]]]
 
 
@@ -131,6 +131,9 @@ Module Contents
 
    .. py:attribute:: fe_ll_cache_observations
       :type:  gstaichi.lang._kernel_types.FeLlCacheObservations
+
+
+   .. py:attribute:: launch_observations
 
 
    .. py:attribute:: launch_context_buffer_cache
