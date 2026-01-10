@@ -73,7 +73,7 @@ class Pruning:
             dotted_by_func_id[func_id] = set([tuple(p.split("__ti_")[1:]) for p in used_parameters])
         self.dotted_by_func_id = dotted_by_func_id
 
-    def record_after_call(self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node: ast.Call) -> None:
+    def record_after_call(self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node: "ast.Call") -> None:
         """
         called from build_Call, after making the call, in pass 0
         """
