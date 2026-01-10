@@ -32,7 +32,7 @@ _NONE = AutodiffMode.NONE
 
 
 class Func(FuncBase):
-    function_counter = 0
+    function_counter = 1  # MUST start from >= 1, because 0 means "kernel".
 
     def __init__(self, _func: Callable, _classfunc=False, _pyfunc=False, is_real_function=False) -> None:
         super().__init__(

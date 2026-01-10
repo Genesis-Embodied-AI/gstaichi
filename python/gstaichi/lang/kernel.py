@@ -264,7 +264,7 @@ class Kernel(FuncBase):
             is_kernel=True,
             is_classkernel=_is_classkernel,
             is_real_function=False,
-            func_id=-1,
+            func_id=Pruning.KERNEL_FUNC_ID,
         )
         self.kernel_counter = Kernel.counter
         Kernel.counter += 1
@@ -416,7 +416,9 @@ class Kernel(FuncBase):
                             new_used_parameters.add(joined)
                     used_parameters.clear()
                     used_parameters.update(new_used_parameters)
-                self.used_py_dataclass_parameters_by_key_enforcing[key] = pruning.used_parameters_by_func_id[-1]
+                self.used_py_dataclass_parameters_by_key_enforcing[key] = pruning.used_parameters_by_func_id[
+                    Pruning.KERNEL_FUNC_ID
+                ]
                 self.used_py_dataclass_parameters_by_key_enforcing_dotted[key] = set(
                     [tuple(p.split("__ti_")[1:]) for p in self.used_py_dataclass_parameters_by_key_enforcing[key]]
                 )

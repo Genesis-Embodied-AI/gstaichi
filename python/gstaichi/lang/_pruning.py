@@ -1,9 +1,11 @@
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+from ._gstaichi_callable import BoundGsTaichiCallable, GsTaichiCallable
 
-    from ._gstaichi_callable import GsTaichiCallable
+if TYPE_CHECKING:
+    import ast
+
     from .ast.ast_transformer_utils import ASTTransformerFuncContext
 
 
@@ -13,27 +15,32 @@ class Pruning:
     one set of used parameters within the compiled kernel, even if called in multiple
     places.
 
+    In practice however, the implementation DOES work if a function
+    is called multiple times within one compilation tree walk pass. What happens is that
+    the union of used parameters, across all calls to that function, is stored. And that
+    works fine for us, because all we need to ensure is 1. it compiles, 2. the list of
+    parameters passed to the kernel is the minimum possible.
+
     To be clear, there is no restriction that a function needs to have the same set of
     used parameters between kernels, or between calls to the same kernel.
 
     This assumption allows us to use the func id to uniquely identify each kernel, without
     some additional index based on used parameters or similar.
 
-    Note that we unify handling of func and kernel by using func_id -1 to denote kernel.
+    Note that we unify handling of func and kernel by using func_id KERNEL_FUNC_ID
+    to denote the kernel.
     """
+
+    KERNEL_FUNC_ID = 0
 
     def __init__(self, kernel_used_parameters: set[str] | None) -> None:
         self.enforcing: bool = False
-        # func_id -1 means kernel
         self.used_parameters_by_func_id: dict[int, set[str]] = defaultdict(set)
         self.dotted_by_func_id: dict[int, tuple[str, ...]] | None = None
         if kernel_used_parameters is not None:
-            self.used_parameters_by_func_id[-1].update(kernel_used_parameters)
+            self.used_parameters_by_func_id[Pruning.KERNEL_FUNC_ID].update(kernel_used_parameters)
 
     def mark_used(self, func_id: int, parameter_flat_name: str) -> None:
-        """
-        func_id -1 means kernel
-        """
         assert not self.enforcing
         self.used_parameters_by_func_id[func_id].add(parameter_flat_name)
 
@@ -57,7 +64,8 @@ class Pruning:
         was changed to tuple notation. It's used in _recursive_set_args method, as parameter
         used_py_dataclass_parameters.
 
-        For speed we pre-calculate dotted here.
+        To optimize runtime speed we pre-calculate dotted here. (I tried calculating it on the fly,
+        and it was noticeably slower, so I took the time to pre-calculate/cache it instead)
         """
         assert self.enforcing
         dotted_by_func_id = {}
@@ -65,16 +73,11 @@ class Pruning:
             dotted_by_func_id[func_id] = set([tuple(p.split("__ti_")[1:]) for p in used_parameters])
         self.dotted_by_func_id = dotted_by_func_id
 
-    def record_after_call(
-        self,
-        ctx: "ASTTransformerFuncContext",
-        func: "GsTaichiCallable",
-        node,
-    ) -> None:
+    def record_after_call(self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node: ast.Call) -> None:
         """
         called from build_Call, after making the call, in pass 0
         """
-        if not hasattr(func, "wrapper"):
+        if type(func) not in {GsTaichiCallable, BoundGsTaichiCallable}:
             return
 
         _my_func_id = ctx.func.func_id
@@ -86,7 +89,7 @@ class Pruning:
         arg_id = 0
         for kwarg in node.keywords:
             if hasattr(kwarg.value, "id"):
-                calling_name = kwarg.value.id
+                calling_name = kwarg.value.id  # type: ignore
                 called_name = kwarg.arg
                 if called_name in called_unpruned:
                     to_unprune.add(calling_name)

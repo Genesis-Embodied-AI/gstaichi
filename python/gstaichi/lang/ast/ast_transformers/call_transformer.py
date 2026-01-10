@@ -285,26 +285,23 @@ class CallTransformer:
 
             func = node.func.ptr
             func_type = type(func)
-            is_func_base_wrapper = func_type is GsTaichiCallable or func_type is BoundGsTaichiCallable
-            _pruning = ctx.global_context.pruning
+            is_func_base_wrapper = func_type in {GsTaichiCallable, BoundGsTaichiCallable}
+            pruning = ctx.global_context.pruning
             called_needed = None
-            if _pruning.enforcing and is_func_base_wrapper:
-                _called_func_id = func.wrapper.func_id  # type: ignore
-                called_needed = _pruning.used_parameters_by_func_id[_called_func_id]
+            if pruning.enforcing and is_func_base_wrapper:
+                called_func_id_ = func.wrapper.func_id  # type: ignore
+                called_needed = pruning.used_parameters_by_func_id[called_func_id_]
 
             added_args, node.args = CallTransformer._expand_Call_dataclass_args(ctx, node.args)
             added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(
                 ctx, node.keywords, called_needed
             )
 
-            # create variables for the now-expanded dataclass members
-            # we don't want to include these in the list of variables to not prune
-            # since these will contain *all* declared fields, instead of all used fields
-            # so we set expanding_dataclass_call_parameters to True during this expansion
-            # We don't build these until this point in the function, because we need
-            # to prune when enforcing is True, and to do that, we need to know what to prune,
-            # which we get from the child func, and so we want to have filtered out all the
-            # cases first where we aren't calling a ti.func
+            # Create variables for the now-expanded dataclass members.
+            # We don't want to include these now-expanded dataclass members
+            # in the list of variables to not prune,
+            # since these will contain *all* declared fields, instead of all used fields.
+            # So we set expanding_dataclass_call_parameters to True during this expansion.
             ctx.expanding_dataclass_call_parameters = True
             for arg in added_args:
                 assert not hasattr(arg, "ptr")
