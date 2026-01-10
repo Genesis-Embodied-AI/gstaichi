@@ -348,7 +348,7 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">Func</span><span class="p">(</span><span class="n">FuncBase</span><span class="p">):</span>
 <div class="viewcode-block" id="Func.function_counter">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/func/index.html#gstaichi.lang.func.Func.function_counter">[docs]</a>
-    <span class="n">function_counter</span> <span class="o">=</span> <span class="mi">0</span></div>
+    <span class="n">function_counter</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># MUST start from &gt;= 1, because 0 means &quot;kernel&quot;.</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">_classfunc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">_pyfunc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_real_function</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
