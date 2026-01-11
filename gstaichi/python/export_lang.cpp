@@ -1071,6 +1071,12 @@ void export_lang(py::module &m) {
 #else
       TI_NOT_IMPLEMENTED
 #endif
+    } else if (key == "cuda_clock_rate_khz") {
+#if defined(TI_WITH_CUDA)
+      return CUDAContext::get_instance().get_clock_rate_khz();
+#else
+      TI_NOT_IMPLEMENTED
+#endif
     } else {
       TI_ERROR("Key {} not supported in query_int64", key);
     }

@@ -114,6 +114,7 @@ user_api[ti] = [
     "cast",
     "ceil",
     "clock_counter",
+    "clock_speed_hz",
     "cos",
     "cpu",
     "cuda",

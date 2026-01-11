@@ -38,6 +38,50 @@ def clock_counter():
     return 0
 
 
+def clock_speed_hz():
+    """
+    Returns the clock speed in Hz corresponding to the clock counter.
+
+    This function runs on the host side and queries the device for its clock rate.
+    The returned value can be used to convert clock cycles from clock_counter() to time.
+
+    Supported backends:
+    - CUDA: Returns the GPU clock rate in Hz
+
+    Unsupported backends (returns 0.0):
+    - AMDGPU: Returns 0.0
+    - Vulkan: Returns 0.0
+    - Metal: Returns 0.0
+    - CPU: Returns 0.0
+
+    Returns:
+        float: Clock rate in Hz, or 0.0 if not supported
+
+    Example::
+
+        >>> import gstaichi as ti
+        >>> ti.init(arch=ti.cuda)
+        >>> clock_rate_hz = ti.clock_speed_hz()
+        >>> print(f"GPU clock rate: {clock_rate_hz / 1e9:.2f} GHz")
+        >>> 
+        >>> # Use with clock_counter to measure time
+        >>> @ti.kernel
+        >>> def timed_kernel() -> ti.f64:
+        >>>     start = ti.clock_counter()
+        >>>     # ... do work ...
+        >>>     end = ti.clock_counter()
+        >>>     return (end - start) / clock_rate_hz  # time in seconds
+    """
+    arch = impl.get_runtime().prog.config().arch
+    if arch == _ti_core.cuda:
+        # query_int64 returns kHz, convert to Hz
+        clock_rate_khz = _ti_core.query_int64("cuda_clock_rate_khz")
+        return float(clock_rate_khz * 1000)
+    # Return 0.0 for unsupported backends
+    return 0.0
+
+
 __all__ = [
     "clock_counter",
+    "clock_speed_hz",
 ]
