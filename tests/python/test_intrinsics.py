@@ -81,7 +81,7 @@ def test_clock_speed_hz_unsupported():
     """Test that clock_speed_hz returns 0.0 for unsupported backends."""
     arch = ti.lang.impl.get_runtime().prog.config().arch
     clock_rate_hz = ti.clock_speed_hz()
-    
+
     if arch == ti.cuda:
         # For CUDA, should be non-zero
         assert clock_rate_hz > 0

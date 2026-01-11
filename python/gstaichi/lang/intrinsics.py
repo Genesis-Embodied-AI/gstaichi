@@ -63,7 +63,7 @@ def clock_speed_hz():
         >>> ti.init(arch=ti.cuda)
         >>> clock_rate_hz = ti.clock_speed_hz()
         >>> print(f"GPU clock rate: {clock_rate_hz / 1e9:.2f} GHz")
-        >>> 
+        >>>
         >>> # Use with clock_counter to measure time
         >>> @ti.kernel
         >>> def timed_kernel() -> ti.f64:

@@ -1064,10 +1064,11 @@ void export_lang(py::module &m) {
   m.def("test_threading", test_threading);
   m.def("is_extension_supported", is_extension_supported);
 
-  m.def("query_int64", [](const std::string &key) {
+  m.def("query_int64", [](const std::string &key) -> int64_t {
     if (key == "cuda_compute_capability") {
 #if defined(TI_WITH_CUDA)
-      return CUDAContext::get_instance().get_compute_capability();
+      return static_cast<int64_t>(
+          CUDAContext::get_instance().get_compute_capability());
 #else
       TI_NOT_IMPLEMENTED
 #endif
