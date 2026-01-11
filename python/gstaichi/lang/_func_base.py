@@ -28,6 +28,7 @@ from gstaichi.lang.exception import (
     GsTaichiRuntimeTypeError,
     GsTaichiSyntaxError,
 )
+from gstaichi.lang._dataclass_util import create_flat_name
 from gstaichi.lang.kernel_arguments import ArgMetadata
 from gstaichi.lang.matrix import MatrixType
 from gstaichi.lang.struct import StructType
@@ -395,8 +396,8 @@ class FuncBase:
 
     @staticmethod
     def _recursive_set_args(
-        used_py_dataclass_parameters: set[tuple[str, ...]],
-        py_dataclass_basename: tuple[str, ...],
+        used_py_dataclass_parameters: set[str],
+        py_dataclass_basename: str,
         launch_ctx: KernelLaunchContext,
         launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]],
         needed_arg_type: Type,
@@ -453,7 +454,9 @@ class FuncBase:
                 if field._field_type is not _FIELD:
                     continue
                 field_name = field.name
-                field_full_name = py_dataclass_basename + (field_name,)
+                field_full_name = create_flat_name(py_dataclass_basename, field_name)
+                # print('field_full_name', field_full_name)
+                # field_full_name = py_dataclass_basename + (field_name,)
                 if field_full_name not in used_py_dataclass_parameters:
                     continue
                 # Storing attribute in a temporary to avoid repeated attribute lookup (~20ns penalty)

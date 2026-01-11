@@ -31,7 +31,7 @@ class Pruning:
         self.enforcing: bool = False
         # func_id -1 means kernel
         self.used_parameters_by_func_id: dict[int, set[str]] = defaultdict(set)
-        self.dotted_by_func_id: dict[int, tuple[str, ...]] | None = None
+        # self.dotted_by_func_id: dict[int, tuple[str, ...]] | None = None
         if kernel_used_parameters is not None:
             self.used_parameters_by_func_id[-1].update(kernel_used_parameters)
         self.child_name_by_caller_name_by_func_id: dict[int, dict[str, str]] = defaultdict(dict)
@@ -45,17 +45,17 @@ class Pruning:
 
     def enforce(self) -> None:
         self.enforcing = True
-        self._calc_dotted()
+        # self._calc_dotted()
 
     def is_used(self, func_id: int, parameter_flat_name: str) -> bool:
         return parameter_flat_name in self.used_parameters_by_func_id[func_id]
 
-    def _calc_dotted(self) -> None:
-        assert self.enforcing
-        dotted_by_func_id = {}
-        for func_id, used_parameters in self.used_parameters_by_func_id.items():
-            dotted_by_func_id[func_id] = set([tuple(p.split("__ti_")[1:]) for p in used_parameters])
-        self.dotted_by_func_id = dotted_by_func_id
+    # def _calc_dotted(self) -> None:
+    #     assert self.enforcing
+    #     dotted_by_func_id = {}
+    #     for func_id, used_parameters in self.used_parameters_by_func_id.items():
+    #         dotted_by_func_id[func_id] = set([tuple(p.split("__ti_")[1:]) for p in used_parameters])
+    #     self.dotted_by_func_id = dotted_by_func_id
 
     def record_after_call(
         self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node, node_args, node_keywords

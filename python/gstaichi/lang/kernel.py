@@ -298,9 +298,9 @@ class Kernel(FuncBase):
         # used_py_dataclass_parameters_by_key_enforcing_dotted will be reconstructed on load from
         # fast cache.
         self.used_py_dataclass_parameters_by_key_enforcing: dict[CompiledKernelKeyType, set[str]] = {}
-        self.used_py_dataclass_parameters_by_key_enforcing_dotted: dict[CompiledKernelKeyType, set[tuple[str, ...]]] = (
-            {}
-        )
+        # self.used_py_dataclass_parameters_by_key_enforcing_dotted: dict[CompiledKernelKeyType, set[tuple[str, ...]]] = (
+        #     {}
+        # )
 
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
         self.fe_ll_cache_observations: FeLlCacheObservations = FeLlCacheObservations()
@@ -344,9 +344,9 @@ class Kernel(FuncBase):
                 if self.compiled_kernel_data_by_key[key]:
                     self.src_ll_cache_observations.cache_loaded = True
                     self.used_py_dataclass_parameters_by_key_enforcing[key] = used_py_dataclass_parameters
-                    self.used_py_dataclass_parameters_by_key_enforcing_dotted[key] = set(
-                        [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_parameters]
-                    )
+                    # self.used_py_dataclass_parameters_by_key_enforcing_dotted[key] = set(
+                    #     [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_parameters]
+                    # )
                     return used_py_dataclass_parameters
 
         elif self.gstaichi_callable and not self.gstaichi_callable.is_pure and self.runtime.print_non_pure:
@@ -417,9 +417,9 @@ class Kernel(FuncBase):
                     used_parameters.clear()
                     used_parameters.update(new_used_parameters)
                 self.used_py_dataclass_parameters_by_key_enforcing[key] = pruning.used_parameters_by_func_id[-1]
-                self.used_py_dataclass_parameters_by_key_enforcing_dotted[key] = set(
-                    [tuple(p.split("__ti_")[1:]) for p in self.used_py_dataclass_parameters_by_key_enforcing[key]]
-                )
+                # self.used_py_dataclass_parameters_by_key_enforcing_dotted[key] = set(
+                #     [tuple(p.split("__ti_")[1:]) for p in self.used_py_dataclass_parameters_by_key_enforcing[key]]
+                # )
             runtime._current_global_context = None
 
     def launch_kernel(self, key, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
@@ -442,8 +442,8 @@ class Kernel(FuncBase):
                     i_out += 1
                     continue
                 num_args_, is_launch_ctx_cacheable_ = self._recursive_set_args(
-                    self.used_py_dataclass_parameters_by_key_enforcing_dotted[key],
-                    (self.arg_metas[i_in].name,),
+                    self.used_py_dataclass_parameters_by_key_enforcing[key],
+                    self.arg_metas[i_in].name,
                     launch_ctx,
                     launch_ctx_buffer,
                     needed_,
