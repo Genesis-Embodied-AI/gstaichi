@@ -36,7 +36,6 @@ class Pruning:
     def __init__(self, kernel_used_parameters: set[str] | None) -> None:
         self.enforcing: bool = False
         self.used_parameters_by_func_id: dict[int, set[str]] = defaultdict(set)
-        self.dotted_by_func_id: dict[int, tuple[str, ...]] | None = None
         if kernel_used_parameters is not None:
             self.used_parameters_by_func_id[Pruning.KERNEL_FUNC_ID].update(kernel_used_parameters)
 
@@ -46,32 +45,9 @@ class Pruning:
 
     def enforce(self) -> None:
         self.enforcing = True
-        self._calc_dotted()
 
     def is_used(self, func_id: int, parameter_flat_name: str) -> bool:
         return parameter_flat_name in self.used_parameters_by_func_id[func_id]
-
-    def _calc_dotted(self) -> None:
-        """
-        There are two formats we need:
-        - the internal variable name, like "__ti_struct__ti_some_member"
-            - desigend to not conflict with customer variable names
-            - cannot contain "."
-        - tuple of str, like ("struct", "some_member")
-            - named "dotted", for historical reasons. We should probably rename...
-
-        The latter is called "dotted" because the format used to be "struct.some_member", but
-        was changed to tuple notation. It's used in _recursive_set_args method, as parameter
-        used_py_dataclass_parameters.
-
-        To optimize runtime speed we pre-calculate dotted here. (I tried calculating it on the fly,
-        and it was noticeably slower, so I took the time to pre-calculate/cache it instead)
-        """
-        assert self.enforcing
-        dotted_by_func_id = {}
-        for func_id, used_parameters in self.used_parameters_by_func_id.items():
-            dotted_by_func_id[func_id] = set([tuple(p.split("__ti_")[1:]) for p in used_parameters])
-        self.dotted_by_func_id = dotted_by_func_id
 
     def record_after_call(self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node: "ast.Call") -> None:
         """

@@ -20,6 +20,7 @@ import numpy as np
 from gstaichi._lib import core as _ti_core
 from gstaichi._lib.core.gstaichi_python import KernelLaunchContext
 from gstaichi.lang import _kernel_impl_dataclass, impl
+from gstaichi.lang._dataclass_util import create_flat_name
 from gstaichi.lang._ndarray import Ndarray
 from gstaichi.lang._wrap_inspect import get_source_info_and_src
 from gstaichi.lang.ast import ASTTransformerFuncContext
@@ -388,8 +389,8 @@ class FuncBase:
 
     @staticmethod
     def _recursive_set_args(
-        used_py_dataclass_parameters: set[tuple[str, ...]],
-        py_dataclass_basename: tuple[str, ...],
+        used_py_dataclass_parameters: set[str],
+        py_dataclass_basename: str,
         launch_ctx: KernelLaunchContext,
         launch_ctx_buffer: DefaultDict[KernelBatchedArgType, list[tuple]],
         needed_arg_type: Type,
@@ -446,7 +447,7 @@ class FuncBase:
                 if field._field_type is not _FIELD:
                     continue
                 field_name = field.name
-                field_full_name = py_dataclass_basename + (field_name,)
+                field_full_name = create_flat_name(py_dataclass_basename, field_name)
                 if field_full_name not in used_py_dataclass_parameters:
                     continue
                 # Storing attribute in a temporary to avoid repeated attribute lookup (~20ns penalty)
