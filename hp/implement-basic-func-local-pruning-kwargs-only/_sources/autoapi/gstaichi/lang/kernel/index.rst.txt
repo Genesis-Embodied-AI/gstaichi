@@ -114,10 +114,6 @@ Module Contents
       :type:  dict[gstaichi.lang._kernel_types.CompiledKernelKeyType, set[str]]
 
 
-   .. py:attribute:: used_py_dataclass_parameters_by_key_enforcing_dotted
-      :type:  dict[gstaichi.lang._kernel_types.CompiledKernelKeyType, set[tuple[str, Ellipsis]]]
-
-
    .. py:attribute:: src_ll_cache_observations
       :type:  gstaichi.lang._kernel_types.SrcLlCacheObservations
 
