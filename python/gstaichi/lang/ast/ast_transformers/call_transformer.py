@@ -8,6 +8,7 @@ import re
 import warnings
 from ast import unparse
 from collections import ChainMap
+from contextlib import nullcontext
 from typing import Any
 
 from gstaichi.lang import (
@@ -271,22 +272,18 @@ class CallTransformer:
         Call(func=Name(id='f2', ctx=Load()), args=[Name(id='my_struct_ab', ctx=Load())], keywords=[])
         """
         is_func_base_wrapper = False
-        if get_decorator(ctx, node) in ["static", "static_assert"]:
-            with ctx.static_scope_guard():
-                build_stmt(ctx, node.func)
-                build_stmts(ctx, node.args)
-                build_stmts(ctx, node.keywords)
-            func = node.func.ptr
-            func_type = type(func)
-        else:
+        is_static = get_decorator(ctx, node) in ["static", "static_assert"]
+
+        with ctx.static_scope_guard() if is_static else nullcontext():
             build_stmt(ctx, node.func)
             # creates variable for the dataclass itself (as well as other variables,
             # not related to dataclasses). Necessary for calling further child functions
             build_stmts(ctx, node.args)
             build_stmts(ctx, node.keywords)
+        func = node.func.ptr
+        func_type = type(func)
 
-            func = node.func.ptr
-            func_type = type(func)
+        if not is_static:
             is_func_base_wrapper = func_type in {GsTaichiCallable, BoundGsTaichiCallable}
             pruning = ctx.global_context.pruning
             called_needed = None
