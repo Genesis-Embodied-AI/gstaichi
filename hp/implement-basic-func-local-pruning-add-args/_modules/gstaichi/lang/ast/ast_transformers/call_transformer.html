@@ -629,9 +629,9 @@
                 <span class="n">build_stmt</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span>
             <span class="n">ctx</span><span class="o">.</span><span class="n">expanding_dataclass_call_parameters</span> <span class="o">=</span> <span class="kc">False</span>
 
-        <span class="c1"># check for pure violations</span>
-        <span class="c1"># we have to do this after building the statements</span>
-        <span class="c1"># if any arg violates pure, then node also violates pure</span>
+        <span class="c1"># Check for pure violations.</span>
+        <span class="c1"># We have to do this after building the statements.</span>
+        <span class="c1"># If any arg violates pure, then node also violates pure.</span>
         <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">violates_pure</span><span class="p">:</span>
                 <span class="n">node</span><span class="o">.</span><span class="n">violates_pure_reason</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">violates_pure_reason</span>
