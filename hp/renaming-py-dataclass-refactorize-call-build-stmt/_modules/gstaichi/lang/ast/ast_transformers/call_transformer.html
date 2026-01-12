@@ -588,7 +588,7 @@
 <span class="sd">        Call(func=Name(id=&#39;f2&#39;, ctx=Load()), args=[Name(id=&#39;my_struct_ab&#39;, ctx=Load())], keywords=[])</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">is_func_base_wrapper</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="n">is_static</span> <span class="o">=</span> <span class="n">get_decorator</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;static&quot;</span><span class="p">,</span> <span class="s2">&quot;static_assert&quot;</span><span class="p">]</span>
+        <span class="n">is_static</span> <span class="o">=</span> <span class="n">get_decorator</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;static&quot;</span><span class="p">,</span> <span class="s2">&quot;static_assert&quot;</span><span class="p">)</span>
 
         <span class="k">with</span> <span class="n">ctx</span><span class="o">.</span><span class="n">static_scope_guard</span><span class="p">()</span> <span class="k">if</span> <span class="n">is_static</span> <span class="k">else</span> <span class="n">nullcontext</span><span class="p">():</span>
             <span class="n">build_stmt</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
