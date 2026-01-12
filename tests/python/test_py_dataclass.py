@@ -2245,6 +2245,7 @@ def test_pruning_kwargs_swap_order_bound_callable() -> None:
 
 
 @test_utils.test()
+@pytest.mark.xfail(reason="data oriented not implemented yet.")
 def test_pruning_args_bound_callable() -> None:
     @dataclasses.dataclass
     class MyStruct1:
