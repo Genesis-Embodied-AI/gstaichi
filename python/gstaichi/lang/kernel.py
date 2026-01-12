@@ -58,6 +58,7 @@ from ._kernel_types import (
     LaunchStats,
     SrcLlCacheObservations,
 )
+from ._pruning import Pruning
 
 # Define proxies for fast lookup
 _NONE, _VALIDATION = AutodiffMode.NONE, AutodiffMode.VALIDATION
@@ -168,7 +169,6 @@ class ASTGenerator:
         current_kernel: "Kernel",
         only_parse_function_def: bool,
         tree: ast.Module,
-        used_py_dataclass_parameters: set[str] | None,
         dump_ast: bool,
     ) -> None:
         self.runtime = impl.get_runtime()
@@ -177,8 +177,11 @@ class ASTGenerator:
         self.kernel_name = kernel_name
         self.tree = tree
         self.only_parse_function_def = only_parse_function_def
-        self.used_py_dataclass_parameters = used_py_dataclass_parameters
         self.dump_ast = dump_ast
+
+    """
+    only_parse_function_def will be set when running from fast cache.
+    """
 
     # Do not change the name of 'gstaichi_ast_generator'
     # The warning system needs this identifier to remove unnecessary messages
@@ -193,6 +196,7 @@ class ASTGenerator:
             )
         self.current_kernel.kernel_cpp = kernel_cxx
         ctx = self.ctx
+        pruning = ctx.global_context.pruning
         self.runtime.inside_kernel = True
         assert self.runtime._compiling_callable is None
         self.runtime._compiling_callable = kernel_cxx
@@ -200,10 +204,12 @@ class ASTGenerator:
             ctx.ast_builder = kernel_cxx.ast_builder()
             if self.dump_ast:
                 self._dump_ast()
-            if not self.used_py_dataclass_parameters:
+            if not pruning.enforcing:
                 struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
             else:
-                struct_locals = self.used_py_dataclass_parameters
+                struct_locals = pruning.used_parameters_by_func_id[ctx.func.func_id]
+            # struct locals are the expanded py dataclass fields that we will write to
+            # local variables, and will then be available to use in build_Call, later.
             tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(self.tree, struct_locals=struct_locals)
             ctx.only_parse_function_def = self.only_parse_function_def
             transform_tree(tree, ctx)
@@ -258,6 +264,7 @@ class Kernel(FuncBase):
             is_kernel=True,
             is_classkernel=_is_classkernel,
             is_real_function=False,
+            func_id=Pruning.KERNEL_FUNC_ID,
         )
         self.kernel_counter = Kernel.counter
         Kernel.counter += 1
@@ -284,13 +291,11 @@ class Kernel(FuncBase):
         self._last_compiled_kernel_data: CompiledKernelData | None = None  # for dev/debug
         self._last_launch_key = None  # for dev/debug
 
-        # for collecting, we'll grab an empty set if it doesnt exist
-        self.used_py_dataclass_parameters_by_key_collecting: dict[CompiledKernelKeyType, set[str]] = defaultdict(set)
-        # however, for enforcing, we want None if it doesn't exist (we'll use .get() instead of [] )
+        # next two parameters are ONLY used at kernel launch time,
+        # NOT for compilation. (for compilation, global_context.pruning is used).
+        # These parameters here are used to filter args passed into the already-compiled kernel.
+        # used_py_dataclass_parameters_by_key_enforcing will also be serialized with fast cache.
         self.used_py_dataclass_parameters_by_key_enforcing: dict[CompiledKernelKeyType, set[str]] = {}
-        self.used_py_dataclass_parameters_by_key_enforcing_dotted: dict[CompiledKernelKeyType, set[tuple[str, ...]]] = (
-            {}
-        )
 
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
         self.fe_ll_cache_observations: FeLlCacheObservations = FeLlCacheObservations()
@@ -309,18 +314,15 @@ class Kernel(FuncBase):
         self._last_compiled_kernel_data = None
         self.src_ll_cache_observations = SrcLlCacheObservations()
         self.fe_ll_cache_observations = FeLlCacheObservations()
-        self.used_py_dataclass_parameters_by_key_collecting = defaultdict(set)
-        self.used_py_dataclass_parameters_by_key_enforcing = {}
-        self.used_py_dataclass_parameters_by_key_enforcing_dotted = {}
 
     def _try_load_fastcache(self, args: tuple[Any, ...], key: "CompiledKernelKeyType") -> set[str] | None:
         frontend_cache_key: str | None = None
-        used_py_dataclass_parameters: set[str] | None = None
         if self.runtime.src_ll_cache and self.gstaichi_callable and self.gstaichi_callable.is_pure:
             kernel_source_info, _src = get_source_info_and_src(self.func)
             self.fast_checksum = src_hasher.create_cache_key(
                 self.raise_on_templated_floats, kernel_source_info, args, self.arg_metas
             )
+            used_py_dataclass_parameters = None
             if self.fast_checksum:
                 self.src_ll_cache_observations.cache_key_generated = True
                 used_py_dataclass_parameters, frontend_cache_key = src_hasher.load(self.fast_checksum)
@@ -337,9 +339,8 @@ class Kernel(FuncBase):
                 if self.compiled_kernel_data_by_key[key]:
                     self.src_ll_cache_observations.cache_loaded = True
                     self.used_py_dataclass_parameters_by_key_enforcing[key] = used_py_dataclass_parameters
-                    self.used_py_dataclass_parameters_by_key_enforcing_dotted[key] = set(
-                        [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_parameters]
-                    )
+                    return used_py_dataclass_parameters
+
         elif self.gstaichi_callable and not self.gstaichi_callable.is_pure and self.runtime.print_non_pure:
             # The bit in caps should not be modified without updating corresponding test
             # freetext can be freely modified.
@@ -347,7 +348,7 @@ class Kernel(FuncBase):
             # this is only printed when ti.init(print_non_pure=..) is True. And it is
             # confusing to set that to True, and see nothing printed.
             print(f"[NOT_PURE] Debug information: not pure: {self.func.__name__}")
-        return used_py_dataclass_parameters
+        return None
 
     def materialize(self, key: "CompiledKernelKeyType | None", py_args: tuple[Any, ...], arg_features=None):
         if key is None:
@@ -361,30 +362,19 @@ class Kernel(FuncBase):
         kernel_name = f"{self.func.__name__}_c{self.kernel_counter}_{key[1]}"
         _logging.trace(f"Materializing kernel {kernel_name} in {self.autodiff_mode}...")
 
+        pruning = Pruning(kernel_used_parameters=used_py_dataclass_parameters)
         range_begin = 0 if used_py_dataclass_parameters is None else 1
         runtime = impl.get_runtime()
         for _pass in range(range_begin, 2):
-            used_py_dataclass_parameters_by_key_enforcing = None
-            if _pass == 1:
-                assert used_py_dataclass_parameters is not None
-                used_py_dataclass_parameters_by_key_enforcing = set()
-                for param in used_py_dataclass_parameters:
-                    split_param = param.split("__ti_")
-                    for i in range(len(split_param), 0, -1):
-                        joined = "__ti_".join(split_param[:i])
-                        if joined in used_py_dataclass_parameters_by_key_enforcing:
-                            break
-                        used_py_dataclass_parameters_by_key_enforcing.add(joined)
-                self.used_py_dataclass_parameters_by_key_enforcing[key] = used_py_dataclass_parameters_by_key_enforcing
-                self.used_py_dataclass_parameters_by_key_enforcing_dotted[key] = set(
-                    [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_parameters_by_key_enforcing]
-                )
+            if _pass >= 1:
+                pruning.enforce()
             tree, ctx = self.get_tree_and_ctx(
+                pass_idx=_pass,
                 py_args=py_args,
                 template_slot_locations=self.template_slot_locations,
                 arg_features=arg_features,
                 current_kernel=self,
-                used_py_dataclass_parameters_enforcing=used_py_dataclass_parameters_by_key_enforcing,
+                pruning=pruning,
                 currently_compiling_materialize_key=key,
             )
             runtime._current_global_context = ctx.global_context
@@ -398,16 +388,29 @@ class Kernel(FuncBase):
                 current_kernel=self,
                 only_parse_function_def=self.compiled_kernel_data_by_key.get(key) is not None,
                 tree=tree,
-                used_py_dataclass_parameters=used_py_dataclass_parameters,
                 dump_ast=os.environ.get("TI_DUMP_AST", "") == "1" and _pass == 1,
             )
-            used_py_dataclass_parameters = self.used_py_dataclass_parameters_by_key_collecting[key]
             gstaichi_kernel = impl.get_runtime().prog.create_kernel(
                 gstaichi_ast_generator, kernel_name, self.autodiff_mode
             )
             if _pass == 1:
                 assert key not in self.materialized_kernels
                 self.materialized_kernels[key] = gstaichi_kernel
+            else:
+                for used_parameters in pruning.used_parameters_by_func_id.values():
+                    new_used_parameters = set()
+                    for param in used_parameters:
+                        split_param = param.split("__ti_")
+                        for i in range(len(split_param), 1, -1):
+                            joined = "__ti_".join(split_param[:i])
+                            if joined in new_used_parameters:
+                                break
+                            new_used_parameters.add(joined)
+                    used_parameters.clear()
+                    used_parameters.update(new_used_parameters)
+                self.used_py_dataclass_parameters_by_key_enforcing[key] = pruning.used_parameters_by_func_id[
+                    Pruning.KERNEL_FUNC_ID
+                ]
             runtime._current_global_context = None
 
     def launch_kernel(self, key, t_kernel: KernelCxx, compiled_kernel_data: CompiledKernelData | None, *args) -> Any:
@@ -423,9 +426,6 @@ class Kernel(FuncBase):
             is_launch_ctx_cacheable = True
             template_num = 0
             i_out = 0
-            used_py_dataclass_parameters_enforcing_dotted = self.used_py_dataclass_parameters_by_key_enforcing_dotted[
-                key
-            ]
             for i_in, val in enumerate(args):
                 needed_ = self.arg_metas[i_in].annotation
                 if needed_ is template or type(needed_) is template:
@@ -433,8 +433,8 @@ class Kernel(FuncBase):
                     i_out += 1
                     continue
                 num_args_, is_launch_ctx_cacheable_ = self._recursive_set_args(
-                    used_py_dataclass_parameters_enforcing_dotted,
-                    (self.arg_metas[i_in].name,),
+                    self.used_py_dataclass_parameters_by_key_enforcing[key],
+                    self.arg_metas[i_in].name,
                     launch_ctx,
                     launch_ctx_buffer,
                     needed_,

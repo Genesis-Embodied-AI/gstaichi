@@ -1164,15 +1164,19 @@ def static(x, *xs) -> Any:
         or x is None
     ):
         return x
+
     if isinstance(x, (np.bool_, np.integer, np.floating)):
         return x
 
     if isinstance(x, AnyArray):
         return x
+
     if isinstance(x, Field):
         return x
+
     if isinstance(x, (FunctionType, MethodType, BoundGsTaichiCallable, GsTaichiCallable)):
         return x
+
     raise ValueError(f"Input to ti.static must be compile-time constants or global pointers, instead of {type(x)}")
 
 

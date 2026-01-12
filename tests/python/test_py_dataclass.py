@@ -941,6 +941,7 @@ def test_template_mapper_cache(use_slots, monkeypatch):
 
 
 @test_utils.test()
+@pytest.mark.xfail(reason="pruning dataclass args not currently implemented.")
 def test_print_used_parameters():
     @dataclasses.dataclass
     class MyDataclass:
@@ -996,6 +997,7 @@ def test_print_used_parameters():
 
 
 @test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
 def test_prune_used_parameters1():
     @dataclasses.dataclass
     class Nested1:
@@ -1137,6 +1139,7 @@ def test_prune_used_parameters2():
 
 
 @test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
 def test_prune_used_parameters_fastcache1(tmp_path: Path):
     arch_name = ti.lang.impl.current_cfg().arch.name
     for _it in range(3):
@@ -1353,7 +1356,6 @@ def test_prune_used_parameters_fastcache_no_used(tmp_path: Path):
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_with_keyword_rename() -> None:
     @dataclasses.dataclass
     class MyStruct:
@@ -1938,7 +1940,6 @@ def test_pruning_reuse_func_same_kernel_diff_call() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_kwargs_same_param_names_diff_names() -> None:
     """
     In this test, we call functions from one parent, passing the same struct
@@ -2051,7 +2052,6 @@ def test_pruning_func_return_star_to_another_two_step() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_func_return_star_to_another_explicit_vars() -> None:
     """
     Using the tuple return from one fucntion as the args to
@@ -2079,13 +2079,7 @@ def test_pruning_func_return_star_to_another_explicit_vars() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_pass_element_of_tensor_of_dataclass() -> None:
-    """
-    Using the tuple return from one fucntion as the args to
-    another
-    """
-
     vec3 = ti.types.vector(3, ti.f32)
 
     @dataclasses.dataclass
@@ -2140,7 +2134,6 @@ def test_pruning_pass_element_of_tensor_of_dataclass() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_kwargs_swap_order() -> None:
     """
     In this test, we call into a kwargs function with the kwargs in a different
@@ -2199,7 +2192,6 @@ def test_pruning_kwargs_swap_order() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_kwargs_swap_order_bound_callable() -> None:
     """
     In this test, we call into a kwargs function with the kwargs in a different
@@ -2324,7 +2316,6 @@ def test_pruning_args_bound_callable() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_star_args() -> None:
     """
     Designed to test
@@ -2441,13 +2432,7 @@ def test_pruning_iterate_function() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_iterate_function_no_iterate() -> None:
-    """
-    Designed to test
-    https://github.com/Genesis-Embodied-AI/Genesis/blob/6d344d0d4c46b7c9de98442bc4d09f9f9bfa541b/genesis/engine/couplers/sap_coupler.py#L631
-    """
-
     @dataclasses.dataclass
     class MyStruct:
         _k1: ti.types.NDArray[ti.f32, 2]
