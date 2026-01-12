@@ -40,37 +40,18 @@ def clock_counter():
 
 def clock_speed_hz():
     """
-    Returns the clock speed in Hz corresponding to the clock counter.
+    Returns the clock speed in Hz of the compute device, i.e. GPU.
 
-    This function runs on the host side and queries the device for its clock rate.
-    The returned value can be used to convert clock cycles from clock_counter() to time.
+    Note that this is the nominal speed, NOT the current dynamic speed.
 
-    Supported backends:
-    - CUDA: Returns the GPU clock rate in Hz
+    To set to fixed speed, per AI (untested):
 
-    Unsupported backends (returns 0.0):
-    - AMDGPU: Returns 0.0
-    - Vulkan: Returns 0.0
-    - Metal: Returns 0.0
-    - CPU: Returns 0.0
+    # Lock GPU clock and memory clock to specific values
+    sudo nvidia-smi -lgc <gpu_clock_mhz>
+    sudo nvidia-smi -lmc <memory_clock_mhz>
 
-    Returns:
-        float: Clock rate in Hz, or 0.0 if not supported
-
-    Example::
-
-        >>> import gstaichi as ti
-        >>> ti.init(arch=ti.cuda)
-        >>> clock_rate_hz = ti.clock_speed_hz()
-        >>> print(f"GPU clock rate: {clock_rate_hz / 1e9:.2f} GHz")
-        >>>
-        >>> # Use with clock_counter to measure time
-        >>> @ti.kernel
-        >>> def timed_kernel() -> ti.f64:
-        >>>     start = ti.clock_counter()
-        >>>     # ... do work ...
-        >>>     end = ti.clock_counter()
-        >>>     return (end - start) / clock_rate_hz  # time in seconds
+    # Example: Lock to 1200 MHz GPU clock
+    sudo nvidia-smi -lgc 1200
     """
     arch = impl.get_runtime().prog.config().arch
     if arch == _ti_core.cuda:
