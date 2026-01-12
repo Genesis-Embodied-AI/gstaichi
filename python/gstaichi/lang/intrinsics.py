@@ -74,11 +74,9 @@ def clock_speed_hz():
     """
     arch = impl.get_runtime().prog.config().arch
     if arch == _ti_core.cuda:
-        # query_int64 returns kHz, convert to Hz
         clock_rate_khz = _ti_core.query_int64("cuda_clock_rate_khz")
         return float(clock_rate_khz * 1000)
-    # Return 0.0 for unsupported backends
-    return 0.0
+    raise NotImplementedError(f"{clock_speed_hz.__name__} not implemented for arch {arch.name}")
 
 
 __all__ = [
