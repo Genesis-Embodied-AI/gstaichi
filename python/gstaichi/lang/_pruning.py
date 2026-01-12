@@ -50,11 +50,11 @@ class Pruning:
         if type(func) not in {GsTaichiCallable, BoundGsTaichiCallable}:
             return
 
-        _my_func_id = ctx.func.func_id
-        _called_func_id = func.wrapper.func_id  # type: ignore
+        my_func_id = ctx.func.func_id
+        called_func_id = func.wrapper.func_id  # type: ignore
 
         # Copy the used parameters from the child function into our own function.
-        called_unpruned = self.used_parameters_by_func_id[_called_func_id]
+        called_unpruned = self.used_parameters_by_func_id[called_func_id]
         to_unprune: set[str] = set()
         arg_id = 0
         for kwarg in node.keywords:
@@ -64,4 +64,4 @@ class Pruning:
                 if called_name in called_unpruned:
                     to_unprune.add(calling_name)
             arg_id += 1
-        self.used_parameters_by_func_id[_my_func_id].update(to_unprune)
+        self.used_parameters_by_func_id[my_func_id].update(to_unprune)

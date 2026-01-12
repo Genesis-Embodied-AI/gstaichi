@@ -358,12 +358,12 @@ class Kernel(FuncBase):
             return
 
         self.runtime.materialize()
-        _used_py_dataclass_parameters = self._try_load_fastcache(py_args, key)
+        used_py_dataclass_parameters = self._try_load_fastcache(py_args, key)
         kernel_name = f"{self.func.__name__}_c{self.kernel_counter}_{key[1]}"
         _logging.trace(f"Materializing kernel {kernel_name} in {self.autodiff_mode}...")
 
-        pruning = Pruning(kernel_used_parameters=_used_py_dataclass_parameters)
-        range_begin = 0 if _used_py_dataclass_parameters is None else 1
+        pruning = Pruning(kernel_used_parameters=used_py_dataclass_parameters)
+        range_begin = 0 if used_py_dataclass_parameters is None else 1
         runtime = impl.get_runtime()
         for _pass in range(range_begin, 2):
             if _pass >= 1:
