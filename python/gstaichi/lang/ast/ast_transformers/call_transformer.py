@@ -173,7 +173,7 @@ class CallTransformer:
         """
         args_new = []
         added_args = []
-        _pruning = ctx.global_context.pruning
+        pruning = ctx.global_context.pruning
         func_id = ctx.func.func_id
         for arg in args:
             val = arg.ptr
@@ -184,7 +184,7 @@ class CallTransformer:
                         child_name = create_flat_name(arg.id, field.name)
                     except Exception as e:
                         raise RuntimeError(f"Exception whilst processing {field.name} in {type(dataclass_type)}") from e
-                    if _pruning.enforcing and child_name not in _pruning.used_parameters_by_func_id[func_id]:
+                    if pruning.enforcing and child_name not in pruning.used_parameters_by_func_id[func_id]:
                         continue
                     load_ctx = ast.Load()
                     arg_node = ast.Name(
@@ -364,9 +364,9 @@ class CallTransformer:
         CallTransformer._warn_if_is_external_func(ctx, node)
         try:
             node.ptr = func(*py_args, **py_kwargs)
-            _pruning = ctx.global_context.pruning
-            if not _pruning.enforcing:
-                _pruning.record_after_call(ctx, func, node)
+            pruning = ctx.global_context.pruning
+            if not pruning.enforcing:
+                pruning.record_after_call(ctx, func, node)
         except TypeError as e:
             module = inspect.getmodule(func)
             error_msg = re.sub(r"\bExpr\b", "GsTaichi Expression", str(e))

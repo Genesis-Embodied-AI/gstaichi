@@ -305,9 +305,9 @@ class FuncBase:
             assert global_context is not None
             current_kernel = global_context.current_kernel
             assert current_kernel is not None
-            _pruning = global_context.pruning
+            pruning = global_context.pruning
             used_by_dataclass_parameters_enforcing = None
-            if _pruning.enforcing:
+            if pruning.enforcing:
                 used_by_dataclass_parameters_enforcing = global_context.pruning.used_parameters_by_func_id[self.func_id]
             self.arg_metas_expanded = _kernel_impl_dataclass.expand_func_arguments(
                 used_by_dataclass_parameters_enforcing,

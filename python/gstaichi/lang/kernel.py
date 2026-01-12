@@ -196,7 +196,7 @@ class ASTGenerator:
             )
         self.current_kernel.kernel_cpp = kernel_cxx
         ctx = self.ctx
-        _pruning = ctx.global_context.pruning
+        pruning = ctx.global_context.pruning
         self.runtime.inside_kernel = True
         assert self.runtime._compiling_callable is None
         self.runtime._compiling_callable = kernel_cxx
@@ -204,10 +204,10 @@ class ASTGenerator:
             ctx.ast_builder = kernel_cxx.ast_builder()
             if self.dump_ast:
                 self._dump_ast()
-            if not _pruning.enforcing:
+            if not pruning.enforcing:
                 struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
             else:
-                struct_locals = _pruning.used_parameters_by_func_id[ctx.func.func_id]
+                struct_locals = pruning.used_parameters_by_func_id[ctx.func.func_id]
             # struct locals are the expanded py dataclass fields that we will write to
             # local variables, and will then be available to use in build_Call, later.
             tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(self.tree, struct_locals=struct_locals)

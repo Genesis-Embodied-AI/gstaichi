@@ -76,8 +76,8 @@ def boundary_type_cast_warning(expression: Expr) -> None:
 class ASTTransformer(Builder):
     @staticmethod
     def build_Name(ctx: ASTTransformerFuncContext, node: ast.Name):
-        _pruning = ctx.global_context.pruning
-        if not _pruning.enforcing and not ctx.expanding_dataclass_call_parameters and node.id.startswith("__ti_"):
+        pruning = ctx.global_context.pruning
+        if not pruning.enforcing and not ctx.expanding_dataclass_call_parameters and node.id.startswith("__ti_"):
             ctx.global_context.pruning.mark_used(ctx.func.func_id, node.id)
         node.violates_pure, node.ptr, node.violates_pure_reason = ctx.get_var_by_name(node.id)
         if isinstance(node, (ast.stmt, ast.expr)) and isinstance(node.ptr, Expr):
