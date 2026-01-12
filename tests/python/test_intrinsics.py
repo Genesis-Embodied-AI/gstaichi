@@ -1,6 +1,10 @@
+import pytest
+
 import gstaichi as ti
 
 from tests import test_utils
+
+clock_speed_supported_archs = ti.cuda
 
 
 def _arch_supports_clock(arch):
@@ -65,26 +69,15 @@ def test_clock_accuracy():
         assert -1 < a[i] / a[0] - (i + 1) < 1
 
 
-@test_utils.test(arch=ti.cuda)
+@test_utils.test(arch=clock_speed_supported_archs)
 def test_clock_speed_hz_cuda():
-    """Test that clock_speed_hz returns a valid value for CUDA."""
     clock_rate_hz = ti.clock_speed_hz()
-    # GPU clock speeds are typically between 100 MHz (100e6 Hz) and 3 GHz (3e9 Hz)
     assert clock_rate_hz > 0, "CUDA clock speed should be greater than 0"
     assert clock_rate_hz > 100e6, f"CUDA clock speed {clock_rate_hz} Hz seems too low"
     assert clock_rate_hz < 5e9, f"CUDA clock speed {clock_rate_hz} Hz seems too high"
-    print(f"CUDA clock speed: {clock_rate_hz / 1e6:.2f} MHz ({clock_rate_hz / 1e9:.3f} GHz)")
 
 
-@test_utils.test()
+@test_utils.test(exclude=clock_speed_supported_archs)
 def test_clock_speed_hz_unsupported():
-    """Test that clock_speed_hz returns 0.0 for unsupported backends."""
-    arch = ti.lang.impl.get_runtime().prog.config().arch
-    clock_rate_hz = ti.clock_speed_hz()
-
-    if arch == ti.cuda:
-        # For CUDA, should be non-zero
-        assert clock_rate_hz > 0
-    else:
-        # For all other backends, should return 0.0
-        assert clock_rate_hz == 0.0, f"Expected 0.0 for unsupported arch {arch}, got {clock_rate_hz}"
+    with pytest.raises(NotImplementedError):
+        ti.clock_speed_hz()
