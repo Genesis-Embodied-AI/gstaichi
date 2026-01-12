@@ -364,10 +364,8 @@ class FuncBase:
             else:
                 primary_, secondaries_ = errors_l[0], errors_l[1:]
                 raise GsTaichiSyntaxError(
-                    f"Primary exception: {primary_}\n"
-                    "\n"
-                    "Additional diagnostic/dev info:\n"
-                    "\n".join(secondaries_))
+                    f"Primary exception: {primary_}\n\nAdditional diagnostic/dev info:\n" "\n".join(secondaries_)
+                )
 
         return tuple(fused_py_args)
 
