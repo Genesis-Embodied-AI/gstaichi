@@ -211,11 +211,13 @@ class CallTransformer:
     def _expand_Call_dataclass_kwargs(
         ctx: ASTTransformerFuncContext,
         kwargs: list[ast.keyword],
-        called_needed: set[str] | None,
+        used_args: set[str] | None,
     ) -> tuple[list[ast.keyword], list[ast.keyword]]:
         """
         We require that each node has a .ptr attribute added to it, that contains
         the associated Python object
+
+        used_args are the names of parameters that are used, and should not be pruned.
         """
         kwargs_new = []
         added_kwargs = []
@@ -228,7 +230,7 @@ class CallTransformer:
                     child_name = create_flat_name(kwarg.arg, field.name)
                     # Note: using `called_needed` instead of `called_needed is not None` will cause
                     # a bug, when it is empty set.
-                    if called_needed is not None and child_name not in called_needed:
+                    if used_args is not None and child_name not in used_args:
                         continue
                     load_ctx = ast.Load()
                     src_node = ast.Name(
@@ -251,7 +253,7 @@ class CallTransformer:
                     if dataclasses.is_dataclass(field.type):
                         kwarg_node.ptr = {child_name: field.type}
                         _added_kwargs, _kwargs_new = CallTransformer._expand_Call_dataclass_kwargs(
-                            ctx, [kwarg_node], called_needed
+                            ctx, [kwarg_node], used_args
                         )
                         kwargs_new.extend(_kwargs_new)
                         added_kwargs.extend(_added_kwargs)

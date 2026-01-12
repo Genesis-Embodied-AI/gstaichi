@@ -11,21 +11,15 @@ if TYPE_CHECKING:
 
 class Pruning:
     """
-    Note: this assumes when compiling a kernel that each function will only have
-    one set of used parameters within the compiled kernel, even if called in multiple
-    places.
+    We use the func id to uniquely identify each function.
 
-    In practice however, the implementation DOES work if a function
-    is called multiple times within one compilation tree walk pass. What happens is that
-    the union of used parameters, across all calls to that function, is stored. And that
-    works fine for us, because all we need to ensure is 1. it compiles, 2. the list of
-    parameters passed to the kernel is the minimum possible.
+    Thus, each function has a single set of used parameters associated with it, within
+    a single call to a single kernel. When the same function is called multiple times
+    within the same call, to the same kernel, then the used parameters for that function
+    will be the union over the parameters used by each call to that function.
 
-    To be clear, there is no restriction that a function needs to have the same set of
-    used parameters between kernels, or between calls to the same kernel.
-
-    This assumption allows us to use the func id to uniquely identify each kernel, without
-    some additional index based on used parameters or similar.
+    A function can have different used parameters parameters between kernels, and
+    between different calls to the same kernel.
 
     Note that we unify handling of func and kernel by using func_id KERNEL_FUNC_ID
     to denote the kernel.
