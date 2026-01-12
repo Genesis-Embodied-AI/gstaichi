@@ -997,7 +997,6 @@ def test_print_used_parameters():
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_prune_used_parameters1():
     @dataclasses.dataclass
     class Nested1:
@@ -1139,7 +1138,6 @@ def test_prune_used_parameters2():
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_prune_used_parameters_fastcache1(tmp_path: Path):
     arch_name = ti.lang.impl.current_cfg().arch.name
     for _it in range(3):
@@ -1386,7 +1384,6 @@ def test_pruning_with_keyword_rename() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_with_arg_rename() -> None:
     @dataclasses.dataclass
     class MyStruct:
@@ -1421,7 +1418,6 @@ def test_pruning_with_arg_rename() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_with_arg_kwargs_rename() -> None:
     @dataclasses.dataclass
     class MyStruct:
@@ -1463,10 +1459,6 @@ def test_pruning_with_arg_kwargs_rename() -> None:
         # struct_f1.used
         # struct2_f1.used
         f2(a2, struct_f1, b2, d3=d2, struct2_f2=struct2_f1, c3=c2)
-
-    # @ti.func
-    # def f1(my_struct: MyStruct):
-    #     my_struct.used[0, 0]
 
     @ti.kernel
     def k1(
@@ -1582,7 +1574,6 @@ def test_pruning_with_recursive_func() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_reuse_func_diff_kernel_parameters() -> None:
     """
     In this test, any vertical call stack doesn't ever
@@ -1661,7 +1652,6 @@ def test_pruning_reuse_func_diff_kernel_parameters() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_reuse_func_same_kernel_call_l1() -> None:
     @dataclasses.dataclass
     class MyStruct:
@@ -1711,7 +1701,6 @@ def test_pruning_reuse_func_same_kernel_call_l1() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_reuse_func_same_kernel_call_l2() -> None:
     @dataclasses.dataclass
     class MyStruct:
@@ -1770,7 +1759,6 @@ def test_pruning_reuse_func_same_kernel_call_l2() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_reuse_func_across_kernels() -> None:
     """
     In this test, the same function can be used in different kernels,
@@ -1832,7 +1820,6 @@ def test_pruning_reuse_func_across_kernels() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_reuse_func_same_kernel_diff_call() -> None:
     """
     In this test, the same function can be used in different calls to the same kernel,
@@ -2258,7 +2245,6 @@ def test_pruning_kwargs_swap_order_bound_callable() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_args_bound_callable() -> None:
     @dataclasses.dataclass
     class MyStruct1:
@@ -2316,6 +2302,7 @@ def test_pruning_args_bound_callable() -> None:
 
 
 @test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_star_args() -> None:
     """
     Designed to test
