@@ -27,6 +27,11 @@ class FeLlCacheObservations:
 
 
 @dataclass
+class LaunchObservations:
+    found_kernel_in_materialize_cache: bool = False
+
+
+@dataclass
 class LaunchStats:
     kernel_args_count_by_type: dict[KernelBatchedArgType, int]
 

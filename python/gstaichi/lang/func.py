@@ -76,7 +76,7 @@ class Func(FuncBase):
             return self.func_call_rvalue(key=key, args=py_args)
         current_args_key = global_context.currently_compiling_materialize_key
         assert current_args_key is not None
-        used_by_dataclass_parameters_enforcing = current_kernel.used_py_dataclass_leaves_by_key_enforcing.get(
+        used_by_dataclass_parameters_enforcing = current_kernel.used_py_dataclass_parameters_by_key_enforcing.get(
             current_args_key
         )
         tree, ctx = self.get_tree_and_ctx(

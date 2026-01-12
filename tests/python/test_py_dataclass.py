@@ -8,6 +8,7 @@ import pytest
 
 import gstaichi as ti
 from gstaichi.lang._kernel_types import KernelBatchedArgType
+from gstaichi.lang.impl import GsTaichiSyntaxError, Kernel
 
 from tests import test_utils
 
@@ -53,11 +54,16 @@ def test_ndarray_struct_kwargs():
 
     @ti.func
     def s4(a: ti.types.NDArray[ti.i32, 1], b: ti.types.NDArray[ti.i32, 1]) -> None:
+        # note: no used py dataclass parameters
         a[1] += 888
         b[2] += 999
 
     @ti.func
     def s3(z3: ti.types.NDArray[ti.i32, 1], my_struct3: MyStruct, bar3: ti.types.NDArray[ti.i32, 1]) -> None:
+        # used py dataclass variables:
+        # __ti_my_struct3__ti_a
+        # __ti_my_struct3__ti_b
+        # __ti_my_struct3__ti_c
         z3[25] += 90
         my_struct3.a[47] += 42
         my_struct3.b[49] += 43
@@ -67,6 +73,10 @@ def test_ndarray_struct_kwargs():
 
     @ti.func
     def s2(z3: ti.types.NDArray[ti.i32, 1], my_struct3: MyStruct, bar3: ti.types.NDArray[ti.i32, 1]) -> None:
+        # used py dataclass variables:
+        # __ti_my_struct3__ti_a
+        # __ti_my_struct3__ti_b
+        # __ti_my_struct3__ti_c
         z3[24] += 89
         my_struct3.a[46] += 32
         my_struct3.b[48] += 33
@@ -76,6 +86,10 @@ def test_ndarray_struct_kwargs():
 
     @ti.func
     def s1(z2: ti.types.NDArray[ti.i32, 1], my_struct2: MyStruct, bar2: ti.types.NDArray[ti.i32, 1]) -> None:
+        # used py dataclass variables:
+        # __ti_my_struct2__ti_a
+        # __ti_my_struct2__ti_b
+        # __ti_my_struct2__ti_c
         z2[22] += 88
         my_struct2.a[45] += 22
         my_struct2.b[47] += 23
@@ -85,6 +99,10 @@ def test_ndarray_struct_kwargs():
 
     @ti.kernel
     def k1(z: ti.types.NDArray[ti.i32, 1], my_struct: MyStruct, bar: ti.types.NDArray[ti.i32, 1]) -> None:
+        # used py dataclass variables:
+        # __ti_my_struct__ti_a
+        # __ti_my_struct__ti_b
+        # __ti_my_struct__ti_c
         z[33] += 2
         my_struct.a[35] += 3
         my_struct.b[37] += 5
@@ -923,7 +941,7 @@ def test_template_mapper_cache(use_slots, monkeypatch):
 
 
 @test_utils.test()
-def test_print_used_leaves():
+def test_print_used_parameters():
     @dataclasses.dataclass
     class MyDataclass:
         used1: ti.types.NDArray[ti.i32, 1]
@@ -978,7 +996,7 @@ def test_print_used_leaves():
 
 
 @test_utils.test()
-def test_prune_used_leaves1():
+def test_prune_used_parameters1():
     @dataclasses.dataclass
     class Nested1:
         n1: ti.types.NDArray[ti.i32, 1]
@@ -1035,9 +1053,9 @@ def test_prune_used_leaves1():
     assert u1[0] == 222
     assert u3[0] == 123
     assert u1[1] == 333
-    assert u1[2] == 0
     assert u1b[5] == 555
     assert n1[0] == 777
+    assert u1[2] == 0
 
     u1[0] = 0
     u1[1] = 0
@@ -1056,7 +1074,7 @@ def test_prune_used_leaves1():
 
 
 @test_utils.test()
-def test_prune_used_leaves2():
+def test_prune_used_parameters2():
     @dataclasses.dataclass
     class MyDataclass1:
         used1: ti.types.NDArray[ti.i32, 1]
@@ -1112,9 +1130,14 @@ def test_prune_used_leaves2():
     assert u2b[0] == 444
     assert u3b[0] == 333
 
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    print(sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])))
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 7  # +1 for envs_idx
+
 
 @test_utils.test()
-def test_prune_used_leaves_fastcache1(tmp_path: Path):
+def test_prune_used_parameters_fastcache1(tmp_path: Path):
     arch_name = ti.lang.impl.current_cfg().arch.name
     for _it in range(3):
         ti.init(arch=getattr(ti, arch_name), offline_cache_file_path=str(tmp_path), offline_cache=True)
@@ -1141,6 +1164,12 @@ def test_prune_used_leaves_fastcache1(tmp_path: Path):
 
         @ti.func
         def f1(md1: MyDataclass1, md2: MyDataclass2) -> None:
+            # used:
+            # __ti_md1__ti_used3
+            # __ti_md2__ti_used1
+            # __ti_md2__ti_used2
+            # __ti_md2__ti_used3
+            # __ti_md1__ti_nested1__ti_n1
             md1.used3[0] = 123
             md2.used1[5] = 555
             md2.used2[5] = 444
@@ -1149,6 +1178,14 @@ def test_prune_used_leaves_fastcache1(tmp_path: Path):
 
         @ti.kernel(fastcache=True)
         def k1(md1: MyDataclass1, md2: MyDataclass2, trigger_static: ti.Template) -> None:
+            # used:
+            # __ti_md1__ti_used1
+            # __ti_md1__ti_used2
+            # __ti_md1__ti_used3
+            # __ti_md2__ti_used1
+            # __ti_md2__ti_used2
+            # __ti_md2__ti_used3
+            # __ti_md1__ti_nested1__ti_n1
             md1.used1[0] = 222
             md1.used1[1] = md1.used2[0]
             f1(md1, md2)
@@ -1202,7 +1239,7 @@ def test_prune_used_leaves_fastcache1(tmp_path: Path):
 
 
 @test_utils.test()
-def test_prune_used_leaves_fastcache2(tmp_path: Path):
+def test_prune_used_parameters_fastcache2(tmp_path: Path):
     arch_name = ti.lang.impl.current_cfg().arch.name
     for _it in range(3):
         ti.init(arch=getattr(ti, arch_name), offline_cache_file_path=str(tmp_path), offline_cache=True)
@@ -1273,7 +1310,7 @@ def test_prune_used_leaves_fastcache2(tmp_path: Path):
 
 
 @test_utils.test()
-def test_prune_used_leaves_fastcache_no_used(tmp_path: Path):
+def test_prune_used_parameters_fastcache_no_used(tmp_path: Path):
     arch_name = ti.lang.impl.current_cfg().arch.name
     for _it in range(3):
         ti.init(arch=getattr(ti, arch_name), offline_cache_file_path=str(tmp_path), offline_cache=True)
@@ -1313,3 +1350,1140 @@ def test_prune_used_leaves_fastcache_no_used(tmp_path: Path):
         md2 = MyDataclass2(not_used1=nu1b, not_used2=nu2b)
 
         k1(envs_idx, md1, md2=md2)
+
+
+@test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
+def test_pruning_with_keyword_rename() -> None:
+    @dataclasses.dataclass
+    class MyStruct:
+        used: ti.types.NDArray[ti.f32, 2]
+        not_used: ti.types.NDArray[ti.f32, 2]
+
+    def create_struct():
+        my_struct_outside = MyStruct(
+            used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1))
+        )
+        return my_struct_outside
+
+    @ti.func
+    def f1(new_struct_name: MyStruct):
+        new_struct_name.used[0, 0] = 100
+
+    @ti.kernel
+    def k1(my_struct: MyStruct):
+        f1(new_struct_name=my_struct)
+
+    my_struct_outside = create_struct()
+    k1(my_struct=my_struct_outside)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 1
+    assert my_struct_outside.used[0, 0] == 100
+    assert my_struct_outside.not_used[0, 0] == 0
+
+
+@test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
+def test_pruning_with_arg_rename() -> None:
+    @dataclasses.dataclass
+    class MyStruct:
+        used: ti.types.NDArray[ti.f32, 2]
+        not_used: ti.types.NDArray[ti.f32, 2]
+
+    def create_struct():
+        return MyStruct(used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1)))
+
+    @ti.func
+    def f1(new_struct_name: MyStruct):
+        new_struct_name.used[0, 0] = 100
+
+    @ti.kernel
+    def k1(my_struct: MyStruct):
+        f1(my_struct)
+
+    my_struct = create_struct()
+    k1(my_struct=my_struct)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 1
+    assert my_struct.used[0, 0] == 100
+    assert my_struct.not_used[0, 0] == 0
+
+    my_struct = create_struct()
+    k1(my_struct=my_struct)
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 1
+    assert my_struct.used[0, 0] == 100
+    assert my_struct.not_used[0, 0] == 0
+
+
+@test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
+def test_pruning_with_arg_kwargs_rename() -> None:
+    @dataclasses.dataclass
+    class MyStruct:
+        used: ti.types.NDArray[ti.f32, 2]
+        not_used: ti.types.NDArray[ti.f32, 2]
+
+    def create_structs():
+        my_struct1 = MyStruct(
+            used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1))
+        )
+        my_struct2 = MyStruct(
+            used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1))
+        )
+        my_struct3 = MyStruct(
+            used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1))
+        )
+        my_struct4 = MyStruct(
+            used=ti.ndarray(dtype=ti.f32, shape=(1, 1)), not_used=ti.ndarray(dtype=ti.f32, shape=(1, 1))
+        )
+        return my_struct1, my_struct2, my_struct3, my_struct4
+
+    @ti.func
+    def g1(struc3_g1: MyStruct):
+        # should be used:
+        # struc3_g1.used
+        struc3_g1.used[0, 0] = 102
+
+    @ti.func
+    def f2(a3: ti.i32, struct_f2: MyStruct, b3: ti.i32, d3: ti.i32, struct2_f2: MyStruct, c3: ti.i32):
+        # should be used:
+        # struct_f2.used
+        # struct2_f2.useds
+        struct_f2.used[0, 0] = 100
+        struct2_f2.used[0, 0] = 101
+
+    @ti.func
+    def f1(a2: ti.i32, struct_f1: MyStruct, b2: ti.i32, d2: ti.i32, struct2_f1: MyStruct, c2: ti.i32):
+        # should be used:
+        # struct_f1.used
+        # struct2_f1.used
+        f2(a2, struct_f1, b2, d3=d2, struct2_f2=struct2_f1, c3=c2)
+
+    # @ti.func
+    # def f1(my_struct: MyStruct):
+    #     my_struct.used[0, 0]
+
+    @ti.kernel
+    def k1(
+        a: ti.i32,
+        struct1_k1: MyStruct,
+        b: ti.i32,
+        d: ti.i32,
+        struct2_k1: MyStruct,
+        c: ti.i32,
+        struct3_k1: MyStruct,
+        struct4_k1: MyStruct,
+    ):
+        # should be used:
+        # struct1_k1.used
+        # struct2_k1.used
+        f1(a, struct1_k1, b, d2=d, struct2_f1=struct2_k1, c2=c)
+        # should be used:
+        # struct3_k1.used
+        g1(struct3_k1)
+        # should be used:
+        # struct4_k1.used
+        g1(struct4_k1)
+
+    # should be used:
+    # my_struct1.used
+    # my_struct2.used
+    # my_struct3.used
+    # my_struct4.used
+    s1, s2, s3, s4 = create_structs()
+    k1(1, s1, 2, d=5, struct2_k1=s2, c=3, struct3_k1=s3, struct4_k1=s4)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
+    assert s1.used[0, 0] == 100
+    assert s2.used[0, 0] == 101
+    assert s3.used[0, 0] == 102
+    assert s4.used[0, 0] == 102
+
+    assert s1.not_used[0, 0] == 0
+    assert s2.not_used[0, 0] == 0
+    assert s3.not_used[0, 0] == 0
+    assert s4.not_used[0, 0] == 0
+
+    s1, s2, s3, s4 = create_structs()
+    k1(1, s1, 2, d=5, struct2_k1=s2, c=3, struct3_k1=s3, struct4_k1=s4)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
+
+    assert s1.used[0, 0] == 100
+    assert s2.used[0, 0] == 101
+    assert s3.used[0, 0] == 102
+    assert s4.used[0, 0] == 102
+
+    assert s1.not_used[0, 0] == 0
+    assert s2.not_used[0, 0] == 0
+    assert s3.not_used[0, 0] == 0
+    assert s4.not_used[0, 0] == 0
+
+
+@pytest.mark.xfail(reason="calling sub functions with different templated values seems unsupported currently")
+@test_utils.test()
+def test_pruning_with_recursive_func() -> None:
+    @dataclasses.dataclass
+    class MyStruct:
+        a: ti.types.NDArray[ti.f32, 2]
+        b: ti.types.NDArray[ti.f32, 2]
+        c: ti.types.NDArray[ti.f32, 2]
+        d: ti.types.NDArray[ti.f32, 2]
+
+    def create_struct():
+        my_struct = MyStruct(
+            a=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            b=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            c=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            d=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct
+
+    @ti.func
+    def f1(depth: ti.template(), struc_f1: MyStruct):
+        if ti.static(depth) == 0:
+            struc_f1.a[0, 0] = 100
+            f1(1, struc_f1)
+        elif ti.static(depth) == 1:
+            struc_f1.b[0, 0] = 101
+            f1(2, struc_f1)
+        elif ti.static(depth) == 2:
+            struc_f1.c[0, 0] = 102
+            f1(2, struc_f1)
+
+    @ti.kernel
+    def k1(struct_k1: MyStruct):
+        f1(0, struct_k1)
+
+    my_struct = create_struct()
+    k1(my_struct)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 3
+    assert my_struct.a[0, 0] == 100
+    assert my_struct.b[0, 0] == 101
+    assert my_struct.c[0, 0] == 102
+
+    my_struct = create_struct()
+    k1(my_struct)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 3
+    assert my_struct.a[0, 0] == 100
+    assert my_struct.b[0, 0] == 101
+    assert my_struct.c[0, 0] == 102
+
+
+@test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
+def test_pruning_reuse_func_diff_kernel_parameters() -> None:
+    """
+    In this test, any vertical call stack doesn't ever
+    contain the same function more than once.
+    However, the same function might be present in multiple
+    child calls of a function.
+    We assume however that the same py dataclass members will be used
+    in both calls.s
+    """
+
+    @dataclasses.dataclass
+    class MyStruct:
+        _f3: ti.types.NDArray[ti.f32, 2]
+        _f2b: ti.types.NDArray[ti.f32, 2]
+        _f2a: ti.types.NDArray[ti.f32, 2]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _unused: ti.types.NDArray[ti.f32, 2]
+
+    def create_struct():
+        my_struct = MyStruct(
+            _f3=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f2b=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f2a=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct
+
+    @ti.func
+    def f3(struc_f3: MyStruct):
+        struc_f3._f3[0, 0] = 104
+        f2b(struc_f3)
+
+    @ti.func
+    def f2b(struc_f2b: MyStruct):
+        struc_f2b._f2b[0, 0] = 103
+
+    @ti.func
+    def f2a(struc_f2a: MyStruct):
+        struc_f2a._f2a[0, 0] = 102
+        f2b(struc_f2a)
+
+    @ti.func
+    def f1(struc_f1: MyStruct):
+        struc_f1._f1[0, 0] = 101
+        f2a(struc_f1)
+        f3(struc_f1)
+
+    @ti.kernel
+    def k1(struct_k1: MyStruct):
+        struct_k1._k1[0, 0] = 100
+        f1(struct_k1)
+
+    my_struct = create_struct()
+    k1(my_struct)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 5
+    assert my_struct._f1[0, 0] == 101
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f2a[0, 0] == 102
+    assert my_struct._f2b[0, 0] == 103
+    assert my_struct._f3[0, 0] == 104
+
+    my_struct = create_struct()
+    k1(my_struct)
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 5
+    assert my_struct._f1[0, 0] == 101
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f2a[0, 0] == 102
+    assert my_struct._f2b[0, 0] == 103
+    assert my_struct._f3[0, 0] == 104
+
+
+@test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
+def test_pruning_reuse_func_same_kernel_call_l1() -> None:
+    @dataclasses.dataclass
+    class MyStruct:
+        _f1b: ti.types.NDArray[ti.f32, 2]
+        _f1a: ti.types.NDArray[ti.f32, 2]
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _unused: ti.types.NDArray[ti.f32, 2]
+
+    def create_struct():
+        my_struct = MyStruct(
+            _f1b=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1a=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct
+
+    @ti.func
+    def f1(flag: ti.template(), struc_f1: MyStruct):
+        if ti.static(flag):
+            struc_f1._f1a[0, 0] = 101
+        else:
+            struc_f1._f1b[0, 0] = 102
+
+    @ti.kernel
+    def k1(struct_k1: MyStruct):
+        struct_k1._k1[0, 0] = 100
+        f1(False, struct_k1)
+        f1(True, struct_k1)
+
+    my_struct = create_struct()
+    k1(my_struct)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 3
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1a[0, 0] == 101
+    assert my_struct._f1b[0, 0] == 102
+
+    my_struct = create_struct()
+    k1(my_struct)
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 3
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1a[0, 0] == 101
+    assert my_struct._f1b[0, 0] == 102
+
+
+@test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
+def test_pruning_reuse_func_same_kernel_call_l2() -> None:
+    @dataclasses.dataclass
+    class MyStruct:
+        _f2b: ti.types.NDArray[ti.f32, 2]
+        _f2a: ti.types.NDArray[ti.f32, 2]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _unused: ti.types.NDArray[ti.f32, 2]
+
+    def create_struct():
+        my_struct = MyStruct(
+            _f2b=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f2a=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct
+
+    @ti.func
+    def f2(flag: ti.template(), struc_f2: MyStruct):
+        if ti.static(flag):
+            struc_f2._f2a[0, 0] = 102
+        else:
+            struc_f2._f2b[0, 0] = 103
+
+    @ti.func
+    def f1(struct_f1: MyStruct):
+        struct_f1._f1[0, 0] = 101
+        f2(False, struct_f1)
+        f2(True, struct_f1)
+
+    @ti.kernel
+    def k1(struct_k1: MyStruct):
+        struct_k1._k1[0, 0] = 100
+        f1(struct_k1)
+
+    my_struct = create_struct()
+    k1(my_struct)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1[0, 0] == 101
+    assert my_struct._f2a[0, 0] == 102
+    assert my_struct._f2b[0, 0] == 103
+
+    my_struct = create_struct()
+    k1(my_struct)
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1[0, 0] == 101
+    assert my_struct._f2a[0, 0] == 102
+    assert my_struct._f2b[0, 0] == 103
+
+
+@test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
+def test_pruning_reuse_func_across_kernels() -> None:
+    """
+    In this test, the same function can be used in different kernels,
+    but with *different* used members
+    """
+
+    @dataclasses.dataclass
+    class MyStruct:
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _k2: ti.types.NDArray[ti.f32, 2]
+        _f1_no_flag: ti.types.NDArray[ti.f32, 2]
+        _f1_with_flag: ti.types.NDArray[ti.f32, 2]
+        _unused: ti.types.NDArray[ti.f32, 2]
+
+    def make_struct():
+        my_struct = MyStruct(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _k2=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1_no_flag=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1_with_flag=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct
+
+    @ti.func
+    def f1(flag: ti.template(), struct_f1: MyStruct):
+        if ti.static(flag):
+            struct_f1._f1_with_flag[0, 0] = 102
+        else:
+            struct_f1._f1_no_flag[0, 0] = 103
+
+    @ti.kernel
+    def k1(struct_k1: MyStruct):
+        struct_k1._k1[0, 0] = 101
+        f1(False, struct_k1)
+
+    @ti.kernel
+    def k2(struct_k2: MyStruct):
+        struct_k2._k2[0, 0] = 100
+        f1(True, struct_k2)
+
+    my_struct = make_struct()
+    k1(my_struct)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
+    assert my_struct._k1[0, 0] == 101
+    assert my_struct._f1_with_flag[0, 0] == 0
+    assert my_struct._f1_no_flag[0, 0] == 103
+
+    my_struct = make_struct()
+    k2(my_struct)
+    k2_primal: Kernel = k2._primal
+    kernel_args_count_by_type = k2_primal.launch_stats.kernel_args_count_by_type
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
+    assert my_struct._k2[0, 0] == 100
+    assert my_struct._f1_with_flag[0, 0] == 102
+    assert my_struct._f1_no_flag[0, 0] == 0
+
+
+@test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
+def test_pruning_reuse_func_same_kernel_diff_call() -> None:
+    """
+    In this test, the same function can be used in different calls to the same kernel,
+    but with *different* used members
+    """
+
+    @dataclasses.dataclass
+    class MyStruct:
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _f1_no_flag: ti.types.NDArray[ti.f32, 2]
+        _f1_with_flag: ti.types.NDArray[ti.f32, 2]
+        _unused: ti.types.NDArray[ti.f32, 2]
+
+    def make_struct():
+        my_struct = MyStruct(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1_no_flag=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1_with_flag=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct
+
+    @ti.func
+    def f1(flag: ti.template(), struct_f1: MyStruct):
+        if ti.static(flag):
+            struct_f1._f1_with_flag[0, 0] = 101
+        else:
+            struct_f1._f1_no_flag[0, 0] = 102
+
+    @ti.kernel
+    def k1(flag: ti.Template, struct_k1: MyStruct):
+        struct_k1._k1[0, 0] = 100
+        f1(flag, struct_k1)
+
+    my_struct = make_struct()
+    k1(False, my_struct)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1_no_flag[0, 0] == 102
+    assert my_struct._f1_with_flag[0, 0] == 0
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
+    assert sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])) == [
+        "__ti_struct_k1",
+        "__ti_struct_k1__ti__f1_no_flag",
+        "__ti_struct_k1__ti__k1",
+    ]
+
+    my_struct = make_struct()
+    k1(False, my_struct)
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1_no_flag[0, 0] == 102
+    assert my_struct._f1_with_flag[0, 0] == 0
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
+    assert sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])) == [
+        "__ti_struct_k1",
+        "__ti_struct_k1__ti__f1_no_flag",
+        "__ti_struct_k1__ti__k1",
+    ]
+
+    my_struct = make_struct()
+    k1(True, my_struct)
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1_no_flag[0, 0] == 0
+    assert my_struct._f1_with_flag[0, 0] == 101
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
+    assert sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])) == [
+        "__ti_struct_k1",
+        "__ti_struct_k1__ti__f1_with_flag",
+        "__ti_struct_k1__ti__k1",
+    ]
+
+    my_struct = make_struct()
+    k1(False, my_struct)
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1_no_flag[0, 0] == 102
+    assert my_struct._f1_with_flag[0, 0] == 0
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
+    assert sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])) == [
+        "__ti_struct_k1",
+        "__ti_struct_k1__ti__f1_no_flag",
+        "__ti_struct_k1__ti__k1",
+    ]
+
+    my_struct = make_struct()
+    k1(True, my_struct)
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1_no_flag[0, 0] == 0
+    assert my_struct._f1_with_flag[0, 0] == 101
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 2
+    assert sorted(list(k1_primal.used_py_dataclass_parameters_by_key_enforcing[k1_primal._last_launch_key])) == [
+        "__ti_struct_k1",
+        "__ti_struct_k1__ti__f1_with_flag",
+        "__ti_struct_k1__ti__k1",
+    ]
+
+
+@test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
+def test_pruning_kwargs_same_param_names_diff_names() -> None:
+    """
+    In this test, we call functions from one parent, passing the same struct
+    with same name, and with different name
+    """
+
+    @dataclasses.dataclass
+    class MyStruct:
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _f2a: ti.types.NDArray[ti.f32, 2]
+        _f2b: ti.types.NDArray[ti.f32, 2]
+        _unused: ti.types.NDArray[ti.f32, 2]
+
+    def make_struct():
+        my_struct = MyStruct(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f2a=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f2b=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct
+
+    @ti.func
+    def f2a(struct_f2a: MyStruct):
+        struct_f2a._f2a[0, 0] += 3
+
+    @ti.func
+    def f2b(struct_f2b: MyStruct):
+        struct_f2b._f2b[0, 0] += 5
+
+    @ti.func
+    def f1(struct_f1: MyStruct):
+        struct_f1._f1[0, 0] = 101
+        f2a(struct_f2a=struct_f1)
+        f2a(struct_f2a=struct_f1)
+        f2b(struct_f2b=struct_f1)
+
+    @ti.kernel
+    def k1(struct_k1: MyStruct):
+        struct_k1._k1[0, 0] = 100
+        f1(struct_f1=struct_k1)
+
+    my_struct = make_struct()
+    k1(my_struct)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1[0, 0] == 101
+    assert my_struct._f2a[0, 0] == 6
+    assert my_struct._f2b[0, 0] == 5
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
+
+
+@pytest.mark.xfail(reason="cannot use * when calling ti.func")
+@test_utils.test()
+def test_pruning_func_return_star_to_another() -> None:
+    """
+    Using the tuple return from one fucntion as the args to
+    another
+    """
+
+    @ti.func
+    def return_params(a: ti.i32):
+        return a + 1, a + 5
+
+    @ti.func
+    def f2(t: ti.types.NDArray[ti.i32, 1], a: ti.i32, b: ti.i32) -> None:
+        t[0] = a
+        t[1] = b
+
+    @ti.kernel
+    def k1(t: ti.types.NDArray[ti.i32, 1], a: ti.i32) -> None:
+        f2(t, *return_params(a))
+
+    t = ti.ndarray(ti.i32, (10,))
+    k1(t, 3)
+    assert t[0] == 4
+    assert t[0] == 8
+
+
+@pytest.mark.xfail(reason="cannot use * when calling ti.func")
+@test_utils.test()
+def test_pruning_func_return_star_to_another_two_step() -> None:
+    """
+    Using the tuple return from one fucntion as the args to
+    another
+    """
+
+    @ti.func
+    def return_params(a: ti.i32):
+        return a + 1, a + 5
+
+    @ti.func
+    def f2(t: ti.types.NDArray[ti.i32, 1], a: ti.i32, b: ti.i32) -> None:
+        t[0] = a
+        t[1] = b
+
+    @ti.kernel
+    def k1(t: ti.types.NDArray[ti.i32, 1], a: ti.i32) -> None:
+        res = return_params(a)
+        f2(t, *res)
+
+    t = ti.ndarray(ti.i32, (10,))
+    k1(t, 3)
+    assert t[0] == 4
+    assert t[0] == 8
+
+
+@test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
+def test_pruning_func_return_star_to_another_explicit_vars() -> None:
+    """
+    Using the tuple return from one fucntion as the args to
+    another
+    """
+
+    @ti.func
+    def return_params(a: ti.i32):
+        return a + 1, a + 5
+
+    @ti.func
+    def f2(t: ti.types.NDArray[ti.i32, 1], a: ti.i32, b: ti.i32) -> None:
+        t[0] = a
+        t[1] = b
+
+    @ti.kernel
+    def k1(t: ti.types.NDArray[ti.i32, 1], a: ti.i32) -> None:
+        b, c = return_params(a)
+        f2(t, b, c)
+
+    t = ti.ndarray(ti.i32, (10,))
+    k1(t, 3)
+    assert t[0] == 4
+    assert t[1] == 8
+
+
+@test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
+def test_pruning_pass_element_of_tensor_of_dataclass() -> None:
+    """
+    Using the tuple return from one fucntion as the args to
+    another
+    """
+
+    vec3 = ti.types.vector(3, ti.f32)
+
+    @dataclasses.dataclass
+    class MyStruct:
+        _unused0: ti.types.NDArray[vec3, 2]
+        _k1: ti.types.NDArray[vec3, 2]
+        _unused0b: ti.types.NDArray[vec3, 2]
+        _f1: ti.types.NDArray[vec3, 2]
+        _unused1: ti.types.NDArray[vec3, 2]
+        _in: ti.types.NDArray[vec3, 2]
+        _unused2: ti.types.NDArray[vec3, 2]
+        _out: ti.types.NDArray[vec3, 2]
+        _unused3: ti.types.NDArray[vec3, 2]
+
+    def make_struct():
+        my_struct = MyStruct(
+            _unused0=ti.ndarray(dtype=vec3, shape=(1, 1)),
+            _k1=ti.ndarray(dtype=vec3, shape=(1, 1)),
+            _unused0b=ti.ndarray(dtype=vec3, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=vec3, shape=(1, 1)),
+            _unused1=ti.ndarray(dtype=vec3, shape=(1, 1)),
+            _in=ti.ndarray(dtype=vec3, shape=(1, 1)),
+            _unused2=ti.ndarray(dtype=vec3, shape=(1, 1)),
+            _out=ti.ndarray(dtype=vec3, shape=(1, 1)),
+            _unused3=ti.ndarray(dtype=vec3, shape=(1, 1)),
+        )
+        return my_struct
+
+    @ti.func
+    def f2(_in: vec3) -> vec3:
+        return _in + 5.0
+
+    @ti.func
+    def f1(struct_f1: MyStruct):
+        struct_f1._f1[0, 0] = 101
+        struct_f1._out[0, 0] = f2(struct_f1._in[0, 0])
+
+    @ti.kernel
+    def k1(struct_k1: MyStruct):
+        struct_k1._k1[0, 0] = 100
+        f1(struct_f1=struct_k1)
+
+    my_struct = make_struct()
+    k1(my_struct)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct._k1[0, 0][0] == 100
+    assert my_struct._f1[0, 0][0] == 101
+    assert my_struct._out[0, 0][0] == 5
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
+
+
+@test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
+def test_pruning_kwargs_swap_order() -> None:
+    """
+    In this test, we call into a kwargs function with the kwargs in a different
+    order than in the child function declaration; and different number of params
+    in each struct
+    """
+
+    @dataclasses.dataclass
+    class MyStruct1:
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _unused1: ti.types.NDArray[ti.f32, 2]
+        _unused2: ti.types.NDArray[ti.f32, 2]
+
+    @dataclasses.dataclass
+    class MyStruct2:
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _unused: ti.types.NDArray[ti.f32, 2]
+
+    def make_structs():
+        my_struct1 = MyStruct1(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused2=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        my_struct2 = MyStruct2(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct1, my_struct2
+
+    @ti.func
+    def f1(struct1_f1: MyStruct1, struct2_f1: MyStruct2):
+        struct1_f1._f1[0, 0] = 102
+        struct2_f1._f1[0, 0] = 103
+
+    @ti.kernel
+    def k1(struct1_k1: MyStruct1, struct2_k1: MyStruct2):
+        struct1_k1._k1[0, 0] = 100
+        struct2_k1._k1[0, 0] = 101
+        f1(struct2_f1=struct2_k1, struct1_f1=struct1_k1)
+
+    my_struct1, my_struct2 = make_structs()
+    k1(my_struct1, my_struct2)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct1._k1[0, 0] == 100
+    assert my_struct2._k1[0, 0] == 101
+    assert my_struct1._f1[0, 0] == 102
+    assert my_struct2._f1[0, 0] == 103
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
+
+
+@test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
+def test_pruning_kwargs_swap_order_bound_callable() -> None:
+    """
+    In this test, we call into a kwargs function with the kwargs in a different
+    order than in the child function declaration; and different number of params
+    in each struct.
+
+    Compared to test_pruning_kwargs_swap_order, we use a data oriented object, with
+    the function on that
+    """
+
+    @dataclasses.dataclass
+    class MyStruct1:
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _unused1: ti.types.NDArray[ti.f32, 2]
+        _unused2: ti.types.NDArray[ti.f32, 2]
+
+    @dataclasses.dataclass
+    class MyStruct2:
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _unused: ti.types.NDArray[ti.f32, 2]
+
+    def make_structs():
+        my_struct1 = MyStruct1(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused2=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        my_struct2 = MyStruct2(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct1, my_struct2
+
+    @ti.data_oriented
+    class MyDataOriented:
+        def __init__(self) -> None: ...
+
+        @ti.func
+        def f1(self, struct1_f1: MyStruct1, struct2_f1: MyStruct2):
+            struct1_f1._f1[0, 0] = 102
+            struct2_f1._f1[0, 0] = 103
+
+    @ti.kernel
+    def k1(my_data_oriented: ti.Template, struct1_k1: MyStruct1, struct2_k1: MyStruct2):
+        struct1_k1._k1[0, 0] = 100
+        struct2_k1._k1[0, 0] = 101
+        my_data_oriented.f1(struct2_f1=struct2_k1, struct1_f1=struct1_k1)
+
+    my_struct1, my_struct2 = make_structs()
+    my_data_oriented = MyDataOriented()
+    k1(my_data_oriented, my_struct1, my_struct2)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct1._k1[0, 0] == 100
+    assert my_struct2._k1[0, 0] == 101
+    assert my_struct1._f1[0, 0] == 102
+    assert my_struct2._f1[0, 0] == 103
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
+
+
+@test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
+def test_pruning_args_bound_callable() -> None:
+    @dataclasses.dataclass
+    class MyStruct1:
+        _k1: ti.types.NDArray[ti.f32, 1]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _unused1: ti.types.NDArray[ti.f32, 4]
+        _unused2: ti.types.NDArray[ti.f32, 4]
+
+    @dataclasses.dataclass
+    class MyStruct2:
+        _k1: ti.types.NDArray[ti.f32, 1]
+        _f1: ti.types.NDArray[ti.f32, 3]
+        _unused: ti.types.NDArray[ti.f32, 4]
+
+    def make_structs():
+        my_struct1 = MyStruct1(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused1=ti.ndarray(dtype=ti.f32, shape=(1, 1, 1, 1)),
+            _unused2=ti.ndarray(dtype=ti.f32, shape=(1, 1, 1, 1)),
+        )
+        my_struct2 = MyStruct2(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1, 1, 1)),
+        )
+        return my_struct1, my_struct2
+
+    @ti.data_oriented
+    class MyDataOriented:
+        def __init__(self) -> None: ...
+
+        @ti.func
+        def f1(self, struct1_f1: MyStruct1, struct2_f1: MyStruct2):
+            struct1_f1._f1[0, 0] = 102
+            struct2_f1._f1[0, 0, 0] = 103
+
+    @ti.kernel
+    def k1(my_data_oriented: ti.Template, struct1_k1: MyStruct1, struct2_k1: MyStruct2):
+        struct1_k1._k1[0] = 100
+        struct2_k1._k1[0] = 101
+        my_data_oriented.f1(struct1_k1, struct2_k1)
+
+    my_struct1, my_struct2 = make_structs()
+    my_data_oriented = MyDataOriented()
+    k1(my_data_oriented, my_struct1, my_struct2)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct1._k1[0] == 100
+    assert my_struct2._k1[0] == 101
+    assert my_struct1._f1[0, 0] == 102
+    assert my_struct2._f1[0, 0, 0] == 103
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
+
+
+@test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
+def test_pruning_star_args() -> None:
+    """
+    Designed to test
+    https://github.com/Genesis-Embodied-AI/Genesis/blob/2d98bbb786e94b3f6c4e7171c87b4ff31ff3ccdf/tests/test_utils.py#L103
+    scenario
+    """
+
+    @ti.func
+    def f1(a: ti.types.NDArray[ti.i32, 1], b: ti.i32, c: ti.i32):
+        a[0] = b
+        a[1] = c
+
+    @ti.kernel
+    def k1(a: ti.types.NDArray[ti.i32, 1]) -> None:
+        f1(a, *star_args)
+
+    star_args = [3, 5]
+
+    a = ti.ndarray(ti.i32, (10,))
+    k1(a)
+    assert a[0] == 3
+    assert a[1] == 5
+
+
+@test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
+def test_pruning_star_args_error_not_at_end_another_arg() -> None:
+    @ti.func
+    def f1(a: ti.types.NDArray[ti.i32, 1], b: ti.i32, c: ti.i32, d: ti.i32):
+        a[0] = b
+        a[1] = c
+
+    @ti.kernel
+    def k1(a: ti.types.NDArray[ti.i32, 1]) -> None:
+        f1(a, *star_args, 3)
+
+    star_args = [3, 5]
+
+    a = ti.ndarray(ti.i32, (10,))
+    with pytest.raises(GsTaichiSyntaxError) as e:
+        k1(a)
+    assert "STARNOTLAST" in e.value.args[0]
+
+
+@test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
+def test_pruning_star_args_error_not_at_end_kwargs() -> None:
+    @ti.func
+    def f1(a: ti.types.NDArray[ti.i32, 1], b: ti.i32, c: ti.i32, d: ti.i32):
+        a[0] = b
+        a[1] = c
+
+    @ti.kernel
+    def k1(a: ti.types.NDArray[ti.i32, 1]) -> None:
+        f1(a, *star_args, d=3)
+
+    star_args = [3, 5]
+
+    a = ti.ndarray(ti.i32, (10,))
+    with pytest.raises(GsTaichiSyntaxError) as e:
+        k1(a)
+    assert "STARNOTLAST" in e.value.args[0]
+
+
+@test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
+def test_pruning_iterate_function() -> None:
+    """
+    Designed to test
+    https://github.com/Genesis-Embodied-AI/Genesis/blob/6d344d0d4c46b7c9de98442bc4d09f9f9bfa541b/genesis/engine/couplers/sap_coupler.py#L631
+    """
+
+    @dataclasses.dataclass
+    class MyStruct:
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _f2: ti.types.NDArray[ti.f32, 2]
+        _unused: ti.types.NDArray[ti.f32, 2]
+
+    def make_struct():
+        my_struct = MyStruct(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f2=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct
+
+    @ti.func
+    def f1(struct: MyStruct):
+        struct._f1[0, 0] = 101
+
+    @ti.func
+    def f2(struct: MyStruct):
+        struct._f2[0, 0] = 102
+
+    functions = [f1, f2]
+
+    @ti.kernel
+    def k1(struct_k1: MyStruct):
+        struct_k1._k1[0, 0] = 100
+        for fn in ti.static(functions):
+            fn(struct=struct_k1)
+
+    my_struct = make_struct()
+    k1(struct_k1=my_struct)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1[0, 0] == 101
+    assert my_struct._f2[0, 0] == 102
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 3
+
+
+@test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
+def test_pruning_iterate_function_no_iterate() -> None:
+    """
+    Designed to test
+    https://github.com/Genesis-Embodied-AI/Genesis/blob/6d344d0d4c46b7c9de98442bc4d09f9f9bfa541b/genesis/engine/couplers/sap_coupler.py#L631
+    """
+
+    @dataclasses.dataclass
+    class MyStruct:
+        _k1: ti.types.NDArray[ti.f32, 2]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _f2: ti.types.NDArray[ti.f32, 2]
+        _unused: ti.types.NDArray[ti.f32, 2]
+
+    def make_struct():
+        my_struct = MyStruct(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _f2=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+        )
+        return my_struct
+
+    @ti.func
+    def f1(struct: MyStruct):
+        struct._f1[0, 0] = 101
+
+    @ti.func
+    def f2(struct: MyStruct):
+        struct._f2[0, 0] = 102
+
+    @ti.kernel
+    def k1(struct_k1: MyStruct):
+        struct_k1._k1[0, 0] = 100
+        f1(struct=struct_k1)
+        f2(struct=struct_k1)
+
+    my_struct = make_struct()
+    k1(struct_k1=my_struct)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct._k1[0, 0] == 100
+    assert my_struct._f1[0, 0] == 101
+    assert my_struct._f2[0, 0] == 102
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 3

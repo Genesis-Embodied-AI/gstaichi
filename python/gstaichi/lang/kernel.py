@@ -54,6 +54,7 @@ from ._kernel_types import (
     CompiledKernelKeyType,
     FeLlCacheObservations,
     KernelBatchedArgType,
+    LaunchObservations,
     LaunchStats,
     SrcLlCacheObservations,
 )
@@ -76,8 +77,8 @@ class LaunchContextBufferCache:
     # without caching. In this particular case, the function calls corresponds to adding arguments to the current
     # context for this kernel call.
     # A launch context buffer is considered cache-friendly if and only if no direct call to the launch context
-    # where made preemptively during the recursive processing of the arguments, all of leaves of the arguments are
-    # pointers, the address of these pointers cannot change, and the set of leaves is fixed.
+    # where made preemptively during the recursive processing of the arguments, all of parameters of the arguments are
+    # pointers, the address of these pointers cannot change, and the set of parameters is fixed.
     # The lifetime of a cache entry is bound to the lifetime of any of its input arguments: the first being garbage
     # collected will invalidate the entire entry. Moreover, the entire cache registry is bound to the lifetime of
     # the taichi prog itself, which means that calling `ti.reset()` will automatically clear the cache. Note that
@@ -281,14 +282,19 @@ class Kernel(FuncBase):
         self.kernel_function_info: FunctionSourceInfo | None = None
         self.compiled_kernel_data_by_key: dict[CompiledKernelKeyType, CompiledKernelData] = {}
         self._last_compiled_kernel_data: CompiledKernelData | None = None  # for dev/debug
+        self._last_launch_key = None  # for dev/debug
+
         # for collecting, we'll grab an empty set if it doesnt exist
-        self.used_py_dataclass_leaves_by_key_collecting: dict[CompiledKernelKeyType, set[str]] = defaultdict(set)
+        self.used_py_dataclass_parameters_by_key_collecting: dict[CompiledKernelKeyType, set[str]] = defaultdict(set)
         # however, for enforcing, we want None if it doesn't exist (we'll use .get() instead of [] )
-        self.used_py_dataclass_leaves_by_key_enforcing: dict[CompiledKernelKeyType, set[str]] = {}
-        self.used_py_dataclass_leaves_by_key_enforcing_dotted: dict[CompiledKernelKeyType, set[tuple[str, ...]]] = {}
+        self.used_py_dataclass_parameters_by_key_enforcing: dict[CompiledKernelKeyType, set[str]] = {}
+        self.used_py_dataclass_parameters_by_key_enforcing_dotted: dict[CompiledKernelKeyType, set[tuple[str, ...]]] = (
+            {}
+        )
 
         self.src_ll_cache_observations: SrcLlCacheObservations = SrcLlCacheObservations()
         self.fe_ll_cache_observations: FeLlCacheObservations = FeLlCacheObservations()
+        self.launch_observations = LaunchObservations()
 
         self.launch_context_buffer_cache = LaunchContextBufferCache()
 
@@ -303,9 +309,9 @@ class Kernel(FuncBase):
         self._last_compiled_kernel_data = None
         self.src_ll_cache_observations = SrcLlCacheObservations()
         self.fe_ll_cache_observations = FeLlCacheObservations()
-        self.used_py_dataclass_leaves_by_key_collecting = defaultdict(set)
-        self.used_py_dataclass_leaves_by_key_enforcing = {}
-        self.used_py_dataclass_leaves_by_key_enforcing_dotted = {}
+        self.used_py_dataclass_parameters_by_key_collecting = defaultdict(set)
+        self.used_py_dataclass_parameters_by_key_enforcing = {}
+        self.used_py_dataclass_parameters_by_key_enforcing_dotted = {}
 
     def _try_load_fastcache(self, args: tuple[Any, ...], key: "CompiledKernelKeyType") -> set[str] | None:
         frontend_cache_key: str | None = None
@@ -330,8 +336,8 @@ class Kernel(FuncBase):
                 )
                 if self.compiled_kernel_data_by_key[key]:
                     self.src_ll_cache_observations.cache_loaded = True
-                    self.used_py_dataclass_leaves_by_key_enforcing[key] = used_py_dataclass_parameters
-                    self.used_py_dataclass_leaves_by_key_enforcing_dotted[key] = set(
+                    self.used_py_dataclass_parameters_by_key_enforcing[key] = used_py_dataclass_parameters
+                    self.used_py_dataclass_parameters_by_key_enforcing_dotted[key] = set(
                         [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_parameters]
                     )
         elif self.gstaichi_callable and not self.gstaichi_callable.is_pure and self.runtime.print_non_pure:
@@ -358,27 +364,27 @@ class Kernel(FuncBase):
         range_begin = 0 if used_py_dataclass_parameters is None else 1
         runtime = impl.get_runtime()
         for _pass in range(range_begin, 2):
-            used_py_dataclass_leaves_by_key_enforcing = None
+            used_py_dataclass_parameters_by_key_enforcing = None
             if _pass == 1:
                 assert used_py_dataclass_parameters is not None
-                used_py_dataclass_leaves_by_key_enforcing = set()
+                used_py_dataclass_parameters_by_key_enforcing = set()
                 for param in used_py_dataclass_parameters:
                     split_param = param.split("__ti_")
                     for i in range(len(split_param), 0, -1):
                         joined = "__ti_".join(split_param[:i])
-                        if joined in used_py_dataclass_leaves_by_key_enforcing:
+                        if joined in used_py_dataclass_parameters_by_key_enforcing:
                             break
-                        used_py_dataclass_leaves_by_key_enforcing.add(joined)
-                self.used_py_dataclass_leaves_by_key_enforcing[key] = used_py_dataclass_leaves_by_key_enforcing
-                self.used_py_dataclass_leaves_by_key_enforcing_dotted[key] = set(
-                    [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_leaves_by_key_enforcing]
+                        used_py_dataclass_parameters_by_key_enforcing.add(joined)
+                self.used_py_dataclass_parameters_by_key_enforcing[key] = used_py_dataclass_parameters_by_key_enforcing
+                self.used_py_dataclass_parameters_by_key_enforcing_dotted[key] = set(
+                    [tuple(p.split("__ti_")[1:]) for p in used_py_dataclass_parameters_by_key_enforcing]
                 )
             tree, ctx = self.get_tree_and_ctx(
                 py_args=py_args,
                 template_slot_locations=self.template_slot_locations,
                 arg_features=arg_features,
                 current_kernel=self,
-                used_py_dataclass_parameters_enforcing=used_py_dataclass_leaves_by_key_enforcing,
+                used_py_dataclass_parameters_enforcing=used_py_dataclass_parameters_by_key_enforcing,
                 currently_compiling_materialize_key=key,
             )
             runtime._current_global_context = ctx.global_context
@@ -395,7 +401,7 @@ class Kernel(FuncBase):
                 used_py_dataclass_parameters=used_py_dataclass_parameters,
                 dump_ast=os.environ.get("TI_DUMP_AST", "") == "1" and _pass == 1,
             )
-            used_py_dataclass_parameters = self.used_py_dataclass_leaves_by_key_collecting[key]
+            used_py_dataclass_parameters = self.used_py_dataclass_parameters_by_key_collecting[key]
             gstaichi_kernel = impl.get_runtime().prog.create_kernel(
                 gstaichi_ast_generator, kernel_name, self.autodiff_mode
             )
@@ -417,7 +423,9 @@ class Kernel(FuncBase):
             is_launch_ctx_cacheable = True
             template_num = 0
             i_out = 0
-            used_py_dataclass_parameters_enforcing_dotted = self.used_py_dataclass_leaves_by_key_enforcing_dotted[key]
+            used_py_dataclass_parameters_enforcing_dotted = self.used_py_dataclass_parameters_by_key_enforcing_dotted[
+                key
+            ]
             for i_in, val in enumerate(args):
                 needed_ = self.arg_metas[i_in].annotation
                 if needed_ is template or type(needed_) is template:
@@ -480,7 +488,7 @@ class Kernel(FuncBase):
                         compile_result.cache_key,
                         self.fast_checksum,
                         self.visited_functions,
-                        self.used_py_dataclass_leaves_by_key_enforcing[key],
+                        self.used_py_dataclass_parameters_by_key_enforcing[key],
                     )
                     self.src_ll_cache_observations.cache_stored = True
             self._last_compiled_kernel_data = compiled_kernel_data
@@ -551,8 +559,10 @@ class Kernel(FuncBase):
             _logging.warn("""opt_level = 1 is enforced to enable gradient computation.""")
             impl.current_cfg().opt_level = 1
         key = self.ensure_compiled(*py_args)
+        self._last_launch_key = key
         kernel_cpp = self.materialized_kernels[key]
         compiled_kernel_data = self.compiled_kernel_data_by_key.get(key, None)
+        self.launch_observations.found_kernel_in_materialize_cache = compiled_kernel_data is not None
         ret = self.launch_kernel(key, kernel_cpp, compiled_kernel_data, *py_args)
         if compiled_kernel_data is None:
             assert self._last_compiled_kernel_data is not None
