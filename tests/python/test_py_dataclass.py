@@ -941,7 +941,6 @@ def test_template_mapper_cache(use_slots, monkeypatch):
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="pruning dataclass args not currently implemented.")
 def test_print_used_parameters():
     @dataclasses.dataclass
     class MyDataclass:

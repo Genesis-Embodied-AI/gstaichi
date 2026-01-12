@@ -1,8 +1,12 @@
+from ast import Name
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
 from ._gstaichi_callable import BoundGsTaichiCallable, GsTaichiCallable
+from .func import Func
 from .kernel_arguments import ArgMetadata
+
+# from .kernel import Kernel, fu
 
 if TYPE_CHECKING:
     import ast
@@ -66,9 +70,9 @@ class Pruning:
         # We need to look at the child's declaration - via metas - in order to get the name they use.
         # We can't tell their name just by looking at our own metas.
         for i, arg in enumerate(node.args):
-            if hasattr(arg, "id"):
-                calling_name = arg.id
-                called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name
+            if type(arg) in {Name}:
+                calling_name = arg.id  # type: ignore
+                called_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name  # type: ignore
                 if called_name in called_unpruned:
                     to_unprune.add(calling_name)
             arg_id += 1
@@ -76,10 +80,10 @@ class Pruning:
         # because our ordering is based on the order in which we pass arguments to the function, but the
         # child's ordering is based on the ordering of their declaration; and these orderings might not
         # match.
-        # Luckily, for keywords, we don't need to look at the child's metas, because we can get the
-        # child's name directly from our own keyword node.
+        # This is not an issue because, for keywords, we don't need to look at the child's metas.
+        # We can get the child's name directly from our own keyword node.
         for kwarg in node.keywords:
-            if hasattr(kwarg.value, "id"):
+            if type(kwarg.value) in {Name}:
                 calling_name = kwarg.value.id  # type: ignore
                 called_name = kwarg.arg
                 if called_name in called_unpruned:
@@ -89,11 +93,11 @@ class Pruning:
 
         called_needed = self.used_parameters_by_func_id[called_func_id]
         child_arg_id = 0
-        child_metas: list[ArgMetadata] = node.func.ptr.wrapper.arg_metas_expanded
+        child_metas: list[ArgMetadata] = node.func.ptr.wrapper.arg_metas_expanded  # type: ignore
         child_name_by_our_name = self.child_name_by_caller_name_by_func_id[called_func_id]
         for i, arg in enumerate(node.args):
-            if hasattr(arg, "id"):
-                calling_name = arg.id
+            if type(arg) in {Name}:
+                calling_name = arg.id  # type: ignore
                 if calling_name.startswith("__ti_"):
                     called_name = child_metas[child_arg_id].name
                     if called_name in called_needed or not called_name.startswith("__ti_"):
@@ -112,9 +116,8 @@ class Pruning:
 
         note that this ONLY handles args, not kwargs
         """
-        if not (hasattr(func, "wrapper") and hasattr(func.wrapper, "func_id")):
+        if type(func) not in {GsTaichiCallable, BoundGsTaichiCallable} or type(func.wrapper) != Func:
             return py_args
-
         called_func_id = func.wrapper.func_id  # type: ignore
         called_needed = self.used_parameters_by_func_id[called_func_id]
         new_args = []
@@ -129,7 +132,7 @@ class Pruning:
                 child_metas_pruned.append(_child)
         child_metas = child_metas_pruned
         for i, arg in enumerate(node.args):
-            if hasattr(arg, "id"):
+            if type(arg) in {Name}:
                 calling_name = arg.id  # type: ignore
                 if calling_name.startswith("__ti_"):
                     called_name = self.child_name_by_caller_name_by_func_id[called_func_id].get(calling_name)
