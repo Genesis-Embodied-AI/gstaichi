@@ -136,14 +136,9 @@ class Pruning:
                 calling_name = arg.id  # type: ignore
                 if calling_name.startswith("__ti_"):
                     called_name = self.child_name_by_caller_name_by_func_id[called_func_id].get(calling_name)
-                    if called_name is not None and (
-                        called_name in called_needed or not called_name.startswith("__ti_")
-                    ):
-                        new_args.append(py_args[i])
-                else:
-                    new_args.append(py_args[i])
-            else:
-                new_args.append(py_args[i])
+                    if called_name is None or (called_name not in called_needed and called_name.startswith("__ti_")):
+                        continue
+            new_args.append(py_args[i])
             child_arg_id += 1
         py_args = new_args
         return py_args
