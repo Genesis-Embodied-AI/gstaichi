@@ -424,7 +424,7 @@
 <td><p>Returns the current value of a hardware cycle counter.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#gstaichi.lang.intrinsics.clock_speed_hz" title="gstaichi.lang.intrinsics.clock_speed_hz"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clock_speed_hz</span></code></a>()</p></td>
-<td><p>Returns the clock speed in Hz corresponding to the clock counter.</p></td>
+<td><p>Returns the clock speed in Hz of the compute device, i.e. GPU.</p></td>
 </tr>
 </tbody>
 </table>
@@ -458,39 +458,14 @@ Comparing cycle counts across different backends or hardware is not meaningful.<
 <dl class="py function">
 <dt class="sig sig-object py" id="gstaichi.lang.intrinsics.clock_speed_hz">
 <span class="sig-prename descclassname"><span class="pre">gstaichi.lang.intrinsics.</span></span><span class="sig-name descname"><span class="pre">clock_speed_hz</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/gstaichi/lang/intrinsics.html#clock_speed_hz"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.intrinsics.clock_speed_hz" title="Link to this definition">#</a></dt>
-<dd><p>Returns the clock speed in Hz corresponding to the clock counter.</p>
-<p>This function runs on the host side and queries the device for its clock rate.
-The returned value can be used to convert clock cycles from clock_counter() to time.</p>
-<p>Supported backends:
-- CUDA: Returns the GPU clock rate in Hz</p>
-<p>Unsupported backends (returns 0.0):
-- AMDGPU: Returns 0.0
-- Vulkan: Returns 0.0
-- Metal: Returns 0.0
-- CPU: Returns 0.0</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Clock rate in Hz, or 0.0 if not supported</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>float</p>
-</dd>
-</dl>
-<p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">gstaichi</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ti</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">ti</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">arch</span><span class="o">=</span><span class="n">ti</span><span class="o">.</span><span class="n">cuda</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">clock_rate_hz</span> <span class="o">=</span> <span class="n">ti</span><span class="o">.</span><span class="n">clock_speed_hz</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;GPU clock rate: </span><span class="si">{</span><span class="n">clock_rate_hz</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1e9</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> GHz&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Use with clock_counter to measure time</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nd">@ti</span><span class="o">.</span><span class="n">kernel</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">timed_kernel</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ti</span><span class="o">.</span><span class="n">f64</span><span class="p">:</span>
-<span class="gp">&gt;&gt;&gt; </span>    <span class="n">start</span> <span class="o">=</span> <span class="n">ti</span><span class="o">.</span><span class="n">clock_counter</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span>    <span class="c1"># ... do work ...</span>
-<span class="gp">&gt;&gt;&gt; </span>    <span class="n">end</span> <span class="o">=</span> <span class="n">ti</span><span class="o">.</span><span class="n">clock_counter</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span>    <span class="k">return</span> <span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">/</span> <span class="n">clock_rate_hz</span>  <span class="c1"># time in seconds</span>
-</pre></div>
-</div>
+<dd><p>Returns the clock speed in Hz of the compute device, i.e. GPU.</p>
+<p>Note that this is the nominal speed, NOT the current dynamic speed.</p>
+<p>To set to fixed speed, per AI (untested):</p>
+<p># Lock GPU clock and memory clock to specific values
+sudo nvidia-smi -lgc &lt;gpu_clock_mhz&gt;
+sudo nvidia-smi -lmc &lt;memory_clock_mhz&gt;</p>
+<p># Example: Lock to 1200 MHz GPU clock
+sudo nvidia-smi -lgc 1200</p>
 </dd></dl>
 
 </section>

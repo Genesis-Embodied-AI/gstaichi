@@ -357,45 +357,24 @@
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/intrinsics/index.html#gstaichi.lang.intrinsics.clock_speed_hz">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">clock_speed_hz</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Returns the clock speed in Hz corresponding to the clock counter.</span>
+<span class="sd">    Returns the clock speed in Hz of the compute device, i.e. GPU.</span>
 
-<span class="sd">    This function runs on the host side and queries the device for its clock rate.</span>
-<span class="sd">    The returned value can be used to convert clock cycles from clock_counter() to time.</span>
+<span class="sd">    Note that this is the nominal speed, NOT the current dynamic speed.</span>
 
-<span class="sd">    Supported backends:</span>
-<span class="sd">    - CUDA: Returns the GPU clock rate in Hz</span>
+<span class="sd">    To set to fixed speed, per AI (untested):</span>
 
-<span class="sd">    Unsupported backends (returns 0.0):</span>
-<span class="sd">    - AMDGPU: Returns 0.0</span>
-<span class="sd">    - Vulkan: Returns 0.0</span>
-<span class="sd">    - Metal: Returns 0.0</span>
-<span class="sd">    - CPU: Returns 0.0</span>
+<span class="sd">    # Lock GPU clock and memory clock to specific values</span>
+<span class="sd">    sudo nvidia-smi -lgc &lt;gpu_clock_mhz&gt;</span>
+<span class="sd">    sudo nvidia-smi -lmc &lt;memory_clock_mhz&gt;</span>
 
-<span class="sd">    Returns:</span>
-<span class="sd">        float: Clock rate in Hz, or 0.0 if not supported</span>
-
-<span class="sd">    Example::</span>
-
-<span class="sd">        &gt;&gt;&gt; import gstaichi as ti</span>
-<span class="sd">        &gt;&gt;&gt; ti.init(arch=ti.cuda)</span>
-<span class="sd">        &gt;&gt;&gt; clock_rate_hz = ti.clock_speed_hz()</span>
-<span class="sd">        &gt;&gt;&gt; print(f&quot;GPU clock rate: {clock_rate_hz / 1e9:.2f} GHz&quot;)</span>
-<span class="sd">        &gt;&gt;&gt;</span>
-<span class="sd">        &gt;&gt;&gt; # Use with clock_counter to measure time</span>
-<span class="sd">        &gt;&gt;&gt; @ti.kernel</span>
-<span class="sd">        &gt;&gt;&gt; def timed_kernel() -&gt; ti.f64:</span>
-<span class="sd">        &gt;&gt;&gt;     start = ti.clock_counter()</span>
-<span class="sd">        &gt;&gt;&gt;     # ... do work ...</span>
-<span class="sd">        &gt;&gt;&gt;     end = ti.clock_counter()</span>
-<span class="sd">        &gt;&gt;&gt;     return (end - start) / clock_rate_hz  # time in seconds</span>
+<span class="sd">    # Example: Lock to 1200 MHz GPU clock</span>
+<span class="sd">    sudo nvidia-smi -lgc 1200</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">arch</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">prog</span><span class="o">.</span><span class="n">config</span><span class="p">()</span><span class="o">.</span><span class="n">arch</span>
     <span class="k">if</span> <span class="n">arch</span> <span class="o">==</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">cuda</span><span class="p">:</span>
-        <span class="c1"># query_int64 returns kHz, convert to Hz</span>
         <span class="n">clock_rate_khz</span> <span class="o">=</span> <span class="n">_ti_core</span><span class="o">.</span><span class="n">query_int64</span><span class="p">(</span><span class="s2">&quot;cuda_clock_rate_khz&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">clock_rate_khz</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
-    <span class="c1"># Return 0.0 for unsupported backends</span>
-    <span class="k">return</span> <span class="mf">0.0</span></div>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">clock_speed_hz</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> not implemented for arch </span><span class="si">{</span><span class="n">arch</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
 
