@@ -551,7 +551,7 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="n">pruning</span><span class="o">.</span><span class="n">enforcing</span><span class="p">:</span>
                 <span class="n">struct_locals</span> <span class="o">=</span> <span class="n">_kernel_impl_dataclass</span><span class="o">.</span><span class="n">extract_struct_locals_from_context</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">struct_locals</span> <span class="o">=</span> <span class="n">pruning</span><span class="o">.</span><span class="n">used_parameters_by_func_id</span><span class="p">[</span><span class="n">ctx</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">func_id</span><span class="p">]</span>
+                <span class="n">struct_locals</span> <span class="o">=</span> <span class="n">pruning</span><span class="o">.</span><span class="n">used_vars_by_func_id</span><span class="p">[</span><span class="n">ctx</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="n">func_id</span><span class="p">]</span>
             <span class="c1"># struct locals are the expanded py dataclass fields that we will write to</span>
             <span class="c1"># local variables, and will then be available to use in build_Call, later.</span>
             <span class="n">tree</span> <span class="o">=</span> <span class="n">_kernel_impl_dataclass</span><span class="o">.</span><span class="n">unpack_ast_struct_expressions</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tree</span><span class="p">,</span> <span class="n">struct_locals</span><span class="o">=</span><span class="n">struct_locals</span><span class="p">)</span>
@@ -800,7 +800,7 @@
                 <span class="k">assert</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">materialized_kernels</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">materialized_kernels</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">gstaichi_kernel</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">for</span> <span class="n">used_parameters</span> <span class="ow">in</span> <span class="n">pruning</span><span class="o">.</span><span class="n">used_parameters_by_func_id</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">used_parameters</span> <span class="ow">in</span> <span class="n">pruning</span><span class="o">.</span><span class="n">used_vars_by_func_id</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
                     <span class="n">new_used_parameters</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
                     <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">used_parameters</span><span class="p">:</span>
                         <span class="n">split_param</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;__ti_&quot;</span><span class="p">)</span>
@@ -811,7 +811,7 @@
                             <span class="n">new_used_parameters</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">joined</span><span class="p">)</span>
                     <span class="n">used_parameters</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
                     <span class="n">used_parameters</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">new_used_parameters</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_enforcing</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">pruning</span><span class="o">.</span><span class="n">used_parameters_by_func_id</span><span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_enforcing</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">pruning</span><span class="o">.</span><span class="n">used_vars_by_func_id</span><span class="p">[</span>
                     <span class="n">Pruning</span><span class="o">.</span><span class="n">KERNEL_FUNC_ID</span>
                 <span class="p">]</span>
             <span class="n">runtime</span><span class="o">.</span><span class="n">_current_global_context</span> <span class="o">=</span> <span class="kc">None</span></div>
