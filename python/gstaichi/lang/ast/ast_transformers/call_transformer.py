@@ -272,7 +272,7 @@ class CallTransformer:
         Call(func=Name(id='f2', ctx=Load()), args=[Name(id='my_struct_ab', ctx=Load())], keywords=[])
         """
         is_func_base_wrapper = False
-        is_static = get_decorator(ctx, node) in ["static", "static_assert"]
+        is_static = get_decorator(ctx, node) in ("static", "static_assert")
 
         with ctx.static_scope_guard() if is_static else nullcontext():
             build_stmt(ctx, node.func)
