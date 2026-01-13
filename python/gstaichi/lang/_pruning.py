@@ -1,4 +1,4 @@
-from ast import Name, Starred
+from ast import Name, expr, keyword, Starred
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
@@ -49,7 +49,14 @@ class Pruning:
     def is_used(self, func_id: int, var_flat_name: str) -> bool:
         return var_flat_name in self.used_vars_by_func_id[func_id]
 
-    def record_after_call(self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node: "ast.Call") -> None:
+    def record_after_call(
+        self,
+        ctx: "ASTTransformerFuncContext",
+        func: "GsTaichiCallable",
+        node: "ast.Call",
+        node_args: list[expr],
+        node_keywords: list[keyword],
+    ) -> None:
         """
         called from build_Call, after making the call, in pass 0
 
@@ -68,7 +75,7 @@ class Pruning:
         # because of the way calling with sequential args works.
         # We need to look at the child's declaration - via metas - in order to get the name they use.
         # We can't tell their name just by looking at our own metas.
-        for i, arg in enumerate(node.args):
+        for i, arg in enumerate(node_args):
             if type(arg) in {Name}:
                 caller_arg_name = arg.id  # type: ignore
                 callee_param_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name  # type: ignore
@@ -81,7 +88,7 @@ class Pruning:
         # match.
         # This is not an issue because, for keywords, we don't need to look at the child's metas.
         # We can get the child's name directly from our own keyword node.
-        for kwarg in node.keywords:
+        for kwarg in node_keywords:
             if type(kwarg.value) in {Name}:
                 caller_arg_name = kwarg.value.id  # type: ignore
                 callee_param_name = kwarg.arg
@@ -94,7 +101,7 @@ class Pruning:
         child_arg_id = 0
         child_metas: list[ArgMetadata] = node.func.ptr.wrapper.arg_metas_expanded  # type: ignore
         callee_param_by_called_arg_name = self.callee_param_by_caller_arg_name_by_func_id[callee_func_id]
-        for i, arg in enumerate(node.args):
+        for i, arg in enumerate(node_args):
             if type(arg) in {Name}:
                 caller_arg_name = arg.id  # type: ignore
                 if caller_arg_name.startswith("__ti_"):
@@ -108,6 +115,8 @@ class Pruning:
         self,
         func: "GsTaichiCallable",
         node: "ast.Call",
+        node_args: list[expr],
+        node_keywords: list[keyword],
         py_args: list[Any],
     ) -> list[Any]:
         """
@@ -130,10 +139,10 @@ class Pruning:
             else:
                 callee_metas_pruned.append(_callee_meta)
         callee_metas = callee_metas_pruned
-        for i, arg in enumerate(node.args):
+        for i, arg in enumerate(node_args):
             is_starred = type(arg) is Starred
             if is_starred:
-                if i != len(node.args) - 1 or len(node.keywords) != 0:
+                if i != len(node_args) - 1 or len(node_keywords) != 0:
                     raise GsTaichiSyntaxError(
                         "STARNOTLAST * args can only be present as the last argument of a function"
                     )
