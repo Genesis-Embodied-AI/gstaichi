@@ -543,7 +543,7 @@
                 <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">fields</span><span class="p">(</span><span class="n">dataclass_type</span><span class="p">):</span>
                     <span class="n">src_name</span> <span class="o">=</span> <span class="n">create_flat_name</span><span class="p">(</span><span class="n">kwarg</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
                     <span class="n">child_name</span> <span class="o">=</span> <span class="n">create_flat_name</span><span class="p">(</span><span class="n">kwarg</span><span class="o">.</span><span class="n">arg</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-                    <span class="c1"># Note: using `called_needed` instead of `called_needed is not None` will cause</span>
+                    <span class="c1"># Note: using `used_args` instead of `used_args is not None` will cause</span>
                     <span class="c1"># a bug, when it is empty set.</span>
                     <span class="k">if</span> <span class="n">used_args</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">child_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">used_args</span><span class="p">:</span>
                         <span class="k">continue</span>
