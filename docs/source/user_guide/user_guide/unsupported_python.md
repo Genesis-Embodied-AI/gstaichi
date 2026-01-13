@@ -1,8 +1,8 @@
 # Unsupported python notations
 
-## star calling
+## Argument unpacking
 
-i.e. calling like `some_function(*args)`
+i.e. syntax like `some_function(*args)`
 
 Only supported in a very narrow case:
 - `*args` must be the last argument in the function call
