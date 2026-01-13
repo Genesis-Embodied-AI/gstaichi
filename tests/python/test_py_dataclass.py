@@ -2368,7 +2368,6 @@ def test_pruning_star_args_error_not_at_end_kwargs() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_iterate_function() -> None:
     """
     Designed to test
