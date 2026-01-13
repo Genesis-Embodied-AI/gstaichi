@@ -2302,7 +2302,6 @@ def test_pruning_args_bound_callable() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_star_args() -> None:
     """
     Designed to test
@@ -2328,7 +2327,6 @@ def test_pruning_star_args() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_star_args_error_not_at_end_another_arg() -> None:
     @ti.func
     def f1(a: ti.types.NDArray[ti.i32, 1], b: ti.i32, c: ti.i32, d: ti.i32):
@@ -2348,7 +2346,6 @@ def test_pruning_star_args_error_not_at_end_another_arg() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_star_args_error_not_at_end_kwargs() -> None:
     @ti.func
     def f1(a: ti.types.NDArray[ti.i32, 1], b: ti.i32, c: ti.i32, d: ti.i32):

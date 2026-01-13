@@ -325,9 +325,9 @@ class CallTransformer:
 
         py_args = []
         for arg in node.args:
-            if isinstance(arg, ast.Starred):
+            if type(arg) is ast.Starred:
                 arg_list = arg.ptr
-                if isinstance(arg_list, Expr) and arg_list.is_tensor():
+                if type(arg_list) is Expr and arg_list.is_tensor():
                     # Expand Expr with Matrix-type return into list of Exprs
                     arg_list = [Expr(x) for x in ctx.ast_builder.expand_exprs([arg_list.ptr])]
 
