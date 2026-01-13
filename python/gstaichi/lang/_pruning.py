@@ -74,10 +74,16 @@ class Pruning:
         # because of the way calling with sequential args works.
         # We need to look at the child's declaration - via metas - in order to get the name they use.
         # We can't tell their name just by looking at our own metas.
+        #
+        # One issue is when calling data-oriented methods, there will be a `self`. We'll detect this
+        # by seeing if the childs arg_metas_expanded is exactly 1 longer than len(node.args) + len(node.kwargs)
+        callee_func: Func = node.func.ptr.wrapper  # type: ignore
+        has_self = type(func) is BoundGsTaichiCallable
+        self_offset = 1 if has_self else 0
         for i, arg in enumerate(node_args):
             if type(arg) in {Name}:
                 caller_arg_name = arg.id  # type: ignore
-                callee_param_name = node.func.ptr.wrapper.arg_metas_expanded[arg_id].name  # type: ignore
+                callee_param_name = callee_func.arg_metas_expanded[arg_id + self_offset].name  # type: ignore
                 if callee_param_name in callee_used_vars:
                     vars_to_unprune.add(caller_arg_name)
             arg_id += 1
@@ -104,7 +110,7 @@ class Pruning:
             if type(arg) in {Name}:
                 caller_arg_name = arg.id  # type: ignore
                 if caller_arg_name.startswith("__ti_"):
-                    callee_param_name = child_metas[child_arg_id].name
+                    callee_param_name = child_metas[child_arg_id + self_offset].name
                     if callee_param_name in used_callee_vars or not callee_param_name.startswith("__ti_"):
                         callee_param_by_called_arg_name[caller_arg_name] = callee_param_name
             child_arg_id += 1
@@ -112,7 +118,7 @@ class Pruning:
 
     def filter_call_args(
         self,
-        func: "GsTaichiCallable",
+        gstaichi_callable: "GsTaichiCallable",
         node: "ast.Call",
         node_args: list[expr],
         py_args: list[Any],
@@ -122,9 +128,14 @@ class Pruning:
 
         note that this ONLY handles args, not kwargs
         """
-        if type(func) not in {GsTaichiCallable, BoundGsTaichiCallable} or type(func.wrapper) != Func:
+        # We can be called with callables other than ti.func, so filter those out:
+        if (
+            type(gstaichi_callable) not in {GsTaichiCallable, BoundGsTaichiCallable}
+            or type(gstaichi_callable.wrapper) != Func
+        ):
             return py_args
-        callee_func_id = func.wrapper.func_id  # type: ignore
+        func: Func = gstaichi_callable.wrapper  # type: ignore
+        callee_func_id = func.func_id
         caller_used_args = self.used_vars_by_func_id[callee_func_id]
         new_args = []
         callee_param_id = 0
