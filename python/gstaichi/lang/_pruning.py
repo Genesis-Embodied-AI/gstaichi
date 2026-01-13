@@ -1,4 +1,4 @@
-from ast import AST, Name
+from ast import Name, expr, keyword
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
@@ -53,8 +53,8 @@ class Pruning:
         ctx: "ASTTransformerFuncContext",
         func: "GsTaichiCallable",
         node: "ast.Call",
-        node_args: list[AST],
-        node_keywords: list[AST],
+        node_args: list[expr],
+        node_keywords: list[keyword],
     ) -> None:
         """
         called from build_Call, after making the call, in pass 0
@@ -114,7 +114,7 @@ class Pruning:
         self,
         func: "GsTaichiCallable",
         node: "ast.Call",
-        node_args: list[AST],
+        node_args: list[expr],
         py_args: list[Any],
     ) -> list[Any]:
         """
