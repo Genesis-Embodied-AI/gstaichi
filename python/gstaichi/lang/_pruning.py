@@ -144,7 +144,7 @@ class Pruning:
             if is_starred:
                 if i != len(node_args) - 1 or len(node_keywords) != 0:
                     raise GsTaichiSyntaxError(
-                        "STARNOTLAST * args can only be present as the last argument of a function"
+                        "[FUNCDECLARATION][STARNOTLAST] * args can only be present as the last argument of a function"
                     )
 
                 # we'll just dump the rest of the py_args in:
