@@ -610,10 +610,13 @@
         <span class="n">added_keywords</span><span class="p">,</span> <span class="n">node_keywords</span> <span class="o">=</span> <span class="n">CallTransformer</span><span class="o">.</span><span class="n">_expand_Call_dataclass_kwargs</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">keywords</span><span class="p">,</span> <span class="n">called_needed</span><span class="p">)</span>
 
         <span class="c1"># Create variables for the now-expanded dataclass members.</span>
-        <span class="c1"># We don&#39;t want to include these now-expanded dataclass members</span>
-        <span class="c1"># in the list of variables to not prune,</span>
-        <span class="c1"># since these will contain *all* declared fields, instead of all used fields.</span>
-        <span class="c1"># So we set expanding_dataclass_call_parameters to True during this expansion.</span>
+        <span class="c1"># We don&#39;t want to include these now-expanded dataclass members in</span>
+        <span class="c1"># the list of used variables (ie to not prune), because passing input arguments to</span>
+        <span class="c1"># a function does not mean that they are actually used anywhere in that function.</span>
+        <span class="c1"># Setting &#39;expanding_dataclass_call_parameters&#39; to True during this expansion is</span>
+        <span class="c1"># used to achieve the desired behaviour. If parameters are actually used in that function,</span>
+        <span class="c1"># they will be added to the list of used variables later on, when traversing</span>
+        <span class="c1"># the source code of the function body.</span>
         <span class="n">ctx</span><span class="o">.</span><span class="n">expanding_dataclass_call_parameters</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">added_args</span><span class="p">:</span>
             <span class="k">assert</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="s2">&quot;ptr&quot;</span><span class="p">)</span>
