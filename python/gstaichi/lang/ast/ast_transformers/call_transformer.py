@@ -297,10 +297,10 @@ class CallTransformer:
             )
 
             # Create variables for the now-expanded dataclass members.
-            # We don't want to include these now-expanded dataclass members in 
-            # the list of used variables (ie to not prune), because passing input arguments to 
-            # a function does not mean that they are actually used anywhere in that function. 
-            # Setting 'expanding_dataclass_call_parameters' to True during this expansion is 
+            # We don't want to include these now-expanded dataclass members in
+            # the list of used variables (ie to not prune), because passing input arguments to
+            # a function does not mean that they are actually used anywhere in that function.
+            # Setting 'expanding_dataclass_call_parameters' to True during this expansion is
             # used to achieve the desired behaviour. If parameters are actually used in that function,
             # they will be added to the list of used variables later on, when traversing
             # the source code of the function body.
