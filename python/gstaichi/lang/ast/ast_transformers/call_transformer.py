@@ -297,10 +297,13 @@ class CallTransformer:
             )
 
             # Create variables for the now-expanded dataclass members.
-            # We don't want to include these now-expanded dataclass members
-            # in the list of variables to not prune,
-            # since these will contain *all* declared fields, instead of all used fields.
-            # So we set expanding_dataclass_call_parameters to True during this expansion.
+            # We don't want to include these now-expanded dataclass members in 
+            # the list of used variables (ie to not prune), because passing input arguments to 
+            # a function does not mean that they are actually used anywhere in that function. 
+            # Setting 'expanding_dataclass_call_parameters' to True during this expansion is 
+            # used to achieve the desired behaviour. If parameters are actually used in that function,
+            # they will be added to the list of used variables later on, when traversing
+            # the source code of the function body.
             ctx.expanding_dataclass_call_parameters = True
             for arg in added_args:
                 assert not hasattr(arg, "ptr")
