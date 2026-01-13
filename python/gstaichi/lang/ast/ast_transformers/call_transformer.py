@@ -229,7 +229,7 @@ class CallTransformer:
                 for field in dataclasses.fields(dataclass_type):
                     src_name = create_flat_name(kwarg.value.id, field.name)
                     child_name = create_flat_name(kwarg.arg, field.name)
-                    # Note: using `called_needed` instead of `called_needed is not None` will cause
+                    # Note: using `used_args` instead of `used_args is not None` will cause
                     # a bug, when it is empty set.
                     if used_args is not None and child_name not in used_args:
                         continue
