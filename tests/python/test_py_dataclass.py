@@ -2244,8 +2244,7 @@ def test_pruning_kwargs_swap_order_bound_callable() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="data oriented not implemented yet.")
-def test_pruning_args_bound_callable() -> None:
+def test_pruning_bound_callable_args() -> None:
     @dataclasses.dataclass
     class MyStruct1:
         _k1: ti.types.NDArray[ti.f32, 1]
@@ -2302,6 +2301,64 @@ def test_pruning_args_bound_callable() -> None:
 
 
 @test_utils.test()
+def test_pruning_bound_callable_kwargs() -> None:
+    @dataclasses.dataclass
+    class MyStruct1:
+        _k1: ti.types.NDArray[ti.f32, 1]
+        _f1: ti.types.NDArray[ti.f32, 2]
+        _unused1: ti.types.NDArray[ti.f32, 4]
+        _unused2: ti.types.NDArray[ti.f32, 4]
+
+    @dataclasses.dataclass
+    class MyStruct2:
+        _k1: ti.types.NDArray[ti.f32, 1]
+        _f1: ti.types.NDArray[ti.f32, 3]
+        _unused: ti.types.NDArray[ti.f32, 4]
+
+    def make_structs():
+        my_struct1 = MyStruct1(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1)),
+            _unused1=ti.ndarray(dtype=ti.f32, shape=(1, 1, 1, 1)),
+            _unused2=ti.ndarray(dtype=ti.f32, shape=(1, 1, 1, 1)),
+        )
+        my_struct2 = MyStruct2(
+            _k1=ti.ndarray(dtype=ti.f32, shape=(1)),
+            _f1=ti.ndarray(dtype=ti.f32, shape=(1, 1, 1)),
+            _unused=ti.ndarray(dtype=ti.f32, shape=(1, 1, 1, 1)),
+        )
+        return my_struct1, my_struct2
+
+    @ti.data_oriented
+    class MyDataOriented:
+        def __init__(self) -> None: ...
+
+        @ti.func
+        def f1(self, struct1_f1: MyStruct1, struct2_f1: MyStruct2):
+            struct1_f1._f1[0, 0] = 102
+            struct2_f1._f1[0, 0, 0] = 103
+
+    @ti.kernel
+    def k1(my_data_oriented: ti.Template, struct1_k1: MyStruct1, struct2_k1: MyStruct2):
+        struct1_k1._k1[0] = 100
+        struct2_k1._k1[0] = 101
+        my_data_oriented.f1(struct1_f1=struct1_k1, struct2_f1=struct2_k1)
+
+    my_struct1, my_struct2 = make_structs()
+    my_data_oriented = MyDataOriented()
+    k1(my_data_oriented=my_data_oriented, struct1_k1=my_struct1, struct2_k1=my_struct2)
+    k1_primal: Kernel = k1._primal
+    kernel_args_count_by_type = k1_primal.launch_stats.kernel_args_count_by_type
+    assert not k1_primal.launch_observations.found_kernel_in_materialize_cache
+    assert my_struct1._k1[0] == 100
+    assert my_struct2._k1[0] == 101
+    assert my_struct1._f1[0, 0] == 102
+    assert my_struct2._f1[0, 0, 0] == 103
+    assert kernel_args_count_by_type[KernelBatchedArgType.TI_ARRAY] == 4
+
+
+@test_utils.test()
+@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_star_args() -> None:
     """
     Designed to test
