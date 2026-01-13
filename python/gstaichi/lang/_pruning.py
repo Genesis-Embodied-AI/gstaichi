@@ -1,12 +1,10 @@
-from ast import Name
+from ast import Name, expr, keyword
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
 from ._gstaichi_callable import BoundGsTaichiCallable, GsTaichiCallable
 from .func import Func
 from .kernel_arguments import ArgMetadata
-
-# from .kernel import Kernel, fu
 
 if TYPE_CHECKING:
     import ast
@@ -50,7 +48,14 @@ class Pruning:
     def is_used(self, func_id: int, var_flat_name: str) -> bool:
         return var_flat_name in self.used_vars_by_func_id[func_id]
 
-    def record_after_call(self, ctx: "ASTTransformerFuncContext", func: "GsTaichiCallable", node: "ast.Call") -> None:
+    def record_after_call(
+        self,
+        ctx: "ASTTransformerFuncContext",
+        func: "GsTaichiCallable",
+        node: "ast.Call",
+        node_args: list[expr],
+        node_keywords: list[keyword],
+    ) -> None:
         """
         called from build_Call, after making the call, in pass 0
 
@@ -75,7 +80,7 @@ class Pruning:
         callee_func: Func = node.func.ptr.wrapper  # type: ignore
         has_self = type(func) is BoundGsTaichiCallable
         self_offset = 1 if has_self else 0
-        for i, arg in enumerate(node.args):
+        for i, arg in enumerate(node_args):
             if type(arg) in {Name}:
                 caller_arg_name = arg.id  # type: ignore
                 callee_param_name = callee_func.arg_metas_expanded[arg_id + self_offset].name  # type: ignore
@@ -88,7 +93,7 @@ class Pruning:
         # match.
         # This is not an issue because, for keywords, we don't need to look at the child's metas.
         # We can get the child's name directly from our own keyword node.
-        for kwarg in node.keywords:
+        for kwarg in node_keywords:
             if type(kwarg.value) in {Name}:
                 caller_arg_name = kwarg.value.id  # type: ignore
                 callee_param_name = kwarg.arg
@@ -101,7 +106,7 @@ class Pruning:
         child_arg_id = 0
         child_metas: list[ArgMetadata] = node.func.ptr.wrapper.arg_metas_expanded  # type: ignore
         callee_param_by_called_arg_name = self.callee_param_by_caller_arg_name_by_func_id[callee_func_id]
-        for i, arg in enumerate(node.args):
+        for i, arg in enumerate(node_args):
             if type(arg) in {Name}:
                 caller_arg_name = arg.id  # type: ignore
                 if caller_arg_name.startswith("__ti_"):
@@ -115,6 +120,7 @@ class Pruning:
         self,
         gstaichi_callable: "GsTaichiCallable",
         node: "ast.Call",
+        node_args: list[expr],
         py_args: list[Any],
     ) -> list[Any]:
         """
@@ -142,7 +148,7 @@ class Pruning:
             else:
                 callee_metas_pruned.append(_callee_meta)
         callee_metas = callee_metas_pruned
-        for i, arg in enumerate(node.args):
+        for i, arg in enumerate(node_args):
             if type(arg) in {Name}:
                 caller_arg_name = arg.id  # type: ignore
                 if caller_arg_name.startswith("__ti_"):
