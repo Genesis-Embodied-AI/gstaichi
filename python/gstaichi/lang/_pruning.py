@@ -2,9 +2,8 @@ from ast import Name, Starred
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
-from .exception import GsTaichiSyntaxError
-
 from ._gstaichi_callable import BoundGsTaichiCallable, GsTaichiCallable
+from .exception import GsTaichiSyntaxError
 from .func import Func
 from .kernel_arguments import ArgMetadata
 
