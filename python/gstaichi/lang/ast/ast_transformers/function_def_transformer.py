@@ -91,7 +91,7 @@ class FunctionDefTransformer:
             ctx.create_variable(argument_name, argument_type)
             for field_idx, field in enumerate(dataclasses.fields(argument_type)):
                 flat_name = create_flat_name(argument_name, field.name)
-                if pruning.enforcing and flat_name not in pruning.used_parameters_by_func_id[func_id]:
+                if pruning.enforcing and flat_name not in pruning.used_vars_by_func_id[func_id]:
                     continue
                 # if a field is a dataclass, then feed back into process_kernel_arg recursively
                 if dataclasses.is_dataclass(field.type):

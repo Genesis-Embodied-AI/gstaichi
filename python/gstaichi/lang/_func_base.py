@@ -308,7 +308,7 @@ class FuncBase:
             pruning = global_context.pruning
             used_by_dataclass_parameters_enforcing = None
             if pruning.enforcing:
-                used_by_dataclass_parameters_enforcing = global_context.pruning.used_parameters_by_func_id[self.func_id]
+                used_by_dataclass_parameters_enforcing = global_context.pruning.used_vars_by_func_id[self.func_id]
             self.arg_metas_expanded = _kernel_impl_dataclass.expand_func_arguments(
                 used_by_dataclass_parameters_enforcing,
                 self.arg_metas,

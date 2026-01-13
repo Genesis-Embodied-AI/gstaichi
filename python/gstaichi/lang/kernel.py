@@ -207,7 +207,7 @@ class ASTGenerator:
             if not pruning.enforcing:
                 struct_locals = _kernel_impl_dataclass.extract_struct_locals_from_context(ctx)
             else:
-                struct_locals = pruning.used_parameters_by_func_id[ctx.func.func_id]
+                struct_locals = pruning.used_vars_by_func_id[ctx.func.func_id]
             # struct locals are the expanded py dataclass fields that we will write to
             # local variables, and will then be available to use in build_Call, later.
             tree = _kernel_impl_dataclass.unpack_ast_struct_expressions(self.tree, struct_locals=struct_locals)
@@ -397,7 +397,7 @@ class Kernel(FuncBase):
                 assert key not in self.materialized_kernels
                 self.materialized_kernels[key] = gstaichi_kernel
             else:
-                for used_parameters in pruning.used_parameters_by_func_id.values():
+                for used_parameters in pruning.used_vars_by_func_id.values():
                     new_used_parameters = set()
                     for param in used_parameters:
                         split_param = param.split("__ti_")
@@ -408,7 +408,7 @@ class Kernel(FuncBase):
                             new_used_parameters.add(joined)
                     used_parameters.clear()
                     used_parameters.update(new_used_parameters)
-                self.used_py_dataclass_parameters_by_key_enforcing[key] = pruning.used_parameters_by_func_id[
+                self.used_py_dataclass_parameters_by_key_enforcing[key] = pruning.used_vars_by_func_id[
                     Pruning.KERNEL_FUNC_ID
                 ]
             runtime._current_global_context = None

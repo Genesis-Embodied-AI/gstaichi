@@ -185,7 +185,7 @@ class CallTransformer:
                         child_name = create_flat_name(arg.id, field.name)
                     except Exception as e:
                         raise RuntimeError(f"Exception whilst processing {field.name} in {type(dataclass_type)}") from e
-                    if pruning.enforcing and child_name not in pruning.used_parameters_by_func_id[func_id]:
+                    if pruning.enforcing and child_name not in pruning.used_vars_by_func_id[func_id]:
                         continue
                     load_ctx = ast.Load()
                     arg_node = ast.Name(
@@ -289,7 +289,7 @@ class CallTransformer:
             called_needed = None
             if pruning.enforcing and is_func_base_wrapper:
                 called_func_id_ = func.wrapper.func_id  # type: ignore
-                called_needed = pruning.used_parameters_by_func_id[called_func_id_]
+                called_needed = pruning.used_vars_by_func_id[called_func_id_]
 
             added_args, node.args = CallTransformer._expand_Call_dataclass_args(ctx, node.args)
             added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(
@@ -310,7 +310,9 @@ class CallTransformer:
                 build_stmt(ctx, arg)
             ctx.expanding_dataclass_call_parameters = False
 
-        # if any arg violates pure, then node also violates pure
+        # Check for pure violations.
+        # We have to do this after building the statements.
+        # If any arg violates pure, then node also violates pure.
         for arg in node.args:
             if arg.violates_pure:
                 node.violates_pure_reason = arg.violates_pure_reason
@@ -360,8 +362,12 @@ class CallTransformer:
 
         CallTransformer._warn_if_is_external_func(ctx, node)
         try:
-            node.ptr = func(*py_args, **py_kwargs)
             pruning = ctx.global_context.pruning
+            if pruning.enforcing:
+                py_args = pruning.filter_call_args(func, node, py_args)
+
+            node.ptr = func(*py_args, **py_kwargs)
+
             if not pruning.enforcing:
                 pruning.record_after_call(ctx, func, node)
         except TypeError as e:
