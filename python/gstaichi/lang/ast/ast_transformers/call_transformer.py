@@ -283,51 +283,48 @@ class CallTransformer:
         func = node.func.ptr
         func_type = type(func)
 
-        if not is_static:
-            is_func_base_wrapper = func_type in {GsTaichiCallable, BoundGsTaichiCallable}
-            pruning = ctx.global_context.pruning
-            called_needed = None
-            if pruning.enforcing and is_func_base_wrapper:
-                called_func_id_ = func.wrapper.func_id  # type: ignore
-                called_needed = pruning.used_vars_by_func_id[called_func_id_]
+        is_func_base_wrapper = func_type in {GsTaichiCallable, BoundGsTaichiCallable}
+        pruning = ctx.global_context.pruning
+        called_needed = None
+        if pruning.enforcing and is_func_base_wrapper:
+            called_func_id_ = func.wrapper.func_id  # type: ignore
+            called_needed = pruning.used_vars_by_func_id[called_func_id_]
 
-            added_args, node.args = CallTransformer._expand_Call_dataclass_args(ctx, node.args)
-            added_keywords, node.keywords = CallTransformer._expand_Call_dataclass_kwargs(
-                ctx, node.keywords, called_needed
-            )
+        added_args, node_args = CallTransformer._expand_Call_dataclass_args(ctx, node.args)
+        added_keywords, node_keywords = CallTransformer._expand_Call_dataclass_kwargs(ctx, node.keywords, called_needed)
 
-            # Create variables for the now-expanded dataclass members.
-            # We don't want to include these now-expanded dataclass members in
-            # the list of used variables (ie to not prune), because passing input arguments to
-            # a function does not mean that they are actually used anywhere in that function.
-            # Setting 'expanding_dataclass_call_parameters' to True during this expansion is
-            # used to achieve the desired behaviour. If parameters are actually used in that function,
-            # they will be added to the list of used variables later on, when traversing
-            # the source code of the function body.
-            ctx.expanding_dataclass_call_parameters = True
-            for arg in added_args:
-                assert not hasattr(arg, "ptr")
-                build_stmt(ctx, arg)
-            for arg in added_keywords:
-                assert not hasattr(arg, "ptr")
-                build_stmt(ctx, arg)
-            ctx.expanding_dataclass_call_parameters = False
+        # Create variables for the now-expanded dataclass members.
+        # We don't want to include these now-expanded dataclass members in
+        # the list of used variables (ie to not prune), because passing input arguments to
+        # a function does not mean that they are actually used anywhere in that function.
+        # Setting 'expanding_dataclass_call_parameters' to True during this expansion is
+        # used to achieve the desired behaviour. If parameters are actually used in that function,
+        # they will be added to the list of used variables later on, when traversing
+        # the source code of the function body.
+        ctx.expanding_dataclass_call_parameters = True
+        for arg in added_args:
+            assert not hasattr(arg, "ptr")
+            build_stmt(ctx, arg)
+        for arg in added_keywords:
+            assert not hasattr(arg, "ptr")
+            build_stmt(ctx, arg)
+        ctx.expanding_dataclass_call_parameters = False
 
         # Check for pure violations.
         # We have to do this after building the statements.
         # If any arg violates pure, then node also violates pure.
-        for arg in node.args:
+        for arg in node_args:
             if arg.violates_pure:
                 node.violates_pure_reason = arg.violates_pure_reason
                 node.violates_pure = True
 
-        for kw in node.keywords:
+        for kw in node_keywords:
             if kw.value.violates_pure:
                 node.violates_pure = True
                 node.violates_pure_reason = kw.value.violates_pure_reason
 
         py_args = []
-        for arg in node.args:
+        for arg in node_args:
             if isinstance(arg, ast.Starred):
                 arg_list = arg.ptr
                 if isinstance(arg_list, Expr) and arg_list.is_tensor():
@@ -338,7 +335,7 @@ class CallTransformer:
                     py_args.append(i)
             else:
                 py_args.append(arg.ptr)
-        py_kwargs = dict(ChainMap(*[keyword.ptr for keyword in node.keywords]))
+        py_kwargs = dict(ChainMap(*[keyword.ptr for keyword in node_keywords]))
 
         if id(func) in [id(print), id(impl.ti_print)]:
             ctx.func.has_print = True
@@ -367,12 +364,12 @@ class CallTransformer:
         try:
             pruning = ctx.global_context.pruning
             if pruning.enforcing:
-                py_args = pruning.filter_call_args(func, node, py_args)
+                py_args = pruning.filter_call_args(func, node, node_args, py_args)
 
             node.ptr = func(*py_args, **py_kwargs)
 
             if not pruning.enforcing:
-                pruning.record_after_call(ctx, func, node)
+                pruning.record_after_call(ctx, func, node, node_args, node_keywords)
         except TypeError as e:
             module = inspect.getmodule(func)
             error_msg = re.sub(r"\bExpr\b", "GsTaichi Expression", str(e))
