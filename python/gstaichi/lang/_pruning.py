@@ -73,7 +73,7 @@ class Pruning:
         # One issue is when calling data-oriented methods, there will be a `self`. We'll detect this
         # by seeing if the childs arg_metas_expanded is exactly 1 longer than len(node.args) + len(node.kwargs)
         callee_func: Func = node.func.ptr.wrapper  # type: ignore
-        has_self = len(node.args) + len(node.keywords) + 1 == len(callee_func.arg_metas_expanded)
+        has_self = type(func) is BoundGsTaichiCallable
         self_offset = 1 if has_self else 0
         for i, arg in enumerate(node.args):
             if type(arg) in {Name}:
@@ -122,6 +122,7 @@ class Pruning:
 
         note that this ONLY handles args, not kwargs
         """
+        # We can be called with callables other than ti.func, so filter those out:
         if (
             type(gstaichi_callable) not in {GsTaichiCallable, BoundGsTaichiCallable}
             or type(gstaichi_callable.wrapper) != Func
