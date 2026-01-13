@@ -1,4 +1,4 @@
-from ast import Name, expr, keyword, Starred
+from ast import Name, Starred, expr, keyword
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
