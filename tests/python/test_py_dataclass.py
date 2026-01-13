@@ -2358,7 +2358,6 @@ def test_pruning_bound_callable_kwargs() -> None:
 
 
 @test_utils.test()
-@pytest.mark.xfail(reason="Not implemented yet")
 def test_pruning_star_args() -> None:
     """
     Designed to test
