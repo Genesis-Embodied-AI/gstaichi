@@ -2,6 +2,7 @@ from ast import Name, Starred, expr, keyword
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
+from ._exceptions import raise_exception
 from ._gstaichi_callable import BoundGsTaichiCallable, GsTaichiCallable
 from .exception import GsTaichiSyntaxError
 from .func import Func
@@ -154,8 +155,11 @@ class Pruning:
             is_starred = type(arg) is Starred
             if is_starred:
                 if i != len(node_args) - 1 or len(node_keywords) != 0:
-                    raise GsTaichiSyntaxError(
-                        "[FUNCDECLARATION][STARNOTLAST] * args can only be present as the last argument of a function"
+                    raise_exception(
+                        GsTaichiSyntaxError,
+                        "* args can only be present as the last argument of a function",
+                        "FUNCDECLARATION",
+                        "STARNOTLAST",
                     )
 
                 # we'll just dump the rest of the py_args in:
