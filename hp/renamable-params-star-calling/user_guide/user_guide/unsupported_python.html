@@ -316,10 +316,10 @@
 <section id="argument-unpacking">
 <h2>Argument unpacking<a class="headerlink" href="#argument-unpacking" title="Link to this heading">#</a></h2>
 <p>i.e. syntax like <code class="docutils literal notranslate"><span class="pre">some_function(*args)</span></code></p>
-<p>Only supported in a very narrow case:</p>
+<p>Argument unpacking is supported in a very narrow case, in order for test_utils in Genesis to work, https://github.com/Genesis-Embodied-AI/Genesis/blob/f711ef981a71558f8961f308066023d369405df4/tests/test_utils.py#L63:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">*args</span></code> must be the last argument in the function call</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">*args</span></code> must not contain any <code class="docutils literal notranslate"><span class="pre">dataclasses.dataclass</span></code> objects</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">*args</span></code> must not contain <code class="docutils literal notranslate"><span class="pre">dataclasses.dataclass</span></code> objects</p></li>
 </ul>
 </section>
 </section>
