@@ -336,6 +336,7 @@ class FuncBase:
             return py_args
 
         fused_py_args: list[Any] = [*py_args, *[arg_meta.default for arg_meta in self.arg_metas_expanded[num_args:]]]
+        errors_l: list[str] = []
         if kwargs:
             num_invalid_kwargs_args = len(kwargs)
             for i in range(num_args, num_arg_metas):
@@ -345,21 +346,32 @@ class FuncBase:
                     fused_py_args[i] = py_arg
                     num_invalid_kwargs_args -= 1
                 elif fused_py_args[i] is _ARG_EMPTY:
-                    raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
+                    errors_l.append(f"Missing argument '{arg_meta.name}'.")
+                    continue
             if num_invalid_kwargs_args:
                 for key, py_arg in kwargs.items():
                     for i, arg_meta in enumerate(self.arg_metas_expanded):
                         if key == arg_meta.name:
                             if i < num_args:
-                                raise GsTaichiSyntaxError(f"Multiple values for argument '{key}'.")
+                                errors_l.append(f"Multiple values for argument '{key}'.")
                             break
                     else:
-                        raise GsTaichiSyntaxError(f"Unexpected argument '{key}'.")
+                        errors_l.append(f"Unexpected argument '{key}'.")
         else:
             for i in range(num_args, num_arg_metas):
                 if fused_py_args[i] is _ARG_EMPTY:
                     arg_meta = self.arg_metas_expanded[i]
-                    raise GsTaichiSyntaxError(f"Missing argument '{arg_meta.name}'.")
+                    errors_l.append(f"Missing argument '{arg_meta.name}'.")
+                    continue
+
+        if errors_l:
+            if len(errors_l) == 1:
+                raise GsTaichiSyntaxError(errors_l[0])
+            else:
+                primary_, secondaries_ = errors_l[0], errors_l[1:]
+                raise GsTaichiSyntaxError(
+                    f"Primary exception: {primary_}\n\nAdditional diagnostic/dev info:\n" "\n".join(secondaries_)
+                )
 
         return tuple(fused_py_args)
 
