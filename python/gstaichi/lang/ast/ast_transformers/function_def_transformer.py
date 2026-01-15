@@ -85,14 +85,13 @@ class FunctionDefTransformer:
         argument_type: Any,
         this_arg_features: tuple[Any, ...],
     ) -> None:
+        pruning = ctx.global_context.pruning
+        func_id = ctx.func.func_id
         if dataclasses.is_dataclass(argument_type):
             ctx.create_variable(argument_name, argument_type)
             for field_idx, field in enumerate(dataclasses.fields(argument_type)):
                 flat_name = create_flat_name(argument_name, field.name)
-                if (
-                    ctx.used_py_dataclass_parameters_enforcing
-                    and flat_name not in ctx.used_py_dataclass_parameters_enforcing
-                ):
+                if pruning.enforcing and flat_name not in pruning.used_vars_by_func_id[func_id]:
                     continue
                 # if a field is a dataclass, then feed back into process_kernel_arg recursively
                 if dataclasses.is_dataclass(field.type):
