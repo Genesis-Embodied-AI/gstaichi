@@ -5,18 +5,16 @@
 - added dataclasses.dataclass structs:
     - work with both ndarrays and fields (cf ti.struct (field only), ti.dataclass (field only), ti.data_oriented (field only), argpack (ndarray only))
     - can be passed into child `ti.func`tions (cf argpack)
+    - can be nested
     - does not affect kernel runtime speed (kernels see only the underlying arrays, no indirection is added within the kernel layer)
-- removed GUI/GGUI, C-API, AOT, DX11, DX12, IOS, Android, OpenGL, GLES
-
-Planned features:
-- reduce warm cache launch latency
-- (maybe) add launch args caching, to reduce launch latency
-- make dataclasses.dataclass nestable
-
-Planned pruning:
-- remove argpack
-- remove ti CLI
-- remove support for NVidia GPUs earlier than sm_60/Pascal
+- removed GUI/GGUI, C-API, AOT, DX11, DX12, IOS, Android, OpenGL, GLES, argpack, CLI
+- reduced warm cache launch latency
+- reduced launch latency
+- added PTX caching
+- added `to_dlpack`
+- upgraded to LLVM 20
+- enabled ARM
+- enabled AMD GPU (experimental)
 
 # What is gstaichi?
 
