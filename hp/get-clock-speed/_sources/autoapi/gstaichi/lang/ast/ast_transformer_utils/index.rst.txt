@@ -169,16 +169,24 @@ Module Contents
       :type:  str
 
 
-.. py:class:: ASTTransformerGlobalContext(current_kernel: Kernel, currently_compiling_materialize_key)
+.. py:class:: ASTTransformerGlobalContext(current_kernel: Kernel, pruning: gstaichi.lang._pruning.Pruning, currently_compiling_materialize_key, pass_idx: int)
 
    .. py:attribute:: current_kernel
       :type:  Kernel
 
 
+   .. py:attribute:: pruning
+      :type:  gstaichi.lang._pruning.Pruning
+
+
    .. py:attribute:: currently_compiling_materialize_key
 
 
-.. py:class:: ASTTransformerFuncContext(global_context: ASTTransformerGlobalContext, template_slot_locations, end_lineno: int, is_kernel: bool, func: gstaichi.lang._func_base.FuncBase, arg_features: list[tuple[Any, Ellipsis]] | None, global_vars: dict[str, Any], template_vars: dict[str, Any], is_pure: bool, py_args: tuple[Any, Ellipsis], file: str, src: list[str], start_lineno: int, ast_builder: gstaichi._lib.core.gstaichi_python.ASTBuilder | None, is_real_function: bool, autodiff_mode: AutodiffMode, raise_on_templated_floats: bool, used_py_dataclass_parameters_collecting: set[str], used_py_dataclass_parameters_enforcing: set[str] | None)
+   .. py:attribute:: pass_idx
+      :type:  int
+
+
+.. py:class:: ASTTransformerFuncContext(global_context: ASTTransformerGlobalContext, template_slot_locations, end_lineno: int, is_kernel: bool, func: gstaichi.lang._func_base.FuncBase, arg_features: list[tuple[Any, Ellipsis]] | None, global_vars: dict[str, Any], template_vars: dict[str, Any], is_pure: bool, py_args: tuple[Any, Ellipsis], file: str, src: list[str], start_lineno: int, ast_builder: gstaichi._lib.core.gstaichi_python.ASTBuilder | None, is_real_function: bool, autodiff_mode: AutodiffMode, raise_on_templated_floats: bool)
 
    .. py:attribute:: global_context
       :type:  ASTTransformerGlobalContext
@@ -308,12 +316,6 @@ Module Contents
 
 
    .. py:attribute:: raise_on_templated_floats
-
-
-   .. py:attribute:: used_py_dataclass_parameters_collecting
-
-
-   .. py:attribute:: used_py_dataclass_parameters_enforcing
 
 
    .. py:attribute:: expanding_dataclass_call_parameters
