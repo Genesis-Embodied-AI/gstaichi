@@ -229,7 +229,7 @@ class CallTransformer:
                 for field in dataclasses.fields(dataclass_type):
                     src_name = create_flat_name(kwarg.value.id, field.name)
                     child_name = create_flat_name(kwarg.arg, field.name)
-                    # Note: using `called_needed` instead of `called_needed is not None` will cause
+                    # Note: using `used_args` instead of `used_args is not None` will cause
                     # a bug, when it is empty set.
                     if used_args is not None and child_name not in used_args:
                         continue
@@ -325,9 +325,9 @@ class CallTransformer:
 
         py_args = []
         for arg in node_args:
-            if isinstance(arg, ast.Starred):
+            if type(arg) is ast.Starred:
                 arg_list = arg.ptr
-                if isinstance(arg_list, Expr) and arg_list.is_tensor():
+                if type(arg_list) is Expr and arg_list.is_tensor():
                     # Expand Expr with Matrix-type return into list of Exprs
                     arg_list = [Expr(x) for x in ctx.ast_builder.expand_exprs([arg_list.ptr])]
 
@@ -364,7 +364,7 @@ class CallTransformer:
         try:
             pruning = ctx.global_context.pruning
             if pruning.enforcing:
-                py_args = pruning.filter_call_args(func, node, node_args, py_args)
+                py_args = pruning.filter_call_args(func, node, node_args, node_keywords, py_args)
 
             node.ptr = func(*py_args, **py_kwargs)
 

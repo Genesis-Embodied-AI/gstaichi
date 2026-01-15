@@ -1,8 +1,10 @@
-from ast import Name, expr, keyword
+from ast import Name, Starred, expr, keyword
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
+from ._exceptions import raise_exception
 from ._gstaichi_callable import BoundGsTaichiCallable, GsTaichiCallable
+from .exception import GsTaichiSyntaxError
 from .func import Func
 from .kernel_arguments import ArgMetadata
 
@@ -121,6 +123,7 @@ class Pruning:
         gstaichi_callable: "GsTaichiCallable",
         node: "ast.Call",
         node_args: list[expr],
+        node_keywords: list[keyword],
         py_args: list[Any],
     ) -> list[Any]:
         """
@@ -149,6 +152,19 @@ class Pruning:
                 callee_metas_pruned.append(_callee_meta)
         callee_metas = callee_metas_pruned
         for i, arg in enumerate(node_args):
+            is_starred = type(arg) is Starred
+            if is_starred:
+                if i != len(node_args) - 1 or len(node_keywords) != 0:
+                    raise_exception(
+                        ExceptionClass=GsTaichiSyntaxError,
+                        msg="* args can only be present as the last argument of a function",
+                        err_code="STARNOTLAST",
+                    )
+
+                # we'll just dump the rest of the py_args in:
+                new_args.extend(py_args[i:])
+                callee_param_id += len(py_args[i:])
+                break
             if type(arg) in {Name}:
                 caller_arg_name = arg.id  # type: ignore
                 if caller_arg_name.startswith("__ti_"):
