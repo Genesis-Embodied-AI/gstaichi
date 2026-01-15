@@ -24,12 +24,7 @@ Module Contents
 
 
    .. py:attribute:: function_counter
-      :value: 0
-
-
-
-   .. py:attribute:: func_id
-      :value: 0
+      :value: 1
 
 
 

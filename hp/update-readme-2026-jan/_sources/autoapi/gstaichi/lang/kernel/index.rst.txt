@@ -25,7 +25,7 @@ Module Contents
    .. py:method:: populate_launch_ctx_from_cache(args_hash: gstaichi.lang._kernel_types.ArgsHash, launch_ctx: gstaichi._lib.core.gstaichi_python.KernelLaunchContext) -> bool
 
 
-.. py:class:: ASTGenerator(ctx: gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext, kernel_name: str, current_kernel: Kernel, only_parse_function_def: bool, tree: ast.Module, used_py_dataclass_parameters: set[str] | None, dump_ast: bool)
+.. py:class:: ASTGenerator(ctx: gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext, kernel_name: str, current_kernel: Kernel, only_parse_function_def: bool, tree: ast.Module, dump_ast: bool)
 
    .. py:attribute:: runtime
 
@@ -43,9 +43,6 @@ Module Contents
 
 
    .. py:attribute:: only_parse_function_def
-
-
-   .. py:attribute:: used_py_dataclass_parameters
 
 
    .. py:attribute:: dump_ast
@@ -113,16 +110,8 @@ Module Contents
       :type:  dict[gstaichi.lang._kernel_types.CompiledKernelKeyType, gstaichi._lib.core.gstaichi_python.CompiledKernelData]
 
 
-   .. py:attribute:: used_py_dataclass_parameters_by_key_collecting
-      :type:  dict[gstaichi.lang._kernel_types.CompiledKernelKeyType, set[str]]
-
-
    .. py:attribute:: used_py_dataclass_parameters_by_key_enforcing
       :type:  dict[gstaichi.lang._kernel_types.CompiledKernelKeyType, set[str]]
-
-
-   .. py:attribute:: used_py_dataclass_parameters_by_key_enforcing_dotted
-      :type:  dict[gstaichi.lang._kernel_types.CompiledKernelKeyType, set[tuple[str, Ellipsis]]]
 
 
    .. py:attribute:: src_ll_cache_observations
