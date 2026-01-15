@@ -357,7 +357,8 @@
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/intrinsics/index.html#gstaichi.lang.intrinsics.clock_speed_hz">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">clock_speed_hz</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Returns the clock speed in Hz of the compute device, i.e. GPU.</span>
+<span class="sd">    Returns the clock speed in Hz of the compute device, i.e. GPU. Throws NotImplementedError on</span>
+<span class="sd">    unsupported architectures.</span>
 
 <span class="sd">    Note that this is the nominal speed, NOT the current dynamic speed.</span>
 

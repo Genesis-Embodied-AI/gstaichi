@@ -40,7 +40,8 @@ Module Contents
 
 .. py:function:: clock_speed_hz()
 
-   Returns the clock speed in Hz of the compute device, i.e. GPU.
+   Returns the clock speed in Hz of the compute device, i.e. GPU. Throws NotImplementedError on
+   unsupported architectures.
 
    Note that this is the nominal speed, NOT the current dynamic speed.
 
