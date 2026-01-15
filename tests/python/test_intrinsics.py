@@ -4,7 +4,7 @@ import gstaichi as ti
 
 from tests import test_utils
 
-clock_speed_supported_archs = ti.cuda
+clock_freq_supported_archs = ti.cuda
 
 
 def _arch_supports_clock(arch):
@@ -69,15 +69,15 @@ def test_clock_accuracy():
         assert -1 < a[i] / a[0] - (i + 1) < 1
 
 
-@test_utils.test(arch=clock_speed_supported_archs)
-def test_clock_speed_hz_cuda():
-    clock_rate_hz = ti.clock_speed_hz()
+@test_utils.test(arch=clock_freq_supported_archs)
+def test_clock_freq_hz_cuda():
+    clock_rate_hz = ti.clock_freq_hz()
     assert clock_rate_hz > 0, "CUDA clock speed should be greater than 0"
     assert clock_rate_hz > 100e6, f"CUDA clock speed {clock_rate_hz} Hz seems too low"
     assert clock_rate_hz < 5e9, f"CUDA clock speed {clock_rate_hz} Hz seems too high"
 
 
-@test_utils.test(exclude=clock_speed_supported_archs)
-def test_clock_speed_hz_unsupported():
+@test_utils.test(exclude=clock_freq_supported_archs)
+def test_clock_freq_hz_unsupported():
     with pytest.raises(NotImplementedError):
-        ti.clock_speed_hz()
+        ti.clock_freq_hz()

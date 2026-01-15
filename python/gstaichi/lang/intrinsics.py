@@ -38,7 +38,7 @@ def clock_counter():
     return 0
 
 
-def clock_speed_hz():
+def clock_freq_hz():
     """
     Returns the clock speed in Hz of the compute device, i.e. GPU. Throws NotImplementedError on
     unsupported architectures.
@@ -58,10 +58,10 @@ def clock_speed_hz():
     if arch == _ti_core.cuda:
         clock_rate_khz = _ti_core.query_int64("cuda_clock_rate_khz")
         return float(clock_rate_khz * 1000)
-    raise NotImplementedError(f"{clock_speed_hz.__name__} not implemented for arch {arch.name}")
+    raise NotImplementedError(f"{clock_freq_hz.__name__} not implemented for arch {arch.name}")
 
 
 __all__ = [
     "clock_counter",
-    "clock_speed_hz",
+    "clock_freq_hz",
 ]
