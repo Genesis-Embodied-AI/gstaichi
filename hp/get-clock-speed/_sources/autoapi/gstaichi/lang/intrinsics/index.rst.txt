@@ -10,7 +10,7 @@ Functions
 .. autoapisummary::
 
    gstaichi.lang.intrinsics.clock_counter
-   gstaichi.lang.intrinsics.clock_speed_hz
+   gstaichi.lang.intrinsics.clock_freq_hz
 
 
 Module Contents
@@ -38,7 +38,7 @@ Module Contents
    Comparing cycle counts across different backends or hardware is not meaningful.
 
 
-.. py:function:: clock_speed_hz()
+.. py:function:: clock_freq_hz()
 
    Returns the clock speed in Hz of the compute device, i.e. GPU. Throws NotImplementedError on
    unsupported architectures.

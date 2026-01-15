@@ -423,7 +423,7 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#gstaichi.lang.intrinsics.clock_counter" title="gstaichi.lang.intrinsics.clock_counter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clock_counter</span></code></a>()</p></td>
 <td><p>Returns the current value of a hardware cycle counter.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#gstaichi.lang.intrinsics.clock_speed_hz" title="gstaichi.lang.intrinsics.clock_speed_hz"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clock_speed_hz</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#gstaichi.lang.intrinsics.clock_freq_hz" title="gstaichi.lang.intrinsics.clock_freq_hz"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clock_freq_hz</span></code></a>()</p></td>
 <td><p>Returns the clock speed in Hz of the compute device, i.e. GPU. Throws NotImplementedError on</p></td>
 </tr>
 </tbody>
@@ -456,8 +456,8 @@ Comparing cycle counts across different backends or hardware is not meaningful.<
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="gstaichi.lang.intrinsics.clock_speed_hz">
-<span class="sig-prename descclassname"><span class="pre">gstaichi.lang.intrinsics.</span></span><span class="sig-name descname"><span class="pre">clock_speed_hz</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/gstaichi/lang/intrinsics.html#clock_speed_hz"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.intrinsics.clock_speed_hz" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="gstaichi.lang.intrinsics.clock_freq_hz">
+<span class="sig-prename descclassname"><span class="pre">gstaichi.lang.intrinsics.</span></span><span class="sig-name descname"><span class="pre">clock_freq_hz</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/gstaichi/lang/intrinsics.html#clock_freq_hz"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#gstaichi.lang.intrinsics.clock_freq_hz" title="Link to this definition">#</a></dt>
 <dd><p>Returns the clock speed in Hz of the compute device, i.e. GPU. Throws NotImplementedError on
 unsupported architectures.</p>
 <p>Note that this is the nominal speed, NOT the current dynamic speed.</p>
@@ -522,7 +522,7 @@ sudo nvidia-smi -lgc 1200</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.intrinsics.clock_counter"><code class="docutils literal notranslate"><span class="pre">clock_counter()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.intrinsics.clock_speed_hz"><code class="docutils literal notranslate"><span class="pre">clock_speed_hz()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gstaichi.lang.intrinsics.clock_freq_hz"><code class="docutils literal notranslate"><span class="pre">clock_freq_hz()</span></code></a></li>
 </ul>
 </li>
 </ul>
