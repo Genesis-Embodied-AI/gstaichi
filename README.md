@@ -8,9 +8,15 @@
     - can be nested
     - does not affect kernel runtime speed (kernels see only the underlying arrays, no indirection is added within the kernel layer)
 - removed GUI/GGUI, C-API, AOT, DX11, DX12, IOS, Android, OpenGL, GLES, argpack, CLI
-- reduced warm cache launch latency
 - reduced launch latency
-- added PTX caching
+    - for example, release 4.0.0 increased the speed of non-batched ndarray on CPU by 4.5x in Genesis benchmarks
+    - release 3.2.0 added many optimizations so that ndarrays run much faster, changing from 11x slower than fields before this release, to 1.8x slower than fields with this release. (on a specific Genesis test, using a 5090 GPU)
+- reduced warm cache launch latency
+    - concretely, on Genesis simulator, running on linux, with an NVidia 5090 GPU, cache load time for single_franka_envs.py changed from 7.2s to 0.3s.
+baseline: 7.2s
+with SRC-LL cache added: 2.9s
+with PTX cache added: 4.6s
+with both SRC-LL cache and PTX cache added: 0.3s
 - added `to_dlpack`
 - upgraded to LLVM 20
 - enabled ARM
