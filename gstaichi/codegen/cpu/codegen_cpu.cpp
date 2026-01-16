@@ -290,12 +290,12 @@ void KernelCodeGenCPU::optimize_module(llvm::Module *module) {
   pb.registerLoopAnalyses(lam);
   pb.crossRegisterProxies(lam, fam, cgam, mam);
 
-  #ifdef _WIN32
-    // Use O2 on Windows for faster compilation
-    auto opt_level = llvm::OptimizationLevel::O1;
-  #else
-    auto opt_level = llvm::OptimizationLevel::O3;
-  #endif
+#ifdef _WIN32
+  // Use O2 on Windows for faster compilation
+  auto opt_level = llvm::OptimizationLevel::O1;
+#else
+  auto opt_level = llvm::OptimizationLevel::O3;
+#endif
   llvm::ModulePassManager mpm = pb.buildPerModuleDefaultPipeline(opt_level);
 
   mpm.run(*module, mam);
