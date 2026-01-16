@@ -31,7 +31,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/togglebutton.css?v=9c3e77be" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css" />
@@ -50,7 +50,7 @@
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
     <script>let toggleOpenOnPrint = 'true';</script>
-    <script src="../../../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script src="../../../_static/togglebutton.js?v=1ae7504c"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
@@ -348,7 +348,7 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">Func</span><span class="p">(</span><span class="n">FuncBase</span><span class="p">):</span>
 <div class="viewcode-block" id="Func.function_counter">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/func/index.html#gstaichi.lang.func.Func.function_counter">[docs]</a>
-    <span class="n">function_counter</span> <span class="o">=</span> <span class="mi">0</span></div>
+    <span class="n">function_counter</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># MUST start from &gt;= 1, because 0 means &quot;kernel&quot;.</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">_classfunc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">_pyfunc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_real_function</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -358,11 +358,8 @@
             <span class="n">is_kernel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">is_classkernel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">is_real_function</span><span class="o">=</span><span class="n">is_real_function</span><span class="p">,</span>
+            <span class="n">func_id</span><span class="o">=</span><span class="n">Func</span><span class="o">.</span><span class="n">function_counter</span><span class="p">,</span>
         <span class="p">)</span>
-<div class="viewcode-block" id="Func.func_id">
-<a class="viewcode-back" href="../../../autoapi/gstaichi/lang/func/index.html#gstaichi.lang.func.Func.func_id">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">func_id</span> <span class="o">=</span> <span class="n">Func</span><span class="o">.</span><span class="n">function_counter</span></div>
-
         <span class="n">Func</span><span class="o">.</span><span class="n">function_counter</span> <span class="o">+=</span> <span class="mi">1</span>
 <div class="viewcode-block" id="Func.compiled">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/func/index.html#gstaichi.lang.func.Func.compiled">[docs]</a>
@@ -412,17 +409,11 @@
             <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">instance_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">compiled</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">do_compile</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">py_args</span><span class="p">,</span> <span class="n">arg_features</span><span class="o">=</span><span class="n">arg_features</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">func_call_rvalue</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">py_args</span><span class="p">)</span>
-        <span class="n">current_args_key</span> <span class="o">=</span> <span class="n">global_context</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span>
-        <span class="k">assert</span> <span class="n">current_args_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="n">used_by_dataclass_parameters_enforcing</span> <span class="o">=</span> <span class="n">current_kernel</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_by_key_enforcing</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-            <span class="n">current_args_key</span>
-        <span class="p">)</span>
         <span class="n">tree</span><span class="p">,</span> <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tree_and_ctx</span><span class="p">(</span>
             <span class="n">is_kernel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">py_args</span><span class="o">=</span><span class="n">py_args</span><span class="p">,</span>
             <span class="n">ast_builder</span><span class="o">=</span><span class="n">current_kernel</span><span class="o">.</span><span class="n">ast_builder</span><span class="p">(),</span>
             <span class="n">is_real_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">is_real_function</span><span class="p">,</span>
-            <span class="n">used_py_dataclass_parameters_enforcing</span><span class="o">=</span><span class="n">used_by_dataclass_parameters_enforcing</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="n">struct_locals</span> <span class="o">=</span> <span class="n">_kernel_impl_dataclass</span><span class="o">.</span><span class="n">extract_struct_locals_from_context</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
@@ -491,7 +482,6 @@
             <span class="n">py_args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
             <span class="n">arg_features</span><span class="o">=</span><span class="n">arg_features</span><span class="p">,</span>
             <span class="n">is_real_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">is_real_function</span><span class="p">,</span>
-            <span class="n">used_py_dataclass_parameters_enforcing</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">fn</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">prog</span><span class="o">.</span><span class="n">create_function</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
 

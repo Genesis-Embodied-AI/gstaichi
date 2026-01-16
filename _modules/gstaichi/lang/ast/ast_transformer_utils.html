@@ -31,7 +31,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../../../../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/togglebutton.css?v=9c3e77be" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/css/custom.css" />
@@ -50,7 +50,7 @@
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
     <script>let toggleOpenOnPrint = 'true';</script>
-    <script src="../../../../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script src="../../../../_static/togglebutton.js?v=1ae7504c"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
@@ -334,6 +334,7 @@
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">.._func_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">FuncBase</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.._pruning</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pruning</span>
 
 <div class="viewcode-block" id="AutodiffMode">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.AutodiffMode">[docs]</a>
@@ -587,17 +588,23 @@
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerGlobalContext">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ASTTransformerGlobalContext</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">current_kernel</span><span class="p">:</span> <span class="s2">&quot;Kernel&quot;</span><span class="p">,</span>
-        <span class="n">currently_compiling_materialize_key</span><span class="p">,</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">current_kernel</span><span class="p">:</span> <span class="s2">&quot;Kernel&quot;</span><span class="p">,</span> <span class="n">pruning</span><span class="p">:</span> <span class="s2">&quot;Pruning&quot;</span><span class="p">,</span> <span class="n">currently_compiling_materialize_key</span><span class="p">,</span> <span class="n">pass_idx</span><span class="p">:</span> <span class="nb">int</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <div class="viewcode-block" id="ASTTransformerGlobalContext.current_kernel">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerGlobalContext.current_kernel">[docs]</a>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_kernel</span><span class="p">:</span> <span class="s2">&quot;Kernel&quot;</span> <span class="o">=</span> <span class="n">current_kernel</span></div>
 
+<div class="viewcode-block" id="ASTTransformerGlobalContext.pruning">
+<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerGlobalContext.pruning">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pruning</span><span class="p">:</span> <span class="s2">&quot;Pruning&quot;</span> <span class="o">=</span> <span class="n">pruning</span></div>
+
 <div class="viewcode-block" id="ASTTransformerGlobalContext.currently_compiling_materialize_key">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerGlobalContext.currently_compiling_materialize_key">[docs]</a>
         <span class="bp">self</span><span class="o">.</span><span class="n">currently_compiling_materialize_key</span> <span class="o">=</span> <span class="n">currently_compiling_materialize_key</span></div>
+
+<div class="viewcode-block" id="ASTTransformerGlobalContext.pass_idx">
+<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerGlobalContext.pass_idx">[docs]</a>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pass_idx</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">pass_idx</span></div>
 </div>
 
 
@@ -624,10 +631,6 @@
         <span class="n">is_real_function</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
         <span class="n">autodiff_mode</span><span class="p">:</span> <span class="n">AutodiffMode</span><span class="p">,</span>
         <span class="n">raise_on_templated_floats</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
-        <span class="c1"># during 1st pass, we collect the names of used parameters</span>
-        <span class="n">used_py_dataclass_parameters_collecting</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-        <span class="c1"># during 2nd pass, we only handle these names</span>
-        <span class="n">used_py_dataclass_parameters_enforcing</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi</span><span class="w"> </span><span class="kn">import</span> <span class="n">extension</span>  <span class="c1"># pylint: disable=import-outside-toplevel</span>
 
@@ -759,14 +762,6 @@
 <div class="viewcode-block" id="ASTTransformerFuncContext.raise_on_templated_floats">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.raise_on_templated_floats">[docs]</a>
         <span class="bp">self</span><span class="o">.</span><span class="n">raise_on_templated_floats</span> <span class="o">=</span> <span class="n">raise_on_templated_floats</span></div>
-
-<div class="viewcode-block" id="ASTTransformerFuncContext.used_py_dataclass_parameters_collecting">
-<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.used_py_dataclass_parameters_collecting">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_collecting</span> <span class="o">=</span> <span class="n">used_py_dataclass_parameters_collecting</span></div>
-
-<div class="viewcode-block" id="ASTTransformerFuncContext.used_py_dataclass_parameters_enforcing">
-<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.used_py_dataclass_parameters_enforcing">[docs]</a>
-        <span class="bp">self</span><span class="o">.</span><span class="n">used_py_dataclass_parameters_enforcing</span> <span class="o">=</span> <span class="n">used_py_dataclass_parameters_enforcing</span></div>
 
 <div class="viewcode-block" id="ASTTransformerFuncContext.expanding_dataclass_call_parameters">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer_utils/index.html#gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext.expanding_dataclass_call_parameters">[docs]</a>
