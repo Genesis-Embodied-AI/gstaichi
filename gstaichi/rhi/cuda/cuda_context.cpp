@@ -108,6 +108,13 @@ std::string CUDAContext::get_device_name() {
   return str;
 }
 
+int64_t CUDAContext::get_clock_rate_khz() const {
+  int clock_rate_khz = 0;
+  driver_.device_get_attribute(&clock_rate_khz, CU_DEVICE_ATTRIBUTE_CLOCK_RATE,
+                               device_);
+  return static_cast<int64_t>(clock_rate_khz);
+}
+
 void CUDAContext::launch(void *func,
                          const std::string &task_name,
                          std::vector<void *> arg_pointers,
