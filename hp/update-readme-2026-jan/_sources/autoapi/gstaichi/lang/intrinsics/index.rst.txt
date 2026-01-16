@@ -10,6 +10,7 @@ Functions
 .. autoapisummary::
 
    gstaichi.lang.intrinsics.clock_counter
+   gstaichi.lang.intrinsics.clock_freq_hz
 
 
 Module Contents
@@ -35,5 +36,22 @@ Module Contents
 
    Use this for relative timing measurements within the same backend and run.
    Comparing cycle counts across different backends or hardware is not meaningful.
+
+
+.. py:function:: clock_freq_hz()
+
+   Returns the clock speed in Hz of the compute device, i.e. GPU. Throws NotImplementedError on
+   unsupported architectures.
+
+   Note that this is the nominal speed, NOT the current dynamic speed.
+
+   To set to fixed speed, per AI (untested):
+
+   # Lock GPU clock and memory clock to specific values
+   sudo nvidia-smi -lgc <gpu_clock_mhz>
+   sudo nvidia-smi -lmc <memory_clock_mhz>
+
+   # Example: Lock to 1200 MHz GPU clock
+   sudo nvidia-smi -lgc 1200
 
 
