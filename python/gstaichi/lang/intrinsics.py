@@ -38,6 +38,30 @@ def clock_counter():
     return 0
 
 
+def clock_freq_hz():
+    """
+    Returns the clock speed in Hz of the compute device, i.e. GPU. Throws NotImplementedError on
+    unsupported architectures.
+
+    Note that this is the nominal speed, NOT the current dynamic speed.
+
+    To set to fixed speed, per AI (untested):
+
+    # Lock GPU clock and memory clock to specific values
+    sudo nvidia-smi -lgc <gpu_clock_mhz>
+    sudo nvidia-smi -lmc <memory_clock_mhz>
+
+    # Example: Lock to 1200 MHz GPU clock
+    sudo nvidia-smi -lgc 1200
+    """
+    arch = impl.get_runtime().prog.config().arch
+    if arch == _ti_core.cuda:
+        clock_rate_khz = _ti_core.query_int64("cuda_clock_rate_khz")
+        return float(clock_rate_khz * 1000)
+    raise NotImplementedError(f"{clock_freq_hz.__name__} not implemented for arch {arch.name}")
+
+
 __all__ = [
     "clock_counter",
+    "clock_freq_hz",
 ]

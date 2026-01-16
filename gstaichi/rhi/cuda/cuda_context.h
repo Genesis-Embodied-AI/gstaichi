@@ -75,6 +75,8 @@ class CUDAContext {
     return compute_capability_;
   }
 
+  int64_t get_clock_rate_khz() const;
+
   bool supports_mem_pool() const {
     return supports_mem_pool_;
   }
