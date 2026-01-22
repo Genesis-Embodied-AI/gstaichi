@@ -13,7 +13,7 @@
     - release 3.2.0 added many optimizations so that ndarrays run much faster, changing from 11x slower than fields before this release, to 1.8x slower than fields with this release. (on a specific Genesis test, using a 5090 GPU)
 - reduced warm cache launch latency
     - concretely, on Genesis simulator, running on linux, with an NVidia 5090 GPU, cache load time for single_franka_envs.py changed from 7.2s to 0.3s.
-- added `to_dlpack`
+- added `to_dlpack`, which enables zero-copy memory sharing between torch and gstaichi, avoiding going through kernels for data-accessors. This significantly improves performance.
 - upgraded to LLVM 20
 - enabled ARM
 
