@@ -1,22 +1,21 @@
 # GsTaichi
 
 [GsTaichi](https://github.com/Genesis-Embodied-AI/gstaichi) was forked in June 2025. This repository (or gstaichi) is now a fully independent project with no intention of maintaining backward compatibility with the original taichi. Whilst the repo largely resembles upstream for now, we have made the following changes:
-- revamped continuous integration, to run using recent python versions (up to 3.13), recent mac os x versions (up to 15), and to run reliably (at least 80% of runs with correct code succeed)
+- revamped continuous integration, to run using recent python versions (up to 3.13), recent mac os x versions (up to 15), and to run reliably (at least 90% of runs with correct code succeed)
 - added dataclasses.dataclass structs:
     - work with both ndarrays and fields (cf ti.struct (field only), ti.dataclass (field only), ti.data_oriented (field only), argpack (ndarray only))
     - can be passed into child `ti.func`tions (cf argpack)
+    - can be nested
     - does not affect kernel runtime speed (kernels see only the underlying arrays, no indirection is added within the kernel layer)
-- removed GUI/GGUI, C-API, AOT, DX11, DX12, IOS, Android, OpenGL, GLES
-
-Planned features:
-- reduce warm cache launch latency
-- (maybe) add launch args caching, to reduce launch latency
-- make dataclasses.dataclass nestable
-
-Planned pruning:
-- remove argpack
-- remove ti CLI
-- remove support for NVidia GPUs earlier than sm_60/Pascal
+- removed GUI/GGUI, C-API, AOT, DX11, DX12, IOS, Android, OpenGL, GLES, argpack, CLI
+- reduced launch latency
+    - for example, release 4.0.0 increased the speed of non-batched ndarray on CPU by 4.5x in Genesis benchmarks
+    - release 3.2.0 added many optimizations so that ndarrays run much faster, changing from 11x slower than fields before this release, to 1.8x slower than fields with this release. (on a specific Genesis test, using a 5090 GPU)
+- reduced warm cache launch latency
+    - concretely, on Genesis simulator, running on linux, with an NVidia 5090 GPU, cache load time for single_franka_envs.py changed from 7.2s to 0.3s.
+- added `to_dlpack`, which enables zero-copy memory sharing between torch and gstaichi, avoiding going through kernels for data-accessors. This significantly improves performance.
+- upgraded to LLVM 20
+- enabled ARM
 
 # What is gstaichi?
 
