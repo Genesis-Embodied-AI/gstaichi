@@ -26,15 +26,13 @@ class KernelSpeedChecker:
         self._fastest_by_geometry_hash: dict[int, DispatchKernelImpl] = defaultdict(None)
 
     def register(
-        self,
-        kernel: GsTaichiCallable | None = None,
-        *,
-        is_compatible: Callable[[dict], bool] | None=None
+        self, kernel: GsTaichiCallable | None = None, *, is_compatible: Callable[[dict], bool] | None = None
     ) -> Callable[[GsTaichiCallable], GsTaichiCallable]:
         def decorator(func: GsTaichiCallable) -> GsTaichiCallable:
-            impl = DispatchKernelImpl(underlying=func, is_compatible=is_compatible)
-            self._underlyings.append(impl)
+            dispatch_impl = DispatchKernelImpl(underlying=func, is_compatible=is_compatible)
+            self._underlyings.append(dispatch_impl)
             return func
+
         if kernel is not None:
             return decorator(kernel)
         return decorator
@@ -69,6 +67,8 @@ def perf_dispatch(*, get_geometry_hash: Callable):
     def decorator(fn: GsTaichiCallable):
         speed_checker = KernelSpeedChecker(get_geometry_hash=get_geometry_hash)
         return speed_checker
+
     return decorator
+
 
 __all__ = ["perf_dispatch"]

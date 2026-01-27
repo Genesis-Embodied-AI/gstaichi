@@ -13,9 +13,8 @@ def test_perf_dispatch() -> None:
         a_shape0_lt2 = 1
         a_shape0_ge2 = 2
 
-    @ti.perf_dispatch(get_geometry_hash=lambda a,  b: hash(a.shape + c.shape))
-    def my_func1(a: ti.types.NDArray[ti.i32, 1], c: ti.types.NDArray[ti.i32, 1]):
-        ...
+    @ti.perf_dispatch(get_geometry_hash=lambda a, b: hash(a.shape + c.shape))
+    def my_func1(a: ti.types.NDArray[ti.i32, 1], c: ti.types.NDArray[ti.i32, 1]): ...
 
     @my_func1.register
     @ti.kernel
@@ -29,7 +28,7 @@ def test_perf_dispatch() -> None:
     @my_func1.register(is_compatible=lambda a, c: a.shape[0] < 2)
     @ti.kernel
     def my_func1_impl_a_shape0_lt_2(a: ti.types.NDArray[ti.i32, 1], c: ti.types.NDArray[ti.i32, 1]) -> None:
-        print('my_func1_impl_a_shape0_lt_2')
+        print("my_func1_impl_a_shape0_lt_2")
         B = a.shape[0]
         ti.loop_config(serialize=False)
         for b in range(B):
@@ -39,7 +38,7 @@ def test_perf_dispatch() -> None:
     @my_func1.register(is_compatible=lambda a, c: a.shape[0] >= 2)
     @ti.kernel
     def my_func1_impl_a_shape0_ge_2(a: ti.types.NDArray[ti.i32, 1], c: ti.types.NDArray[ti.i32, 1]) -> None:
-        print('my_func1_impl_a_shape0_ge_2')
+        print("my_func1_impl_a_shape0_ge_2")
         B = a.shape[0]
         ti.loop_config(serialize=False)
         for b in range(B):
