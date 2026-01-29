@@ -60,11 +60,12 @@ void JITModuleCUDA::launch(const std::string &name,
                            std::size_t block_dim,
                            std::size_t dynamic_shared_mem_bytes,
                            const std::vector<void *> &arg_pointers,
-                           const std::vector<int> &arg_sizes) {
+                           const std::vector<int> &arg_sizes,
+                           void *stream) {
   auto func = lookup_function(name);
   CUDAContext::get_instance().launch(func, name, arg_pointers, arg_sizes,
                                      grid_dim, block_dim,
-                                     dynamic_shared_mem_bytes);
+                                     dynamic_shared_mem_bytes, stream);
 }
 
 bool JITModuleCUDA::direct_dispatch() const {

@@ -10,7 +10,8 @@ class KernelLauncher {
   using Handle = KernelLaunchHandle;
 
   virtual void launch_kernel(const CompiledKernelData &compiled_kernel_data,
-                             LaunchContextBuilder &ctx) = 0;
+                             LaunchContextBuilder &ctx,
+                             void *stream = nullptr) = 0;
 
   virtual ~KernelLauncher() = default;
 };

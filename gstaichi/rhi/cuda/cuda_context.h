@@ -49,7 +49,8 @@ class CUDAContext {
               std::vector<int> arg_sizes,
               unsigned grid_dim,
               unsigned block_dim,
-              std::size_t dynamic_shared_mem_bytes);
+              std::size_t dynamic_shared_mem_bytes,
+              void *stream = nullptr);
 
   void set_profiler(KernelProfilerBase *profiler) {
     profiler_ = profiler;

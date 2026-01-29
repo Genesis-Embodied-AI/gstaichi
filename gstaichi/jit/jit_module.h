@@ -85,7 +85,8 @@ class JITModule {
                       std::size_t block_dim,
                       std::size_t shared_mem_bytes,
                       const std::vector<void *> &arg_pointers,
-                      const std::vector<int> &arg_sizes) {
+                      const std::vector<int> &arg_sizes,
+                      void *stream = nullptr) {
     TI_NOT_IMPLEMENTED
   }
 
