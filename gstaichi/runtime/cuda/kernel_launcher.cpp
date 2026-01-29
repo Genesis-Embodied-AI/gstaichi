@@ -13,7 +13,8 @@ bool KernelLauncher::on_cuda_device(void *ptr) {
 }
 
 void KernelLauncher::launch_llvm_kernel(Handle handle,
-                                        LaunchContextBuilder &ctx) {
+                                        LaunchContextBuilder &ctx,
+                                        void *stream) {
   TI_ASSERT(handle.get_launch_id() < contexts_.size());
   auto launcher_ctx = contexts_[handle.get_launch_id()];
   auto *executor = get_runtime_executor();
@@ -140,7 +141,7 @@ void KernelLauncher::launch_llvm_kernel(Handle handle,
     TI_TRACE("Launching kernel {}<<<{}, {}>>>", task.name, task.grid_dim,
              task.block_dim);
     cuda_module->launch(task.name, task.grid_dim, task.block_dim, 0,
-                        {&ctx.get_context()}, {});
+                        {&ctx.get_context()}, {}, stream);
   }
   if (ctx.arg_buffer_size > 0) {
     CUDADriver::get_instance().mem_free_async(device_arg_buffer, nullptr);

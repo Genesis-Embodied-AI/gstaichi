@@ -162,8 +162,9 @@ CompileResult Program::compile_kernel(const CompileConfig &compile_config,
 }
 
 void Program::launch_kernel(const CompiledKernelData &compiled_kernel_data,
-                            LaunchContextBuilder &ctx) {
-  program_impl_->get_kernel_launcher().launch_kernel(compiled_kernel_data, ctx);
+                            LaunchContextBuilder &ctx,
+                            void *stream) {
+  program_impl_->get_kernel_launcher().launch_kernel(compiled_kernel_data, ctx, stream);
   if (compile_config().debug && arch_uses_llvm(compiled_kernel_data.arch())) {
     program_impl_->check_runtime_error(result_buffer);
   }

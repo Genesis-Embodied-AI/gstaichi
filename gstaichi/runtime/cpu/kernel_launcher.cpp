@@ -5,7 +5,9 @@ namespace gstaichi::lang {
 namespace cpu {
 
 void KernelLauncher::launch_llvm_kernel(Handle handle,
-                                        LaunchContextBuilder &ctx) {
+                                        LaunchContextBuilder &ctx,
+                                        void *stream) {
+  // CPU doesn't use streams, ignore the parameter
   TI_ASSERT(handle.get_launch_id() < contexts_.size());
   auto launcher_ctx = contexts_[handle.get_launch_id()];
   auto *executor = get_runtime_executor();

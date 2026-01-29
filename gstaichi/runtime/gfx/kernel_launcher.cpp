@@ -9,7 +9,9 @@ KernelLauncher::KernelLauncher(Config config) : config_(std::move(config)) {
 
 void KernelLauncher::launch_kernel(
     const lang::CompiledKernelData &compiled_kernel_data,
-    LaunchContextBuilder &ctx) {
+    LaunchContextBuilder &ctx,
+    void *stream) {
+  // GFX doesn't use streams, ignore the parameter
   auto handle = register_kernel(compiled_kernel_data);
   config_.gfx_runtime_->launch_kernel(handle, ctx);
 }

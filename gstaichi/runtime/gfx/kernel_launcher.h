@@ -15,7 +15,8 @@ class KernelLauncher : public lang::KernelLauncher {
   explicit KernelLauncher(Config config);
 
   void launch_kernel(const lang::CompiledKernelData &compiled_kernel_data,
-                     LaunchContextBuilder &ctx) override;
+                     LaunchContextBuilder &ctx,
+                     void *stream = nullptr) override;
 
  private:
   Handle register_kernel(const lang::CompiledKernelData &compiled_kernel_data);
