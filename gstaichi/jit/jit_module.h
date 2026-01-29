@@ -77,7 +77,7 @@ class JITModule {
               Args... args) {
     auto [arg_pointers, arg_sizes] = JITModule::get_arg_pointers(args...);
     launch(name, grid_dim, block_dim, shared_mem_bytes, arg_pointers,
-           arg_sizes);
+           arg_sizes, nullptr);
   }
 
   virtual void launch(const std::string &name,
@@ -85,7 +85,8 @@ class JITModule {
                       std::size_t block_dim,
                       std::size_t shared_mem_bytes,
                       const std::vector<void *> &arg_pointers,
-                      const std::vector<int> &arg_sizes) {
+                      const std::vector<int> &arg_sizes,
+                      void *stream = nullptr) {
     TI_NOT_IMPLEMENTED
   }
 

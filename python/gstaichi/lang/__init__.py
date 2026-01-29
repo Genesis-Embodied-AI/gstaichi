@@ -15,6 +15,15 @@ from gstaichi.lang.ops import *  # pylint: disable=W0622
 from gstaichi.lang.runtime_ops import *
 from gstaichi.lang.snode import *
 from gstaichi.lang.source_builder import *
+from gstaichi.lang.stream import (  # noqa: F401
+    Stream,
+    Event,
+    create_stream,
+    create_event,
+    sync_stream,
+    record_event,
+    stream_wait_event,
+)
 from gstaichi.lang.struct import *
 from gstaichi.types.enums import DeviceCapability, Format, Layout  # noqa: F401
 
@@ -43,6 +52,7 @@ __all__ = [
         "shell",
         "snode",
         "source_builder",
+        "stream",
         "struct",
         "util",
     ]

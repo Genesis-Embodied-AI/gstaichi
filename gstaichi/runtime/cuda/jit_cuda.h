@@ -52,7 +52,8 @@ class JITModuleCUDA : public JITModule {
               std::size_t block_dim,
               std::size_t dynamic_shared_mem_bytes,
               const std::vector<void *> &arg_pointers,
-              const std::vector<int> &arg_sizes) override;
+              const std::vector<int> &arg_sizes,
+              void *stream = nullptr) override;
   bool direct_dispatch() const override;
 };
 

@@ -494,7 +494,15 @@ void export_lang(py::module &m) {
            [](Program *program) { return program->get_graphics_device(); })
       .def("compile_kernel", &Program::compile_kernel,
            py::return_value_policy::reference)
-      .def("launch_kernel", &Program::launch_kernel)
+      .def("launch_kernel",
+           [](Program *program, const CompiledKernelData &compiled_kernel_data,
+              LaunchContextBuilder &ctx, py::object stream_obj) {
+             void *stream = stream_obj.is_none() ? nullptr : stream_obj.cast<void*>();
+             program->launch_kernel(compiled_kernel_data, ctx, stream);
+           },
+           py::arg("compiled_kernel_data"),
+           py::arg("ctx"),
+           py::arg("stream") = py::none())
       .def("get_device_caps", &Program::get_device_caps);
 
   py::class_<CompileResult>(m, "CompileResult")

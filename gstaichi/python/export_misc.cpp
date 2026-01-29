@@ -145,6 +145,128 @@ void export_misc(py::module &m) {
   m.def("with_vulkan", []() { return false; });
 #endif
 
+  // Stream and event management for async GPU execution
+  m.def("create_stream", [](Arch arch) -> void* {
+    void* stream = nullptr;
+    if (arch == Arch::cuda) {
+#ifdef TI_WITH_CUDA
+      lang::CUDADriver::get_instance().stream_create(&stream, 0x01);  // CU_STREAM_NON_BLOCKING
+#else
+      TI_ERROR("CUDA not available");
+#endif
+    } else if (arch == Arch::amdgpu) {
+#ifdef TI_WITH_AMDGPU
+      lang::AMDGPUDriver::get_instance().stream_create(&stream, 0x01);  // hipStreamNonBlocking
+#else
+      TI_ERROR("AMDGPU not available");
+#endif
+    } else {
+      TI_ERROR("Streams not supported for architecture {}", arch_name(arch));
+    }
+    return stream;
+  });
+
+  m.def("create_event", [](Arch arch) -> void* {
+    void* event = nullptr;
+    if (arch == Arch::cuda) {
+#ifdef TI_WITH_CUDA
+      lang::CUDADriver::get_instance().event_create(&event, 0x00);  // CU_EVENT_DEFAULT
+#else
+      TI_ERROR("CUDA not available");
+#endif
+    } else if (arch == Arch::amdgpu) {
+#ifdef TI_WITH_AMDGPU
+      lang::AMDGPUDriver::get_instance().event_create(&event, 0x00);  // hipEventDefault
+#else
+      TI_ERROR("AMDGPU not available");
+#endif
+    } else {
+      TI_ERROR("Events not supported for architecture {}", arch_name(arch));
+    }
+    return event;
+  });
+
+  m.def("sync_stream", [](void* stream) {
+    // Get current architecture from the program
+    auto* prog = lang::get_current_program();
+    if (!prog) {
+      TI_ERROR("No active Taichi program");
+    }
+    Arch arch = prog->compile_config().arch;
+    
+    if (arch == Arch::cuda) {
+#ifdef TI_WITH_CUDA
+      lang::CUDADriver::get_instance().stream_synchronize(stream);
+#endif
+    } else if (arch == Arch::amdgpu) {
+#ifdef TI_WITH_AMDGPU
+      lang::AMDGPUDriver::get_instance().stream_synchronize(stream);
+#endif
+    } else {
+      TI_ERROR("Streams not supported for architecture {}", arch_name(arch));
+    }
+  });
+
+  m.def("sync_event", [](void* event) {
+    auto* prog = lang::get_current_program();
+    if (!prog) {
+      TI_ERROR("No active Taichi program");
+    }
+    Arch arch = prog->compile_config().arch;
+    
+    if (arch == Arch::cuda) {
+#ifdef TI_WITH_CUDA
+      lang::CUDADriver::get_instance().event_synchronize(event);
+#endif
+    } else if (arch == Arch::amdgpu) {
+#ifdef TI_WITH_AMDGPU
+      lang::AMDGPUDriver::get_instance().event_synchronize(event);
+#endif
+    } else {
+      TI_ERROR("Events not supported for architecture {}", arch_name(arch));
+    }
+  });
+
+  m.def("record_event", [](void* event, void* stream) {
+    auto* prog = lang::get_current_program();
+    if (!prog) {
+      TI_ERROR("No active Taichi program");
+    }
+    Arch arch = prog->compile_config().arch;
+    
+    if (arch == Arch::cuda) {
+#ifdef TI_WITH_CUDA
+      lang::CUDADriver::get_instance().event_record(event, stream);
+#endif
+    } else if (arch == Arch::amdgpu) {
+#ifdef TI_WITH_AMDGPU
+      lang::AMDGPUDriver::get_instance().event_record(event, stream);
+#endif
+    } else {
+      TI_ERROR("Events not supported for architecture {}", arch_name(arch));
+    }
+  });
+
+  m.def("stream_wait_event", [](void* stream, void* event) {
+    auto* prog = lang::get_current_program();
+    if (!prog) {
+      TI_ERROR("No active Taichi program");
+    }
+    Arch arch = prog->compile_config().arch;
+    
+    if (arch == Arch::cuda) {
+#ifdef TI_WITH_CUDA
+      lang::CUDADriver::get_instance().stream_wait_event(stream, event, 0);
+#endif
+    } else if (arch == Arch::amdgpu) {
+#ifdef TI_WITH_AMDGPU
+      lang::AMDGPUDriver::get_instance().stream_wait_event(stream, event, 0);
+#endif
+    } else {
+      TI_ERROR("stream_wait_event not supported for architecture {}", arch_name(arch));
+    }
+  });
+
   py::class_<HackedSignalRegister>(m, "HackedSignalRegister").def(py::init<>());
 }
 

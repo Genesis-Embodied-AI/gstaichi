@@ -15,7 +15,10 @@ bool KernelLauncher::on_amdgpu_device(void *ptr) {
 }
 
 void KernelLauncher::launch_llvm_kernel(Handle handle,
-                                        LaunchContextBuilder &ctx) {
+                                        LaunchContextBuilder &ctx,
+                                        void *stream) {
+  // AMD GPU stream support - for now we'll pass stream through
+  // (HIP supports streams similar to CUDA)
   TI_ASSERT(handle.get_launch_id() < contexts_.size());
   auto launcher_ctx = contexts_[handle.get_launch_id()];
   auto *executor = get_runtime_executor();

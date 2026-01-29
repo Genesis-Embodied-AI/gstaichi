@@ -131,7 +131,8 @@ class TI_DLL_EXPORT Program {
                                const Kernel &kernel_def);
 
   void launch_kernel(const CompiledKernelData &compiled_kernel_data,
-                     LaunchContextBuilder &ctx);
+                     LaunchContextBuilder &ctx,
+                     void *stream = nullptr);
 
   DeviceCapabilityConfig get_device_caps() {
     return program_impl_->get_device_caps();
