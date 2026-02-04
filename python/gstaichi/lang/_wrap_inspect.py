@@ -22,7 +22,7 @@ import tempfile
 from typing import Callable
 
 import dill
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 _builtin_getfile = inspect.getfile
 _builtin_findsource = inspect.findsource
@@ -194,8 +194,7 @@ class FunctionSourceInfo(BaseModel):
     start_lineno: int
     end_lineno: int
 
-    class Config:
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 def get_source_info_and_src(func: Callable) -> tuple[FunctionSourceInfo, list[str]]:
