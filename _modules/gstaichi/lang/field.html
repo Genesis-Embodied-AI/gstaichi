@@ -310,10 +310,11 @@
                 <article class="bd-article">
                   
   <h1>Source code for gstaichi.lang.field</h1><div class="highlight"><pre>
-<span></span><span class="c1"># type: ignore</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">gstaichi.lang</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi._lib</span><span class="w"> </span><span class="kn">import</span> <span class="n">core</span> <span class="k">as</span> <span class="n">_ti_core</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi._lib.core.gstaichi_python</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataTypeCxx</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi._logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">warn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang</span><span class="w"> </span><span class="kn">import</span> <span class="n">impl</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.exception</span><span class="w"> </span><span class="kn">import</span> <span class="n">GsTaichiSyntaxError</span>
@@ -323,6 +324,9 @@
     <span class="n">to_numpy_type</span><span class="p">,</span>
     <span class="n">to_pytorch_type</span><span class="p">,</span>
 <span class="p">)</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi.lang.expr</span><span class="w"> </span><span class="kn">import</span> <span class="n">Expr</span>
 
 
 <div class="viewcode-block" id="Field">
@@ -356,7 +360,11 @@
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/field/index.html#gstaichi.lang.field.Field.dual">[docs]</a>
         <span class="bp">self</span><span class="o">.</span><span class="n">dual</span> <span class="o">=</span> <span class="kc">None</span></div>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_shape</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span><span class="p">:</span> <span class="n">DataTypeCxx</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
+    <span class="c1"># TODO: why do we have snode and _snode, that return the same thing?</span>
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Field.snode">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/field/index.html#gstaichi.lang.field.Field.snode">[docs]</a>
@@ -370,67 +378,48 @@
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_snode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_snode</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;gstaichi.lang.snode.SNode&quot;</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Gets representative SNode for info purposes.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            SNode: Representative SNode (SNode of first field member).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">gstaichi</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">snode</span><span class="o">.</span><span class="n">SNode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">ptr</span><span class="o">.</span><span class="n">snode</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">gstaichi</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">snode</span><span class="o">.</span><span class="n">SNode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">ptr</span><span class="o">.</span><span class="n">snode</span><span class="p">())</span>  <span class="c1"># type: ignore</span>
 
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Field.shape">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/field/index.html#gstaichi.lang.field.Field.shape">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Gets field shape.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            Tuple[Int]: Field shape.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_snode</span><span class="o">.</span><span class="n">shape</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shape</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_shape</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_snode</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shape</span></div>
 
 
     <span class="nd">@property</span>
 <div class="viewcode-block" id="Field.dtype">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/field/index.html#gstaichi.lang.field.Field.dtype">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Gets data type of each individual value.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            DataType: Data type of each individual value.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_snode</span><span class="o">.</span><span class="n">_dtype</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataTypeCxx</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">DataTypeCxx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_snode</span><span class="o">.</span><span class="n">_dtype</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span></div>
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Gets field name.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            str: Field name.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_snode</span><span class="o">.</span><span class="n">_name</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__name</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__name</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_snode</span><span class="o">.</span><span class="n">_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__name</span>
 
 <div class="viewcode-block" id="Field.parent">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/field/index.html#gstaichi.lang.field.Field.parent">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">parent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Gets an ancestor of the representative SNode in the SNode tree.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            n (int): the number of levels going up from the representative SNode.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            SNode: The n-th parent of the representative SNode.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        n (int): the number of levels going up from the representative SNode.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">snode</span><span class="o">.</span><span class="n">parent</span><span class="p">(</span><span class="n">n</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_get_field_members</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Gets field members.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            List[Expr]: Field members.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_field_members</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="s2">&quot;Expr&quot;</span><span class="p">]:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">vars</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_loop_range</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -441,41 +430,26 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">vars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">ptr</span><span class="o">.</span><span class="n">snode</span><span class="p">()</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_set_grad</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">grad</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets corresponding grad field (reverse mode).</span>
-<span class="sd">        Args:</span>
-<span class="sd">            grad (Field): Corresponding grad field.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_grad</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">grad</span><span class="p">:</span> <span class="s2">&quot;Field&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets corresponding grad field (reverse mode).&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">grad</span> <span class="o">=</span> <span class="n">grad</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_set_dual</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dual</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets corresponding dual field (forward mode).</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            dual (Field): Corresponding dual field.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_dual</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dual</span><span class="p">:</span> <span class="s2">&quot;Field&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets corresponding dual field (forward mode).&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dual</span> <span class="o">=</span> <span class="n">dual</span>
 
     <span class="nd">@python_scope</span>
 <div class="viewcode-block" id="Field.fill">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/field/index.html#gstaichi.lang.field.Field.fill">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">fill</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fills `self` with a specific value.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            val (Union[int, float]): Value to fill.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fill</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
 
 
     <span class="nd">@python_scope</span>
 <div class="viewcode-block" id="Field.to_numpy">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/field/index.html#gstaichi.lang.field.Field.to_numpy">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">to_numpy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_numpy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">DataTypeCxx</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Converts `self` to a numpy array.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            dtype (DataType, optional): The desired data type of returned numpy array.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            numpy.ndarray: The result numpy array.</span>
@@ -533,13 +507,10 @@
     <span class="nd">@python_scope</span>
 <div class="viewcode-block" id="Field.copy_from">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/field/index.html#gstaichi.lang.field.Field.copy_from">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">copy_from</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy_from</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;Field&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Copies all elements from another field.</span>
 
 <span class="sd">        The shape of the other field needs to be the same as `self`.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            other (Field): The source field.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Field</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Cannot copy from a non-field object&quot;</span><span class="p">)</span>
@@ -551,28 +522,14 @@
 
 
     <span class="nd">@python_scope</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets field element in Python scope.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            key (Union[List[int], int, None]): Coordinates of the field element.</span>
-<span class="sd">            value (element type): Value to set.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 
     <span class="nd">@python_scope</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Gets field element in Python scope.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            key (Union[List[int], int, None]): Coordinates of the field element.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            element type: Value retrieved.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">gstaichi</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">impl</span><span class="o">.</span><span class="n">inside_kernel</span><span class="p">():</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__repr__</span><span class="p">()</span>  <span class="c1"># make pybind11 happy, see Matrix.__str__</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_snode</span><span class="o">.</span><span class="n">ptr</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -588,7 +545,7 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="s2">&quot;Slicing is not supported on ti.field&quot;</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">key</span> <span class="o">+</span> <span class="p">((</span><span class="mi">0</span><span class="p">,)</span> <span class="o">*</span> <span class="p">(</span><span class="n">_ti_core</span><span class="o">.</span><span class="n">get_max_num_indices</span><span class="p">()</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">key</span> <span class="o">+</span> <span class="p">((</span><span class="mi">0</span><span class="p">,)</span> <span class="o">*</span> <span class="p">(</span><span class="n">_ti_core</span><span class="o">.</span><span class="n">get_max_num_indices</span><span class="p">()</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)))</span>  <span class="c1"># type: ignore</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_host_accessors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">host_accessors</span><span class="p">:</span>
@@ -597,7 +554,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">host_accessors</span> <span class="o">=</span> <span class="p">[</span><span class="n">SNodeHostAccessor</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">ptr</span><span class="o">.</span><span class="n">snode</span><span class="p">())</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vars</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_host_access</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">SNodeHostAccess</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">host_accessors</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">SNodeHostAccess</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">host_accessors</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Struct for is only available in GsTaichi scope.&quot;</span><span class="p">)</span></div>
@@ -656,11 +613,12 @@
             <span class="n">dtype</span> <span class="o">=</span> <span class="n">to_numpy_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>  <span class="c1"># pylint: disable=C0415</span>
 
-        <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi._kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">tensor_to_ext_arr</span>  <span class="c1"># pylint: disable=C0415</span>
 
         <span class="n">tensor_to_ext_arr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arr</span><span class="p">)</span>
-        <span class="n">gstaichi</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">runtime_ops</span><span class="o">.</span><span class="n">sync</span><span class="p">()</span>
+        <span class="c1"># TODO: can we remove .runtime_ops here?</span>
+        <span class="n">gstaichi</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">runtime_ops</span><span class="o">.</span><span class="n">sync</span><span class="p">()</span>  <span class="c1"># type: ignore</span>
         <span class="k">return</span> <span class="n">arr</span></div>
 
 
@@ -676,7 +634,8 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi._kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">tensor_to_ext_arr</span>  <span class="c1"># pylint: disable=C0415</span>
 
         <span class="n">tensor_to_ext_arr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arr</span><span class="p">)</span>
-        <span class="n">gstaichi</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">runtime_ops</span><span class="o">.</span><span class="n">sync</span><span class="p">()</span>
+        <span class="c1"># TODO: can we remove .runtime_ops here?</span>
+        <span class="n">gstaichi</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">runtime_ops</span><span class="o">.</span><span class="n">sync</span><span class="p">()</span>  <span class="c1"># type: ignore</span>
         <span class="k">return</span> <span class="n">arr</span></div>
 
 
@@ -690,7 +649,8 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">gstaichi._kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">ext_arr_to_tensor</span>  <span class="c1"># pylint: disable=C0415</span>
 
         <span class="n">ext_arr_to_tensor</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-        <span class="n">gstaichi</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">runtime_ops</span><span class="o">.</span><span class="n">sync</span><span class="p">()</span>
+        <span class="c1"># TODO: can we remove .runtime_ops here?</span>
+        <span class="n">gstaichi</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">runtime_ops</span><span class="o">.</span><span class="n">sync</span><span class="p">()</span>  <span class="c1"># type: ignore</span>
 
     <span class="nd">@python_scope</span>
 <div class="viewcode-block" id="ScalarField.from_numpy">
@@ -707,7 +667,7 @@
     <span class="nd">@python_scope</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_host_accessors</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">host_accessors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setter</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_pad_key</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">host_accessors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">setter</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_pad_key</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>  <span class="c1"># type: ignore</span>
 
     <span class="nd">@python_scope</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
@@ -723,7 +683,7 @@
                     <span class="sa">f</span><span class="s2">&quot;Detected illegal element of type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="si">}</span><span class="s2">. &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;Please be aware that slicing a ti.field is not supported so far.&quot;</span>
                 <span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">host_accessors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">getter</span><span class="p">(</span><span class="o">*</span><span class="n">padded_key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">host_accessors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">getter</span><span class="p">(</span><span class="o">*</span><span class="n">padded_key</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># make interactive shell happy, prevent materialization</span>
@@ -759,12 +719,12 @@
             <span class="c1"># same as above</span>
             <span class="k">if</span> <span class="p">(</span>
                 <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">target_tape</span>
-                <span class="ow">and</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">target_tape</span><span class="o">.</span><span class="n">grad_checker</span>
+                <span class="ow">and</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">target_tape</span><span class="o">.</span><span class="n">grad_checker</span>  <span class="c1"># type: ignore</span>
                 <span class="ow">and</span> <span class="ow">not</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">grad_replaced</span>
             <span class="p">):</span>
-                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">target_tape</span><span class="o">.</span><span class="n">grad_checker</span><span class="o">.</span><span class="n">to_check</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">target_tape</span><span class="o">.</span><span class="n">grad_checker</span><span class="o">.</span><span class="n">to_check</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
                     <span class="k">assert</span> <span class="n">snode</span> <span class="o">!=</span> <span class="n">x</span><span class="o">.</span><span class="n">snode</span><span class="o">.</span><span class="n">ptr</span><span class="p">,</span> <span class="s2">&quot;Overwritten is prohibitive when doing grad check.&quot;</span>
-                <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">target_tape</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">write_func</span><span class="p">,</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+                <span class="n">impl</span><span class="o">.</span><span class="n">get_runtime</span><span class="p">()</span><span class="o">.</span><span class="n">target_tape</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">write_func</span><span class="p">,</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>  <span class="c1"># type: ignore</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">getter</span> <span class="o">=</span> <span class="n">getter</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">setter</span> <span class="o">=</span> <span class="n">setter</span>

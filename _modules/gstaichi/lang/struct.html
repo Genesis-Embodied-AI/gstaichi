@@ -714,6 +714,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_dict</span><span class="p">,</span> <span class="n">struct_methods</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">is_primal</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="c1"># will not call Field initializer</span>
+        <span class="c1"># TODO: Why?</span>
 <div class="viewcode-block" id="StructField.field_dict">
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/struct/index.html#gstaichi.lang.struct.StructField.field_dict">[docs]</a>
         <span class="bp">self</span><span class="o">.</span><span class="n">field_dict</span> <span class="o">=</span> <span class="n">field_dict</span></div>
@@ -734,6 +735,8 @@
 <a class="viewcode-back" href="../../../autoapi/gstaichi/lang/struct/index.html#gstaichi.lang.struct.StructField.dual">[docs]</a>
         <span class="bp">self</span><span class="o">.</span><span class="n">dual</span> <span class="o">=</span> <span class="kc">None</span></div>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_shape</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span><span class="p">:</span> <span class="n">DataTypeCxx</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">is_primal</span><span class="p">:</span>
             <span class="n">grad_field_dict</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">field_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>

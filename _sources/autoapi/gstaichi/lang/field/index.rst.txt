@@ -56,52 +56,31 @@ Module Contents
 
 
    .. py:property:: shape
+      :type: tuple[int, Ellipsis]
 
-      Gets field shape.
-
-      :returns: Field shape.
-      :rtype: Tuple[Int]
 
 
    .. py:property:: dtype
+      :type: gstaichi._lib.core.gstaichi_python.DataTypeCxx
 
-      Gets data type of each individual value.
-
-      :returns: Data type of each individual value.
-      :rtype: DataType
 
 
    .. py:method:: parent(n=1)
 
-      Gets an ancestor of the representative SNode in the SNode tree.
-
-      :param n: the number of levels going up from the representative SNode.
-      :type n: int
-
-      :returns: The n-th parent of the representative SNode.
-      :rtype: SNode
+      n (int): the number of levels going up from the representative SNode.
 
 
 
-   .. py:method:: fill(val)
+   .. py:method:: fill(val: int | float) -> None
       :abstractmethod:
 
 
-      Fills `self` with a specific value.
 
-      :param val: Value to fill.
-      :type val: Union[int, float]
-
-
-
-   .. py:method:: to_numpy(dtype=None)
+   .. py:method:: to_numpy(dtype: gstaichi._lib.core.gstaichi_python.DataTypeCxx | None = None)
       :abstractmethod:
 
 
       Converts `self` to a numpy array.
-
-      :param dtype: The desired data type of returned numpy array.
-      :type dtype: DataType, optional
 
       :returns: The result numpy array.
       :rtype: numpy.ndarray
@@ -146,14 +125,11 @@ Module Contents
 
 
 
-   .. py:method:: copy_from(other)
+   .. py:method:: copy_from(other: Field) -> None
 
       Copies all elements from another field.
 
       The shape of the other field needs to be the same as `self`.
-
-      :param other: The source field.
-      :type other: Field
 
 
 
