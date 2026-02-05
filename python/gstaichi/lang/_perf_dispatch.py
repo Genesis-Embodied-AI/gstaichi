@@ -4,12 +4,15 @@ from typing import Callable
 
 from . import impl
 from ._gstaichi_callable import GsTaichiCallable
+from .exception import GsTaichiSyntaxError
 
 
 class DispatchKernelImpl:
-    kernel_impl_idx = 1
+    kernel_impl_idx: int = 1
 
     def __init__(self, underlying: GsTaichiCallable, is_compatible: Callable | None) -> None:
+        if not type(underlying) in {GsTaichiCallable}:
+            raise GsTaichiSyntaxError("@ti.perf_dispatch should be placed before @ti.kernel")
         self.is_compatible: Callable | None = is_compatible
         self._underlying: GsTaichiCallable = underlying
         self.kernel_impl_idx = DispatchKernelImpl.kernel_impl_idx
@@ -21,7 +24,7 @@ class DispatchKernelImpl:
 
 
 class KernelSpeedChecker:
-    num_warmup = 2
+    num_warmup: int = 2
 
     def __init__(self, get_geometry_hash: Callable) -> None:
         self._get_geometry_hash: Callable = get_geometry_hash

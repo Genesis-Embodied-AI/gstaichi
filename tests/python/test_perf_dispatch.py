@@ -1,14 +1,17 @@
 from enum import IntEnum
 from typing import cast
 
+import pytest
+
 import gstaichi as ti
 from gstaichi.lang._perf_dispatch import KernelSpeedChecker
+from gstaichi.lang.exception import GsTaichiSyntaxError
 
 from tests import test_utils
 
 
 @test_utils.test()
-def test_perf_dispatch() -> None:
+def test_perf_dispatch_basic() -> None:
     class ImplEnum(IntEnum):
         serial = 0
         a_shape0_lt2 = 1
@@ -67,3 +70,15 @@ def test_perf_dispatch() -> None:
     for _kernel_impl_idx, trials in speed_checker._trial_count_by_underlying_idx_by_geometry_hash[geometry].items():
         assert trials == KernelSpeedChecker.num_warmup + 1
     assert len(speed_checker._trial_count_by_underlying_idx_by_geometry_hash[geometry]) == 2
+
+
+@test_utils.test()
+def test_perf_dispatch_swap_annotation_order() -> None:
+    @ti.perf_dispatch(get_geometry_hash=lambda a, c: hash(a.shape + c.shape))
+    def my_func1(a: ti.types.NDArray[ti.i32, 1], c: ti.types.NDArray[ti.i32, 1]): ...
+
+    with pytest.raises(GsTaichiSyntaxError):
+
+        @ti.kernel
+        @my_func1.register
+        def my_func1_impl_serial(a: ti.types.NDArray[ti.i32, 1], c: ti.types.NDArray[ti.i32, 1]) -> None: ...
