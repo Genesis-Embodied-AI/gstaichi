@@ -1,4 +1,5 @@
 from enum import IntEnum
+from typing import cast
 
 import gstaichi as ti
 from gstaichi.lang._perf_dispatch import KernelSpeedChecker
@@ -61,3 +62,8 @@ def test_perf_dispatch() -> None:
             assert c[ImplEnum.a_shape0_ge2] == 1
             assert c[ImplEnum.a_shape0_lt2] == 0
             assert c[ImplEnum.serial] == 0
+    speed_checker = cast(KernelSpeedChecker, my_func1)
+    geometry = list(speed_checker._trial_count_by_underlying_idx_by_geometry_hash.keys())[0]
+    for _kernel_impl_idx, trials in speed_checker._trial_count_by_underlying_idx_by_geometry_hash[geometry].items():
+        assert trials == KernelSpeedChecker.num_warmup + 1
+    assert len(speed_checker._trial_count_by_underlying_idx_by_geometry_hash[geometry]) == 2
