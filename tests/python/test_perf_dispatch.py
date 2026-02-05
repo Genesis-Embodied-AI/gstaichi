@@ -4,7 +4,7 @@ from typing import cast
 import pytest
 
 import gstaichi as ti
-from gstaichi.lang._perf_dispatch import KernelSpeedChecker, NUM_WARMUP
+from gstaichi.lang._perf_dispatch import NUM_WARMUP, KernelSpeedChecker
 from gstaichi.lang.exception import GsTaichiSyntaxError
 
 from tests import test_utils

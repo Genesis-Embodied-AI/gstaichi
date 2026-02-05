@@ -6,7 +6,6 @@ from . import impl
 from ._gstaichi_callable import GsTaichiCallable
 from .exception import GsTaichiSyntaxError
 
-
 NUM_WARMUP: int = 2
 
 
@@ -70,10 +69,7 @@ class KernelSpeedChecker:
         return least_trials_idx
 
     def _finished_trials(self, geometry_hash: int) -> bool:
-        return (
-            min(self._trial_count_by_underlying_idx_by_geometry_hash[geometry_hash].values())
-            >= NUM_WARMUP + 1
-        )
+        return min(self._trial_count_by_underlying_idx_by_geometry_hash[geometry_hash].values()) >= NUM_WARMUP + 1
 
     def _calculate_fastest(self, geometry_hash: int) -> None:
         speeds_l = []
