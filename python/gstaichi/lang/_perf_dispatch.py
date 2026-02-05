@@ -39,6 +39,26 @@ class PerformanceDispatcher:
     def register(
         self, kernel: GsTaichiCallable | None = None, *, is_compatible: Callable[[dict], bool] | None = None
     ) -> Callable[[GsTaichiCallable], GsTaichiCallable]:
+        """
+        Use register to register a @ti.kernel with a @ti.perf_dispatch meta kernel
+
+        See @ti.perf_dispatch for documentation about using @ti.perf_dispatch meta kernels
+
+        is_compatible is an optional function that will return whether the kernel being registered can
+        run on the specific arguments being passed in. If there are circumstances where this kernel being
+        registered cannot run, then is_compatible MUST be implemented, and MUST return False given the specific arguments
+        or platform.
+
+        is_compatible receives the exact same *args and **kwargs that were used to call the meta kernel.
+
+        Examples of where you might need to implement is_compatible:
+        - the kernel only runs on Metal => is_compatible should return False on any platform where Metal is not
+          available (typically, any non-Darwin machine for example)
+        - the kernel only runs for certain ranges of dimensions on one or more of the input arguments
+            - in this case, check the shape of the argument in question, and return False if out of spec for this
+              kernel implementation
+        """
+
         def decorator(func: GsTaichiCallable) -> GsTaichiCallable:
             dispatch_impl = DispatchKernelImpl(kernel=func, is_compatible=is_compatible)
             self._kernel_by_idx[dispatch_impl.kernel_impl_idx] = dispatch_impl
