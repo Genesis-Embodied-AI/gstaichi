@@ -193,8 +193,7 @@ def perf_dispatch(*, get_geometry_hash: Callable):
     """
 
     def decorator(fn: GsTaichiCallable):
-        speed_checker = PerformanceDispatcher(get_geometry_hash=get_geometry_hash)
-        return speed_checker
+        return PerformanceDispatcher(get_geometry_hash=get_geometry_hash)
 
     return decorator
 
