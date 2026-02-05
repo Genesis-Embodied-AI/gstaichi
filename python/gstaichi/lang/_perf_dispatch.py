@@ -7,6 +7,9 @@ from ._gstaichi_callable import GsTaichiCallable
 from .exception import GsTaichiSyntaxError
 
 
+NUM_WARMUP: int = 2
+
+
 class DispatchKernelImpl:
     kernel_impl_idx: int = 1
 
@@ -24,8 +27,6 @@ class DispatchKernelImpl:
 
 
 class KernelSpeedChecker:
-    num_warmup: int = 2
-
     def __init__(self, get_geometry_hash: Callable) -> None:
         self._get_geometry_hash: Callable = get_geometry_hash
         self._underlying_by_idx: dict[int, DispatchKernelImpl] = {}
@@ -71,7 +72,7 @@ class KernelSpeedChecker:
     def _finished_trials(self, geometry_hash: int) -> bool:
         return (
             min(self._trial_count_by_underlying_idx_by_geometry_hash[geometry_hash].values())
-            >= KernelSpeedChecker.num_warmup + 1
+            >= NUM_WARMUP + 1
         )
 
     def _calculate_fastest(self, geometry_hash: int) -> None:
@@ -101,7 +102,7 @@ class KernelSpeedChecker:
         elapsed = end - start
         speeds_l.append((elapsed, underlying))
         self._trial_count_by_underlying_idx_by_geometry_hash[geometry_hash][underlying_idx] += 1
-        if self._trial_count_by_underlying_idx_by_geometry_hash[geometry_hash][underlying_idx] >= self.num_warmup:
+        if self._trial_count_by_underlying_idx_by_geometry_hash[geometry_hash][underlying_idx] >= NUM_WARMUP:
             self._times_by_underlying_idx_by_geometry_hash[geometry_hash][underlying_idx].append(elapsed)
         if self._finished_trials(geometry_hash=geometry_hash):
             self._calculate_fastest(geometry_hash)
