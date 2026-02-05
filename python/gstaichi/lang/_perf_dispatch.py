@@ -24,7 +24,7 @@ class DispatchKernelImpl:
         return self.__wrapped__(*args, **kwargs)
 
 
-class KernelSpeedChecker:
+class PerformanceDispatcher:
     def __init__(self, get_geometry_hash: Callable) -> None:
         self._get_geometry_hash: Callable = get_geometry_hash
         self._kernel_by_idx: dict[int, DispatchKernelImpl] = {}
@@ -108,7 +108,7 @@ class KernelSpeedChecker:
 
 def perf_dispatch(*, get_geometry_hash: Callable):
     def decorator(fn: GsTaichiCallable):
-        speed_checker = KernelSpeedChecker(get_geometry_hash=get_geometry_hash)
+        speed_checker = PerformanceDispatcher(get_geometry_hash=get_geometry_hash)
         return speed_checker
 
     return decorator
