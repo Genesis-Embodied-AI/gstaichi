@@ -91,7 +91,7 @@ class PerformanceDispatcher:
     def _finished_trials(self, geometry_hash: int) -> bool:
         return min(self._trial_count_by_kernel_idx_by_geometry_hash[geometry_hash].values()) >= NUM_WARMUP + 1
 
-    def _calculate_fastest(self, geometry_hash: int) -> None:
+    def _update_fastest(self, geometry_hash: int) -> None:
         speeds_l = []
         for kernel_idx, elapsed_time in self._times_by_kernel_idx_by_geometry_hash[geometry_hash].items():
             speeds_l.append((kernel_idx, elapsed_time))
@@ -121,7 +121,7 @@ class PerformanceDispatcher:
         if self._trial_count_by_kernel_idx_by_geometry_hash[geometry_hash][kernel_idx] >= NUM_WARMUP:
             self._times_by_kernel_idx_by_geometry_hash[geometry_hash][kernel_idx].append(elapsed)
         if self._finished_trials(geometry_hash=geometry_hash):
-            self._calculate_fastest(geometry_hash)
+            self._update_fastest(geometry_hash)
             speeds_l.sort(key=lambda x: x[0], reverse=False)
             self._fastest_by_geometry_hash[geometry_hash] = speeds_l[0][1]
         return res
