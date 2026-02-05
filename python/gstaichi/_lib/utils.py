@@ -70,8 +70,7 @@ def locale_encode(path):
         import locale  # pylint: disable=C0415
 
         # Use getencoding() if available (Python 3.11+), otherwise fall back to getdefaultlocale()
-        # TODO: remove the conditional once our minimum python version
-        # is 3.11
+        # TODO: remove the conditional once our minimum python version is 3.11
         if sys.version_info >= (3, 11):
             encoding = locale.getencoding()  # pylint: disable=E1101
         else:
