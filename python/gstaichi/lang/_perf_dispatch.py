@@ -77,7 +77,7 @@ class PerformanceDispatcher:
             compatible[kernel_idx] = kernel
         return compatible
 
-    def _pick_next_kernel_idx(self, compatible: dict[int, DispatchKernelImpl], geometry_hash: int) -> int:
+    def _get_next_kernel_idx(self, compatible: dict[int, DispatchKernelImpl], geometry_hash: int) -> int:
         least_trials_idx = None
         least_trials = None
         for kernel_idx in compatible.keys():
@@ -88,7 +88,7 @@ class PerformanceDispatcher:
         assert least_trials_idx is not None
         return least_trials_idx
 
-    def _finished_trials(self, geometry_hash: int) -> bool:
+    def _get_finished_trials(self, geometry_hash: int) -> bool:
         return min(self._trial_count_by_kernel_idx_by_geometry_hash[geometry_hash].values()) >= NUM_WARMUP + 1
 
     def _update_fastest(self, geometry_hash: int) -> None:
@@ -108,7 +108,7 @@ class PerformanceDispatcher:
         speeds_l = []
         runtime = impl.get_runtime()
         compatible = self._get_compatible_kernels(*args, **kwargs)
-        kernel_idx = self._pick_next_kernel_idx(compatible=compatible, geometry_hash=geometry_hash)
+        kernel_idx = self._get_next_kernel_idx(compatible=compatible, geometry_hash=geometry_hash)
         kernel = self._kernel_by_idx[kernel_idx]
         runtime.sync()
         start = time.time()
@@ -117,10 +117,11 @@ class PerformanceDispatcher:
         end = time.time()
         elapsed = end - start
         speeds_l.append((elapsed, kernel))
-        self._trial_count_by_kernel_idx_by_geometry_hash[geometry_hash][kernel_idx] += 1
-        if self._trial_count_by_kernel_idx_by_geometry_hash[geometry_hash][kernel_idx] >= NUM_WARMUP:
+        trial_count_by_kernel_idx = self._trial_count_by_kernel_idx_by_geometry_hash[geometry_hash]
+        trial_count_by_kernel_idx[kernel_idx] += 1
+        if trial_count_by_kernel_idx[kernel_idx] >= NUM_WARMUP:
             self._times_by_kernel_idx_by_geometry_hash[geometry_hash][kernel_idx].append(elapsed)
-        if self._finished_trials(geometry_hash=geometry_hash):
+        if self._get_finished_trials(geometry_hash=geometry_hash):
             self._update_fastest(geometry_hash)
             speeds_l.sort(key=lambda x: x[0], reverse=False)
             self._fastest_by_geometry_hash[geometry_hash] = speeds_l[0][1]
