@@ -107,6 +107,69 @@ class PerformanceDispatcher:
 
 
 def perf_dispatch(*, get_geometry_hash: Callable):
+    """
+    This annotation designates a meta-kernel that can have one or more @ti.kernel's registered with it.
+
+    At runtime, gstaichi will try running each registered kernel in turn, and choose the fastest. Once
+    chosen, the fastest kernel will systematically be used, for the lifetime of the process. This is
+    aimed for use where there are multiple possible kernel implementations, and no clear heuristic to
+    choose between them.
+
+    Example usage:
+
+    @ti.perf_dispatch(get_geometry_hash=lambda a, c: hash(a.shape + c.shape))
+    def my_func1(a: ti.types.NDArray[ti.i32, 1], c: ti.types.NDArray[ti.i32, 1]): ...
+        # note: this is intentionally empty. The function body will NEVER be called.
+
+    @my_func1.register
+    @ti.kernel
+    def my_func1_impl1(a: ti.types.NDArray[ti.i32, 1], c: ti.types.NDArray[ti.i32, 1]) -> None:
+        # implementation 1 here...
+
+    @my_func1.register(is_compatible=lambda a, c: a.shape[0] < 2)
+    @ti.kernel
+    def my_func1_impl2(a: ti.types.NDArray[ti.i32, 1], c: ti.types.NDArray[ti.i32, 1]) -> None:
+        # implementation 2 here...
+
+    Then simply call the meta-kernel, just like any other kernel:
+
+    my_func1(a, b)
+
+    Note that the effect of each implementation must be identical, including side effects, otherwise subtle
+    and hard to diagnose bugs are likely to occur. @ti.perf_dispatch does NOT check that the implementations have
+    identical effects.
+
+    ## Geometry
+
+    Depending on certain characteristics of the input arguments to a call, different implementations might be
+    relatively faster or slower. We denote such characteristics the 'geometry' of the call. An example of 'geometry'
+    is the stride and padding to a call to a convolutional kernel, as well as the number of channels, the height
+    and the width.
+
+    The meta kernel @ti.perf_dispatch annotation MUST provide a function that returns a geometry hash
+    given the arguments.
+
+    You are free to return any valid hash.
+    - In the simplest case, you could simply return a constant value, in which case all inputs will be considered to
+      have identical 'geometry', and the same implemnetation kernel will systematically be called
+    - Otherwise, if you are aware of key characteristics of the input arguments, then you can return a hash of these
+      characteristics here
+
+    Note that it is strongly recommended that any values used to create the geometry hash are NOT retrieved from data
+    on the GPU, otherwise you are likely to create a GPU sync point, which would be likely to severely slow down
+    performance.
+
+    Examples of geometry could be simply the shapes of all input arguments:
+
+    get_geometry_hash=lambda *args, **kwargs: hash(tuple([arg.shape for arg in args]))
+
+    ### Advanced geometry
+
+    You can simply hash the input arguments directly:
+
+    get_geometry_hash=lambda *args, **kwargs: hash(tuple(*args, frozendict(kwargs)))
+    """
+
     def decorator(fn: GsTaichiCallable):
         speed_checker = PerformanceDispatcher(get_geometry_hash=get_geometry_hash)
         return speed_checker
