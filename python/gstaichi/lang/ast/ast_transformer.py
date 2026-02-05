@@ -382,26 +382,6 @@ class ASTTransformer(Builder):
         return node.ptr
 
     @staticmethod
-    def build_Num(ctx: ASTTransformerFuncContext, node: ast.Num):
-        node.ptr = node.n
-        return node.ptr
-
-    @staticmethod
-    def build_Str(ctx: ASTTransformerFuncContext, node: ast.Str):
-        node.ptr = node.s
-        return node.ptr
-
-    @staticmethod
-    def build_Bytes(ctx: ASTTransformerFuncContext, node: ast.Bytes):
-        node.ptr = node.s
-        return node.ptr
-
-    @staticmethod
-    def build_NameConstant(ctx: ASTTransformerFuncContext, node: ast.NameConstant):
-        node.ptr = node.value
-        return node.ptr
-
-    @staticmethod
     def build_keyword(ctx: ASTTransformerFuncContext, node: ast.keyword):
         build_stmt(ctx, node.value)
         if node.arg is None:
