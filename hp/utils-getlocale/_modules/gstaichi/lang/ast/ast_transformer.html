@@ -771,38 +771,6 @@
 
 
     <span class="nd">@staticmethod</span>
-<div class="viewcode-block" id="ASTTransformer.build_Num">
-<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer/index.html#gstaichi.lang.ast.ast_transformer.ASTTransformer.build_Num">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">build_Num</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">ASTTransformerFuncContext</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Num</span><span class="p">):</span>
-        <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">n</span>
-        <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr</span></div>
-
-
-    <span class="nd">@staticmethod</span>
-<div class="viewcode-block" id="ASTTransformer.build_Str">
-<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer/index.html#gstaichi.lang.ast.ast_transformer.ASTTransformer.build_Str">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">build_Str</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">ASTTransformerFuncContext</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Str</span><span class="p">):</span>
-        <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">s</span>
-        <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr</span></div>
-
-
-    <span class="nd">@staticmethod</span>
-<div class="viewcode-block" id="ASTTransformer.build_Bytes">
-<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer/index.html#gstaichi.lang.ast.ast_transformer.ASTTransformer.build_Bytes">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">build_Bytes</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">ASTTransformerFuncContext</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">Bytes</span><span class="p">):</span>
-        <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">s</span>
-        <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr</span></div>
-
-
-    <span class="nd">@staticmethod</span>
-<div class="viewcode-block" id="ASTTransformer.build_NameConstant">
-<a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer/index.html#gstaichi.lang.ast.ast_transformer.ASTTransformer.build_NameConstant">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">build_NameConstant</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">ASTTransformerFuncContext</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">NameConstant</span><span class="p">):</span>
-        <span class="n">node</span><span class="o">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span>
-        <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">ptr</span></div>
-
-
-    <span class="nd">@staticmethod</span>
 <div class="viewcode-block" id="ASTTransformer.build_keyword">
 <a class="viewcode-back" href="../../../../autoapi/gstaichi/lang/ast/ast_transformer/index.html#gstaichi.lang.ast.ast_transformer.ASTTransformer.build_keyword">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">build_keyword</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">ASTTransformerFuncContext</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">ast</span><span class="o">.</span><span class="n">keyword</span><span class="p">):</span>
