@@ -1,6 +1,6 @@
 import time
 from collections import defaultdict
-from typing import Callable
+from typing import Any, Callable
 
 from . import impl
 from ._gstaichi_callable import GsTaichiCallable
@@ -16,13 +16,12 @@ class DispatchKernelImpl:
         if not type(underlying) in {GsTaichiCallable}:
             raise GsTaichiSyntaxError("@ti.perf_dispatch should be placed before @ti.kernel")
         self.is_compatible: Callable | None = is_compatible
-        self._underlying: GsTaichiCallable = underlying
+        self.__wrapped__: GsTaichiCallable = underlying
         self.kernel_impl_idx = DispatchKernelImpl.kernel_impl_idx
         DispatchKernelImpl.kernel_impl_idx += 1
 
-    @property
-    def underlying(self) -> GsTaichiCallable:
-        return self._underlying
+    def __call__(self, *args, **kwargs) -> Any:
+        return self.__wrapped__(*args, **kwargs)
 
 
 class KernelSpeedChecker:
@@ -82,7 +81,7 @@ class KernelSpeedChecker:
         geometry_hash = self._get_geometry_hash(*args, **kwargs)
         fastest = self._fastest_by_geometry_hash.get(geometry_hash)
         if fastest:
-            return fastest.underlying(*args, **kwargs)
+            return fastest(*args, **kwargs)
 
         res = None
         speeds_l = []
@@ -92,7 +91,7 @@ class KernelSpeedChecker:
         underlying = self._underlying_by_idx[underlying_idx]
         runtime.sync()
         start = time.time()
-        res = underlying.underlying(*args, **kwargs)
+        res = underlying(*args, **kwargs)
         runtime.sync()
         end = time.time()
         elapsed = end - start
