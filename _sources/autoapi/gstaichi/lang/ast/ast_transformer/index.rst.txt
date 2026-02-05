@@ -190,26 +190,6 @@ Module Contents
 
 
 
-   .. py:method:: build_Num(ctx: gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext, node: ast.Num)
-      :staticmethod:
-
-
-
-   .. py:method:: build_Str(ctx: gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext, node: ast.Str)
-      :staticmethod:
-
-
-
-   .. py:method:: build_Bytes(ctx: gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext, node: ast.Bytes)
-      :staticmethod:
-
-
-
-   .. py:method:: build_NameConstant(ctx: gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext, node: ast.NameConstant)
-      :staticmethod:
-
-
-
    .. py:method:: build_keyword(ctx: gstaichi.lang.ast.ast_transformer_utils.ASTTransformerFuncContext, node: ast.keyword)
       :staticmethod:
 
