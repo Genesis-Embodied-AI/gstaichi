@@ -4,7 +4,7 @@ from typing import Any, Callable
 
 from . import impl
 from ._gstaichi_callable import GsTaichiCallable
-from .exception import GsTaichiSyntaxError
+from .exception import GsTaichiRuntimeError, GsTaichiSyntaxError
 
 NUM_WARMUP: int = 2
 
@@ -108,6 +108,13 @@ class PerformanceDispatcher:
         speeds_l = []
         runtime = impl.get_runtime()
         compatible = self._get_compatible_kernels(*args, **kwargs)
+        if len(compatible) == 0:
+            raise GsTaichiRuntimeError("No suitable kernels were found.")
+
+        elif len(compatible) == 1:
+            self._fastest_by_geometry_hash[geometry_hash] = list(compatible.values())[0]
+            return self._fastest_by_geometry_hash[geometry_hash](*args, **kwargs)
+
         kernel_idx = self._get_next_kernel_idx(compatible=compatible, geometry_hash=geometry_hash)
         kernel = self._kernel_by_idx[kernel_idx]
         runtime.sync()
