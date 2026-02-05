@@ -58,10 +58,11 @@ class PerformanceDispatcher:
             - in this case, check the shape of the argument in question, and return False if out of spec for this
               kernel implementation
         """
+        kernel_by_idx = self._kernel_by_idx
 
         def decorator(func: GsTaichiCallable) -> GsTaichiCallable:
             dispatch_impl = DispatchKernelImpl(kernel=func, is_compatible=is_compatible)
-            self._kernel_by_idx[dispatch_impl.kernel_impl_idx] = dispatch_impl
+            kernel_by_idx[dispatch_impl.kernel_impl_idx] = dispatch_impl
             return func
 
         if kernel is not None:
