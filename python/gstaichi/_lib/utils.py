@@ -69,7 +69,13 @@ def locale_encode(path):
     try:
         import locale  # pylint: disable=C0415
 
-        return path.encode(locale.getdefaultlocale()[1])
+        # Use getencoding() if available (Python 3.11+), otherwise fall back to getdefaultlocale()
+        # TODO: remove the conditional once our minimum python version is 3.11
+        if sys.version_info >= (3, 11):
+            encoding = locale.getencoding()  # pylint: disable=E1101
+        else:
+            encoding = locale.getdefaultlocale()[1]
+        return path.encode(encoding)
     except (UnicodeEncodeError, TypeError):
         try:
             return path.encode(sys.getfilesystemencoding())
