@@ -1,7 +1,7 @@
 from enum import IntEnum
 
 import gstaichi as ti
-from gstaichi.lang._perf_dispatch import NUM_WARMUP
+from gstaichi.lang._perf_dispatch import KernelSpeedChecker
 
 from tests import test_utils
 
@@ -28,7 +28,6 @@ def test_perf_dispatch() -> None:
     @my_func1.register(is_compatible=lambda a, c: a.shape[0] < 2)
     @ti.kernel
     def my_func1_impl_a_shape0_lt_2(a: ti.types.NDArray[ti.i32, 1], c: ti.types.NDArray[ti.i32, 1]) -> None:
-        print("my_func1_impl_a_shape0_lt_2")
         B = a.shape[0]
         ti.loop_config(serialize=False)
         for b in range(B):
@@ -38,7 +37,6 @@ def test_perf_dispatch() -> None:
     @my_func1.register(is_compatible=lambda a, c: a.shape[0] >= 2)
     @ti.kernel
     def my_func1_impl_a_shape0_ge_2(a: ti.types.NDArray[ti.i32, 1], c: ti.types.NDArray[ti.i32, 1]) -> None:
-        print("my_func1_impl_a_shape0_ge_2")
         B = a.shape[0]
         ti.loop_config(serialize=False)
         for b in range(B):
@@ -49,15 +47,17 @@ def test_perf_dispatch() -> None:
     a = ti.ndarray(ti.i32, (N,))
     c = ti.ndarray(ti.i32, (10,))
 
-    for it in range(3):
-        a.fill(5)
-        my_func1(a, c)
-        assert (a.to_numpy()[:5] == [0, 5, 20, 45, 80]).all()
-        if it <= NUM_WARMUP:
+    for it in range((KernelSpeedChecker.num_warmup + 5)):
+        c.fill(0)
+        for _inner_it in range(2):  # 2 compatible kernels
+            a.fill(5)
+            my_func1(a, c)
+            assert (a.to_numpy()[:5] == [0, 5, 10, 15, 20]).all()
+        if it <= KernelSpeedChecker.num_warmup:
             assert c[ImplEnum.serial] == 1
             assert c[ImplEnum.a_shape0_lt2] == 0
             assert c[ImplEnum.a_shape0_ge2] == 1
         else:
             assert c[ImplEnum.a_shape0_ge2] == 1
             assert c[ImplEnum.a_shape0_lt2] == 0
-            assert c[ImplEnum.a_shape0_ge2] == 0
+            assert c[ImplEnum.serial] == 0
