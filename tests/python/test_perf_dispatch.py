@@ -1,4 +1,5 @@
 from enum import IntEnum
+import time
 from typing import cast
 
 import pytest
@@ -22,32 +23,32 @@ def test_perf_dispatch_basic() -> None:
 
     @my_func1.register
     @ti.kernel
-    def my_func1_impl_serial(a: ti.types.NDArray[ti.i32, 1], c: ti.types.NDArray[ti.i32, 1]) -> None:
+    def my_func1_impl_slow(a: ti.types.NDArray[ti.i32, 1], c: ti.types.NDArray[ti.i32, 1]) -> None:
         B = a.shape[0]
-        ti.loop_config(serialize=True)
         for b in range(B):
             a[b] = a[b] * b
             c[ImplEnum.serial] = 1
+            time.sleep(0.05)
 
     @my_func1.register(is_compatible=lambda a, c: a.shape[0] < 2)
     @ti.kernel
     def my_func1_impl_a_shape0_lt_2(a: ti.types.NDArray[ti.i32, 1], c: ti.types.NDArray[ti.i32, 1]) -> None:
         B = a.shape[0]
-        ti.loop_config(serialize=False)
         for b in range(B):
             a[b] = a[b] * b
             c[ImplEnum.a_shape0_lt2] = 1
+            time.sleep(0.03)
 
     @my_func1.register(is_compatible=lambda a, c: a.shape[0] >= 2)
     @ti.kernel
     def my_func1_impl_a_shape0_ge_2(a: ti.types.NDArray[ti.i32, 1], c: ti.types.NDArray[ti.i32, 1]) -> None:
         B = a.shape[0]
-        ti.loop_config(serialize=False)
         for b in range(B):
             a[b] = a[b] * b
             c[ImplEnum.a_shape0_ge2] = 1
+            time.sleep(0.01)
 
-    N = 10000000
+    N = 10
     a = ti.ndarray(ti.i32, (N,))
     c = ti.ndarray(ti.i32, (10,))
 
@@ -90,11 +91,15 @@ def test_perf_dispatch_annotation_mismatch() -> None:
     def my_func1(a: ti.types.NDArray[ti.i32, 1], c: ti.types.NDArray[ti.i32, 1]): ...
 
     with pytest.raises(GsTaichiSyntaxError):
+
         @ti.kernel
         @my_func1.register
         def my_func1_impl_impl1(c: ti.types.NDArray[ti.i32, 1]) -> None: ...
 
     with pytest.raises(GsTaichiSyntaxError):
+
         @ti.kernel
         @my_func1.register
-        def my_func1_impl_impl1(a: ti.types.NDArray[ti.i32, 1], d: ti.types.NDArray[ti.i32, 1], c: ti.types.NDArray[ti.i32, 1]) -> None: ...
+        def my_func1_impl_impl1(
+            a: ti.types.NDArray[ti.i32, 1], d: ti.types.NDArray[ti.i32, 1], c: ti.types.NDArray[ti.i32, 1]
+        ) -> None: ...
