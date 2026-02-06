@@ -129,7 +129,7 @@ class PerformanceDispatcher:
             raise GsTaichiRuntimeError("No suitable kernels were found.")
 
         elif len(compatible) == 1:
-            self._fastest_by_geometry_hash[geometry_hash] = list(compatible.values())[0]
+            self._fastest_by_geometry_hash[geometry_hash] = next(iter(compatible.values()))
             return self._fastest_by_geometry_hash[geometry_hash](*args, **kwargs)
 
         kernel_idx = self._get_next_kernel_idx(compatible=compatible, geometry_hash=geometry_hash)
