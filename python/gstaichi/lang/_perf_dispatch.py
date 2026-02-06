@@ -24,7 +24,8 @@ class DispatchKernelImpl:
 
 
 class PerformanceDispatcher:
-    def __init__(self, get_geometry_hash: Callable, fn: Callable) -> None:
+    def __init__(self, get_geometry_hash: Callable, fn: Callable, num_warmup: int | None = None) -> None:
+        self.num_warmup = num_warmup if num_warmup else NUM_WARMUP
         sig = inspect.signature(fn)
         self._param_types: dict[str, Any] = {}
         for param_name, param in sig.parameters.items():
@@ -105,7 +106,7 @@ class PerformanceDispatcher:
         return least_trials_idx
 
     def _get_finished_trials(self, geometry_hash: int) -> bool:
-        return min(self._trial_count_by_kernel_idx_by_geometry_hash[geometry_hash].values()) >= NUM_WARMUP + 1
+        return min(self._trial_count_by_kernel_idx_by_geometry_hash[geometry_hash].values()) >= self.num_warmup + 1
 
     def _update_fastest(self, geometry_hash: int) -> None:
         speeds_l = []
@@ -142,7 +143,7 @@ class PerformanceDispatcher:
         speeds_l.append((elapsed, kernel))
         trial_count_by_kernel_idx = self._trial_count_by_kernel_idx_by_geometry_hash[geometry_hash]
         trial_count_by_kernel_idx[kernel_idx] += 1
-        if trial_count_by_kernel_idx[kernel_idx] >= NUM_WARMUP:
+        if trial_count_by_kernel_idx[kernel_idx] >= self.num_warmup:
             self._times_by_kernel_idx_by_geometry_hash[geometry_hash][kernel_idx].append(elapsed)
         if self._get_finished_trials(geometry_hash=geometry_hash):
             self._update_fastest(geometry_hash)
