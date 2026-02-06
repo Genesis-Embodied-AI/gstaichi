@@ -120,6 +120,33 @@ class PerformanceDispatcher(Generic[P, R]):
         self._fastest_by_geometry_hash[geometry_hash] = self._kernel_by_idx[speeds_l[0][0]]
 
     def __call__(self, *args: P.args, **kwargs: P.kwargs):
+        """
+        We are going to run each kernel self.num_warmup times, to warm up, then run them each again,
+        then choose the fastest kernel, based on the time of the last run.
+
+        Each kernel must have identical behavior, including for side-effects.
+
+        We only run a single kernel per call, so kernels don't need to be idempotent.
+
+        We call sync before and after, because kernels run async, so:
+        - if we didn't sync after, we'd measure the time to queue the kernel, without waiting for it to finish.
+        - if we didn't sync before, we'd be measuring also the time for all the existing gpu kernels that
+          have already been queued up, are processing. So we sync to make sure those have finished first.
+
+        We collect a single sample from each implementation, and compare that single sample with the samples from the
+        other implementations.
+
+        We are comparing algorithms based on empirical runtime.
+
+        Note that for best results, sets of input arguments that have different runtimes should map to different
+        geometries, otherwise the comparison between runtimes might not be fair, and an inappropriate implementation
+        kernel might be selected.
+
+        We are not implementing an epsilon-greedy algorithm to keep sampling non-fastest variants just in case the
+        distribution is shifting over time.
+
+        It is not possible for you to control exploration vs exploitation.
+        """
         geometry_hash = self._get_geometry_hash(*args, **kwargs)
         fastest = self._fastest_by_geometry_hash.get(geometry_hash)
         if fastest:
