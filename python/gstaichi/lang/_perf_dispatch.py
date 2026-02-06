@@ -1,7 +1,7 @@
 import inspect
 import time
 from collections import defaultdict
-from typing import Any, Callable
+from typing import Any, Callable, Generic, ParamSpec, TypeVar
 
 from . import impl
 from ._gstaichi_callable import GsTaichiCallable
@@ -23,14 +23,18 @@ class DispatchKernelImpl:
         return self.__wrapped__(*args, **kwargs)
 
 
-class PerformanceDispatcher:
-    def __init__(self, get_geometry_hash: Callable, fn: Callable, num_warmup: int | None = None) -> None:
+P = ParamSpec("P")
+R = TypeVar("R")
+
+
+class PerformanceDispatcher(Generic[P, R]):
+    def __init__(self, get_geometry_hash: Callable[P, int], fn: Callable, num_warmup: int | None = None) -> None:
         self.num_warmup = num_warmup if num_warmup else NUM_WARMUP
         sig = inspect.signature(fn)
         self._param_types: dict[str, Any] = {}
         for param_name, param in sig.parameters.items():
             self._param_types[param_name] = param.annotation
-        self._get_geometry_hash: Callable = get_geometry_hash
+        self._get_geometry_hash: Callable[P, int] = get_geometry_hash
         self._kernel_by_idx: dict[int, DispatchKernelImpl] = {}
         self._trial_count_by_kernel_idx_by_geometry_hash: dict[int, dict[int, int]] = defaultdict(
             lambda: defaultdict(int)
@@ -115,7 +119,7 @@ class PerformanceDispatcher:
         speeds_l.sort(key=lambda x: x[1], reverse=False)
         self._fastest_by_geometry_hash[geometry_hash] = self._kernel_by_idx[speeds_l[0][0]]
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: P.args, **kwargs: P.kwargs):
         geometry_hash = self._get_geometry_hash(*args, **kwargs)
         fastest = self._fastest_by_geometry_hash.get(geometry_hash)
         if fastest:
