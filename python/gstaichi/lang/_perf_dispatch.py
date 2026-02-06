@@ -74,7 +74,7 @@ class PerformanceDispatcher:
                     )
             if len(sig.parameters) != len(self._param_types):
                 raise GsTaichiSyntaxError(
-                    f"Number of kernel parameters doesn't match number of parameters in perf_dispatch function prototype"
+                    f"Number of kernel parameters {len(sig.parameters)} doesn't match number of parameters in perf_dispatch function prototype {len(self._param_types)}"
                 )
 
             dispatch_impl = DispatchKernelImpl(kernel=func, is_compatible=is_compatible)

@@ -1,5 +1,5 @@
-from enum import IntEnum
 import time
+from enum import IntEnum
 from typing import cast
 
 import pytest
