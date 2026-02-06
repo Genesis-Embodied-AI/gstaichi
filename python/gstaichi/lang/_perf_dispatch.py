@@ -1,3 +1,4 @@
+import inspect
 import time
 from collections import defaultdict
 from typing import Any, Callable
@@ -13,8 +14,6 @@ class DispatchKernelImpl:
     kernel_impl_idx: int = 1
 
     def __init__(self, kernel: GsTaichiCallable, is_compatible: Callable | None) -> None:
-        if not type(kernel) in {GsTaichiCallable}:
-            raise GsTaichiSyntaxError("@ti.perf_dispatch should be placed before @ti.kernel")
         self.is_compatible: Callable | None = is_compatible
         self.__wrapped__: GsTaichiCallable = kernel
         self.kernel_impl_idx = DispatchKernelImpl.kernel_impl_idx
@@ -25,7 +24,11 @@ class DispatchKernelImpl:
 
 
 class PerformanceDispatcher:
-    def __init__(self, get_geometry_hash: Callable) -> None:
+    def __init__(self, get_geometry_hash: Callable, fn: Callable) -> None:
+        sig = inspect.signature(fn)
+        self._param_types: dict[str, Any] = {}
+        for param_name, param in sig.parameters.items():
+            self._param_types[param_name] = param.annotation
         self._get_geometry_hash: Callable = get_geometry_hash
         self._kernel_by_idx: dict[int, DispatchKernelImpl] = {}
         self._trial_count_by_kernel_idx_by_geometry_hash: dict[int, dict[int, int]] = defaultdict(
@@ -61,6 +64,15 @@ class PerformanceDispatcher:
         kernel_by_idx = self._kernel_by_idx
 
         def decorator(func: GsTaichiCallable) -> GsTaichiCallable:
+            if not type(func) in {GsTaichiCallable}:
+                raise GsTaichiSyntaxError("@ti.perf_dispatch should be placed before @ti.kernel")
+            sig = inspect.signature(func.fn)
+            for param_name, _param in sig.parameters.items():
+                if param_name not in self._param_types:
+                    raise GsTaichiSyntaxError(f"Signature parameter {param_name} of kernel not in perf_dispatch function prototype")
+            if len(sig.parameters) != len(self._param_types):
+                raise GsTaichiSyntaxError(f"Number of kernel parameters doesn't match number of parameters in perf_dispatch function prototype")
+
             dispatch_impl = DispatchKernelImpl(kernel=func, is_compatible=is_compatible)
             kernel_by_idx[dispatch_impl.kernel_impl_idx] = dispatch_impl
             return func
@@ -200,7 +212,7 @@ def perf_dispatch(*, get_geometry_hash: Callable):
     """
 
     def decorator(fn: GsTaichiCallable):
-        return PerformanceDispatcher(get_geometry_hash=get_geometry_hash)
+        return PerformanceDispatcher(get_geometry_hash=get_geometry_hash, fn=fn)
 
     return decorator
 
