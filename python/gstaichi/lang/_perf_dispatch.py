@@ -69,9 +69,13 @@ class PerformanceDispatcher:
             sig = inspect.signature(func.fn)
             for param_name, _param in sig.parameters.items():
                 if param_name not in self._param_types:
-                    raise GsTaichiSyntaxError(f"Signature parameter {param_name} of kernel not in perf_dispatch function prototype")
+                    raise GsTaichiSyntaxError(
+                        f"Signature parameter {param_name} of kernel not in perf_dispatch function prototype"
+                    )
             if len(sig.parameters) != len(self._param_types):
-                raise GsTaichiSyntaxError(f"Number of kernel parameters doesn't match number of parameters in perf_dispatch function prototype")
+                raise GsTaichiSyntaxError(
+                    f"Number of kernel parameters doesn't match number of parameters in perf_dispatch function prototype"
+                )
 
             dispatch_impl = DispatchKernelImpl(kernel=func, is_compatible=is_compatible)
             kernel_by_idx[dispatch_impl.kernel_impl_idx] = dispatch_impl
