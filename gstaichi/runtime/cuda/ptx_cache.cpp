@@ -57,13 +57,15 @@ struct CacheCleanerUtils<PtxCacheAllData> {
 
 }  // namespace offline_cache
 
-PtxCache::PtxCache(const Config config, const CompileConfig &compile_config,
+PtxCache::PtxCache(const Config config,
+                   const CompileConfig &compile_config,
                    int compute_capability)
     : config_(std::move(config)),
       compile_config_(compile_config),
       compute_capability_(compute_capability),
-      cache_dir_(join_path(config_.offline_cache_path,
-                           fmt::format("ptx_cache_sm_{}", compute_capability_))) {
+      cache_dir_(
+          join_path(config_.offline_cache_path,
+                    fmt::format("ptx_cache_sm_{}", compute_capability_))) {
   TI_DEBUG("Create ptxcache with offline_cache_file_path = {}",
            this->cache_dir_);
   auto filepath = join_path(this->cache_dir_, kMetadataFilename);
