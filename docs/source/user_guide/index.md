@@ -73,7 +73,6 @@ algorithms
 
 performance
 fastcache
-kernel_caching
 graph
 streams
 perf_dispatch
