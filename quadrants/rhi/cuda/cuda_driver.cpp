@@ -239,13 +239,9 @@ CUBLASDriver &CUBLASDriver::get_instance() {
 }
 
 bool CUBLASDriver::load_cublas() {
-  /* Load a versioned cuBLAS SONAME (e.g. libcublas.so.12) rather than the
-   * unversioned libcublas.so. In a PyTorch environment torch has already loaded
-   * its own cuBLAS; matching a versioned SONAME reuses torch's copy, whereas
-   * libcublas.so would pull in a second, conflicting system cuBLAS. The first
-   * already-loaded match wins, so in practice we bind to whichever cuBLAS torch
-   * loaded. torch currently ships CUDA 12/13 builds (older torch shipped CUDA
-   * 11), so we try 11, 12, and 13.
+  /* Load a versioned cuBLAS SONAME (e.g. libcublas.so.12) rather than the unversioned libcublas.so. In a PyTorch
+   * environment torch has already loaded its own cuBLAS; matching a versioned SONAME reuses torch's copy, whereas
+   * libcublas.so would pull in a second, conflicting system cuBLAS.
    */
   cublas_loaded_ = try_load_lib_any_version("cublas", "64_", {11, 12, 13});
   if (!cublas_loaded_) {
