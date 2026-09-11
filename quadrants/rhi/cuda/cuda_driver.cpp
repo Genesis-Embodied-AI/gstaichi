@@ -243,9 +243,8 @@ bool CUBLASDriver::load_cublas() {
    * environment torch has already loaded its own cuBLAS; matching a versioned SONAME reuses torch's copy, whereas
    * libcublas.so would pull in a second, conflicting system cuBLAS.
    *
-   * FIXME: the version list is hardcoded. Ideally we would both derive fresh-load candidates from the detected
-   * driver version (like load_cusolver()/load_cusparse()) and still scan a broad set for torch's already-loaded
-   * cuBLAS. That needs try_load_lib_any_version() to take separate "already-loaded scan" and "fresh-load" lists.
+   * FIXME: the version list is hardcoded. Ideally we would both derive fresh-load candidates from the detected driver
+   * version (like load_cusolver()/load_cusparse()) and still scan a broad set for torch's already-loaded cuBLAS.
    */
   cublas_loaded_ = try_load_lib_any_version("cublas", "64_", {11, 12, 13});
   if (!cublas_loaded_) {
